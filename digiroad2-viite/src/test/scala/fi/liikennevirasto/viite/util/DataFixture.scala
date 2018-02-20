@@ -215,8 +215,8 @@ object DataFixture {
         try {
           val groupedAddresses = roadAddresses.groupBy(ra => (ra.linkId, ra.commonHistoryId))
           val affectingChanges = changedRoadLinks.filter(ci => {
-            val address = roadAddresses.filter(_.linkId == ci.oldId).maxBy(_.adjustedTimestamp)
-            ci.oldId.nonEmpty && ci.affects(ci.oldId.get, address.adjustedTimestamp)
+            val address = roadAddresses.filter(_.linkId == ci.oldId.getOrElse(0))
+            ci.oldId.nonEmpty && address.nonEmpty && ci.affects(ci.oldId.get, address.maxBy(_.adjustedTimestamp).adjustedTimestamp)
           })
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
