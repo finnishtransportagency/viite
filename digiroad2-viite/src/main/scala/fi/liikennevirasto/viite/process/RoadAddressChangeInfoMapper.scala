@@ -154,8 +154,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   private def groupByRoadSection(sections: Seq[RoadAddressSection],
                                  roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    val thorRoadAddress = roadAddresses.flatMap(_.allSegments).groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(rd => LinkRoadAddressHistory((rd.toSeq, Seq()))).values
-    sections.map(section => section -> thorRoadAddress.filter(lh => lh.currentSegments.exists(section.includes)).toSeq).toMap
+    sections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).toSeq).toMap
   }
 
   // TODO: Don't try to apply changes to invalid sections
