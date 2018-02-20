@@ -1,8 +1,8 @@
 lock '3.1.0'
-set :application, 'digiroad2'
-set :repo_url, 'https://github.com/finnishtransportagency/digiroad2.git'
+set :application, 'viite'
+set :repo_url, 'https://github.com/finnishtransportagency/viite.git'
 set :branch, ENV['REVISION'] || ENV['BRANCH_NAME'] || 'master'
-set :deploy_to, "/home/web/digiroad2"
+set :deploy_to, "/home/web/viite"
 set :pty, true
 set :log_level, :info
 set :grunt_target, ENV['GRUNT_TARGET'] || ''
@@ -38,7 +38,7 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/viite/"
       execute "killall -q java; exit 0"
-      execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
+      #execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
     end
   end
 
