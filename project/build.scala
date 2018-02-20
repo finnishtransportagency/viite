@@ -8,7 +8,7 @@ import org.scalatra.sbt.PluginKeys._
 
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"
-  val Digiroad2Name = "digiroad2"
+  val Digiroad2Name = "viite"
   val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.7"
