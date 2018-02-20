@@ -78,11 +78,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }).filter(c => c.isDefined).map(_.get)
   }
 
-  private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+  private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[(Long, Long), Seq[RoadAddress]]): Map[(Long, Long), Seq[RoadAddress]] = {
     changes.foldLeft(roadAddresses) { case (addresses, changeInfo) =>
       val (toFloat, other) = changeInfo.partition(isFloatingChange)
       val (length, maps) = other.partition(isLengthChange)
-      val changeOperations: Seq[Map[Long, Seq[RoadAddress]] => Map[Long, Seq[RoadAddress]]] = Seq(
+      val changeOperations: Seq[Map[(Long, Long), Seq[RoadAddress]] => Map[(Long, Long), Seq[RoadAddress]]] = Seq(
         applyFloating(toFloat),
         applyMappedChanges(maps),
         applyLengthChanges(length)
@@ -99,17 +99,17 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       Seq(ra)
   }
 
-  private def applyMappedChanges(changes: Seq[ChangeInfo])(roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+  private def applyMappedChanges(changes: Seq[ChangeInfo])(roadAddresses: Map[(Long, Long), Seq[RoadAddress]]): Map[(Long, Long), Seq[RoadAddress]] = {
     if (changes.isEmpty)
       roadAddresses
     else {
       val mapping = createAddressMap(changes)
       val mapped = roadAddresses.mapValues(_.flatMap(mapAddress(mapping)))
-      mapped.values.toSeq.flatten.groupBy(_.linkId)
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.commonHistoryId))
     }
   }
 
-  private def applyLengthChanges(changes: Seq[ChangeInfo])(roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+  private def applyLengthChanges(changes: Seq[ChangeInfo])(roadAddresses: Map[(Long, Long), Seq[RoadAddress]]): Map[(Long, Long), Seq[RoadAddress]] = {
     if (changes.isEmpty)
       roadAddresses
     else {
@@ -121,11 +121,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         } else
           mapAddress(mapping)(ra)
       ))
-      mapped.values.toSeq.flatten.groupBy(_.linkId)
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.commonHistoryId))
     }
   }
 
-  private def applyFloating(changes: Seq[ChangeInfo])(roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+  private def applyFloating(changes: Seq[ChangeInfo])(roadAddresses: Map[(Long, Long), Seq[RoadAddress]]): Map[(Long, Long), Seq[RoadAddress]] = {
     if (changes.isEmpty)
       roadAddresses
     else {
@@ -135,11 +135,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         } else
           ra
       ))
-      mapped.values.toSeq.flatten.groupBy(_.linkId)
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.commonHistoryId))
     }
   }
 
-  def resolveChangesToMap(roadAddresses: Map[Long, LinkRoadAddressHistory], changedRoadLinks: Seq[RoadLink],
+  def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changedRoadLinks: Seq[RoadLink],
                           changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
     val current = roadAddresses.flatMap(_._2.currentSegments).toSeq
     val sections = partition(current)
@@ -154,7 +154,8 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   private def groupByRoadSection(sections: Seq[RoadAddressSection],
                                  roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    sections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).toSeq).toMap
+    val thorRoadAddress = roadAddresses.flatMap(_.allSegments).groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(rd => LinkRoadAddressHistory((rd.toSeq, Seq()))).values
+    sections.map(section => section -> thorRoadAddress.filter(lh => lh.currentSegments.exists(section.includes)).toSeq).toMap
   }
 
   // TODO: Don't try to apply changes to invalid sections
