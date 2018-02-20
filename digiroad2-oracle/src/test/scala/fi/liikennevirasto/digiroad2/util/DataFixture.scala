@@ -1371,6 +1371,9 @@ object DataFixture {
   }
 
   def main(args:Array[String]) : Unit = {
+
+    throw new Exception("Any task from oth shouldn't be executed here")
+    /*
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
     if (!username.startsWith("dr2dev")) {
@@ -1508,5 +1511,6 @@ object DataFixture {
         " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_speedLimits_from_TR_to_OTH | " +
         " update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
     }
+    */
   }
 }
