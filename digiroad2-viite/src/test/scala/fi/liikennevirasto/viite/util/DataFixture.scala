@@ -220,7 +220,7 @@ object DataFixture {
               ci.affects(ci.oldId.get, timestamps(ci.oldId.get)))
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
-          roadAddressService.applyChanges(roadLinks, affectingChanges, groupedAddresses.mapValues(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
+          //roadAddressService.applyChanges(roadLinks, affectingChanges, groupedAddresses.mapValues(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
