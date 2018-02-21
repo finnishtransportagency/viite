@@ -1,20 +1,16 @@
 #!/bin/bash
 
-# digiroad          Start up the Digiroad2 server daemon
-
-SKIP_VALLU=${SKIP_VALLU:-0}
+# viite          Start up the Viite server daemon
 
 case "$1" in
   start)
     runuser web -lc $"
-      cd /home/web/digiroad2/current
+      cd /home/web/viite/current
 	    ./start.sh
-	    [[ $SKIP_VALLU -gt 0 ]] || nohup grunt vallu-test-server >> ./src/main/webapp/vallu-server.log &"
 	;;
   stop)
-    cd /home/web/digiroad2/current
+    cd /home/web/viite/current
     ./stop.sh
-    pkill -f vallu_test_server.js || true
 	;;
   *)
 	  echo $"Usage: $0 {start|stop}"
