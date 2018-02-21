@@ -883,7 +883,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s =>
         LinkRoadAddressHistory(s, Seq()))).map(_.allSegments)
       newAddresses should have size 5
-      newAddresses(5622953).headOption.exists(_.calibrationPoints._2.nonEmpty) should be (true)
+      newAddresses.flatten.find(_.linkId == 5622953).exists(_.calibrationPoints._2.nonEmpty) should be (true)
       val flatList = newAddresses.flatten
       flatList.count(_.calibrationPoints._2.nonEmpty) should be (1)
       flatList.count(_.calibrationPoints._1.nonEmpty) should be (1)
