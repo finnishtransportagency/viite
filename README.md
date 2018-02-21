@@ -7,7 +7,7 @@ Ympäristön pystytys
 1. Kloonaa digiroad2-repo omalle koneellesi
 
   ```
-  git clone https://github.com/finnishtransportagency/digi-road-2.git
+  git clone https://github.com/finnishtransportagency/viite.git
   ```
 
 1. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
