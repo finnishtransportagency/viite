@@ -9,13 +9,13 @@
     var cachedMarker = null;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
-    var standardZIndex = 6;
     var LinkStatus = LinkValues.LinkStatus;
     var Anomaly = LinkValues.Anomaly;
     var SideCode = LinkValues.SideCode;
     var RoadLinkType = LinkValues.RoadLinkType;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var RoadClass = LinkValues.RoadClass;
+    var RoadZIndex = LinkValues.RoadZIndex;
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -48,7 +48,8 @@
 
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
-      name: 'calibrationPointLayer'
+      name: 'calibrationPointLayer',
+      zIndex: RoadZIndex.CalibrationPointLayer.value
     });
 
     var directionMarkerLayer = new ol.layer.Vector({
@@ -61,9 +62,9 @@
       name: 'suravageRoadProjectLayer',
       style: function (feature) {
         return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
-      }
+      },
+      zIndex: RoadZIndex.SuravageLayer.value
     });
-    suravageRoadProjectLayer.setZIndex(2);
 
     var suravageProjectDirectionMarkerLayer = new ol.layer.Vector({
       source: suravageProjectDirectionMarkerVector,
@@ -80,9 +81,9 @@
         } else {
           return styler.getRoadLinkStyle().getStyle(feature.projectLinkData, currentZoom);
         }
-    }
+    },
+      zIndex: RoadZIndex.VectorLayer.value
     });
-    vectorLayer.setZIndex(1);
 
     var showChangesAndSendButton = function () {
       selectedProjectLinkProperty.clean();
@@ -918,7 +919,6 @@
         calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
       });
 
-      calibrationPointLayer.setZIndex(standardZIndex + 2);
       var partitioned = _.partition(features, function (feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.projectLinkData.linkId));
       });
