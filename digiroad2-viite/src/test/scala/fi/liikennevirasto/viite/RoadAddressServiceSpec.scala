@@ -791,12 +791,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      /*val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq())))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq())))
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
-      newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
-      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)
-      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.head should be (123456)*/
+      newAddresses.flatMap(_.allSegments).map(_.id).toSet should be (addresses.map(_.id).toSet)
+      newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.size should be (1)
+      newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.head should be (123456)
     }
   }
 
@@ -837,11 +837,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      /*val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq())))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq())))
       // should contain just the 5622953
-      newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
-      newAddresses.get(5622953).isEmpty should be (false)
-      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)*/
+      newAddresses.flatMap(_.allSegments).map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size 1
+      newAddresses.flatMap(_.allSegments).exists(_.linkId == 5622953) should be (true)
+      newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.size should be (1)
     }
   }
 
@@ -854,7 +854,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val o5622931Geom = n499914628Geom  ++ n5622931Geom ++ n499914643Geom ++ n5622953Geom
     val o1Geom = Seq(Point(6734173, 332309-1984), Point(6734173,332309))
 
-    val commonHistoryId = 123;
+    val commonHistoryId = 123
 
     runWithRollback {
       val oldAddressLinks = Seq(
@@ -880,11 +880,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
       RoadAddressDAO.create(addresses)
-      /*val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s =>
-        LinkRoadAddressHistory(s, Seq()))).mapValues(_.allSegments)
-      newAddresses should have size (5)
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s =>
+        LinkRoadAddressHistory(s, Seq()))).map(_.allSegments)
+      newAddresses should have size 5
       newAddresses(5622953).headOption.exists(_.calibrationPoints._2.nonEmpty) should be (true)
-      val flatList = newAddresses.values.flatten
+      val flatList = newAddresses.flatten
       flatList.count(_.calibrationPoints._2.nonEmpty) should be (1)
       flatList.count(_.calibrationPoints._1.nonEmpty) should be (1)
       flatList.count(_.startAddrMValue == 0) should be (1)
@@ -896,7 +896,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // Test that the common_history_id is inherited correctly in split
       flatList.forall(_.commonHistoryId == commonHistoryId) should be (true)
-*/
     }
   }
 
