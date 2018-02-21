@@ -573,7 +573,7 @@ object ProjectValidator {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
-    }).head
+    }).headOption.getOrElse(Seq())
   }
 
   /**
