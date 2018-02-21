@@ -63,6 +63,7 @@
         return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
       }
     });
+    suravageRoadProjectLayer.setZIndex(2);
 
     var suravageProjectDirectionMarkerLayer = new ol.layer.Vector({
       source: suravageProjectDirectionMarkerVector,
@@ -81,6 +82,7 @@
         }
     }
     });
+    vectorLayer.setZIndex(1);
 
     var showChangesAndSendButton = function () {
       selectedProjectLinkProperty.clean();
@@ -115,6 +117,7 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
+        if(!_.isUndefined(feature.projectLinkData))
         if(projectLinkStatusIn(feature.projectLinkData, possibleStatusForSelection) || feature.projectLinkData.roadClass === RoadClass.NoClass.value || feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
@@ -855,15 +858,6 @@
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var suravageDirectionRoadMarker = _.filter(suravageProjectRoads, function (projectLink) {
         return projectLink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
-      });
-
-      var suravageFeaturesToRemove = [];
-      _.each(selectSingleClick.getFeatures().getArray(), function (feature) {
-        if (feature.getProperties().type && feature.getProperties().type === "marker")
-          suravageFeaturesToRemove.push(feature);
-      });
-      _.each(suravageFeaturesToRemove, function (feature) {
-        selectSingleClick.getFeatures().remove(feature);
       });
 
       _.each(suravageDirectionRoadMarker, function (directionLink) {
