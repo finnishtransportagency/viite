@@ -13,13 +13,13 @@ namespace :deploy do
       execute "cp #{deploy_to}/newrelic/* #{release_path}/."
       execute "cd #{release_path} && chmod 700 start.sh"
       execute "cd #{release_path} && nohup ./start.sh"
-      execute "cd #{release_path} && tmux new -s 'waiting for your commands' -d"
+      execute "cd #{release_path} && tmux new -s 'viite' -d"
     end
   end
 
   task :prepare_release do
     on roles(:all) do |host|
-      execute "tmux kill-server || true"
+      execute "tmux kill-session -t 'viite' || true"
       execute "mkdir -p #{release_path}/tmp"
       execute "cd #{release_path} && npm install && export TMPDIR=#{release_path}/tmp && yarn install && grunt deploy --target=#{fetch(:grunt_target)}"
       execute "cd #{deploy_path} && mkdir #{release_path}/digiroad2-oracle/lib && cp oracle/* #{release_path}/digiroad2-oracle/lib/."
