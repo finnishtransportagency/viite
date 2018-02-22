@@ -839,7 +839,7 @@ object RoadAddressDAO {
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
-          Update ROAD_ADDRESS ra Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
+          Update ROAD_ADDRESS Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
         """
     if (ids.isEmpty)
       0
