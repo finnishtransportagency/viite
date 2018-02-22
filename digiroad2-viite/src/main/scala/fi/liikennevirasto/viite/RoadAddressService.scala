@@ -724,7 +724,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
     val transferredRoadAddresses = getRoadAddressesAfterCalculation(sources, targets, user)
     val target = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet,newTransaction,frozenTimeVVHAPIServiceEnabled)
-    transferredRoadAddresses.map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
+    transferredRoadAddresses.filter(_.endDate.isEmpty).map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
   }
 
   def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
@@ -743,12 +743,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
     val hasFloatings = withDynTransaction {
-      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = false,
+      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = true,
         includeTerminated = false)
       RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
-      RoadAddressDAO.fetchAllFloatingRoadAddresses(false).isEmpty
+      RoadAddressDAO.fetchAllFloatingRoadAddresses(true).isEmpty
     }
     if (!hasFloatings)
       eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
@@ -773,14 +773,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
     val sourceRoadAddresses = withDynSession {
       RoadAddressDAO.fetchByLinkId(sources.map(_.linkId).toSet, includeFloating = true,
-        includeHistory = false, includeTerminated = false)
+        includeHistory = true, includeTerminated = false)
     }
 
-    DefloatMapper.preTransferChecks(sourceRoadAddresses.filter(_.endDate.isEmpty))
-    val targetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(sourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
-    DefloatMapper.postTransferChecks(targetRoadAddresses.filter(_.endDate.isEmpty), sourceRoadAddresses.filter(_.endDate.isEmpty))
+    val (currentSourceRoadAddresses, historySourceRoadAddresses) = sourceRoadAddresses.partition(ra => ra.endDate.isEmpty)
 
-    targetRoadAddresses
+    DefloatMapper.preTransferChecks(currentSourceRoadAddresses)
+    val currentTargetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(currentSourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
+    DefloatMapper.postTransferChecks(currentTargetRoadAddresses.filter(_.endDate.isEmpty), currentSourceRoadAddresses)
+
+    val historyTargetRoadAddresses = historySourceRoadAddresses.groupBy(_.endDate).flatMap(group =>{
+      DefloatMapper.preTransferChecks(group._2)
+      val targetHistory = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(group._2.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
+      //DefloatMapper.postTransferChecks(targetHistory, group._2)
+      targetHistory
+    })
+
+    currentTargetRoadAddresses ++ historyTargetRoadAddresses
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long): Boolean = {
