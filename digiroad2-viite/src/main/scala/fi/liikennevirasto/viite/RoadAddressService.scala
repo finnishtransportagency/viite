@@ -748,7 +748,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
-      RoadAddressDAO.fetchAllFloatingRoadAddresses(true).isEmpty
+      RoadAddressDAO.fetchAllFloatingRoadAddresses().nonEmpty
     }
     if (!hasFloatings)
       eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
@@ -785,7 +785,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val historyTargetRoadAddresses = historySourceRoadAddresses.groupBy(_.endDate).flatMap(group =>{
       DefloatMapper.preTransferChecks(group._2)
       val targetHistory = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(group._2.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
-      //DefloatMapper.postTransferChecks(targetHistory, group._2)
       targetHistory
     })
 
