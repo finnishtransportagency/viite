@@ -37,7 +37,7 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' viite-UI/ src/main/webapp/viite/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/viite/"
-      execute "killall -q java; exit 0"
+      execute "killall -q java.*viite; exit 0"
     end
   end
 
