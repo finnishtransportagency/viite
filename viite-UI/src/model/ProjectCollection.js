@@ -328,6 +328,7 @@
           },
           closeCallback: function () {
             applicationModel.removeSpinner();
+            eventbus.trigger('roadAddress:projectLinksUpdated');
           }
         });
       } else{
