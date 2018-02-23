@@ -745,9 +745,18 @@ object ProjectValidator {
         links.map(l => (l.linkId, zoomPoint, l.ely))
       }).unzip3
 
-      if (gLinkIds.nonEmpty)
-        Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
-          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Some(RoadContinuesInAnotherElyMessage.format(gEly.toSet.mkString(", ")))))
+      if (gLinkIds.nonEmpty) {
+        if(gEly.nonEmpty){
+          case object formattedMessage extends ValidationError {
+            def value = validationError.value
+            def message: String = validationError.message.format(gEly.toSet.mkString(", "))
+            def notification = validationError.notification
+          }
+          Some(ValidationErrorDetails(project.id, formattedMessage, gLinkIds.toSeq.distinct,
+            gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
+        } else Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
+          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
+    }
       else
         Option.empty[ValidationErrorDetails]
     }
