@@ -27,13 +27,15 @@
     var Anomaly = LinkValues.Anomaly;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var SideCode = LinkValues.SideCode;
+    var RoadZIndex = LinkValues.RoadZIndex;
     var activeLayer = false;
 
     var projectLinkStyler = new ProjectLinkStyler();
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector,
-      name: 'indicatorLayer'
+      name: 'indicatorLayer',
+      zIndex: RoadZIndex.IndicatorLayer.value
     });
 
     var floatingMarkerLayer = new ol.layer.Vector({
@@ -43,9 +45,9 @@
 
     var anomalousMarkerLayer = new ol.layer.Vector({
       source: anomalousMarkerVector,
-      name: 'anomalousMarkerLayer'
+      name: 'anomalousMarkerLayer',
+      zIndex: RoadZIndex.IndicatorLayer.value
     });
-    anomalousMarkerLayer.setZIndex(11);
 
     var suravageMarkerLayer = new ol.layer.Vector({
       source: suravageMarkerVector,
@@ -61,22 +63,26 @@
       source: geometryChangedVector,
       style: function(feature) {
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
-      }
+      },
+      zIndex: RoadZIndex.GeometryChangedLayer.value
     });
 
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
-      name: 'calibrationPointLayer'
+      name: 'calibrationPointLayer',
+      zIndex: RoadZIndex.CalibrationPointLayer.value
     });
 
     var greenRoadLayer = new ol.layer.Vector({
       source: greenRoadLayerVector,
-      name: 'greenRoadLayer'
+      name: 'greenRoadLayer',
+      zIndex: RoadZIndex.GreenLayer.value
     });
 
     var reservedRoadLayer = new ol.layer.Vector({
       source: reservedRoadVector,
-      name: 'reservedRoadLayer'
+      name: 'reservedRoadLayer',
+      zIndex: RoadZIndex.ReservedRoadLayer.value
     });
 
     var greenRoads = function(Ol3Features, addToGreenLayer) {
@@ -103,7 +109,7 @@
         });
       };
       greenStyle();
-      greenRoadLayer.setZIndex(10000);
+
       if(!addToGreenLayer){
         greenRoadLayer.getSource().addFeatures(features);
         selectSingleClick.getFeatures().clear();
@@ -140,9 +146,9 @@
       name: 'historicRoadsLayer',
       style: function(feature) {
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
-      }
+      },
+      zIndex: RoadZIndex.HistoricRoadLayer.value
     });
-    historicRoadsLayer.setZIndex(15000);
 
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
@@ -640,8 +646,6 @@
           geometryChangedLayer.getSource().addFeature(feature);
         });
 
-        geometryChangedLayer.setZIndex(100);
-        calibrationPointLayer.setZIndex(22);
         calibrationPointLayer.getSource().clear();
         if(!applicationModel.isActiveButtons()) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
@@ -649,7 +653,6 @@
             var calMarker = new CalibrationPoint(actualPoint);
             calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
           });
-          calibrationPointLayer.setZIndex(22);
         }
       }
       addSelectInteractions();
@@ -722,7 +725,6 @@
     };
 
     this.layerStarted = function(eventListener) {
-      indicatorLayer.setZIndex(1000);
       var linkPropertyChangeHandler = _.partial(handleLinkPropertyChanged, eventListener);
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
@@ -1120,7 +1122,6 @@
         return feature;
       });
       if (applicationModel.getSelectedLayer()==="linkProperty"){ //check if user is still in reservation form
-        reservedRoadLayer.setZIndex(10000);
         reservedRoadLayer.getSource().addFeatures(styledFeatures);
       }
     });
