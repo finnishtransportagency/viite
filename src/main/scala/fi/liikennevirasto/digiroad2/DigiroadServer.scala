@@ -21,6 +21,7 @@ trait DigiroadServer {
   val contextPath : String
   val viiteContextPath: String
 
+  @deprecated
   protected def setupWebContext(): WebAppContext ={
     val context = new WebAppContext()
     context.setDescriptor("src/main/webapp/WEB-INF/web.xml")
@@ -40,10 +41,9 @@ trait DigiroadServer {
   }
 
   def startServer() {
-    val server = new Server(8080)
-    val context = setupWebContext()
+    val server = new Server(9080)
     val handler = new ContextHandlerCollection()
-    val handlers = Array(context, createViiteContext())
+    val handlers = Array(createViiteContext())
     handler.setHandlers(handlers.map(_.asInstanceOf[Handler]))
     server.setHandler(handler)
     server.start()
@@ -194,6 +194,7 @@ class ArcGisProxyServlet extends ProxyServlet {
     client
   }
 }
+
 class VKMProxyServlet extends ProxyServlet {
   def regex = "/(digiroad|viite)".r
 
