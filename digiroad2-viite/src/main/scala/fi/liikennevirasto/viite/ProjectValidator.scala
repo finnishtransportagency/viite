@@ -602,8 +602,8 @@ object ProjectValidator {
       }).unzip3
 
       if (gLinkIds.nonEmpty)
-        Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
-          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Some(WrongDiscontinuityWhenAdjacentToTerminatedRoad.format(roadAndPart.toSet.mkString(", ")))))
+        Some(ValidationErrorDetails(project.id, alterMessage(validationError, Option.empty, Option(roadAndPart.toSeq)), gLinkIds.toSeq.distinct,
+          gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
       else
         Option.empty[ValidationErrorDetails]
     }
@@ -747,12 +747,7 @@ object ProjectValidator {
 
       if (gLinkIds.nonEmpty) {
         if(gEly.nonEmpty){
-          case object formattedMessage extends ValidationError {
-            def value = validationError.value
-            def message: String = validationError.message.format(gEly.toSet.mkString(", "))
-            def notification = validationError.notification
-          }
-          Some(ValidationErrorDetails(project.id, formattedMessage, gLinkIds.toSeq.distinct,
+          Some(ValidationErrorDetails(project.id, alterMessage(validationError,Option(gEly.toSeq)), gLinkIds.toSeq.distinct,
             gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
         } else Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
           gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
@@ -773,6 +768,21 @@ object ProjectValidator {
 
     })
     validationProblems.toSeq
+  }
+
+  private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]], roadAndPart: Option[Seq[(Long,Long)]] = Option.empty[Seq[(Long,Long)]]) = {
+    case object formattedMessage extends ValidationError {
+      def value = validationError.value
+      def message: String = validationError.message.format(if(elyBorderData.nonEmpty) {
+        elyBorderData.get.toSet.mkString(", ")
+      } else if(roadAndPart.nonEmpty){
+        roadAndPart.get.toSet.mkString(", ")
+      } else {
+        validationError.message
+      })
+      def notification = validationError.notification
+    }
+    formattedMessage
   }
 
   /**
