@@ -84,7 +84,8 @@ object GeometryUtils {
     case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
     if (geometry.size < 2 || measure < 0) { None }
     else {
-      val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
+      val adjustedMeasure = if(GeometryUtils.geometryLength(geometry) < measure) GeometryUtils.geometryLength(geometry) else measure
+      val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, adjustedMeasure, None)) { (acc, point) =>
         if (acc.result.isDefined) {
           acc
         } else {
