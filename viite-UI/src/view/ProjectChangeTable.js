@@ -57,14 +57,13 @@
       '</table>' +
       '</div>');
 
-    function show(){
+    function show() {
       $('.container').append(changeTable.toggle());
-        resetInteractions();
-        interact('.change-table-frame').unset();
+      resetInteractions();
+      interact('.change-table-frame').unset();
       bindEvents();
       getChanges();
       enableTableInteractions();
-
     }
 
     function hide() {
@@ -76,9 +75,12 @@
     }
 
     function resetInteractions() {
-      $('.change-table-frame')[0].setAttribute('data-x', 0);
-      $('.change-table-frame')[0].setAttribute('data-y', 0);
-      $('.change-table-frame').css('transform', 'none');
+      var dragTable = $('.change-table-frame');
+      if (dragTable && dragTable.length > 0) {
+        dragTable[0].setAttribute('data-x', 0);
+        dragTable[0].setAttribute('data-y', 0);
+        dragTable.css('transform', 'none');
+      }
     }
 
     function getChangeType(type){
