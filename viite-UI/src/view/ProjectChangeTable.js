@@ -17,7 +17,7 @@
     // Text about validation success hard-coded now
     // TODO: handle status-text for real
     // TODO: table not responsive
-    changeTable.append('<div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>');
+    changeTable.append('<div class="change-table-header font-resize">Validointi ok. Alla näet muutokset projektissa.</div>');
     changeTable.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
     changeTable.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
     changeTable.append('<div class="change-table-borders">' +
@@ -59,6 +59,8 @@
 
     function show(){
       $('.container').append(changeTable.toggle());
+        resetInteractions();
+        interact('.change-table-frame').unset();
       bindEvents();
       getChanges();
       enableTableInteractions();
@@ -130,26 +132,27 @@
         $('.row-changes').remove();
         $('.change-table-dimensions').append($(htmlTable));
         if (projectChangeData.validationErrors.length === 0){
-          $('.change-table-header').html($('<div>Validointi ok. Alla näet muutokset projektissa.</div>'));
+          $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
           if($('.change-table-frame').css('display')==="block")
             $('#send-button').attr('disabled',false); //enables send button if changetable is open
         }
         else
         {
-          $('.change-table-header').html($('<div><font color="yellow">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</font></div>'));
+          $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
         }
       });
 
       changeTable.on('click', 'button.max', function (){
         resetInteractions();
+        $('.font-resize').css('font-size', '18px');
         if(windowMaximized) {
           $('.change-table-frame').height('260px');
           $('.change-table-frame').width('1135px');
           $('.change-table-frame').css('top', '620px');
-          $('[id=change-table-borders-target]').height('180px');
-          $('[id=change-table-borders-source]').height('180px');
-          $('[id=change-table-borders-reversed]').height('180px');
-          $('[id=change-table-borders-changetype]').height('180px');
+          $('[id=change-table-borders-target]').height('210px');
+          $('[id=change-table-borders-source]').height('210px');
+          $('[id=change-table-borders-reversed]').height('210px');
+          $('[id=change-table-borders-changetype]').height('210px');
           $('[id=buttonText]').text("Suurenna ");
           $('[id=sizeSymbol]').text("□");
           windowMaximized=false;
@@ -157,10 +160,10 @@
           $('.change-table-frame').height('800px');
           $('.change-table-frame').width('1135px');
           $('.change-table-frame').css('top', '50px');
-          $('[id=change-table-borders-target]').height('670px');
-          $('[id=change-table-borders-source]').height('670px');
-          $('[id=change-table-borders-reversed]').height('670px');
-          $('[id=change-table-borders-changetype]').height('670px');
+          $('[id=change-table-borders-target]').height('740px');
+          $('[id=change-table-borders-source]').height('750px');
+          $('[id=change-table-borders-reversed]').height('750px');
+          $('[id=change-table-borders-changetype]').height('750px');
           $('[id=buttonText]').text("Pienennä ");
           $('[id=sizeSymbol]').text("_");
           windowMaximized=true;
@@ -253,7 +256,7 @@
             endOnly: true
           },
           restrictSize: {
-            min: { width: 100, height: 50 }
+            min: { width: 650, height: 300 }
           },
           inertia: true
         })
@@ -269,6 +272,13 @@
             'translate(' + x + 'px,' + y + 'px)';
           target.setAttribute('data-x', x);
           target.setAttribute('data-y', y);
+          var fontResizeElements = $('.font-resize');
+          var newFontSize =18*parseInt(target.style.width) / 950 + 'px';
+          fontResizeElements.css('font-size', newFontSize);
+          $('[id=change-table-borders-target]').height(parseFloat(target.style.height) - 50 + 'px');
+          $('[id=change-table-borders-source]').height(parseFloat(target.style.height) - 50 + 'px');
+          $('[id=change-table-borders-reversed]').height(parseFloat(target.style.height) - 50 + 'px');
+          $('[id=change-table-borders-changetype]').height(parseFloat(target.style.height) - 50 + 'px');
         });
     }
 
