@@ -717,7 +717,7 @@ object ProjectValidator {
       val startRoad = projectLinks.head
       val endRoad = projectLinks.last
       val roadsValidation = evaluateBorderCheck(startRoad, endRoad, secondCheck = false)
-      val problemRoads = roadsValidation.filterNot(_.isEmpty).get
+      val problemRoads = roadsValidation.filterNot(_.isEmpty).getOrElse(Seq())
       error(ValidationErrorList.RoadNotEndingInElyBorder)(problemRoads)
     }).toSeq
   }
@@ -759,7 +759,7 @@ object ProjectValidator {
       val endRoad = projectLinks.last
       val validationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, endRoad, secondCheck = true) else Option.empty[Seq[ProjectLink]]
 
-      val problemRoads = validationResult.filterNot(_.isEmpty).get
+      val problemRoads = validationResult.filterNot(_.isEmpty).getOrElse(Seq())
       error(ValidationErrorList.RoadContinuesInAnotherEly)(problemRoads)
 
     })
