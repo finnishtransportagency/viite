@@ -124,6 +124,7 @@ trait BaseRoadAddress {
   def ely: Long
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
+  def commonHistoryId: Long
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -839,7 +840,7 @@ object RoadAddressDAO {
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
-          Update ROAD_ADDRESS ra Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
+          Update ROAD_ADDRESS Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
         """
     if (ids.isEmpty)
       0
@@ -935,8 +936,35 @@ object RoadAddressDAO {
     }
   }
 
+  /**
+    * Marks the road address identified by the supplied Id as eiher floating or not and also updates the history of
+    * those who shares the same link_id and common_history_id
+    *
+    * @param isFloating '0' for not floating, '1' for floating
+    * @param roadAddressId The Id of a road addresss
+    */
+  def changeRoadAddressFloatingWithHistory(isFloating: Int, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
+    if (geometry.nonEmpty) {
+      val first = geometry.get.head
+      val last = geometry.get.last
+      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
+      val length = GeometryUtils.geometryLength(geometry.get)
+      sqlu"""
+           Update road_address Set floating = $isFloating,
+                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+             Where id = $roadAddressId
+      """.execute
+    }
+    sqlu"""
+       update road_address set floating = $isFloating where id in(
+       select road_address.id from road_address join lrm_position on road_address.lrm_position_id = lrm_position.id where link_id =
+       (select link_id from road_address join lrm_position on road_address.lrm_position_id = lrm_position.id where road_address.id = $roadAddressId))
+        """.execute
+  }
+
   def changeRoadAddressFloating(float: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]] = None): Unit = {
-    changeRoadAddressFloating(if (float) 1 else 0, roadAddressId, geometry)
+    changeRoadAddressFloatingWithHistory(if (float) 1 else 0, roadAddressId, geometry)
   }
 
   def getCurrentValidRoadNumbers(filter: String = "") = {
