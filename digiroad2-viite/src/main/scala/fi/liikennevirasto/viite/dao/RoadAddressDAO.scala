@@ -956,7 +956,7 @@ object RoadAddressDAO {
       """.execute
     }
     sqlu"""
-       update road_address set floating = 1 where id in(
+       update road_address set floating = $isFloating where id in(
        select road_address.id from road_address join lrm_position on road_address.lrm_position_id = lrm_position.id where link_id =
        (select link_id from road_address join lrm_position on road_address.lrm_position_id = lrm_position.id where road_address.id = $roadAddressId))
         """.execute
