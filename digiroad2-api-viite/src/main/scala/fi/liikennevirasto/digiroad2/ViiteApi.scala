@@ -235,6 +235,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case e: MappingException =>
         logger.warn("Exception treating road links", e)
         BadRequest("Missing mandatory ProjectLink parameter")
+      case e: Exception =>
+        logger.warn("Exception", e)
+        BadRequest("An unexpected error occurred while processing this action.")
     }
   }
 
