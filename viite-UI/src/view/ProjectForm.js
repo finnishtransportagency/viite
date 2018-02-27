@@ -651,7 +651,7 @@
             cancelChanges();
           }
         });
-
+        eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
