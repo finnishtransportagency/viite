@@ -270,18 +270,20 @@
     };
 
     this.saveProjectLinks = function(changedLinks, statusCode) {
-      var validUserGivenAddrMValues = function(linkId, userEndAddr){
-        if(_.isUndefined(userEndAddr))
-          return false;
+      var validUserGivenAddrMValues = function(linkId, userEndAddr) {
+        if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
           var roadPartIds = self.getMultiSelectIds(linkId);
           var roadPartLinks = self.getByLinkId(roadPartIds);
-          var roadPartGeometries = _.map(roadPartLinks, function(roadPart){
+          var roadPartGeometries = _.map(roadPartLinks, function (roadPart) {
             return roadPart.getData().points;
           });
-          var roadPartLength = _.reduce((roadPartGeometries), function(length, geom){
+          var roadPartLength = _.reduce((roadPartGeometries), function (length, geom) {
             return GeometryUtils.geometryLength(geom) + length;
           }, 0.0);
-        return (userEndAddr >= (roadPartLength * (1 - ALLOWED_ADDR_M_VALUE_PERCENTAGE))) && (userEndAddr <= (roadPartLength * (1 + ALLOWED_ADDR_M_VALUE_PERCENTAGE)));
+          return (userEndAddr >= (roadPartLength * (1 - ALLOWED_ADDR_M_VALUE_PERCENTAGE))) && (userEndAddr <= (roadPartLength * (1 + ALLOWED_ADDR_M_VALUE_PERCENTAGE)));
+        } else {
+          return true;
+        }
       };
 
       applicationModel.addSpinner();
@@ -304,7 +306,7 @@
         roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: null,
+        userDefinedEndAddressM: (!isNaN(Number($('#roadAddressProjectForm').find('#endDistance')[0].value)) ?  Number($('#roadAddressProjectForm').find('#endDistance')[0].value) : null),
         coordinates:coordinates
       };
 
@@ -314,23 +316,19 @@
         return false;
       }
 
-      var endDistance = parseInt($('#endDistance').val());
       var changedLink = _.chain(changedLinks).uniq().sortBy(function(cl){
         return cl.endAddressM;
       }).last().value();
-      var originalEndDistance = changedLink.endAddressM;
-      var isNewEndAddrMValue = (originalEndDistance != dataJson.userDefinedEndAddressM) && changedLink.status == LinkStatus.New.value;
-      if(!isNaN(endDistance) && !isNaN(originalEndDistance) && originalEndDistance !== endDistance){
-        dataJson.userDefinedEndAddressM = endDistance;
-      }
+      var isNewRoad = changedLink.status == LinkStatus.New.value;
 
-      if(isNewEndAddrMValue && !validUserGivenAddrMValues(_.first(dataJson.linkIds), dataJson.userDefinedEndAddressM)){
+      if(isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.linkIds), dataJson.userDefinedEndAddressM)){
         new GenericConfirmPopup("Antamasi pituus eroaa yli 5% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
             createOrUpdate(dataJson, changedLinks);
           },
           closeCallback: function () {
             applicationModel.removeSpinner();
+            eventbus.trigger('roadAddress:projectLinksUpdated');
           }
         });
       } else{

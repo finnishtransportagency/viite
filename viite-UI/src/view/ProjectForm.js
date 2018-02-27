@@ -446,6 +446,7 @@
 
       rootElement.on('click', '[id^=editProject]', currentProject, function (eventObject) {
         var projectId = eventObject.currentTarget.value === "undefined" ? currentProject.id : eventObject.currentTarget.value;
+        applicationModel.setSelectedTool("Select");
         applicationModel.addSpinner();
         projectCollection.getProjectsWithLinksById(parseInt(projectId)).then(function (result) {
           rootElement.empty();
