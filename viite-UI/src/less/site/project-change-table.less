@@ -7,7 +7,7 @@
   right: 500px;
   top: 620px;
   background-color: #e3e3e1;
-  overflow: auto;
+  overflow-y: auto;
 }
 .change-table-header {
   padding: 10px;
@@ -25,6 +25,8 @@
   height: @change-table-sections-height;
   font-size: 15px;
   background-color: #cbcbc9;
+  display: inline-flex;
+  width: 100%;
 }
 .change-table-heading-label {
   font-size: 13px;
@@ -95,52 +97,48 @@
 #change-table-borders-changetype {
   position: absolute;
   height: @table-borders-height;
-  width: 110px;
+  width: 10%;
   border-right: 1px solid #a4a4a2;
-  border-bottom: 1px solid #a4a4a2;
   z-index: 1;
   pointer-events: none;
 }
 #change-table-borders-reversed {
   position: absolute;
   height: @table-borders-height;
-  width: 65px;
+  width: 10%;
   border-right: 1px solid #a4a4a2;
-  border-bottom: 1px solid #a4a4a2;
   z-index: 1;
   pointer-events: none;
-  padding-left: 580px;
+  padding-left: 47.5%;
 }
 #change-table-borders-source {
   position: absolute;
   height: @table-borders-height;
-  width: 475px;
+  width: 42%;
   border-right: 1px solid #a4a4a2;
-  border-bottom: 1px solid #a4a4a2;
   z-index: 1;
   pointer-events: none;
-  padding-left: 110px;
+  padding-left: 10%;
 }
 #change-table-borders-target {
   position: absolute;
   height: @table-borders-height;
-  width: 470px;
-  border-bottom: 1px solid #a4a4a2;
+  width: 32%;
   z-index: 1;
   pointer-events: none;
-  padding-left: 640px;
+  padding-left: 68%;
 }
 #label-type {
-  width: 7.5em;
+  width: 10%;
 }
 #label-reverse {
-  width: 3.5em;
+  width: 10%;
 }
 #label-source {
-  width: 36em;
+  width: 40%;
 }
 #label-target {
-  width: 31em;
+  width: 45%;
 }
 .dimension-reversed {
   padding-right: 8px;
