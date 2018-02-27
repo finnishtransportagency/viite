@@ -66,10 +66,11 @@
     }
 
     function hide() {
-      resetInteractions();
       $('#information-content').empty();
       $('#send-button').attr('disabled', true);
-      changeTable.hide();
+      resetInteractions();
+      interact('.change-table-frame').unset();
+      $('.change-table-frame').remove();
     }
 
     function resetInteractions() {
@@ -136,6 +137,33 @@
         else
         {
           $('.change-table-header').html($('<div><font color="yellow">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</font></div>'));
+        }
+      });
+
+      changeTable.on('click', 'button.max', function (){
+        resetInteractions();
+        if(windowMaximized) {
+          $('.change-table-frame').height('260px');
+          $('.change-table-frame').width('1135px');
+          $('.change-table-frame').css('top', '620px');
+          $('[id=change-table-borders-target]').height('180px');
+          $('[id=change-table-borders-source]').height('180px');
+          $('[id=change-table-borders-reversed]').height('180px');
+          $('[id=change-table-borders-changetype]').height('180px');
+          $('[id=buttonText]').text("Suurenna ");
+          $('[id=sizeSymbol]').text("□");
+          windowMaximized=false;
+        } else {
+          $('.change-table-frame').height('800px');
+          $('.change-table-frame').width('1135px');
+          $('.change-table-frame').css('top', '50px');
+          $('[id=change-table-borders-target]').height('670px');
+          $('[id=change-table-borders-source]').height('670px');
+          $('[id=change-table-borders-reversed]').height('670px');
+          $('[id=change-table-borders-changetype]').height('670px');
+          $('[id=buttonText]').text("Pienennä ");
+          $('[id=sizeSymbol]').text("_");
+          windowMaximized=true;
         }
       });
 
@@ -243,33 +271,6 @@
           target.setAttribute('data-y', y);
         });
     }
-
-    changeTable.on('click', 'button.max', function (){
-      resetInteractions();
-      if(windowMaximized) {
-        $('.change-table-frame').height('260px');
-        $('.change-table-frame').width('1135px');
-        $('.change-table-frame').css('top', '620px');
-        $('[id=change-table-borders-target]').height('180px');
-        $('[id=change-table-borders-source]').height('180px');
-        $('[id=change-table-borders-reversed]').height('180px');
-        $('[id=change-table-borders-changetype]').height('180px');
-        $('[id=buttonText]').text("Suurenna ");
-        $('[id=sizeSymbol]').text("□");
-        windowMaximized=false;
-      } else {
-        $('.change-table-frame').height('800px');
-        $('.change-table-frame').width('1135px');
-        $('.change-table-frame').css('top', '50px');
-        $('[id=change-table-borders-target]').height('670px');
-        $('[id=change-table-borders-source]').height('670px');
-        $('[id=change-table-borders-reversed]').height('670px');
-        $('[id=change-table-borders-changetype]').height('670px');
-        $('[id=buttonText]').text("Pienennä ");
-        $('[id=sizeSymbol]').text("_");
-        windowMaximized=true;
-      }
-    });
 
     eventbus.on('projectChangeTable:refresh', function() {
       bindEvents();
