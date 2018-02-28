@@ -573,6 +573,7 @@
         rootElement.find('.wrapper').toggle();
         rootElement.find('footer').toggle();
         projectCollection.clearRoadAddressProjects();
+        projectCollection.clearProjectErrors();
         eventbus.trigger('layer:enableButtons', true);
         if (changeLayerMode) {
           eventbus.trigger('roadAddressProject:clearOnClose');
