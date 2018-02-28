@@ -74,6 +74,11 @@
       return '<label class="control-label-small">'+label+'</label>';
     };
 
+    var addSmallLabelLowercase = function(label){
+      return '<label class="control-label-small" style="text-transform: none">'+label+'</label>';
+    };
+
+
     var addSmallLabelTopped = function(label){
       return '<label class="control-label-small" style="vertical-align: top;">'+label+'</label>';
     };
@@ -282,8 +287,8 @@
         }
         errorLines += '<div class="form-project-errors-list">' +
           addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
-          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
-          addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
+          addSmallLabel('ERROR: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
+          addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
           '</div>';
       });

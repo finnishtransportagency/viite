@@ -125,7 +125,7 @@
         '</div>' +
         '</div>' +
         '<div class = "form-result">' +
-        '<label>PROJEKTIIN VARAUT TIEOSAT:</label>' +
+        '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
         '<div style="margin-left: 16px;">' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
         '</div>' +
@@ -446,6 +446,7 @@
 
       rootElement.on('click', '[id^=editProject]', currentProject, function (eventObject) {
         var projectId = eventObject.currentTarget.value === "undefined" ? currentProject.id : eventObject.currentTarget.value;
+        applicationModel.setSelectedTool("Select");
         applicationModel.addSpinner();
         projectCollection.getProjectsWithLinksById(parseInt(projectId)).then(function (result) {
           rootElement.empty();
