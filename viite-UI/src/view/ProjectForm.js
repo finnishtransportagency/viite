@@ -125,7 +125,7 @@
         '</div>' +
         '</div>' +
         '<div class = "form-result">' +
-        '<label>PROJEKTIIN VARAUT TIEOSAT:</label>' +
+        '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
         '<div style="margin-left: 16px;">' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
         '</div>' +
