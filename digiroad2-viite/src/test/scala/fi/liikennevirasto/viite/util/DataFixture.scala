@@ -213,11 +213,11 @@ object DataFixture {
           RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet, false, true, false)
         }
         try {
-          val groupedAddresses = roadAddresses.groupBy(_.linkId)
-          val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
-          val affectingChanges = changedRoadLinks.filter(ci =>
-            ci.oldId.nonEmpty && timestamps.get(ci.oldId.get).nonEmpty &&
-              ci.affects(ci.oldId.get, timestamps(ci.oldId.get)))
+          val groupedAddresses = roadAddresses.groupBy(ra => (ra.linkId, ra.commonHistoryId))
+          val affectingChanges = changedRoadLinks.filter(ci => {
+            val address = roadAddresses.filter(_.linkId == ci.oldId.getOrElse(0))
+            ci.oldId.nonEmpty && address.nonEmpty && ci.affects(ci.oldId.get, address.maxBy(_.adjustedTimestamp).adjustedTimestamp)
+          })
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
           roadAddressService.applyChanges(roadLinks, affectingChanges, groupedAddresses.mapValues(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
