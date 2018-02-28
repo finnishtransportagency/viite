@@ -360,6 +360,5 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       p1.y should be (p2.y +- 0.0005)
       p1.z should be (p2.z +- 0.0005)
     }
-
   }
 }
