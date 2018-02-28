@@ -469,7 +469,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.size should be (0)
   }
 
-  test("GetAdjacents road links on road 75 part 2 targetLinkId 5176147") {
+  ignore("GetAdjacents road links on road 75 part 2 targetLinkId 5176147") {
     val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
     val road75TargetLink = Seq(RoadLink(5176147,List(Point(538909.794,6999855.848,101.153999999995), Point(538915.453,6999869.226,100.69899999999325), Point(538918.052,6999875.753,101.44500000000698)),21.551092889334765,State,99,BothDirections,UnknownLinkType,Some(""),Some("vvh_modified"),Map("TO_RIGHT" -> 873, "LAST_EDITED_DATE" -> BigInt.apply(0L), "FROM_LEFT" -> 872, "MTKHEREFLIP" -> 0, "MTKID" -> 441179395, "ROADNAME_FI" -> "Nilsiäntie", "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(0L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 2, "points" -> List(Map("x" -> 538909.794, "y" -> 6999855.848, "z" -> 101.153999999995, "m" -> 0), Map("x" -> 538915.453, "y" -> 6999869.226, "z" -> 100.69899999999325, "m" -> 14.525699999998324), Map("x" -> 538918.052, "y" -> 6999875.753, "z" -> 101.44500000000698, "m" -> 21.55109999999695)), "OBJECTID" -> 2739051, "TO_LEFT" -> 874, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 749, "FROM_RIGHT" -> 871, "CREATED_DATE" -> BigInt.apply(0L), "GEOMETRY_EDITED_DATE" -> BigInt.apply(0L), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 75),InUse,NormalLinkInterface))
     val roadLinks = Seq(
