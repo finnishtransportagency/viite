@@ -286,18 +286,40 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     viiteRoadLinks.values.toSeq
   }
 
+  /**
+    * Checks that  length is same after change  (used in type 1 and type 2)
+    *
+    * @param change change case class
+    * @return true if stays with in epsilon
+    */
   private def changedLenghtStaySame(change: ChangeInfo): Boolean = {
-    change.oldEndMeasure.getOrElse(0) - change.oldStartMeasure.getOrElse(0) == change.newEndMeasure.getOrElse(0) - change.newStartMeasure.getOrElse(0)
+    val difference=(change.oldEndMeasure.getOrElse(0D) - change.oldStartMeasure.getOrElse(0D)) -
+      (change.newEndMeasure.getOrElse(0D) - change.newStartMeasure.getOrElse(0D))
+    if (difference.abs < Epsilon) {
+      return true
+    } else
+      logger.error("Change message for change " + change.toString + "failed due to lenghtg not being same before and after change")
+    false
   }
 
-  protected def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
-    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value || x.changeType == ChangeType.CombinedRemovedPart.value)
+  /**
+    * Sanity checks for changes. We dont want to solely trust VVH messages, thus we do some sanity checks and drop insane ones
+    *
+    * @param changes
+    * @return sane changetypes
+    */
+
+  def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
+    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
+      || x.changeType == ChangeType.CombinedRemovedPart.value)
     val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
-    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value || x.changeType == ChangeType.CombinedRemovedPart.value)
+    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
+      || x.changeType == ChangeType.CombinedRemovedPart.value)
     sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
   }
 
-  def applyChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], addresses: Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+  def applyChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], addresses:
+  Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
     val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
