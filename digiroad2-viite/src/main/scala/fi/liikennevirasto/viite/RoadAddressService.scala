@@ -72,7 +72,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
 
     val floating = floatingAddresses.groupBy(_.linkId)
-    val addresses = nonFloatingAddresses.groupBy(_.linkId)
+
+    val adjustedCalibrationPoints = nonFloatingAddresses.map{
+      ad =>
+        val cps: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+          val stCp = ad.calibrationPoints._1 match {
+            case Some(calibrationPoint) => Option(ad.calibrationPoints._1.get.copy(segmentMValue = if (ad.sideCode == SideCode.AgainstDigitizing) ad.endMValue - ad.startMValue else ad.startMValue))
+            case _ => None
+          }
+          val endCp = ad.calibrationPoints._2 match {
+            case Some(calibrationPoint) => Option(ad.calibrationPoints._2.get.copy(segmentMValue = if (ad.sideCode == SideCode.AgainstDigitizing) ad.startMValue else ad.endMValue - ad.startMValue))
+            case _ => None
+          }
+          (stCp, endCp)
+        }
+        ad.copy(calibrationPoints = cps)
+    }
+    val addresses = adjustedCalibrationPoints.groupBy(_.linkId)
 
     val floatingHistoryRoadLinks = withDynTransaction {
       roadLinkService.getViiteRoadLinksHistoryFromVVH(floating.keySet)
