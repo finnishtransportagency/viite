@@ -654,6 +654,10 @@
       projectErrors = errors;
     };
 
+    this.clearProjectErrors = function () {
+      projectErrors = [];
+    };
+
     this.getProjectErrors = function(){
       return projectErrors;
     };

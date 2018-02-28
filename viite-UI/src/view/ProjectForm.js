@@ -125,7 +125,7 @@
         '</div>' +
         '</div>' +
         '<div class = "form-result">' +
-        '<label>PROJEKTIIN VARAUT TIEOSAT:</label>' +
+        '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
         '<div style="margin-left: 16px;">' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
         '</div>' +
@@ -573,6 +573,7 @@
         rootElement.find('.wrapper').toggle();
         rootElement.find('footer').toggle();
         projectCollection.clearRoadAddressProjects();
+        projectCollection.clearProjectErrors();
         eventbus.trigger('layer:enableButtons', true);
         if (changeLayerMode) {
           eventbus.trigger('roadAddressProject:clearOnClose');
@@ -651,7 +652,7 @@
             cancelChanges();
           }
         });
-
+        eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
