@@ -10,8 +10,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.Point
 import com.vividsolutions.jts.io.WKTReader
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-
+import fi.liikennevirasto.digiroad2.model.Measures
 
 class PolygonToolsSpec extends FunSuite with Matchers {
   val polygonTools= new PolygonTools()

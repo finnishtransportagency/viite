@@ -32,7 +32,6 @@ object LinkIdImporter {
     val tableNames = Seq(
       "lrm_position",
       "traffic_direction",
-      "incomplete_link",
       "functional_class",
       "link_type",
       "manoeuvre_element",
