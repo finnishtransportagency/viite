@@ -3,7 +3,7 @@ import java.net.ConnectException
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
@@ -269,7 +269,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] ={
+  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] = {
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating = false, onlyNormalRoads = true, roadNumberLimits))
 
@@ -283,10 +283,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val buildEndTime = System.currentTimeMillis()
     logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
 
-   viiteRoadLinks.values.toSeq
+    viiteRoadLinks.values.toSeq
   }
 
-  def applyChanges(roadLinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+  private def changedLenghtStaySame(change: ChangeInfo): Boolean = {
+    change.oldEndMeasure.getOrElse(0) - change.oldStartMeasure.getOrElse(0) == change.newEndMeasure.getOrElse(0) - change.newStartMeasure.getOrElse(0)
+  }
+
+  protected def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
+    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value || x.changeType == ChangeType.CombinedRemovedPart.value)
+    val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
+    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value || x.changeType == ChangeType.CombinedRemovedPart.value)
+    sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
+  }
+
+  def applyChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], addresses: Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+    val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
     else
