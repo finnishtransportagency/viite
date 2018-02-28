@@ -9,7 +9,9 @@
       'Numerointi',
       'Lakkautettu'
     ];
+
     var LinkStatus = LinkValues.LinkStatus;
+    var ProjectStatus = LinkValues.ProjectStatus;
     var windowMaximized = false;
 
     var changeTable =
@@ -134,8 +136,11 @@
         $('.row-changes').remove();
         $('.change-table-dimensions').append($(htmlTable));
         if (projectChangeData.validationErrors.length === 0){
+
           $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
-          if($('.change-table-frame').css('display')==="block")
+          var currentProject = projectCollection.getCurrentProject();
+          if($('.change-table-frame').css('display')==="block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode ===  ProjectStatus.ErroredInTR.value))
+
             $('#send-button').attr('disabled',false); //enables send button if changetable is open
         }
         else

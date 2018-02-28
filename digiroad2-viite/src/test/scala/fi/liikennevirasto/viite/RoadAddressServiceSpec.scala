@@ -791,12 +791,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq())))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq())))
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
-      newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
-      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)
-      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.head should be (123456)
+      newAddresses.flatMap(_.allSegments).map(_.id).toSet should be (addresses.map(_.id).toSet)
+      newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.size should be (1)
+      newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.head should be (123456)
     }
   }
 
@@ -837,11 +837,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s, Seq())))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq())))
       // should contain just the 5622953
-      newAddresses.values.map(_.allSegments).toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
-      newAddresses.get(5622953).isEmpty should be (false)
-      newAddresses.mapValues(_.allSegments).values.flatten.map(_.commonHistoryId).toSet.size should be (1)
+      newAddresses.flatMap(_.allSegments).map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size 1
+      newAddresses.flatMap(_.allSegments).exists(_.linkId == 5622953) should be (true)
+      newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.size should be (1)
     }
   }
 
@@ -854,7 +854,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val o5622931Geom = n499914628Geom  ++ n5622931Geom ++ n499914643Geom ++ n5622953Geom
     val o1Geom = Seq(Point(6734173, 332309-1984), Point(6734173,332309))
 
-    val commonHistoryId = 123;
+    val commonHistoryId = 123
 
     runWithRollback {
       val oldAddressLinks = Seq(
@@ -880,11 +880,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId).mapValues(s =>
-        LinkRoadAddressHistory(s, Seq()))).mapValues(_.allSegments)
-      newAddresses should have size (5)
-      newAddresses(5622953).headOption.exists(_.calibrationPoints._2.nonEmpty) should be (true)
-      val flatList = newAddresses.values.flatten
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s =>
+        LinkRoadAddressHistory(s, Seq()))).map(_.allSegments)
+      newAddresses should have size 5
+      newAddresses.flatten.find(_.linkId == 5622953).exists(_.calibrationPoints._2.nonEmpty) should be (true)
+      val flatList = newAddresses.flatten
       flatList.count(_.calibrationPoints._2.nonEmpty) should be (1)
       flatList.count(_.calibrationPoints._1.nonEmpty) should be (1)
       flatList.count(_.startAddrMValue == 0) should be (1)
@@ -896,7 +896,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // Test that the common_history_id is inherited correctly in split
       flatList.forall(_.commonHistoryId == commonHistoryId) should be (true)
-
     }
   }
 
@@ -913,7 +912,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("Mapping floating road addresses back to link work for historic addresses too") {
     /*
        Test that road address history is placed on links properly: history is moved, terminated address is not
-       Current address checks calculation isn't affected by historic. No recalculation for historic
+       Current address checks calculation isn't affected by historic. Now we need to also recalculate for floating history
      */
     runWithRollback {
       val linkGeom1 = Seq(Point(0, 0), Point(1.0, 4.5))
@@ -923,7 +922,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val history1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 100L, 105L,
         Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 0L, 123L, 0.0, 4.61, TowardsDigitizing,
         84600L, (None, None), true, linkGeom1, NormalLinkInterface, 20L, NoTermination, 0)
-      val history2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.LeftSide, Continuous, 105L, 116L,
+      val history2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 105L, 116L,
         Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 0L, 124L, 0.0, 11.801, TowardsDigitizing,
         84600L, (None, None), true, linkGeom2, NormalLinkInterface, 20L, NoTermination, 0)
       val current1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 15L, 21L,
@@ -957,7 +956,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(456L), false)).thenReturn(
         (roadLinksSeq.filter(_.linkId==456L), Seq[VVHHistoryRoadLink]()))
       val postTransfer = roadAddressService.getRoadAddressesAfterCalculation(Seq("123", "124"), Seq("456"), User(1L, "k", Configuration()))
-      postTransfer should have size(3)
+      postTransfer should have size(2)
       postTransfer.foreach{ ra =>
         ra.roadNumber should be (199L)
         ra.roadPartNumber should be (199L)
@@ -972,7 +971,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       termRA should have size(1)
       termRA.head.terminated should be (Termination)
       val current = RoadAddressDAO.fetchByLinkId(Set(456L), true, true, true)
-      current should have size(3)
+      current should have size(2)
       current.exists(ra => ra.startAddrMValue == 16L && ra.endAddrMValue == 34 && ra.endDate.isEmpty) should be (true)
     }
   }
