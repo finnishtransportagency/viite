@@ -24,6 +24,14 @@ object ProjectValidator {
     }
   }
 
+  private def startPoint(b: BaseRoadAddress) = {
+    b.sideCode match {
+      case TowardsDigitizing => b.geometry.head
+      case AgainstDigitizing => b.geometry.last
+      case _ => Point(0.0, 0.0)
+    }
+  }
+
   sealed trait ValidationError {
     def value: Int
     def message: String
@@ -593,8 +601,8 @@ object ProjectValidator {
       * @return An optional value with eventual Validation error details
       */
     def error(validationError: ValidationError)(roadAddressLike: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
-      val grouppedByRoadAndPartNumber = roadAddressLike.groupBy(p => (p.roadNumber, p.roadPartNumber))
-      val (gLinkIds, gPoints, roadAndPart) = grouppedByRoadAndPartNumber.flatMap(g => {
+      val groupedByRoadAndPartNumber = roadAddressLike.groupBy(p => (p.roadNumber, p.roadPartNumber))
+      val (gLinkIds, gPoints, roadAndPart) = groupedByRoadAndPartNumber.flatMap(g => {
         val (road, part) = g._1
         val links = g._2
         val zoomPoint = GeometryUtils.midPointGeometry(links.minBy(_.endAddrMValue).geometry)
@@ -609,7 +617,7 @@ object ProjectValidator {
     }
 
     /**
-      * Will find the endPoints (lowest and highest endAddressM respectivly) and run the standard validation to them
+      * Will find the endPoints (lowest and highest endAddressM respectively) and run the standard validation to them
       *
       * @param groupedProjectLinks Project Links groupped by Road Number and Road Part Number
       * @return Well formed validation error objects, if applicable
@@ -618,13 +626,10 @@ object ProjectValidator {
       //Find endpoints, start and end
       val startRoad = groupedProjectLinks.head
       val endRoad = groupedProjectLinks.last
-      val anomalousAtStart = if (startRoad.status == LinkStatus.Terminated) {
-        checkValidation(startRoad)
-      } else Seq.empty[BaseRoadAddress]
-      val anomalousAtEnd = if (endRoad.status == LinkStatus.Terminated) {
-        checkValidation(endRoad)
-      } else Seq.empty[BaseRoadAddress]
-      error(ValidationErrorList.TerminationContinuity)(anomalousAtStart ++ anomalousAtEnd)
+      val anomalousAtBorders = checkValidation(startRoad, endRoad)
+
+
+      error(ValidationErrorList.TerminationContinuity)(anomalousAtBorders)
     }
 
     /**
@@ -633,19 +638,20 @@ object ProjectValidator {
       * If any road address survives the removal process then it is a anomalous and must be reported as such.
       * We also search the whole project link list for the same "anomalous" linkIds and run them through the same process, if any returns then it is also deemed "anomalous" and will be reported
       *
-      * @param edgeRoad A project link, either the start of it (lowest endAddressMValue) or the end of it(highest endAddressMValue)
+      * @param startRoad A project link, at the start of it (lowest endAddressMValue)
+      * @param endRoad A project link, at the end of it(highest endAddressMValue)
       * @return the anomalous base road addresses
       */
-    def checkValidation(edgeRoad: ProjectLink): Seq[BaseRoadAddress] = {
-      val roadAddresses = findRoads(edgeRoad)
+    def checkValidation(startRoad: ProjectLink, endRoad: ProjectLink): Seq[BaseRoadAddress] = {
+      val roadAddresses = findRoads(startRoad, endRoad)
       val problemAddress = if (roadAddresses.nonEmpty) {
         //I am aware that in THEORY this filters could be fused into one, unifying the filter clauses with a && operator
         // but it just does not work, you can try it, but using the Viite1120Test project (devtest) it will output 4 entries while the correct result should be only one entry
         val numberAndPartFilter = roadAddresses.filterNot(ra => {
-          ra.roadNumber == edgeRoad.roadNumber && ra.roadPartNumber == edgeRoad.roadPartNumber
+          ra.roadNumber == startRoad.roadNumber && ra.roadPartNumber == startRoad.roadPartNumber
         })
-        val onlyAdjacents = numberAndPartFilter.filterNot(tf => {
-          !GeometryUtils.areAdjacent(tf.geometry, edgeRoad.geometry)
+        val onlyAdjacents = numberAndPartFilter.filter(tf => {
+          GeometryUtils.areAdjacent(tf.geometry, startRoad.geometry) || GeometryUtils.areAdjacent(tf.geometry, endRoad.geometry)
         })
         onlyAdjacents.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
       } else Seq.empty[RoadAddress]
@@ -654,10 +660,10 @@ object ProjectValidator {
         //I am aware that in THEORY this filters could be fused into one, unifying the filter clauses with a && operator
         // but it just does not work, you can try it, but using the Viite1120Test project (devtest) it will output 4 entries while the correct result should be only one entry
         val numberAndPartFilter = adjacentProjectLinks.filterNot(ra => {
-          ra.roadNumber == edgeRoad.roadNumber && ra.roadPartNumber == edgeRoad.roadPartNumber
+          ra.roadNumber == startRoad.roadNumber && ra.roadPartNumber == startRoad.roadPartNumber
         })
-        val onlyAdjacents = numberAndPartFilter.filterNot(tf => {
-          !GeometryUtils.areAdjacent(tf.geometry, edgeRoad.geometry)
+        val onlyAdjacents = numberAndPartFilter.filter(tf => {
+          GeometryUtils.areAdjacent(tf.geometry, startRoad.geometry) || GeometryUtils.areAdjacent(tf.geometry, endRoad.geometry)
         })
         onlyAdjacents.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
       } else Seq.empty[ProjectLink]
@@ -707,16 +713,11 @@ object ProjectValidator {
     }
 
     groupedProjectLinks.flatMap(group => {
-      val projectLinks = group._2
+      val projectLinks = group._2.filter(_.discontinuity == Discontinuity.ChangingELYCode)
       val startRoad = projectLinks.head
       val endRoad = projectLinks.last
-      val startRoadValidation = if (startRoad.discontinuity == Discontinuity.ChangingELYCode) {
-        evaluateBorderCheck(startRoad, secondCheck = false)
-      } else Option.empty[ProjectLink]
-      val endRoadValidation = if (endRoad.discontinuity == Discontinuity.ChangingELYCode) {
-        evaluateBorderCheck(endRoad, secondCheck = false)
-      } else Option.empty[ProjectLink]
-      val problemRoads = Seq(startRoadValidation, endRoadValidation).filterNot(_.isEmpty).map(_.get)
+      val roadsValidation = evaluateBorderCheck(startRoad, endRoad, secondCheck = false)
+      val problemRoads = roadsValidation.filterNot(_.isEmpty).getOrElse(Seq())
       error(ValidationErrorList.RoadNotEndingInElyBorder)(problemRoads)
     }).toSeq
   }
@@ -760,10 +761,9 @@ object ProjectValidator {
       val projectLinks = group._2
       val startRoad = projectLinks.head
       val endRoad = projectLinks.last
-      val startValidationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, secondCheck = true) else Option.empty[ProjectLink]
-      val endValidationResult = if (endRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(endRoad, secondCheck = true) else Option.empty[ProjectLink]
+      val validationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, endRoad, secondCheck = true) else Option.empty[Seq[ProjectLink]]
 
-      val problemRoads = Seq(startValidationResult, endValidationResult).filterNot(_.isEmpty).map(_.get)
+      val problemRoads = validationResult.filterNot(_.isEmpty).getOrElse(Seq())
       error(ValidationErrorList.RoadContinuesInAnotherEly)(problemRoads)
 
     })
@@ -788,15 +788,26 @@ object ProjectValidator {
   /**
     * Helper method, will find ALL the road addresses in a bounding box whose center is the edge road
     *
-    * @param edgeRoad A project link, either the start of it (lowest endAddressMValue) or the end of it(highest endAddressMValue)
+    * @param headRoad  A project link, at the start of it (lowest endAddressMValue)
+    * @param tailRoad  A project link, at the end of it(highest endAddressMValue)
     * @return Road addresses contained in a small bounding box
     */
-  private def findRoads(edgeRoad: ProjectLink) = {
-    val p = endPoint(edgeRoad)
-    val lowerCorner = Point(p.x - distanceToPoint, p.y - distanceToPoint, p.z - distanceToPoint)
-    val higherCorner = Point(p.x + distanceToPoint, p.y + distanceToPoint, p.z + distanceToPoint)
+  private def findRoads(headRoad: ProjectLink, tailRoad: ProjectLink) = {
+    val sp = startPoint(headRoad)
+    val ep = endPoint(tailRoad)
+    val connectingAtStart = {
+    val lowerCorner = Point(sp.x - distanceToPoint, sp.y - distanceToPoint, sp.z - distanceToPoint)
+    val higherCorner = Point(sp.x + distanceToPoint, sp.y + distanceToPoint, sp.z + distanceToPoint)
     val box = BoundingRectangle(lowerCorner, higherCorner)
     RoadAddressDAO.fetchRoadAddressesByBoundingBox(box, fetchOnlyFloating = false)
+    }
+    val connectingAtEnd = {
+      val lowerCorner = Point(ep.x - distanceToPoint, ep.y - distanceToPoint, ep.z - distanceToPoint)
+      val higherCorner = Point(ep.x + distanceToPoint, ep.y + distanceToPoint, ep.z + distanceToPoint)
+      val box = BoundingRectangle(lowerCorner, higherCorner)
+      RoadAddressDAO.fetchRoadAddressesByBoundingBox(box, fetchOnlyFloating = false)
+    }
+    connectingAtStart ++ connectingAtEnd
   }
 
   /**
@@ -804,22 +815,23 @@ object ProjectValidator {
     * Then check if the ely code changed between them, depending whether we are validation the firstBorderCheck or the
     * second we output the edgeRoad based on the finding (or not) of a road address with a different ely code then that of the edgeRoad.
     *
-    * @param edgeRoad    - either the start or the end of a road number/road part number project link
+    * @param startRoad    - start of a road number/road part number project link
+    * @param endRoad    - end of a road number/road part number project link
     * @param secondCheck - indicates what kind of search we use
     * @return an optional symbolizing a found invalid edgeRoad, or nothing.
     */
-  private def evaluateBorderCheck(edgeRoad: ProjectLink, secondCheck: Boolean): Option[ProjectLink] = {
-    val roadAddresses = findRoads(edgeRoad)
+  private def evaluateBorderCheck(startRoad: ProjectLink, endRoad: ProjectLink, secondCheck: Boolean): Option[Seq[ProjectLink]] = {
+    val roadAddresses = findRoads(startRoad, endRoad)
     if (roadAddresses.nonEmpty) {
-      val filtered = roadAddresses.filterNot(ra => ra.roadNumber == edgeRoad.roadNumber && ra.roadPartNumber == edgeRoad.roadPartNumber &&
-        !GeometryUtils.areAdjacent(ra.geometry, edgeRoad.geometry))
-      val diffEly = filtered.find(_.ely != edgeRoad.ely)
+      val filtered = roadAddresses.filterNot(ra => ra.roadNumber == startRoad.roadNumber && ra.roadPartNumber == startRoad.roadPartNumber &&
+        !GeometryUtils.areAdjacent(ra.geometry, startRoad.geometry) && !GeometryUtils.areAdjacent(ra.geometry, endRoad.geometry))
+      val diffEly = filtered.find(_.ely != startRoad.ely)
       if (!secondCheck && diffEly.isEmpty) {
-        Option(edgeRoad)
+        Option(Seq(startRoad, endRoad))
       } else if (secondCheck && diffEly.isDefined) {
-        Option(edgeRoad)
-      } else Option.empty[ProjectLink]
-    } else Option.empty[ProjectLink]
+        Option(Seq(startRoad, endRoad))
+      } else Option.empty[Seq[ProjectLink]]
+    } else Option.empty[Seq[ProjectLink]]
   }
 }
 
