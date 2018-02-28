@@ -74,6 +74,19 @@
       return '<label class="control-label-small">'+label+'</label>';
     };
 
+    var addSmallLabelLowercase = function(label){
+      return '<label class="control-label-small" style="text-transform: none">'+label+'</label>';
+    };
+
+
+    var addSmallLabelTopped = function(label){
+      return '<label class="control-label-small" style="vertical-align: top;">'+label+'</label>';
+    };
+
+    var addSmallLabelWrapped = function(label){
+      return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">'+label+'</label>';
+    };
+
     var addSmallInputNumber = function(id, value){
       //Validate only number characters on "onkeypress" including TAB and backspace
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
@@ -273,9 +286,9 @@
           buttonIndex++;
         }
         errorLines += '<div class="form-project-errors-list">' +
-          addSmallLabel('LINKIDS: ') + ' ' + addSmallLabel(error.linkIds) + '</br>' +
-          addSmallLabel('ERROR: ') + ' ' + addSmallLabel((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
-          addSmallLabel('INFO: ') + ' ' + addSmallLabel((error.info ? error.info: 'N/A')) + '</br>' +
+          addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
+          addSmallLabel('ERROR: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
+          addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
           '</div>';
       });
