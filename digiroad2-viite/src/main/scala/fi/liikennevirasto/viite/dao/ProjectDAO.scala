@@ -762,19 +762,17 @@ object ProjectDAO {
       SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
   }
 
-  @Deprecated
-  def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
-    // TODO: remove after current merges are done and no method calls this
-    throw new RuntimeException("Deprecated method")
+  def getReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
+    val query = s"""SELECT ID FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId AND
+            ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber"""
+    Q.queryNA[Long](query).list.head
   }
 
   def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
-    var query =
-      s"""
-         select count(id) from project_link
+    val query =
+      s"""select count(id) from project_link
           WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and
-          (status = ${LinkStatus.UnChanged.value} or status = ${LinkStatus.NotHandled.value})
-       """
+          (status = ${LinkStatus.UnChanged.value} or status = ${LinkStatus.NotHandled.value})"""
     Q.queryNA[Long](query).first
   }
 

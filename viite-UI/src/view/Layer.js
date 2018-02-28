@@ -69,10 +69,10 @@
 
     this.drawCalibrationMarkers = function(layer, roadLinks) {
       var calibrationPointsWithValue = [];
-      (_.filter(roadLinks, function (roadLink) {
+      _.filter(roadLinks, function (roadLink) {
           return roadLink.calibrationPoints.length > 0;
         }
-      )).forEach(function (roadLink) {
+      ).forEach(function (roadLink) {
         roadLink.calibrationPoints.forEach(function (currentPoint) {
           var point=currentPoint.point;
           if(point)
