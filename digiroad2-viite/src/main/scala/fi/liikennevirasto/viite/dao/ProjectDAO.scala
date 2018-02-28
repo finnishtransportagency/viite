@@ -87,7 +87,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long)
+                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -762,19 +762,17 @@ object ProjectDAO {
       SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
   }
 
-  @Deprecated
-  def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
-    // TODO: remove after current merges are done and no method calls this
-    throw new RuntimeException("Deprecated method")
+  def getReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
+    val query = s"""SELECT ID FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId AND
+            ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber"""
+    Q.queryNA[Long](query).list.head
   }
 
   def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
-    var query =
-      s"""
-         select count(id) from project_link
+    val query =
+      s"""select count(id) from project_link
           WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and
-          (status = ${LinkStatus.UnChanged.value} or status = ${LinkStatus.NotHandled.value})
-       """
+          (status = ${LinkStatus.UnChanged.value} or status = ${LinkStatus.NotHandled.value})"""
     Q.queryNA[Long](query).first
   }
 

@@ -9,13 +9,13 @@
     var cachedMarker = null;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
-    var standardZIndex = 6;
     var LinkStatus = LinkValues.LinkStatus;
     var Anomaly = LinkValues.Anomaly;
     var SideCode = LinkValues.SideCode;
     var RoadLinkType = LinkValues.RoadLinkType;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var RoadClass = LinkValues.RoadClass;
+    var RoadZIndex = LinkValues.RoadZIndex;
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -48,7 +48,8 @@
 
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
-      name: 'calibrationPointLayer'
+      name: 'calibrationPointLayer',
+      zIndex: RoadZIndex.CalibrationPointLayer.value
     });
 
     var directionMarkerLayer = new ol.layer.Vector({
@@ -61,7 +62,8 @@
       name: 'suravageRoadProjectLayer',
       style: function (feature) {
         return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
-      }
+      },
+      zIndex: RoadZIndex.SuravageLayer.value
     });
 
     var suravageProjectDirectionMarkerLayer = new ol.layer.Vector({
@@ -79,7 +81,8 @@
         } else {
           return styler.getRoadLinkStyle().getStyle(feature.projectLinkData, currentZoom);
         }
-    }
+    },
+      zIndex: RoadZIndex.VectorLayer.value
     });
 
     var showChangesAndSendButton = function () {
@@ -115,6 +118,7 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
+        if(!_.isUndefined(feature.projectLinkData))
         if(projectLinkStatusIn(feature.projectLinkData, possibleStatusForSelection) || feature.projectLinkData.roadClass === RoadClass.NoClass.value || feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
@@ -857,15 +861,6 @@
         return projectLink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
       });
 
-      var suravageFeaturesToRemove = [];
-      _.each(selectSingleClick.getFeatures().getArray(), function (feature) {
-        if (feature.getProperties().type && feature.getProperties().type === "marker")
-          suravageFeaturesToRemove.push(feature);
-      });
-      _.each(suravageFeaturesToRemove, function (feature) {
-        selectSingleClick.getFeatures().remove(feature);
-      });
-
       _.each(suravageDirectionRoadMarker, function (directionLink) {
         var marker = cachedMarker.createMarker(directionLink);
         if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
@@ -924,7 +919,6 @@
         calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
       });
 
-      calibrationPointLayer.setZIndex(standardZIndex + 2);
       var partitioned = _.partition(features, function (feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.projectLinkData.linkId));
       });
