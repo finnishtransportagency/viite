@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.service.{RoadLinkOTHService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import org.apache.http.impl.client.HttpClientBuilder
