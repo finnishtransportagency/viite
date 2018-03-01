@@ -87,6 +87,12 @@
       }
     };
 
+    var generateUnderLineColor = function(roadLinkData, opacityMultiplier, middleLineWidth) {
+      if(roadLinkData.blackUnderline)
+        return {color: 'rgba(30, 30, 30,' + opacityMultiplier + ')', width: middleLineWidth + 7};
+      else return {color: undefined, width: undefined};
+    };
+
     /**
      * Inspired in the LinkPropertyLayerStyles complementaryRoadAddressRules and unknownRoadAddressAnomalyRules,
      * @param roadLinkType The roadLink roadLinkType.
@@ -222,12 +228,10 @@
       // If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the
       // dashed/colored line and above the border and grey lines
       var middleLineColor;
-      var adminClassColor;
       var borderColor;
       var lineCap;
       var borderCap;
       var middleLineCap;
-      var adminClassWidth;
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType,
         roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource, roadLinkData.id);
       if (roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10) {
@@ -257,10 +261,6 @@
         lineCap: borderCap
       });
       var middleLineWidth = strokeWidth;
-      if (roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality") {
-        adminClassColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource, roadLinkData.id);
-        adminClassWidth = middleLineWidth + 7;
-      }
       var middleLine = new ol.style.Stroke({
         width: middleLineWidth,
         color: middleLineColor,
@@ -277,9 +277,10 @@
         lineCap: lineCap
       });
 
-      var adminClassLine = new ol.style.Stroke({
-        width: adminClassWidth,
-        color: adminClassColor,
+      var roadTypeDetails = generateUnderLineColor(roadLinkData, opacityMultiplier, middleLineWidth);
+      var roadTypeLine = new ol.style.Stroke({
+        width: roadTypeDetails.width,
+        color: roadTypeDetails.color,
         lineCap: lineCap
       });
 
@@ -305,16 +306,16 @@
       var underlineStyle = new ol.style.Style({
         stroke: underline
       });
-      var adminClassStyle = new ol.style.Style({
-        stroke: adminClassLine
+      var roadTypeStyle = new ol.style.Style({
+        stroke: roadTypeLine
       });
       var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource);
       underlineStyle.setZIndex(zIndex - 1);
       borderStyle.setZIndex(zIndex);
       middleLineStyle.setZIndex(zIndex + 1);
       lineStyle.setZIndex(zIndex + 2);
-      adminClassStyle.setZIndex(zIndex - 2);
-      return [borderStyle, underlineStyle, middleLineStyle, lineStyle, adminClassStyle];
+      roadTypeStyle.setZIndex(zIndex - 2);
+      return [borderStyle, underlineStyle, middleLineStyle, lineStyle, roadTypeStyle];
     };
 
     var setOpacityMultiplier = function (multiplier) {
