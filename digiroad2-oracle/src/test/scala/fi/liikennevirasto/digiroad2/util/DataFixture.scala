@@ -42,9 +42,7 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
-  lazy val roadLinkService: RoadLinkOTHService = {
-    new RoadLinkOTHService(vvhClient, eventbus, new DummySerializer)
-  }
+
   lazy val eventbus: DigiroadEventBus = {
     new DigiroadEventBus
   }
@@ -92,29 +90,11 @@ object DataFixture {
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
-      //"kauniainen_production_speed_limits.sql",
-      //"kauniainen_total_weight_limits.sql",
-      //"kauniainen_manoeuvres.sql",
       "kauniainen_functional_classes.sql",
       "kauniainen_traffic_directions.sql",
       "kauniainen_link_types.sql",
       "test_fixture_sequences.sql",
       "kauniainen_lrm_positions.sql",
-      //"kauniainen_lit_roads.sql",
-      //"kauniainen_vehicle_prohibitions.sql",
-      //"kauniainen_paved_roads.sql",
-      //"kauniainen_pedestrian_crossings.sql",
-      //"kauniainen_obstacles.sql",
-      //"kauniainen_european_roads.sql",
-      //"kauniainen_exit_numbers.sql",
-      //"kauniainen_traffic_lights.sql",
-      //"kauniainen_railway_crossings.sql",
-      //"kauniainen_traffic_signs.sql",
-//      "siilijarvi_functional_classes.sql",
-//      "siilijarvi_link_types.sql",
-//      "siilijarvi_traffic_directions.sql",
-//      "siilinjarvi_speed_limits.sql",
-//      "siilinjarvi_linear_assets.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
       "insert_project_link_data.sql"
@@ -128,12 +108,6 @@ object DataFixture {
     println("Municipality code import complete at time: ")
     println(DateTime.now())
     println("\n")
-  }
-
-  @deprecated
-  def importRoadLinkData() = {
-    println("\nCommencing functional classes import from conversion DB\n")
-    RoadLinkDataImporter.importFromConversionDB()
   }
 
   def adjustToNewDigitization(): Unit = {
@@ -167,19 +141,14 @@ object DataFixture {
       case Some("test") =>
         tearDown()
         setUpTest()
-        //val typeProps = dataImporter.getTypeProperties
         importMunicipalityCodes()
-        //TrafficSignTestData.createTestData
-        //ServicePointTestData.createTestData
-      case Some("import_roadlink_data") =>
-        importRoadLinkData()
       case Some("repair") =>
         flyway.repair()
       case Some("adjust_digitization") =>
         adjustToNewDigitization()
       case Some("import_link_ids") =>
         LinkIdImporter.importLinkIdsFromVVH(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-      case _ => println("Usage: DataFixture test | import_roadlink_data | repair | adjust_digitization | import_link_ids"
+      case _ => println("Usage: DataFixture test | repair | adjust_digitization | import_link_ids"
         )
     }
   }
