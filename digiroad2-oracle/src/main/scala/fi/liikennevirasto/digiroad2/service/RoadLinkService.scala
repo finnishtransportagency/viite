@@ -70,28 +70,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  /**
-    * ATENTION Use this method always with transation not with session
-    * This method returns a road link by link id.
-    *
-    * @param linkId
-    * @param newTransaction
-    * @return Road link
-    */
-  def getRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadsLinksFromVVH(Set(linkId), newTransaction: Boolean).headOption
-
-  def getRoadsLinksFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinks(linkId)
-    if (newTransaction)
-      withDynTransaction {
-        enrichRoadLinksFromVVH(vvhRoadLinks)
-      }
-    else
-      enrichRoadLinksFromVVH(vvhRoadLinks)
-  }
-
-  def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksAndComplementariesFromVVH(Set(linkId), newTransaction: Boolean).headOption
-
   def getRoadLinksAndComplementariesFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(linkId)
     if (newTransaction)
@@ -116,27 +94,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     else
       enrichRoadLinksFromVVH(vvhRoadLinks)
-  }
-
-  /**
-    * ATENTION Use this method always with transation not with session
-    * Returns the road links and changes from VVH by municipality.
-    *
-    * @param municipality A integer, representative of the municipality Id.
-    */
-  def getRoadLinksAndChangesFromVVHByMunicipality(municipality: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo]) = {
-    val fut = for{
-      changeInfos <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipality)
-      vvhRoadLinks <- vvhClient.roadLinkData.fetchByMunicipalityF(municipality)
-    } yield (changeInfos, vvhRoadLinks)
-
-    val (changeInfos, vvhRoadLinks) = Await.result(fut, Duration.Inf)
-    if (newTransaction)
-      withDynTransaction {
-        (enrichRoadLinksFromVVH(vvhRoadLinks), changeInfos)
-      }
-    else
-      (enrichRoadLinksFromVVH(vvhRoadLinks), changeInfos)
   }
 
   /**
@@ -200,10 +157,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     getCachedRoadLinksAndChanges(municipality)._1
   }
 
-  def getRoadLinksWithComplementaryFromVVH(municipality: Int): Seq[RoadLink] = {
-    getCachedRoadLinksWithComplementaryAndChanges(municipality)._1
-  }
-
   def getRoadLinksFromVVHFuture(municipality: Int): Future[Seq[RoadLink]] = {
     Future(getRoadLinksFromVVH(municipality))
   }
@@ -257,21 +210,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
-  def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
-    RoadLinkServiceDAO.getAllLinkType(linkIds).groupBy(_._1)
-  }
-
-  def fetchVVHComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty) vvhClient.complementaryData.fetchByLinkIds(linkIds)
-    else Seq.empty[VVHRoadlink]
-  }
-
   def fetchVVHRoadlinksAndComplementary(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) vvhClient.roadLinkData.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchByLinkIds(linkIds)
     else Seq.empty[VVHRoadlink]
   }
-
-  def fetchVVHRoadlinkAndComplementary(linkId: Long): Option[VVHRoadlink] = fetchVVHRoadlinksAndComplementary(Set(linkId)).headOption
 
   /**
     * This method returns VVH road links that had changed between two dates.
@@ -294,24 +236,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     vvhClient.roadLinkData.fetchByMunicipalitiesAndBounds(bounds, municipalities)
-  }
-
-  /**
-    * This method is used by CsvGenerator.
-    *
-    * @param linkIds
-    * @param fieldSelection
-    * @param fetchGeometry
-    * @param resultTransition
-    * @tparam T
-    * @return
-    */
-  def fetchVVHRoadlinks[T](linkIds: Set[Long],
-                           fieldSelection: Option[String],
-                           fetchGeometry: Boolean,
-                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = {
-    if (linkIds.nonEmpty) vvhClient.roadLinkData.fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition)
-    else Seq.empty[T]
   }
 
   /**
@@ -338,38 +262,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     } else
       getRoadLinksAndChangesFromVVH(bounds,municipalities)
-  }
-
-  def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) = Await.result(vvhClient.roadLinkChangeInfo.fetchByPolygonF(polygon).zip(vvhClient.roadLinkData.fetchByPolygonF(polygon)), atMost = Duration.Inf)
-    withDynTransaction {
-      (enrichRoadLinksFromVVH(links, changes), changes)
-    }
-  }
-
-  def getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val futures = for{
-      roadLinkResult <- vvhClient.roadLinkData.fetchByPolygonF(polygon)
-      changesResult <- vvhClient.roadLinkChangeInfo.fetchByPolygonF(polygon)
-      complementaryResult <- vvhClient.complementaryData.fetchByPolygonF(polygon)
-    } yield (roadLinkResult, changesResult, complementaryResult)
-
-    val (complementaryLinks, changes, links) = Await.result(futures, Duration.Inf)
-
-    withDynTransaction {
-      (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
-    }
-  }
-
-  /**
-    * This method returns "real" and "complementary" link id by polygons.
-    *
-    * @param polygons
-    * @return LinksId
-    */
-
-  def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[Polygon]) = {
-    polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
   }
 
   /**
@@ -1637,12 +1529,4 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-}
-
-
-class RoadLinkOTHService(vvhClient: VVHClient, eventbus: DigiroadEventBus, vvhSerializer: VVHSerializer) extends RoadLinkService(vvhClient, eventbus, vvhSerializer){
-
-  override protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
-    super.enrichRoadLinksFromVVH( vvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads), changes)
-  }
 }

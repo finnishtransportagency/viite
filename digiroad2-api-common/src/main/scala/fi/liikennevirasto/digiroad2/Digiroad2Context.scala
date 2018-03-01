@@ -80,7 +80,7 @@ object Digiroad2Context {
     }
   }
 
-  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkOTHService), name = "linkPropertyUpdater")
+  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
   val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
@@ -132,14 +132,6 @@ object Digiroad2Context {
 
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
-  }
-
-  lazy val roadLinkOTHService: RoadLinkOTHService = {
-    new RoadLinkOTHService(vvhClient, eventbus, new JsonSerializer)
-  }
-
-  lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(eventbus, roadLinkOTHService)
   }
 
   lazy val revision: String = {
