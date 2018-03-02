@@ -990,12 +990,14 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
-  def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
+  def getValidRoadParts(roadNumber: Long, startDate: DateTime, projectId: Long) = {
     sql"""
-       select distinct road_part_number
+       select distinct ra.road_part_number
               from road_address ra
               where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL) AND START_DATE <= $startDate
               AND (END_DATE IS NULL OR END_DATE > $startDate)
+              AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
+               = 1 and pl.status = 5)
       """.as[Long].list
   }
 
