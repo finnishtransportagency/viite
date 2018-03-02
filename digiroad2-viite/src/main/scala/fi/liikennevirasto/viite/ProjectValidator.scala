@@ -347,7 +347,7 @@ object ProjectValidator {
 
         val nextProjectPart = projectNextRoadParts.filter(_.newLength.getOrElse(0L) > 0L)
           .map(_.roadPartNumber).sorted.headOption
-        val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate, project.id)
+        val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
           .filter(p => p > part || (projectNextRoadParts.nonEmpty && projectNextRoadParts.exists(_.roadPartNumber == p))).sorted.headOption
         if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
           if (discontinuity != EndOfRoad)
@@ -455,7 +455,7 @@ object ProjectValidator {
 
       val nextProjectPart = projectNextRoadParts.filter(_.newLength.getOrElse(0L) > 0L)
         .map(_.roadPartNumber).sorted.headOption
-      val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate, project.id).filter(_ > part)
+      val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate).filter(_ > part)
         .filterNot(p => projectNextRoadParts.exists(_.roadPartNumber == p)).sorted.headOption
       if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
         if (discontinuity != EndOfRoad)

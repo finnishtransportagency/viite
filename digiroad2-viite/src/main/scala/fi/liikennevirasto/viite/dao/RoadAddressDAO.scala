@@ -990,7 +990,7 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
-  def getValidRoadParts(roadNumber: Long, startDate: DateTime, projectId: Long) = {
+  def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
     sql"""
        select distinct ra.road_part_number
               from road_address ra
