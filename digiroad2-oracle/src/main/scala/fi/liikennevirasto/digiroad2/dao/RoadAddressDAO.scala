@@ -10,8 +10,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-
-case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+//TODO remove this OTH class
+/*case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long,
                        startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point],
                        expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime]) {
@@ -33,10 +33,10 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 case class RoadAddressRow(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                           endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false,
                           geom: Seq[Point], expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime])
-
+*/
 class RoadAddressDAO {
 
-  def getRoadAddress(queryFilter: String => String): Seq[RoadAddress] = {
+  /*def getRoadAddress(queryFilter: String => String): Seq[RoadAddress] = {
     val query =
       s"""
            select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date,
@@ -235,5 +235,5 @@ class RoadAddressDAO {
           floating, Seq(), expired, createdBy, createdDate, modifiedDate)
     }
   }
-
+*/
 }
