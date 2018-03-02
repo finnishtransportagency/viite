@@ -1353,4 +1353,70 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
+  def getRoadAddress(queryFilter: String => String): Seq[RoadAddress] = {
+    val query =
+      s"""
+           select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date,
+           ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure, pos.side_code,
+           ra.floating,
+           (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+           (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+           case when ra.valid_to <= sysdate then 1 else 0 end as expired, ra.created_by, ra.start_date, pos.modified_date
+           from road_address ra
+           join lrm_position pos on ra.lrm_position_id = pos.id"""
+
+    queryList(queryFilter(query))
+  }
+
+  def withRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double)(query: String): String = {
+    query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
+      s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" + withValidatyCheck
+  }
+
+  def withLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None)(query: String): String = {
+
+    val qfilter = (road) match {
+      case Some(road) => "AND road_number = " + road
+      case (_) => " "
+    }
+    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " + qfilter + withValidatyCheck
+  }
+
+  def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
+    query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
+      s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
+  }
+
+  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double): Seq[RoadAddress] = {
+
+    val where =
+      s""" where pos.link_id = $linkId and
+         (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
+         ( $endM >= pos.start_measure and $endM <= pos.end_measure)) """
+
+    val query =
+      s"""
+         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+         pos.side_code, pos.adjusted_timestamp,
+         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+         (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+         (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+         link_source, ra.ely, ra.terminated, ra.common_history_id
+         from road_address ra
+         join lrm_position pos on ra.lrm_position_id = pos.id
+			 $where
+		  """
+    queryList(query)
+  }
+
+  def withValidatyCheck(): String = {
+    s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
+      s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
+  }
+
 }

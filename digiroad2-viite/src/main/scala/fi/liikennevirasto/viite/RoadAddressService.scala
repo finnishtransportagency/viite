@@ -13,6 +13,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
 import fi.liikennevirasto.viite.process._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.SortedMap
@@ -826,6 +827,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       println(s"""changeType: ${group._1}""" + "\n" + group._2.foldLeft("")((stream, nextChange) => concatenate(nextChange, stream))+ "\n")
     }
   }
+
+  /**
+    * Methods for the interface between VIITE and OTH
+    *
+    */
+
+  def getRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double): Seq[RoadAddress] = {
+    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+  }
+
+  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None): Seq[RoadAddress] = {
+    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM, road))
+
+  }
+  def getRoadAddressWithBetweenDates(sinceDate: DateTime, untilDate: DateTime): Seq[RoadAddress] = {
+    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
+  }
+
+  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double): Seq[RoadAddress] = {
+    RoadAddressDAO.getByLinkIdAndMeasures(linkId, startM, endM)
+  }
+
 }
 
 
