@@ -833,22 +833,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     *
     */
 
-  def getRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double): Seq[RoadAddress] = {
+  def getRoadNumbers(): Seq[Long] = {
+    RoadAddressDAO.getRoadNumbers()
+  }
+
+  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
     RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
   }
 
-  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None): Seq[RoadAddress] = {
-    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM, road))
-
-  }
-  def getRoadAddressWithBetweenDates(sinceDate: DateTime, untilDate: DateTime): Seq[RoadAddress] = {
-    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
+  def getRoadAddressWithRoadNumber(road: Long, tracks: Option[Seq[Int]]): Seq[RoadAddress] = {
+    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadNumber(road, tracks))
   }
 
-  def getByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double): Seq[RoadAddress] = {
-    RoadAddressDAO.getByLinkIdAndMeasures(linkId, startM, endM)
-  }
+  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long]): Seq[RoadAddress] = {
+    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
 
+  }
 }
 
 
