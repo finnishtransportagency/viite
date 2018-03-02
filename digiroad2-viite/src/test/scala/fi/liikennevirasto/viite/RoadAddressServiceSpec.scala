@@ -800,6 +800,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("drop changes that have different old and new lenghts"){
+    val changeTable = Seq(
+      createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 93.93784134, 1476478965000L),
+      createChangeTable(5622931, 499914628, ChangeType.CombinedRemovedPart, 0, 2.21200293, 93.90506222, 96.11706515, 1476478965000L),
+      createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 157.73223733, 1476478965000L),
+      createChangeTable(5622932, 499914643, ChangeType.CombinedRemovedPart, 0,8.554685974199694, 0.0, 8.554685974199694, 1476478965000L)
+    )
+    roadAddressService.changesSanityCheck(changeTable).size should be (4)
+
+    val changeTable2 = Seq(
+      createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 13.90293074, 0.0349106, 91.93784134, 1476478965000L),
+      createChangeTable(5622931, 499914628, ChangeType.CombinedRemovedPart, 0, 2.21200293, 93.90506222, 15.11706515, 1476478965000L),
+      createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 146.73223733, 1476478965000L),
+      createChangeTable(5622932, 499914643, ChangeType.CombinedRemovedPart, 0,8.554685974199694, 0.0, 6.554685974199694, 1476478965000L)
+    )
+  roadAddressService.changesSanityCheck(changeTable2).size should be (0)
+  }
+
   test("Test change info on links 5622931, 5622953, 499914628 and 499914643 with only handled transitions") {
     val n499914628Geom = Seq(Point(6733893, 332453), Point(6733990, 332420))
     val n5622931Geom = Seq(Point(6733990, 332420), Point(6734010, 332412))
@@ -830,10 +848,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(0, 5622953, n5622953Geom, 15, 1, 0, 5, 6, SideCode.TowardsDigitizing, Anomaly.None, false, false)
       ).map(roadAddressLinkToRoadLink)
       val changeTable = Seq(
-        createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 93.90506222, 1476478965000L),
-        createChangeTable(5622931, 499914628, ChangeType.CombinedRemovedPart, 0, GeometryUtils.geometryLength(o5622931Geom), 93.90506222, 103.78471484, 1476478965000L),
-        createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 157.72241408, 1476478965000L),
-        createChangeTable(5622932, 499914643, ChangeType.CombinedRemovedPart, 0, GeometryUtils.geometryLength(o5622932Geom), 0.0, 1.31962463, 1476478965000L)
+        createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 93.93784134, 1476478965000L),
+        createChangeTable(5622931, 499914628, ChangeType.CombinedRemovedPart, 0, 2.21200293, 93.90506222, 96.11706515, 1476478965000L),
+        createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 157.73223733, 1476478965000L),
+        createChangeTable(5622932, 499914643, ChangeType.CombinedRemovedPart, 0,8.554685974199694, 0.0, 8.554685974199694, 1476478965000L)
       )
 
       RoadAddressDAO.create(addresses)
