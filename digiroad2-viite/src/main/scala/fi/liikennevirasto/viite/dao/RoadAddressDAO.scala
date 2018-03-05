@@ -1439,4 +1439,28 @@ object RoadAddressDAO {
 		  """.as[Long].list
   }
 
+  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
+    val startEndFilter =
+      if (startM.getOrElse(0) > 0 && endM.getOrElse(0) > 0)
+        s"""(( ra.start_addr_m >= $startM and ra.end_addr_m <= $endM ) or ( $startM >= ra.start_addr_m and $startM < ra.end_addr_m) or
+         ( $endM > ra.start_addr_m and $endM <= ra.end_addr_m)) and"""
+      else ""
+
+    val where =
+      s""" where $startEndFilter ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
+         and ra.floating = 0 """ + withValidatyCheck
+
+    val query =
+      s"""
+			select distinct ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+      ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date, ra.lrm_position_id, pos.link_id,
+      pos.start_measure, pos.end_measure, pos.side_code, ra.floating,
+      case when ra.valid_to <= sysdate then 1 else 0 end as expired, ra.created_by, ra.start_date, pos.modified_date
+      from road_address ra
+      join lrm_position pos on ra.lrm_position_id = pos.id
+      $where
+      """
+    queryList(query)
+  }
+
 }
