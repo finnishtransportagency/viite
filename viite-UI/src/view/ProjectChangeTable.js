@@ -9,11 +9,9 @@
       'Numerointi',
       'Lakkautettu'
     ];
-    var unchangedStatus = 1;
-    var newLinkStatus = 2;
-    var transferredLinkStatus = 3;
-    var numberingLinkStatus = 4;
-    var terminatedLinkStatus = 5;
+
+    var LinkStatus = LinkValues.LinkStatus;
+    var ProjectStatus = LinkValues.ProjectStatus;
     var windowMaximized = false;
 
     var changeTable =
@@ -21,7 +19,7 @@
     // Text about validation success hard-coded now
     // TODO: handle status-text for real
     // TODO: table not responsive
-    changeTable.append('<div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>');
+    changeTable.append('<div class="change-table-header font-resize">Validointi ok. Alla näet muutokset projektissa.</div>');
     changeTable.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
     changeTable.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
     changeTable.append('<div class="change-table-borders">' +
@@ -61,16 +59,30 @@
       '</table>' +
       '</div>');
 
-    function show(){
+    function show() {
       $('.container').append(changeTable.toggle());
+      resetInteractions();
+      interact('.change-table-frame').unset();
       bindEvents();
       getChanges();
+      enableTableInteractions();
     }
 
     function hide() {
       $('#information-content').empty();
       $('#send-button').attr('disabled', true);
-      changeTable.hide();
+      resetInteractions();
+      interact('.change-table-frame').unset();
+      $('.change-table-frame').remove();
+    }
+
+    function resetInteractions() {
+      var dragTable = $('.change-table-frame');
+      if (dragTable && dragTable.length > 0) {
+        dragTable[0].setAttribute('data-x', 0);
+        dragTable[0].setAttribute('data-y', 0);
+        dragTable.css('transform', 'none');
+      }
     }
 
     function getChangeType(type){
@@ -86,33 +98,33 @@
       $('.row-changes').remove();
       eventbus.once('projectChanges:fetched', function(projectChangeData) {
         var htmlTable = "";
-        if (!_.isUndefined(projectChangeData) && projectChangeData !== null) {
+        if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
           _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq) {
-            if (changeInfoSeq.changetype === newLinkStatus) {
+            if (changeInfoSeq.changetype === LinkStatus.New.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getEmptySource(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getEmptyTarget();
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === unchangedStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Unchanged.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === transferredLinkStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Transfer.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === numberingLinkStatus) {
+            } else if (changeInfoSeq.changetype === LinkStatus.Numbering.value) {
               htmlTable += '<tr class="row-changes">';
               htmlTable += getSourceInfo(changeInfoSeq);
               htmlTable += getReversed(changeInfoSeq);
@@ -124,13 +136,44 @@
         $('.row-changes').remove();
         $('.change-table-dimensions').append($(htmlTable));
         if (projectChangeData.validationErrors.length === 0){
-          $('.change-table-header').html($('<div>Validointi ok. Alla näet muutokset projektissa.</div>'));
-          if($('.change-table-frame').css('display')==="block")
+
+          $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
+          var currentProject = projectCollection.getCurrentProject();
+          if($('.change-table-frame').css('display')==="block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode ===  ProjectStatus.ErroredInTR.value))
+
             $('#send-button').attr('disabled',false); //enables send button if changetable is open
         }
         else
         {
-          $('.change-table-header').html($('<div><font color="yellow">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</font></div>'));
+          $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+        }
+      });
+
+      changeTable.on('click', 'button.max', function (){
+        resetInteractions();
+        $('.font-resize').css('font-size', '18px');
+        if(windowMaximized) {
+          $('.change-table-frame').height('260px');
+          $('.change-table-frame').width('1135px');
+          $('.change-table-frame').css('top', '620px');
+          $('[id=change-table-borders-target]').height('210px');
+          $('[id=change-table-borders-source]').height('210px');
+          $('[id=change-table-borders-reversed]').height('210px');
+          $('[id=change-table-borders-changetype]').height('210px');
+          $('[id=buttonText]').text("Suurenna ");
+          $('[id=sizeSymbol]').text("□");
+          windowMaximized=false;
+        } else {
+          $('.change-table-frame').height('800px');
+          $('.change-table-frame').width('1135px');
+          $('.change-table-frame').css('top', '50px');
+          $('[id=change-table-borders-target]').height('740px');
+          $('[id=change-table-borders-source]').height('750px');
+          $('[id=change-table-borders-reversed]').height('750px');
+          $('[id=change-table-borders-changetype]').height('750px');
+          $('[id=buttonText]').text("Pienennä ");
+          $('[id=sizeSymbol]').text("_");
+          windowMaximized=true;
         }
       });
 
@@ -192,31 +235,64 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
 
-    changeTable.on('click', 'button.max', function (){
-      if(windowMaximized) {
-        $('.change-table-frame').height('260px');
-        $('[id=change-table-borders-target]').height('180px');
-        $('[id=change-table-borders-source]').height('180px');
-        $('[id=change-table-borders-reversed]').height('180px');
-        $('[id=change-table-borders-changetype]').height('180px');
-        $('[id=buttonText]').text("Suurenna ");
-        $('[id=sizeSymbol]').text("□");
-        windowMaximized=false;
-      } else {
-        $('.change-table-frame').height('80%');
-        $('[id=change-table-borders-target]').height('670px');
-        $('[id=change-table-borders-source]').height('670px');
-        $('[id=change-table-borders-reversed]').height('670px');
-        $('[id=change-table-borders-changetype]').height('670px');
-        $('[id=buttonText]').text("Pienennä ");
-        $('[id=sizeSymbol]').text("_");
-        windowMaximized=true;
-      }
-    });
+    function dragListener (event) {
+      var target = event.target,
+        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      target.style.webkitTransform =
+        target.style.transform =
+          'translate(' + x + 'px, ' + y + 'px)';
+      target.setAttribute('data-x', x);
+      target.setAttribute('data-y', y);
+    }
+
+
+    function enableTableInteractions() {
+      interact('.change-table-frame')
+        .draggable({
+          onmove: dragListener,
+          restrict: {
+            restriction: '.container',
+            elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+          }
+        })
+        .resizable({
+          edges: { left: true, right: true, bottom: true, top: true },
+          restrictEdges: {
+            outer: '.container',
+            endOnly: true
+          },
+          restrictSize: {
+            min: { width: 650, height: 300 }
+          },
+          inertia: true
+        })
+        .on('resizemove', function (event) {
+          var target = event.target,
+            x = (parseFloat(target.getAttribute('data-x')) || 0),
+            y = (parseFloat(target.getAttribute('data-y')) || 0);
+          target.style.width  = event.rect.width + 'px';
+          target.style.height = event.rect.height + 'px';
+          x += event.deltaRect.left;
+          y += event.deltaRect.top;
+          target.style.webkitTransform = target.style.transform =
+            'translate(' + x + 'px,' + y + 'px)';
+          target.setAttribute('data-x', x);
+          target.setAttribute('data-y', y);
+          var fontResizeElements = $('.font-resize');
+          var newFontSize =18*parseInt(target.style.width) / 950 + 'px';
+          fontResizeElements.css('font-size', newFontSize);
+          $('[id=change-table-borders-target]').height(parseFloat(target.style.height) - 50 + 'px');
+          $('[id=change-table-borders-source]').height(parseFloat(target.style.height) - 50 + 'px');
+          $('[id=change-table-borders-reversed]').height(parseFloat(target.style.height) - 50 + 'px');
+          $('[id=change-table-borders-changetype]').height(parseFloat(target.style.height) - 50 + 'px');
+        });
+    }
 
     eventbus.on('projectChangeTable:refresh', function() {
       bindEvents();
       getChanges();
+      enableTableInteractions();
     });
 
     eventbus.on('projectChangeTable:hide', function() {

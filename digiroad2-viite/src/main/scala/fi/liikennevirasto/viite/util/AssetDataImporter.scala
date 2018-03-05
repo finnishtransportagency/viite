@@ -124,8 +124,7 @@ class AssetDataImporter {
       sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
-      sqlu"""DELETE FROM LRM_POSITION WHERE
-            NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
+      sqlu"""DELETE FROM LRM_POSITION""".execute
       println(s"${DateTime.now()} - Old address data removed")
 
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
@@ -274,18 +273,18 @@ class AssetDataImporter {
     val service = new RoadAddressService(linkService, eventBus)
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
-    OracleDatabase.withDynTransaction {
-      val municipalities = Queries.getMunicipalitiesWithoutAhvenanmaa
+    val municipalities = OracleDatabase.withDynTransaction {
       sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
       println("Old address data cleared")
+      Queries.getMunicipalitiesWithoutAhvenanmaa
+    }
       municipalities.foreach(municipality => {
         println("Processing municipality %d at time: %s".format(municipality, DateTime.now().toString))
         val missing = service.getMissingRoadAddresses(roadNumbersToFetch, municipality)
         println("Got %d links".format(missing.size))
-        missing.foreach(service.createSingleMissingRoadAddress)
+        service.createMissingRoadAddress(missing)
         println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
       })
-    }
   }
 
   def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean) = {
