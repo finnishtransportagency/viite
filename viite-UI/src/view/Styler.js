@@ -88,7 +88,7 @@
     };
 
     var generateUnderLineColor = function(roadLinkData, opacityMultiplier, middleLineWidth) {
-      if(roadLinkData.blackUnderline)
+      if (roadLinkData.blackUnderline)
         return {color: 'rgba(30, 30, 30,' + opacityMultiplier + ')', width: middleLineWidth + 7};
       else return {color: undefined, width: undefined};
     };
