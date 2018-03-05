@@ -842,7 +842,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val (number, part) = grouped._1
       val addresses = grouped._2
       val (municipalityAddresses, regularAddresses) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
-      if (municipalityAddresses.nonEmpty){
+      if (municipalityAddresses.nonEmpty) {
         logger.info(s"Found municipality roads, fetching by roadNumber: $number and roadPartNumber: $part")
         withDynTransaction {
           val fullRoads = RoadAddressDAO.fetchByRoadPart(number, part)
