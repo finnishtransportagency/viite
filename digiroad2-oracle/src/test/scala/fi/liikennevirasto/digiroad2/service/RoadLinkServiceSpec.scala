@@ -18,7 +18,8 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future, Promise}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -27,7 +28,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynSession[T](f: => T): T = f
   }
 
-  class RoadLinkTestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkOTHService(vvhClient, eventBus, vvhSerializer) {
+  class RoadLinkTestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(vvhClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -69,57 +70,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Modified traffic Direction in a Complementary RoadLink") {
-    OracleDatabase.withDynTransaction {
-      val oldRoadLink = VVHRoadlink(30, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MTKCLASS" -> BigInt(12314)))
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-
-      val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-      val service = new TestService(mockVVHClient)
-
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(30)).thenReturn(None)
-      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchByLinkId(30)).thenReturn(Some(oldRoadLink))
-
-      val roadLink = service.updateLinkProperties(30, 8, CycleOrPedestrianPath, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
-      roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
-      roadLink.map(_.attributes("MTKCLASS")) should be (Some(12314))
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Adjust link type") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      val service = new TestService(mockVVHClient)
-      val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
-      roadLink.map(_.linkType) should be(Some(PedestrianZone))
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Override administrative class") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      val service = new TestService(mockVVHClient)
-      val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Option("testuser"), { _ => })
-      roadLink.map(_.administrativeClass) should be(Some(Private))
-      dynamicSession.rollback()
-    }
-  }
-
   test("Provide last edited date from VVH on road link modification date if there are no overrides") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -139,61 +89,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       dynamicSession.rollback()
     }
   }
-
-  test("Adjust link traffic direction to value that is in VVH") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      val service = new TestService(mockVVHClient)
-      val roadLink = simulateQuery {
-        service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
-      }
-      roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
-      val roadLink2 = simulateQuery {
-        service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.TowardsDigitizing, Municipality, Option("testuser"), { _ => })
-      }
-      roadLink2.map(_.trafficDirection) should be(Some(TrafficDirection.TowardsDigitizing))
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Adjust non-existent road link") {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByLinkId(1l)).thenReturn(None)
-    when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-    when(mockVVHComplementaryClient.fetchByLinkId(1l)).thenReturn(None)
-
-    val service = new RoadLinkOTHService(mockVVHClient, new DummyEventBus, new DummySerializer)
-    val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { _ => })
-    roadLink.map(_.linkType) should be(None)
-  }
-
-  test("Validate access rights to municipality") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      val service = new TestService(mockVVHClient)
-      var validatedCode = 0
-      service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality, Option("testuser"), { municipalityCode =>
-        validatedCode = municipalityCode
-      })
-      validatedCode should be(91)
-      dynamicSession.rollback()
-    }
-  }
-
 
   test("Autogenerate properties for tractor road and drive path") {
     OracleDatabase.withDynTransaction {
@@ -258,28 +153,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       verify(mockEventBus).publish(
         org.mockito.Matchers.eq("linkProperties:changed"),
         org.mockito.Matchers.eq(changeSet))
-
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Remove road link from incomplete link list once functional class and link type are specified") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-
-      val roadLink = VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(1l)).thenReturn(Some(roadLink))
-      val service = new TestService(mockVVHClient)
-
-      sqlu"""insert into incomplete_link (id, link_id, municipality_code, administrative_class) values (43241231233, 1, 91, 1)""".execute
-
-      simulateQuery { service.updateLinkProperties(1, FunctionalClass.Unknown, Freeway, TrafficDirection.BothDirections, Municipality, Option("test"), _ => ()) }
-      simulateQuery { service.updateLinkProperties(1, 4, UnknownLinkType, TrafficDirection.BothDirections, Municipality, Option("test"), _ => ()) }
-
-      val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
-      incompleteLinks should be(empty)
 
       dynamicSession.rollback()
     }
@@ -823,23 +696,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Return road nodes") {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadNodesClient = MockitoSugar.mock[VVHRoadNodesClient]
-    val vvhRoadNode = VVHRoadNodes(1, Point(1, 2, 3), 2, NodeType(1), 235, 1)
-    val vvhRoadNode1 = VVHRoadNodes(2, Point(4, 5, 6), 2, NodeType(1), 235, 1)
-    val service = new TestService(mockVVHClient)
-
-    OracleDatabase.withDynTransaction {
-      when(mockVVHClient.roadNodesData).thenReturn(mockVVHRoadNodesClient)
-      when(mockVVHRoadNodesClient.fetchByMunicipality(any[Int])).thenReturn(Seq(vvhRoadNode, vvhRoadNode1))
-
-      val roadNodes = service.getRoadNodesFromVVHByMunicipality(235)
-      roadNodes.size should be (2)
-    }
-
-  }
-
   test("Get information about changes in road names when using all other municipalities") {
     val modifiedAt = Some(DateTime.parse("2015-05-07T12:00Z"))
     val attributes: Map[String, Any] =
@@ -905,46 +761,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
-      val returnedChangeInfo = service.getChangeInfoFromVVH(boundingBox, Set())
+      val returnedChangeInfo = Await.result(service.getChangeInfoFromVVHF(boundingBox, Set()), atMost = Duration.Inf)
 
       returnedChangeInfo.size should be (1)
       returnedChangeInfo.head.oldId.get should be(oldLinkId)
       returnedChangeInfo.head.newId.get should be(newLinkId)
       returnedChangeInfo.head.mmlId should be(123l)
-    }
-  }
-
-  test("Should not return roadLinks because it has FeatureClass Winter Roads") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(Set(1611447l)))
-        .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads)))
-      val service = new RoadLinkTestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
-      roadLinks.length should be (0)
-      dynamicSession.rollback()
-    }
-  }
-
-
-  test("Should only return roadLinks that doesn't have FeatureClass Winter Roads") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipality(91))
-        .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads),
-          VVHRoadlink(1611448, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-          VVHRoadlink(1611449, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      val service = new RoadLinkTestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksFromVVHByMunicipality(91)
-      roadLinks.length should be (2)
-      roadLinks.sortBy(_.linkId)
-      roadLinks.head.linkId should be(1611448)
-      roadLinks.last.linkId should be(1611449)
-      dynamicSession.rollback()
     }
   }
 }
