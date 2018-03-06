@@ -212,7 +212,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   private def createRoadAddressLinkMap(roadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], toFloating: Seq[RoadAddressLink],
                                        addresses: Seq[RoadAddress],
                                        missedRL: Map[Long, List[MissingRoadAddress]]): Map[Long, Seq[RoadAddressLink]] = {
-    val (suravageRA, regularRa ) = addresses.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    val (suravageRA, regularRa ) = addresses.partition(ad => ad.linkGeomSource == LinkGeomSource.SuravageLinkInterface && ad.id == 0)
     logger.info(s"Creation of RoadAddressLinks started.")
     val mappedRegular = roadLinks.map { rl =>
       val floaters = toFloating.filter(_.linkId == rl.linkId)

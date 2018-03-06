@@ -351,7 +351,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val projectMap = roadAddressProjectToApi(project)
         val parts = project.reservedParts.map(reservedRoadPartToApi)
         val errorParts = projectService.validateProjectById(project.id)
-        val publishable = projectService.isProjectPublishable(projectId)
+        val publishable = errorParts.isEmpty
         val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
         Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
           "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
@@ -394,9 +394,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, user) match {
           case None =>
             writableProject.saveProjectCoordinates(linksToRevert.projectId, linksToRevert.coordinates)
+            val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi)
             Map("success" -> true,
-              "publishable" -> projectService.isProjectPublishable(linksToRevert.projectId),
-              "projectErrors" -> projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi))
+              "publishable" -> projectErrors.isEmpty,
+              "projectErrors" -> projectErrors)
           case Some(s) => Map("success" -> false, "errorMessage" -> s)
         }
       }
@@ -423,9 +424,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       response.get("success") match {
         case Some(true) => {
           writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
+          val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
           Map("success" -> true,
-            "publishable" -> projectService.isProjectPublishable(links.projectId),
-            "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
+            "publishable" -> response.get("projectErrors").isEmpty,
+            "projectErrors" -> response.get("projectErrors"))
         }
         case _ => response
       }
@@ -454,9 +456,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
+              val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
               Map("success" -> true, "id" -> links.projectId,
-                "publishable" -> projectService.isProjectPublishable(links.projectId),
-                "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
+                "publishable" -> projectErrors.isEmpty,
+                "projectErrors" -> projectErrors)
           }
         }
         case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")
