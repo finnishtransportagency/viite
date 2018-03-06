@@ -1488,12 +1488,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val (roadAddressesWithoutGeom, newRoadAddresses) = convertToRoadAddress(splitReplacements, pureReplacements, additions,
         expiringRoadAddresses, project).partition(_.floating)
 
+      val (roadAddressesWithHistory, newRoadAddressesWithHistory) = CommonHistoryFiller.fillCommonHistory(projectLinks, roadAddressesWithoutGeom, newRoadAddresses)
+
       //Expiring all old addresses by their ID
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
       val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
       updateTerminationForHistory(terminatedLinkIds, splitReplacements)
       //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-      val created = RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
+      val created = RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithHistory, newRoadAddressesWithHistory))
       Some(s"${created.size} road addresses created")
     } catch {
       case e: ProjectValidationException => {
