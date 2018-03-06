@@ -27,7 +27,7 @@ object CommonHistoryFiller {
                   val nextId = Sequences.nextCommonHistorySeqValue
                   address.copy(commonHistoryId = nextId)
                 } else
-                  address
+                  address.copy(commonHistoryId = seq.last.commonHistoryId)
               }
               Seq(changedAddress)
             }
