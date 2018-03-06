@@ -1383,10 +1383,11 @@ object RoadAddressDAO {
       s"$trackFilter $mValueFilter " + withValidatyCheck
   }
 
-  def withRoadNumber(road: Long, trackCodes: Option[Seq[Int]])(query: String): String = {
-    val trackFilter = trackCodes match {
-      case Some(tracks) => s" AND ra.TRACK_CODE in (${tracks.mkString(",")})"
-      case None => ""
+  def withRoadNumber(road: Long, trackCodes: Seq[Int])(query: String): String = {
+    val trackFilter = if(trackCodes.isEmpty) {
+      s" AND ra.TRACK_CODE in (${trackCodes.mkString(",")})"
+    } else {
+       ""
     }
     query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0" + withValidatyCheck
   }
@@ -1439,11 +1440,11 @@ object RoadAddressDAO {
 		  """.as[Long].list
   }
 
-  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
+  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Double], endAddrM: Option[Double]): Seq[RoadAddress] = {
     val startEndFilter =
-      if (startM.getOrElse(0) > 0 && endM.getOrElse(0) > 0)
-        s"""(( ra.start_addr_m >= $startM and ra.end_addr_m <= $endM ) or ( $startM >= ra.start_addr_m and $startM < ra.end_addr_m) or
-         ( $endM > ra.start_addr_m and $endM <= ra.end_addr_m)) and"""
+      if (startAddrM.getOrElse(0.0) > 0.0 && endAddrM.getOrElse(0.0) > 0.0)
+        s"""(( ra.start_addr_m >= $startAddrM and ra.end_addr_m <= $endAddrM ) or ( $startAddrM >= ra.start_addr_m and $startAddrM < ra.end_addr_m) or
+         ( $endAddrM > ra.start_addr_m and $endAddrM <= ra.end_addr_m)) and"""
       else ""
 
     val where =

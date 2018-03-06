@@ -841,13 +841,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
   }
 
-  def getRoadAddressWithRoadNumber(road: Long, tracks: Option[Seq[Int]]): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
     RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadNumber(road, tracks))
   }
 
   def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long]): Seq[RoadAddress] = {
     RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
-
   }
 
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
