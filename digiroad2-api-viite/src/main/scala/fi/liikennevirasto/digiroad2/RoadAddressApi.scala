@@ -2,13 +2,14 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService
 import fi.liikennevirasto.digiroad2.asset.{Modification, TimeStamps}
+import fi.liikennevirasto.viite.RoadAddressService
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
+import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.slf4j.LoggerFactory
 
 
-class RoadAddressApi extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
+class RoadAddressApi(roadAddressService: RoadAddressService) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -22,35 +23,52 @@ class RoadAddressApi extends  ScalatraServlet with JacksonJsonSupport with Viite
     basicAuth
   }
 
-  get("/road_address/roads"){
-    Seq(1,2,3,4)
+  get("/road_address/?"){
+    val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toLong
+    val startMeasure = params.get("startMeasure").map(_.toLong)
+    val endMeasure = params.get("endMeasure").map(_.toLong)
+
+    roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId, startMeasure, endMeasure)
   }
 
-  get("/road_address/:road"){
-    params.get("tracks")
+  get("/road_address/roads/?"){
+    roadAddressService.getRoadNumbers()
   }
 
-  get("/road_address/:road/:roadPart"){
-    params.get("tracks")
-    //or
-    params.get("tracks")
-    params.get("startMeasure")
-    params.get("endMeasure")
-    params.get("withFloatings")
+  get("/road_address/:road/?"){
+    val roadNumber = params("road").toLong
+    val trackCodes = multiParams.getOrElse("tracks", Seq()).map(_.toInt)
+
+    roadAddressService.getRoadAddressWithRoadNumber(roadNumber, trackCodes)
   }
 
-  get("/road_address/:road/:roadPart/:address"){
-    params.get("tracks")
+  get("/road_address/:road/:roadPart/?"){
+    val roadNumber = params("road").toLong
+    val roadPart = params("roadPart").toLong
+    val track = params.get("track").map(_.toInt)
+
+    roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, None, None)
   }
 
-  get("/road_address/:road/:roadPart/:startAddress/:endAddress"){
-    params.get("tracks")
+  get("/road_address/:road/:roadPart/:address/?"){
+    val roadNumber = params("road").toLong
+    val roadPart = params("roadPart").toLong
+    val address = params("address").toDouble
+    val track = params.get("track").map(_.toInt)
+
+    roadAddressService.getRoadAddress(roadNumber, roadPart, track, Some(address))
   }
 
-  get("/road_address/"){
-    params.get("linkId")
-    params.get("startMeasure")
-    params.get("endMeasure")
-    params.get("road")
+  get("/road_address/:road/:roadPart/:startAddress/:endAddress/?"){
+    val roadNumber = params("road").toLong
+    val roadPart = params("roadPart").toLong
+    val startAddress = params("startAddress").toDouble
+    val endAddress = params("endAddress").toDouble
+
+    roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, Some(startAddress), Some(endAddress))
+  }
+
+  post("/road_address/?") {
+
   }
 }
