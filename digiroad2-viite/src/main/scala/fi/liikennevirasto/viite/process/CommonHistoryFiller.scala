@@ -1,13 +1,42 @@
 package fi.liikennevirasto.viite.process
 
 
-import fi.liikennevirasto.viite.dao.{ProjectLink, RoadAddress}
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, RoadAddress}
 
 object CommonHistoryFiller {
-  private def applyUnchanged(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
-    // TODO
-    newRoadAddresses
-  }
+  private def applyUnchanged(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+      // TODO
+      val (unchangedLinks, rest) = projectLinks.partition(_.status == LinkStatus.UnChanged)
+      val groupedExistingAddresses = newRoadAddresses.groupBy(_.id)
+      //    val groupedAddresses = unchangedLinks.flatMap(pl => groupedExistingAddresses.get(pl.roadAddressId).getOrElse(Seq.empty[RoadAddress]).headOption)
+      val addresses = unchangedLinks.flatMap(pl => newRoadAddresses.find(_.id == pl.roadAddressId))
+      if(addresses.nonEmpty) {
+        //check if whole length of the road has changed track or road type => same commonHistoryId
+        val checkLengthChangeInRoad = addresses.groupBy(ra => (ra.roadNumber, ra.commonHistoryId))
+        checkLengthChangeInRoad.flatMap { group =>
+          val groupAddresses = group._2
+          groupAddresses.groupBy(c => (c.track, c.roadType)).size match {
+            //in case they have same track and road type
+            case 1 => groupAddresses
+            case _ => groupAddresses.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]){ case (seq, address) =>
+
+              val changedAddress = if(seq.isEmpty) {
+                val nextId = Sequences.nextCommonHistorySeqValue
+                address.copy(commonHistoryId = nextId)
+              } else {
+                if(address.track != seq.last.track || address.roadType != seq.last.roadType){
+                  val nextId = Sequences.nextCommonHistorySeqValue
+                  address.copy(commonHistoryId = nextId)
+                } else
+                  address
+              }
+              Seq(changedAddress)
+            }
+          }
+        }.toSeq
+      } else newRoadAddresses
+    }
 
   private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
     // TODO
