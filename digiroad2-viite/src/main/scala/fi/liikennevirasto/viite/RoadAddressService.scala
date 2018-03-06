@@ -834,23 +834,33 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
 
   def getRoadNumbers(): Seq[Long] = {
-    RoadAddressDAO.getRoadNumbers()
+    withDynSession {
+      RoadAddressDAO.getRoadNumbers()
+    }
   }
 
   def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
-    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+    withDynSession {
+      RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+    }
   }
 
   def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
-    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadNumber(road, tracks))
+    withDynSession{
+      RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadNumber(road, tracks))
+    }
   }
 
   def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long]): Seq[RoadAddress] = {
-    RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
+    withDynSession {
+      RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
+    }
   }
 
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
-    RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
+    withDynSession {
+      RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
+    }
   }
 }
 

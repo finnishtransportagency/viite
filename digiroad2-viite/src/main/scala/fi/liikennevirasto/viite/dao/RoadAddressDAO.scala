@@ -1354,18 +1354,19 @@ object RoadAddressDAO {
   }
 
   def getRoadAddress(queryFilter: String => String): Seq[RoadAddress] = {
-    val query =
-      s"""
-           select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date,
-           ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure, pos.side_code,
-           ra.floating,
-           (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
-           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
-           (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
-           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-           case when ra.valid_to <= sysdate then 1 else 0 end as expired, ra.created_by, ra.start_date, pos.modified_date
-           from road_address ra
-           join lrm_position pos on ra.lrm_position_id = pos.id"""
+    val query = s"""
+         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+          pos.side_code, pos.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+          link_source, ra.ely, ra.terminated, ra.common_history_id
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+      """
 
     queryList(queryFilter(query))
   }
@@ -1384,12 +1385,12 @@ object RoadAddressDAO {
   }
 
   def withRoadNumber(road: Long, trackCodes: Seq[Int])(query: String): String = {
-    val trackFilter = if(trackCodes.isEmpty) {
+    val trackFilter = if(trackCodes.nonEmpty) {
       s" AND ra.TRACK_CODE in (${trackCodes.mkString(",")})"
     } else {
        ""
     }
-    query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0" + withValidatyCheck
+    query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidatyCheck
   }
 
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
@@ -1442,24 +1443,28 @@ object RoadAddressDAO {
 
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Double], endAddrM: Option[Double]): Seq[RoadAddress] = {
     val startEndFilter =
-      if (startAddrM.getOrElse(0.0) > 0.0 && endAddrM.getOrElse(0.0) > 0.0)
-        s"""(( ra.start_addr_m >= $startAddrM and ra.end_addr_m <= $endAddrM ) or ( $startAddrM >= ra.start_addr_m and $startAddrM < ra.end_addr_m) or
-         ( $endAddrM > ra.start_addr_m and $endAddrM <= ra.end_addr_m)) and"""
+      if (startAddrM.nonEmpty && endAddrM.nonEmpty)
+        s"""(( ra.start_addr_m >= ${startAddrM.get} and ra.end_addr_m <= ${endAddrM.get} ) or ( ${startAddrM.get} >= ra.start_addr_m and ${startAddrM.get} < ra.end_addr_m) or
+         ( ${endAddrM.get} > ra.start_addr_m and ${endAddrM.get} <= ra.end_addr_m)) and"""
       else ""
 
     val where =
       s""" where $startEndFilter ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
          and ra.floating = 0 """ + withValidatyCheck
 
-    val query =
-      s"""
-			select distinct ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-      ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date, ra.lrm_position_id, pos.link_id,
-      pos.start_measure, pos.end_measure, pos.side_code, ra.floating,
-      case when ra.valid_to <= sysdate then 1 else 0 end as expired, ra.created_by, ra.start_date, pos.modified_date
-      from road_address ra
-      join lrm_position pos on ra.lrm_position_id = pos.id
-      $where
+    val query = s"""
+         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+          pos.side_code, pos.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+          link_source, ra.ely, ra.terminated, ra.common_history_id
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        $where
       """
     queryList(query)
   }
