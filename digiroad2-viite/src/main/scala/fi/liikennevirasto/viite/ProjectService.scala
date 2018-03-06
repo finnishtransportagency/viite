@@ -1485,17 +1485,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     try {
       val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
-      val (roadAddressesWithoutGeom, newRoadAddresses) = convertToRoadAddress(splitReplacements, pureReplacements, additions,
-        expiringRoadAddresses, project).partition(_.floating)
+      val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
+        expiringRoadAddresses, project)
 
-      val (roadAddressesWithHistory, newRoadAddressesWithHistory) = CommonHistoryFiller.fillCommonHistory(projectLinks, roadAddressesWithoutGeom, newRoadAddresses)
+      val newRoadAddressesWithHistory = CommonHistoryFiller.fillCommonHistory(projectLinks, newRoadAddresses)
 
       //Expiring all old addresses by their ID
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
       val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
       updateTerminationForHistory(terminatedLinkIds, splitReplacements)
       //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-      val created = RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithHistory, newRoadAddressesWithHistory))
+      val created = RoadAddressDAO.create(newRoadAddressesWithHistory.map(_.copy(id = NewRoadAddress)))
       Some(s"${created.size} road addresses created")
     } catch {
       case e: ProjectValidationException => {
@@ -1527,16 +1527,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } else {
       Seq()
     }
-    val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
+    val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewRoadAddress), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.get.commonHistoryId)
+      pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.commonHistoryId).getOrElse(0))
     pl.status match {
       case UnChanged =>
         roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
-      //TODO in this situations we should check whether we should use one new CommonHistoryId or not
       case Transfer | Numbering =>
         roadAddress.copy(startDate = Some(project.startDate))
-      //TODO in new situations we should probably always user NewCommonId
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
       case Terminated =>
@@ -1560,7 +1558,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
       case UnChanged | Terminated =>
         None
-      case Transfer | Numbering => // TODO Check common_history_id
+      case Transfer | Numbering =>
         Some(roadAddress.copy(id = NewRoadAddress, endDate = pl.startDate))
       case _ =>
         logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
