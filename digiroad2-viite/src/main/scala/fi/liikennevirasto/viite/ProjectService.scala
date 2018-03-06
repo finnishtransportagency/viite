@@ -245,7 +245,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case None => {
             addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId) match {
               case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-              case None => Map("success" -> true, "publishable" -> isProjectPublishable(projectId))
+              case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId))
             }
           }
         }
