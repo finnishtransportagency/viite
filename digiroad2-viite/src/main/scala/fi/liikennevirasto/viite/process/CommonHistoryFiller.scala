@@ -8,13 +8,11 @@ object CommonHistoryFiller {
   private def applyUnchanged(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
       // TODO
       val (unchangedLinks, rest) = projectLinks.partition(_.status == LinkStatus.UnChanged)
-      val groupedExistingAddresses = newRoadAddresses.groupBy(_.id)
       //    val groupedAddresses = unchangedLinks.flatMap(pl => groupedExistingAddresses.get(pl.roadAddressId).getOrElse(Seq.empty[RoadAddress]).headOption)
       val addresses = unchangedLinks.flatMap(pl => newRoadAddresses.find(_.id == pl.roadAddressId))
-      if(addresses.nonEmpty) {
+      val commonHistoryForUnchanged = if(addresses.nonEmpty) {
         //check if whole length of the road has changed track or road type => same commonHistoryId
-        val checkLengthChangeInRoad = addresses.groupBy(ra => (ra.roadNumber, ra.commonHistoryId))
-        checkLengthChangeInRoad.flatMap { group =>
+        addresses.groupBy(ra => (ra.roadNumber, ra.commonHistoryId)).flatMap { group =>
           val groupAddresses = group._2
           groupAddresses.groupBy(c => (c.track, c.roadType)).size match {
             //in case they have same track and road type
@@ -29,13 +27,14 @@ object CommonHistoryFiller {
                   val nextId = Sequences.nextCommonHistorySeqValue
                   address.copy(commonHistoryId = nextId)
                 } else
-                  address
+                  address.copy(commonHistoryId = seq.last.commonHistoryId)
               }
               Seq(changedAddress)
             }
           }
         }.toSeq
       } else newRoadAddresses
+    newRoadAddresses.filterNot(nra =>commonHistoryForUnchanged.map(_.id).contains(nra.id))++commonHistoryForUnchanged
     }
 
   private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
