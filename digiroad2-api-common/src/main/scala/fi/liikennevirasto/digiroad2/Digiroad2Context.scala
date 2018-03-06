@@ -72,7 +72,7 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
+  system.scheduler.schedule(FiniteDuration(10, TimeUnit.SECONDS),FiniteDuration(10, TimeUnit.SECONDS)) { //first query after 2 mins, then every 10 mins
     try {
       projectService.updateProjectsWaitingResponseFromTR()
     } catch {

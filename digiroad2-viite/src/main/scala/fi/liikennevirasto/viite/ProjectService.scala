@@ -1369,11 +1369,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case Some(trId) =>
         ProjectDAO.getProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState")
-          val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
-          val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
-          val errorMessage = getTRErrorMessage(trProjectState)
-          logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
-          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
+          //val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
+          //val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
+          val errorMessage = ""
+          //logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
+          val updatedStatus = updateProjectStatusIfNeeded(currentState, Saved2TR, errorMessage, projectID)
           if (updatedStatus == Saved2TR)
             updateRoadAddressWithProjectLinks(updatedStatus, projectID)
         }
