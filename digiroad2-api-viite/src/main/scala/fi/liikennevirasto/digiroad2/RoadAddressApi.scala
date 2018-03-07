@@ -36,7 +36,6 @@ class RoadAddressApi(roadAddressService: RoadAddressService) extends  ScalatraSe
 
   get("/road_numbers?"){
     roadAddressService.getRoadNumbers()
-
   }
 
   get("/road_address/:road/?"){
@@ -73,7 +72,8 @@ class RoadAddressApi(roadAddressService: RoadAddressService) extends  ScalatraSe
   }
 
   post("/road_address/?") {
-
+    val linkIds = (parsedBody).extract[Set[Long]]
+    roadAddressService.getRoadAddressByLinkIds(linkIds, false).map(roadAddressMapper)
   }
 
   private def roadAddressMapper(roadAddress : RoadAddress) = {

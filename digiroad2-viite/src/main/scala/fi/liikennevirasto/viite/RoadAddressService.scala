@@ -828,11 +828,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  /**
-    * Methods for the interface between VIITE and OTH
-    *
-    */
-
   def getRoadNumbers(): Seq[Long] = {
     withDynSession {
       RoadAddressDAO.getRoadNumbers()
@@ -841,19 +836,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
     withDynSession {
-      RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
     }
   }
 
   def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
     withDynSession{
-      RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadNumber(road, tracks))
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumber(road, tracks))
     }
   }
 
   def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long]): Seq[RoadAddress] = {
     withDynSession {
-      RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
     }
   }
 
@@ -861,6 +856,34 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynSession {
       RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
     }
+  }
+
+  def getRoadAddressByLinkIds(linkIds: Set[Long], withFloating: Boolean): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, false, false)
+    }
+  }
+
+  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
+    Seq()
+
+    val roadAddresses =
+      withDynTransaction {
+        RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
+      }
+
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+
+    roadAddresses.flatMap { roadAddress =>
+      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+        ChangedRoadAddress(
+          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
+          link = roadLink
+        )
+      }
+    }
+
   }
 }
 
@@ -885,6 +908,8 @@ case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val historySegments: Seq[RoadAddress] = v._2
   val allSegments: Seq[RoadAddress] = currentSegments ++ historySegments
 }
+
+case class ChangedRoadAddress(roadAddress : RoadAddress, link: RoadLink)
 
 object AddressConsistencyValidator {
 
