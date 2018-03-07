@@ -125,6 +125,7 @@ trait BaseRoadAddress {
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
   def commonHistoryId: Long
+  def blackUnderline: Boolean
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -137,7 +138,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, commonHistoryId: Long) extends BaseRoadAddress {
+                       terminated: TerminationCode = NoTermination,commonHistoryId: Long, blackUnderline: Boolean = false) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
