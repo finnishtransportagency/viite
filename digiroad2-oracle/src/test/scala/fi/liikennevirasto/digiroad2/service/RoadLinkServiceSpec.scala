@@ -497,12 +497,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
 
-      val viiteRoadLinks = service.getViiteRoadLinksFromVVHByMunicipality(municipalityId)
+      val roadLinks = service.getRoadLinksFromVVHByMunicipality(municipalityId)
 
-      viiteRoadLinks.length > 0 should be (true)
-      viiteRoadLinks.head.isInstanceOf[RoadLink] should be (true)
-      viiteRoadLinks.head.linkId should be(linkId)
-      viiteRoadLinks.head.municipalityCode should be (municipalityId)
+      roadLinks.nonEmpty should be (true)
+      roadLinks.head.isInstanceOf[RoadLink] should be (true)
+      roadLinks.head.linkId should be(linkId)
+      roadLinks.head.municipalityCode should be (municipalityId)
     }
   }
 
@@ -551,7 +551,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHComplementaryClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
       when(mockVVHRoadLinkClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinks))
 
-      val roadLinksList = service.getViiteCurrentAndComplementaryRoadLinksFromVVH(235, Seq())
+      val roadLinksList = service.getCurrentAndComplementaryRoadLinksFromVVH(235, Seq())
 
       roadLinksList should have length (4)
       roadLinksList.filter(_.attributes.contains("SUBTYPE")) should have length(2)
@@ -571,7 +571,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     OracleDatabase.withDynTransaction {
       when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
       when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIdsF(any[Set[Long]])).thenReturn(Future(Seq(firstRoadLink, secondRoadLink)))
-      val serviceResult = service.getViiteRoadLinksHistoryFromVVH(Set[Long](linkId))
+      val serviceResult = service.getRoadLinksHistoryFromVVH(Set[Long](linkId))
       serviceResult.length should be (1)
       serviceResult.head.linkId should be (linkId)
       serviceResult.head.endDate should be (1000)
@@ -597,7 +597,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHRoadLinkClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)).future)
       when(mockVVHChangeInfoClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
       val service = new TestService(mockVVHClient, mockEventBus)
-      val roadLinks = service.getRoadLinksFromVVH(91)
+      val roadLinks = service.getCachedRoadLinksFromVVH(91)
 
       // Return all road links (all are incomplete here)
       val roadLink1 = RoadLink(1,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
@@ -639,7 +639,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new TestService(mockVVHClient, mockEventBus)
       when(mockVVHRoadLinkClient.fetchByLinkId(5)).thenReturn(Some(vvhRoadLink5))
 
-      val roadLinks = service.getRoadLinksFromVVH(91)
+      val roadLinks = service.getCachedRoadLinksFromVVH(91)
 
       // Return all road links (all are incomplete here)
       val roadLink1 = RoadLink(1,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.FrozenLinkInterface)
@@ -688,63 +688,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
       when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)))
 
-      val roadlinks = service.getRoadLinksWithComplementaryFromVVH(boundingBox, Set(91))
+      val roadlinks = service.getRoadLinksAndComplementaryFromVVH(boundingBox, Set(91))
 
       roadlinks.length should be(8)
       roadlinks.map(r => r.linkId).sorted should be (Seq(1,2,3,4,5,6,7,8))
 
-    }
-  }
-
-  test("Get information about changes in road names when using all other municipalities") {
-    val modifiedAt = Some(DateTime.parse("2015-05-07T12:00Z"))
-    val attributes: Map[String, Any] =
-      Map("ROADNAME_SE" -> "roadname_se",
-        "ROADNAME_FI" -> "roadname_fi",
-        "CREATED_DATE" -> BigInt.apply(1446132842000L),
-        "MUNICIPALITYCODE" -> BigInt(91))
-
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
-      .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
-    val service = new TestService(mockVVHClient)
-
-    OracleDatabase.withDynTransaction {
-      val changedVVHRoadlinks = service.getChanged(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z"))
-      changedVVHRoadlinks.length should be(1)
-      changedVVHRoadlinks.head.link.linkId should be(1611447)
-      changedVVHRoadlinks.head.link.municipalityCode should be(91)
-      changedVVHRoadlinks.head.value should be(attributes.get("ROADNAME_FI").get.toString)
-      changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
-      changedVVHRoadlinks.head.changeType should be("Modify")
-    }
-  }
-
-  test("Get information about changes in road names when using the municipalities of Ahvenanmaa") {
-    val modifiedAt = Some(DateTime.parse("2015-05-07T12:00Z"))
-    val attributes: Map[String, Any] =
-      Map("ROADNAME_SE" -> "roadname_se",
-        "ROADNAME_FI" -> "roadname_fi",
-        "CREATED_DATE" -> BigInt.apply(1446132842000L),
-        "MUNICIPALITYCODE" -> BigInt(60))
-
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
-      .thenReturn(Seq(VVHRoadlink(1611447, 60, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
-    val service = new TestService(mockVVHClient)
-
-    OracleDatabase.withDynTransaction {
-      val changedVVHRoadlinks = service.getChanged(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z"))
-      changedVVHRoadlinks.length should be(1)
-      changedVVHRoadlinks.head.link.linkId should be(1611447)
-      changedVVHRoadlinks.head.link.municipalityCode should be(60)
-      changedVVHRoadlinks.head.value should be(attributes.get("ROADNAME_SE").get.toString)
-      changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
-      changedVVHRoadlinks.head.changeType should be("Modify")
     }
   }
 
