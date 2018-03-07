@@ -125,7 +125,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       ProjectDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
-      ProjectDAO.create(projectLinks.map(l => l.copy(id = NewRoadAddress, roadPartNumber = 2L, modifiedBy = Some("User"),
+      ProjectDAO.create(projectLinks.map(l => l.copy(id = NewRoadAddress, roadPartNumber = 2L, createdBy = Some("User"),
         geometry = l.geometry.map(_ + Vector3d(0.0, 40.0, 0.0)))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(updProject, projectLinks)
@@ -275,7 +275,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       ProjectDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
       ProjectDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
-        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, modifiedBy = Some("I"))))
+        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, createdBy = Some("I"))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       ProjectValidator.checkRampContinuityCodes(updProject,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))) should have size 0
