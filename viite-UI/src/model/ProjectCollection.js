@@ -274,13 +274,15 @@
         if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
           var roadPartIds = self.getMultiSelectIds(linkId);
           var roadPartLinks = self.getByLinkId(roadPartIds);
+          var startAddrFromChangedLinks = _.min(_.map(roadPartLinks, function(link){return link.getData().startAddressM;}));
+          var userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
           var roadPartGeometries = _.map(roadPartLinks, function (roadPart) {
             return roadPart.getData().points;
           });
           var roadPartLength = _.reduce((roadPartGeometries), function (length, geom) {
             return GeometryUtils.geometryLength(geom) + length;
           }, 0.0);
-          return (userEndAddr >= (roadPartLength * (1 - ALLOWED_ADDR_M_VALUE_PERCENTAGE))) && (userEndAddr <= (roadPartLength * (1 + ALLOWED_ADDR_M_VALUE_PERCENTAGE)));
+          return (userDiffFromChangedLinks >= (roadPartLength * (1 - ALLOWED_ADDR_M_VALUE_PERCENTAGE))) && (userDiffFromChangedLinks <= (roadPartLength * (1 + ALLOWED_ADDR_M_VALUE_PERCENTAGE)));
         } else {
           return true;
         }
