@@ -224,7 +224,7 @@ trait AddressLinkBuilder {
       }
 
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
-        discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy,
+        discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.createdBy,
         nextSegment.lrmPositionId, nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
         calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated, nextSegment.commonHistoryId))
 

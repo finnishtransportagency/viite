@@ -865,7 +865,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
-    Seq()
 
     val roadAddresses =
       withDynTransaction {
@@ -883,7 +882,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         )
       }
     }
-
   }
 }
 

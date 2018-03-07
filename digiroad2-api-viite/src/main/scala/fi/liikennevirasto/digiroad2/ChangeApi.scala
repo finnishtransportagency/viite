@@ -71,11 +71,14 @@ class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet 
                     road.sideCode.value
                 }),
                 "startMeasure" -> road.startMValue,
-                "endMeasure" -> road.endMValue/*,
-                "createdBy" -> road.createdBy,
-                "modifiedAt" -> road.modifiedDate.map(DateTimePropertyFormat.print(_)),
-                "createdAt" -> road.createdDate.map(DateTimePropertyFormat.print(_)),
-                "changeType" -> extractChangeType(since, road.expired, road.createdDate)*/
+                "endMeasure" -> road.endMValue,
+                //Migrated values from OTH
+                "createdBy" -> road.createdBy
+                //Should be equal to valid from
+                //"modifiedAt" -> road.startDate.map(DateTimePropertyFormat.print(_)),
+                //"createdAt" -> road..map(DateTimePropertyFormat.print(_)),
+                //expire is when the valid from is setted with a valid value
+                //"changeType" -> extractChangeType(since, road.expired, road.createdDate)*/
               )
           )
         }

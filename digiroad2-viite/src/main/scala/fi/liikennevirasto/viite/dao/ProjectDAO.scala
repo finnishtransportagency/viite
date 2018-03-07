@@ -83,7 +83,7 @@ case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       endDate: Option[DateTime] = None, createdBy: Option[String] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
@@ -203,7 +203,7 @@ object ProjectDAO {
       addressPS.setLong(7, pl.discontinuity.value)
       addressPS.setLong(8, pl.startAddrMValue)
       addressPS.setLong(9, pl.endAddrMValue)
-      addressPS.setString(10, pl.modifiedBy.getOrElse(null))
+      addressPS.setString(10, pl.createdBy.getOrElse(null))
       addressPS.setDouble(11, CalibrationCode.getFromAddress(pl).value)
       addressPS.setLong(12, pl.status.value)
       addressPS.setLong(13, pl.roadType.value)

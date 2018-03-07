@@ -112,7 +112,7 @@ trait BaseRoadAddress {
   def endAddrMValue: Long
   def startDate: Option[DateTime]
   def endDate: Option[DateTime]
-  def modifiedBy: Option[String]
+  def createdBy: Option[String]
   def lrmPositionId : Long
   def linkId: Long
   def startMValue: Double
@@ -133,7 +133,7 @@ trait BaseRoadAddress {
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
-                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, modifiedBy: Option[String] = None,
+                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
                        lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
@@ -1238,7 +1238,7 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      val newCreatedBy = createdBy.getOrElse(address.modifiedBy.getOrElse("-"))
+      val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
       addressPS.setString(11, if(newCreatedBy == null) "-" else newCreatedBy)
       val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
