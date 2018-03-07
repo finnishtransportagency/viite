@@ -320,7 +320,7 @@ object DataFixture {
         findFloatingRoadAddresses()
       case Some("import_road_addresses") =>
         if (args.length > 1)
-          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"), Some(args(1)))
+          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("viitetestuser"), Some(args(1)))
         else
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
