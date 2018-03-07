@@ -692,7 +692,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
     val knownRoadLinks = allRoadLinks.filter(rl => {
-      addresses.contains(rl.linkId)
+      addresses.contains(rl.linkId) || rl.linkSource == LinkGeomSource.SuravageLinkInterface
     })
 
     val viiteRoadLinks = knownRoadLinks.map { rl =>
@@ -700,7 +700,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
     }.toMap
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks, viiteRoadLinks)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(knownRoadLinks, viiteRoadLinks)
     publishChangeSet(changeSet)
     filledTopology
   }
