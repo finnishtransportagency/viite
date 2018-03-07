@@ -1353,7 +1353,7 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
-  def getRoadAddress(queryFilter: String => String): Seq[RoadAddress] = {
+  def getRoadAddressByFilter(queryFilter: String => String): Seq[RoadAddress] = {
     val query = s"""
          select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
           ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
