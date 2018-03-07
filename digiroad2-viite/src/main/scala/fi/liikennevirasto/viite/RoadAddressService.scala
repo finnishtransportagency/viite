@@ -134,7 +134,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val combinedFuture = fetchBoundingBoxF(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val roadAddressLinks = getRoadAddressLinks(combinedFuture, boundingRectangle, Seq(), municipalities, everything)
     val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, municipalities, combinedFuture)
-    suravageAddresses ++ roadAddressLinks
+    setBlackUnderline(suravageAddresses ++ roadAddressLinks)
   }
 
   private def withTiming[T](f: => T, s: String): T = {
@@ -280,7 +280,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val returningTopology = filledTopology.filterNot(p => p.anomaly == Anomaly.NoAddressGiven)
 
-    returningTopology ++ missingFloating
+    setBlackUnderline(returningTopology ++ missingFloating)
 
   }
 
@@ -298,7 +298,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val buildEndTime = System.currentTimeMillis()
     logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
 
-    viiteRoadLinks.values.toSeq
+   setBlackUnderline(viiteRoadLinks.values.toSeq)
   }
 
   /**
@@ -875,6 +875,46 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     groupedChanges.foreach{ group =>
       println(s"""changeType: ${group._1}""" + "\n" + group._2.foldLeft("")((stream, nextChange) => concatenate(nextChange, stream))+ "\n")
     }
+  }
+
+  /**
+    * This will define what road_addresses should have a black outline according to the following rule:
+    * Address must have road type = 3 (MunicipalityStreetRoad)
+    * The length of all addresses in the same road number and road part number that posses road type = 3  must be
+    * bigger than the combined length of ALL the road numbers that have the same road number and road part number divided by 2.
+    * @param addresses Sequence of all road addresses that were fetched
+    * @return Sequence of road addresses properly tagged in order to get the
+    */
+  private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    logger.info("Starting the setting of the blackUnderline")
+    val groupedAddresses = addresses.groupBy(a => (a.roadNumber, a.roadPartNumber))
+    groupedAddresses.flatMap(grouped => {
+      val (number, part) = grouped._1
+      val addresses = grouped._2
+      val (municipalityAddresses, regularAddresses) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
+      if (municipalityAddresses.nonEmpty) {
+        logger.info(s"Found municipality roads, fetching by roadNumber: $number and roadPartNumber: $part")
+        withDynTransaction {
+          val fullRoads = RoadAddressDAO.fetchByRoadPart(number, part)
+          val allMunicipalityAddresses = fullRoads.filter(_.roadType == RoadType.MunicipalityStreetRoad)
+          if (allMunicipalityAddresses.nonEmpty) {
+            logger.info(s"Within the fetch, found municipality roads, testing lengths")
+            val fullRoadLength = fullRoads.map(r => GeometryUtils.geometryLength(r.geometry)).sum
+            val municipalityLength = allMunicipalityAddresses.map(r => GeometryUtils.geometryLength(r.geometry)).sum
+            if (municipalityLength >= fullRoadLength / 2) {
+              logger.info(s"Municipality roads summed geometryLength >= fetchedRoads summed geometryLength / 2, all are eligible for black underline")
+              (municipalityAddresses.map(_.copy(blackUnderline = true)) ++ regularAddresses).sortBy(_.endAddressM)
+            } else {
+              addresses
+            }
+          } else {
+            addresses
+          }
+        }
+      } else {
+        addresses
+      }
+    }).toSeq
   }
 }
 
