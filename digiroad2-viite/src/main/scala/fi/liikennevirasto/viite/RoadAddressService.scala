@@ -76,23 +76,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val historyLinkAddresses = floatingHistoryRoadLinks.flatMap(fh => {
       buildFloatingRoadAddressLink(fh, floatingAddresses.filter(_.linkId == fh.linkId))
     })
-    val addressesWithCalibrationP = nonFloatingAddresses.map{
-      ad =>
-        val cps: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-          val stCp = ad.calibrationPoints._1 match {
-            case Some(calibrationPoint) => Option(ad.calibrationPoints._1.get.copy(segmentMValue = if (ad.sideCode == SideCode.AgainstDigitizing) ad.endMValue - ad.startMValue else ad.startMValue))
-            case _ => None
-          }
-          val endCp = ad.calibrationPoints._2 match {
-            case Some(calibrationPoint) => Option(ad.calibrationPoints._2.get.copy(segmentMValue = if (ad.sideCode == SideCode.AgainstDigitizing) ad.startMValue else ad.endMValue - ad.startMValue))
-            case _ => None
-          }
-          (stCp, endCp)
-        }
-        ad.copy(calibrationPoints = cps)
-    }
 
-    RoadAddressResult(historyLinkAddresses, addressesWithCalibrationP, floatingAddresses)
+    RoadAddressResult(historyLinkAddresses, nonFloatingAddresses, floatingAddresses)
   }
 
   private def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
