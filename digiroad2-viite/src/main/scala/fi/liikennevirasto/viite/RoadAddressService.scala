@@ -692,7 +692,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
     val knownRoadLinks = allRoadLinks.filter(rl => {
-      addresses.contains(rl.linkId) || rl.linkSource == LinkGeomSource.SuravageLinkInterface
+      addresses.contains(rl.linkId)
     })
 
     val viiteRoadLinks = knownRoadLinks.map { rl =>
