@@ -47,12 +47,12 @@ trait RoadAddressMapper {
       val startCP = ra.startCalibrationPoint match {
         case None => None
         case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) Math.max(startM, endM) else 0.0)) else None
+          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) GeometryUtils.geometryLength(ra.geometry) else 0.0)) else None
       }
       val endCP = ra.endCalibrationPoint match {
         case None => None
         case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
+          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) GeometryUtils.geometryLength(ra.geometry) else 0.0)) else None
       }
       ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
@@ -138,7 +138,7 @@ trait RoadAddressMapper {
     if (addr.startAddrMValue != cp.addressMValue)
       throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
     if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-      addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
+      addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - GeometryUtils.geometryLength(addr.geometry)) > MaxAllowedMValueError)
       throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
   }
 
@@ -148,7 +148,7 @@ trait RoadAddressMapper {
     if (Math.abs(cp.segmentMValue -
       (addr.sideCode match {
         case SideCode.AgainstDigitizing => 0.0
-        case SideCode.TowardsDigitizing => addr.endMValue
+        case SideCode.TowardsDigitizing => GeometryUtils.geometryLength(addr.geometry)
         case _ => Double.NegativeInfinity
       })
     ) > MinAllowedRoadAddressLength)

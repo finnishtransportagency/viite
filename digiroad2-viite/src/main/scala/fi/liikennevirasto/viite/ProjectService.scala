@@ -1031,13 +1031,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw new ProjectValidationException(ErrorSplitSuravageNotUpdatable)
         userDefinedEndAddressM.map(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
-          val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, addressM)
+          val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.geometryLength, addressM)
           // TODO: remove calibration points that exist elsewhere except at the link end or start
-          val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue)
+          val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.geometryLength)
           if (foundCalibrationPoint.isEmpty)
             CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
           else
-            CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, addressM)
+            CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.geometryLength, addressM)
           Seq(CalibrationPoint)
         })
         linkStatus match {
