@@ -3,12 +3,15 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.viite.{ChangedRoadAddress, RoadAddressService}
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 
 
 class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+  val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
@@ -72,13 +75,10 @@ class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet 
                 }),
                 "startMeasure" -> road.startMValue,
                 "endMeasure" -> road.endMValue,
-                //Migrated values from OTH
-                "createdBy" -> road.createdBy
-                //Should be equal to valid from
-                //"modifiedAt" -> road.startDate.map(DateTimePropertyFormat.print(_)),
-                //"createdAt" -> road..map(DateTimePropertyFormat.print(_)),
-                //expire is when the valid from is setted with a valid value
-                //"changeType" -> extractChangeType(since, road.expired, road.createdDate)*/
+                "createdBy" -> road.createdBy,
+                "modifiedAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
+                "changeType" -> extractChangeType(since, road.isExpire(), road.validFrom)
               )
           )
         }
