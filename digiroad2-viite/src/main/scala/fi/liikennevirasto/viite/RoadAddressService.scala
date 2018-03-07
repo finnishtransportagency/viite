@@ -3,7 +3,7 @@ import java.net.ConnectException
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
@@ -76,7 +76,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val historyLinkAddresses = floatingHistoryRoadLinks.flatMap(fh => {
       buildFloatingRoadAddressLink(fh, floatingAddresses.filter(_.linkId == fh.linkId))
     })
-    RoadAddressResult(historyLinkAddresses, nonFloatingAddresses, floatingAddresses)
+    val addressesWithCalibrationP = nonFloatingAddresses.map{
+      ad =>
+        val cps: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+          val stCp = ad.calibrationPoints._1 match {
+            case Some(calibrationPoint) => Option(ad.calibrationPoints._1.get.copy(segmentMValue = if (ad.sideCode == SideCode.AgainstDigitizing) ad.endMValue - ad.startMValue else ad.startMValue))
+            case _ => None
+          }
+          val endCp = ad.calibrationPoints._2 match {
+            case Some(calibrationPoint) => Option(ad.calibrationPoints._2.get.copy(segmentMValue = if (ad.sideCode == SideCode.AgainstDigitizing) ad.startMValue else ad.endMValue - ad.startMValue))
+            case _ => None
+          }
+          (stCp, endCp)
+        }
+        ad.copy(calibrationPoints = cps)
+    }
+
+    RoadAddressResult(historyLinkAddresses, addressesWithCalibrationP, floatingAddresses)
   }
 
   private def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
@@ -158,7 +174,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val suravageLinkIds = suravageLinks.map(_.linkId).toSet
     val allRoadLinks = roadLinks++complementaryLinks
     val linkIds = complementaryLinkIds ++ normalRoadLinkIds ++ suravageLinkIds
-    
+
     val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(),
       addressMaps)
     val missedRL = withTiming(
@@ -268,7 +284,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] ={
+  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] = {
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating = false, onlyNormalRoads = true, roadNumberLimits))
 
@@ -282,10 +298,44 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val buildEndTime = System.currentTimeMillis()
     logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
 
-    setBlackUnderline(viiteRoadLinks.values.toSeq)
+   setBlackUnderline(viiteRoadLinks.values.toSeq)
   }
 
-  def applyChanges(roadLinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+  /**
+    * Checks that  length is same after change  (used in type 1 and type 2)
+    *
+    * @param change change case class
+    * @return true if stays with in epsilon
+    */
+  private def changedLenghtStaySame(change: ChangeInfo): Boolean = {
+    val difference=(change.oldEndMeasure.getOrElse(0D) - change.oldStartMeasure.getOrElse(0D)) -
+      (change.newEndMeasure.getOrElse(0D) - change.newStartMeasure.getOrElse(0D))
+    if (difference.abs < Epsilon) {
+      return true
+    } else
+      logger.error("Change message for change " + change.toString + "failed due to lenghtg not being same before and after change")
+    false
+  }
+
+  /**
+    * Sanity checks for changes. We dont want to solely trust VVH messages, thus we do some sanity checks and drop insane ones
+    *
+    * @param changes
+    * @return sane changetypes
+    */
+
+  def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
+    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
+      || x.changeType == ChangeType.CombinedRemovedPart.value)
+    val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
+    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
+      || x.changeType == ChangeType.CombinedRemovedPart.value)
+    sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
+  }
+
+  def applyChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], addresses:
+  Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+    val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
     else

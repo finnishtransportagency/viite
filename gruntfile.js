@@ -51,10 +51,10 @@ module.exports = function(grunt) {
     },
     cachebreaker: {
       options: {
-        match: ['digiroad2.css'],
+        match: ['viite.css'],
         replacement: 'md5',
         src: {
-          path: 'dist/css/digiroad2.css'
+          path: 'dist-viite/css/viite.css'
         }
       },
       files: {

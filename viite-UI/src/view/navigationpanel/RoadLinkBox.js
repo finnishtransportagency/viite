@@ -248,7 +248,7 @@
         container.append(roadProjectOperations());
         container.append(calibrationPointPicture);
       } else {
-        $('.panel-actions').remove();
+        $('.panel-actions').hide();
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
         roadClassLegend.append(constructionTypeLegendEntries);
