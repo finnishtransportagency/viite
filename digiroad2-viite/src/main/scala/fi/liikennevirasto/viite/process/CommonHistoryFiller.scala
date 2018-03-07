@@ -38,16 +38,25 @@ object CommonHistoryFiller {
     }
 
   private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
-    // TODO
-
     val newLinks = projectLinks.filter(_.status == LinkStatus.New)
-    val addresses = newLinks.flatMap(pl => newRoadAddresses.find(_.id == pl.roadAddressId))
-    if(addresses.nonEmpty) {
-      val groups = addresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
-
-
-      //WIP
-      newRoadAddresses
+    val addressesGroups = newLinks.flatMap(pl => newRoadAddresses.find(_.id == pl.roadAddressId))
+    if(addressesGroups.nonEmpty) {
+      addressesGroups.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType)).flatMap{ group =>
+        val addressesInGroup = group._2
+        addressesInGroup.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]){ case (seq, address) =>
+          val changedAddress = if(seq.isEmpty) {
+            val nextId = Sequences.nextCommonHistorySeqValue
+            address.copy(commonHistoryId = nextId)
+          } else {
+            if(address.startAddrMValue != seq.last.endAddrMValue ){
+              val nextId = Sequences.nextCommonHistorySeqValue
+              address.copy(commonHistoryId = nextId)
+            } else
+              address.copy(commonHistoryId = seq.last.commonHistoryId)
+          }
+          Seq(changedAddress)
+        }
+      }.toSeq
     }
     else newRoadAddresses
   }
