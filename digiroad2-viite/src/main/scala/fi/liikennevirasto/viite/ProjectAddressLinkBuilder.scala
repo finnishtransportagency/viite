@@ -15,7 +15,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val roadLinkType = pl.linkGeomSource match {
       case NormalLinkInterface => NormalRoadLinkType
       case ComplimentaryLinkInterface => ComplementaryRoadLinkType
-      case SuravageLinkInterface => SuravageRoadLink
+      case SuravageLinkInterface => SuravageRoadLinkType
       case FrozenLinkInterface => NormalRoadLinkType
       case HistoryLinkInterface => FloatingRoadLinkType
       case LinkGeomSource.Unknown => UnknownRoadLinkType
@@ -49,7 +49,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val roadLinkType = roadLink.linkSource match {
       case NormalLinkInterface => NormalRoadLinkType
       case ComplimentaryLinkInterface => ComplementaryRoadLinkType
-      case SuravageLinkInterface => SuravageRoadLink
+      case SuravageLinkInterface => SuravageRoadLinkType
       case FrozenLinkInterface => NormalRoadLinkType
       case HistoryLinkInterface => FloatingRoadLinkType
       case LinkGeomSource.Unknown => UnknownRoadLinkType
