@@ -638,13 +638,16 @@ object ProjectValidator {
       val grouped = anomalousAtBorders.groupBy(anom => {
         (anom.roadNumber, anom.track, anom.discontinuity)
       })
-      val remaining = grouped.mapValues(addresses => {
+      val (groupedTrueAnomalous, possibleAnomalous) = grouped.partition(_._2.length <= 1)
+      val trueAnomalous = groupedTrueAnomalous.values.flatten.toSeq
+      val remaining = possibleAnomalous.mapValues(addresses => {
         addresses.sliding(2).toSeq.filterNot(a => {
           GeometryUtils.areAdjacent(a.head.geometry, a.last.geometry)
         }).flatten
-      })
+      }).values.flatten.toSeq
 
-      error(ValidationErrorList.TerminationContinuity)(remaining.values.flatten.toSeq)
+
+      error(ValidationErrorList.TerminationContinuity)(trueAnomalous ++ remaining)
     }
 
     /**
