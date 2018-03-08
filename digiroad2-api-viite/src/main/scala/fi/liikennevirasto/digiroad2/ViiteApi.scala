@@ -22,6 +22,7 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
 
+import scala.reflect.macros.blackbox
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
@@ -765,7 +766,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "endMValue" -> roadAddressLink.endMValue,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
-      "roadLinkSource" -> roadAddressLink.roadLinkSource.value
+      "roadLinkSource" -> roadAddressLink.roadLinkSource.value,
+      "blackUnderline" -> roadAddressLink.blackUnderline
     )
   }
 
