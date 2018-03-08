@@ -3,7 +3,7 @@ import java.net.ConnectException
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
@@ -60,7 +60,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                               everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Seq[RoadLink]) = {
-    val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads,frozenTimeVVHAPIServiceEnabled))
+    val roadLinksF = Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads,frozenTimeVVHAPIServiceEnabled))
     val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
     val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
     (roadLinks, complementaryLinks)
@@ -72,11 +72,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating, onlyNormalRoads, roadNumberLimits).partition(_.floating)
     }
     val floatingHistoryRoadLinks = withDynTransaction {
-      roadLinkService.getViiteRoadLinksHistoryFromVVH(floatingAddresses.map(_.linkId).toSet)
+      roadLinkService.getRoadLinksHistoryFromVVH(floatingAddresses.map(_.linkId).toSet)
     }
     val historyLinkAddresses = floatingHistoryRoadLinks.flatMap(fh => {
       buildFloatingRoadAddressLink(fh, floatingAddresses.filter(_.linkId == fh.linkId))
     })
+
     RoadAddressResult(historyLinkAddresses, nonFloatingAddresses, floatingAddresses)
   }
 
@@ -99,7 +100,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getSuravageRoadLinkAddressesByLinkIds(linkIdsToGet: Set[Long]): Seq[RoadAddressLink] = {
-    val suravageLinks = roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIdsToGet)
+    val suravageLinks = roadLinkService.getSuravageRoadLinksFromVVH(linkIdsToGet)
     suravageLinks.map( suravage=>RoadAddressLinkBuilder.buildSuravageRoadAddressLink(suravage))
   }
 
@@ -108,7 +109,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(boundingRectangle, municipalities),
       Future(fetchRoadAddressesByBoundingBox(boundingRectangle)),
-      Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads,frozenTimeVVHAPIServiceEnabled)),
+      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads,frozenTimeVVHAPIServiceEnabled)),
       Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)),
       roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, municipalities)
     )
@@ -119,7 +120,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val combinedFuture = fetchBoundingBoxF(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val roadAddressLinks = getRoadAddressLinks(combinedFuture, boundingRectangle, Seq(), municipalities, everything)
     val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, municipalities, combinedFuture)
-    suravageAddresses ++ roadAddressLinks
+    setBlackUnderline(suravageAddresses ++ roadAddressLinks)
   }
 
   private def withTiming[T](f: => T, s: String): T = {
@@ -159,7 +160,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val suravageLinkIds = suravageLinks.map(_.linkId).toSet
     val allRoadLinks = roadLinks++complementaryLinks
     val linkIds = complementaryLinkIds ++ normalRoadLinkIds ++ suravageLinkIds
-    
+
     val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(),
       addressMaps)
     val missedRL = withTiming(
@@ -233,7 +234,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = if (!frozenTimeVVHAPIServiceEnabled) roadLinkService.getChangeInfoFromVVHF(addressLinkIds) else Future(Seq())
 
-    val roadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressLinkIds,newTransaction,frozenTimeVVHAPIServiceEnabled)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressLinkIds,newTransaction,frozenTimeVVHAPIServiceEnabled)
 
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
@@ -265,11 +266,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val returningTopology = filledTopology.filterNot(p => p.anomaly == Anomaly.NoAddressGiven)
 
-    returningTopology ++ missingFloating
+    setBlackUnderline(returningTopology ++ missingFloating)
 
   }
 
-  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] ={
+  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] = {
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating = false, onlyNormalRoads = true, roadNumberLimits))
 
@@ -283,10 +284,44 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val buildEndTime = System.currentTimeMillis()
     logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
 
-   viiteRoadLinks.values.toSeq
+   setBlackUnderline(viiteRoadLinks.values.toSeq)
   }
 
-  def applyChanges(roadLinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+  /**
+    * Checks that  length is same after change  (used in type 1 and type 2)
+    *
+    * @param change change case class
+    * @return true if stays with in epsilon
+    */
+  private def changedLenghtStaySame(change: ChangeInfo): Boolean = {
+    val difference=(change.oldEndMeasure.getOrElse(0D) - change.oldStartMeasure.getOrElse(0D)) -
+      (change.newEndMeasure.getOrElse(0D) - change.newStartMeasure.getOrElse(0D))
+    if (difference.abs < Epsilon) {
+      return true
+    } else
+      logger.error("Change message for change " + change.toString + "failed due to lenghtg not being same before and after change")
+    false
+  }
+
+  /**
+    * Sanity checks for changes. We dont want to solely trust VVH messages, thus we do some sanity checks and drop insane ones
+    *
+    * @param changes
+    * @return sane changetypes
+    */
+
+  def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
+    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
+      || x.changeType == ChangeType.CombinedRemovedPart.value)
+    val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
+    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
+      || x.changeType == ChangeType.CombinedRemovedPart.value)
+    sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
+  }
+
+  def applyChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], addresses:
+  Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+    val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
     else
@@ -327,7 +362,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getMissingRoadAddresses(roadNumberLimits: Seq[(Int, Int)], municipality: Int): Seq[MissingRoadAddress] = {
     val (addresses, missedRL, roadLinks) =
       withDynTransaction {
-        val roadLinks = roadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumberLimits, frozenTimeVVHAPIServiceEnabled)
+        val roadLinks = roadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumberLimits, frozenTimeVVHAPIServiceEnabled)
         val linkIds = roadLinks.map(_.linkId).toSet
         val addr = RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
         val missingLinkIds = linkIds -- addr.keySet
@@ -390,7 +425,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits).groupBy(_.linkId)
     }
 
-    val vvhRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.keySet,newTransaction,frozenTimeVVHAPIServiceEnabled)
+    val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet,newTransaction,frozenTimeVVHAPIServiceEnabled)
     val combined = addresses.mapValues(combineGeom)
     val roadLinks = vvhRoadLinks.map(rl => rl -> combined(rl.linkId)).toMap
 
@@ -404,7 +439,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val addresses = withDynTransaction {
       RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits, coarse = true).groupBy(_.linkId)
     }
-    val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
+    val roadLinks = roadLinkService.getRoadPartsFromVVH(addresses.keySet, municipalities)
     val groupedLinks = roadLinks.flatMap { rl =>
       val ra = addresses.getOrElse(rl.linkId, List())
       buildRoadAddressLink(rl, ra, Seq())
@@ -442,7 +477,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         RoadAddressDAO.getMissingRoadAddresses(Set(id)))
     }
     val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
-    val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id),frozenTimeVVHAPIServiceEnabled)
+    val (roadLinks, vvhHistoryLinks) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(Set(id),frozenTimeVVHAPIServiceEnabled)
     (anomaly, addresses.size, roadLinks.size) match {
       case (_, 0, 0) => List() // No road link currently exists and no addresses on this link id => ignore
       case (Anomaly.GeometryChanged, _, _) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
@@ -477,7 +512,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getTargetRoadLink(linkId: Long): RoadAddressLink = {
-    val (roadLinks, _) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(linkId),frozenTimeVVHAPIServiceEnabled)
+    val (roadLinks, _) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(Set(linkId),frozenTimeVVHAPIServiceEnabled)
     if (roadLinks.isEmpty) {
       throw new InvalidAddressDataException(s"Can't find road link for target link id $linkId")
     } else{
@@ -616,7 +651,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       // TODO This if statement will be removed after the frozen links are no longer needed and jut use the cache
       if (frozenTimeVVHAPIServiceEnabled) {
         val roadLinks = {
-          val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality, frozenTimeVVHAPIServiceEnabled)
+          val tempRoadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, frozenTimeVVHAPIServiceEnabled)
           if (tempRoadLinks == null)
             Seq.empty[RoadLink]
           else tempRoadLinks
@@ -681,7 +716,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
     val adjacentAddresses = getAdjacentAddresses(chainLinks, linkId, roadNumber, roadPartNumber, Track.apply(trackCode))
     val adjacentLinkIds = adjacentAddresses.map(_.linkId).toSet
-    val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds,frozenTimeVVHAPIServiceEnabled)
+    val roadLinks = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds,frozenTimeVVHAPIServiceEnabled)
     val adjacentAddressLinks = roadLinks._1.map(rl => rl.linkId -> rl).toMap
     val historyLinks = roadLinks._2.groupBy(rl => rl.linkId)
 
@@ -699,11 +734,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long): Seq[RoadAddressLink] = {
-    val chainRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(chainLinks,newTransaction,frozenTimeVVHAPIServiceEnabled)
+    val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks,newTransaction,frozenTimeVVHAPIServiceEnabled)
     val pointCloud = chainRoadLinks.map(_.geometry).map(GeometryUtils.geometryEndpoints).flatMap(x => Seq(x._1, x._2))
     val boundingPoints = GeometryUtils.boundingRectangleCorners(pointCloud)
     val boundingRectangle = BoundingRectangle(boundingPoints._1 + Vector3d(-.1, .1, 0.0), boundingPoints._2 + Vector3d(.1, -.1, 0.0))
-    val connectedLinks =  roadLinkService.getRoadLinksAndChangesFromVVHWithFrozenTimeAPI(boundingRectangle,Set(),frozenTimeVVHAPIServiceEnabled)._1
+    val connectedLinks =  roadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(boundingRectangle,frozenTimeVVHAPIServiceEnabled)._1
       .filterNot(rl => chainLinks.contains(rl.linkId))
       .filter{rl =>
         val endPoints = GeometryUtils.geometryEndpoints(rl.geometry)
@@ -717,7 +752,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
     val transferredRoadAddresses = getRoadAddressesAfterCalculation(sources, targets, user)
-    val target = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet,newTransaction,frozenTimeVVHAPIServiceEnabled)
+    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet,newTransaction,frozenTimeVVHAPIServiceEnabled)
     transferredRoadAddresses.filter(_.endDate.isEmpty).map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
   }
 
@@ -882,6 +917,46 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         )
       }
     }
+  }
+
+  /**
+    * This will define what road_addresses should have a black outline according to the following rule:
+    * Address must have road type = 3 (MunicipalityStreetRoad)
+    * The length of all addresses in the same road number and road part number that posses road type = 3  must be
+    * bigger than the combined length of ALL the road numbers that have the same road number and road part number divided by 2.
+    * @param addresses Sequence of all road addresses that were fetched
+    * @return Sequence of road addresses properly tagged in order to get the
+    */
+  private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    logger.info("Starting the setting of the blackUnderline")
+    val groupedAddresses = addresses.groupBy(a => (a.roadNumber, a.roadPartNumber))
+    groupedAddresses.flatMap(grouped => {
+      val (number, part) = grouped._1
+      val addresses = grouped._2
+      val (municipalityAddresses, regularAddresses) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
+      if (municipalityAddresses.nonEmpty) {
+        logger.info(s"Found municipality roads, fetching by roadNumber: $number and roadPartNumber: $part")
+        withDynTransaction {
+          val fullRoads = RoadAddressDAO.fetchByRoadPart(number, part)
+          val allMunicipalityAddresses = fullRoads.filter(_.roadType == RoadType.MunicipalityStreetRoad)
+          if (allMunicipalityAddresses.nonEmpty) {
+            logger.info(s"Within the fetch, found municipality roads, testing lengths")
+            val fullRoadLength = fullRoads.map(r => GeometryUtils.geometryLength(r.geometry)).sum
+            val municipalityLength = allMunicipalityAddresses.map(r => GeometryUtils.geometryLength(r.geometry)).sum
+            if (municipalityLength >= fullRoadLength / 2) {
+              logger.info(s"Municipality roads summed geometryLength >= fetchedRoads summed geometryLength / 2, all are eligible for black underline")
+              (municipalityAddresses.map(_.copy(blackUnderline = true)) ++ regularAddresses).sortBy(_.endAddressM)
+            } else {
+              addresses
+            }
+          } else {
+            addresses
+          }
+        }
+      } else {
+        addresses
+      }
+    }).toSeq
   }
 }
 

@@ -56,7 +56,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   }
 
   def checkRoadNetwork(username: String = ""): List[RoadAddress] = {
-    val roadNumbers = if (username.startsWith("dr2dev") || username.startsWith("dr2test")) {
+    val roadNumbers = if (username.startsWith("dr2dev") || username.startsWith("viitetestuser")) {
       RoadAddressDAO.getValidRoadNumbersWithFilterToTestAndDevEnv
     } else {
       RoadAddressDAO.getCurrentValidRoadNumbers()

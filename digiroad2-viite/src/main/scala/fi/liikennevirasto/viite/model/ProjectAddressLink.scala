@@ -52,7 +52,7 @@ case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                               startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
                               anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, reversed: Boolean = false,
-                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None) extends ProjectAddressLinkLike {
+                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None, blackUnderline: Boolean = false) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
