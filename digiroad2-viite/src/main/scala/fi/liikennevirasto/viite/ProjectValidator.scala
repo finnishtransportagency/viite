@@ -627,8 +627,27 @@ object ProjectValidator {
       val startRoad = groupedProjectLinks.head
       val endRoad = groupedProjectLinks.last
       val anomalousAtBorders = checkValidation(startRoad, endRoad)
+      /*
+      We check the possible anomalous roads if they are:
+        Adjacent
+        Share the same track code and road number
+        Are continuous
+      If we have all those conditions then we discard them for they are not anomalous then it means that those roads are in the same road address number and
+      only changed part, therefore there is no logic in defining their discontinuity as "End of Road".
+       */
+      val grouped = anomalousAtBorders.groupBy(anom => {
+        (anom.roadNumber, anom.track, anom.discontinuity)
+      })
+      val (groupedTrueAnomalous, possibleAnomalous) = grouped.partition(_._2.length <= 1)
+      val trueAnomalous = groupedTrueAnomalous.values.flatten.toSeq
+      val remaining = possibleAnomalous.mapValues(addresses => {
+        addresses.sliding(2).toSeq.filterNot(a => {
+          GeometryUtils.areAdjacent(a.head.geometry, a.last.geometry)
+        }).flatten
+      }).values.flatten.toSeq
 
-      error(ValidationErrorList.TerminationContinuity)(anomalousAtBorders)
+
+      error(ValidationErrorList.TerminationContinuity)(trueAnomalous ++ remaining)
     }
 
     /**
