@@ -50,7 +50,7 @@ class RoadNetworkService {
       try {
         ExportLockDAO.insert
         RoadAddressDAO.lockRoadAddressWriting
-        RoadNetworkDAO.removeNetworkErrors
+//        RoadNetworkDAO.removeNetworkErrors
         val allRoads = RoadAddressDAO.fetchAllCurrentRoads(options).groupBy(_.roadNumber).flatMap(road => {
           val groupedRoadParts = road._2.groupBy(_.roadPartNumber).toSeq.sortBy(_._1)
           val lastRoadAddress = groupedRoadParts.last._2.sortBy(g => (g.track.value, g.startAddrMValue)).last
