@@ -39,7 +39,6 @@ object CommonHistoryFiller {
     }
 
   private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
-    val newLinks = projectLinks.filter(_.status == LinkStatus.New)
     val addressesGroups = newRoadAddresses.filter(_.id == NewRoadAddress)
     if(addressesGroups.nonEmpty) {
       addressesGroups.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType)).flatMap{ group =>
