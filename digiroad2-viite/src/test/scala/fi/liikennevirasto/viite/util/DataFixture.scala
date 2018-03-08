@@ -301,18 +301,21 @@ object DataFixture {
       println(s"Going to check roads for ely $ely")
       val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
       println(s"Got ${roads.size} for ely $ely")
-      roads.groupBy(r => (r.linkId, r.commonHistoryId)).foreach(group => {
+      val roadErrors = roads.groupBy(r => (r.linkId, r.commonHistoryId)).map(group => {
         println(s"Validating linkid: ${group._1._1}, common_history_id: ${group._1._2}")
         val roadGroup = group._2
         val errorRoad = roadGroup.find(r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue)
         errorRoad match {
           case Some(road) => {
-            println(s"Error in check for road address with id ${road.id} ")
-            RoadNetworkDAO.addRoadNetworkError(road.id, InconsistentLrmHistory.value)
+            println(s"Error in lrm check for road address with id ${road.id} ")
+            road
           }
-          case _ =>
         }
       })
+      println(s"Found ${roadErrors.size} errors for ely $ely")
+      OracleDatabase.withDynTransaction {
+        roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+      }
     })
 
   }
