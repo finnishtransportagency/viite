@@ -1000,7 +1000,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
       when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
       val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
-      roadAddresses.size should be (0)
+      roadAddresses.count(_.roadNumber > 0) should be (0)
     }
   }
 
@@ -1016,7 +1016,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
       when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
       val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
-      roadAddresses.size should be (0)
+      roadAddresses.count(_.roadNumber > 0) should be (0)
     }
   }
 
