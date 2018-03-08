@@ -953,6 +953,8 @@ object AddressConsistencyValidator {
       def message: String = ErrorOverlappingRoadAddress}
     case object InconsistentTopology extends AddressError {def value = 2
       def message: String = ErrorInconsistentTopology}
+    case object InconsistentLrmHistory extends AddressError{def value = 3
+      def message: String = ErrorInconsistentLrmHistory}
 
     def apply(intValue: Int): AddressError = {
       values.find(_.value == intValue).get
