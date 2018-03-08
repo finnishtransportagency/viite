@@ -300,11 +300,11 @@ object DataFixture {
     elyCodes.foreach(ely => {
       println(s"Going to check roads for ely $ely")
       val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
-      println(s"Got ${roads.size} for ely $ely")
+      println(s"Got ${roads.size} road addresses for ely $ely")
       val roadErrors = roads.groupBy(r => (r.linkId, r.commonHistoryId)).foldLeft(Seq.empty[RoadAddress])((errorList, group) => {
-        println(s"Validating linkid: ${group._1._1}, common_history_id: ${group._1._2}")
         val roadGroup = group._2
-        val errorRoad = roadGroup.find(r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue)
+        val errorRoad = roadGroup.find(
+          r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue || r.sideCode != roadGroup.head.sideCode)
         errorRoad match {
           case Some(road) =>
             println(s"Error in lrm check for road address with id ${road.id} ")
