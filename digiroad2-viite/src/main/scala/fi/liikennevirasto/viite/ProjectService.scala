@@ -1476,7 +1476,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
 
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
-    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet, true).map(ra => ra.id -> ra).toMap
+    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
     if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size){
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
@@ -1559,7 +1559,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case UnChanged | Terminated =>
         None
       case Transfer | Numbering =>
-        Some(roadAddress.copy(id = NewRoadAddress, endDate = pl.startDate))
+        Some(roadAddress.copy(endDate = pl.startDate))
       case _ =>
         logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
         throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
