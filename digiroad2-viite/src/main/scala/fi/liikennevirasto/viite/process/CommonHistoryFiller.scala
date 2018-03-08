@@ -29,7 +29,7 @@ object CommonHistoryFiller {
                 } else
                   address.copy(commonHistoryId = seq.last.commonHistoryId)
               }
-              Seq(changedAddress)
+              seq++Seq(changedAddress)
             }
           }
         }.toSeq
