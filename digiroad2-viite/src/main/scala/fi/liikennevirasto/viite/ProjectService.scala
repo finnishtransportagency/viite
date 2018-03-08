@@ -1519,7 +1519,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def convertProjectLinkToRoadAddress(pl: ProjectLink, project: RoadAddressProject,
                                               source: Option[RoadAddress]): RoadAddress = {
     val geom = if (pl.geometry.nonEmpty) {
-      val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(pl.geometry, pl.startMValue, pl.endMValue))
+      val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(pl.geometry, 0, pl.endMValue - pl.startMValue))
       if (pl.sideCode == SideCode.TowardsDigitizing)
         Seq(linkGeom._1, linkGeom._2)
       else
