@@ -204,7 +204,7 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
-      val (roadLinks, changedRoadLinks) = roadLinkService.getFrozenViiteRoadLinksAndChangesFromVVH(municipality.toInt,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+      val (roadLinks, changedRoadLinks) = roadLinkService.getFrozenRoadLinksAndChangesFromVVH(municipality.toInt,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
@@ -278,7 +278,7 @@ object DataFixture {
         val cacLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIds)
           .map(rl => rl.linkId -> rl.linkSource).toMap
         // If not present in current and complementary, check the historic links, too
-        val vvhHistoryLinks = roadLinkService.getViiteRoadLinksHistoryFromVVH(linkIds -- cacLinks.keySet)
+        val vvhHistoryLinks = roadLinkService.getRoadLinksHistoryFromVVH(linkIds -- cacLinks.keySet)
           .map(rl => rl.linkId -> LinkGeomSource.HistoryLinkInterface).toMap
         val vvhLinks = cacLinks ++ vvhHistoryLinks
         val updated = roadAddressSeq
@@ -320,7 +320,7 @@ object DataFixture {
         findFloatingRoadAddresses()
       case Some("import_road_addresses") =>
         if (args.length > 1)
-          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"), Some(args(1)))
+          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("viitetestuser"), Some(args(1)))
         else
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>

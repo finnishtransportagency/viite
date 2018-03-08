@@ -25,7 +25,7 @@ object UpdateIncompleteLinkList {
     Digiroad2Context.roadLinkService.clearCache()
     municipalities.foreach { municipality =>
       println("*** Processing municipality: " + municipality)
-      val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
+      val roadLinks = Digiroad2Context.roadLinkService.getCachedRoadLinksFromVVH(municipality)
       println("*** Processed " + roadLinks.length + " road links")
     }
   }
