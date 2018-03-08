@@ -37,7 +37,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val roadsToCreate = ra ++ Seq(RoadAddress(nextRoadAddressId, 27L, 21L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 4387L, 4397L,
         Some(DateTime.parse("1996-01-01")), None, Option("TR"), 1, 1817197, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), floating = false,
         Seq(Point(0.0, 40.0), Point(0.0, 55.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
-      println(s"Test Roads to create : ${roadsToCreate.mkString(", ")}")
       RoadAddressDAO.create(roadsToCreate)
     } else {
       RoadAddressDAO.create(ra)
