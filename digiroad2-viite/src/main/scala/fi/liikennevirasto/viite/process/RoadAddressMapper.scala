@@ -47,12 +47,12 @@ trait RoadAddressMapper {
       val startCP = ra.startCalibrationPoint match {
         case None => None
         case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) GeometryUtils.geometryLength(ra.geometry) else 0.0)) else None
+          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) GeometryUtils.geometryLength(mappedGeom) else 0.0)) else None
       }
       val endCP = ra.endCalibrationPoint match {
         case None => None
         case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) GeometryUtils.geometryLength(ra.geometry) else 0.0)) else None
+          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) GeometryUtils.geometryLength(mappedGeom) else 0.0)) else None
       }
       ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
