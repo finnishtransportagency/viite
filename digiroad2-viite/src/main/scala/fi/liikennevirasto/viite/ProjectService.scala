@@ -1082,7 +1082,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           }
           case LinkStatus.New => {
             checkAndMakeReservation(toUpdateLinks.head)
-            if(!isNewAndSameLink(toUpdateLinks.head))
             updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode))))
           }
           case _ =>
