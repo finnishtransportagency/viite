@@ -387,7 +387,7 @@ object ProjectValidator {
     }
     // Checks inside road part (not including last links' checks)
     checkConnectedAreContinuous.toSeq ++ checkNotConnectedHaveMinorDiscontinuity.toSeq ++
-      checkRoadPartEnd(seq.filter(_.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
+      checkRoadPartEnd(seq.filter(r => r.status != LinkStatus.Terminated && r.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
   }
 
   /**
@@ -515,7 +515,7 @@ object ProjectValidator {
     }
     // Checks inside road part (not including last links' checks)
     checkDiscontinuityBetweenLinks.toSeq ++
-      checkRoadPartEnd(seq.filter(_.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
+      checkRoadPartEnd(seq.filter(r => r.status != LinkStatus.Terminated && r.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
   }
 
 
@@ -628,7 +628,6 @@ object ProjectValidator {
       val endRoad = groupedProjectLinks.last
       val anomalousAtBorders = checkValidation(startRoad, endRoad)
 
-
       error(ValidationErrorList.TerminationContinuity)(anomalousAtBorders)
     }
 
@@ -644,7 +643,7 @@ object ProjectValidator {
       */
     def checkValidation(startRoad: ProjectLink, endRoad: ProjectLink): Seq[BaseRoadAddress] = {
       val roadAddresses = findRoads(startRoad, endRoad)
-      val problemAddress = if (roadAddresses.nonEmpty) {
+      if (roadAddresses.nonEmpty) {
         //I am aware that in THEORY this filters could be fused into one, unifying the filter clauses with a && operator
         // but it just does not work, you can try it, but using the Viite1120Test project (devtest) it will output 4 entries while the correct result should be only one entry
         val numberAndPartFilter = roadAddresses.filterNot(ra => {
@@ -653,31 +652,26 @@ object ProjectValidator {
         val onlyAdjacents = numberAndPartFilter.filter(tf => {
           GeometryUtils.areAdjacent(tf.geometry, startRoad.geometry) || GeometryUtils.areAdjacent(tf.geometry, endRoad.geometry)
         })
-        onlyAdjacents.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
+        val projectLinkIds = projectLinksByIds(startRoad.projectId, onlyAdjacents.map(_.id).toSet)
+
+        onlyAdjacents.map{ra =>
+          ra.copy(discontinuity = projectLinkIds.find(_.roadAddressId == ra.id).getOrElse(ra).discontinuity)
+        }.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
       } else Seq.empty[RoadAddress]
-      val adjacentProjectLinks = allProjectLinks.filter(p => problemAddress.exists(_.linkId == p.linkId))
-      val problemLinks = if (adjacentProjectLinks.nonEmpty) {
-        //I am aware that in THEORY this filters could be fused into one, unifying the filter clauses with a && operator
-        // but it just does not work, you can try it, but using the Viite1120Test project (devtest) it will output 4 entries while the correct result should be only one entry
-        val numberAndPartFilter = adjacentProjectLinks.filterNot(ra => {
-          ra.roadNumber == startRoad.roadNumber && ra.roadPartNumber == startRoad.roadPartNumber
-        })
-        val onlyAdjacents = numberAndPartFilter.filter(tf => {
-          GeometryUtils.areAdjacent(tf.geometry, startRoad.geometry) || GeometryUtils.areAdjacent(tf.geometry, endRoad.geometry)
-        })
-        onlyAdjacents.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
-      } else Seq.empty[ProjectLink]
-      problemLinks ++ problemAddress
     }
 
-    val terminatedProjectLinks = allProjectLinks.filterNot(_.status.value != LinkStatus.Terminated.value)
+    val terminatedProjectLinks = allProjectLinks.filter(_.status.value == LinkStatus.Terminated.value)
     if (terminatedProjectLinks.nonEmpty) {
       val grouped = terminatedProjectLinks.groupBy(p => (p.roadNumber, p.roadPartNumber))
       val t = grouped.map(g => {
-        checkEndpoints(g._2.sortBy(_.endAddrMValue))
+        checkEndpoints(g._2.sortBy(_.startAddrMValue))
       })
       t.filter(_.nonEmpty).map(_.get).toSeq
     } else Seq.empty[ValidationErrorDetails]
+  }
+
+  private def projectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
+    ProjectDAO.getProjectLinksByIds(projectId, ids)
   }
 
   private def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
