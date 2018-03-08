@@ -9,7 +9,11 @@
         });
 
         this.route(/^([A-Za-z]+)\/?$/, function (layer) {
-          applicationModel.selectLayer(layer);
+          if (layer != 'roadAddressProject') {
+            applicationModel.selectLayer(layer);
+          } else {
+            applicationModel.selectLayer('linkProperty');
+          }
         });
 
         this.route(/^$/, function () {

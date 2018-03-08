@@ -125,6 +125,7 @@ trait BaseRoadAddress {
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
   def commonHistoryId: Long
+  def blackUnderline: Boolean
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -137,7 +138,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, commonHistoryId: Long) extends BaseRoadAddress {
+                       terminated: TerminationCode = NoTermination,commonHistoryId: Long, blackUnderline: Boolean = false) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -992,10 +993,12 @@ object RoadAddressDAO {
 
   def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
     sql"""
-       select distinct road_part_number
+       select distinct ra.road_part_number
               from road_address ra
               where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL) AND START_DATE <= $startDate
               AND (END_DATE IS NULL OR END_DATE > $startDate)
+              AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
+               = 1 and pl.status = 5)
       """.as[Long].list
   }
 
