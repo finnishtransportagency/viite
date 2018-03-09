@@ -767,7 +767,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private val cacheDirectory = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.cache.directory", "/tmp/digiroad.cache")
+    properties.getProperty("digiroad2.cache.directory", "/tmp/viite.cache")
   }
 
   private def getCacheDirectory: Option[File] = {
