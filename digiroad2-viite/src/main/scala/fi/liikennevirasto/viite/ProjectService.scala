@@ -1487,7 +1487,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
         expiringRoadAddresses, project)
 
-      val newRoadAddressesWithHistory = CommonHistoryFiller.fillCommonHistory(projectLinks, newRoadAddresses)
+      val newRoadAddressesWithHistory = CommonHistoryFiller.fillCommonHistory(projectLinks, newRoadAddresses, expiringRoadAddresses.values.toSeq)
 
       //Expiring all old addresses by their ID
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
