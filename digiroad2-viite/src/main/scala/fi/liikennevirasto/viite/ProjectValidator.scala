@@ -652,7 +652,8 @@ object ProjectValidator {
         val onlyAdjacents = numberAndPartFilter.filter(tf => {
           GeometryUtils.areAdjacent(tf.geometry, startRoad.geometry) || GeometryUtils.areAdjacent(tf.geometry, endRoad.geometry)
         })
-        val projectLinkIds = projectLinksByIds(startRoad.projectId, onlyAdjacents.map(_.id).toSet)
+        val projectLinkIds = if(onlyAdjacents.nonEmpty) projectLinksByIds(startRoad.projectId, onlyAdjacents.map(_.id).toSet)
+        else Seq.empty[ProjectLink]
 
         onlyAdjacents.map{ra =>
           ra.copy(discontinuity = projectLinkIds.find(_.roadAddressId == ra.id).getOrElse(ra).discontinuity)
@@ -733,16 +734,16 @@ object ProjectValidator {
       * @return An optional value with eventual Validation error details
       */
     def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
-      val grouppedByEly = pl.groupBy(_.ely)
-      val (gLinkIds, gPoints, gEly) = grouppedByEly.flatMap(g => {
+      val grouppedByDiscontinuity = pl.groupBy(_.discontinuity)
+      val (gLinkIds, gPoints, gDiscontinuity) = grouppedByDiscontinuity.flatMap(g => {
         val links = g._2
         val zoomPoint = GeometryUtils.midPointGeometry(links.minBy(_.endAddrMValue).geometry)
-        links.map(l => (l.linkId, zoomPoint, l.ely))
+        links.map(l => (l.linkId, zoomPoint, l.discontinuity))
       }).unzip3
 
       if (gLinkIds.nonEmpty) {
-        if(gEly.nonEmpty){
-          Some(ValidationErrorDetails(project.id, alterMessage(validationError,Option(gEly.toSeq)), gLinkIds.toSeq.distinct,
+        if(gDiscontinuity.nonEmpty){
+          Some(ValidationErrorDetails(project.id, alterMessage(validationError,Option.empty, Option.empty, Option(gDiscontinuity.toSeq)), gLinkIds.toSeq.distinct,
             gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
         } else Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
           gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
@@ -764,14 +765,18 @@ object ProjectValidator {
     validationProblems.toSeq
   }
 
-  private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]], roadAndPart: Option[Seq[(Long,Long)]] = Option.empty[Seq[(Long,Long)]]) = {
+  private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
+                           roadAndPart: Option[Seq[(Long,Long)]] = Option.empty[Seq[(Long,Long)]], discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]]) = {
     case object formattedMessage extends ValidationError {
       def value = validationError.value
       def message: String = validationError.message.format(if(elyBorderData.nonEmpty) {
         elyBorderData.get.toSet.mkString(", ")
       } else if(roadAndPart.nonEmpty){
         roadAndPart.get.toSet.mkString(", ")
-      } else {
+      } else if(discontinuity.nonEmpty) {
+        discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
+      }
+      else{
         validationError.message
       })
       def notification = validationError.notification
