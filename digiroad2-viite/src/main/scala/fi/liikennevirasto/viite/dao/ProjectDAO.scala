@@ -1,29 +1,23 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.{Timestamp, Types}
+import java.sql.Timestamp
 import java.util.Date
-import java.util.regex.{Matcher, Pattern}
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
-import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
-import fi.liikennevirasto.viite.model.ProjectAddressLink
-import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
+import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
+import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
-import scala.util.control.NonFatal
 
 sealed trait ProjectState {
   def value: Int
@@ -340,9 +334,11 @@ object ProjectDAO {
   }
 
   def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
+    val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.ROAD_ADDRESS_ID in (${ids.mkString(",")})""" else ""
     val query =
+
       s"""$projectLinkQueryBase
-                where PROJECT_LINK.PROJECT_ID = $projectId AND PROJECT_LINK.ROAD_ADDRESS_ID in (${ids.mkString(",")})"""
+                where PROJECT_LINK.PROJECT_ID = $projectId $filter"""
     listQuery(query).seq
   }
 
