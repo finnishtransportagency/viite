@@ -1,21 +1,16 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.SQLException
-
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, Transfer}
+import fi.liikennevirasto.viite.dao.LinkStatus.Transfer
+import fi.liikennevirasto.viite.util.toProjectLink
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.viite.util.toProjectLink
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
@@ -39,6 +34,18 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
     }
   }
+
+  test("open empty project") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      val project= ProjectDAO.getProjectLinksByIds(id,Set())
+      project.isEmpty should be (true)
+    }
+  }
+
 
   test("create road address project with project links and verify if the geometry is set") {
     val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
