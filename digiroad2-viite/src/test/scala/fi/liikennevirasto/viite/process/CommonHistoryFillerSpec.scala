@@ -10,14 +10,14 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.util._
 import org.joda.time.DateTime
 import org.mockito.Matchers._
@@ -30,6 +30,8 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
+
+import scala.util.parsing.json.JSON
 
 /**
   * Created by marquesrf on 08-03-2018.
@@ -179,6 +181,65 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
 
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
       roadAddresses.groupBy(_.commonHistoryId).size should be (6)
+    }
+  }
+
+  test("New addresses with new Road Type between") {
+    runWithRollback {
+      sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+
+      val geometries = StaticTestData.mappedGeoms(Set(5176552, 5176512, 5176584, 5502405, 5502441, 5502444))
+      val geom5176552 = geometries(5176552)
+      val geom5176512 = geometries(5176512)
+      val geom5176584 = geometries(5176584)
+      val geom5502405 = geometries(5502405)
+      val geom5502441 = geometries(5502441)
+      val geom5502444 = geometries(5502444)
+
+      val addProjectAddressLink5176552 = ProjectAddressLink(NewRoadAddress, 5176552, geom5176552, GeometryUtils.geometryLength(geom5176552),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176552),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addProjectAddressLink5176512 = ProjectAddressLink(NewRoadAddress, 5176512, geom5176512, GeometryUtils.geometryLength(geom5176512),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176512),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addProjectAddressLink5176584 = ProjectAddressLink(NewRoadAddress, 5176584, geom5176584, GeometryUtils.geometryLength(geom5176584),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176584),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addProjectAddressLink5502405 = ProjectAddressLink(NewRoadAddress, 5176512, geom5502405, GeometryUtils.geometryLength(geom5502405),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502405),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addProjectAddressLink5502441 = ProjectAddressLink(NewRoadAddress, 5176512, geom5502441, GeometryUtils.geometryLength(geom5502441),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502441),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addProjectAddressLink5502444 = ProjectAddressLink(NewRoadAddress, 5176512, geom5502444, GeometryUtils.geometryLength(geom5502444),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502444),
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+      val addresses = Seq(addProjectAddressLink5176552, addProjectAddressLink5176512, addProjectAddressLink5176584, addProjectAddressLink5502405, addProjectAddressLink5502441, addProjectAddressLink5502444)
+      mockForProject(id, addresses)
+      projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)).map(_.copy(status = LinkStatus.New)), id, "U", addresses.minBy(_.endMValue).linkId) should be(None)
+      val links = ProjectDAO.getProjectLinks(id)
+
+      val ids = Seq(links(1),links(links.size - 2)).map(_.id).toSet
+      val filter2 = s" (${ids.mkString(",")}) "
+      sqlu""" update project_link set road_type=3 WHERE id in #$filter2""".execute
+
+      val linksAfterUpdate = ProjectDAO.getProjectLinks(id)
+      sqlu""" update project set state=5, tr_id = 1 WHERE id=${id}""".execute
+      ProjectDAO.getProjectStatus(id) should be(Some(ProjectState.Saved2TR))
+      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, rap.id)
+      ProjectDAO.getProjectLinks(id).size should be (0)
+
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
+      roadAddresses.groupBy(_.commonHistoryId).size should be (5)
     }
   }
 }
