@@ -7,9 +7,7 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, RoadAddress}
 
 object CommonHistoryFiller {
   private def applyUnchanged(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-      // TODO
       val (unchangedLinks, rest) = projectLinks.partition(_.status == LinkStatus.UnChanged)
-      //    val groupedAddresses = unchangedLinks.flatMap(pl => groupedExistingAddresses.get(pl.roadAddressId).getOrElse(Seq.empty[RoadAddress]).headOption)
       val addresses = unchangedLinks.flatMap(pl => newRoadAddresses.find(_.id == pl.roadAddressId))
       val commonHistoryForUnchanged = if(addresses.nonEmpty) {
         //check if whole length of the road has changed track or road type => same commonHistoryId
