@@ -627,27 +627,8 @@ object ProjectValidator {
       val startRoad = groupedProjectLinks.head
       val endRoad = groupedProjectLinks.last
       val anomalousAtBorders = checkValidation(startRoad, endRoad)
-      /*
-      We check the possible anomalous roads if they are:
-        Adjacent
-        Share the same track code and road number
-        Are continuous
-      If we have all those conditions then we discard them for they are not anomalous then it means that those roads are in the same road address number and
-      only changed part, therefore there is no logic in defining their discontinuity as "End of Road".
-       */
-      val grouped = anomalousAtBorders.groupBy(anom => {
-        (anom.roadNumber, anom.track, anom.discontinuity)
-      })
-      val (groupedTrueAnomalous, possibleAnomalous) = grouped.partition(_._2.length <= 1)
-      val trueAnomalous = groupedTrueAnomalous.values.flatten.toSeq
-      val remaining = possibleAnomalous.mapValues(addresses => {
-        addresses.sliding(2).toSeq.filterNot(a => {
-          GeometryUtils.areAdjacent(a.head.geometry, a.last.geometry)
-        }).flatten
-      }).values.flatten.toSeq
 
-
-      error(ValidationErrorList.TerminationContinuity)(trueAnomalous ++ remaining)
+      error(ValidationErrorList.TerminationContinuity)(anomalousAtBorders)
     }
 
     /**
@@ -673,9 +654,18 @@ object ProjectValidator {
         })
         val projectLinkIds = projectLinksByIds(startRoad.projectId, onlyAdjacents.map(_.id).toSet)
 
-        onlyAdjacents.map{ra =>
+        val possibleProblems = onlyAdjacents.map { ra =>
           ra.copy(discontinuity = projectLinkIds.find(_.roadAddressId == ra.id).getOrElse(ra).discontinuity)
         }.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
+
+        val filteredProblems = possibleProblems.filter(pp => {
+          if (pp.roadNumber == startRoad.roadNumber || pp.roadNumber == endRoad.roadNumber) {
+            val lastRoadAddress = RoadAddressDAO.fetchByRoadPart(pp.roadNumber, pp.roadPartNumber, fetchOnlyEnd = true)
+            lastRoadAddress.head.endAddrMValue == pp.endAddrMValue
+          } else false
+        })
+
+        filteredProblems
       } else Seq.empty[RoadAddress]
     }
 
