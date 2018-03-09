@@ -12,6 +12,7 @@ namespace :deploy do
     on roles(:all), in: :parallel do
       execute "cp #{deploy_to}/newrelic/* #{release_path}/."
       execute "cd #{release_path} && chmod 700 start.sh"
+      execute "cd #{release_path} && nohup ./start.sh"
       execute "cd #{release_path} && tmux new -s 'viite' -d"
     end
   end
