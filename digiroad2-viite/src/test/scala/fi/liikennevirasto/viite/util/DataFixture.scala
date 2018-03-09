@@ -2,13 +2,14 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
+import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
-import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
+import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -296,6 +297,48 @@ object DataFixture {
     println("Road link geometry freeze is active; exiting without changes")
   }
 
+  def flyway: Flyway = {
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setInitVersion("-1")
+    flyway.setInitOnMigrate(true)
+    flyway.setLocations("db.migration")
+    flyway
+  }
+
+  def migrateAll() = {
+    flyway.migrate()
+  }
+
+  def tearDown() {
+    flyway.clean()
+  }
+
+  def setUpTest() {
+    migrateAll()
+    SqlScriptRunner.runScripts(List(
+      "insert_test_fixture.sql",
+      "insert_users.sql",
+      "kauniainen_functional_classes.sql",
+      "kauniainen_traffic_directions.sql",
+      "kauniainen_link_types.sql",
+      "test_fixture_sequences.sql",
+      "kauniainen_lrm_positions.sql",
+      "insert_road_address_data.sql",
+      "insert_floating_road_addresses.sql",
+      "insert_project_link_data.sql"
+    ))
+  }
+
+  def importMunicipalityCodes() {
+    println("\nCommencing municipality code import at time: ")
+    println(DateTime.now())
+    new MunicipalityCodeImporter().importMunicipalityCodes()
+    println("Municipality code import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -359,6 +402,10 @@ object DataFixture {
         importRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
+      case Some("test") =>
+        tearDown()
+        setUpTest()
+        importMunicipalityCodes()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
