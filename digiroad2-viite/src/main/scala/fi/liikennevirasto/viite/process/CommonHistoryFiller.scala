@@ -61,9 +61,26 @@ object CommonHistoryFiller {
     else newRoadAddresses
   }
 
-  private def applyTransfer(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
-    // TODO
-    newRoadAddresses
+  private def applyTransfer(currentRoadAddresses : Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
+    val transferedLinks = projectLinks.filter(_.status == LinkStatus.Transfer)
+    if(transferedLinks.nonEmpty){
+      transferedLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
+        case((roadNumber, roadPartNumber, trackCode, roadType), groupedLinks) =>
+          val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.sortBy(_.startAddrMValue).map(_.roadAddressId).contains(ra.id ))
+          val roadAddressesToCompare = currentRoadAddresses.filter(ra => ra.roadNumber == roadNumber && ra.roadPartNumber == roadPartNumber && ra.track == trackCode && ra.roadType == roadType).sortBy(_.startAddrMValue)
+          //if the length of the transferred part is the same in road address table
+          if(groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue){
+            roadAddressesToReturn
+          }
+          else{
+            val nextId = Sequences.nextCommonHistorySeqValue
+            roadAddressesToReturn.map(_.copy(commonHistoryId = nextId))
+          }
+      }
+    }.toSeq ++ newRoadAddresses.filterNot(ra => transferedLinks.map(_.roadAddressId).contains(ra.id ))
+    else{
+      newRoadAddresses
+    }
   }
 
   private def applyNumbering(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
@@ -71,11 +88,11 @@ object CommonHistoryFiller {
     newRoadAddresses
   }
 
-  def fillCommonHistory(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) : Seq[RoadAddress]= {
+  def fillCommonHistory(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress], currentRoadAddresses: Seq[RoadAddress]) : Seq[RoadAddress]= {
     val fillOperations: Seq[(Seq[ProjectLink], Seq[RoadAddress]) => Seq[RoadAddress]] = Seq(
       applyUnchanged,
       applyNew,
-      applyTransfer
+      applyTransfer(currentRoadAddresses)
     )
 
     fillOperations.foldLeft(newRoadAddresses){
