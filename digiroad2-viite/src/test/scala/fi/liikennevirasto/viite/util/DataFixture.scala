@@ -190,8 +190,12 @@ object DataFixture {
   }
 
   private def applyChangeInformationToRoadAddressLinks(): Unit = {
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+
+    println("Clearing cache...")
+    roadLinkService.clearCache()
+    println("Cache cleaned.")
 
     //Get All Municipalities
     val municipalities: Seq[Long] =
