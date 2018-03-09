@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.Inconsi
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.viite.{LinkRoadAddressHistory, ProjectService, RoadAddressLinkBuilder, RoadAddressService}
+import fi.liikennevirasto.viite._
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
@@ -320,6 +320,11 @@ object DataFixture {
 
   }
 
+  def checkRoadNetwork(): Unit = {
+    val roadNetworkService = new RoadNetworkService
+    roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq()))
+  }
+
   private def showFreezeInfo() = {
     println("Road link geometry freeze is active; exiting without changes")
   }
@@ -389,6 +394,8 @@ object DataFixture {
         correctNullElyCodeProjects()
       case Some("check_lrm_position_history") =>
         checkLrmPositionHistory()
+      case Some("check_road_network") =>
+        checkRoadNetwork()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
