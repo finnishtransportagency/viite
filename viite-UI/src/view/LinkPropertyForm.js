@@ -447,6 +447,7 @@
       var emptyFormDiv = '<div class="form-initial-state" id="emptyFormDiv">' +
         '<span class="header-noposition">Aloita valitsemalla projekti.</span>' +
         '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
+          '<button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
         '</div>' +
         '<p class="form form-horizontal">' +
         '<p><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
@@ -457,6 +458,10 @@
         $('[id=projectListButton]').click();
         return false;
       });
+        $('[id=formNameToolButton]').click(function () {
+            $('[id=formNameToolButton]').click();
+            return false;
+        });
     };
 
 
