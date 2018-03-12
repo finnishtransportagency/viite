@@ -328,20 +328,25 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("merge road addresses") {
+    val linkId1 = 5171285L
+    val linkId2 = 5170935L
+    val linkId3 = 5171863L
     runWithRollback {
-      val addressList = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
+      val addressList = RoadAddressDAO.fetchByLinkId(Set(linkId1, linkId2, linkId3))
       addressList should have size (3)
+      addressList.forall(_.commonHistoryId == addressList.head.commonHistoryId) should be (true)
       val address = addressList.head
-      val newAddr = address.copy(id = -1000L, startAddrMValue = addressList.map(_.startAddrMValue).min,
+      val newAddr = address.copy(id = NewRoadAddress, startAddrMValue = addressList.map(_.startAddrMValue).min,
         endAddrMValue = addressList.map(_.endAddrMValue).max)
       val merger = RoadAddressMerge(addressList.map(_.id).toSet, Seq(newAddr))
       roadAddressService.mergeRoadAddressInTX(merger)
-      val addressListMerged = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
+      val addressListMerged = RoadAddressDAO.fetchByLinkId(Set(linkId1, linkId2, linkId3))
       addressListMerged should have size (1)
       addressListMerged.head.linkId should be (address.linkId)
+      addressListMerged.head.commonHistoryId should be (addressList.head.commonHistoryId)
     }
     runWithRollback {
-      RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L)) should have size (3)
+      RoadAddressDAO.fetchByLinkId(Set(linkId1, linkId2, linkId3)) should have size (3)
     }
   }
 
