@@ -300,11 +300,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("Floating check gets geometry updated") {
-    val roadLink = VVHRoadlink(5171359L, 1, Seq(Point(0.0, 0.0), Point(0.0, 31.045)), State, TrafficDirection.BothDirections,
+    val linkId = 5171359L
+    val roadLink = VVHRoadlink(linkId, 1, Seq(Point(0.0, 0.0), Point(0.0, 31.045)), State, TrafficDirection.BothDirections,
       AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getCurrentAndComplementaryVVHRoadLinks(Set(5171359L))).thenReturn(Seq(roadLink))
+    when(mockRoadLinkService.getCurrentAndComplementaryVVHRoadLinks(Set(linkId))).thenReturn(Seq(roadLink))
     runWithRollback {
-      val addressList = RoadAddressDAO.fetchByLinkId(Set(5171359L))
+      val addressList = RoadAddressDAO.fetchByLinkId(Set(linkId))
       addressList should have size (1)
       val address = addressList.head
       address.floating should be (false)
@@ -315,6 +316,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       addressUpdated.geometry shouldNot be (address.geometry)
       addressUpdated.geometry should be(roadLink.geometry)
       addressUpdated.floating should be (false)
+      addressUpdated.commonHistoryId should be (addressList.head.commonHistoryId)
     }
   }
 
