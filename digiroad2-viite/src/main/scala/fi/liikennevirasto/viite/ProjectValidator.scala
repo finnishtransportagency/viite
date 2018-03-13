@@ -195,7 +195,7 @@ object ProjectValidator {
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
-    def checkProjectContinuity: Seq[ValidationErrorDetails] =
+    def checkProjectContinuity: Seq[ValidationErrorDetails] = {
       projectLinks.filter(_.status != Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).flatMap {
         case ((road, _), seq) =>
           if (road < RampsMinBound || road > RampsMaxBound) {
@@ -205,6 +205,7 @@ object ProjectValidator {
           }
         case _ => Seq()
       }.toSeq
+    }
 
     def checkProjectCoverage = {
       Seq.empty[ValidationErrorDetails]
