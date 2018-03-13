@@ -9,10 +9,11 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
+import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.viite.{LinkRoadAddressHistory, ProjectService, RoadAddressLinkBuilder, RoadAddressService}
+import fi.liikennevirasto.viite._
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
@@ -297,6 +298,32 @@ object DataFixture {
 
   }
 
+  def checkLrmPositionHistory(): Unit = {
+
+    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
+    elyCodes.foreach(ely => {
+      println(s"Going to check roads for ely $ely")
+      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
+      println(s"Got ${roads.size} road addresses for ely $ely")
+      val roadErrors = roads.groupBy(r => (r.linkId, r.commonHistoryId)).foldLeft(Seq.empty[RoadAddress])((errorList, group) => {
+        val roadGroup = group._2
+        val errorRoad = roadGroup.find(
+          r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue || r.sideCode != roadGroup.head.sideCode)
+        errorRoad match {
+          case Some(road) =>
+            println(s"Error in lrm check for road address with id ${road.id} ")
+            errorList :+ road
+          case None => errorList
+        }
+      })
+      println(s"Found ${roadErrors.size} errors for ely $ely")
+      OracleDatabase.withDynTransaction {
+        roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+      }
+    })
+
+  }
+
   private def showFreezeInfo() = {
     println("Road link geometry freeze is active; exiting without changes")
   }
@@ -364,6 +391,8 @@ object DataFixture {
         importRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
+      case Some("check_lrm_position_history") =>
+        checkLrmPositionHistory()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
