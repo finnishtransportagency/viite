@@ -125,6 +125,7 @@ trait BaseRoadAddress {
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
   def commonHistoryId: Long
+  def blackUnderline: Boolean
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -137,7 +138,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, commonHistoryId: Long) extends BaseRoadAddress {
+                       terminated: TerminationCode = NoTermination,commonHistoryId: Long, blackUnderline: Boolean = false) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -553,7 +554,7 @@ object RoadAddressDAO {
   }
 
   def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false,
-                      includeHistory: Boolean = false, includeSuravage: Boolean = true): List[RoadAddress] = {
+                      includeHistory: Boolean = false, includeSuravage: Boolean = true, fetchOnlyEnd: Boolean = false, fetchOnlyStart: Boolean = false): List[RoadAddress] = {
     val floating = if (!includeFloating)
       "floating='0' AND"
     else
@@ -570,6 +571,13 @@ object RoadAddressDAO {
       "link_source != 3 AND"
     else ""
     // valid_to > sysdate because we may expire and query the data again in same transaction
+
+    val endPart = if (fetchOnlyEnd) {
+      s"And ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber )"
+    } else ""
+    val startPart = if (fetchOnlyStart) {
+      s"And ra.start_addr_m = (Select min(road.start_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber )"
+    } else ""
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -580,7 +588,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id 
+        $endPart $startPart
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
@@ -1353,6 +1362,20 @@ object RoadAddressDAO {
 
   def lockRoadAddressWriting: Unit = {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
+  }
+
+  def getRoadAddressByEly(ely: Long): List[RoadAddress] = {
+    val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, pos.adjusted_timestamp,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where t.id < t2.id and
+          valid_from <= sysdate and floating = 0 and ely = $ely"""
+    queryList(query)
   }
 
 }

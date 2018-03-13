@@ -41,7 +41,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 
   def build(roadLink: VVHRoadlink, roadAddress: RoadAddress): RoadAddressLink = {
-    val roadLinkType = SuravageRoadLink
+    val roadLinkType = SuravageRoadLinkType
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     val roadName = roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
@@ -122,7 +122,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case _ => municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1)
     }
     RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLink, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
+      length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes,roadLinkRoadNumber,
       roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
