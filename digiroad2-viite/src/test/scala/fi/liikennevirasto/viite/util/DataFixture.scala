@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
+import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.viite.{LinkRoadAddressHistory, ProjectService, RoadAddressLinkBuilder, RoadAddressService}
 import org.joda.time.format.PeriodFormatterBuilder
@@ -214,12 +214,12 @@ object DataFixture {
       if(roadLinks.nonEmpty) {
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet, false, true, false)
+          RoadAddressDAO.fetchByLinkId(changedRoadLinks.map(cr => cr.oldId.getOrElse(cr.newId.getOrElse(0L))).toSet, false, true, false)
         }
         try {
           val groupedAddresses = roadAddresses.groupBy(_.linkId)
           val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
-          val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.get(ci.oldId.getOrElse(ci.newId.get)).getOrElse(0L))
+          val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
           roadAddressService.applyChanges(roadLinks, affectingChanges,
