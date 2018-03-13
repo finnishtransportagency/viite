@@ -35,26 +35,27 @@ trait RoadAddressMapper {
     }
 
     roadAddressMapping.filter(_.matches(ra)).map(m => adjust(m, ra.startMValue, ra.endMValue)).map(adjMap => {
-      val (sideCode, mappedGeom) =
+      val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(adjMap))
-          (ra.sideCode, adjMap.targetGeom)
+          (ra.sideCode, adjMap.targetGeom, splitRoadAddressValues(ra, adjMap))
         else {
-          (switchSideCode(ra.sideCode), adjMap.targetGeom.reverse)
+          (switchSideCode(ra.sideCode), adjMap.targetGeom.reverse,
+            splitRoadAddressValues(ra, adjMap))
         }
       val (startM, endM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
 
       val startCP = ra.startCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == ra.startAddrMValue) Some(cp.copy(linkId = adjMap.targetLinkId,
+        case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.AgainstDigitizing) endM - startM else 0.0)) else None
       }
       val endCP = ra.endCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == ra.endAddrMValue) Some(cp.copy(linkId = adjMap.targetLinkId,
+        case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.TowardsDigitizing) endM - startM else 0.0)) else None
       }
-      ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(ra.startAddrMValue),
-        endAddrMValue = endCP.map(_.addressMValue).getOrElse(ra.endAddrMValue), linkId = adjMap.targetLinkId,
+      ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
+        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
         startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
         calibrationPoints = (startCP, endCP), floating = false, geometry = mappedGeom)
     })
