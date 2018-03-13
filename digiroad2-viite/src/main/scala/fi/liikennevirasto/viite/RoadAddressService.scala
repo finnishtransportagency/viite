@@ -672,7 +672,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion > 0).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion.nonEmpty).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
@@ -938,6 +938,8 @@ object AddressConsistencyValidator {
       def message: String = ErrorOverlappingRoadAddress}
     case object InconsistentTopology extends AddressError {def value = 2
       def message: String = ErrorInconsistentTopology}
+    case object InconsistentLrmHistory extends AddressError{def value = 3
+      def message: String = ErrorInconsistentLrmHistory}
 
     def apply(intValue: Int): AddressError = {
       values.find(_.value == intValue).get
