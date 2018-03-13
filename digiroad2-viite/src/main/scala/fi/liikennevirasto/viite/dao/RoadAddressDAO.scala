@@ -588,7 +588,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id 
         $endPart $startPart
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
