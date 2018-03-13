@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -245,7 +245,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case None => {
             addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId) match {
               case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-              case None => Map("success" -> true, "publishable" -> isProjectPublishable(projectId))
+              case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId))
             }
           }
         }
@@ -1082,7 +1082,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           }
           case LinkStatus.New => {
             checkAndMakeReservation(toUpdateLinks.head)
-            if(!isNewAndSameLink(toUpdateLinks.head))
             updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode))))
           }
           case _ =>
