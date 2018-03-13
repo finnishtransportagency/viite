@@ -67,7 +67,6 @@ trait RoadAddressMapper {
     * @param mapping Mapping entry that may or may not have smaller or larger span than road address
     * @return A pair of address start and address end values this mapping and road address applies to
     */
-  @deprecated
   private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
