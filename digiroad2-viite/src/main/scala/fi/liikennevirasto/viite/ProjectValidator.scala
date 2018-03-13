@@ -552,16 +552,18 @@ object ProjectValidator {
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
-      checkMinMaxTrack(trackInterval) match {
-        case Some(link) => Seq(link)
-        case None => {
-          trackInterval.sliding(2).map(l => {
-            if (l.head.endAddrMValue != l.last.startAddrMValue) {
-              Some(l.head)
-            } else None
-          }).toSeq.flatten
+      if(trackInterval.size > 1){
+        checkMinMaxTrack(trackInterval) match {
+          case Some(link) => Seq(link)
+          case None => {
+            trackInterval.sliding(2).map(l => {
+              if (l.head.endAddrMValue != l.last.startAddrMValue) {
+                Some(l.head)
+              } else None
+            }).toSeq.flatten
+          }
         }
-      }
+      } else Seq.empty[ProjectLink]
     }
 
     def recursiveCheckTrackChange(links: Seq[ProjectLink], errorLinks: Seq[ProjectLink] = Seq()): Option[ValidationErrorDetails] = {
