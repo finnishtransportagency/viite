@@ -26,7 +26,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
   test("validate network with valid road"){
     runWithRollback {
       RoadNetworkDAO.createPublishedRoadNetwork
-      val currentVersion = RoadNetworkDAO.getLatestRoadNetworkVersion
+      val currentVersion = RoadNetworkDAO.getLatestRoadNetworkVersion.getOrElse(0L)
 
       sqlu"""DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER = 18602""".execute
       sqlu"""Insert into LRM_POSITION values (lrm_position_primary_key_seq.nextval,null,3,0,23.182,null,5919553,1510790400000,to_timestamp('17.12.18 11:31:40','RR.MM.DD HH24:MI:SS'),1)""".execute
@@ -42,14 +42,14 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
 
       roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(18602L)))
       RoadNetworkDAO.hasRoadNetworkErrors should be (false)
-      RoadNetworkDAO.getLatestRoadNetworkVersion should be (currentVersion + 1)
+      RoadNetworkDAO.getLatestRoadNetworkVersion.get should be (currentVersion + 1)
     }
   }
 
   test("validate network with overlaping road") {
     runWithRollback {
       RoadNetworkDAO.createPublishedRoadNetwork
-      val currentVersion = RoadNetworkDAO.getLatestRoadNetworkVersion
+      val currentVersion = RoadNetworkDAO.getLatestRoadNetworkVersion.getOrElse(0L)
 
       sqlu"""DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER = 18602""".execute
       sqlu"""Insert into LRM_POSITION values (lrm_position_primary_key_seq.nextval,null,3,0,23.182,null,5919553,1510790400000,to_timestamp('17.12.18 11:31:40','RR.MM.DD HH24:MI:SS'),1)""".execute
@@ -65,14 +65,14 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
 
       roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(18602L)))
       RoadNetworkDAO.hasRoadNetworkErrors should be (true)
-      RoadNetworkDAO.getLatestRoadNetworkVersion should be (currentVersion)
+      RoadNetworkDAO.getLatestRoadNetworkVersion.get should be (currentVersion)
     }
   }
 
   test("validate network with wrong discontinuity") {
     runWithRollback {
       RoadNetworkDAO.createPublishedRoadNetwork
-      val currentVersion = RoadNetworkDAO.getLatestRoadNetworkVersion
+      val currentVersion = RoadNetworkDAO.getLatestRoadNetworkVersion.getOrElse(0L)
 
       sqlu"""DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER = 18602""".execute
       sqlu"""Insert into LRM_POSITION values (lrm_position_primary_key_seq.nextval,null,3,0,23.182,null,5919553,1510790400000,to_timestamp('17.12.18 11:31:40','RR.MM.DD HH24:MI:SS'),1)""".execute
@@ -88,7 +88,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
 
       roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(18602L)))
       RoadNetworkDAO.hasRoadNetworkErrors should be (true)
-      RoadNetworkDAO.getLatestRoadNetworkVersion should be (currentVersion)
+      RoadNetworkDAO.getLatestRoadNetworkVersion.get should be (currentVersion)
     }
   }
 
