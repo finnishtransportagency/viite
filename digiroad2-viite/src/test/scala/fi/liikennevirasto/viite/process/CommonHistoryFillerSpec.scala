@@ -153,7 +153,6 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       projectLinks.isEmpty should be(false)
       val sortedLinks = projectLinks.sortBy(_.startAddrMValue)
       val (first, last) = (sortedLinks.head, sortedLinks.last)
-      val (firstGeom, lastGeom) = (first.geometry, last.geometry)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
       val linkIds207 = partitioned._1.map(_.linkId).toSet
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
@@ -242,7 +241,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("CommonHistoryIds: New addresses at the begining and at the end of Transfer ones") {
+  test("CommonHistoryIds: New addresses at the beginning and at the end of Transfer ones") {
 
     runWithRollback {
       val id = 0
@@ -265,10 +264,10 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       val filter = s" (${addressIds207.mkString(",")}) "
       sqlu""" update project_link set status=3 WHERE road_address_id in #$filter""".execute
 
-      val geom5168564 = Seq(Point(0.0 , 20.0, 0.0), Point(0.0 , 10.0, 0.0))
-      val geom5168574 = Seq(Point(0.0 , 10.0, 0.0), Point(0.0 , 0.0, 0.0))
-      val geom5166912 = Seq(Point(4286.0 , 0.0, 0.0), Point(4296.0 , 0.0, 0.0))
-      val geom5167078 = Seq(Point(4296.0 , 0.0, 0.0), Point(4306.0 , 0.0, 0.0))
+      val geom5168564 = Seq(Point(0.0 , 20.0), Point(0.0 , 10.0))
+      val geom5168574 = Seq(Point(0.0 , 10.0), Point(0.0 , 0.0))
+      val geom5166912 = Seq(Point(4286.0 , 0.0), Point(4296.0 , 0.0))
+      val geom5167078 = Seq(Point(4296.0 , 0.0), Point(4306.0 , 0.0))
 
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
 
