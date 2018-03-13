@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -134,27 +134,26 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       None, roadAddress.adjustedTimestamp)
   }
 
-  test("Unchanged addresses with new Road Type between different commonHistoryId groups") {
-    var count = 0
+  test("CommonHistoryIds: Unchanged addresses with new Road Type between different commonHistoryId groups") {
     val roadLinks = Seq(
       RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface))
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
       val addresses = List(
         ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
-      mockForProject(saved.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(saved)))
+      val roadAddressesfetch= RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(saved))
+      mockForProject(saved.id, roadAddressesfetch)
       projectService.saveProject(saved.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be(count)
       val projectLinks = ProjectDAO.getProjectLinks(saved.id)
       projectLinks.isEmpty should be(false)
+      val sortedLinks = projectLinks.sortBy(_.startAddrMValue)
+      val (first, last) = (sortedLinks.head, sortedLinks.last)
+      val (firstGeom, lastGeom) = (first.geometry, last.geometry)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
       val linkIds207 = partitioned._1.map(_.linkId).toSet
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
@@ -184,7 +183,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("New addresses with new Road Type between") {
+  test("CommonHistoryIds: New addresses with new Road Type between") {
     runWithRollback {
       sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -242,4 +241,53 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       roadAddresses.groupBy(_.commonHistoryId).size should be (5)
     }
   }
+
+  test("CommonHistoryIds: New addresses at the begining and at the end of Transfer ones") {
+
+    runWithRollback {
+      val id = 0
+      val parts = List(
+        ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      )
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.parse("2018-03-05"), DateTime.now(), "Some additional info", Seq(), None)
+      val saved = projectService.createRoadLinkProject(roadAddressProject)
+      val roadAddressesFetch= RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(saved))
+      mockForProject(saved.id, roadAddressesFetch)
+      projectService.saveProject(saved.copy(reservedParts = parts))
+
+      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
+      projectLinks.isEmpty should be(false)
+
+      val partitioned = projectLinks.partition(_.roadPartNumber == 207)
+
+      val addressIds207 = partitioned._1.map(_.roadAddressId).toSet
+      val filter = s" (${addressIds207.mkString(",")}) "
+      sqlu""" update project_link set status=3 WHERE road_address_id in #$filter""".execute
+
+      val geom5168564 = Seq(Point(0.0 , 20.0, 0.0), Point(0.0 , 10.0, 0.0))
+      val geom5168574 = Seq(Point(0.0 , 10.0, 0.0), Point(0.0 , 0.0, 0.0))
+      val geom5166912 = Seq(Point(4286.0 , 0.0, 0.0), Point(4296.0 , 0.0, 0.0))
+      val geom5167078 = Seq(Point(4296.0 , 0.0, 0.0), Point(4306.0 , 0.0, 0.0))
+
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+
+      val roadLinksNew = Seq(
+        RoadLink(5168564,geom5168564,64.34399229934398,Private,99, TrafficDirection.BothDirections, UnknownLinkType ,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface),
+        RoadLink(5168574,geom5168574,10.35728226922293,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface),
+        RoadLink(5166912,geom5166912,549.5011938749938,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface),
+        RoadLink(5167078,geom5167078,359.2242564221318,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface)
+      )
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinksNew)
+      projectService.createProjectLinks(Seq(5168564, 5168574, 5166912, 5167078), saved.id, 5, 207,Track.apply(0), Discontinuity.apply(5), RoadType.apply(1), LinkGeomSource.apply(1), 8, "me")
+
+      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
+      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
+      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
+      ProjectDAO.getProjectLinks(saved.id).size should be (0)
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(5, 207)
+      roadAddresses.groupBy(_.commonHistoryId).size should be (3)
+    }
+  }
+
 }
