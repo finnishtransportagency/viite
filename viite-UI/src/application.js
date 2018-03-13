@@ -103,8 +103,9 @@
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
+      var roadNamingTool = new RoadNamingTool();
 
-    new LinkPropertyForm(models.selectedLinkProperty);
+      new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
