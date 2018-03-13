@@ -656,9 +656,18 @@ object ProjectValidator {
         val projectLinkIds = if(onlyAdjacents.nonEmpty) projectLinksByIds(startRoad.projectId, onlyAdjacents.map(_.id).toSet)
         else Seq.empty[ProjectLink]
 
-        onlyAdjacents.map{ra =>
+        val possibleProblems = onlyAdjacents.map { ra =>
           ra.copy(discontinuity = projectLinkIds.find(_.roadAddressId == ra.id).getOrElse(ra).discontinuity)
         }.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
+
+        val filteredProblems = possibleProblems.filter(pp => {
+          if (pp.roadNumber == startRoad.roadNumber || pp.roadNumber == endRoad.roadNumber) {
+            val lastRoadAddress = RoadAddressDAO.fetchByRoadPart(pp.roadNumber, pp.roadPartNumber, fetchOnlyEnd = true)
+            lastRoadAddress.head.endAddrMValue == pp.endAddrMValue
+          } else false
+        })
+
+        filteredProblems
       } else Seq.empty[RoadAddress]
     }
 
