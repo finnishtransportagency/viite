@@ -35,7 +35,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     others ++
       lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues{ s =>
         val common = s.find(_.changeType == LengthenedCommonPart.value)
-        val added = s.find(st => st.changeType == LengthenedNewPart.value && st.newEndMeasure == common.get.newStartMeasure)
+        val added = s.find(st => st.changeType == LengthenedNewPart.value)
         (common, added) match {
           case (Some(c), Some(a)) =>
             val (expStart, expEnd) = if (c.newStartMeasure.get > c.newEndMeasure.get)
@@ -48,8 +48,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       }.values.flatten.toSeq ++
       shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues{ s =>
         val common = s.find(_.changeType == ShortenedCommonPart.value)
-        val removed = s.find(st => st.changeType == ShortenedRemovedPart.value && st.oldEndMeasure == common.get.oldStartMeasure)
-        (common, removed) match {
+        val toRemove = s.filter(_.changeType == ShortenedRemovedPart.value)
+        val fusedRemove = if (toRemove.lengthCompare(1) > 0) {
+          Some(toRemove.head.copy(oldStartMeasure = toRemove.minBy(_.oldStartMeasure).oldStartMeasure, oldEndMeasure = toRemove.maxBy(_.oldEndMeasure).oldEndMeasure))
+        } else Some(toRemove.head)
+        (common, fusedRemove) match {
           case (Some(c), Some(r)) =>
             val (expStart, expEnd) = if (c.oldStartMeasure.get > c.oldEndMeasure.get)
               (max(c.oldStartMeasure.get, r.oldStartMeasure.get, r.oldEndMeasure.get), min(c.oldEndMeasure.get, c.newStartMeasure.get, r.oldEndMeasure.get))
