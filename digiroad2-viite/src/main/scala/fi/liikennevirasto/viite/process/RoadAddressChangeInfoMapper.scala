@@ -35,7 +35,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     others ++
       lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues{ s =>
         val common = s.find(_.changeType == LengthenedCommonPart.value)
-        val added = s.find(_.changeType == LengthenedNewPart.value)
+        val added = s.find(st => st.changeType == LengthenedNewPart.value && st.newEndMeasure == common.get.newStartMeasure)
         (common, added) match {
           case (Some(c), Some(a)) =>
             val (expStart, expEnd) = if (c.newStartMeasure.get > c.newEndMeasure.get)
@@ -48,7 +48,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       }.values.flatten.toSeq ++
       shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues{ s =>
         val common = s.find(_.changeType == ShortenedCommonPart.value)
-        val removed = s.find(_.changeType == ShortenedRemovedPart.value)
+        val removed = s.find(st => st.changeType == ShortenedRemovedPart.value && st.oldEndMeasure == common.get.oldStartMeasure)
         (common, removed) match {
           case (Some(c), Some(r)) =>
             val (expStart, expEnd) = if (c.oldStartMeasure.get > c.oldEndMeasure.get)
