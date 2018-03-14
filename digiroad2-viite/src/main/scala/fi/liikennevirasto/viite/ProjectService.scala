@@ -142,7 +142,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       (startPart to endPart).foreach(part =>
         ProjectDAO.roadPartReservedByProject(roadNumber, part) match {
-          case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna toisessa projektissa $name.")
+          case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa $name.")
           case _ =>
         })
       Right((startPart to endPart).flatMap(part => getAddressPartInfo(roadNumber, part))
@@ -406,7 +406,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             .map(rl => rl.linkId -> rl).toMap
           val reserved = checkAndReserve(project, reservation)
           if (reserved._1.isEmpty)
-            throw new RuntimeException(s"Tie ${reservation.roadNumber} osa ${reservation.roadPartNumber} ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna toisessa projektissa ${reserved._2.get}.")
+            throw new RuntimeException(s"Tie ${reservation.roadNumber} osa ${reservation.roadPartNumber} ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa ${reserved._2.get}.")
           addressesOnPart.map(ra => newProjectTemplate(mapping(ra.linkId), ra, project))
         }
         logger.debug(s"Reserve done")
@@ -442,7 +442,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val elyErrors = reservedRoadParts.flatMap(roadAddress =>
       if (projectEly.filterNot(l => l == -1L).getOrElse(roadAddress.ely.get) != roadAddress.ely.get) {
-        Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY ${roadAddress.ely} != ${projectEly.get})")
+        Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}. Tarkista tiedot.")
       } else None)
     if (errors.nonEmpty)
       Some(s"$ErrorFollowingRoadPartsNotFoundInDB ${errors.mkString(", ")}")
