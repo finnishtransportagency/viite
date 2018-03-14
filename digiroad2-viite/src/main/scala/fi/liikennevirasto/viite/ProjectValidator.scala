@@ -543,26 +543,31 @@ object ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        if (!notCombinedLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
+        val otherTrackLinks = notCombinedLinks.filterNot(l => l.track == Combined || l.track==minTrackLink.track)
+        val minOtherTrackLink = otherTrackLinks.minBy(_.startAddrMValue)
+        val maxOtherTrackLink = otherTrackLinks.maxBy(_.endAddrMValue)
+        if (minTrackLink.startAddrMValue != minOtherTrackLink.startAddrMValue) {
           Some(minTrackLink)
         }
-        else if (!notCombinedLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
+        else if (maxTrackLink.endAddrMValue != maxOtherTrackLink.endAddrMValue) {
           Some(maxTrackLink)
         } else None
       } else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
-      checkMinMaxTrack(trackInterval) match {
-        case Some(link) => Seq(link)
-        case None => {
-          trackInterval.sliding(2).map(l => {
-            if (l.head.endAddrMValue != l.last.startAddrMValue) {
-              Some(l.head)
-            } else None
-          }).toSeq.flatten
+      if(trackInterval.size > 1){
+        checkMinMaxTrack(trackInterval) match {
+          case Some(link) => Seq(link)
+          case None => {
+            trackInterval.sliding(2).map(l => {
+              if (l.head.endAddrMValue != l.last.startAddrMValue) {
+                Some(l.head)
+              } else None
+            }).toSeq.flatten
+          }
         }
-      }
+      } else Seq.empty[ProjectLink]
     }
 
     def recursiveCheckTrackChange(links: Seq[ProjectLink], errorLinks: Seq[ProjectLink] = Seq()): Option[ValidationErrorDetails] = {
