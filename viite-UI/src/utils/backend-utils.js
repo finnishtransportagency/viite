@@ -543,17 +543,17 @@
           //add API call here
           var dummyReturnObject = [{
               roadNumber: 12345,
-              roadName: "AAAAAAA",
+              roadNameFi: "AAAAAAA",
               startDate: "22-06-2018",
               endDate: "11-02-2000"
           }, {
               roadNumber: 12345,
-              roadName: "AAAAAAA",
+              roadNameFi: "AAAAAAA",
               startDate: "22-06-2018",
               endDate: ""
           }, {
               roadNumber: 123456,
-              roadName: "BBBBBBBB",
+              roadNameFi: "BBBBBBBB",
               startDate: "22-06-2018",
               endDate: ""
           }];
