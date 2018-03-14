@@ -276,12 +276,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       if (project.id != 0) //we check if project is new. If it is then we check project for being in writable state
         projectWritable(roadAddressProject.id)
+      val reservationMessage = if (roadAddressProject.reservedParts.nonEmpty)
+      projectService.validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
+        case Some(errMsg) => Some(errMsg)
+        case None => None
+    } else None
+      if(reservationMessage.isEmpty){
       val projectSaved = projectService.saveProject(roadAddressProject)
       projectService.saveProjectCoordinates(projectSaved.id, projectService.calculateProjectCoordinates(projectSaved.id, project.resolution))
       val firstLink = projectService.getFirstProjectLink(projectSaved)
       Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
         projectSaved.reservedParts.map(reservedRoadPartToApi),
         "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+      } else
+      Map("success" -> false, "errorMessage" -> reservationMessage.get)
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
