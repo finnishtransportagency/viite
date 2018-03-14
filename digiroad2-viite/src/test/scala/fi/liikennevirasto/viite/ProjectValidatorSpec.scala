@@ -448,4 +448,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       validationErrors.size should be(0)
     }
   }
+
+  test("project track codes should be consistent when adding one simple link with track Combined") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val validationErrors = ProjectValidator.checkTrackCode(project, projectLinks)
+      validationErrors.size should be(0)
+    }
+  }
 }
