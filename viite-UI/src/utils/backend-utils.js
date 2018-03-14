@@ -500,7 +500,6 @@
       return self;
     };
 
-
     this.withSaveRoadAddressProject = function (returnData){
       self.saveRoadAddressProject = function (){
         return returnData;
@@ -539,6 +538,27 @@
       };
       return self;
     };
+
+      this.getRoadAddressesByRoadNumber = function (roadNumber, callback) {
+          //add API call here
+          var dummyReturnObject = [{
+              roadNumber: 12345,
+              roadName: "AAAAAAA",
+              startDate: "22-06-2018",
+              endDate: "11-02-2000"
+          }, {
+              roadNumber: 12345,
+              roadName: "AAAAAAA",
+              startDate: "22-06-2018",
+              endDate: ""
+          }, {
+              roadNumber: 123456,
+              roadName: "BBBBBBBB",
+              startDate: "22-06-2018",
+              endDate: ""
+          }];
+          return callback(dummyReturnObject);
+      };
 
   };
 }(this));

@@ -1,5 +1,5 @@
 (function (root) {
-    root.RoadNamingTool = function () {
+    root.RoadNamingToolWindow = function (roadNameCollection) {
 
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
         nameToolSearchWindow.append('<button class="close btn-close" id="closeRoadNameTool">x</button>');
@@ -7,7 +7,7 @@
         nameToolSearchWindow.append('<div class="name-tool-content-new">' +
             '<label class="name-tool-content-new label">Tie</label>' +
             '<div class = "panel-header">' +
-            '<input type="text" class = "road-input" title="Tie Nimi">' +
+            '<input type="text" class="road-input" title="Tie Nimi" id="roadSearchParameter">' +
             '<div id="buttons-div" style="display: inline-flex;">' +
             '<button id="executeRoadSearch" class="btn btn-sm btn-primary button-spacing">Hae</button>' +
             //Regular display: inline-block
@@ -43,6 +43,15 @@
 
             nameToolSearchWindow.on('click', 'button.close', function () {
                 hide();
+            });
+
+            nameToolSearchWindow.on('click', '#executeRoadSearch', function () {
+                var roadParam = $('#roadSearchParameter').val();
+                roadNameCollection.fetchRoads(roadParam);
+            });
+
+            eventbus.on("roadNameTool: roadsFetched", function (roadData) {
+                alert("RoadData returned to UI");
             });
         }
 
