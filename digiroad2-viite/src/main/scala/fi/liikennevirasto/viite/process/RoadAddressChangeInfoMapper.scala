@@ -49,9 +49,9 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues{ s =>
         val common = s.find(_.changeType == ShortenedCommonPart.value)
         val toRemove = s.filter(_.changeType == ShortenedRemovedPart.value)
-        val fusedRemove = if (toRemove.lengthCompare(1) > 0) {
+        val fusedRemove = if (toRemove.lengthCompare(0) > 0) {
           Some(toRemove.head.copy(oldStartMeasure = toRemove.minBy(_.oldStartMeasure).oldStartMeasure, oldEndMeasure = toRemove.maxBy(_.oldEndMeasure).oldEndMeasure))
-        } else Some(toRemove.head)
+        } else None
         (common, fusedRemove) match {
           case (Some(c), Some(r)) =>
             val (expStart, expEnd) = if (c.oldStartMeasure.get > c.oldEndMeasure.get)
