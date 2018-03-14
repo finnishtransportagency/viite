@@ -1066,7 +1066,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.filter(r => r.startAddrMValue == 1024).head.commonHistoryId should be(commonHistoryId) // Original
     result.filter(r => r.startAddrMValue == 1028).head.commonHistoryId should not be(commonHistoryId) // Transferred
     result.filter(r => r.startAddrMValue == 1128).head.commonHistoryId should not be(commonHistoryId) // New
-    result.filter(r => r.startAddrMValue == 1124).head.commonHistoryId should be(commonHistoryId) // Terminated
+    result.filter(r => r.startAddrMValue == 1124).head.commonHistoryId should not be(commonHistoryId) // Terminated
   }
 
   test("split road address save behaves correctly on unchanged + new") {
