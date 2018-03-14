@@ -42,7 +42,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val NoClass = 99
 
   val MaxAllowedMValueError = 0.001
-  val Epsilon = 1E-6
+  val Epsilon = 1
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
                              */
