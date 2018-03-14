@@ -16,13 +16,12 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
 
-import scala.reflect.macros.blackbox
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
@@ -33,6 +32,8 @@ import scala.util.{Left, Right}
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
+
+case class RoadNameExtractor(id: Option[Long], roadNumber: Option[Long], roadName:String, startDate :String, endDate: String) //not use
 
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
@@ -54,6 +55,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
                val roadNetworkService: RoadNetworkService,
+               val roadNameService: RoadNameService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date
               )
@@ -66,7 +68,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   class Contains(r: Range) {
     def unapply(i: Int): Boolean = r contains i
   }
-
+  private val  dtf: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
   val DrawMainRoadPartsOnly = 1
   val DrawRoadPartsOnly = 2
   val DrawLinearPublicRoads = 3
@@ -171,6 +173,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
   }
+
+
+  get("/roadnames/") {
+    val oRoadNumber = params.get("roadnumber")
+    val oRoadName = params.get("roadName")
+    val oStartDate = params.get("startdate")
+    val oEndDate = params.get("enddate")
+    roadNameService.getRoadAddresses(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
+      case Right(roadNameList) => //todo sort for frontend
+      case Left(errorMessage) => //errormessage if something went wrong
+    }
+  }
+
 
   get("/roadlinks/multiSourceAdjacents") {
     val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String, Any]]]
@@ -925,6 +940,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "elyCode" -> splittedLinks.ely
           ))
       }
+    }
+  }
+
+  /**
+    * For checking date validity we convert string datre to datetime options
+    * @param dateString string formated date dd.mm.yyyy
+    * @return  Joda datetime
+    */
+  private def optionStringToDateTime(dateString:Option[String]): Option[DateTime] = {
+    dateString match {
+      case Some(dateString) => Some(dtf.parseDateTime(dateString))
+      case _=> None
     }
   }
 
