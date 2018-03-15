@@ -176,13 +176,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
 
   get("/roadnames/") {
-    val oRoadNumber = params.get("roadnumber")
+    val oRoadNumber = params.get("roadNumber")
     val oRoadName = params.get("roadName")
-    val oStartDate = params.get("startdate")
-    val oEndDate = params.get("enddate")
+    val oStartDate = params.get("startDate")
+    val oEndDate = params.get("endDate")
     roadNameService.getRoadAddressesInTx(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
-      case Right(roadNameList) => //todo sort for frontend
-      case Left(errorMessage) => //errormessage if something went wrong
+      case Right(roadNameList) => Map("success" -> true, "roadNameInfo" -> roadNameList.map(roadNameToApi))
+      case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
     }
   }
 
@@ -818,6 +818,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "startDate" -> roadAddressLink.startDate,
         "endDate" -> roadAddressLink.endDate,
         "newGeometry" -> roadAddressLink.newGeometry
+      )
+  }
+
+  def roadNameToApi(roadName: RoadName): Map[String, Any] = {
+      Map(
+        "id"-> roadName.id,
+        "roadNumber"-> roadName.roadNumber,
+        "roadNameFi"-> roadName.roadName,
+        "startDate" -> roadName.startDate,
+        "endDate" -> roadName.endDate
       )
   }
 

@@ -47,7 +47,7 @@ class RoadNameService() {
           Right(queryRoadNamesAndNumbers(None, Some(roadName), oStartDate, oEndDate))
         case (Some(roadNumber), None) =>
             Right(RoadNameDAO.getRoadNamesByRoadNumber(roadNumber.toLong, None, None, oStartDate, oEndDate))
-        case (None, None) => Left("Missing RoadNumber and RoadName")
+        case (None, None) => Left("Missing RoadNumber")
       }
     }
     catch {
