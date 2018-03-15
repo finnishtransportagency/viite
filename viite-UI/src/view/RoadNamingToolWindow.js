@@ -23,18 +23,20 @@
 
         nameToolSearchWindow.append('<div id="road-list" style="width:810px; height:400px; overflow:auto;"></div>');
 
-        var staticFieldRoadNumber = function (dataField) {
+        var staticFieldRoadNumber = function (dataField, fieldName) {
             var field;
             field = '<div>' +
-                '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
+                '<input class="input-road-details-readonly" style="width: 300px" value="' + dataField + '" data-FieldName="' + fieldName + '" readonly >' +
                 '</div>';
             return field;
         };
 
-        var staticFieldRoadList = function (dataField) {
+        var staticFieldRoadList = function (dataField, writable, roadId, fieldName) {
             var field;
+            var inputClass = (writable ? "input-road-details-writable" : "input-road-details-readonly");
+            var readOnly = (writable ? "" : "readonly");
             field = '<div>' +
-                '<label class="control-label-projects-list">' + dataField + '</label>' +
+                '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
                 '</div>';
             return field;
         };
@@ -60,23 +62,28 @@
             });
 
             nameToolSearchWindow.on('click', 'button.close', function () {
+                $('.roadList-item').remove();
+                roadNameCollection.clearBoth();
                 hide();
             });
 
             nameToolSearchWindow.on('click', '#executeRoadSearch', function () {
                 var roadParam = $('#roadSearchParameter').val();
+                $('.roadList-item').remove();
                 roadNameCollection.fetchRoads(roadParam);
             });
 
             eventbus.on("roadNameTool: roadsFetched", function (roadData) {
+                var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data">Tallenna</button>';
                 var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
                 if (!_.isEmpty(roadData)) {
                     _.each(roadData, function (road) {
-                        html += '<tr class="project-item">' +
-                            '<td style="width: 310px;">' + staticFieldRoadNumber(road.roadNumber) + '</td>' +
-                            '<td style="width: 110px;">' + staticFieldRoadList(road.roadNameFi) + '</td>' +
-                            '<td style="width: 110px;">' + staticFieldRoadList(road.startDate) + '</td>' +
-                            '<td style="width: 110px;">' + staticFieldRoadList(road.endDate) + '</td>';
+                        var writable = road.endDate == "";
+                        html += '<tr class="roadList-item">' +
+                            '<td style="width: 310px;">' + staticFieldRoadNumber(road.roadNumber, road.id) + '</td>' +
+                            '<td style="width: 110px;">' + staticFieldRoadList(road.roadNameFi, writable, road.id) + '</td>' +
+                            '<td style="width: 110px;">' + staticFieldRoadList(road.startDate, false, road.id) + '</td>' +
+                            '<td style="width: 110px;">' + staticFieldRoadList(road.endDate, writable, road.id) + '</td>';
                         if (road.endDate === "") {
                             html += '<td>' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px; margin-left: 70px" id="new-road-name-' + road.roadNumber + '" value="' + road.roadNumber + '"">+</button>' + '</td>' +
                                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
@@ -87,11 +94,21 @@
                     });
                     html += '</table>';
                     $('#road-list').html($(html));
+                    $('#road-list').append(saveButton);
+
+                    $('.input-road-details-writable').on("change", function (eventObject) {
+                        var target = $(eventObject.target);
+                        var roadId = target.attr("data-roadid");
+                        var fieldName = target.attr("data-FieldName");
+                        var fieldValue = target.val();
+                        roadNameCollection.registerEdition(roadId, fieldName, fieldValue);
+                    });
+
                 } else {
                     html += '</table>';
                     $('#road-list').html($(html));
+                    $('#road-list').append(saveButton);
                 }
-                alert("RoadData returned to UI");
             });
         }
 
