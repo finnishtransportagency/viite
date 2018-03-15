@@ -180,7 +180,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val oRoadName = params.get("roadName")
     val oStartDate = params.get("startdate")
     val oEndDate = params.get("enddate")
-    roadNameService.getRoadAddresses(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
+    roadNameService.getRoadAddressesInTx(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
       case Right(roadNameList) => //todo sort for frontend
       case Left(errorMessage) => //errormessage if something went wrong
     }
