@@ -425,10 +425,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       response.get("success") match {
         case Some(true) => {
           writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
-          val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
+          val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[ValidationErrorDetails]].map(errorPartsToApi)
           Map("success" -> true,
             "publishable" -> response.get("projectErrors").isEmpty,
-            "projectErrors" -> response.get("projectErrors"))
+            "projectErrors" -> projectErrors)
         }
         case _ => response
       }
