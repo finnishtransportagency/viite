@@ -14,8 +14,8 @@
             '<button id="createRoad" class="btn btn-sm btn-primary" style="display: none">Luo Tie</button>' +
             '</div>' +
             '<div id="table-labels">' +
-            '<label class="content-new label">Tie</label>' +
-            '<label class="content-new label" style="width: 100px">Tien nimi</label>' +
+            '<label class="content-new label" style="width:150px">Tie</label>' +
+            '<label class="content-new label" style="width: 200px">Tien nimi</label>' +
             '<label class="content-new label" style="width: 100px">Alkupvm</label>' +
             '<label class="content-new label" style="width: 100px">Loppupvm</label>' +
             '</div>' +
@@ -25,18 +25,20 @@
 
         var staticFieldRoadNumber = function (dataField, fieldName) {
             var field;
-            field = '<div>' +
-                '<input class="input-road-details-readonly" style="width: 300px" value="' + dataField + '" data-FieldName="' + fieldName + '" readonly >' +
+            field = '<div sty>' +
+                '<input class="input-road-details-readonly" style="width: 110px" value="' + dataField + '" data-FieldName="' + fieldName + '" readonly >' +
                 '</div>';
             return field;
         };
 
         var staticFieldRoadList = function (dataField, writable, roadId, fieldName) {
             var field;
-            var inputClass = (writable ? "input-road-details-writable" : "input-road-details-readonly");
+            //input-road-details-writable
+            var inputClass = (writable ? "form-control" : "form-control");
+            //form-control
             var readOnly = (writable ? "" : "readonly");
             field = '<div>' +
-                '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
+                '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; width: 85%">' +
                 '</div>';
             return field;
         };
@@ -49,6 +51,7 @@
 
         function hide() {
             nameToolSearchWindow.hide();
+            $('#saveChangedRoads').remove();
             $('.modal-overlay').remove();
         }
 
@@ -80,12 +83,12 @@
                     _.each(roadData, function (road) {
                         var writable = road.endDate == "";
                         html += '<tr class="roadList-item">' +
-                            '<td style="width: 310px;">' + staticFieldRoadNumber(road.roadNumber, road.id) + '</td>' +
-                            '<td style="width: 110px;">' + staticFieldRoadList(road.roadNameFi, writable, road.id) + '</td>' +
+                            '<td style="width: 150px;">' + staticFieldRoadNumber(road.roadNumber, road.id) + '</td>' +
+                            '<td style="width: 200px;">' + staticFieldRoadList(road.roadNameFi, writable, road.id) + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.startDate, false, road.id) + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.endDate, writable, road.id) + '</td>';
                         if (road.endDate === "") {
-                            html += '<td>' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px; margin-left: 70px" id="new-road-name-' + road.roadNumber + '" value="' + road.roadNumber + '"">+</button>' + '</td>' +
+                            html += '<td>' + '<button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 70px" id="new-road-name-' + road.roadNumber + '" value="' + road.roadNumber + '"">+</button>' + '</td>' +
                                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
                         } else {
                             html += '<td>' + '<button class="project-open btn btn-new" style="visibility:hidden; alignment: right; margin-bottom:6px; margin-left: 70px" id="spaceFillerButton">+</button>' + '</td>' +
