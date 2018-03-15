@@ -99,38 +99,24 @@
       eventbus.once('projectChanges:fetched', function(projectChangeData) {
         var htmlTable = "";
         if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
-          _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq) {
-            if (changeInfoSeq.changetype === LinkStatus.New.value) {
-              htmlTable += '<tr class="row-changes">';
-              htmlTable += getEmptySource(changeInfoSeq);
-              htmlTable += getReversed(changeInfoSeq);
-              htmlTable += getTargetInfo(changeInfoSeq);
-              htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
-              htmlTable += '<tr class="row-changes">';
-              htmlTable += getSourceInfo(changeInfoSeq);
-              htmlTable += getReversed(changeInfoSeq);
-              htmlTable += getEmptyTarget();
-              htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === LinkStatus.Unchanged.value) {
-              htmlTable += '<tr class="row-changes">';
-              htmlTable += getSourceInfo(changeInfoSeq);
-              htmlTable += getReversed(changeInfoSeq);
-              htmlTable += getTargetInfo(changeInfoSeq);
-              htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === LinkStatus.Transfer.value) {
-              htmlTable += '<tr class="row-changes">';
-              htmlTable += getSourceInfo(changeInfoSeq);
-              htmlTable += getReversed(changeInfoSeq);
-              htmlTable += getTargetInfo(changeInfoSeq);
-              htmlTable += '</tr>';
-            } else if (changeInfoSeq.changetype === LinkStatus.Numbering.value) {
-              htmlTable += '<tr class="row-changes">';
-              htmlTable += getSourceInfo(changeInfoSeq);
-              htmlTable += getReversed(changeInfoSeq);
-              htmlTable += getTargetInfo(changeInfoSeq);
-              htmlTable += '</tr>';
+          _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
+            var rowColorClass = '';
+            if (index % 2 !== 0) {
+              rowColorClass = 'white-row';
             }
+            htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
+            if (changeInfoSeq.changetype === LinkStatus.New.value) {
+              htmlTable += getEmptySource(changeInfoSeq);
+            } else {
+              htmlTable += getSourceInfo(changeInfoSeq);
+            }
+            htmlTable += getReversed(changeInfoSeq);
+            if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
+              htmlTable += getEmptyTarget();
+            } else {
+              htmlTable += getTargetInfo(changeInfoSeq);
+            }
+            htmlTable += '</tr>';
           });
         }
         $('.row-changes').remove();
