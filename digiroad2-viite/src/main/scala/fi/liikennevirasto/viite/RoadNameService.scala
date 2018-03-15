@@ -18,17 +18,21 @@ class RoadNameService() {
   private val dtf: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
 
 
-  private def queryRoadNamesandNumbers(oRoadNumber: Option[Long], oRoadName: Option[String],
+  private def queryRoadNamesAndNumbers(oRoadNumber: Option[Long], oRoadName: Option[String],
                                        oStartDate: Option[DateTime] = None, oEndDate: Option[DateTime] = None): Seq[RoadName] = {
-    withDynTransaction {
       RoadNameDAO.getRoadNamesByRoadNameAndRoadNumber(oRoadNumber, oRoadName, None, None, oStartDate, oEndDate)
+  }
+
+  def getRoadAddressesInTx(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
+    withDynTransaction {
+      getRoadAddresses(oRoadNumber, oRoadName, oStartDate, oEndDate)
     }
   }
 
-
-  /**
+    /**
     * Searches roadnames by roadnumber, roadname and between history
-    * @param oRoadNumber Option ruoadnumber
+      *
+      * @param oRoadNumber Option ruoadnumber
     * @param oRoadName option roadName
     * @param oStartDate optionStart date
     * @param oEndDate Option Endate
@@ -38,13 +42,11 @@ class RoadNameService() {
     try {
       (oRoadNumber, oRoadName) match {
         case (Some(roadNumber), Some(roadName)) =>
-          Right(queryRoadNamesandNumbers(Some(roadNumber.toLong), Some(roadName), oStartDate, oEndDate))
+          Right(queryRoadNamesAndNumbers(Some(roadNumber.toLong), Some(roadName), oStartDate, oEndDate))
         case (None, Some(roadName)) =>
-          Right(queryRoadNamesandNumbers(None, Some(roadName), oStartDate, oEndDate))
+          Right(queryRoadNamesAndNumbers(None, Some(roadName), oStartDate, oEndDate))
         case (Some(roadNumber), None) =>
-          withDynTransaction {
             Right(RoadNameDAO.getRoadNamesByRoadNumber(roadNumber.toLong, None, None, oStartDate, oEndDate))
-          }
         case (None, None) => Left("Missing RoadNumber and RoadName")
       }
     }

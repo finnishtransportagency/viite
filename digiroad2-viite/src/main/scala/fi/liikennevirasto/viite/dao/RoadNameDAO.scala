@@ -13,6 +13,8 @@ case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Opt
 
 object RoadNameDAO {
   private val logger = LoggerFactory.getLogger(getClass)
+  private val roadsNameQueryBase =  s"""select id,road_number,road_Name,start_date,end_date,valid_from,valid_To,created_By
+  from Road_Names"""
   implicit val getRoadNameRow = new GetResult[RoadName] {
     def apply(r: PositionedResult) = {
       val roadNameId = r.nextLong()
@@ -28,10 +30,6 @@ object RoadNameDAO {
     }
   }
 
-
-
-
-
   def dateParser(oDate: Option[DateTime]):String ={
     oDate match {
       case Some(date) => {
@@ -44,6 +42,10 @@ object RoadNameDAO {
     }
   }
 
+  private def queryList(query: String) = {
+    Q.queryNA[RoadName](query).iterator.toSeq
+  }
+
   /**
     * Get roadNames ValidFrom - ValidTo determines database history vector and startDate and endDate determines data history
     */
@@ -54,12 +56,10 @@ object RoadNameDAO {
     val startDateFilter = if (oStartDate.isDefined) s"AND startDate >= ${dateParser(oStartDate)}" else ""
     val endDateFilter = if (oEndDate.isDefined) s"AND endDate <= ${dateParser(oEndDate)}" else ""
 
-    val  query= s"""select id,road_number,road_Name,start_date,end_date,valid_from,valid_To,created_By
-              from Road_Names
-              Where road_number = $roadNumber $validFromFilter $validToFilter $startDateFilter $endDateFilter"""
-    Q.queryNA[RoadName](query).iterator.toSeq
+    val query =
+      s"""$roadsNameQueryBase Where road_number = $roadNumber $validFromFilter $validToFilter $startDateFilter $endDateFilter"""
+    queryList(query)
   }
-
 
   /** // TODO
     * We probably want to use slightly slower prepared statement when we query with user given string to avoid sql injection
@@ -81,12 +81,9 @@ object RoadNameDAO {
     val roadNumber = if (oRoadNumber.isDefined) s" $roadNameApplied road_number = ${oRoadNumber.getOrElse("")}" else ""
     if (roadName + roadNumber != "") {
       val query =
-        s"""select id,road_number,road_Name,start_date,end_date,valid_from,valid_To,created_By
-              from Road_Names
-              Where $roadName  $roadNumber $validFromFilter $validToFilter $startDateFilter $endDateFilter"""
-
-      Q.queryNA[RoadName](query).iterator.toSeq
+        s"""$roadsNameQueryBase Where $roadName $roadNumber $validFromFilter $validToFilter $startDateFilter $endDateFilter"""
+      queryList(query)
     } else
-      Seq.empty // if roadnumber and roadname are empty we return empty list
+      Seq.empty[RoadName]
   }
 }
