@@ -35,7 +35,7 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' viite-UI/ src/main/webapp/viite/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/viite/"
       execute "cd #{release_path} && chmod 700 stop.sh"
-      execute "cd #{release_path} && ./stop.sh"
+      execute "cd #{release_path} && ./stop.sh; exit 0"
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
     end
   end
