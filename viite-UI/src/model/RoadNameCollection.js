@@ -2,6 +2,7 @@
     root.RoadNameCollection = function (backend) {
         var currentRoadData = [];
         var editedRoadData = [];
+        var newRoads = [];
 
         this.fetchRoads = function (roadNumber) {
             editedRoadData = [];
@@ -22,7 +23,7 @@
                 originalRoad: originalRecord,
                 changedField: editedField,
                 newValue: newValue
-            }]
+            }];
         };
 
         this.clearCurrent = function () {
