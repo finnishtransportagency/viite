@@ -9,6 +9,11 @@
             backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
                 var sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
                     return rd.roadNumber == roadNumber;
+                }).map(function (road) {
+                    var roadCopy = road;
+                    roadCopy.endDate = _.first(road.endDate.split(","));
+                    roadCopy.startDate = _.first(road.startDate.split(","));
+                    return roadCopy;
                 }).sortBy('endDate').reverse().sortBy('roadNumber').value();
                 currentRoadData = sortedRoadData;
                 eventbus.trigger("roadNameTool: roadsFetched", sortedRoadData);

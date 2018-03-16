@@ -15,7 +15,7 @@
             '</div>' +
             '<div id="table-labels">' +
             '<label class="content-new label" style="width:138px">Tie</label>' +
-            '<label class="content-new label" style="width: 192px">Tien nimi</label>' +
+            '<label class="content-new label" style="width: 242px">Tien nimi</label>' +
             '<label class="content-new label" style="width: 100px">Alkupvm</label>' +
             '<label class="content-new label" style="width: 100px">Loppupvm</label>' +
             '</div>' +
@@ -90,10 +90,10 @@
                 var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
                 if (!_.isEmpty(roadData)) {
                     _.each(roadData, function (road) {
-                        var writable = road.endDate == "";
+                        var writable = road.endDate === "";
                         html += '<tr class="roadList-item">' +
                             '<td style="width: 150px;">' + staticFieldRoadNumber(road.roadNumber, road.id) + '</td>' +
-                            '<td style="width: 200px;">' + staticFieldRoadList(road.roadNameFi, writable, road.id, "roadName") + '</td>' +
+                            '<td style="width: 250px;">' + staticFieldRoadList(road.roadNameFi, writable, road.id, "roadName") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.startDate, false, road.id, "startDate") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.endDate, writable, road.id, "endDate") + '</td>';
                         if (road.endDate === "") {

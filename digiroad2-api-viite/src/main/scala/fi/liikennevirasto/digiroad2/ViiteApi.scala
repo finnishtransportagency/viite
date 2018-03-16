@@ -826,8 +826,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "id"-> roadName.id,
         "roadNumber"-> roadName.roadNumber,
         "roadNameFi"-> roadName.roadName,
-        "startDate" -> roadName.startDate,
-        "endDate" -> roadName.endDate
+        "startDate" -> formatDateTimeToString(roadName.startDate).getOrElse(""),
+        "endDate" -> formatDateTimeToString(roadName.endDate).getOrElse("")
       )
   }
 
