@@ -7,7 +7,7 @@
         this.fetchRoads = function (roadNumber) {
             editedRoadData = [];
             backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
-                var sortedRoadData = _.chain(roadData).filter(function (rd) {
+                var sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
                     return rd.roadNumber == roadNumber;
                 }).sortBy('endDate').reverse().sortBy('roadNumber').value();
                 currentRoadData = sortedRoadData;
@@ -16,14 +16,11 @@
         };
 
         this.registerEdition = function (roadId, editedField, newValue) {
-            var originalRecord = _.find(currentRoadData, function (road) {
-                return road.id == roadId;
-            });
-            editedRoadData = editedRoadData + [{
-                originalRoad: originalRecord,
+            editedRoadData = editedRoadData.concat([{
+                originalRoadId: roadId,
                 changedField: editedField,
                 newValue: newValue
-            }];
+            }]);
         };
 
         this.clearCurrent = function () {
@@ -37,6 +34,14 @@
         this.clearBoth = function () {
             currentRoadData = [];
             editedRoadData = [];
+        };
+
+        this.saveChanges = function () {
+            //TODO
+            var groupedChanges = _.groupBy(function (data) {
+                return data.originalRoadId;
+            });
+
         };
     };
 })(this);

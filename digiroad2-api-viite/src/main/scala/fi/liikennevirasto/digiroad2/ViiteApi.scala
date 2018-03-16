@@ -175,7 +175,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
 
-  get("/roadnames/") {
+  get("/roadnames") {
     val oRoadNumber = params.get("roadNumber")
     val oRoadName = params.get("roadName")
     val oStartDate = params.get("startDate")
