@@ -539,7 +539,7 @@
       return self;
     };
 
-      this.getRoadAddressesByRoadNumber = function (roadNumber, callback) {
+      this.getDummyRoadAddressesByRoadNumber = function (roadNumber, callback) {
           //add API call here
           var dummyReturnObject = [{
               id: 0,
@@ -562,6 +562,12 @@
           }];
           return callback(dummyReturnObject);
       };
+
+      this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
+          return {
+              url: 'api/viite/roadnames?roadNumber=' + roadNumber
+          };
+      });
 
   };
 }(this));
