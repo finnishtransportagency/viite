@@ -589,7 +589,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId))
       RoadAddressDAO.create(ra)
-      val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
+      val roadBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
@@ -622,14 +622,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId), false, true)
       roadsAfterChanges.size should be(1)
-      val roadsAfterPublishing = roadsAfterChanges.filter(x => x.startDate.nonEmpty && x.endDate.isEmpty).head
+      val roadAfterPublishing = roadsAfterChanges.filter(x => x.startDate.nonEmpty && x.endDate.isEmpty).head
       val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty)
 
-      roadsBeforeChanges.linkId should be(roadsAfterPublishing.linkId)
-      roadsBeforeChanges.roadNumber should be(roadsAfterPublishing.roadNumber)
-      roadsBeforeChanges.roadPartNumber should be(roadsAfterPublishing.roadPartNumber)
+      roadBeforeChanges.linkId should be(roadAfterPublishing.linkId)
+      roadBeforeChanges.roadNumber should be(roadAfterPublishing.roadNumber)
+      roadBeforeChanges.roadPartNumber should be(roadAfterPublishing.roadPartNumber)
       endedAddress.isEmpty should be (true)
-      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1901-01-01")
+      roadAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1901-01-01")
+      roadAfterPublishing.commonHistoryId should be (commonHistoryId)
     }
   }
 
