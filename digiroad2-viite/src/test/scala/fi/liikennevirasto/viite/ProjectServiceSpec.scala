@@ -1026,7 +1026,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val linkId = 1049L
     val endM = 520.387
     val suravageLinkId = 5774839L
-    val commonHistoryId = 123
     val user = Some("user")
     val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
@@ -1034,7 +1033,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     // Original road address: 1024 -> 1547
     val roadAddress = RoadAddress(1L, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
       None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, commonHistoryId)
+      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
 
     val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, Some(DateTime.now()), None, user,
       0, 0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
@@ -1063,10 +1062,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.count(_.startDate == roadAddress.startDate) should be(2)
     result.count(_.startDate.get == project.startDate) should be(2)
     result.count(_.endDate.isEmpty) should be(2)
-    result.filter(r => r.startAddrMValue == 1024).head.commonHistoryId should be(commonHistoryId) // Original
-    result.filter(r => r.startAddrMValue == 1028).head.commonHistoryId should not be(commonHistoryId) // Transferred
-    result.filter(r => r.startAddrMValue == 1128).head.commonHistoryId should not be(commonHistoryId) // New
-    result.filter(r => r.startAddrMValue == 1124).head.commonHistoryId should not be(commonHistoryId) // Terminated
   }
 
   test("split road address save behaves correctly on unchanged + new") {
