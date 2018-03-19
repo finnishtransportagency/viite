@@ -289,14 +289,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
-      if (project.id != 0) //we check if project is new. If it is then we check project for being in writable state
+      if (project.id != 0) { // we check if project is new. If it is then we check project for being in writable state
         projectWritable(roadAddressProject.id)
-      val projectSaved = projectService.saveProject(roadAddressProject)
-      projectService.saveProjectCoordinates(projectSaved.id, projectService.calculateProjectCoordinates(projectSaved.id, project.resolution))
-      val firstLink = projectService.getFirstProjectLink(projectSaved)
-      Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
-        projectSaved.reservedParts.map(reservedRoadPartToApi),
-        "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+      }
+      val reservationMessage = if (roadAddressProject.reservedParts.nonEmpty) {
+        projectService.validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
+          case Some(errMsg) => Some(errMsg)
+          case None => None
+        }
+      } else {
+        None
+      }
+      if (reservationMessage.isEmpty) {
+        val projectSaved = projectService.saveProject(roadAddressProject)
+        projectService.saveProjectCoordinates(projectSaved.id, projectService.calculateProjectCoordinates(projectSaved.id, project.resolution))
+        val firstLink = projectService.getFirstProjectLink(projectSaved)
+        Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
+          projectSaved.reservedParts.map(reservedRoadPartToApi),
+          "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
+      } else {
+        Map("success" -> false, "errorMessage" -> reservationMessage.get)
+      }
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
@@ -357,7 +370,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/roadlinks/roadaddress/project/all") {
-    projectService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
+    projectService.getRoadAddressAllProjects.map(roadAddressProjectToApi)
   }
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
@@ -367,7 +380,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val projectMap = roadAddressProjectToApi(project)
         val parts = project.reservedParts.map(reservedRoadPartToApi)
         val errorParts = projectService.validateProjectById(project.id)
-        val publishable = projectService.isProjectPublishable(projectId)
+        val publishable = errorParts.isEmpty
         val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
         Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
           "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
@@ -410,9 +423,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, user) match {
           case None =>
             writableProject.saveProjectCoordinates(linksToRevert.projectId, linksToRevert.coordinates)
+            val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi)
             Map("success" -> true,
-              "publishable" -> projectService.isProjectPublishable(linksToRevert.projectId),
-              "projectErrors" -> projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi))
+              "publishable" -> projectErrors.isEmpty,
+              "projectErrors" -> projectErrors)
           case Some(s) => Map("success" -> false, "errorMessage" -> s)
         }
       }
@@ -439,9 +453,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       response.get("success") match {
         case Some(true) => {
           writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
+          val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[ValidationErrorDetails]].map(errorPartsToApi)
           Map("success" -> true,
-            "publishable" -> projectService.isProjectPublishable(links.projectId),
-            "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
+            "publishable" -> response.get("projectErrors").isEmpty,
+            "projectErrors" -> projectErrors)
         }
         case _ => response
       }
@@ -470,9 +485,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
+              val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
               Map("success" -> true, "id" -> links.projectId,
-                "publishable" -> projectService.isProjectPublishable(links.projectId),
-                "projectErrors" -> projectService.validateProjectById(links.projectId).map(errorPartsToApi))
+                "publishable" -> projectErrors.isEmpty,
+                "projectErrors" -> projectErrors)
           }
         }
         case _ => Map("success" -> false, "errorMessage" -> "Invalid track code")

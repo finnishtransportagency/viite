@@ -554,7 +554,7 @@ object RoadAddressDAO {
   }
 
   def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false,
-                      includeHistory: Boolean = false, includeSuravage: Boolean = true): List[RoadAddress] = {
+                      includeHistory: Boolean = false, includeSuravage: Boolean = true, fetchOnlyEnd: Boolean = false, fetchOnlyStart: Boolean = false): List[RoadAddress] = {
     val floating = if (!includeFloating)
       "floating='0' AND"
     else
@@ -571,6 +571,13 @@ object RoadAddressDAO {
       "link_source != 3 AND"
     else ""
     // valid_to > sysdate because we may expire and query the data again in same transaction
+
+    val endPart = if (fetchOnlyEnd) {
+      s"And ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+    } else ""
+    val startPart = if (fetchOnlyStart) {
+      s"And ra.start_addr_m = (Select min(road.start_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+    } else ""
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -581,7 +588,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id 
+        $endPart $startPart
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
