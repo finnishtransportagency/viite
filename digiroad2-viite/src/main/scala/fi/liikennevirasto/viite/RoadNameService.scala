@@ -2,10 +2,8 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.{RoadName, RoadNameDAO}
-import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.format.DateTimeFormatter
+import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 
@@ -13,14 +11,11 @@ class RoadNameService() {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-
   private val logger = LoggerFactory.getLogger(getClass)
-  private val dtf: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
-
 
   private def queryRoadNamesAndNumbers(oRoadNumber: Option[Long], oRoadName: Option[String],
                                        oStartDate: Option[DateTime] = None, oEndDate: Option[DateTime] = None): Seq[RoadName] = {
-      RoadNameDAO.getRoadNamesByRoadNameAndRoadNumber(oRoadNumber, oRoadName, None, None, oStartDate, oEndDate)
+    RoadNameDAO.getRoadNamesByRoadNameAndRoadNumber(oRoadNumber, oRoadName, None, None, oStartDate, oEndDate)
   }
 
   def getRoadAddressesInTx(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
@@ -29,14 +24,14 @@ class RoadNameService() {
     }
   }
 
-    /**
-    * Searches roadnames by roadnumber, roadname and between history
-      *
-      * @param oRoadNumber Option ruoadnumber
-    * @param oRoadName option roadName
-    * @param oStartDate optionStart date
-    * @param oEndDate Option Endate
-    * @return         Returns error message as left and right as seq of roadnames
+  /**
+    * Searches road names by road number, road name and between history
+    *
+    * @param oRoadNumber Option road number
+    * @param oRoadName   Option road name
+    * @param oStartDate  Option start date
+    * @param oEndDate    Option end date
+    * @return Returns error message as left and right as seq of road names
     */
   def getRoadAddresses(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
     try {
@@ -46,22 +41,12 @@ class RoadNameService() {
         case (None, Some(roadName)) =>
           Right(queryRoadNamesAndNumbers(None, Some(roadName), oStartDate, oEndDate))
         case (Some(roadNumber), None) =>
-            Right(RoadNameDAO.getRoadNamesByRoadNumber(roadNumber.toLong, None, None, oStartDate, oEndDate))
+          Right(RoadNameDAO.getRoadNamesByRoadNumber(roadNumber.toLong, None, None, oStartDate, oEndDate))
         case (None, None) => Left("Missing RoadNumber")
       }
-    }
-    catch {
-      case longparsingException: NumberFormatException =>
-        Left("Could not parse roadnumber")
+    } catch {
+      case longParsingException: NumberFormatException => Left("Could not parse road number")
       case e if NonFatal(e) => Left("Unknown error")
     }
   }
 }
-
-
-
-
-
-
-
-
