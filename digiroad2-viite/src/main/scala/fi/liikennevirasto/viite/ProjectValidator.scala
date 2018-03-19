@@ -625,7 +625,7 @@ object ProjectValidator {
     /**
       * Will find the endPoints (lowest and highest endAddressM respectively) and run the standard validation to them
       *
-      * @param groupedProjectLinks Project Links groupped by Road Number and Road Part Number
+      * @param groupedProjectLinks Project Links grouped by Road Number and Road Part Number
       * @return Well formed validation error objects, if applicable
       */
     def checkEndpoints(groupedProjectLinks: Seq[ProjectLink]) = {
