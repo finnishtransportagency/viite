@@ -832,6 +832,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
       newAddresses.flatMap(_.allSegments).map(_.id).toSet should be (addresses.map(_.id).toSet)
+
       newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.size should be (1)
       newAddresses.flatMap(_.allSegments).map(_.commonHistoryId).toSet.head should be (commonHistoryId)
     }
