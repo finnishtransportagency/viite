@@ -256,8 +256,11 @@ object ProjectValidator {
       checkTrackCode(project, projectLinks)
     }
 
-    checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ elyCodesResults ++ checkTerminationContinuity(project, projectLinks)
+    val validationErrors = checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ elyCodesResults
+    if (!validationErrors.exists(_.validationError == ValidationErrorList.MissingEndOfRoad))
+      validationErrors ++ checkTerminationContinuity(project, projectLinks)
+    else validationErrors
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {

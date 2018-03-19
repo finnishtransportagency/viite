@@ -436,13 +436,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val elyErrors = reservedRoadParts.flatMap(roadAddress =>
       if (projectEly.filterNot(l => l == -1L).getOrElse(roadAddress.ely.get) != roadAddress.ely.get) {
-        Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}. Tarkista tiedot.")
+        Some(s"TIE ${roadAddress.roadNumber} OSA ${roadAddress.roadPartNumber}")
       } else None)
     if (errors.nonEmpty)
       Some(s"$ErrorFollowingRoadPartsNotFoundInDB ${errors.mkString(", ")}")
     else {
       if (elyErrors.nonEmpty)
-        Some(s"$ErrorFollowingPartsHaveDifferingEly ${elyErrors.mkString(", ")}")
+        Some(s"$ErrorFollowingPartsHaveDifferingEly ${elyErrors.mkString(", ")}. Tarkista tiedot.")
       else {
         val ely = reservedRoadParts.map(_.ely)
         if (ely.distinct.lengthCompare(1) > 0) {
