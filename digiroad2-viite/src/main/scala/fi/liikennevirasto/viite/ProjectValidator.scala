@@ -195,7 +195,7 @@ object ProjectValidator {
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
-    def checkProjectContinuity: Seq[ValidationErrorDetails] =
+    def checkProjectContinuity: Seq[ValidationErrorDetails] = {
       projectLinks.filter(_.status != Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).flatMap {
         case ((road, _), seq) =>
           if (road < RampsMinBound || road > RampsMaxBound) {
@@ -205,6 +205,7 @@ object ProjectValidator {
           }
         case _ => Seq()
       }.toSeq
+    }
 
     def checkProjectCoverage = {
       Seq.empty[ValidationErrorDetails]
@@ -542,26 +543,31 @@ object ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        if (!notCombinedLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
+        val otherTrackLinks = notCombinedLinks.filterNot(l => l.track == Combined || l.track==minTrackLink.track)
+        val minOtherTrackLink = otherTrackLinks.minBy(_.startAddrMValue)
+        val maxOtherTrackLink = otherTrackLinks.maxBy(_.endAddrMValue)
+        if (minTrackLink.startAddrMValue != minOtherTrackLink.startAddrMValue) {
           Some(minTrackLink)
         }
-        else if (!notCombinedLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
+        else if (maxTrackLink.endAddrMValue != maxOtherTrackLink.endAddrMValue) {
           Some(maxTrackLink)
         } else None
       } else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
-      checkMinMaxTrack(trackInterval) match {
-        case Some(link) => Seq(link)
-        case None => {
-          trackInterval.sliding(2).map(l => {
-            if (l.head.endAddrMValue != l.last.startAddrMValue) {
-              Some(l.head)
-            } else None
-          }).toSeq.flatten
+      if(trackInterval.size > 1){
+        checkMinMaxTrack(trackInterval) match {
+          case Some(link) => Seq(link)
+          case None => {
+            trackInterval.sliding(2).map(l => {
+              if (l.head.endAddrMValue != l.last.startAddrMValue) {
+                Some(l.head)
+              } else None
+            }).toSeq.flatten
+          }
         }
-      }
+      } else Seq.empty[ProjectLink]
     }
 
     def recursiveCheckTrackChange(links: Seq[ProjectLink], errorLinks: Seq[ProjectLink] = Seq()): Option[ValidationErrorDetails] = {
@@ -619,7 +625,7 @@ object ProjectValidator {
     /**
       * Will find the endPoints (lowest and highest endAddressM respectively) and run the standard validation to them
       *
-      * @param groupedProjectLinks Project Links groupped by Road Number and Road Part Number
+      * @param groupedProjectLinks Project Links grouped by Road Number and Road Part Number
       * @return Well formed validation error objects, if applicable
       */
     def checkEndpoints(groupedProjectLinks: Seq[ProjectLink]) = {
@@ -655,9 +661,18 @@ object ProjectValidator {
         val projectLinkIds = if(onlyAdjacents.nonEmpty) projectLinksByIds(startRoad.projectId, onlyAdjacents.map(_.id).toSet)
         else Seq.empty[ProjectLink]
 
-        onlyAdjacents.map{ra =>
+        val possibleProblems = onlyAdjacents.map { ra =>
           ra.copy(discontinuity = projectLinkIds.find(_.roadAddressId == ra.id).getOrElse(ra).discontinuity)
         }.filterNot(_.discontinuity == Discontinuity.EndOfRoad)
+
+        val filteredProblems = possibleProblems.filter(pp => {
+          if (pp.roadNumber == startRoad.roadNumber || pp.roadNumber == endRoad.roadNumber) {
+            val lastRoadAddress = RoadAddressDAO.fetchByRoadPart(pp.roadNumber, pp.roadPartNumber, fetchOnlyEnd = true)
+            lastRoadAddress.head.endAddrMValue == pp.endAddrMValue
+          } else false
+        })
+
+        filteredProblems
       } else Seq.empty[RoadAddress]
     }
 

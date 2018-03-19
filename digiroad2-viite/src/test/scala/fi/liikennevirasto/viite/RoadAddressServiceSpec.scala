@@ -468,39 +468,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.size should be (0)
   }
 
-  ignore("GetAdjacents road links on road 75 part 2 targetLinkId 5176147") {
-    val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
-    val road75TargetLink = Seq(RoadLink(5176147,List(Point(538909.794,6999855.848,101.153999999995), Point(538915.453,6999869.226,100.69899999999325), Point(538918.052,6999875.753,101.44500000000698)),21.551092889334765,State,99,BothDirections,UnknownLinkType,Some(""),Some("vvh_modified"),Map("TO_RIGHT" -> 873, "LAST_EDITED_DATE" -> BigInt.apply(0L), "FROM_LEFT" -> 872, "MTKHEREFLIP" -> 0, "MTKID" -> 441179395, "ROADNAME_FI" -> "Nilsiäntie", "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(0L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 2, "points" -> List(Map("x" -> 538909.794, "y" -> 6999855.848, "z" -> 101.153999999995, "m" -> 0), Map("x" -> 538915.453, "y" -> 6999869.226, "z" -> 100.69899999999325, "m" -> 14.525699999998324), Map("x" -> 538918.052, "y" -> 6999875.753, "z" -> 101.44500000000698, "m" -> 21.55109999999695)), "OBJECTID" -> 2739051, "TO_LEFT" -> 874, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 749, "FROM_RIGHT" -> 871, "CREATED_DATE" -> BigInt.apply(0L), "GEOMETRY_EDITED_DATE" -> BigInt.apply(0L), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 75),InUse,NormalLinkInterface))
-    val roadLinks = Seq(
-      RoadLink(5176153,List(Point(538918.701,6999861.318,97.69500000000698), Point(538908.109,6999873.097,97.49700000000303)),15.840937630113233,Unknown,8,BothDirections,CycleOrPedestrianPath,Some("08.06.2017 18:02:01"),Some("automatic_generation"),Map("MTKHEREFLIP" -> 1, "MTKID" -> 1046479017, "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(1418083200000L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12314, "points" -> List(Map("x" -> 538918.701, "y" -> 6999861.318, "z" -> 97.69500000000698, "m" -> 0), Map("x" -> 538908.109, "y" -> 6999873.097, "z" -> 97.49700000000303, "m" -> 15.8408999999956)), "OBJECTID" -> 2739057, "VERTICALLEVEL" -> BigInt.apply(-1), "MUNICIPALITYCODE" -> BigInt.apply(749), "CREATED_DATE" -> BigInt.apply(1446132842000L) , "HORIZONTALACCURACY" -> 15000),InUse,NormalLinkInterface),
-      RoadLink(5176148,List(Point(538947.853,6999873.982,100.79399999999441), Point(538933.887,6999875.424,101.00699999999779), Point(538918.052,6999875.753,101.44500000000698)),29.878663844853985,Private,6,BothDirections,SingleCarriageway,Some("08.06.2017 18:02:01"),Some("automatic_generation"),Map("MTKHEREFLIP" -> 1, "MTKID" -> 1046464265, "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(1418083200000L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 1, "MTKCLASS" -> 12141, "points" -> List(Map("x" -> 538947.853, "y" -> 6999873.982, "z" -> 100.79399999999441, "m" -> 0), Map("x" -> 538933.887, "y" -> 6999875.424, "z" -> 101.00699999999779, "m" -> 14.040200000003097), Map("x" -> 538918.052, "y" -> 6999875.753, "z" -> 101.44500000000698, "m" -> 29.878700000001118)), "OBJECTID" -> 2739052, "VERTICALLEVEL" -> BigInt.apply(0), "MUNICIPALITYCODE" -> BigInt.apply(749), "CREATED_DATE" -> BigInt.apply(1446132842000L), "HORIZONTALACCURACY" -> 2000),InUse,NormalLinkInterface),
-      RoadLink(499836959,List(Point(538792.385,6999181.636,98.24300000000221), Point(538790.62,6999210.402,98.5280000000057), Point(538789.2,6999243.536,98.74000000000524), Point(538787.224,6999284.683,98.7219999999943), Point(538784.755,6999334.547,98.10700000000361), Point(538783.407,6999371.984,97.54200000000128), Point(538782.819,6999399.938,97.05400000000373), Point(538783.484,6999433.826,96.68099999999686), Point(538785.575,6999467.829,96.61800000000221), Point(538787.164,6999483.295,96.68700000000536), Point(538792.141,6999514.696,96.99599999999919), Point(538801.236,6999555.027,97.4829999999929), Point(538810.254,6999586.333,97.86900000000605), Point(538819.572,6999614.06,98.2039999999979), Point(538834.679,6999655.645,98.71799999999348), Point(538845.987,6999685.356,99.0850000000064), Point(538864.988,6999735.798,99.71499999999651), Point(538880.908,6999778.072,100.24899999999616), Point(538889.669,6999800.979,100.51200000000244), Point(538896.546,6999818.978,100.73200000000361), Point(538909.551,6999855.126,101.1469999999972), Point(538909.794,6999855.848,101.153999999995)),695.0810638900756,State,99,BothDirections,UnknownLinkType,Some("07.04.2017 14:20:02"),Some("vvh_modified"),Map("TO_RIGHT" -> 869, "LAST_EDITED_DATE" -> BigInt.apply(1491564002000L), "FROM_LEFT" -> 796, "MTKHEREFLIP" -> 0, "MTKID" -> 318861771, "ROADNAME_FI" -> "Nilsiäntie", "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(1418083200000L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 2, "points" -> List(Map("x" -> 538792.385, "y" -> 6999181.636, "z" -> 98.24300000000221, "m" -> 0), Map("x" -> 538790.62, "y" -> 6999210.402, "z" -> 98.5280000000057, "m" -> 28.820099999997183), Map("x" -> 538789.2, "y" -> 6999243.536, "z" -> 98.74000000000524, "m" -> 61.98450000000594), Map("x" -> 538787.224, "y" -> 6999284.683, "z" -> 98.7219999999943, "m" -> 103.17889999999898), Map("x" -> 538784.755, "y" -> 6999334.547, "z" -> 98.10700000000361, "m" -> 153.10400000000664), Map("x" -> 538783.407, "y" -> 6999371.984, "z" -> 97.54200000000128, "m" -> 190.56530000000203), Map("x" -> 538782.819, "y" -> 6999399.938, "z" -> 97.05400000000373, "m" -> 218.52550000000338), Map("x" -> 538783.484, "y" -> 6999433.826, "z" -> 96.68099999999686, "m" -> 252.41999999999825), Map("x" -> 538785.575, "y" -> 6999467.829, "z" -> 96.61800000000221, "m" -> 286.4872000000032), Map("x" -> 538787.164, "y" -> 6999483.295, "z" -> 96.68700000000536, "m" -> 302.03459999999905), Map("x" -> 538792.141, "y" -> 6999514.696, "z" -> 96.99599999999919, "m" -> 333.82760000000417), Map("x" -> 538801.236, "y" -> 6999555.027, "z" -> 97.4829999999929, "m" -> 375.17140000000654), Map("x" -> 538810.254, "y" -> 6999586.333, "z" -> 97.86900000000605, "m" -> 407.75040000000445), Map("x" -> 538819.572, "y" -> 6999614.06, "z" -> 98.2039999999979, "m" -> 437.0011999999988), Map("x" -> 538834.679, "y" -> 6999655.645, "z" -> 98.71799999999348, "m" -> 481.24520000000484), Map("x" -> 538845.987, "y" -> 6999685.356, "z" -> 99.0850000000064, "m" -> 513.0353999999934), Map("x" -> 538864.988, "y" -> 6999735.798, "z" -> 99.71499999999651, "m" -> 566.9375), Map("x" -> 538880.908, "y" -> 6999778.072, "z" -> 100.24899999999616, "m" -> 612.1098000000056), Map("x" -> 538889.669, "y" -> 6999800.979, "z" -> 100.51200000000244, "m" -> 636.6349999999948), Map("x" -> 538896.546, "y" -> 6999818.978, "z" -> 100.73200000000361, "m" -> 655.9030000000057), Map("x" -> 538909.551, "y" -> 6999855.126, "z" -> 101.1469999999972, "m" -> 694.3193000000028), Map("x" -> 538909.794, "y" -> 6999855.848, "z" -> 101.153999999995, "m" -> 695.0810999999958)), "OBJECTID" -> 2739046, "TO_LEFT" -> 870, "VERTICALLEVEL" -> BigInt.apply(0), "MUNICIPALITYCODE" -> BigInt.apply(749), "FROM_RIGHT" -> 795, "CREATED_DATE" -> BigInt.apply(1446132842000L), "GEOMETRY_EDITED_DATE" -> BigInt.apply(1472941768000L), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 75),InUse,NormalLinkInterface),
-      RoadLink(5176151,List(Point(538909.794,6999855.848,101.153999999995), Point(538905.753,6999857.568,101.08800000000338), Point(538901.355,6999859.052,100.9890000000014), Point(538898.319,6999859.816,100.8969999999972)),12.164095949095342,State,99,BothDirections,UnknownLinkType,Some("12.02.2016 12:55:04"),Some("vvh_modified"),Map("TO_RIGHT" -> 2, "LAST_EDITED_DATE" -> BigInt.apply(1455274504000L), "FROM_LEFT" -> 1, "MTKHEREFLIP" -> 1, "MTKID" -> 441179434, "ROADNAME_FI" -> "Kinnusentie", "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(1418083200000L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12131, "points" -> List(Map("x" -> 538909.794, "y" -> 6999855.848, "z" -> 101.153999999995, "m" -> 0), Map("x" -> 538905.753, "y" -> 6999857.568, "z" -> 101.08800000000338, "m" -> 4.391799999997602), Map("x" -> 538901.355, "y" -> 6999859.052, "z" -> 100.9890000000014, "m" -> 9.033400000000256), Map("x" -> 538898.319, "y" -> 6999859.816, "z" -> 100.8969999999972, "m" -> 12.164099999994505)), "OBJECTID" -> 2739055, "TO_LEFT" -> 1, "VERTICALLEVEL" -> BigInt.apply(0), "MUNICIPALITYCODE" -> BigInt.apply(749), "FROM_RIGHT" -> 2, "CREATED_DATE" -> BigInt.apply(1446132842000L), "GEOMETRY_EDITED_DATE" -> BigInt.apply(1455274504000L), "HORIZONTALACCURACY" -> 3000),InUse,NormalLinkInterface),
-      RoadLink(5176147,List(Point(538909.794,6999855.848,101.153999999995), Point(538915.453,6999869.226,100.69899999999325), Point(538918.052,6999875.753,101.44500000000698)),21.551092889334765,State,99,BothDirections,UnknownLinkType,Some("07.04.2017 14:20:02"),Some("vvh_modified"),Map("TO_RIGHT" -> 873, "LAST_EDITED_DATE" -> BigInt.apply(1491564002000L), "FROM_LEFT" -> 872, "MTKHEREFLIP" -> 0, "MTKID" -> 441179395, "ROADNAME_FI" -> "Nilsiäntie", "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(1418083200000L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 2, "points" -> List(Map("x" -> 538909.794, "y" -> 6999855.848, "z" -> 101.153999999995, "m" -> 0), Map("x" -> 538915.453, "y" -> 6999869.226, "z" -> 100.69899999999325, "m" -> 14.525699999998324), Map("x" -> 538918.052, "y" -> 6999875.753, "z" -> 101.44500000000698, "m" -> 21.55109999999695)), "OBJECTID" -> 2739051, "TO_LEFT" -> 874, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> BigInt.apply(749), "FROM_RIGHT" -> 871, "CREATED_DATE" -> BigInt.apply(1446132842000L), "GEOMETRY_EDITED_DATE" -> BigInt.apply(1455274504000L), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 75),InUse,NormalLinkInterface),
-      RoadLink(6479168,List(Point(538918.052,6999875.753,101.44500000000698), Point(538921.358,6999884.381,101.54099999999744), Point(538935.727,6999923.678,102.04499999999825), Point(538956.539,6999978.306,102.78399999999965), Point(538956.722,6999978.783,102.79399999999441), Point(538967.108,7000005.884,103.1079999999929), Point(538971.654,7000019.597,103.1420000000071)),153.5202644294187,State,99,BothDirections,UnknownLinkType,Some("07.04.2017 14:20:02"),Some("vvh_modified"),Map("TO_RIGHT" -> 883, "LAST_EDITED_DATE" -> BigInt.apply(1491564002000L), "FROM_LEFT" -> 876, "MTKHEREFLIP" -> 0, "MTKID" -> 318861789, "ROADNAME_FI" -> "Nilsiäntie", "VERTICALACCURACY" -> 201, "VALIDFROM" -> BigInt.apply(1418083200000L), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 2, "points" -> List(Map("x" -> 538918.052, "y" -> 6999875.753, "z" -> 101.44500000000698, "m" -> 0), Map("x" -> 538921.358, "y" -> 6999884.381, "z" -> 101.54099999999744, "m" -> 9.239700000005541), Map("x" -> 538935.727, "y" -> 6999923.678, "z" -> 102.04499999999825, "m" -> 51.081300000005285), Map("x" -> 538956.539, "y" -> 6999978.306, "z" -> 102.78399999999965, "m" -> 109.53949999999895), Map("x" -> 538956.722, "y" -> 6999978.783, "z" -> 102.79399999999441, "m" -> 110.0503999999928), Map("x" -> 538967.108, "y" -> 7000005.884, "z" -> 103.1079999999929, "m" -> 139.07339999999385), Map("x" -> 538971.654, "y" -> 7000019.597, "z" -> 103.1420000000071, "m" -> 153.52030000000377)), "OBJECTID" -> 2739027, "TO_LEFT" -> 884, "VERTICALLEVEL" -> BigInt.apply(0), "MUNICIPALITYCODE" -> BigInt.apply(749), "FROM_RIGHT" -> 875, "CREATED_DATE" -> BigInt.apply(1446132842000L), "GEOMETRY_EDITED_DATE" -> BigInt.apply(1448028123000L), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 75),InUse,NormalLinkInterface)
-    )
-    val changeInfo = Seq(
-      ChangeInfo(Some(5176142),Some(499836959),318861771,1,Some(0.0),Some(58.44607544),Some(636.63498845),Some(695.08106389),1472941768000L),
-      ChangeInfo(Some(5176109),Some(499836959),318861771,2,Some(0.0),Some(566.9374729),Some(0.0),Some(566.9374729),1472941768000L),
-      ChangeInfo(Some(5176143),Some(499836959),318861771,2,Some(0.0),Some(69.69751556),Some(566.9374729),Some(636.63498845),1472941768000L),
-      ChangeInfo(Some(5176142),Some(5176142),318861771,7,Some(0.0),Some(58.4456179),Some(0.0),Some(58.44607544),1455274504000L),
-      ChangeInfo(Some(5176142),None,318861771,8,Some(58.4456179),Some(65.25904657),None,None,1455274504000L),
-      ChangeInfo(Some(5176147),Some(5176147),441179395,3,Some(0.0),Some(14.74135819),Some(6.81226464),Some(21.55109289),1455274504000L),
-      ChangeInfo(None,Some(5176147),441179395,4,None,None,Some(0.0),Some(6.81226464),1455274504000L),
-      ChangeInfo(Some(5176151),Some(5176151),441179434,7,Some(11.41471577),Some(0.0),Some(0.0),Some(12.16409595),1455274504000L),
-      ChangeInfo(Some(5176151),None,441179434,8,Some(0.0),Some(11.41471577),None,None,1455274504000L)
-    )
-
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(road75TargetLink)
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle],any[Boolean])).thenReturn((roadLinks, changeInfo))
-
-    val result = roadAddressService.getAdjacent(Set(road75TargetLink.head.linkId),road75TargetLink.head.linkId)
-    result.size should be (3)
-    GeometryUtils.areAdjacent(road75TargetLink.head.geometry, result(0).geometry) should be (true)
-    GeometryUtils.areAdjacent(road75TargetLink.head.geometry, result(1).geometry) should be (true)
-    GeometryUtils.areAdjacent(road75TargetLink.head.geometry, result(2).geometry) should be (true)
-  }
-
   test("Defloating road links from three links to two links") {
     val sources = Seq(
       createRoadAddressLink(8000001L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 114, SideCode.TowardsDigitizing, Anomaly.None),
@@ -777,11 +744,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       ).map(roadAddressLinkToRoadLink)
       val changeTable = Seq(
         createChangeTable(5622931, 5622931, ChangeType.ReplacedCommonPart, 0, 2.21200769, 19.59840118, 20.49478145, 1476478965000L),
-        createChangeTable(0, 5622931, ChangeType.ReplacedNewPart, 0, 0, 0, 19.59840118, 1476478965000L),
-        createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 93.90506222, 1476478965000L),
-        createChangeTable(5622932, 499914628, ChangeType.CombinedRemovedPart, 0, 19.46021513, 93.90506222, 103.78471484, 1476478965000L),
-        createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 157.72241408, 1476478965000L),
-        createChangeTable(5622931, 499914643, ChangeType.CombinedModifiedPart, 0, 2.21200769, 0.0, 1.31962463, 1476478965000L)
+        createChangeTable(0, 5622931, ChangeType.ReplacedNewPart, 0, 0, 0, 23.59840118, 1476478965000L),
+        createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 95.90506222, 1476478965000L),
+        createChangeTable(5622932, 499914628, ChangeType.CombinedRemovedPart, 0, 19.46021513, 98.90506222, 103.78471484, 1476478965000L),
+        createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 159.72241408, 1476478965000L),
+        createChangeTable(5622931, 499914643, ChangeType.CombinedModifiedPart, 0, 3.21200769, 0.0, 1.31962463, 1476478965000L)
       )
 
       RoadAddressDAO.create(addresses)
@@ -985,6 +952,108 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val current = RoadAddressDAO.fetchByLinkId(Set(456L), true, true, true)
       current should have size(2)
       current.exists(ra => ra.startAddrMValue == 16L && ra.endAddrMValue == 34 && ra.endDate.isEmpty) should be (true)
+    }
+  }
+
+  test("check if the integration api is returning history") {
+    runWithRollback {
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', TIMESTAMP '2013-01-23 00:00:00.000000', 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 40688)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink), Seq.empty[ChangeInfo]))
+      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
+      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
+      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
+      roadAddresses.count(_.roadNumber > 0) should be (0)
+    }
+  }
+
+  test("check if the integration api returns expired addresses") {
+    runWithRollback {
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), TIMESTAMP '2013-01-23 00:00:00.000000', 1, 1, 0, 40688)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink), Seq.empty[ChangeInfo]))
+      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
+      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
+      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
+      roadAddresses.count(_.roadNumber > 0) should be (0)
+    }
+  }
+
+  test("check if the integration api returns regular, complementary and suravage") {
+    runWithRollback {
+
+      //Regular
+      val regularAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+      val mockRegularRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, regularAttributesMap)
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 40688)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      //Complementary
+      val complementaryAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+      val mockComplementaryRoadLink = RoadLink(99989, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, complementaryAttributesMap)
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 20.076, NULL, 99989, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 62888, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      //Suravage
+      val suravageAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+      val mockSuravageRoadLink = RoadLink(99988, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, suravageAttributesMap, linkSource = LinkGeomSource.SuravageLinkInterface)
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 20.076, NULL, 99988, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 787878, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRegularRoadLink), Seq.empty[ChangeInfo]))
+      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq(mockSuravageRoadLink))
+      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq(mockComplementaryRoadLink))
+      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
+      roadAddresses.size should be (3)
+    }
+  }
+
+  test("Check for MTK-Class in integration API"){
+    runWithRollback {
+      //12316 -> FeatureClass.TractorRoad
+      val attributesMap1 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))
+      val mockRoadLink1 = RoadLink(11111, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap1)
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 11111, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99999, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99999)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      //12141 -> FeatureClass.DrivePath
+      val attributesMap2 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))
+      val mockRoadLink2 = RoadLink(22222, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap2)
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 22222, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99998, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99998)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      //12314 -> FeatureClass.CycleOrPedestrianPath
+      val attributesMap3 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))
+      val mockRoadLink3 = RoadLink(33333, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap3)
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 33333, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99997, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99997)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      //12312 -> FeatureClass.WinterRoads
+      val attributesMap4 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312))
+      val mockRoadLink4 = RoadLink(44444, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap4)
+      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 44444, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99996, 1, 0, 5, 0, 17, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99990)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink1, mockRoadLink2, mockRoadLink3, mockRoadLink4), Seq.empty[ChangeInfo]))
+      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
+      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
+      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
+      roadAddresses.size should be (4)
     }
   }
 
