@@ -1010,8 +1010,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def checkAndMakeReservation(projectLinks: Seq[ProjectLink]) = {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
-      if (!project.isReserved(newRoadNumber, newRoadPartNumber)){
-        if(isCompletelyNewPart(projectLinks)){
+      if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
+        if (isCompletelyNewPart(projectLinks)) {
           val reservedPart = ProjectDAO.fetchReservedRoadPart(projectLinks.head.roadNumber, projectLinks.head.roadPartNumber)
           ProjectDAO.removeReservedRoadPart(projectId, reservedPart.get)
           val newProjectLinks: Seq[ProjectLink] = projectLinks.map(pl => pl.copy(id = NewRoadAddress, roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt), endAddrMValue = userDefinedEndAddressM.get.toLong))
