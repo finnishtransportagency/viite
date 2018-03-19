@@ -239,7 +239,7 @@ object DataFixture {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
-    val projectsIDs= projectService.getRoadAddressAllProjects().map(x=>x.id)
+    val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
     val projectCount=projectsIDs.size
     var c=0
     projectsIDs.foreach(x=>
