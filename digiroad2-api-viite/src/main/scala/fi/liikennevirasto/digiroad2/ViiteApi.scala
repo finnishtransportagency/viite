@@ -342,7 +342,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/roadlinks/roadaddress/project/all") {
-    projectService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
+    projectService.getRoadAddressAllProjects.map(roadAddressProjectToApi)
   }
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
