@@ -844,9 +844,9 @@ object ProjectValidator {
         !GeometryUtils.areAdjacent(ra.geometry, startRoad.geometry) && !GeometryUtils.areAdjacent(ra.geometry, endRoad.geometry))
       val diffEly = filtered.find(_.ely != startRoad.ely)
       if (!secondCheck && diffEly.isEmpty) {
-        Option(Seq(startRoad, endRoad))
+        Option(Seq(endRoad))
       } else if (secondCheck && diffEly.isDefined) {
-        Option(Seq(startRoad, endRoad))
+        Option(Seq(endRoad))
       } else Option.empty[Seq[ProjectLink]]
     } else Option.empty[Seq[ProjectLink]]
   }
