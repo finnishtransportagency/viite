@@ -17,7 +17,7 @@ case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCo
                                  startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
                                  terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode)
+                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode, directionFlag: Long)
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
 
@@ -204,7 +204,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
           case _ =>
             mappedHistoryRoadLinks.get(ra.linkId) match {
               case Some(rl) =>
-                Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, LinkGeomSource.HistoryLinkInterface, ra.commonHistoryId))
+                val historySideCode = if(ra.directionFlag == 1) SideCode.switch(ra.sideCode) else ra.sideCode
+                Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, historySideCode, LinkGeomSource.HistoryLinkInterface, ra.commonHistoryId))
               case _ => None
             }
         }
@@ -271,15 +272,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         case _ => None
       }
 
-      val sideCode = if(directionFlag == 0) SideCode.TowardsDigitizing else if(directionFlag == 1) SideCode.AgainstDigitizing else SideCode.Unknown
-
       if (startAddrM < endAddrM) {
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, sideCode)
+          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, SideCode.TowardsDigitizing, directionFlag)
       } else {
         //switch startAddrM, endAddrM, the geometry and set the side code to AgainstDigitizing
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, sideCode)
+          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, SideCode.AgainstDigitizing, directionFlag)
       }
     }
   }
