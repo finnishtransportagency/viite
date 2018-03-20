@@ -8,6 +8,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.formatter
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -251,9 +252,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val endAddrM = r.nextLong()
       val startM = r.nextDouble()
       val endM = r.nextDouble()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val endDateOption = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val startDate = r.nextTimestampOption().map(d => formatter.parseDateTime(d.toString))
+      val endDateOption = r.nextTimestampOption().map(d => formatter.parseDateTime(d.toString))
+      val validFrom = r.nextTimestampOption().map(d => formatter.parseDateTime(d.toString))
       val ely = r.nextLong()
       val roadType = r.nextLong()
       val linkId = r.nextLong()
