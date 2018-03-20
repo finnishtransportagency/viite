@@ -324,14 +324,21 @@ object DataFixture {
 
   def fuseRoadAddressHistory(): Unit = {
 
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
     val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
+
     elyCodes.foreach(ely => {
       println(s"Going to fuse road history for ely $ely")
       val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressHistoryByEly(ely) }
       println(s"Got ${roads.size} history for ely $ely")
-      val roadsAfter = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
-      val fusedRoads = roads.size - roadsAfter.size
-      println(s"Fused $fusedRoads road history")
+      val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
+      val kept = fusedRoadAddresses.map(_.id).toSet
+      val removed = roads.map(_.id).toSet.diff(kept)
+      val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
+      print(s"Fusing ${roadAddressesToRegister.size} roads")
+      if (roadAddressesToRegister.nonEmpty)
+        roadAddressService.mergeRoadAddress(RoadAddressMerge(removed, roadAddressesToRegister))
     })
   }
 
