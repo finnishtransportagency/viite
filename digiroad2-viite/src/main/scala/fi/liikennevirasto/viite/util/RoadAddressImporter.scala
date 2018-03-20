@@ -17,7 +17,7 @@ case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCo
                                  startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
                                  terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode, directionFlag: Long)
+                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode, directionFlag: Long = 0)
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
 
