@@ -1378,4 +1378,18 @@ object RoadAddressDAO {
     queryList(query)
   }
 
+  def getRoadAddressHistoryByEly(ely: Long): List[RoadAddress] = {
+    val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, pos.adjusted_timestamp,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where t.id < t2.id and end_date is null and
+          valid_from <= sysdate and floating = 0 and ely = $ely"""
+    queryList(query)
+  }
+
 }

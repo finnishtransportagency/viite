@@ -322,6 +322,19 @@ object DataFixture {
 
   }
 
+  def fuseRoadAddressHistory(): Unit = {
+
+    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
+    elyCodes.foreach(ely => {
+      println(s"Going to fuse road history for ely $ely")
+      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressHistoryByEly(ely) }
+      println(s"Got ${roads.size} history for ely $ely")
+      val roadsAfter = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
+      val fusedRoads = roads.size - roadsAfter.size
+      println(s"Fused $fusedRoads road history")
+    })
+  }
+
   private def showFreezeInfo() = {
     println("Road link geometry freeze is active; exiting without changes")
   }
@@ -391,6 +404,8 @@ object DataFixture {
         correctNullElyCodeProjects()
       case Some("check_lrm_position_history") =>
         checkLrmPositionHistory()
+      case Some("fuse_road_address_history") =>
+        fuseRoadAddressHistory()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
