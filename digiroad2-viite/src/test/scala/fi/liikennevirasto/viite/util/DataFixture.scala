@@ -336,9 +336,9 @@ object DataFixture {
       val kept = fusedRoadAddresses.map(_.id).toSet
       val removed = roads.map(_.id).toSet.diff(kept)
       val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
-      print(s"Fusing ${roadAddressesToRegister.size} roads")
+      println(s"Fusing ${roadAddressesToRegister.size} roads for ely $ely")
       if (roadAddressesToRegister.nonEmpty)
-        roadAddressService.mergeRoadAddress(RoadAddressMerge(removed, roadAddressesToRegister))
+        roadAddressService.mergeRoadAddressHistory(RoadAddressMerge(removed, roadAddressesToRegister))
     })
   }
 
