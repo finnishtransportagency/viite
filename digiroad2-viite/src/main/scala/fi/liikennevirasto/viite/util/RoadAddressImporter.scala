@@ -204,8 +204,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
           case _ =>
             mappedHistoryRoadLinks.get(ra.linkId) match {
               case Some(rl) =>
-                val historySideCode = if(ra.directionFlag == 1) SideCode.switch(ra.sideCode) else ra.sideCode
-                Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, historySideCode, LinkGeomSource.HistoryLinkInterface, ra.commonHistoryId))
+                Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, LinkGeomSource.HistoryLinkInterface, ra.commonHistoryId))
               case _ => None
             }
         }
@@ -229,8 +228,16 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case ((roadAddress), (lrmId)) =>
         lrmPositions.getOrElse((roadAddress.linkId, roadAddress.commonHistoryId), Seq()).headOption.foreach {
           case lrmPosition =>
-            insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
-            insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
+            if(roadAddress.directionFlag == 1){
+              val reversedLRM = lrmPosition.copy(sideCode = SideCode.switch(lrmPosition.sideCode))
+              insertLrmPosition(lrmPositionPs, reversedLRM, lrmId)
+              insertRoadAddress(roadAddressPs, roadAddress, reversedLRM, lrmId)
+            }
+            else{
+              insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
+              insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
+            }
+
         }
     }
 
