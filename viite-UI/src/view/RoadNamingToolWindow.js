@@ -1,6 +1,8 @@
 (function (root) {
     root.RoadNamingToolWindow = function (roadNameCollection) {
 
+        var newId = -1000;
+
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
         nameToolSearchWindow.append('<button class="close btn-close" id="closeRoadNameTool">x</button>');
         nameToolSearchWindow.append('<div class="content">Tienimi</div>');
@@ -33,14 +35,18 @@
 
         var staticFieldRoadList = function (dataField, writable, roadId, fieldName) {
             var field;
-            //input-road-details-writable
             var inputClass = (writable ? "form-control" : "input-road-details-readonly");
-            //form-control
             var readOnly = (writable ? "" : "readonly");
             var leftMargin = (writable ? "margin-left: 8px;" : "");
-            field = '<div>' +
-                '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
-                '</div>';
+            if ((fieldName === "startDate" || fieldName === "endDate") && writable) {
+                field = '<div id="addDatePickerHere" value="' + dataField + '" data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
+                    '<input id="addDatePickerToInputHere" class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
+                    '</div>';
+            } else {
+                field = '<div>' +
+                    '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
+                    '</div>';
+            }
             return field;
         };
 
@@ -50,6 +56,12 @@
             $('#saveChangedRoads').on('click', function (clickEvent) {
                 roadNameCollection.saveChanges();
             });
+        };
+
+        var retroactivelyAddDatePickers = function () {
+            var inputs = $('#addDatePickerToInputHere:not([placeholder])');
+            dateutil.addSingleDependentDatePicker(inputs);
+            $('.pika-single.is-bound').css("width", "auto")
         };
 
         function toggle() {
@@ -87,7 +99,7 @@
             });
 
             eventbus.on("roadNameTool: roadsFetched", function (roadData) {
-                var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
+                var html = '<table id="roadList-table" style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
                 if (!_.isEmpty(roadData)) {
                     _.each(roadData, function (road) {
                         var writable = road.endDate === "";
@@ -97,7 +109,7 @@
                             '<td style="width: 110px;">' + staticFieldRoadList(road.startDate, false, road.id, "startDate") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.endDate, writable, road.id, "endDate") + '</td>';
                         if (road.endDate === "") {
-                            html += '<td>' + '<button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 70px" id="new-road-name-' + road.roadNumber + '" value="' + road.roadNumber + '"">+</button>' + '</td>' +
+                            html += '<td>' + '<div id="plus_minus_buttons" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="new-road-name" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '">+</button></div>' + '</td>' +
                                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
                         } else {
                             html += '<td>' + '<button class="project-open btn btn-new" style="visibility:hidden; alignment: right; margin-bottom:6px; margin-left: 70px" id="spaceFillerButton">+</button>' + '</td>' +
@@ -106,19 +118,43 @@
                     });
                     html += '</table>';
                     $('#road-list').html($(html));
+                    retroactivelyAddDatePickers();
 
                     addSaveEvent();
                     $('.form-control').on("change", function (eventObject) {
                         var target = $(eventObject.target);
-                        var roadId = target.attr("data-roadid");
+                        var roadId = target.attr("data-roadId");
                         var fieldName = target.attr("data-FieldName");
                         var fieldValue = target.val();
                         roadNameCollection.registerEdition(roadId, fieldName, fieldValue);
                     });
 
+                    $('#new-road-name').on("click", function (eventObject) {
+                        var target = $(eventObject.target);
+                        target.css("visibility", "hidden");
+                        var originalRoadId = target.attr("data-roadId");
+                        var roadNumber = target.attr("data-roadNumber");
+                        $('#roadList-table').append('<tr class="roadList-item" id="newRoadName" data-originalRoadId ="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">' +
+                            '<td style="width: 150px;">' + staticFieldRoadNumber(roadNumber, newId) + '</td>' +
+                            '<td style="width: 250px;">' + staticFieldRoadList("", true, newId, "roadName") + '</td>' +
+                            '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "startDate") + '</td>' +
+                            '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "endDate") + '</td>' +
+                            '<td>' + '<div id="plus_minus_buttons" data-roadId="' + newId + '" data-roadNumber="' + roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="undo-new-road-name" data-roadId="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">-</button></div>' + '</td>' +
+                            '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>');
+                        retroactivelyAddDatePickers();
+                        $('#undo-new-road-name').on("click", function (eventObject) {
+                            var target = $(eventObject.target);
+                            var roadId = target.attr("data-roadId");
+                            var roadNumber = target.attr("data-roadNumber");
+                            $('#new-road-name[data-roadid|=' + roadId + '][data-roadnumber|=' + roadNumber + ']').css("visibility", "visible");
+                            $('#newRoadName[data-originalRoadId|=' + roadId + '][data-roadnumber|=' + roadNumber + ']').remove();
+                        });
+                    });
+
                 } else {
                     html += '</table>';
                     $('#road-list').html($(html));
+                    retroactivelyAddDatePickers();
                 }
             });
         }
