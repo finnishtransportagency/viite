@@ -118,7 +118,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
                TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName
+               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid, kaannetty from #$tableName
                WHERE linkid > $minLinkId AND linkid <= $maxLinkId AND  aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter """
         .as[ConversionRoadAddress].list
     }
@@ -264,19 +264,22 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val y2 = r.nextDouble()
       val lrmId = r.nextLong()
       val commonHistoryId = r.nextLong()
+      val directionFlag = r.nextLong()
 
       val viiteEndDate = endDateOption match {
         case Some(endDate) => Some(endDate.plusDays(1))
         case _ => None
       }
 
+      val sideCode = if(directionFlag == 0) SideCode.TowardsDigitizing else if(directionFlag == 1) SideCode.AgainstDigitizing else SideCode.Unknown
+
       if (startAddrM < endAddrM) {
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, SideCode.TowardsDigitizing)
+          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, sideCode)
       } else {
         //switch startAddrM, endAddrM, the geometry and set the side code to AgainstDigitizing
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, SideCode.AgainstDigitizing)
+          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, sideCode)
       }
     }
   }
