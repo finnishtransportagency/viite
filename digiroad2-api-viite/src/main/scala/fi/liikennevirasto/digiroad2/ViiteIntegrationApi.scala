@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.{ParseException, SimpleDateFormat}
 import java.util.Locale
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
@@ -11,7 +12,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
+import org.scalatra.{BadRequest, NotFound, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
 trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
@@ -40,6 +41,8 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+
+  val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
 
   def clearCache() = {
     roadLinkService.clearCache()
@@ -115,4 +118,25 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
       BadRequest("Missing mandatory 'municipality' parameter")
     }
   }
+
+  get("/tienimi/paivitetyt") {
+    contentType = formats("json")
+    val muutospvm = params.get("muutospvm")
+    if (muutospvm.isEmpty) {
+      val message = "Vaadittu parametri 'muutospvm' puuttuu."
+      logger.warn(message)
+      BadRequest(message)
+    } else {
+      try {
+        val changesSince = dateFormat.parse(muutospvm.get)
+        roadAddressService.getUpdatedRoadNames(changesSince)
+      } catch {
+        case e: ParseException =>
+          val message = "Parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
+          logger.warn(message, e)
+          BadRequest(message)
+      }
+    }
+  }
+
 }
