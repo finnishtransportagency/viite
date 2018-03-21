@@ -984,7 +984,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                          discontinuity: Int = Discontinuity.Continuous.value, ely: Option[Long] = None,
                          reversed: Boolean = false): Option[String] = {
 
-    def isCompletelyNewPart(): Boolean = {
+    def isCompletelyNewPart: Boolean = {
       val newSavedLinks = ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.New))
       newSavedLinks.forall {
         savedLink => linkIds.contains(savedLink.linkId) && linkStatus == New
@@ -1005,7 +1005,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def checkAndMakeReservation(projectLinks: Seq[ProjectLink]) = {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
       if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
-        if (isCompletelyNewPart()) {
+        if (isCompletelyNewPart) {
           val reservedPart = ProjectDAO.fetchReservedRoadPart(projectLinks.head.roadNumber, projectLinks.head.roadPartNumber)
           ProjectDAO.removeReservedRoadPart(projectId, reservedPart.get)
           val newProjectLinks: Seq[ProjectLink] = projectLinks.map(pl => pl.copy(id = NewRoadAddress, roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt), endAddrMValue = userDefinedEndAddressM.get.toLong))
@@ -1078,9 +1078,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
 
           case LinkStatus.New =>
+            //Current logic allows only re adding new road addresses whithin same road/part group
+            if(toUpdateLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).size == 1){
             checkAndMakeReservation(toUpdateLinks)
             updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode))))
-
+            } else {
+              throw new RoadAddressException(s"multiple roads/parts in one time saving")
+            }
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio $linkStatus")
         }
