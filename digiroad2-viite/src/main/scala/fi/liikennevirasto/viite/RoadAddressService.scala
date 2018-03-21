@@ -14,7 +14,6 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
 import fi.liikennevirasto.viite.process._
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.SortedMap
@@ -864,23 +863,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  case class Tienimi(muutospvm: Date, tienimi: String, voimassaolo_alku: Date, voimassaolo_loppu: Date = null)
+  case class Tienimi(muutospvm: String, tienimi: String, voimassaolo_alku: String, voimassaolo_loppu: String = null)
   case class Tienimihistoria(tie: Long, tienimet: Seq[Tienimi])
 
   def getUpdatedRoadNames(since: Date): Seq[Tienimihistoria] = {
+    RoadAddressChangesDAO.fetchRoadAddressChanges()
     // TODO
     Seq(
       Tienimihistoria(1, Seq(
-        Tienimi(new Date, "Current Name", new DateTime(2018, 2, 1, 0, 0).toDate),
-        Tienimi(new Date, "Previous Name", new DateTime(2017, 2, 1, 0, 0).toDate, new DateTime(2018, 2, 1, 0, 0).toDate),
-        Tienimi(new Date, "Old Name", new DateTime(2016, 2, 1, 0, 0).toDate, new DateTime(2017, 2, 1, 0, 0).toDate)
+        Tienimi("2018-03-21", "Current Name", "2018-03-21"),
+        Tienimi("2018-03-21", "Previous Name", "2018-03-21", "2018-03-21"),
+        Tienimi("2018-03-21", "Old Name", "2018-03-21", "2018-03-21")
       )),
       Tienimihistoria(2, Seq(
-        Tienimi(new Date, "Another Current Name", new DateTime(2018, 2, 1, 0, 0).toDate),
-        Tienimi(new Date, "Another Previous Name", new DateTime(2016, 2, 1, 0, 0).toDate, new DateTime(2018, 2, 1, 0, 0).toDate)
+        Tienimi("2018-03-21", "Another Current Name", "2018-03-21"),
+        Tienimi("2018-03-21", "Another Previous Name", "2018-03-21", "2018-03-21")
       )),
       Tienimihistoria(3, Seq(
-        Tienimi(new Date, "Like some totally awesome random name", new DateTime(2018, 2, 1, 0, 0).toDate)
+        Tienimi("2018-03-21", "Like some totally awesome random name", "2018-03-21")
       ))
     )
   }
