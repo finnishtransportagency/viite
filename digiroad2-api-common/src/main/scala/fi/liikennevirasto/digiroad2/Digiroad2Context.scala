@@ -111,6 +111,10 @@ object Digiroad2Context {
     new RoadNetworkService
   }
 
+  lazy val roadNameService : RoadNameService ={
+    new RoadNameService
+  }
+
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
