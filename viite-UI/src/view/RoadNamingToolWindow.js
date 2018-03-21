@@ -51,7 +51,7 @@
         };
 
         var addSaveEvent = function () {
-            var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data">Tallenna</button>';
+            var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
             $('#road-list').append(saveButton);
             $('#saveChangedRoads').on('click', function (clickEvent) {
                 roadNameCollection.saveChanges();
@@ -59,9 +59,11 @@
         };
 
         var retroactivelyAddDatePickers = function () {
-            var inputs = $('#addDatePickerToInputHere:not([placeholder])');
-            dateutil.addSingleDependentDatePicker(inputs);
-            $('.pika-single.is-bound').css("width", "auto")
+            var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder]),.form-control[data-fieldName=endDate]:not([placeholder]');
+            inputs.each(function (index, input) {
+                dateutil.addSingleDependentDatePicker($(input));
+            });
+            $('.pika-single.is-bound').css("width", "auto");
         };
 
         function toggle() {
@@ -74,6 +76,34 @@
             nameToolSearchWindow.hide();
             $('#saveChangedRoads').remove();
             $('.modal-overlay').remove();
+        }
+
+        function toggleSaveButton(tableRow) {
+            if (_.isUndefined(tableRow)) {
+                $('#saveChangedRoads').prop("disabled", false);
+            }
+            else if (tableRow.find(".form-control[data-roadid=-1000]").filter(function () {
+                    return this.value === "";
+                }).length === 0) {
+                $('#saveChangedRoads').prop("disabled", false);
+            } else $('#saveChangedRoads').prop("disabled", true);
+        }
+
+        function editEvent(eventObject) {
+            var target = $(eventObject.target);
+            var roadId = target.attr("data-roadId");
+            var fieldName = target.attr("data-FieldName");
+            var fieldValue = target.val();
+            var tableRow = target.closest("#newRoadName");
+            if (roadId === newId.toString()) {
+                var originalRoadId = tableRow.attr("data-originalRoadId");
+                var roadNumber = tableRow.attr("data-roadNumber");
+                roadNameCollection.editNewEntry(originalRoadId, roadNumber, fieldName, fieldValue);
+                toggleSaveButton(tableRow);
+            } else {
+                toggleSaveButton();
+                roadNameCollection.registerEdition(roadId, fieldName, fieldValue);
+            }
         }
 
         function bindEvents() {
@@ -121,13 +151,7 @@
                     retroactivelyAddDatePickers();
 
                     addSaveEvent();
-                    $('.form-control').on("change", function (eventObject) {
-                        var target = $(eventObject.target);
-                        var roadId = target.attr("data-roadId");
-                        var fieldName = target.attr("data-FieldName");
-                        var fieldValue = target.val();
-                        roadNameCollection.registerEdition(roadId, fieldName, fieldValue);
-                    });
+                    $('.form-control').on("change", editEvent);
 
                     $('#new-road-name').on("click", function (eventObject) {
                         var target = $(eventObject.target);
@@ -142,6 +166,11 @@
                             '<td>' + '<div id="plus_minus_buttons" data-roadId="' + newId + '" data-roadNumber="' + roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="undo-new-road-name" data-roadId="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">-</button></div>' + '</td>' +
                             '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>');
                         retroactivelyAddDatePickers();
+                        roadNameCollection.addNewEntry(originalRoadId, roadNumber);
+
+                        toggleSaveButton($('#newRoadName[data-originalroadId=' + originalRoadId + ']'));
+                        $('.form-control').on("change", editEvent);
+
                         $('#undo-new-road-name').on("click", function (eventObject) {
                             var target = $(eventObject.target);
                             var roadId = target.attr("data-roadId");
