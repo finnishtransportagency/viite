@@ -1,10 +1,15 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.viite.{RoadNameEditions, toGeomString}
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.{dateFormatter, toTimeStamp}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
+import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
@@ -30,7 +35,7 @@ object RoadNameDAO {
     }
   }
 
-  def dateParser(oDate: Option[DateTime]):String ={
+  def dateParser(oDate: Option[DateTime]):String = {
     oDate match {
       case Some(date) => {
       val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -86,4 +91,61 @@ object RoadNameDAO {
     } else
       Seq.empty[RoadName]
   }
+
+  def update(id: Long, fields: Map[String, String], user: User) = {
+    val roadNumber = fields.get("roadNumber")
+    val roadName = fields.get("roadName")
+    val startDate = fields.get("startDate")
+    val endDate = fields.get("endDate")
+    val numberFilter = if(roadNumber.isDefined) s" roadNumber = $roadNumber " else ""
+    val nameFilter = if(roadName.isDefined) s" roadName = $roadNumber " else ""
+    val startDateFilter = if(startDate.isDefined) s" startDate = $roadNumber " else ""
+    val endDateFilter = if(endDate.isDefined) s" endDate = $roadNumber " else ""
+    val filters = Seq(numberFilter, nameFilter, startDateFilter, endDateFilter)
+    val query =
+      s"""
+          Update ROAD_NAMES Set ${filters.mkString(",")} where id = $id)
+        """
+    Q.updateNA(query).first
+  }
+
+//  def create(id: Long, fields: Map[String, String]) = {
+//    val roadNumber = fields.get("roadNumber")
+//    val roadName = fields.get("roadName")
+//    val startDate = fields.get("startDate")
+//    val endDate = fields.get("endDate")
+//    val numberFilter = if(roadNumber.isDefined) s" roadNumber = $roadNumber " else ""
+//    val nameFilter = if(roadName.isDefined) s" roadName = $roadNumber " else ""
+//    val startDateFilter = if(startDate.isDefined) s" startDate = $roadNumber " else ""
+//    val endDateFilter = if(endDate.isDefined) s" endDate = $roadNumber " else ""
+//    val query =
+//      s"""
+//          Update ROAD_NAMES Set $numberFilter $nameFilter $startDateFilter $endDateFilter where id = $id)
+//        """
+//    Q.updateNA(query).first
+//  }
+
+  def create(id: Long, fields: Map[String, String], user: User): Long = {
+    val roadNumber = fields.get("roadNumber").asInstanceOf[Long]
+    val roadName = fields.get("roadName")
+    val startDate = fields.get("startDate")
+    val endDate = fields.get("endDate")
+
+    val namesPS = dynamicSession.prepareStatement("insert into ROAD_NAMES (id, road_number, road_name, start_date, end_date, valid_from, valid_to, created_by) values " +
+      "(?, ?, ?, ?, ?, ?, ?, ?)")
+    val nextId = Sequences.nextViitePrimaryKeySeqValue
+    namesPS.setLong(1, nextId)
+    namesPS.setLong(2, roadNumber)
+    namesPS.setString(3, roadName.get)
+    namesPS.setString(4, startDate.get)
+    namesPS.setString(5,endDate.get)
+    namesPS.setString(6, startDate.get)
+    namesPS.setString(7, "")
+    namesPS.setString(8, user.username)
+    namesPS.addBatch()
+    namesPS.executeBatch()
+    namesPS.close()
+    nextId
+  }
+
 }
