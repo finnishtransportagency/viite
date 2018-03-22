@@ -121,6 +121,41 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
     }
   }
 
+  /*
+   * Example JSON:
+   *
+   * [
+   *   {
+   *     "tie": 1,
+   *     "tienimet": [
+   *       {
+   *         "muutospvm": "2018-03-01",
+   *         "tienimi": "HELSINKI-TAMPERE",
+   *         "voimassaolo_alku": "2018-02-01",
+   *         "voimassaolo_loppu": null
+   *       },
+   *       {
+   *         "muutospvm": "2018-03-01",
+   *         "tienimi": "HELSINKI-TAMPERE-OLD",
+   *         "voimassaolo_alku": "2010-02-01",
+   *         "voimassaolo_loppu": "2018-02-01"
+   *       }
+   *     ]
+   *   },
+   *   {
+   *     "tie": 2,
+   *     "tienimet": [
+   *       {
+   *         "muutospvm": "2018-03-01",
+   *         "tienimi": "HELSINKI-TURKU",
+   *         "voimassaolo_alku": "2018-02-01",
+   *         "voimassaolo_loppu": null
+   *       }
+   *     ]
+   *   }
+   * ]
+   *
+   */
   get("/tienimi/paivitetyt") {
     contentType = formats("json")
     val muutospvm = params.get("muutospvm")
@@ -131,7 +166,14 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
     } else {
       try {
         val changesSince = DateTime.parse(muutospvm.get, dateFormat)
-        roadNameService.getUpdatedRoadNamesTx(changesSince) // TODO map
+        val result = roadNameService.getUpdatedRoadNamesTx(changesSince)
+        if (result.isLeft) {
+          BadRequest(result.left)
+        } else if (result.isRight) {
+          result.right.get.groupBy(_.roadNumber) // TODO
+        } else {
+          Seq.empty[Any]
+        }
       } catch {
         case e: ParseException =>
           val message = "Parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
