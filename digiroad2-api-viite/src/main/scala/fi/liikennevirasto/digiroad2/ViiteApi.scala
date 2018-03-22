@@ -798,7 +798,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value,
-      "blackUnderline" -> roadAddressLink.blackUnderline
+      "blackUnderline" -> roadAddressLink.blackUnderline,
+      "roadName" -> roadAddressLink.roadName
     )
   }
 
@@ -874,7 +875,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "status" -> projectLink.status.value,
       "roadTypeId" -> projectLink.roadType.value,
       "discontinuity" -> projectLink.discontinuity.value,
-      "elyCode" -> projectLink.ely)
+      "elyCode" -> projectLink.ely,
+      "roadName" -> projectLink.roadName)
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
