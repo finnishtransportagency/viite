@@ -602,7 +602,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def mergeRoadAddressHistoryInTX(data: RoadAddressMerge): Unit = {
-    val unMergedCount = RoadAddressDAO.queryById(data.merged).count(_.endDate.nonEmpty)
+    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
     if (unMergedCount != data.merged.size)
       throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
     val mergedCount = expireRoadAddresses(data.merged)

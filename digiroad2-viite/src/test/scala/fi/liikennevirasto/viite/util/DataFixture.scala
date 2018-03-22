@@ -330,7 +330,7 @@ object DataFixture {
 
     elyCodes.foreach(ely => {
       println(s"Going to fuse road history for ely $ely")
-      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressHistoryByEly(ely) }
+      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
       println(s"Got ${roads.size} history for ely $ely")
       val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
       val kept = fusedRoadAddresses.map(_.id).toSet
