@@ -112,12 +112,12 @@
                 toggleSaveButton(tableRow);
             } else {
                 if (fieldName === "endDate") {
-                    var tableRow = $("#newRoadName[data-originalRoadId=" + roadId + "]");
-                    var newStartDateField = tableRow.find(".form-control[data-fieldName=startDate]");
-                    if (newStartDateField.length != 0) {
+                    var newTableRow = $("#newRoadName[data-originalRoadId=" + roadId + "]");
+                    var newStartDateField = newTableRow.find(".form-control[data-fieldName=startDate]");
+                    if (newStartDateField.length !== 0) {
                         newStartDateField.val(fieldValue);
-                        var roadNumber = tableRow.attr("data-roadNumber");
-                        roadNameCollection.editNewEntry(roadId, roadNumber, "startDate", fieldValue);
+                        var newRoadNumber = newTableRow.attr("data-roadNumber");
+                        roadNameCollection.editNewEntry(roadId, newRoadNumber, "startDate", fieldValue);
                     }
                 }
                 toggleSaveButton();
