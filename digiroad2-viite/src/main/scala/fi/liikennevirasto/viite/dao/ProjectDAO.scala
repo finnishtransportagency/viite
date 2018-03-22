@@ -81,7 +81,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false)
+                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName : String = "")
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -117,7 +117,7 @@ object ProjectDAO {
     WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROAD_ADDRESS.START_DATE
     ELSE PRJ.START_DATE END as start_date,
   CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
-  LRM_POSITION.ADJUSTED_TIMESTAMP
+  LRM_POSITION.ADJUSTED_TIMESTAMP, (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = project_link.ROAD_NUMBER AND rn.END_DATE IS NULL) as road_name
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID) join LRM_POSITION
     on (LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID) LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)"""
   implicit val getProjectLinkRow = new GetResult[ProjectLink] {
@@ -152,10 +152,11 @@ object ProjectDAO {
       val startDate = r.nextDateOption().map(d => new DateTime(d.getTime))
       val endDate = r.nextDateOption().map(d => new DateTime(d.getTime))
       val geometryTimeStamp = r.nextLong()
+      val roadName = r.nextString()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         modifiedBy, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
-        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp)
+        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = roadName)
     }
   }
 

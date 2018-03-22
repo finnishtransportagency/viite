@@ -24,7 +24,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     }
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
-    val roadName = roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
+    val roadName = if(roadAddress.roadName.isEmpty) roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString else roadAddress.roadName
     val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",0).asInstanceOf[Number].intValue()
     val roadType = roadAddress.roadType match {
       case RoadType.Unknown => getRoadType(roadLink.administrativeClass, roadLink.linkType)
@@ -44,7 +44,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val roadLinkType = SuravageRoadLinkType
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
-    val roadName = roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
+    val roadName = if(roadAddress.roadName.isEmpty) roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString else roadAddress.roadName
     val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",roadLink.municipalityCode).asInstanceOf[Number].intValue()
     val linkType = getLinkType(roadLink)
     val roadType = roadAddress.roadType match {
@@ -66,11 +66,10 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
     val geom = roadAddress.geometry
     val length = GeometryUtils.geometryLength(geom)
-    val roadName = ""
     val municipalityCode = 0
     val roadType = roadAddress.roadType
     RoadAddressLink(roadAddress.id, roadAddress.linkId, geom,
-      length, AdministrativeClass.apply(1), LinkType.apply(99), roadLinkType, ConstructionType.apply(0), LinkGeomSource.apply(1), roadType, roadName, municipalityCode, Some(""), Some("vvh_modified"),
+      length, AdministrativeClass.apply(1), LinkType.apply(99), roadLinkType, ConstructionType.apply(0), LinkGeomSource.apply(1), roadType, roadAddress.roadName, municipalityCode, Some(""), Some("vvh_modified"),
       Map(), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, 0, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
@@ -133,7 +132,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val roadLinkType = FloatingRoadLinkType
     val geom = GeometryUtils.truncateGeometry3D(historyRoadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
-    val roadName = historyRoadLink.attributes.getOrElse(FinnishRoadName, historyRoadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
+    val roadName = if(roadAddress.roadName.isEmpty) historyRoadLink.attributes.getOrElse(FinnishRoadName, historyRoadLink.attributes.getOrElse(SwedishRoadName, "none")).toString else roadAddress.roadName
     val municipalityCode = historyRoadLink.attributes.getOrElse(MunicipalityCode,0).asInstanceOf[Number].intValue()
     val roadType = roadAddress.roadType match {
       case RoadType.Unknown => getRoadType(historyRoadLink.administrativeClass, UnknownLinkType)
