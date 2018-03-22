@@ -86,4 +86,26 @@ object RoadNameDAO {
     } else
       Seq.empty[RoadName]
   }
+
+  /**
+    * Fetches road names that are updated after the given date.
+    *
+    * @param since
+    * @return
+    */
+  def getUpdatedRoadNames(since: DateTime): Seq[RoadName] = {
+    if (since != null) {
+      val sinceString = since.toString("yyyy-MM-dd")
+      val query = s"""
+        SELECT * FROM road_names
+        WHERE road_number IN (
+            SELECT DISTINCT road_number FROM road_names WHERE start_date >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
+          ) AND valid_to IS null
+        ORDER BY road_number, start_date desc"""
+      queryList(query)
+    } else {
+      Seq.empty[RoadName]
+    }
+  }
+
 }

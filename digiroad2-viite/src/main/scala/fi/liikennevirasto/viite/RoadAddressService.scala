@@ -863,28 +863,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  case class Tienimi(muutospvm: String, tienimi: String, voimassaolo_alku: String, voimassaolo_loppu: String = null)
-  case class Tienimihistoria(tie: Long, tienimet: Seq[Tienimi])
-
-  def getUpdatedRoadNames(since: Date): Seq[Tienimihistoria] = {
-    RoadAddressChangesDAO.fetchRoadAddressChanges()
-    // TODO
-    Seq(
-      Tienimihistoria(1, Seq(
-        Tienimi("2018-03-21", "Current Name", "2018-03-21"),
-        Tienimi("2018-03-21", "Previous Name", "2018-03-21", "2018-03-21"),
-        Tienimi("2018-03-21", "Old Name", "2018-03-21", "2018-03-21")
-      )),
-      Tienimihistoria(2, Seq(
-        Tienimi("2018-03-21", "Another Current Name", "2018-03-21"),
-        Tienimi("2018-03-21", "Another Previous Name", "2018-03-21", "2018-03-21")
-      )),
-      Tienimihistoria(3, Seq(
-        Tienimi("2018-03-21", "Like some totally awesome random name", "2018-03-21")
-      ))
-    )
-  }
-
   /**
     * This will define what road_addresses should have a black outline according to the following rule:
     * Address must have road type = 3 (MunicipalityStreetRoad)

@@ -5,9 +5,11 @@ import java.util.Locale
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -36,13 +38,13 @@ trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
   }
 }
 
-class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
+class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNameService: RoadNameService) extends ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-  val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
+  val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   def clearCache() = {
     roadLinkService.clearCache()
@@ -128,8 +130,8 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
       BadRequest(message)
     } else {
       try {
-        val changesSince = dateFormat.parse(muutospvm.get)
-        roadAddressService.getUpdatedRoadNames(changesSince)
+        val changesSince = DateTime.parse(muutospvm.get, dateFormat)
+        roadNameService.getUpdatedRoadNamesTx(changesSince) // TODO map
       } catch {
         case e: ParseException =>
           val message = "Parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
