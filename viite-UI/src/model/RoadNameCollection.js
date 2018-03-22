@@ -86,6 +86,20 @@
         };
 
         this.saveChanges = function () {
+            var currentNew = _.map(newRoads, function (road) {
+                var editions = road.editions;
+                return {roadId: newId, editions: editions};
+            });
+            var objectToSave = currentNew.concat(editedRoadData);
+            backend.saveRoadNamesChanges(objectToSave, function (successObject) {
+                {
+                    currentRoadData = [];
+                    editedRoadData = [];
+                    eventbus.trigger("roadNameTool: saveSuccess");
+                }
+            }, function (unsuccessObject) {
+                eventbus.trigger("roadNameTool: saveUnsuccessful");
+            });
 
 
         };
