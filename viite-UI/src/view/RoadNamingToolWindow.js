@@ -54,12 +54,18 @@
             var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
             $('#road-list').append(saveButton);
             $('#saveChangedRoads').on('click', function (clickEvent) {
-                roadNameCollection.saveChanges();
+                new GenericConfirmPopup("Tiellä on jo nimi. Haluatko varmasti muuttaa sen nimeä?", {
+                    successCallback: function () {
+                        roadNameCollection.saveChanges();
+                    },
+                    closeCallback: function () {
+                    }
+                });
             });
         };
 
         var retroactivelyAddDatePickers = function () {
-            var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder]),.form-control[data-fieldName=endDate]:not([placeholder]');
+            var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder]),.form-control[data-fieldName=endDate]:not([placeholder])');
             inputs.each(function (index, input) {
                 dateutil.addSingleDependentDatePicker($(input));
             });
@@ -82,7 +88,7 @@
             if (_.isUndefined(tableRow)) {
                 $('#saveChangedRoads').prop("disabled", false);
             }
-            else if (tableRow.find(".form-control[data-roadid=-1000]").filter(function () {
+            else if (tableRow.find(".form-control[data-roadid=-1000]:not([data-FieldName=endDate])").filter(function () {
                     return this.value === "";
                 }).length === 0) {
                 $('#saveChangedRoads').prop("disabled", false);
@@ -98,9 +104,22 @@
             if (roadId === newId.toString()) {
                 var originalRoadId = tableRow.attr("data-originalRoadId");
                 var roadNumber = tableRow.attr("data-roadNumber");
+                if (fieldName === "startDate") {
+                    $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
+                    roadNameCollection.registerEdition(originalRoadId, "endDate", fieldValue);
+                }
                 roadNameCollection.editNewEntry(originalRoadId, roadNumber, fieldName, fieldValue);
                 toggleSaveButton(tableRow);
             } else {
+                if (fieldName === "endDate") {
+                    var tableRow = $("#newRoadName[data-originalRoadId=" + roadId + "]");
+                    var newStartDateField = tableRow.find(".form-control[data-fieldName=startDate]");
+                    if (newStartDateField.length != 0) {
+                        newStartDateField.val(fieldValue);
+                        var roadNumber = tableRow.attr("data-roadNumber");
+                        roadNameCollection.editNewEntry(roadId, roadNumber, "startDate", fieldValue);
+                    }
+                }
                 toggleSaveButton();
                 roadNameCollection.registerEdition(roadId, fieldName, fieldValue);
             }
@@ -185,6 +204,10 @@
                     $('#road-list').html($(html));
                     retroactivelyAddDatePickers();
                 }
+            });
+
+            eventbus.on("roadNameTool: saveSuccess", function () {
+                $('#saveChangedRoads').prop("disabled", true);
             });
         }
 
