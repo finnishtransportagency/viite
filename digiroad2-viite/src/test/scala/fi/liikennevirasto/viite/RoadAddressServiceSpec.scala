@@ -1057,6 +1057,23 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Check if road address history is fused") {
+    runWithRollback {
+      val addressList = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L)).map(_.copy(endDate = Some(DateTime.parse("2015-01-01"))))
+      val idsString = s" (${addressList.map(_.id).mkString(",")})"
+      sqlu"""UPDATE ROAD_ADDRESS SET END_DATE = TO_DATE('2015-01-01', 'YYYY-MM-DD') WHERE ID IN #$idsString""".execute
+      addressList should have size (3)
+      val address = addressList.head
+      val newAddr = address.copy(id = -1000L, startAddrMValue = addressList.map(_.startAddrMValue).min,
+        endAddrMValue = addressList.map(_.endAddrMValue).max, endDate = Some(DateTime.parse("2015-01-01")))
+      val merger = RoadAddressMerge(addressList.map(_.id).toSet, Seq(newAddr))
+      roadAddressService.mergeRoadAddressHistoryInTX(merger)
+      val addressListMerged = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
+      addressListMerged should have size (1)
+      addressListMerged.head.linkId should be (address.linkId)
+    }
+  }
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false, lrmposition: Long = 0) = {
