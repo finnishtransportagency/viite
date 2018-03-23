@@ -14,7 +14,7 @@ case class ProjectLinkName(id: Long, projectId: Long, roadNumber: Long, roadName
 object ProjectLinkNameDAO {
 
   private val logger = LoggerFactory.getLogger(getClass)
-  private val ptojectLinkNameQueryBase =  s"""select id,project_id,road_number,road_Name from project_link_name """
+  private val ptojectLinkNameQueryBase =  s"""select id,project_id,road_number,road_name from project_link_name """
   implicit val getRoadNameRow = new GetResult[ProjectLinkName] {
     def apply(r: PositionedResult) = {
       val roadNameId = r.nextLong()
@@ -30,8 +30,18 @@ object ProjectLinkNameDAO {
     Q.queryNA[ProjectLinkName](query).iterator.toSeq
   }
 
-  def getProjectLinkNameByRoadNumber(roadNumber: Long): Option[ProjectLinkName] = {
-    queryList(s"where road_number = $roadNumber").headOption
+  def getProjectLinkNameByRoadNumber(roadNumber: Long, projectId: Long): Option[ProjectLinkName] = {
+    queryList(s"where road_number = $roadNumber and project_id = $projectId").headOption
   }
+
+  def create(projectId: Long, roadNumber: Long, roadName: String) : Unit = {
+    sqlu"""
+         insert into project_link_name (id, project_id, road_number, road_name)
+         values (project_link_name_seq.nextval, $projectId, $roadNumber, $roadName)
+    """.execute
+  }
+
+  def update(project)
+
 
 }
