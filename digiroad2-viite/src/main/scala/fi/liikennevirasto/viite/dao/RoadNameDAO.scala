@@ -99,7 +99,8 @@ object RoadNameDAO {
       val query = s"""
         SELECT * FROM road_names
         WHERE road_number IN (
-            SELECT DISTINCT road_number FROM road_names WHERE start_date >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
+            SELECT DISTINCT road_number FROM road_names
+            WHERE valid_to IS null AND start_date >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
           ) AND valid_to IS null
         ORDER BY road_number, start_date desc"""
       queryList(query)
