@@ -35,7 +35,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
       pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, roadLinkType, ConstructionType.UnknownConstructionType,
-      pl.linkGeomSource, pl.roadType, pl.roadName, 0L, None, Some("vvh_modified"),
+      pl.linkGeomSource, pl.roadType, Some(pl.roadName), 0L, None, Some("vvh_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
       pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, pl.calibrationPoints._1,
       pl.calibrationPoints._2, Anomaly.None, pl.lrmPositionId, pl.status, pl.roadAddressId,
@@ -136,7 +136,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
         roadLink.linkId
     ProjectAddressLink(id, linkId, geom,
       length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource,
-      roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadType, Some(roadName), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
       startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, lrmPositionId, status, roadAddressId,
       reversed, connectedLinkId, originalGeometry)

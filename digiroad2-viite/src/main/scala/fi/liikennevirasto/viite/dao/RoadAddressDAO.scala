@@ -138,7 +138,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination,commonHistoryId: Long, blackUnderline: Boolean = false, roadName: String = "") extends BaseRoadAddress {
+                       terminated: TerminationCode = NoTermination,commonHistoryId: Long, blackUnderline: Boolean = false, roadName: Option[String] = None) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -298,7 +298,7 @@ object RoadAddressDAO {
       val ely = r.nextLong()
       val terminated = TerminationCode.apply(r.nextInt())
       val commonHistoryId = r.nextLong()
-      val roadName = r.nextString()
+      val roadName = r.nextStringOption()
 
       RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
