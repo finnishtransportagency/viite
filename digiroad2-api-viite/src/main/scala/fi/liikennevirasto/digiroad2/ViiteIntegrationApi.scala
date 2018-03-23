@@ -1,20 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
-import java.text.{ParseException, SimpleDateFormat}
+import java.text.ParseException
 import java.util.Locale
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.{BadRequest, NotFound, ScalatraBase, ScalatraServlet}
+import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
 trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
