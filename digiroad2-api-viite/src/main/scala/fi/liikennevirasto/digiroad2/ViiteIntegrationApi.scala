@@ -175,10 +175,16 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
               "tie" -> names.head.roadNumber,
               "tienimet" -> names.map(
                 name => Map(
-                  "muutospvm" -> name.validFrom, // TODO
+                  "muutospvm" -> {
+                    if (name.validFrom.isDefined) name.validFrom.get.toString("yyyy-MM-dd") else null
+                  },
                   "tienimi" -> name.roadName,
-                  "voimassaolo_alku" -> name.startDate, // TODO
-                  "voimassaolo_loppu" -> name.endDate // TODO
+                  "voimassaolo_alku" -> {
+                    if (name.startDate.isDefined) name.startDate.get.toString("yyyy-MM-dd") else null
+                  },
+                  "voimassaolo_loppu" -> {
+                    if (name.endDate.isDefined) name.endDate.get.toString("yyyy-MM-dd") else null
+                  }
                 )
               ))
           )
