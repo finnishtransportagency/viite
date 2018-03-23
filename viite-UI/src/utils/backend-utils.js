@@ -65,7 +65,17 @@
       });
     }, 1000);
 
-    this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
+
+      this.getRoadName =
+      _.debounce(function (roadNumber, callback) {
+          return $.getJSON('api/viite/roadlinks/roadname/'+ roadNumber , function (data) {
+              return _.isFunction(callback) && callback(data);
+          });
+      }, 500);
+
+
+
+      this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
       return $.getJSON('api/viite/roadlinks/adjacent?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });

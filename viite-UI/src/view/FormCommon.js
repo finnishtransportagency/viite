@@ -16,8 +16,8 @@
     };
 
     var addRoadNameField = function (name) {
-      var nameToDisplay = _.isUndefined(name) ? "" : name;
-      var disabled = !_.isEmpty(nameToDisplay);
+      var nameToDisplay = _.isUndefined(name) ? " " : name;
+      var disabled = name !== " ";
       return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
     };
 

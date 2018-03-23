@@ -65,6 +65,15 @@ object RoadNameDAO {
     roadNumbers.flatMap(rn => getRoadNamesByRoadNumber(rn))
   }
 
+  /**
+    * Get current roadName by roadNumber (endDate is null)
+    */
+  def getCurrentRoadNamesByRoadNumber(roadNumber: Long): Seq[RoadName] = {
+    val query =
+      s"""$roadsNameQueryBase where road_number = $roadNumber and end_date is null """
+    queryList(query)
+  }
+
   /** // TODO
     * We probably want to use slightly slower prepared statement when we query with user given string to avoid sql injection
     * @param oRoadNumber
