@@ -269,7 +269,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
 
-
         if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         if (GeometryUtils.isNonLinear(newLinks))
@@ -987,7 +986,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, Long, Long) = {
       val reservedPart = ProjectDAO.fetchReservedRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber).get
       val newSavedLinks = ProjectDAO.getProjectLinksByProjectRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber, projectId, Some(LinkStatus.New))
-      (linkStatus == New && newSavedLinks.map(_.linkId).toSet.subsetOf(linkIds), reservedPart.roadNumber, reservedPart.roadPartNumber)
+      /*
+      replaceable -> New link part should replace New existing part if:
+        1. Action is LinkStatus.New
+        2. New road or part is different from existing one
+        3. All New links in existing part are in selected links for New part
+       */
+      val replaceable = linkStatus == New && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.map(_.linkId).toSet.subsetOf(linkIds)
+      (replaceable, reservedPart.roadNumber, reservedPart.roadPartNumber)
     }
 
     def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]): Unit = {
