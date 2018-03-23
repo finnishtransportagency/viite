@@ -170,7 +170,18 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
         if (result.isLeft) {
           BadRequest(result.left)
         } else if (result.isRight) {
-          result.right.get.groupBy(_.roadNumber) // TODO
+          result.right.get.groupBy(_.roadNumber).values.map(
+            names => Map(
+              "tie" -> names.head.roadNumber,
+              "tienimet" -> names.map(
+                name => Map(
+                  "muutospvm" -> name.validFrom, // TODO
+                  "tienimi" -> name.roadName,
+                  "voimassaolo_alku" -> name.startDate, // TODO
+                  "voimassaolo_loppu" -> name.endDate // TODO
+                )
+              ))
+          )
         } else {
           Seq.empty[Any]
         }
