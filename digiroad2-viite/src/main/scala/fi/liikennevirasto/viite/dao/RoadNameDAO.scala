@@ -1,10 +1,9 @@
 package fi.liikennevirasto.viite.dao
 
 import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.format.DateTimeFormatter
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
@@ -96,7 +95,8 @@ object RoadNameDAO {
   def getUpdatedRoadNames(since: DateTime): Seq[RoadName] = {
     if (since != null) {
       val sinceString = since.toString("yyyy-MM-dd")
-      val query = s"""
+      val query =
+        s"""
         SELECT * FROM road_names
         WHERE road_number IN (
             SELECT DISTINCT road_number FROM road_names
