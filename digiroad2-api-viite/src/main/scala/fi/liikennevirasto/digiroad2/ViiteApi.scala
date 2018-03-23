@@ -654,6 +654,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/roadname/:roadNumber"){
+
+    params.get("roadNumber").map(_.toLong) match{
+      case Some(roadNumber) =>{
+        try {
+          Map("roadName" ->roadNameService.getRoadNameByNumber(roadNumber))
+        } catch {
+          case e: Exception => Map("success" -> false, "errorMessage" -> e.getMessage)
+        }
+      }
+      case _ => BadRequest("Missing road number from URL")
+    }
+  }
+
   delete("/project/split") {
     val user = userProvider.getCurrentUser()
     try {

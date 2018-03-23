@@ -49,4 +49,21 @@ class RoadNameService() {
       case e if NonFatal(e) => Left("Unknown error")
     }
   }
+
+
+  def getRoadNameByNumber(roadNumber: Long) : String= {
+    try{
+      withDynTransaction{
+        val roadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
+        if(roadNames.isEmpty)
+          ""
+        else
+          roadNames.head.roadName
+      }
+    }
+    catch {
+      case longParsingException: NumberFormatException => "Could not parse road number"
+      case e if NonFatal(e) => "Unknown error"
+    }
+  }
 }
