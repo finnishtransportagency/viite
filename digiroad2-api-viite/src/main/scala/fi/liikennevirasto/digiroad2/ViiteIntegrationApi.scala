@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import java.text.ParseException
 import java.util.Locale
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
@@ -16,6 +15,8 @@ import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
+
+import scala.util.control.NonFatal
 
 trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
   self: ScalatraBase =>
@@ -159,8 +160,8 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
   get("/tienimi/paivitetyt") {
     contentType = formats("json")
     val muutospvm = params.get("muutospvm")
-    if (muutospvm.isEmpty) {
-      val message = "Vaadittu parametri 'muutospvm' puuttuu."
+    if (!muutospvm.isDefined || muutospvm.get.isEmpty) {
+      val message = "Palvelun '/tienimi/paivitetyt' vaadittu parametri 'muutospvm' puuttuu."
       logger.warn(message)
       BadRequest(message)
     } else {
@@ -192,10 +193,13 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
           Seq.empty[Any]
         }
       } catch {
-        case e: ParseException =>
-          val message = "Parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
-          logger.warn(message, e)
+        case e: IllegalArgumentException =>
+          val message = "Palvelun '/tienimi/paivitetyt' parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
+          logger.warn(message)
           BadRequest(message)
+        case e if NonFatal(e) =>
+          logger.warn(e.getMessage, e)
+          BadRequest(e.getMessage)
       }
     }
   }
