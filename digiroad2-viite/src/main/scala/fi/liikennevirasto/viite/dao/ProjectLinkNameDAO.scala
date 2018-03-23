@@ -34,4 +34,8 @@ object ProjectLinkNameDAO {
     queryList(s"where road_number = $roadNumber").headOption
   }
 
+  def removeProjectLinkName(roadNumber: Long, projectId: Long): Unit = {
+    sqlu"""DELETE FROM PROJECT_LINK_NAME WHERE ROAD_NUMBER = ${roadNumber} AND PROJECT_ID = ${projectId}""".execute
+  }
+
 }
