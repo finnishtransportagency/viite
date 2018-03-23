@@ -984,11 +984,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                          discontinuity: Int = Discontinuity.Continuous.value, ely: Option[Long] = None,
                          reversed: Boolean = false): Option[String] = {
 
-    def isCompletelyNewPart: Boolean = {
-      val newSavedLinks = ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.New))
-      linkStatus == New && newSavedLinks.forall {
-        savedLink => linkIds.contains(savedLink.linkId)
-      }
+    def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, Long, Long) = {
+      val reservedPart = ProjectDAO.fetchReservedRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber).get
+      val newSavedLinks = ProjectDAO.getProjectLinksByProjectRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber, projectId, Some(LinkStatus.New))
+      (linkStatus == New && newSavedLinks.map(_.linkId).toSet.subsetOf(linkIds), reservedPart.roadNumber, reservedPart.roadPartNumber)
     }
 
     def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]): Unit = {
@@ -1005,16 +1004,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def checkAndMakeReservation(projectLinks: Seq[ProjectLink]) = {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
       try {
-        if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
-          if (isCompletelyNewPart) {
-            val reservedPart = ProjectDAO.fetchReservedRoadPart(projectLinks.head.roadNumber, projectLinks.head.roadPartNumber).get
+          val (toReplace, road, part) = isCompletelyNewPart(projectLinks)
+          if (toReplace) {
+            val reservedPart = ProjectDAO.fetchReservedRoadPart(road, part).get
             ProjectDAO.removeReservedRoadPart(projectId, reservedPart)
             val newProjectLinks: Seq[ProjectLink] = projectLinks.map(pl => pl.copy(id = NewRoadAddress, roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt), endAddrMValue = userDefinedEndAddressM.getOrElse(0).toLong))
-            addNewLinksToProject(sortRamps(newProjectLinks, linkIds.toSeq), projectId, userName, linkIds.head)
+            addNewLinksToProject(sortRamps(newProjectLinks, linkIds.toSeq), projectId, userName, linkIds.head, false)
           } else {
-            ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
-          }
-        }
+            if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
+              ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
+            }
+         }
       } catch {
         case e: Exception => println("Unexpected exception occurred: " + e)
       }
