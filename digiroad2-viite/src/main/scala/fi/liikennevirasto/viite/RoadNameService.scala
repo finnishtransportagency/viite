@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 
-case class RoadNameRows(id: Long, editions: Seq[RoadNameEditions])
+case class RoadNameRows(roadId: Long, editions: Seq[RoadNameEditions])
 
 case class RoadNameEditions(editedField: String, value: String)
 
@@ -39,15 +39,15 @@ class RoadNameService() {
 
   def addOrUpdateRoadNames(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
     try {
-      roadNames.foreach{
-        rn =>
-        if(rn.id == NewRoadName){
+      roadNames.foreach(rn => {
+        val fieldMaps = decodeFields(rn.editions)
+        if (rn.roadId == NewRoadName) {
           //TODO validate all non-optional fields in row creation
-          RoadNameDAO.create(rn.id, decodeFields(rn.editions), user)
+          RoadNameDAO.create(rn.roadId, fieldMaps, user)
         } else {
-          RoadNameDAO.update(rn.id, decodeFields(rn.editions), user)
+          RoadNameDAO.update(rn.roadId, fieldMaps, user)
         }
-      }
+      })
       None
     } catch {
       case e: Exception => Some("some error to be define in case there is already one name not expired for some dateinterval")

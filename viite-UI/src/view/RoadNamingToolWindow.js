@@ -50,6 +50,13 @@
             return field;
         };
 
+        var searchForRoadNames = function () {
+            var roadParam = $('#roadSearchParameter').val();
+            $('.roadList-item').remove();
+            $('#saveChangedRoads').remove();
+            roadNameCollection.fetchRoads(roadParam);
+        };
+
         var addSaveEvent = function () {
             var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
             $('#road-list').append(saveButton);
@@ -126,7 +133,7 @@
         }
 
         function bindEvents() {
-            eventbus.on("namingTool: toggleCreate", function () {
+            eventbus.on("namingTool:toggleCreate", function () {
                 if ($("#createRoad").is(":visible")) {
                     $("#createRoad").css({display: "inline-block"});
                 } else {
@@ -141,13 +148,10 @@
             });
 
             nameToolSearchWindow.on('click', '#executeRoadSearch', function () {
-                var roadParam = $('#roadSearchParameter').val();
-                $('.roadList-item').remove();
-                $('#saveChangedRoads').remove();
-                roadNameCollection.fetchRoads(roadParam);
+                searchForRoadNames();
             });
 
-            eventbus.on("roadNameTool: roadsFetched", function (roadData) {
+            eventbus.on("roadNameTool:roadsFetched", function (roadData) {
                 var html = '<table id="roadList-table" style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
                 if (!_.isEmpty(roadData)) {
                     _.each(roadData, function (road) {
@@ -206,8 +210,9 @@
                 }
             });
 
-            eventbus.on("roadNameTool: saveSuccess", function () {
+            eventbus.on("roadNameTool:saveSuccess", function () {
                 $('#saveChangedRoads').prop("disabled", true);
+                searchForRoadNames();
             });
         }
 

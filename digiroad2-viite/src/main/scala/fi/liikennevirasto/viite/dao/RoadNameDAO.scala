@@ -47,6 +47,22 @@ object RoadNameDAO {
     }
   }
 
+  /**
+    * For checking date validity we convert string datre to datetime options
+    *
+    * @param dateString string formated date dd.mm.yyyy
+    * @return Joda datetime
+    */
+  private def optionStringToDateTime(dateString: Option[String]): Option[java.sql.Date] = {
+    dateString match {
+      case Some(dateString) => {
+        val splitDate = dateString.split('.')
+        Option(new java.sql.Date(splitDate(2).toInt, splitDate(1).toInt, splitDate(0).toInt))
+      }
+      case _ => None
+    }
+  }
+
   private def queryList(query: String) = {
     Q.queryNA[RoadName](query).iterator.toSeq
   }
@@ -97,51 +113,42 @@ object RoadNameDAO {
     val roadName = fields.get("roadName")
     val startDate = fields.get("startDate")
     val endDate = fields.get("endDate")
-    val numberFilter = if(roadNumber.isDefined) s" roadNumber = $roadNumber " else ""
-    val nameFilter = if(roadName.isDefined) s" roadName = $roadNumber " else ""
-    val startDateFilter = if(startDate.isDefined) s" startDate = $roadNumber " else ""
-    val endDateFilter = if(endDate.isDefined) s" endDate = $roadNumber " else ""
-    val filters = Seq(numberFilter, nameFilter, startDateFilter, endDateFilter)
-    val query =
-      s"""
-          Update ROAD_NAMES Set ${filters.mkString(",")} where id = $id)
-        """
+
+    val numberFilter = if (roadNumber.isDefined) s" road_number = ${roadNumber.get} " else ""
+    val nameFilter = if (roadName.isDefined) s" road_name = '${roadName.get}' " else ""
+    val startDateFilter = if (startDate.isDefined) s" start_date = to_date('${startDate.get}','dd.MM.YYYY') " else ""
+    val endDateFilter = if (endDate.isDefined) s" end_date = to_date('${endDate.get}','dd.MM.YYYY') " else ""
+
+    val filters = Seq(numberFilter, nameFilter, startDateFilter, endDateFilter).filterNot(_ == "")
+    val query = s"""Update ROAD_NAMES Set ${filters.mkString(",")} where id = $id"""
     Q.updateNA(query).first
   }
 
-//  def create(id: Long, fields: Map[String, String]) = {
-//    val roadNumber = fields.get("roadNumber")
-//    val roadName = fields.get("roadName")
-//    val startDate = fields.get("startDate")
-//    val endDate = fields.get("endDate")
-//    val numberFilter = if(roadNumber.isDefined) s" roadNumber = $roadNumber " else ""
-//    val nameFilter = if(roadName.isDefined) s" roadName = $roadNumber " else ""
-//    val startDateFilter = if(startDate.isDefined) s" startDate = $roadNumber " else ""
-//    val endDateFilter = if(endDate.isDefined) s" endDate = $roadNumber " else ""
-//    val query =
-//      s"""
-//          Update ROAD_NAMES Set $numberFilter $nameFilter $startDateFilter $endDateFilter where id = $id)
-//        """
-//    Q.updateNA(query).first
-//  }
-
   def create(id: Long, fields: Map[String, String], user: User): Long = {
-    val roadNumber = fields.get("roadNumber").asInstanceOf[Long]
+    val roadNumber = fields.get("roadNumber").get.toLong
     val roadName = fields.get("roadName")
-    val startDate = fields.get("startDate")
-    val endDate = fields.get("endDate")
+    val startDate = optionStringToDateTime(fields.get("startDate"))
+    val endDate = optionStringToDateTime(fields.get("endDate"))
 
-    val namesPS = dynamicSession.prepareStatement("insert into ROAD_NAMES (id, road_number, road_name, start_date, end_date, valid_from, valid_to, created_by) values " +
-      "(?, ?, ?, ?, ?, ?, ?, ?)")
+    val (endDateDefString, endDateValString) = if (endDate.nonEmpty) {
+      (s", end_date", s", ?")
+    } else ("", "")
+
+    val query = s"insert into ROAD_NAMES (id, road_number, road_name, start_date, valid_from, valid_to, created_by $endDateDefString) values " +
+      s"(?, ?, ?, ?, ?, ?, ? $endDateValString)"
+
+    val namesPS = dynamicSession.prepareStatement(query)
     val nextId = Sequences.nextViitePrimaryKeySeqValue
     namesPS.setLong(1, nextId)
     namesPS.setLong(2, roadNumber)
     namesPS.setString(3, roadName.get)
-    namesPS.setString(4, startDate.get)
-    namesPS.setString(5,endDate.get)
-    namesPS.setString(6, startDate.get)
-    namesPS.setString(7, "")
-    namesPS.setString(8, user.username)
+    namesPS.setDate(4, startDate.get)
+    namesPS.setDate(5, startDate.get)
+    namesPS.setString(6, "")
+    namesPS.setString(7, user.username)
+    if (endDate.nonEmpty) {
+      namesPS.setDate(8, endDate.get)
+    }
     namesPS.addBatch()
     namesPS.executeBatch()
     namesPS.close()

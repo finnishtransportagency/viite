@@ -18,7 +18,7 @@
                     return roadCopy;
                 }).sortBy('endDate').reverse().sortBy('roadNumber').value();
                 currentRoadData = sortedRoadData;
-                eventbus.trigger("roadNameTool: roadsFetched", sortedRoadData);
+                eventbus.trigger("roadNameTool:roadsFetched", sortedRoadData);
             });
         };
 
@@ -90,15 +90,19 @@
                 var editions = road.editions;
                 return {roadId: newId, editions: editions};
             });
-            var objectToSave = currentNew.concat(editedRoadData);
-            backend.saveRoadNamesChanges(objectToSave, function (successObject) {
+            var rowObjects = _.map(currentNew.concat(editedRoadData), function (row) {
+                var roadId = _.isString(row.roadId) ? parseInt(row.roadId) : row.roadId;
+                var editions = row.editions;
+                return {roadId: roadId, editions: editions};
+            });
+            backend.saveRoadNamesChanges({rows: rowObjects}, function (successObject) {
                 {
                     currentRoadData = [];
                     editedRoadData = [];
-                    eventbus.trigger("roadNameTool: saveSuccess");
+                    eventbus.trigger("roadNameTool:saveSuccess");
                 }
             }, function (unsuccessObject) {
-                eventbus.trigger("roadNameTool: saveUnsuccessful");
+                eventbus.trigger("roadNameTool:saveUnsuccessful");
             });
 
 
