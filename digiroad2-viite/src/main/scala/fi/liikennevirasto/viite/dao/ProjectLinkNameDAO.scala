@@ -41,7 +41,16 @@ object ProjectLinkNameDAO {
     """.execute
   }
 
-  def update(project)
+  def update(projectId: Long, roadNumber: Long, roadName: String) : Unit = {
+    sqlu"""
+         update project_link_name set road_name = $roadName where project_id = $projectId and road_number = $roadNumber
+    """.execute
+  }
 
+  def update(id: Long, roadName: String) : Unit = {
+    sqlu"""
+         update project_link_name set road_name = $roadName where id = $id
+    """.execute
+  }
 
 }
