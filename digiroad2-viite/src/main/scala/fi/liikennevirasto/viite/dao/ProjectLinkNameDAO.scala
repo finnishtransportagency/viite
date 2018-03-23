@@ -27,7 +27,7 @@ object ProjectLinkNameDAO {
   }
 
   private def queryList(query: String) = {
-    Q.queryNA[RoadName](query).iterator.toSeq
+    Q.queryNA[ProjectLinkName](query).iterator.toSeq
   }
 
   def getProjectLinkNameByRoadNumber(roadNumber: Long): Option[ProjectLinkName] = {
