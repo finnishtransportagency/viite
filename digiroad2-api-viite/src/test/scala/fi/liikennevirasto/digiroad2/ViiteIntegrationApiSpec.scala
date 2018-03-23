@@ -6,9 +6,11 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
-import fi.liikennevirasto.viite.{RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService, RoadType}
 import org.apache.commons.codec.binary.Base64
+import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
+import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
@@ -21,7 +23,10 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   when(mockRoadAddressService.getRoadAddressesLinkByMunicipality(235)).thenReturn(Seq())
 
-  private val integrationApi = new ViiteIntegrationApi(mockRoadAddressService)
+  val mockRoadNameService = MockitoSugar.mock[RoadNameService]
+  when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(Either(null, Seq()))
+
+  private val integrationApi = new ViiteIntegrationApi(mockRoadAddressService, mockRoadNameService)
   addServlet(integrationApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
