@@ -290,7 +290,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         //TODO change set project name to support list of project links
         newLinks.headOption.map {
           projectLink =>
-            setProjectRoadName(projectLink.id, projectLink.roadNumber, projectLink.roadName.get)
+            setProjectRoadName(projectId, projectLink.roadNumber, projectLink.roadName.get)
         }
         addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId)
       }
@@ -298,7 +298,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       //TODO change set project name to support list of project links
       newLinks.headOption.map {
         projectLink =>
-          setProjectRoadName(projectLink.id, projectLink.roadNumber, projectLink.roadName.get)
+          setProjectRoadName(projectId, projectLink.roadNumber, projectLink.roadName.get)
       }
       addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId)
     }
