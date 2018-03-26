@@ -256,8 +256,11 @@ object ProjectValidator {
       checkTrackCode(project, projectLinks)
     }
 
-    checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
-      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ elyCodesResults ++ checkTerminationContinuity(project, projectLinks)
+    val validationErrors = checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+      checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ elyCodesResults
+    if (!validationErrors.exists(_.validationError == ValidationErrorList.MissingEndOfRoad))
+      validationErrors ++ checkTerminationContinuity(project, projectLinks)
+    else validationErrors
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {
@@ -841,9 +844,9 @@ object ProjectValidator {
         !GeometryUtils.areAdjacent(ra.geometry, startRoad.geometry) && !GeometryUtils.areAdjacent(ra.geometry, endRoad.geometry))
       val diffEly = filtered.find(_.ely != startRoad.ely)
       if (!secondCheck && diffEly.isEmpty) {
-        Option(Seq(startRoad, endRoad))
+        Option(Seq(endRoad))
       } else if (secondCheck && diffEly.isDefined) {
-        Option(Seq(startRoad, endRoad))
+        Option(Seq(endRoad))
       } else Option.empty[Seq[ProjectLink]]
     } else Option.empty[Seq[ProjectLink]]
   }

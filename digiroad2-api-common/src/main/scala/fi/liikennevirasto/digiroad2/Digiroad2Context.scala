@@ -72,7 +72,8 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
+
+  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(5, TimeUnit.MINUTES)) { //first query after 2 mins, then every 5 mins
     try {
       projectService.updateProjectsWaitingResponseFromTR()
     } catch {
@@ -108,6 +109,10 @@ object Digiroad2Context {
 
   lazy val roadNetworkService: RoadNetworkService = {
     new RoadNetworkService
+  }
+
+  lazy val roadNameService : RoadNameService ={
+    new RoadNameService
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
