@@ -67,6 +67,19 @@ object RoadNameDAO {
     Q.queryNA[RoadName](query).iterator.toSeq
   }
 
+  def getCurrentRoadNames(roadNumbers: Set[Long]):  Seq[RoadName] = {
+    val roadNumbersStr = roadNumbers.mkString(",")
+    val query =
+      s"""$roadsNameQueryBase Where road_number in ($roadNumbersStr) and valid_From <= sysdate and (valid_to > sysdate or valid_to is null) and start_date <= sysdate and (end_date > sysdate or end_date is null)"""
+    queryList(query)
+  }
+
+  def getCurrentRoadName(roadNumber: Long): Option[RoadName] = {
+    val query =
+      s"""$roadsNameQueryBase Where road_number = ($roadNumber) and valid_From <= sysdate and (valid_to > sysdate or valid_to is null) and start_date <= sysdate and (end_date > sysdate or end_date is null)"""
+    queryList(query).headOption
+  }
+
   /**
     * Get roadNames ValidFrom - ValidTo determines database history vector and startDate and endDate determines data history
     */

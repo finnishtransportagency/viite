@@ -147,7 +147,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-
   /**
     *
     * @param projectId project's id
@@ -172,7 +171,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case None => Some("Projektia ei löytynyt") //project could not be found
     }
   }
-
 
   def validateProjectDate(reservedParts: Seq[ReservedRoadPart], date: DateTime): Option[String] = {
     withDynSession {
@@ -215,9 +213,45 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       seq
   }
 
+  private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String) = {
+      ProjectLinkNameDAO.get(roadNumber, projectId) match {
+        case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, projectLinkName.roadName)
+        case _ =>
+          val existingRoadName = RoadNameDAO.getCurrentRoadName(roadNumber).headOption
+          if(existingRoadName.isEmpty)
+            ProjectLinkNameDAO.create(projectId, roadNumber, roadName)
+      }
+  }
+
+  private def setProjectRoadNames(projectId: Long, projectLinks: Seq[ProjectLink]) = {
+    val projectRoadNumbers = projectLinks.groupBy(_.roadNumber)
+    val roadNumbers = projectRoadNumbers.keys.toSet
+    val existingProjectRoadNames = ProjectLinkNameDAO.get(roadNumbers, projectId)
+    val existingRoadNames = RoadNameDAO.getCurrentRoadNames(roadNumbers)
+
+    val projectLinkNames = projectRoadNumbers.flatMap {
+      case (roadNumber, pLinks) =>
+        pLinks.headOption.flatMap { projectLink =>
+          existingProjectRoadNames.find(_.roadNumber == roadNumber) match {
+            case Some(projectLinkName) => Some(projectLinkName.copy(roadName = projectLink.roadName.get))
+            case _ =>
+              val existingRoadName = existingRoadNames.find(_.roadNumber == roadNumber)
+              if(existingRoadName.isEmpty)
+                Some(ProjectLinkName(-1, projectId, roadNumber, projectLink.roadName.get))
+              else
+                None
+          }
+        }
+    }
+
+    val (newProjectNames, changedProjectNames) = projectLinkNames.partition(_.id == -1)
+    ProjectLinkNameDAO.create(newProjectNames.toSeq)
+    ProjectLinkNameDAO.update(changedProjectNames.toSeq)
+  }
+
   def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                          discontinuity: Discontinuity, roadType: RoadType, roadLinkSource: LinkGeomSource,
-                         roadEly: Long, user: String): Map[String, Any] = {
+                         roadEly: Long, user: String, roadName: String): Map[String, Any] = {
 
     validateLinkTrack(track.value) match {
       case true =>
@@ -234,8 +268,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
         }
         val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
-          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity,
-            roadType, roadEly)
+          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName)
         }
         setProjectEly(projectId, roadEly) match {
           case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
@@ -254,10 +287,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def addNewLinksToProject(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, newTransaction: Boolean = true): Option[String] = {
     if (newTransaction)
       withDynTransaction {
-        addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long)
+        //TODO change set project name to support list of project links
+        newLinks.headOption.map {
+          projectLink =>
+            setProjectRoadName(projectLink.id, projectLink.roadNumber, projectLink.roadName.get)
+        }
+        addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId)
       }
-    else
-      addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long)
+    else{
+      //TODO change set project name to support list of project links
+      newLinks.headOption.map {
+        projectLink =>
+          setProjectRoadName(projectLink.id, projectLink.roadNumber, projectLink.roadName.get)
+      }
+      addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId)
+    }
   }
 
   /**
@@ -1005,7 +1049,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val reservedPart = ProjectDAO.fetchReservedRoadPart(projectLink.roadNumber, projectLink.roadPartNumber)
           ProjectDAO.removeReservedRoadPart(projectId, reservedPart.get)
           val projectLinks: Seq[ProjectLink] = Seq(projectLink.copy(id = NewRoadAddress, roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt), endAddrMValue = userDefinedEndAddressM.get.toLong  ))
-              addNewLinksToProject(sortRamps(projectLinks, linkIds.toSeq), projectId, userName, linkIds.head, newTransaction = false)
+              addNewLinksToProject(sortRamps(projectLinks, linkIds.toSeq), projectId, userName, linkIds.head,  newTransaction = false)
         } else {
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         }
@@ -1244,12 +1288,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, roadNumber: Long,
                              roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, roadType: RoadType,
-                             ely: Long): ProjectLink = {
+                             ely: Long, roadName: String = ""): ProjectLink = {
     ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, trackCode, discontinuity,
       0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), 0L, rl.linkId, 0.0, rl.length,
       SideCode.Unknown, (None, None), floating = false, rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
-      0L, ely, reversed = false, None, rl.vvhTimeStamp)
+      0L, ely, reversed = false, None, rl.vvhTimeStamp, roadName = Some(roadName))
   }
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, splitOptions: SplitOptions): ProjectLink = {
     newProjectLink(rl, project, splitOptions.roadNumber, splitOptions.roadPartNumber, splitOptions.trackCode,
