@@ -83,8 +83,13 @@ object ProjectLinkNameDAO {
     """.execute
   }
 
+  def revert(roadNumber: Long, projectId: Long) : Unit = {
+    sqlu"""
+        delete from project_link_name where road_number = $roadNumber and project_id = $projectId and not exists(select id from project_link where road_number = $roadNumber and project_id = $projectId)
+    """.execute
+  }
+
   def removeProjectLinkName(roadNumber: Long, projectId: Long): Unit = {
     sqlu"""DELETE FROM PROJECT_LINK_NAME WHERE ROAD_NUMBER = ${roadNumber} AND PROJECT_ID = ${projectId}""".execute
   }
-
 }

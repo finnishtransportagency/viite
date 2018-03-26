@@ -215,39 +215,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String) = {
       ProjectLinkNameDAO.get(roadNumber, projectId) match {
-        case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, projectLinkName.roadName)
+        case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
         case _ =>
           val existingRoadName = RoadNameDAO.getCurrentRoadName(roadNumber).headOption
-          if(existingRoadName.isEmpty)
-            ProjectLinkNameDAO.create(projectId, roadNumber, roadName)
+          ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
       }
   }
 
-  private def setProjectRoadNames(projectId: Long, projectLinks: Seq[ProjectLink]) = {
-    val projectRoadNumbers = projectLinks.groupBy(_.roadNumber)
-    val roadNumbers = projectRoadNumbers.keys.toSet
-    val existingProjectRoadNames = ProjectLinkNameDAO.get(roadNumbers, projectId)
-    val existingRoadNames = RoadNameDAO.getCurrentRoadNames(roadNumbers)
-
-    val projectLinkNames = projectRoadNumbers.flatMap {
-      case (roadNumber, pLinks) =>
-        pLinks.headOption.flatMap { projectLink =>
-          existingProjectRoadNames.find(_.roadNumber == roadNumber) match {
-            case Some(projectLinkName) => Some(projectLinkName.copy(roadName = projectLink.roadName.get))
-            case _ =>
-              val existingRoadName = existingRoadNames.find(_.roadNumber == roadNumber)
-              if(existingRoadName.isEmpty)
-                Some(ProjectLinkName(-1, projectId, roadNumber, projectLink.roadName.get))
-              else
-                None
-          }
-        }
-    }
-
-    val (newProjectNames, changedProjectNames) = projectLinkNames.partition(_.id == -1)
-    ProjectLinkNameDAO.create(newProjectNames.toSeq)
-    ProjectLinkNameDAO.update(changedProjectNames.toSeq)
-  }
 
   def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                          discontinuity: Discontinuity, roadType: RoadType, roadLinkSource: LinkGeomSource,
@@ -943,6 +917,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
+    ProjectLinkNameDAO.revert(roadNumber, projectId)
     RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) if mod.geometry.nonEmpty =>
@@ -1114,7 +1089,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.New =>
             checkAndMakeReservation(toUpdateLinks.head)
             updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode))))
-
+            roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio $linkStatus")
         }
