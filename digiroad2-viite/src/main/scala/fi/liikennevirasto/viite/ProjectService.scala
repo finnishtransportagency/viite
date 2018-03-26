@@ -1458,6 +1458,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.create(splitAddresses)
   }
 
+  private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
+    projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.modifiedBy)).keys.map(rn =>
+      if (rn._2.nonEmpty){
+        RoadName(NewRoadName, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.get)
+      } else {
+        throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
+      }
+    ).toSeq
+  }
+
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
@@ -1470,10 +1480,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
       .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
     if (existingNames.nonEmpty) {
+      logger.info(s"Found ${existingNames.size} names in project that differ from road address name")
       existingNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
       val nameString = s"${existingNames.map(_.roadNumber).mkString(",")}"
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
+    val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber))
+    RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
+    getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = "TR")))
 
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
