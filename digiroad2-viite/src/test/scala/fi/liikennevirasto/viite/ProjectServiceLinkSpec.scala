@@ -652,21 +652,21 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink512 = ProjectAddressLink(NewRoadAddress, 5176512, geom512, GeometryUtils.geometryLength(geom512),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom512),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, RoadAddressDAO.getNextRoadAddressId)
       val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 5176552, geom552, GeometryUtils.geometryLength(geom552),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom552),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, RoadAddressDAO.getNextRoadAddressId)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
       mockForProject(id, addresses)
-      projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.minBy(_.endMValue).linkId) should be(None)
+      projectService.addNewLinksToProject(addresses.map(addressToProjectLink(rap)), id, "U", addresses.minBy(_.endMValue).linkId, false) should be(None)
       val links = ProjectDAO.getProjectLinks(id)
-      projectService.updateProjectLinks(id, links.map(_.linkId).toSet, LinkStatus.New, "test", 123456, 12345, 0, None,
+      val updated = projectService.updateProjectLinks(id, links.map(_.linkId).toSet, LinkStatus.New, "test", 123456, 1, 0, None,
         RoadType.FerryRoad.value, Discontinuity.EndOfRoad.value, Some(8), false)
       val linksAfterUpdate = ProjectDAO.getProjectLinks(id)
       val firstLink = linksAfterUpdate.head
       firstLink.roadNumber should be(123456)
-      firstLink.roadPartNumber should be(12345)
+      firstLink.roadPartNumber should be(1)
       firstLink.track.value should be(0)
     }
   }
