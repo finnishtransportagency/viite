@@ -50,13 +50,26 @@ object RoadNameDAO {
     */
   def getRoadNamesByRoadNumber(roadNumber: Long, oValidFrom: Option[DateTime] = None, oValidTo: Option[DateTime] = None,
                                oStartDate: Option[DateTime] = None, oEndDate: Option[DateTime] = None): Seq[RoadName] = {
-    val validFromFilter = if (oValidFrom.isDefined) s"AND validFrom >= ${dateParser(oValidFrom)}" else ""
-    val validToFilter = if (oValidTo.isDefined) s"AND validTo <= ${dateParser(oValidTo)}" else ""
-    val startDateFilter = if (oStartDate.isDefined) s"AND startDate >= ${dateParser(oStartDate)}" else ""
-    val endDateFilter = if (oEndDate.isDefined) s"AND endDate <= ${dateParser(oEndDate)}" else ""
+    val validFromFilter = if (oValidFrom.isDefined) s"AND valid_From >= ${dateParser(oValidFrom)}" else " AND valid_From <= sysdate"
+    val validToFilter = if (oValidTo.isDefined) s"AND valid_To <= ${dateParser(oValidTo)}" else " AND (valid_to > sysdate or valid_to is null)"
+    val startDateFilter = if (oStartDate.isDefined) s"AND start_Date >= ${dateParser(oStartDate)}" else ""
+    val endDateFilter = if (oEndDate.isDefined) s"AND end_Date <= ${dateParser(oEndDate)}" else ""
 
     val query =
       s"""$roadsNameQueryBase Where road_number = $roadNumber $validFromFilter $validToFilter $startDateFilter $endDateFilter"""
+    queryList(query)
+  }
+
+  def getRoadNamesByRoadNumber(roadNumbers: Seq[Long]): Seq[RoadName] = {
+    roadNumbers.flatMap(rn => getRoadNamesByRoadNumber(rn))
+  }
+
+  /**
+    * Get current roadName by roadNumber (endDate is null)
+    */
+  def getCurrentRoadNamesByRoadNumber(roadNumber: Long): Seq[RoadName] = {
+    val query =
+      s"""$roadsNameQueryBase where road_number = $roadNumber and end_date is null """
     queryList(query)
   }
 

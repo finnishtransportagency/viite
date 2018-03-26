@@ -1467,6 +1467,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectLinks.isEmpty)
       throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
 
+    val existingNames = RoadNameDAO.getRoadNamesByRoadNumber(projectLinks.groupBy(_.roadNumber).keys.toSeq)
+      .filter(en => projectLinks.exists(_.roadName.toUpperCase() != en.roadName.toUpperCase()))
+    if (existingNames.nonEmpty) {
+      existingNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
+      val nameString = s"${existingNames.map(_.roadNumber).mkString(",")}"
+      appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
+    }
+
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")

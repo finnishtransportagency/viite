@@ -45,7 +45,7 @@ case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], statu
 case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
                                             roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
                                             roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
-                                            coordinates: ProjectCoordinates)
+                                            coordinates: ProjectCoordinates, roadName: Option[String])
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -174,7 +174,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
   }
 
-
   get("/roadnames") {
     val oRoadNumber = params.get("roadNumber")
     val oRoadName = params.get("roadName")
@@ -185,7 +184,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
     }
   }
-
 
   get("/roadlinks/multiSourceAdjacents") {
     val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String, Any]]]
@@ -656,6 +654,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/roadname/:roadNumber"){
+
+    params.get("roadNumber").map(_.toLong) match{
+      case Some(roadNumber) =>{
+        try {
+          Map("roadName" ->roadNameService.getRoadNameByNumber(roadNumber))
+        } catch {
+          case e: Exception => Map("success" -> false, "errorMessage" -> e.getMessage)
+        }
+      }
+      case _ => BadRequest("Missing road number from URL")
+    }
+  }
+
   delete("/project/split") {
     val user = userProvider.getCurrentUser()
     try {
@@ -798,7 +810,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value,
-      "blackUnderline" -> roadAddressLink.blackUnderline
+      "blackUnderline" -> roadAddressLink.blackUnderline,
+      "roadName" -> roadAddressLink.roadName
     )
   }
 
@@ -874,7 +887,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "status" -> projectLink.status.value,
       "roadTypeId" -> projectLink.roadType.value,
       "discontinuity" -> projectLink.discontinuity.value,
-      "elyCode" -> projectLink.ely)
+      "elyCode" -> projectLink.ely,
+      "roadName" -> projectLink.roadName)
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
