@@ -10,28 +10,35 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class ProjectLinkName(id: Long, projectId: Long, roadNumber: Long, roadName: String)
+case class NewProjectLinkName(projectId: Long, roadNumber: Long, roadName: String)
 
 object ProjectLinkNameDAO {
 
   private val logger = LoggerFactory.getLogger(getClass)
   private val ptojectLinkNameQueryBase =  s"""select id,project_id,road_number,road_name from project_link_name """
-  implicit val getRoadNameRow = new GetResult[ProjectLinkName] {
+
+  implicit val getProjectLinkNameRow = new GetResult[ProjectLinkName] {
     def apply(r: PositionedResult) = {
-      val roadNameId = r.nextLong()
+      val id = r.nextLong()
       val projectId = r.nextLong()
       val roadNumber = r.nextLong()
       val roadName = r.nextString()
 
-      ProjectLinkName(roadNameId, projectId, roadNumber, roadName)
+      ProjectLinkName(id, projectId, roadNumber, roadName)
     }
   }
 
   private def queryList(query: String) = {
-    Q.queryNA[ProjectLinkName](query).iterator.toSeq
+    Q.queryNA[ProjectLinkName](ptojectLinkNameQueryBase + query).iterator.toSeq
   }
 
-  def getProjectLinkNameByRoadNumber(roadNumber: Long, projectId: Long): Option[ProjectLinkName] = {
+  def get(roadNumber: Long, projectId: Long): Option[ProjectLinkName] = {
     queryList(s"where road_number = $roadNumber and project_id = $projectId").headOption
+  }
+
+  def get(roadNumbers: Set[Long], projectId: Long) : Seq[ProjectLinkName] = {
+    val roadNumbersStr = roadNumbers.mkString(",")
+    queryList(s"where road_number in ($roadNumbersStr) and project_id = $projectId")
   }
 
   def create(projectId: Long, roadNumber: Long, roadName: String) : Unit = {
