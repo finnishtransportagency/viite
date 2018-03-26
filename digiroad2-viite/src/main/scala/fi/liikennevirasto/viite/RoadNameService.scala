@@ -1,11 +1,16 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.viite.dao.{RoadName, RoadNameDAO}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
+
+case class RoadNameRows(roadId: Long, editions: Seq[RoadNameEditions])
+
+case class RoadNameEditions(editedField: String, value: String)
 
 class RoadNameService() {
 
@@ -26,6 +31,37 @@ class RoadNameService() {
     }
   }
 
+  def addOrUpdateRoadNamesInTx(roadNames: Seq[RoadNameRows], user: User, newTransaction: Boolean = true): Option[String] = {
+    if(newTransaction)
+    withDynTransaction {
+      addOrUpdateRoadNames(roadNames, user)
+    } else
+      addOrUpdateRoadNames(roadNames, user)
+    }
+
+  def addOrUpdateRoadNames(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
+    try {
+      roadNames.foreach(rn => {
+        val fieldMaps = decodeFields(rn.editions)
+        if (rn.roadId == NewRoadName) {
+          //TODO validate all non-optional fields in row creation
+          RoadNameDAO.create(rn.roadId, fieldMaps, user)
+        } else {
+          RoadNameDAO.update(rn.roadId, fieldMaps, user)
+        }
+      })
+      None
+    } catch {
+      case e: Exception => Some("some error to be define in case there is already one name not expired for some dateinterval")
+      case e: RoadNameException => Some(e.getMessage)
+    }
+  }
+
+  private def decodeFields(editions: Seq[RoadNameEditions]) = {
+    editions.foldLeft(Map.empty[String, String]) { (map, edit) =>
+      CombineMaps.combine(map, Map(edit.editedField -> edit.value))
+    }
+  }
   /**
     * Searches road names by road number, road name and between history
     *
@@ -69,3 +105,7 @@ class RoadNameService() {
     }
   }
 }
+
+  class RoadNameException(string: String) extends RuntimeException {
+    override def getMessage: String = string
+  }

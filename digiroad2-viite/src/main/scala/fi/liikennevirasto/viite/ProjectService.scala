@@ -1467,8 +1467,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectLinks.isEmpty)
       throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
 
-    val existingNames = RoadNameDAO.getRoadNamesByRoadNumber(projectLinks.groupBy(_.roadNumber).keys.toSeq)
-      .filter(en => projectLinks.exists(_.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
+    val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
+      .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
     if (existingNames.nonEmpty) {
       existingNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
       val nameString = s"${existingNames.map(_.roadNumber).mkString(",")}"
