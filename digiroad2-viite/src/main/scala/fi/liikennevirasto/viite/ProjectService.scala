@@ -1523,15 +1523,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
       .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
-    if (existingNames.nonEmpty) {
-      logger.info(s"Found ${existingNames.size} names in project that differ from road address name")
-      existingNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
-      val nameString = s"${existingNames.map(_.roadNumber).mkString(",")}"
-      appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
-    }
     val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber))
     RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
     getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = "TR")))
+    projectLinks.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
+    if (existingNames.nonEmpty) {
+      logger.info(s"Found ${existingNames.size} names in project that differ from road address name")
+      val nameString = s"${existingNames.map(_.roadNumber).mkString(",")}"
+      appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
+    }
 
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
