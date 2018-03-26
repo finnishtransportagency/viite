@@ -16,7 +16,7 @@
     };
 
     var addRoadNameField = function (name) {
-      var nameToDisplay = _.isUndefined(name) ? " " : name;
+      var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? " " : name;
       var disabled = name !== " ";
       return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
     };
@@ -49,7 +49,7 @@
         addSmallLabel('TIETYYPPI') +
         roadTypeDropdown() + '<br>' +
         addSmallLabel('NIMI')+
-        addRoadNameField(roadName, true) +
+        addRoadNameField(roadName) +
         ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
