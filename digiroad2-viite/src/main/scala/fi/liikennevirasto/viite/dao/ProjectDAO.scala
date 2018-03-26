@@ -118,12 +118,15 @@ object ProjectDAO {
     ELSE PRJ.START_DATE END as start_date,
   CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
   LRM_POSITION.ADJUSTED_TIMESTAMP,
-  (SELECT ROAD_NAME FROM
-  (SELECT rn.road_name, rn.ROAD_NUMBER FROM ROAD_NAMES rn JOIN PROJECT_LINK ON project_link.ROAD_NUMBER = rn.ROAD_NUMBER WHERE rn.road_number = project_link.ROAD_NUMBER AND END_DATE IS NULL
-  UNION ALL
-  (SELECT rn.ROAD_NAME, rn.ROAD_NUMBER FROM PROJECT_LINK_NAME rn JOIN PROJECT_LINK ON project_link.ROAD_NUMBER = rn.ROAD_NUMBER WHERE rn.road_number = project_link.ROAD_NUMBER )) WHERE rownum = 1) AS ROAD_NAME
-  from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID) join LRM_POSITION
-    on (LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID) LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)"""
+  CASE
+    WHEN rn.road_name IS NOT NULL THEN rn.road_name
+    WHEN rn.road_name IS NULL THEN pln.road_name END AS road_name
+  from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
+  join LRM_POSITION
+    on (LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID)
+   LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)
+   LEFT JOIN road_names rn ON (rn.road_number = project_link.road_number)
+	LEFT JOIN project_link_name pln ON (pln.road_number = project_link.road_number AND pln.project_id = project_link.project_id)"""
 
   implicit val getProjectLinkRow = new GetResult[ProjectLink] {
     def apply(r: PositionedResult) = {
