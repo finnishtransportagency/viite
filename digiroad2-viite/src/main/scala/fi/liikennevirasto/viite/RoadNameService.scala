@@ -25,6 +25,17 @@ class RoadNameService() {
     RoadNameDAO.getRoadNamesByRoadNameAndRoadNumber(oRoadNumber, oRoadName, None, None, oStartDate, oEndDate)
   }
 
+  import org.joda.time.DateTime
+  import org.joda.time.format.DateTimeFormat
+
+  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+  private def singleNameExpiration(nameRows: Seq[RoadNameRows]) = {
+    val field = decodeFields(nameRows.head.editions)
+    val toBeExpired = nameRows.size == 1 && nameRows.head.roadId != NewRoadName && field.size == 1 && field.head._1 == "roadName"
+    (toBeExpired, field.head._2)
+  }
+
   def getRoadAddressesInTx(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
     withDynTransaction {
       getRoadAddresses(oRoadNumber, oRoadName, oStartDate, oEndDate)
@@ -41,23 +52,35 @@ class RoadNameService() {
 
   def addOrUpdateRoadNames(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
     try {
+      val (isRoadNameExpiration, newName) = singleNameExpiration(roadNames)
+      if(isRoadNameExpiration){
+        val road = RoadNameDAO.getRoadNamesById(roadNames.head.roadId)
+        RoadNameDAO.expire(roadNames.head.roadId, user)
+        RoadNameDAO.create(road.copy(createdBy = user.username, roadName = newName))
+      } else {
       roadNames.foreach(rn => {
         val fieldMaps = decodeFields(rn.editions)
         if (rn.roadId == NewRoadName) {
-          //TODO validate all non-optional fields in row creation
           val roadNumber = fieldMaps.get("roadNumber")
           val roadName = fieldMaps.get("roadName")
-          val startDate = fieldMaps.get("startDate")
-          val endDate = fieldMaps.get("endDate")
-          val rn = RoadName(NewRoadName, roadNumber.get.toLong, roadName.get, startDate = Some(new DateTime(startDate)), endDate = Some(new DateTime(endDate)), createdBy = user.username)
-          RoadNameDAO.create(rn)
+          val startDate = fieldMaps.get("startDate") match {
+            case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
+            case _ => None
+          }
+          val endDate = fieldMaps.get("endDate") match {
+            case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
+            case _ => None
+          }
+          val road = RoadName(rn.roadId, roadNumber.get.toLong, roadName.get, startDate, endDate, createdBy = user.username)
+          RoadNameDAO.create(road)
         } else {
           RoadNameDAO.update(rn.roadId, fieldMaps, user)
         }
       })
+      }
       None
     } catch {
-      case e: Exception => Some("some error to be define in case there is already one name not expired for some dateinterval")
+      case e: Exception => Some(e.getMessage)
       case e: RoadNameException => Some(e.getMessage)
     }
   }
@@ -67,6 +90,7 @@ class RoadNameService() {
       CombineMaps.combine(map, Map(edit.editedField -> edit.value))
     }
   }
+
   /**
     * Searches road names by road number, road name and between history
     *
