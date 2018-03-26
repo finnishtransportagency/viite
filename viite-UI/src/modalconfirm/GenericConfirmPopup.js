@@ -13,7 +13,7 @@ window.GenericConfirmPopup = function(message, options) {
     options = _.merge(defaultOptions, options);
 
     var confirmDiv =
-        '<div class="modal-overlay confirm-modal">' +
+        '<div class="modal-overlay confirm-modal" id="genericConfirmationDialog">' +
             '<div class="modal-dialog">' +
                 '<div class="content">' +
                   message +
@@ -68,7 +68,7 @@ window.GenericConfirmPopup = function(message, options) {
     };
 
     var purge = function() {
-        jQuery('.confirm-modal').remove();
+        jQuery('#genericConfirmationDialog').remove();
     };
 
     show();
