@@ -81,7 +81,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName : String = "")
+                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName : Option[String] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -117,9 +117,14 @@ object ProjectDAO {
     WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROAD_ADDRESS.START_DATE
     ELSE PRJ.START_DATE END as start_date,
   CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
-  LRM_POSITION.ADJUSTED_TIMESTAMP, (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = project_link.ROAD_NUMBER AND rn.END_DATE IS NULL) as road_name
+  LRM_POSITION.ADJUSTED_TIMESTAMP,
+  (SELECT ROAD_NAME FROM
+  (SELECT rn.road_name, rn.ROAD_NUMBER FROM ROAD_NAMES rn JOIN PROJECT_LINK ON project_link.ROAD_NUMBER = rn.ROAD_NUMBER WHERE rn.road_number = project_link.ROAD_NUMBER AND END_DATE IS NULL
+  UNION ALL
+  (SELECT rn.ROAD_NAME, rn.ROAD_NUMBER FROM PROJECT_LINK_NAME rn JOIN PROJECT_LINK ON project_link.ROAD_NUMBER = rn.ROAD_NUMBER WHERE rn.road_number = project_link.ROAD_NUMBER )) WHERE rownum = 1) AS ROAD_NAME
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID) join LRM_POSITION
     on (LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID) LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)"""
+
   implicit val getProjectLinkRow = new GetResult[ProjectLink] {
     def apply(r: PositionedResult) = {
       val projectLinkId = r.nextLong()
@@ -156,7 +161,7 @@ object ProjectDAO {
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         modifiedBy, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
-        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = roadName)
+        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName))
     }
   }
 
