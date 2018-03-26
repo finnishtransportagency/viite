@@ -287,21 +287,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def addNewLinksToProject(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, newTransaction: Boolean = true): Option[String] = {
     if (newTransaction)
       withDynTransaction {
-        //TODO change set project name to support list of project links
-        newLinks.headOption.map {
-          projectLink =>
-            setProjectRoadName(projectId, projectLink.roadNumber, projectLink.roadName.get)
-        }
         addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId)
       }
-    else{
-      //TODO change set project name to support list of project links
-      newLinks.headOption.map {
-        projectLink =>
-          setProjectRoadName(projectId, projectLink.roadNumber, projectLink.roadName.get)
-      }
+    else
       addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId)
-    }
+
   }
 
   /**
@@ -340,6 +330,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             newLinks
         ProjectDAO.create(createLinks.map(_.copy(modifiedBy = Some(user))))
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
+        newLinks.flatMap(_.roadName).headOption.foreach { roadName =>
+          setProjectRoadName(projectId, newRoadNumber, roadName)
+        }
         None
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
@@ -1025,7 +1018,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                          newRoadNumber: Long, newRoadPartNumber: Long, newTrackCode: Int,
                          userDefinedEndAddressM: Option[Int], roadType: Long = RoadType.PublicRoad.value,
                          discontinuity: Int = Discontinuity.Continuous.value, ely: Option[Long] = None,
-                         reversed: Boolean = false): Option[String] = {
+                         reversed: Boolean = false, roadName: Option[String] = None): Option[String] = {
 
     def isNewAndSameLink(projectLink: ProjectLink): Boolean = {
       linkIds.contains(projectLink.linkId) && (projectLink.status == linkStatus) && (linkStatus == New)
@@ -1098,6 +1091,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               checkAndMakeReservation(toUpdateLinks.head)
               ProjectDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber,
                 linkStatus, newRoadNumber, newRoadPartNumber, userName)
+              roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
             }
@@ -1110,7 +1104,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             })
             ProjectDAO.updateProjectLinksToDB(updated, userName)
             ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
-
+            roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(toUpdateLinks.head)
             // Reset back to original values
