@@ -178,6 +178,6 @@ object RoadNameDAO {
 
   def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
     val roads = roadNumbers.mkString(",")
-    sqlu"""UPDATE ROAD_NAMES SET VALID_TO = $endDate WHERE VALID_TO IS NULL AND ROAD_NUMBER in ($roads)""".execute
+    sqlu"""UPDATE ROAD_NAMES SET VALID_TO = ${new Date(endDate)} WHERE VALID_TO IS NULL AND ROAD_NUMBER in ($roads)""".execute
   }
 }
