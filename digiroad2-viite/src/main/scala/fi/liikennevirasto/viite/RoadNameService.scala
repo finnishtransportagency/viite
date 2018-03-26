@@ -11,6 +11,8 @@ class RoadNameService() {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def queryRoadNamesAndNumbers(oRoadNumber: Option[Long], oRoadName: Option[String],
@@ -53,7 +55,7 @@ class RoadNameService() {
 
   def getRoadNameByNumber(roadNumber: Long) : String= {
     try{
-      withDynTransaction{
+      withDynSession{
         val roadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
         if(roadNames.isEmpty)
           ""
