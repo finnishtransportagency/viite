@@ -774,7 +774,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val project = projectService.getRoadAddressSingleProject(projectId)
+      val namesAfterUpdate = RoadNameDAO.getCurrentRoadName(99999)
       project.get.statusInfo.get should be (roadNameWasNotSavedInProject + s"${99999}")
+      namesAfterUpdate.get.roadName should be ("road name test")
     }
   }
 
@@ -790,7 +792,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val project = projectService.getRoadAddressSingleProject(projectId)
+      val namesAfterUpdate = RoadNameDAO.getCurrentRoadName(99999)
       project.get.statusInfo should be (None)
+      namesAfterUpdate.get.roadName should be ("road name test")
     }
   }
 
@@ -808,7 +812,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val project = projectService.getRoadAddressSingleProject(projectId)
+      val namesAfterUpdate = RoadNameDAO.getCurrentRoadName(99999)
       project.get.statusInfo should be (None)
+      namesAfterUpdate.get.roadName should be ("road name test")
     }
   }
 
