@@ -33,7 +33,7 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
 
-case class RoadNameExtractor(id: Option[Long], roadNumber: Option[Long], roadName:String, startDate :String, endDate: String) //not use
+case class RoadNameExtractor(rows: Seq[RoadNameRows])
 
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
@@ -182,6 +182,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadNameService.getRoadAddressesInTx(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
       case Right(roadNameList) => Map("success" -> true, "roadNameInfo" -> roadNameList.map(roadNameToApi))
       case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+    }
+  }
+
+  put("/roadnames") {
+    val user = userProvider.getCurrentUser()
+    val roadNames = parsedBody.extract[RoadNameExtractor]
+
+    roadNameService.addOrUpdateRoadNamesInTx(roadNames.rows, user) match {
+      case Some(err) => Map("success" -> false, "errorMessage" -> err)
+      case None => Map("success" -> true)
     }
   }
 
