@@ -1,10 +1,15 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.viite.{RoadNameEditions, toGeomString}
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.{dateFormatter, toTimeStamp}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
+import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
@@ -30,7 +35,7 @@ object RoadNameDAO {
     }
   }
 
-  def dateParser(oDate: Option[DateTime]):String ={
+  def dateParser(oDate: Option[DateTime]):String = {
     oDate match {
       case Some(date) => {
       val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -39,6 +44,22 @@ object RoadNameDAO {
       case _=>
         logger.error("Failed to parse date in RoadName search ")
         "01.01.1900"
+    }
+  }
+
+  /**
+    * For checking date validity we convert string datre to datetime options
+    *
+    * @param dateString string formated date dd.mm.yyyy
+    * @return Joda datetime
+    */
+  private def optionStringToDateTime(dateString: Option[String]): Option[java.sql.Date] = {
+    dateString match {
+      case Some(dateString) => {
+        val splitDate = dateString.split('.')
+        Option(new java.sql.Date(splitDate(2).toInt, splitDate(1).toInt, splitDate(0).toInt))
+      }
+      case _ => None
     }
   }
 
@@ -86,4 +107,52 @@ object RoadNameDAO {
     } else
       Seq.empty[RoadName]
   }
+
+  def update(id: Long, fields: Map[String, String], user: User) = {
+    val roadNumber = fields.get("roadNumber")
+    val roadName = fields.get("roadName")
+    val startDate = fields.get("startDate")
+    val endDate = fields.get("endDate")
+
+    val numberFilter = if (roadNumber.isDefined) s" road_number = ${roadNumber.get} " else ""
+    val nameFilter = if (roadName.isDefined) s" road_name = '${roadName.get}' " else ""
+    val startDateFilter = if (startDate.isDefined) s" start_date = to_date('${startDate.get}','dd.MM.YYYY') " else ""
+    val endDateFilter = if (endDate.isDefined) s" end_date = to_date('${endDate.get}','dd.MM.YYYY') " else ""
+
+    val filters = Seq(numberFilter, nameFilter, startDateFilter, endDateFilter).filterNot(_ == "")
+    val query = s"""Update ROAD_NAMES Set ${filters.mkString(",")} where id = $id"""
+    Q.updateNA(query).first
+  }
+
+  def create(id: Long, fields: Map[String, String], user: User): Long = {
+    val roadNumber = fields.get("roadNumber").get.toLong
+    val roadName = fields.get("roadName")
+    val startDate = optionStringToDateTime(fields.get("startDate"))
+    val endDate = optionStringToDateTime(fields.get("endDate"))
+
+    val (endDateDefString, endDateValString) = if (endDate.nonEmpty) {
+      (s", end_date", s", ?")
+    } else ("", "")
+
+    val query = s"insert into ROAD_NAMES (id, road_number, road_name, start_date, valid_from, valid_to, created_by $endDateDefString) values " +
+      s"(?, ?, ?, ?, ?, ?, ? $endDateValString)"
+
+    val namesPS = dynamicSession.prepareStatement(query)
+    val nextId = Sequences.nextViitePrimaryKeySeqValue
+    namesPS.setLong(1, nextId)
+    namesPS.setLong(2, roadNumber)
+    namesPS.setString(3, roadName.get)
+    namesPS.setDate(4, startDate.get)
+    namesPS.setDate(5, startDate.get)
+    namesPS.setString(6, "")
+    namesPS.setString(7, user.username)
+    if (endDate.nonEmpty) {
+      namesPS.setDate(8, endDate.get)
+    }
+    namesPS.addBatch()
+    namesPS.executeBatch()
+    namesPS.close()
+    nextId
+  }
+
 }
