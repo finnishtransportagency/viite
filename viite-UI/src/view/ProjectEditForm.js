@@ -529,8 +529,13 @@
           backend.getRoadName($(this).val(), function(data){
             $('#roadName').val(data.roadName).change();
             $('#roadName').prop('disabled', false);
+            checkInputs('.project-');
           });
         }
+      });
+
+      rootElement.on('keyup','#roadName', function (event) {
+          checkInputs('.project-');
       });
 
       eventbus.on('projectLink:mapClicked', function () {
