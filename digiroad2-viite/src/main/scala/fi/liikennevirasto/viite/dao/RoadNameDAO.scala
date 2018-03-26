@@ -1,9 +1,9 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.Date
+
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.viite.{RoadNameEditions, toGeomString}
-import fi.liikennevirasto.viite.dao.RoadAddressDAO.{dateFormatter, toTimeStamp}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -137,13 +137,8 @@ object RoadNameDAO {
     Q.updateNA(query).first
   }
 
-  def create(id: Long, fields: Map[String, String], user: User): Long = {
-    val roadNumber = fields.get("roadNumber").get.toLong
-    val roadName = fields.get("roadName")
-    val startDate = optionStringToDateTime(fields.get("startDate"))
-    val endDate = optionStringToDateTime(fields.get("endDate"))
-
-    val (endDateDefString, endDateValString) = if (endDate.nonEmpty) {
+  def create(roadName: RoadName): Long = {
+    val (endDateDefString, endDateValString) = if (roadName.endDate.nonEmpty) {
       (s", end_date", s", ?")
     } else ("", "")
 
@@ -153,14 +148,14 @@ object RoadNameDAO {
     val namesPS = dynamicSession.prepareStatement(query)
     val nextId = Sequences.nextViitePrimaryKeySeqValue
     namesPS.setLong(1, nextId)
-    namesPS.setLong(2, roadNumber)
-    namesPS.setString(3, roadName.get)
-    namesPS.setDate(4, startDate.get)
-    namesPS.setDate(5, startDate.get)
+    namesPS.setLong(2, roadName.roadNumber)
+    namesPS.setString(3, roadName.roadName)
+    namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
+    namesPS.setDate(5, new Date(roadName.startDate.get.getMillis))
     namesPS.setString(6, "")
-    namesPS.setString(7, user.username)
-    if (endDate.nonEmpty) {
-      namesPS.setDate(8, endDate.get)
+    namesPS.setString(7, roadName.createdBy)
+    if (roadName.endDate.nonEmpty) {
+      namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
     }
     namesPS.addBatch()
     namesPS.executeBatch()
@@ -168,4 +163,8 @@ object RoadNameDAO {
     nextId
   }
 
+  def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
+    val roads = roadNumbers.mkString(",")
+    sqlu"""UPDATE ROAD_NAMES SET VALID_TO = $endDate WHERE VALID_TO IS NULL AND ROAD_NUMBER in ($roads)""".execute
+  }
 }

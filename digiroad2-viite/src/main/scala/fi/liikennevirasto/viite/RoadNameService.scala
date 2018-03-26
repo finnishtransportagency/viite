@@ -45,7 +45,12 @@ class RoadNameService() {
         val fieldMaps = decodeFields(rn.editions)
         if (rn.roadId == NewRoadName) {
           //TODO validate all non-optional fields in row creation
-          RoadNameDAO.create(rn.roadId, fieldMaps, user)
+          val roadNumber = fieldMaps.get("roadNumber")
+          val roadName = fieldMaps.get("roadName")
+          val startDate = fieldMaps.get("startDate")
+          val endDate = fieldMaps.get("endDate")
+          val rn = RoadName(NewRoadName, roadNumber.get.toLong, roadName.get, startDate = Some(new DateTime(startDate)), endDate = Some(new DateTime(endDate)), createdBy = user.username)
+          RoadNameDAO.create(rn)
         } else {
           RoadNameDAO.update(rn.roadId, fieldMaps, user)
         }
