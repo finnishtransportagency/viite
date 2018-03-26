@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.service.RoadLinkType
-import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadName}
 import fi.liikennevirasto.viite.RoadType
 
 trait RoadAddressLinkLike extends PolyLine {
@@ -41,7 +41,7 @@ trait RoadAddressLinkLike extends PolyLine {
 
 case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            length: Double, administrativeClass: AdministrativeClass,
-                           linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, roadType: RoadType, roadName: Option[String], municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
+                           linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String],  municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
