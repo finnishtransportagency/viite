@@ -17,7 +17,7 @@
 
     var addRoadNameField = function (name) {
       var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? " " : name;
-      var disabled = name !== " ";
+      var disabled = nameToDisplay !== " ";
       return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
     };
 
