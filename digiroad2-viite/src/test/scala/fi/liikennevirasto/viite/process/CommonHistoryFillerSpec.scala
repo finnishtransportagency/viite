@@ -199,27 +199,27 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
 
       val addProjectAddressLink5176552 = ProjectAddressLink(NewRoadAddress, 5176552, geom5176552, GeometryUtils.geometryLength(geom5176552),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176552),
+        RoadType.PublicRoad, Some("X"), 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176552),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
       val addProjectAddressLink5176512 = ProjectAddressLink(NewRoadAddress, 5176512, geom5176512, GeometryUtils.geometryLength(geom5176512),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176512),
+        RoadType.PublicRoad, Some("X"), 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176512),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
       val addProjectAddressLink5176584 = ProjectAddressLink(NewRoadAddress, 5176584, geom5176584, GeometryUtils.geometryLength(geom5176584),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176584),
+        RoadType.PublicRoad, Some("X"), 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5176584),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
       val addProjectAddressLink5502405 = ProjectAddressLink(NewRoadAddress, 5176512, geom5502405, GeometryUtils.geometryLength(geom5502405),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502405),
+        RoadType.PublicRoad, Some("X"), 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502405),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
       val addProjectAddressLink5502441 = ProjectAddressLink(NewRoadAddress, 5176512, geom5502441, GeometryUtils.geometryLength(geom5502441),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502441),
+        RoadType.PublicRoad, Some("X"), 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502441),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
       val addProjectAddressLink5502444 = ProjectAddressLink(NewRoadAddress, 5176512, geom5502444, GeometryUtils.geometryLength(geom5502444),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502444),
+        RoadType.PublicRoad, Some("X"), 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5502444),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
       val addresses = Seq(addProjectAddressLink5176552, addProjectAddressLink5176512, addProjectAddressLink5176584, addProjectAddressLink5502405, addProjectAddressLink5502441, addProjectAddressLink5502444)
       mockForProject(id, addresses)

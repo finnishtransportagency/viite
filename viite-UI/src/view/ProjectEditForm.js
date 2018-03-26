@@ -522,9 +522,15 @@
           $('footer').html(projectChangesButton);
       });
 
-      rootElement.on('keyup','.form-control.small-input', function () {
+      rootElement.on('keyup','.form-control.small-input', function (event) {
         checkInputs('.project-');
         setFormDirty();
+        if(event.target.id === "tie" && $('#dropdown_0').val() === 'New' ){
+          backend.getRoadName($(this).val(), function(data){
+            $('#roadName').val(data.roadName).change();
+            $('#roadName').prop('disabled', false);
+          });
+        }
       });
 
       eventbus.on('projectLink:mapClicked', function () {
