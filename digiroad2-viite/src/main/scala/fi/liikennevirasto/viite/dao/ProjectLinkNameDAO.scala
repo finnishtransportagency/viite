@@ -10,12 +10,11 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class ProjectLinkName(id: Long, projectId: Long, roadNumber: Long, roadName: String)
-case class NewProjectLinkName(projectId: Long, roadNumber: Long, roadName: String)
 
 object ProjectLinkNameDAO {
 
   private val logger = LoggerFactory.getLogger(getClass)
-  private val ptojectLinkNameQueryBase =  s"""select id,project_id,road_number,road_name from project_link_name """
+  private val ptojectLinkNameQueryBase =  s"""select id, project_id, road_number, road_name from project_link_name """
 
   implicit val getProjectLinkNameRow = new GetResult[ProjectLinkName] {
     def apply(r: PositionedResult) = {
@@ -39,6 +38,30 @@ object ProjectLinkNameDAO {
   def get(roadNumbers: Set[Long], projectId: Long) : Seq[ProjectLinkName] = {
     val roadNumbersStr = roadNumbers.mkString(",")
     queryList(s"where road_number in ($roadNumbersStr) and project_id = $projectId")
+  }
+
+  def create(projectLinkNames: Seq[ProjectLinkName]): Unit = {
+    val projectLinkNamePS = dynamicSession.prepareStatement("insert into project_link_name (id, project_id, road_number, road_name) values values (project_link_name_seq.nextval, ?, ?, ?)")
+    projectLinkNames.foreach{ projectLinkName =>
+      projectLinkNamePS.setLong(1, projectLinkName.projectId)
+      projectLinkNamePS.setLong(2, projectLinkName.roadNumber)
+      projectLinkNamePS.setString(3, projectLinkName.roadName)
+      projectLinkNamePS.addBatch()
+    }
+    projectLinkNamePS.executeBatch()
+    projectLinkNamePS.close()
+  }
+
+  def update(projectLinkNames: Seq[ProjectLinkName]): Unit = {
+    val projectLinkNamePS = dynamicSession.prepareStatement("update project_link_name set road_name = ? where project_id = ? and road_number = ?")
+    projectLinkNames.foreach{ projectLinkName =>
+      projectLinkNamePS.setString(1, projectLinkName.roadName)
+      projectLinkNamePS.setLong(2, projectLinkName.projectId)
+      projectLinkNamePS.setLong(3, projectLinkName.roadNumber)
+      projectLinkNamePS.addBatch()
+    }
+    projectLinkNamePS.executeBatch()
+    projectLinkNamePS.close()
   }
 
   def create(projectId: Long, roadNumber: Long, roadName: String) : Unit = {
