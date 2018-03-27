@@ -664,12 +664,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/roadname/:roadNumber"){
+  get("/roadlinks/roadname/:roadNumber/:projectID"){
 
-    params.get("roadNumber").map(_.toLong) match{
-      case Some(roadNumber) =>{
+    val rNumber = params.get("roadNumber").map(_.toLong)
+    val projectID = params.get("projectID").map(_.toLong)
+
+    (rNumber, projectID) match{
+      case (Some(rNumber), Some(projectID)) =>{
         try {
-          Map("roadName" ->roadNameService.getRoadNameByNumber(roadNumber))
+          roadNameService.getRoadNameByNumber(rNumber, projectID)
         } catch {
           case e: Exception => Map("success" -> false, "errorMessage" -> e.getMessage)
         }

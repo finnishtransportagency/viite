@@ -67,10 +67,12 @@
 
 
       this.getRoadName =
-      _.debounce(function (roadNumber, callback) {
-          return $.getJSON('api/viite/roadlinks/roadname/'+ roadNumber , function (data) {
-              return _.isFunction(callback) && callback(data);
-          });
+      _.debounce(function (roadNumber, projectID, callback) {
+          if(projectID !== 0) {
+              return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
+                  return _.isFunction(callback) && callback(data);
+              });
+          }
       }, 500);
 
 
