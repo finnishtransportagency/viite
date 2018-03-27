@@ -49,4 +49,27 @@ class RoadNameService() {
       case e if NonFatal(e) => Left("Unknown error")
     }
   }
+
+  def getUpdatedRoadNamesTx(since: DateTime): Either[String, Seq[RoadName]] = {
+    withDynTransaction {
+      getUpdatedRoadNames(since)
+    }
+  }
+
+  /**
+    * Fetches road names that are updated after the given date.
+    *
+    * @param since
+    * @return Returns error message as left and seq of road names as right
+    */
+  def getUpdatedRoadNames(since: DateTime): Either[String, Seq[RoadName]] = {
+    try {
+      Right(RoadNameDAO.getUpdatedRoadNames(since))
+    } catch {
+      case e if NonFatal(e) =>
+        logger.error("Failed to fetch updated road names.", e)
+        Left(e.getMessage)
+    }
+  }
+
 }
