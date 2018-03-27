@@ -752,7 +752,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       RoadAddressDAO.create(addresses)
-      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq())))
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses)
 
       // Test that this is not accepted as 101-103 is moved to locate after 103-113
       newAddresses.flatMap(_.allSegments).map(_.id).toSet should be (addresses.map(_.id).toSet)
