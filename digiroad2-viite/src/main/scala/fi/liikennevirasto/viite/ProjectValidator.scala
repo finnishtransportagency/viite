@@ -340,19 +340,19 @@ object ProjectValidator {
     }
 
     def checkRoadPartEnd(lastProjectLinks: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+      val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
       if (lastProjectLinks.exists(_.discontinuity != lastProjectLinks.head.discontinuity))
         error(project.id, ValidationErrorList.IncompatibleDiscontinuityCodes)(lastProjectLinks)
       else {
         val (road, part) = (lastProjectLinks.head.roadNumber, lastProjectLinks.head.roadPartNumber)
         val discontinuity = lastProjectLinks.head.discontinuity
-        val ely = lastProjectLinks.head.ely
         val projectNextRoadParts = project.reservedParts.filter(rp =>
           rp.roadNumber == road && rp.roadPartNumber > part)
 
-        val nextProjectPart = projectNextRoadParts.filter(_.newLength.getOrElse(0L) > 0L)
+        val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
           .map(_.roadPartNumber).sorted.headOption
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
-          .filter(p => p > part || (projectNextRoadParts.nonEmpty && projectNextRoadParts.exists(_.roadPartNumber == p))).sorted.headOption
+          .filter(p => (nextProjectPart.nonEmpty && allProjectLinks.exists(_.roadPartNumber == p)) && p > part).sorted.headOption
         if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
           if (discontinuity != EndOfRoad)
             return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
@@ -360,9 +360,10 @@ object ProjectValidator {
           val nextLinks =
             if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get < nextAddressPart.get))
               ProjectDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
-            else
-              RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
-                .filter(_.startAddrMValue == 0L)
+            else {
+              RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true)
+                .filterNot(rp => allProjectLinks.exists(link => rp.roadPartNumber != link.roadPartNumber && rp.id == link.roadAddressId)).filter(_.startAddrMValue == 0L)
+            }
           val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
             connected(lpl, nl)))
           val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
