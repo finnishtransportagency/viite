@@ -546,25 +546,22 @@ object ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        val otherTrackLinks = notCombinedLinks.filterNot(l => l.track == Combined || l.track==minTrackLink.track)
-        val minOtherTrackLink = otherTrackLinks.minBy(_.startAddrMValue)
-        val maxOtherTrackLink = otherTrackLinks.maxBy(_.endAddrMValue)
-        if (minTrackLink.startAddrMValue != minOtherTrackLink.startAddrMValue) {
+        if (!notCombinedLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
           Some(minTrackLink)
         }
-        else if (maxTrackLink.endAddrMValue != maxOtherTrackLink.endAddrMValue) {
+        else if (!notCombinedLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
           Some(maxTrackLink)
         } else None
       } else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if(trackInterval.size > 1){
+      if(trackInterval.nonEmpty){
         checkMinMaxTrack(trackInterval) match {
           case Some(link) => Seq(link)
           case None => {
             trackInterval.sliding(2).map(l => {
-              if (l.head.endAddrMValue != l.last.startAddrMValue) {
+               if (l.head.endAddrMValue != l.last.startAddrMValue && l.head.id != l.last.id) {
                 Some(l.head)
               } else None
             }).toSeq.flatten
