@@ -746,6 +746,44 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Filtering not relevant changes to be applied") {
+    def DummyRoadAddress(id: Long, linkId: Long, timestamp: Long): RoadAddress = {
+      RoadAddress(1, 199, 199, PublicRoad, Track.Combined, Continuous, 100L, 105L,
+        Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 0L, linkId, 0.0, 4.61, TowardsDigitizing,
+        timestamp, (None, None), true, Seq(Point(0, 0), Point(1.0, 4.5)), NormalLinkInterface, 20L, NoTermination, 0)
+    }
+
+    def DummyChangeInfo(oldId: Option[Long], newId: Option[Long], timestamp: Long): ChangeInfo ={
+      ChangeInfo(oldId, newId, 1L, 1, Some(0),Some(10),Some(0),Some(10), timestamp)
+    }
+
+    runWithRollback {
+      val roadAddresses = Seq(
+        DummyRoadAddress(id = 1L, linkId = 222L, timestamp = 10),
+        DummyRoadAddress(id = 2L, linkId = 333L, timestamp = 20),
+        DummyRoadAddress(id = 3L, linkId = 444l, timestamp = 30)
+      )
+
+      val changesToBeApplied = Seq(
+        DummyChangeInfo(Some(222L), Some(555L), 20),
+        DummyChangeInfo(Some(222L), Some(222L), 15),
+        DummyChangeInfo(None, Some(222L), 15),
+        DummyChangeInfo(Some(222L), None, 20)
+      )
+
+      val changesNotApplied = Seq(
+        DummyChangeInfo(Some(666L), Some(555L), 20),
+        DummyChangeInfo(Some(222L), Some(222L), 0),
+        DummyChangeInfo(Some(222L), Some(222L), 9)
+      )
+
+     val result = roadAddressService.filterRelevantChanges(roadAddresses, changesNotApplied ++ changesToBeApplied)
+
+      result.size should be (4)
+      result.forall(changesToBeApplied.contains) should be (true)
+    }
+  }
+
   test("Test change info on links 5622931, 5622953, 499914628 and 499914643 (will refuse transfer)") {
     val geom6 = Seq(Point(6733893, 332453), Point(6733990, 332420))
     val geom8 = Seq(Point(6733990, 332420), Point(6734010, 332412))
