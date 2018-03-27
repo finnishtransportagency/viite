@@ -134,6 +134,17 @@ object RoadNameDAO {
       Seq.empty[RoadName]
   }
 
+  def getRoadNamesById(id: Long): RoadName = {
+    val query =
+      s"""$roadsNameQueryBase Where id = $id AND valid_to IS NULL OR valid_to > sysdate"""
+    queryList(query).head
+  }
+
+  def expire(id: Long, user: User) = {
+    val query = s"""Update ROAD_NAMES Set valid_to = sysdate, created_by = '${user.username}' where id = $id"""
+    Q.updateNA(query).first
+  }
+
   def update(id: Long, fields: Map[String, String], user: User) = {
     val roadNumber = fields.get("roadNumber")
     val roadName = fields.get("roadName")

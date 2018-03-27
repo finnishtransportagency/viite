@@ -152,6 +152,7 @@
             });
 
             eventbus.on("roadNameTool:roadsFetched", function (roadData) {
+                applicationModel.removeSpinner();
                 var html = '<table id="roadList-table" style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
                 if (!_.isEmpty(roadData)) {
                     _.each(roadData, function (road) {
@@ -211,8 +212,14 @@
             });
 
             eventbus.on("roadNameTool:saveSuccess", function () {
+                applicationModel.removeSpinner();
                 $('#saveChangedRoads').prop("disabled", true);
                 searchForRoadNames();
+            });
+
+            eventbus.on('roadNameTool:saveUnsuccessful', function (error) {
+                new ModalConfirm(error.toString());
+                applicationModel.removeSpinner();
             });
         }
 
