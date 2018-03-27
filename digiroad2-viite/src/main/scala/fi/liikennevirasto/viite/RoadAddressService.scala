@@ -305,23 +305,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
 
   def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
-    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
-      || x.changeType == ChangeType.CombinedRemovedPart.value)
-    val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
-    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
-      || x.changeType == ChangeType.CombinedRemovedPart.value)
-    sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
+      val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
+        || x.changeType == ChangeType.CombinedRemovedPart.value)
+      val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
+      val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
+        || x.changeType == ChangeType.CombinedRemovedPart.value)
+      sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
+  }
+
+  def filterRelevantChanges(roadAddresses: Seq[RoadAddress], allChanges: Seq[ChangeInfo]): Seq[ChangeInfo] = {
+    val groupedAddresses = roadAddresses.groupBy(_.linkId)
+    val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
+    allChanges.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
   }
 
   def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
 
-    def filterChanges: Seq[ChangeInfo] = {
-      val groupedAddresses = roadAddresses.groupBy(_.linkId)
-      val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
-      allChanges.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
-    }
 
-    val changes = filterChanges
+    val changes = filterRelevantChanges(roadAddresses, allChanges)
     val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
 
     val changedRoadLinks = changesSanityCheck(changes)
