@@ -525,16 +525,27 @@
       rootElement.on('keyup','.form-control.small-input', function (event) {
         checkInputs('.project-');
         setFormDirty();
-        if(event.target.id === "tie" && $('#dropdown_0').val() === 'New' ){
-          backend.getRoadName($(this).val(), function(data){
-            $('#roadName').val(data.roadName).change();
-            $('#roadName').prop('disabled', false);
-            checkInputs('.project-');
+        if(event.target.id === "tie" && $('#dropdown_0').val() === 'New' || $('#dropdown_0').val() === 'Transfer' || $('#dropdown_0').val() === 'Numbering' ){
+          backend.getRoadName($(this).val(),projectCollection.getCurrentProject().project.id, function(data){
+            if(data !== null){
+              $('#roadName').val(data.roadName).change();
+              if(data.isCurrent){
+                  $('#roadName').prop('disabled', true);
+              }
+              else
+                  $('#roadName').prop('disabled', false);
+              checkInputs('.project-');
+            }
+            else{
+              if($('#roadName').prop('disabled'))
+                $('#roadName').val('').change();
+              $('#roadName').prop('disabled', false);
+            }
           });
         }
       });
 
-      rootElement.on('keyup','#roadName', function (event) {
+      rootElement.on('keyup','#roadName', function () {
           checkInputs('.project-');
       });
 

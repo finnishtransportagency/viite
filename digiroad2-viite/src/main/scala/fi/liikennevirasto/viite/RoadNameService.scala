@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.viite.dao.{RoadName, RoadNameDAO}
+import fi.liikennevirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -94,19 +94,26 @@ class RoadNameService() {
   }
 
 
-  def getRoadNameByNumber(roadNumber: Long) : String= {
+  def getRoadNameByNumber(roadNumber: Long, projectID: Long) : Option[Map[String, Any]]= {
     try{
       withDynSession{
-        val roadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
-        if(roadNames.isEmpty)
-          ""
+        val currentRoadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
+        if(currentRoadNames.isEmpty){
+          val projectRoadNames = ProjectLinkNameDAO.get(roadNumber, projectID)
+          if(projectRoadNames.isEmpty) {
+            return None
+          }
+          else{
+            Some(Map("roadName" -> projectRoadNames.get.roadName, "isCurrent" -> false))
+          }
+        }
         else
-          roadNames.head.roadName
+          Some(Map("roadName" -> currentRoadNames.head.roadName, "isCurrent" -> true))
       }
     }
     catch {
-      case longParsingException: NumberFormatException => "Could not parse road number"
-      case e if NonFatal(e) => "Unknown error"
+      case longParsingException: NumberFormatException => Some(Map("error"->"Could not parse road number"))
+      case e if NonFatal(e) => Some(Map("error"->"Unknown error"))
     }
   }
 }
