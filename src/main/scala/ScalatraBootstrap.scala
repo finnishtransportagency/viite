@@ -10,7 +10,7 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new UserConfigurationApi, "/api/userconfig/*")
     context.mount(new PingApi, "/api/ping/*")
-    context.mount(new ViiteIntegrationApi(Digiroad2Context.roadAddressService), "/api/viite/integration/*")
+    context.mount(new ViiteIntegrationApi(Digiroad2Context.roadAddressService, Digiroad2Context.roadNameService), "/api/viite/integration/*")
     context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient,
       Digiroad2Context.roadAddressService, Digiroad2Context.projectService, Digiroad2Context.roadNetworkService, Digiroad2Context.roadNameService), "/api/viite/*")
     if (Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
