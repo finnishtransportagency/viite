@@ -8,6 +8,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.formatter
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._

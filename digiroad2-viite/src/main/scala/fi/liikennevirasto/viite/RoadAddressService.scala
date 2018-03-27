@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 import java.net.ConnectException
+import java.util.Date
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
