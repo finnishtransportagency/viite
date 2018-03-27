@@ -30,6 +30,12 @@ class RoadNameService() {
 
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
+  private def singleEndDateExpiration(nameRows: Seq[RoadNameRows]) = {
+    val field = decodeFields(nameRows.head.editions)
+    val invalid = nameRows.size == 1 && nameRows.head.roadId != NewRoadName && field("endDate").nonEmpty
+    (invalid, nameRows.head.roadId)
+  }
+
   private def singleNameExpiration(nameRows: Seq[RoadNameRows]) = {
     val field = decodeFields(nameRows.head.editions)
     val toBeExpired = nameRows.size == 1 && nameRows.head.roadId != NewRoadName && field.size == 1 && field.head._1 == "roadName"
@@ -52,6 +58,8 @@ class RoadNameService() {
 
   def addOrUpdateRoadNames(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
     try {
+      if(singleEndDateExpiration(roadNames)._1)
+        throw new RoadNameException(s"Setting end date would make current road name disabled")
       val (isRoadNameExpiration, newName) = singleNameExpiration(roadNames)
       if(isRoadNameExpiration){
         val road = RoadNameDAO.getRoadNamesById(roadNames.head.roadId)
