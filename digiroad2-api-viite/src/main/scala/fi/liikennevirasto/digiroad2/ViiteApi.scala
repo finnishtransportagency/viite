@@ -489,7 +489,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val writableProject = projectWritable(links.projectId)
           writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.roadType, links.discontinuity, Some(links.roadEly)) match {
+            links.roadType, links.discontinuity, Some(links.roadEly), roadName = links.roadName) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               writableProject.saveProjectCoordinates(links.projectId, links.coordinates)

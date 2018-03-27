@@ -7,6 +7,7 @@
         var newRoads = [];
 
         this.fetchRoads = function (roadNumber) {
+            applicationModel.addSpinner();
             editedRoadData = [];
             backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
                 var sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
@@ -86,6 +87,7 @@
         };
 
         this.saveChanges = function () {
+            applicationModel.addSpinner();
             var currentNew = _.map(newRoads, function (road) {
                 var editions = road.editions;
                 return {roadId: newId, editions: editions};
@@ -95,17 +97,18 @@
                 var editions = row.editions;
                 return {roadId: roadId, editions: editions};
             });
-            backend.saveRoadNamesChanges({rows: rowObjects}, function (successObject) {
-                {
+            backend.saveRoadNamesChanges({rows: rowObjects}, function (result) {
+                if (result.success) {
                     currentRoadData = [];
                     editedRoadData = [];
                     eventbus.trigger("roadNameTool:saveSuccess");
+                } else {
+                    eventbus.trigger("roadNameTool:saveUnsuccessful", result.errorMessage);
                 }
-            }, function (unsuccessObject) {
-                eventbus.trigger("roadNameTool:saveUnsuccessful");
+            }, function (result) {
+                eventbus.trigger("roadNameTool:saveUnsuccessful", result.errorMessage);
             });
-
-
         };
+
     };
 })(this);
