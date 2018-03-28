@@ -258,9 +258,9 @@ object ProjectValidator {
     project.reservedParts.filter(rrp => rrp.addressLength.nonEmpty && rrp.newLength.getOrElse(0L) == 0L &&
       rrp.discontinuity.contains(EndOfRoad))
 
-      // There is no part after this part in project
+      // There is no part after or previous this part in project
       .filterNot(rrp => project.reservedParts.exists(np => np.roadNumber == rrp.roadNumber &&
-      np.roadPartNumber > rrp.roadPartNumber &&  np.newLength.getOrElse(0L) > 0L))
+      (np.roadPartNumber > rrp.roadPartNumber || Some(np.roadPartNumber).contains(RoadAddressDAO.getValidRoadParts(rrp.roadNumber).filter(v => v < rrp.roadPartNumber).last)) &&  np.newLength.getOrElse(0L) > 0L))
 
       // There is no part that is not in this project that comes after this part (rrp)
       .filterNot(rrp => RoadAddressDAO.getValidRoadParts(rrp.roadNumber).exists(l => l > rrp.roadPartNumber &&
