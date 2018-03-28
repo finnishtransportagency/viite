@@ -489,4 +489,26 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Project Links could be both Minor and Major discontinuity if next part exists in road address / project link table and is not connected") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+        floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
+      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
+      errors should have size 1
+      errors.head.validationError should be(MajorDiscontinuityFound)
+
+      val (starting, last) = projectLinks.splitAt(3)
+      val errorsUpd = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous)))
+      errorsUpd should have size 0
+
+      val errorsUpd2 = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
+      errorsUpd2 should have size 0
+    }
+  }
+
 }
