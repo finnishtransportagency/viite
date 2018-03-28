@@ -425,30 +425,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("validator should return an issue whenever a road gets terminated and adjacent to that same road lies other roads with discontinuity value = 1") {
-    runWithRollback {
-      testDataForCheckTerminationContinuity()
-      val project = setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, 27L, 1L, Discontinuity.ChangingELYCode)
-      val projectLinks = ProjectDAO.getProjectLinks(project.id)
-
-      val validationErrors = ProjectValidator.checkTerminationContinuity(project, projectLinks)
-      validationErrors.size should be(1)
-      validationErrors.head.validationError.value should be(TerminationContinuity.value)
-    }
-  }
-
-  test("validator should NOT return an issue whenever a road gets terminated and adjacent lies other roads with discontinuity value = 1," +
-    "that share the same road number, track code and are adjacent between them") {
-    runWithRollback {
-      testDataForCheckTerminationContinuity(true)
-      val project = setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, 16320L, 1L, Discontinuity.ChangingELYCode)
-      val projectLinks = ProjectDAO.getProjectLinks(project.id)
-
-      val validationErrors = ProjectValidator.checkTerminationContinuity(project, projectLinks)
-      validationErrors.size should be(0)
-    }
-  }
-
   test("project track codes should be consistent when adding one simple link with track Combined") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
