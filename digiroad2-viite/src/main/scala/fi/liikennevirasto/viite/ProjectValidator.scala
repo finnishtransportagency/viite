@@ -354,7 +354,7 @@ object ProjectValidator {
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt , project.startDate)
           .filter(p => p > part)
           .filterNot(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
-            .exists(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
+            .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
         if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
           if (discontinuity != EndOfRoad)
             return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
