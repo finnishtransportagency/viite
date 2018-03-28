@@ -10,6 +10,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.TrackSectionOrder
+import org.joda.time.format.DateTimeFormat
 
 object ProjectValidator {
 
@@ -42,7 +43,7 @@ object ProjectValidator {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp,
-      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly)
+      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly, RoadNotAvailable)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -169,6 +170,14 @@ object ProjectValidator {
       def notification = true
     }
 
+    case object RoadNotAvailable extends ValidationError {
+      def value = 18
+
+      def message: String = RoadNotAvailableMessage
+
+      def notification = true
+    }
+
     case object TerminationContinuity extends ValidationError {
       def value = 18
       def message: String = WrongDiscontinuityWhenAdjacentToTerminatedRoad
@@ -256,7 +265,11 @@ object ProjectValidator {
       checkTrackCode(project, projectLinks)
     }
 
-    val validationErrors = checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+    def checkForNewAndAlreadyExisting = {
+      checkNewAndExisting(project, projectLinks)
+    }
+
+    val validationErrors = checkProjectContinuity ++ checkProjectCoverage ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++ checkForNewAndAlreadyExisting ++
       checkForContinuityCodes ++ checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ elyCodesResults
     if (!validationErrors.exists(_.validationError == ValidationErrorList.MissingEndOfRoad))
       validationErrors ++ checkTerminationContinuity(project, projectLinks)
@@ -780,11 +793,48 @@ object ProjectValidator {
     validationProblems.toSeq
   }
 
+  def checkNewAndExisting(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress], roadAndPartData: (Long, Long)): Option[ValidationErrorDetails] = {
+      val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+      if (linkIds.nonEmpty) {
+        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+        val projectStartDate = project.startDate.toString(fmt)
+        val alteredError = alterMessage(validationError, Option.empty[Seq[Long]], Option(Seq(roadAndPartData)),
+          Option.empty[Seq[Discontinuity]], Option(projectStartDate))
+        Some(ValidationErrorDetails(project.id, alteredError, linkIds.distinct,
+          points.map(p => ProjectCoordinates(p.x, p.y, 12)).distinct, None))
+      }
+      else
+        None
+    }
+
+    val newProjectLinks = projectLinks.filter(pl => {
+      pl.status == LinkStatus.New
+    })
+    val errors = newProjectLinks.groupBy(p => (p.roadNumber, p.roadPartNumber)).filter(gL => {
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(gL._1._1, gL._1._2)
+      println(s"Found ${roadAddresses.size} for (roadNumber,partNumber): (${gL._1._1}, ${gL._1._2})")
+      roadAddresses.exists(ra => {
+        !project.reservedParts.exists(rp => {
+          rp.roadNumber == ra.roadNumber && rp.roadPartNumber == ra.roadPartNumber && rp.startingLinkId.contains(ra.linkId)
+        })
+      })
+    }).map(links => {
+      error(ValidationErrorList.RoadNotAvailable)(links._2, links._1).get
+    }).toSeq
+    errors
+  }
+
   private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
-                           roadAndPart: Option[Seq[(Long,Long)]] = Option.empty[Seq[(Long,Long)]], discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]]) = {
-    case object formattedMessage extends ValidationError {
-      def value = validationError.value
-      def message: String = validationError.message.format(if(elyBorderData.nonEmpty) {
+                           roadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
+                           discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]], projectDate: Option[String] = Option.empty[String]) = {
+    val formattedMessage =
+      if (projectDate.nonEmpty && roadAndPart.nonEmpty) {
+        val unzippedRoadAndPart = roadAndPart.get.unzip
+        val changedMsg = validationError.message.format(unzippedRoadAndPart._1.head, unzippedRoadAndPart._2.head, projectDate.get)
+        changedMsg
+      } else {
+        validationError.message.format(if (elyBorderData.nonEmpty) {
         elyBorderData.get.toSet.mkString(", ")
       } else if(roadAndPart.nonEmpty){
         roadAndPart.get.toSet.mkString(", ")
@@ -794,9 +844,15 @@ object ProjectValidator {
       else{
         validationError.message
       })
+      }
+
+    case object formattedMessageObject extends ValidationError {
+      def value = validationError.value
+
+      def message: String = formattedMessage
       def notification = validationError.notification
     }
-    formattedMessage
+    formattedMessageObject
   }
 
   /**
