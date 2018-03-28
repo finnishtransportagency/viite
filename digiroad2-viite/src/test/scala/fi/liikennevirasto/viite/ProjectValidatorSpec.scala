@@ -468,28 +468,18 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
           floating = false, Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 0)))
-
-
+      
       val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L,10L), discontinuity = Discontinuity.Continuous, roadAddressId = ids.min)
-      //val projectLinks = ProjectDAO.getProjectLinks(project.id)
-      //ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(projectLinks.maxBy(_.endAddrMValue).linkId), LinkStatus.Transfer, "test", RoadType.PublicRoad.value.toLong, Some(Discontinuity.EndOfRoad.value.toLong))
       ProjectDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
       val addrMNew = Seq(0L,10L)
       val links = addrMNew.init.zip(addrMNew.tail).map { case (st, en) =>
         projectLink(st, en, Track.Combined, project.id, LinkStatus.Transfer, 19999L, 2L, Discontinuity.EndOfRoad, roadAddressId = ids.max)
       }
       ProjectDAO.create(links)
-      RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-        floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 0),
-        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-        floating = false, Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 0)))
       val allLinks = ProjectDAO.getProjectLinks(project.id)
       val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkOrdinaryRoadContinuityCodes(project, g._2))
       errors.size should be (0)
       sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
-      //ProjectDAO.updateProjectLinksToDB(links.map(_.copy(roadPartNumber = 1L, status = LinkStatus.Transfer)), "test")
       val linksAfterTransfer = ProjectDAO.getProjectLinks(project.id)
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkOrdinaryRoadContinuityCodes(project, g._2))
       errorsAfterTransfer.size should be (0)
