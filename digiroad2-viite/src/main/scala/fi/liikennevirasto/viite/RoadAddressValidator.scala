@@ -8,8 +8,7 @@ object RoadAddressValidator {
   def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
     if (RoadAddressDAO.isNotAvailableForProject(number, part, currentProject.id)) {
       val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-      throw new ProjectValidationException(
-        s"TIE $number OSA $part on jo olemassa projektin alkupäivänä ${currentProject.startDate.toString(fmt)}, tarkista tiedot")
+      throw new ProjectValidationException(RoadNotAvailableMessage.format(number, part, currentProject.startDate.toString(fmt)))
     }
   }
 

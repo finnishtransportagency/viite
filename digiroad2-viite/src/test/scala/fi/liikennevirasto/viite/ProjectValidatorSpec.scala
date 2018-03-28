@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList._
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{TerminationCode, _}
@@ -102,12 +103,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   }
 
-  private def testDataForElyTest02() = {
+  private def testDataForElyTest02(): (Long, Long) = {
     val roadAddressId = RoadAddressDAO.getNextRoadAddressId
+    val linkId = 1817196L
     val ra = Seq(RoadAddress(roadAddressId, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 6109L, 6559L,
-      Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, 1817196, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), floating = false,
+      Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, linkId, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), floating = false,
       Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
     RoadAddressDAO.create(ra)
+    (roadAddressId, linkId)
   }
 
   test("Project Links should be continuous if geometry is continuous") {
@@ -455,6 +458,27 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val validationErrors = ProjectValidator.checkTrackCode(project, projectLinks)
       validationErrors.size should be(0)
+    }
+  }
+
+  test("project validator should return an error if the we create a new road using the road and part from another ALREADY existing road") {
+    runWithRollback {
+      val (roadAddressId, linkId) = testDataForElyTest02()
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      ProjectDAO.createRoadAddressProject(project)
+      val projectLink = ProjectLink(NewRoadAddress, 27L, 20L, Track.Combined, EndOfRoad, 6109L, 6559L, Some(DateTime.now()), None, Option("TR"),
+        0L, linkId + 1, 0.0, 108.261, SideCode.AgainstDigitizing, (None, None),
+        false, Seq(Point(0.0, 40.0), Point(0.0, 50.0)),
+        projectId, LinkStatus.New, PublicRoad, LinkGeomSource.NormalLinkInterface, 10.0, roadAddressId, 8L, false, Some(linkId), 1476392565000L)
+      ProjectDAO.reserveRoadPart(projectId, 27L, 20L, "TR")
+      ProjectDAO.create(Seq(projectLink))
+      val validationErrors = ProjectValidator.checkNewAndExisting(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
+      validationErrors.size should be(1)
+      validationErrors.head.projectId should be(projectId)
+      validationErrors.head.affectedLinkIds.contains(linkId + 1) should be(true)
+      validationErrors.head.validationError.value should be(RoadNotAvailable.value)
     }
   }
 }
