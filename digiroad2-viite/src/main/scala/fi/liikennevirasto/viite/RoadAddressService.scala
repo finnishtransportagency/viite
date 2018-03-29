@@ -584,7 +584,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def mergeRoadAddressHistory(data: RoadAddressMerge): Unit = {
+    try {
+      withDynTransaction {
+        mergeRoadAddressHistoryInTX(data)
+      }
+    } catch {
+      case ex: InvalidAddressDataException => logger.error("Duplicate merging(s) found, skipped.", ex)
+      case ex: ConnectException => logger.error("A connection problem has occurred.", ex)
+      case ex: Exception => logger.error("An unexpected error occurred.", ex)
+    }
+  }
+
   def mergeRoadAddressInTX(data: RoadAddressMerge): Unit = {
+    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
+    if (unMergedCount != data.merged.size)
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
+    val mergedCount = expireRoadAddresses(data.merged)
+    if (mergedCount == data.merged.size)
+      createMergedSegments(data.created)
+    else
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows not updated")
+  }
+
+  def mergeRoadAddressHistoryInTX(data: RoadAddressMerge): Unit = {
     val unMergedCount = RoadAddressDAO.queryById(data.merged).size
     if (unMergedCount != data.merged.size)
       throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
