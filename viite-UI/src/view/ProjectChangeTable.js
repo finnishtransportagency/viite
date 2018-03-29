@@ -124,7 +124,6 @@
             }
             htmlTable += '</tr>';
           });
-          //$('.change-table-dimension-headers').height(changeTable.height());
           setTableHeight();
         }
         $('.row-changes').remove();
