@@ -500,7 +500,6 @@
       return self;
     };
 
-
     this.withSaveRoadAddressProject = function (returnData){
       self.saveRoadAddressProject = function (){
         return returnData;
@@ -539,6 +538,36 @@
       };
       return self;
     };
+
+      this.getDummyRoadAddressesByRoadNumber = function (roadNumber, callback) {
+          //add API call here
+          var dummyReturnObject = [{
+              id: 0,
+              roadNumber: 12345,
+              roadNameFi: "AAAAAAA",
+              startDate: "22-06-2018",
+              endDate: "11-02-2000"
+          }, {
+              id: 1,
+              roadNumber: 12345,
+              roadNameFi: "AAAAAAA",
+              startDate: "22-06-2018",
+              endDate: ""
+          }, {
+              id: 2,
+              roadNumber: 123456,
+              roadNameFi: "BBBBBBBB",
+              startDate: "22-06-2018",
+              endDate: ""
+          }];
+          return callback(dummyReturnObject);
+      };
+
+      this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
+          return {
+              url: 'api/viite/roadnames?roadNumber=' + roadNumber
+          };
+      });
 
   };
 }(this));
