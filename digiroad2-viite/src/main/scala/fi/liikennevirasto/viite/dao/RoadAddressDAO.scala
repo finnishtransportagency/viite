@@ -16,8 +16,9 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{NewRoadAddress, NewCommonHistoryId, RoadCheckOptions, RoadType}
+import fi.liikennevirasto.viite.{NewCommonHistoryId, NewRoadAddress, RoadCheckOptions, RoadType}
 import org.joda.time.DateTime
+import org.joda.time.chrono.ISOChronology
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -139,6 +140,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
                        terminated: TerminationCode = NoTermination, commonHistoryId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, blackUnderline: Boolean = false) extends BaseRoadAddress {
+  
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -289,10 +291,10 @@ object RoadAddressDAO {
       val endMValue = r.nextDouble()
       val sideCode = r.nextInt()
       val adjustedTimestamp = r.nextLong()
-      val startDate = r.nextDateOption.map(new DateTime(_))
-      val endDate = r.nextDateOption.map(new DateTime(_))
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val createdBy = r.nextStringOption.map(new String(_))
-      val validFrom = r.nextDateOption.map(new DateTime(_))
+      val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val calibrationCode = r.nextInt()
       val floating = r.nextBoolean()
       val x = r.nextDouble()
@@ -560,7 +562,7 @@ object RoadAddressDAO {
   }
 
   def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false,
-                      includeHistory: Boolean = false, includeSuravage: Boolean = true): List[RoadAddress] = {
+                      includeHistory: Boolean = false, includeSuravage: Boolean = true, fetchOnlyEnd: Boolean = false, fetchOnlyStart: Boolean = false): List[RoadAddress] = {
     val floating = if (!includeFloating)
       "floating='0' AND"
     else
@@ -577,6 +579,13 @@ object RoadAddressDAO {
       "link_source != 3 AND"
     else ""
     // valid_to > sysdate because we may expire and query the data again in same transaction
+
+    val endPart = if (fetchOnlyEnd) {
+      s"And ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+    } else ""
+    val startPart = if (fetchOnlyStart) {
+      s"And ra.start_addr_m = (Select min(road.start_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+    } else ""
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -587,7 +596,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id 
+        $endPart $startPart
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
@@ -1362,6 +1372,7 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
+
   def getRoadAddressByFilter(queryFilter: String => String): Seq[RoadAddress] = {
     val query = s"""
          select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
@@ -1478,4 +1489,17 @@ object RoadAddressDAO {
     queryList(query)
   }
 
+  def getRoadAddressByEly(ely: Long): List[RoadAddress] = {
+    val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, pos.adjusted_timestamp,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where t.id < t2.id and
+          valid_from <= sysdate and floating = 0 and ely = $ely"""
+    queryList(query)
+  }
 }

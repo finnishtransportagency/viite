@@ -95,6 +95,16 @@ package object util {
       None, rl.vvhTimeStamp)
   }
 
+  def addressToProjectLink(project: RoadAddressProject)(rl: ProjectAddressLink): ProjectLink = {
+    ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
+      Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, None,
+      None, rl.modifiedBy, 0L, rl.linkId, rl.startMValue, rl.endMValue,
+      rl.sideCode, (rl.startCalibrationPoint, rl.endCalibrationPoint), floating=false, rl.geometry, project.id,
+      rl.status, RoadType.PublicRoad,
+      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), 0, rl.elyCode,false,
+      None, rl.vvhTimeStamp)
+  }
+
 
 
 

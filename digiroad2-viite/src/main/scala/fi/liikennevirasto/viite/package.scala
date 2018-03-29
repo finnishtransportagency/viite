@@ -68,6 +68,7 @@ package object viite {
   val ErrorMultipleRoadNumbersOrParts = "Valitut linkit eivät ole samalta tieosalta. Tallennus tulee tehdä erikseen."
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
   val ErrorInconsistentTopology = "Topology have inconsistent data."
+  val ErrorInconsistentLrmHistory = "Lrm with inconsistent history."
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.description}, tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.description}, vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."

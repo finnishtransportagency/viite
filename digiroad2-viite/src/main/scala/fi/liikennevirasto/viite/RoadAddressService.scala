@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 import java.net.ConnectException
+import java.util.Date
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -43,7 +44,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val NoClass = 99
 
   val MaxAllowedMValueError = 0.001
-  val Epsilon = 1E-6
+  val Epsilon = 1
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
                              */
@@ -154,15 +155,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       )
     val (historyLinkAddresses, addresses, floating) = (roadAddressResults.historyLinkAddresses, roadAddressResults.current, roadAddressResults.floating)
     // We should not have any road address history for links that do not have current address (they should be terminated)
-    val addressMaps = addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val normalRoadLinkIds = roadLinks.map(_.linkId).toSet
     val suravageLinkIds = suravageLinks.map(_.linkId).toSet
     val allRoadLinks = roadLinks++complementaryLinks
     val linkIds = complementaryLinkIds ++ normalRoadLinkIds ++ suravageLinkIds
 
-    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(),
-      addressMaps)
+    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(),  addresses)
     val missedRL = withTiming(
       withDynTransaction {
         if (everything || !frozenTimeVVHAPIServiceEnabled) {
@@ -198,11 +197,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   private def createRoadAddressLinkMap(roadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], toFloating: Seq[RoadAddressLink],
                                        addresses: Seq[RoadAddress],
                                        missedRL: Map[Long, List[MissingRoadAddress]]): Map[Long, Seq[RoadAddressLink]] = {
-    val (suravageRA, regularRa ) = addresses.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    val (suravageRA, _ ) = addresses.partition(ad => ad.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     logger.info(s"Creation of RoadAddressLinks started.")
     val mappedRegular = roadLinks.map { rl =>
       val floaters = toFloating.filter(_.linkId == rl.linkId)
-      val ra = regularRa.filter(_.linkId == rl.linkId)
+      val ra = addresses.filter(_.linkId == rl.linkId)
       val missed = missedRL.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
     }.toMap
@@ -228,8 +227,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val missingViiteRoadAddress = if(!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
-    val addressMaps = addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
-
     val addressLinkIds = addresses.map(_.linkId).toSet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = if (!frozenTimeVVHAPIServiceEnabled) roadLinkService.getChangeInfoFromVVHF(addressLinkIds) else Future(Seq())
@@ -241,12 +238,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val linkIds = roadLinks.map(_.linkId).toSet
 
-    val filteredChangedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf).filter(crl => crl.oldId.exists(id =>
-      linkIds.contains(id) && addresses.exists(ra => crl.affects(ra.linkId, ra.adjustedTimestamp))))
+    val changedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf)
     logger.info("End change info in %.3f sec".format((System.currentTimeMillis() - fetchVVHEndTime) * 0.001))
 
-    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(),
-      addressMaps)
+    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(), addresses)
 
     val (changedFloating, missingFloating) = historyLinkAddresses.partition(ral => linkIds.contains(ral.linkId))
 
@@ -311,16 +306,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
 
   def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
-    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
-      || x.changeType == ChangeType.CombinedRemovedPart.value)
-    val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
-    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
-      || x.changeType == ChangeType.CombinedRemovedPart.value)
-    sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
+      val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
+        || x.changeType == ChangeType.CombinedRemovedPart.value)
+      val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
+      val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
+        || x.changeType == ChangeType.CombinedRemovedPart.value)
+      sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
   }
 
-  def applyChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], addresses:
-  Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+  def filterRelevantChanges(roadAddresses: Seq[RoadAddress], allChanges: Seq[ChangeInfo]): Seq[ChangeInfo] = {
+    val groupedAddresses = roadAddresses.groupBy(_.linkId)
+    val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
+    allChanges.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
+  }
+
+  def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
+
+
+    val changes = filterRelevantChanges(roadAddresses, allChanges)
+    val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
+
     val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
@@ -673,7 +678,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion > 0).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion.nonEmpty).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
@@ -997,6 +1002,8 @@ object AddressConsistencyValidator {
       def message: String = ErrorOverlappingRoadAddress}
     case object InconsistentTopology extends AddressError {def value = 2
       def message: String = ErrorInconsistentTopology}
+    case object InconsistentLrmHistory extends AddressError{def value = 3
+      def message: String = ErrorInconsistentLrmHistory}
 
     def apply(intValue: Int): AddressError = {
       values.find(_.value == intValue).get
