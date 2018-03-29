@@ -8,6 +8,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.formatter
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -17,7 +18,7 @@ case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCo
                                  startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
                                  terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode)
+                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode, directionFlag: Long = 0)
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
 
@@ -118,7 +119,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
                TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid from #$tableName
+               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid, kaannetty from #$tableName
                WHERE linkid > $minLinkId AND linkid <= $maxLinkId AND  aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter """
         .as[ConversionRoadAddress].list
     }
@@ -228,8 +229,16 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case ((roadAddress), (lrmId)) =>
         lrmPositions.getOrElse((roadAddress.linkId, roadAddress.commonHistoryId), Seq()).headOption.foreach {
           case lrmPosition =>
-            insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
-            insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
+            if(roadAddress.directionFlag == 1){
+              val reversedLRM = lrmPosition.copy(sideCode = SideCode.switch(lrmPosition.sideCode))
+              insertLrmPosition(lrmPositionPs, reversedLRM, lrmId)
+              insertRoadAddress(roadAddressPs, roadAddress, reversedLRM, lrmId)
+            }
+            else{
+              insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
+              insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
+            }
+
         }
     }
 
@@ -264,6 +273,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val y2 = r.nextDouble()
       val lrmId = r.nextLong()
       val commonHistoryId = r.nextLong()
+      val directionFlag = r.nextLong()
 
       val viiteEndDate = endDateOption match {
         case Some(endDate) => Some(endDate.plusDays(1))
@@ -272,11 +282,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
       if (startAddrM < endAddrM) {
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, SideCode.TowardsDigitizing)
+          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, SideCode.TowardsDigitizing, directionFlag)
       } else {
         //switch startAddrM, endAddrM, the geometry and set the side code to AgainstDigitizing
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, SideCode.AgainstDigitizing)
+          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, SideCode.AgainstDigitizing, directionFlag)
       }
     }
   }

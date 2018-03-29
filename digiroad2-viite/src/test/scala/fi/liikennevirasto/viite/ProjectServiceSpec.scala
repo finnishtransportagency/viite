@@ -281,53 +281,53 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("create and get projects by id") {
     var count = 0
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val project = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(project.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(roadAddressProject)))
       projectService.saveProject(project.copy(reservedParts = Seq(
         ReservedRoadPart(0L, 5, 203, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects().size should be(count - 1)
+      projectService.getRoadAddressAllProjects.size should be(count - 1)
     }
   }
 
   test("save project") {
     var count = 0
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val id = 0
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
       val project = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(project.id, RoadAddressDAO.fetchByRoadPart(1130, 4).map(toProjectLink(roadAddressProject)))
       projectService.saveProject(project.copy(reservedParts = List(
         ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 1130: Long, 4: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects()
+      projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
 
   test("create and delete project") {
     var count = 0
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val project = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(project.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(roadAddressProject)))
       projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 203, Some(100L), Some(Continuous), Some(8L), None, None, None, None))))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       projectService.deleteProject(project.id)
-      val projectsAfterOperations = projectService.getRoadAddressAllProjects()
+      val projectsAfterOperations = projectService.getRoadAddressAllProjects
       projectsAfterOperations.size should be(count)
       projectsAfterOperations.exists(_.id == project.id) should be (true)
       projectsAfterOperations.find(_.id == project.id).get.status should be (ProjectState.Deleted)
@@ -340,7 +340,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val id = 0
       val addresses = Seq(ReservedRoadPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None),
         ReservedRoadPart(5: Long, 5: Long, 206: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -348,7 +348,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val savedProject = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(savedProject.id, (RoadAddressDAO.fetchByRoadPart(5, 205) ++ RoadAddressDAO.fetchByRoadPart(5,206)).map(toProjectLink(savedProject)))
       projectService.saveProject(savedProject.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       projectService.allLinksHandled(savedProject.id) should be(false)
@@ -382,7 +382,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks2.filter(pl => pl.roadPartNumber == 205).exists { x => x.status == LinkStatus.Terminated } should be(false)
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects()
+      projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
 
@@ -392,14 +392,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val id = 0
       val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val savedProject = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(savedProject.id, RoadAddressDAO.fetchByRoadPart(5,207).map(toProjectLink(savedProject)))
       projectService.saveProject(savedProject.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       projectService.allLinksHandled(savedProject.id) should be(false)
@@ -427,7 +427,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks2.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be(None, Some(CalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)))
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects()
+      projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
 
@@ -437,14 +437,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val id = 0
       val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val savedProject = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(savedProject.id, RoadAddressDAO.fetchByRoadPart(5,207).map(toProjectLink(savedProject)))
       projectService.saveProject(savedProject.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       projectService.allLinksHandled(savedProject.id) should be(false)
@@ -473,7 +473,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks2.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be(None, Some(CalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)))
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects()
+      projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
 
@@ -582,13 +582,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadNumber = 1943845
       val roadPartNumber = 1
       val linkId = 12345L
+      val commonHistoryId = 123
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId))
       RoadAddressDAO.create(ra)
-      val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
+      val roadBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
@@ -621,14 +622,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId), false, true)
       roadsAfterChanges.size should be(1)
-      val roadsAfterPublishing = roadsAfterChanges.filter(x => x.startDate.nonEmpty && x.endDate.isEmpty).head
+      val roadAfterPublishing = roadsAfterChanges.filter(x => x.startDate.nonEmpty && x.endDate.isEmpty).head
       val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty)
 
-      roadsBeforeChanges.linkId should be(roadsAfterPublishing.linkId)
-      roadsBeforeChanges.roadNumber should be(roadsAfterPublishing.roadNumber)
-      roadsBeforeChanges.roadPartNumber should be(roadsAfterPublishing.roadPartNumber)
+      roadBeforeChanges.linkId should be(roadAfterPublishing.linkId)
+      roadBeforeChanges.roadNumber should be(roadAfterPublishing.roadNumber)
+      roadBeforeChanges.roadPartNumber should be(roadAfterPublishing.roadPartNumber)
       endedAddress.isEmpty should be (true)
-      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1901-01-01")
+      roadAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1901-01-01")
+      roadAfterPublishing.commonHistoryId should be (commonHistoryId)
     }
   }
 
@@ -638,14 +640,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5L, 205L, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(saved.id, RoadAddressDAO.fetchByRoadPart(5 ,205).map(toProjectLink(saved)))
       val changed = saved.copy(reservedParts = addresses)
       projectService.saveProject(changed)
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       val projectLinks = ProjectDAO.fetchByProjectRoadPart(5, 205, saved.id)
       projectLinks.nonEmpty should be(true)
       count = countCurrentProjects.size + 1
@@ -663,7 +665,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sections.groupBy(_.endMAddr).keySet.size should be(1)
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects()
+      projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
 
@@ -673,14 +675,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5L, 205L, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(saved.id, RoadAddressDAO.fetchByRoadPart(5,205).map(toProjectLink(saved)))
       val changed = saved.copy(reservedParts = addresses)
       projectService.saveProject(changed)
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       val projectLinks = ProjectDAO.fetchByProjectRoadPart(5, 205, saved.id)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
@@ -700,7 +702,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sections.groupBy(_.track).keySet should have size (2)
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects()
+      projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
 
@@ -712,11 +714,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadNumber = 1943845
       val roadPartNumber = 1
       val linkId = 12345L
+      val commonHistoryId = 123
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, commonHistoryId))
       RoadAddressDAO.create(ra)
       val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
 
@@ -755,6 +758,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       endedAddress.head.endDate.nonEmpty should be(true)
       endedAddress.size should be(1)
       endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
+      endedAddress.head.commonHistoryId should be(commonHistoryId)
       sql"""SELECT id FROM PROJECT_LINK WHERE project_id=$projectId""".as[Long].firstOption should be(None)
       sql"""SELECT id FROM PROJECT_RESERVED_ROAD_PART WHERE project_id=$projectId""".as[Long].firstOption should be(None)
     }
@@ -821,14 +825,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadlink = RoadLink(12345L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface)
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(saved.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(saved)))
       projectService.saveProject(saved.copy(reservedParts = addresses))
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       val project = projectService.getRoadAddressSingleProject(saved.id)
@@ -836,7 +840,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       project.head.name should be("TestProject")
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects().size should be(count - 1)
+      projectService.getRoadAddressAllProjects.size should be(count - 1)
     }
   }
 
@@ -847,13 +851,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadlink = RoadLink(12345L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface)
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
       val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(saved.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(saved)))
       projectService.saveProject(saved.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       val project = projectService.getRoadAddressSingleProject(saved.id)
@@ -861,7 +865,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       project.head.name should be("TestProject")
     }
     runWithRollback {
-      projectService.getRoadAddressAllProjects().size should be(count - 1)
+      projectService.getRoadAddressAllProjects.size should be(count - 1)
     }
   }
 
@@ -1028,24 +1032,39 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val user = Some("user")
     val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
-    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+
+    // Original road address: 1024 -> 1547
+    val roadAddress = RoadAddress(1L, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
       None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 0)
-    val transferAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
-      2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
-      -1L, LinkStatus.Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId), 748800L),
-      ProjectLink(3L, 5, 205, Track.Combined, Continuous, 1128, 1205, Some(DateTime.now()), None, user,
-        3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
-        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, false, Some(linkId), 748800L),
-      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
-        4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
-        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 748800L))
+      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
+
+    val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, Some(DateTime.now()), None, user,
+      0, 0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
+      -1L, null, PublicRoad, null, 0.0, 1L, 8L, false, None, 748800L)
+    val transferAndNew = Seq(
+
+      // Transferred road address: 1028 -> 1128
+      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, lrmPositionId = 2, linkId = suravageLinkId,
+        startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = LinkStatus.Transfer,
+        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
+
+      // New road address: 1128 -> 1205
+      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, lrmPositionId = 3, linkId = suravageLinkId,
+        startMValue = 99.384, endMValue = 176.495, geometry = Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)), status = LinkStatus.New,
+        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 77.111, connectedLinkId = Some(linkId)),
+
+      // Terminated road address: 1124 -> 1547
+      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, lrmPositionId = 4, linkId = linkId,
+        startMValue = 99.384, endMValue = endM, geometry = Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)), status = LinkStatus.Terminated,
+        linkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength = endM - 99.384, connectedLinkId = Some(suravageLinkId))
+
+    )
     val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
-    result should have size(4)
-    result.count(_.terminated == TerminationCode.Termination) should be (1)
-    result.count(_.startDate == roadAddress.startDate) should be (2)
-    result.count(_.startDate.get == project.startDate) should be (2)
-    result.count(_.endDate.isEmpty) should be (2)
+    result should have size 4
+    result.count(_.terminated == TerminationCode.Termination) should be(1)
+    result.count(_.startDate == roadAddress.startDate) should be(2)
+    result.count(_.startDate.get == project.startDate) should be(2)
+    result.count(_.endDate.isEmpty) should be(2)
   }
 
   test("split road address save behaves correctly on unchanged + new") {
@@ -1170,7 +1189,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         mockForProject(project2.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project2)))
         projectService.saveProject(project2.copy(reservedParts = addr1))
       }
-      error.getMessage should be ("Tie 5 osa 207 ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna toisessa projektissa TestProject.")
+      error.getMessage should be ("Tie 5 osa 207 ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: TestProject.")
 
     }
   }
