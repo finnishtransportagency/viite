@@ -266,8 +266,11 @@ object ProjectValidator {
       .filterNot(rrp => RoadAddressDAO.getValidRoadParts(rrp.roadNumber).exists(l => l > rrp.roadPartNumber &&
       !project.reservedParts.exists(p => p.roadNumber == rrp.roadNumber && p.roadPartNumber == l)))
       .map { rrp =>
-        ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((rrp.roadNumber, RoadAddressDAO.getValidRoadParts(rrp.roadNumber).filter(v => v < rrp.roadPartNumber).last)))), Seq(),
-          Seq(), Some(""))
+        val lastValidRoadPartNumber =  RoadAddressDAO.getValidRoadParts(rrp.roadNumber).filter(v => v < rrp.roadPartNumber).last
+        val validLinks = RoadAddressDAO.fetchByRoadPart(rrp.roadNumber, lastValidRoadPartNumber, fetchOnlyEnd = true)
+        ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((rrp.roadNumber, lastValidRoadPartNumber)))),
+          Seq(validLinks.head.linkId),
+          Seq(ProjectCoordinates(validLinks.head.geometry.head.x, validLinks.head.geometry.head.y, 12)), Some(""))
       }
   }
 
