@@ -131,13 +131,13 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   test("One update (new road), response should contain one road name") {
     when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
       Right(Seq(
-        RoadName(1, 2, "MYROAD", date(2018, 1, 1), None, date(2017, 12, 1), None, "MOCK")
+        RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2018-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"tie\":2,\"tienimet\":[{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MYROAD\",\"voimassaolo_alku\":\"2018-01-01\",\"voimassaolo_loppu\":null}]}]"
+        "[{\"tie\":2,\"tienimet\":[{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MYROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}]}]"
       )
     }
   }
@@ -145,18 +145,18 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   test("Road name change") {
     when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
       Right(Seq(
-        RoadName(3, 2, "MY ROAD", date(2018, 1, 1), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 1, 1), date(2018, 1, 1), date(2017, 12, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 1, 1), date(2000, 1, 1), date(1900, 1, 1), None, "MOCK")
+        RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2018-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
         "[{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-01-01\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-01-01\",\"voimassaolo_loppu\":\"2018-01-01\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-01-01\",\"voimassaolo_loppu\":\"2000-01-01\"}" +
+          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
+          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
+          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
           "]}]"
       )
     }
@@ -166,9 +166,9 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(3, 2, "MY ROAD", date(2018, 1, 1), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 1, 1), date(2018, 1, 1), date(2017, 12, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 1, 1), date(2000, 1, 1), date(1900, 1, 1), None, "MOCK")
+        RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2017, 12, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2017-12-01", "kalpa", "kalpa") {
@@ -176,9 +176,9 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       response.body should equal(
         "[" +
           "{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-01-01\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-01-01\",\"voimassaolo_loppu\":\"2018-01-01\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-01-01\",\"voimassaolo_loppu\":\"2000-01-01\"}" +
+          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
+          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
+          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
           "]}," +
           "{\"tie\":3,\"tienimet\":[" +
           "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"ANOTHER ROAD\",\"voimassaolo_alku\":\"2017-12-12\",\"voimassaolo_loppu\":null}" +
