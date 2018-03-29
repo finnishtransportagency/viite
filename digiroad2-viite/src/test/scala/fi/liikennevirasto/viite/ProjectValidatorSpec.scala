@@ -489,7 +489,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Project Links could be both Minor and Major discontinuity if next part exists in road address / project link table and is not connected") {
+  test("Project Links could be both Minor discontinuity or Discontinuous if next part exists in road address / project link table and is not connected") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
