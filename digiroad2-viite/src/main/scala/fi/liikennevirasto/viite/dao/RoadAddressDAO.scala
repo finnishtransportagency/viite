@@ -617,7 +617,9 @@ object RoadAddressDAO {
          ra.VALID_TO is null) OR EXISTS (
          SELECT 1 FROM project_reserved_road_part pro, road_address ra JOIN lrm_position pos ON ra.lrm_position_id = pos.id
           WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number
-           AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)"""
+           AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)
+        OR EXISTS (select distinct pl.* from project_link pl inner join lrm_position plPos on pl.lrm_position_id = plPos.id, road_address ra JOIN lrm_position pos ON ra.lrm_position_id = pos.id
+        where  pl.PROJECT_ID = $projectId and pl.road_number = ra.road_number And pl.road_part_number = ra.road_part_number AND pos.link_id != plPos.link_id)"""
     Q.queryNA[Int](query).firstOption.nonEmpty
   }
 
