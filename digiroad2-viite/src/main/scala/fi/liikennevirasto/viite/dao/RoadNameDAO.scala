@@ -100,8 +100,8 @@ object RoadNameDAO {
         SELECT * FROM road_names
         WHERE road_number IN (
             SELECT DISTINCT road_number FROM road_names
-            WHERE valid_from < sysdate AND (valid_to > sysdate OR valid_to IS NULL) AND start_date >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
-          ) AND valid_from < sysdate AND (valid_to > sysdate OR valid_to IS NULL)
+            WHERE valid_to IS NULL AND valid_from >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
+          ) AND valid_to IS NULL
         ORDER BY road_number, start_date desc"""
       queryList(query)
     } else {
