@@ -16,8 +16,9 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{NewRoadAddress, NewCommonHistoryId, RoadCheckOptions, RoadType}
+import fi.liikennevirasto.viite.{NewCommonHistoryId, NewRoadAddress, RoadCheckOptions, RoadType}
 import org.joda.time.DateTime
+import org.joda.time.chrono.ISOChronology
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -138,7 +139,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination,commonHistoryId: Long, blackUnderline: Boolean = false) extends BaseRoadAddress {
+                       terminated: TerminationCode = NoTermination, commonHistoryId: Long, blackUnderline: Boolean = false) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -284,10 +285,10 @@ object RoadAddressDAO {
       val endMValue = r.nextDouble()
       val sideCode = r.nextInt()
       val adjustedTimestamp = r.nextLong()
-      val startDate = r.nextDateOption.map(new DateTime(_))
-      val endDate = r.nextDateOption.map(new DateTime(_))
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val createdBy = r.nextStringOption.map(new String(_))
-      val createdDate = r.nextDateOption.map(new DateTime(_))
+      val createdDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val calibrationCode = r.nextInt()
       val floating = r.nextBoolean()
       val x = r.nextDouble()
