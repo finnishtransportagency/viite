@@ -456,9 +456,10 @@
           canChangeDirection();
         }
         else if(this.value == LinkStatus.Numbering.description) {
+          debugger;
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
-          $('#discontinuityDropdown').prop('disabled',true);
+          $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
