@@ -146,11 +146,15 @@ object TrackSectionOrder {
   def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
 
     def pickMostAligned(rotationMatrix: Matrix, vector: Vector3d, candidates: Seq[ProjectLink]): ProjectLink = {
-      candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
+        candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
     }
 
     def pickRightMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
-      pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), if(lastLink.sideCode == SideCode.AgainstDigitizing) LeftVector else RightVector, candidates)
+      val cPoint = GeometryUtils.connectionPoint(candidates.map(_.geometry):+ lastLink.geometry, MaxDistanceForConnectedLinks).getOrElse(throw new Exception("Candidates should have at least one connection point"))
+      val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if(GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
+      val (_, hVector) = vectors.head
+      val (candidate, _) = vectors.maxBy{ case (_, vector) =>  hVector.angle(vector) }
+      candidate
     }
 
     def pickForwardPointing(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
