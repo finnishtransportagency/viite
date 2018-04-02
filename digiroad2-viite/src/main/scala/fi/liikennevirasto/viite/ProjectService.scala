@@ -1067,7 +1067,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               //TODO: Check that the numbering target road number + road part does not exist or is reserved to this project
               checkAndMakeReservation(toUpdateLinks)
               ProjectDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber,
-                linkStatus, newRoadNumber, newRoadPartNumber, userName)
+                linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity)
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
             }
