@@ -360,7 +360,7 @@ object ProjectValidator {
             return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
         } else {
           val nextLinks =
-            if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get < nextAddressPart.get))
+            if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
               ProjectDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
             else {
               RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true)
