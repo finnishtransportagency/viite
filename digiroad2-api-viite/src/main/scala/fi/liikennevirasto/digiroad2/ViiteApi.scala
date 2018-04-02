@@ -881,12 +881,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "connectedLinkId" -> projectAddressLink.connectedLinkId,
           "originalGeometry" -> projectAddressLink.originalGeometry,
           "reversed" -> projectAddressLink.reversed,
-          "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry)
+          "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry),
+          "roadNameBlocked" -> (if(projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
         )
       else
         Map(
           "status" -> projectAddressLink.status.value,
-          "reversed" -> projectAddressLink.reversed
+          "reversed" -> projectAddressLink.reversed,
+          "roadNameBlocked" -> (if(projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
         ))
   }
 
