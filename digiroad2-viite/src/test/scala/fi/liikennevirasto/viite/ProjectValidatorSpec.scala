@@ -4,14 +4,17 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList._
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{TerminationCode, _}
+import fi.liikennevirasto.viite.util.toProjectLink
 import org.joda.time.DateTime
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -26,6 +29,21 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
       t
     }
+  }
+
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
+
+  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
   }
 
   private def testDataForCheckTerminationContinuity(noErrorTest: Boolean = false) = {
@@ -55,6 +73,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       Some("User"), 0L, startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
       floating = false, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
       LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadAddressId, ely, reversed = false, None, 0L)
+  }
+
+  def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
+    ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
+      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
+      roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely,false,
+      None, roadAddress.adjustedTimestamp)
   }
 
   private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
@@ -485,4 +512,43 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       errorsAfterTransfer.size should be (0)
     }
   }
+
+  ignore("WIP --- Changing start of road part to end of previous part cannot have Major discontinuity error") {
+    runWithRollback {
+      //Create road addresses
+      val ids = RoadAddressDAO.create(Seq(
+        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), None),
+          floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 369595),
+        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          10L, 20L, Some(DateTime.now()), None, None, 0L, 39332L, 0.0, 10.0, TowardsDigitizing, 0L, (None, Some(CalibrationPoint(39332L, 20.0, 10L))),
+          floating = false, Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 369595),
+        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 31229L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(31229L, 0.0, 0L)), None),
+          floating = false, Seq(Point(0.0, 20.0), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 369595),
+        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          10L, 20L, Some(DateTime.now()), None, None, 0L, 36695L, 0.0, 10.0, TowardsDigitizing, 0L, (None, Some(CalibrationPoint(36695L, 20.0, 10L))),
+          floating = false, Seq(Point(0.0, 30.0), Point(0.0, 4360.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 369595)))
+
+      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L,10L, 20L), discontinuity = Discontinuity.Continuous, roadAddressId = ids.min)
+      ProjectDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
+      val links =  RoadAddressDAO.fetchByRoadPart(19999, 2).map(toProjectLink(project))
+
+      ProjectDAO.create(links)
+      val allLinks = ProjectDAO.getProjectLinks(project.id)
+
+      projectService.updateProjectLinks(project.id, Set(10), LinkStatus.Transfer, "-", 19999, 2, 0, Option.empty[Int])
+
+
+      val linksAfterUpdate = ProjectDAO.getProjectLinks(project.id)
+      val errors = linksAfterUpdate.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkOrdinaryRoadContinuityCodes(project, g._2))
+      errors.size should be (0)
+      sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
+      val linksAfterTransfer = ProjectDAO.getProjectLinks(project.id)
+      val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkOrdinaryRoadContinuityCodes(project, g._2))
+      errorsAfterTransfer.size should be (0)
+    }
+  }
+
+
 }
