@@ -15,9 +15,9 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
-    var addRoadNameField = function (name) {
+    var addRoadNameField = function (name, isBlocked) {
       var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
-      var disabled = nameToDisplay !== "";
+      var disabled = nameToDisplay !== "" && isBlocked;
       return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
     };
 
@@ -49,7 +49,7 @@
         addSmallLabel('TIETYYPPI') +
         roadTypeDropdown() + '<br>' +
         addSmallLabel('NIMI')+
-        addRoadNameField(roadName) +
+        addRoadNameField(roadName, selected[0].roadNameBlocked) +
         ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };

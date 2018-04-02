@@ -148,6 +148,13 @@ class RoadNameService() {
       case e if NonFatal(e) => Some(Map("error"->"Unknown error"))
     }
   }
+
+  def getHasCurrentRoadName (roadNumber: Long): Boolean={
+    withDynSession {
+      RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber).nonEmpty
+    }
+  }
+
 }
 
   class RoadNameException(string: String) extends RuntimeException {
