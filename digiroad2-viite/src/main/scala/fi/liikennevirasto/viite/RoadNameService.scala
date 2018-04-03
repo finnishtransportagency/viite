@@ -48,17 +48,13 @@ class RoadNameService() {
     }
   }
 
-  def addOrUpdateRoadNamesInTx(roadNames: Seq[RoadNameRows], user: User, newTransaction: Boolean = true): Option[String] = {
-    if (newTransaction) {
-      withDynTransaction {
-        addOrUpdateRoadNames(roadNames, user)
-      }
-    } else {
-      addOrUpdateRoadNames(roadNames, user)
+  def addOrUpdateRoadNames(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
+    withDynTransaction {
+      addOrUpdateRoadNamesInTX(roadNames, user)
     }
   }
 
-  def addOrUpdateRoadNames(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
+  def addOrUpdateRoadNamesInTX(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
     try {
       if (singleEndDateExpiration(roadNames)._1)
         throw new RoadNameException(s"Setting end date would make current road name disabled")

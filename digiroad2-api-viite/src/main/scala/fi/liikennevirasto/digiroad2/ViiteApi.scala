@@ -189,7 +189,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val roadNames = parsedBody.extract[RoadNameExtractor]
 
-    roadNameService.addOrUpdateRoadNamesInTx(roadNames.rows, user) match {
+    roadNameService.addOrUpdateRoadNames(roadNames.rows, user) match {
       case Some(err) => Map("success" -> false, "errorMessage" -> err)
       case None => Map("success" -> true)
     }
