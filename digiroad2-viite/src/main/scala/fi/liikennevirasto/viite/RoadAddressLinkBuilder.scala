@@ -181,7 +181,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 
   private def getVVHRoadName(link: Map[String, Any]): Option[String] = {
-      Some(link.getOrElse(FinnishRoadName, link.getOrElse(SwedishRoadName, "none")).toString)
+    Some(link.getOrElse(FinnishRoadName, link.getOrElse(SwedishRoadName, "none")).toString)
   }
 }
 

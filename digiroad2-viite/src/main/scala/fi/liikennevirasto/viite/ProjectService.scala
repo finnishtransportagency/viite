@@ -1012,12 +1012,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def checkAndMakeReservation(projectLink: ProjectLink) = {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
-      if (!project.isReserved(newRoadNumber, newRoadPartNumber)){
-        if(isNewAndSameLink(projectLink)){
+      if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
+        if (isNewAndSameLink(projectLink)) {
           val reservedPart = ProjectDAO.fetchReservedRoadPart(projectLink.roadNumber, projectLink.roadPartNumber)
           ProjectDAO.removeReservedRoadPart(projectId, reservedPart.get)
-          val projectLinks: Seq[ProjectLink] = Seq(projectLink.copy(id = NewRoadAddress, roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt), endAddrMValue = userDefinedEndAddressM.get.toLong  ))
-              addNewLinksToProject(sortRamps(projectLinks, linkIds.toSeq), projectId, userName, linkIds.head,  newTransaction = false)
+          val projectLinks: Seq[ProjectLink] = Seq(projectLink.copy(id = NewRoadAddress, roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt), endAddrMValue = userDefinedEndAddressM.get.toLong))
+          addNewLinksToProject(sortRamps(projectLinks, linkIds.toSeq), projectId, userName, linkIds.head, newTransaction = false)
         } else {
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         }
@@ -1473,7 +1473,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
     projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.modifiedBy)).keys.map(rn =>
-      if (rn._2.nonEmpty){
+      if (rn._2.nonEmpty) {
         RoadName(NewRoadName, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
       } else {
         throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
