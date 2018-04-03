@@ -67,10 +67,12 @@
 
 
       this.getRoadName =
-      _.debounce(function (roadNumber, callback) {
-          return $.getJSON('api/viite/roadlinks/roadname/'+ roadNumber , function (data) {
-              return _.isFunction(callback) && callback(data);
-          });
+      _.debounce(function (roadNumber, projectID, callback) {
+          if (projectID !== 0) {
+              return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
+                  return _.isFunction(callback) && callback(data);
+              });
+          }
       }, 500);
 
 
@@ -578,6 +580,18 @@
               url: 'api/viite/roadnames?roadNumber=' + roadNumber
           };
       });
+
+      this.saveRoadNamesChanges = _.throttle(function (data, success, failure) {
+          $.ajax({
+              contentType: "application/json",
+              type: "PUT",
+              url: "api/viite/roadnames",
+              data: JSON.stringify(data),
+              dataType: "json",
+              success: success,
+              error: failure
+          });
+      }, 1000);
 
   };
 }(this));

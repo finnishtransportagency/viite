@@ -5,6 +5,7 @@ import java.sql.PreparedStatement
 import fi.liikennevirasto.viite.RoadType
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.formatter
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressSection}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -78,10 +79,10 @@ object RoadAddressChangesDAO {
       val projectId = r.nextLong
       val projectName = r.nextStringOption
       val createdBy = r.nextString
-      val createdDate = r.nextDateOption.map(new DateTime(_))
-      val startDate = r.nextDateOption.map(new DateTime(_))
+      val createdDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val modifiedBy = r.nextString
-      val modifiedDate = r.nextDateOption.map(new DateTime(_))
+      val modifiedDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val targetEly = r.nextLong
       val changeType = r.nextInt
       val sourceRoadNumber = r.nextLongOption

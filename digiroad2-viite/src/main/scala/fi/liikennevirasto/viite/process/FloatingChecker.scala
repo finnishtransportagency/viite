@@ -91,7 +91,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
 
       // If we get road addresses that were merged we check if they current road link is not overlapping, if it not, then there is a floating problem
       val filteredNonOverlapping = movedAddresses.filterNot(ma => {
-        val filterResult = ma.modifiedBy.getOrElse("") == "Automatic_merged" && GeometryUtils.overlaps((ma.startMValue, ma.endMValue), (0.0, roadLink.length))
+        val filterResult = ma.createdBy.getOrElse("") == "Automatic_merged" && GeometryUtils.overlaps((ma.startMValue, ma.endMValue), (0.0, roadLink.length))
         if (filterResult) {
           println(s"Road address ${ma.id} is a result of automatic merging and it overlaps, discarding.")
         }
