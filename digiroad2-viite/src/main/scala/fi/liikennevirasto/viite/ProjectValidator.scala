@@ -151,9 +151,9 @@ object ProjectValidator {
       def notification = false
     }
 
-    case object RampConnectingRoundabout extends ValidationError {
+    case object RoadConnectingRoundabout extends ValidationError {
       def value = 15
-      def message: String = MinorDiscontinuousWhenRampConnectingRoundabout
+      def message: String = MinorDiscontinuousWhenRoadConnectingRoundabout
       def notification = false
     }
 
@@ -307,14 +307,6 @@ object ProjectValidator {
     * @return
     */
   def checkOrdinaryRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-/*    def error(validationError: ValidationError)(pl: Seq[ProjectLink]) = {
-      val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
-      if (linkIds.nonEmpty)
-        Some(ValidationErrorDetails(project.id, validationError, linkIds,
-          points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
-      else
-        None
-    }*/
 
     def checkConnectedAreContinuous = {
       error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(seq.filterNot(pl =>
@@ -363,13 +355,14 @@ object ProjectValidator {
             else
               RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true, includeExpired = false, includeHistory = false)
                 .filter(_.startAddrMValue == 0L)
+
           val isConnected = lastProjectLinks.forall(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
             connected(lpl, nl)))
           val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
             connected(lpl, nl)))
           if (isDisConnected) {
             discontinuity match {
-              case Continuous | MinorDiscontinuity =>
+              case Continuous =>
                 return error(project.id, ValidationErrorList.MajorDiscontinuityFound)(lastProjectLinks)
               case EndOfRoad =>
                 return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
@@ -474,8 +467,8 @@ object ProjectValidator {
 
         if (isConnectingRoundabout(lastProjectLinks)) {
           discontinuity match {
-            case EndOfRoad | Discontinuous | ChangingELYCode | Continuous =>
-              return errorWithInfo(ValidationErrorList.RampConnectingRoundabout, s"Rampin ${lastProjectLinks.head.roadNumber} tieosa ${lastProjectLinks.head.roadPartNumber} päättyy kiertoliittymään. Korjaa lievä epäjatkuvuus")(lastProjectLinks)
+            case EndOfRoad | ChangingELYCode | Continuous =>
+              return errorWithInfo(ValidationErrorList.RoadConnectingRoundabout, s"Rampin ${lastProjectLinks.head.roadNumber} tieosa ${lastProjectLinks.head.roadPartNumber} päättyy kiertoliittymään. Korjaa lievä epäjatkuvuus")(lastProjectLinks)
             case _ =>
           }
         }
@@ -484,20 +477,6 @@ object ProjectValidator {
         val isDisConnected = !lastProjectLinks.exists(lpl => nextLinks.exists(nl => connected(lpl, nl)))
         if (isDisConnected) {
           discontinuity match {
-            case MinorDiscontinuity =>
-              // This code means that this road part (of a ramp) should be connected to a roundabout
-              val endPoints = lastProjectLinks.map(endPoint).map(p => (p.x, p.y)).unzip
-              val boundingBox = BoundingRectangle(Point(endPoints._1.min,
-                endPoints._2.min), Point(endPoints._1.max, endPoints._2.max))
-              // Fetch all ramps and roundabouts roads and parts this is connected to (or these, if ramp has multiple links)
-              val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, fetchOnlyFloating = false, onlyNormalRoads = false,
-                Seq((RampsMinBound, RampsMaxBound))).filter(ra =>
-                lastProjectLinks.exists(pl => connected(pl, ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
-
-              // Check all the fetched road parts to see if any of them is a roundabout
-              if (!roadParts.keys.exists(rp => TrackSectionOrder.isRoundabout(
-                RoadAddressDAO.fetchByRoadPart(rp._1, rp._2, includeFloating = true))))
-                return error(project.id, ValidationErrorList.DiscontinuityOnRamp)(lastProjectLinks)
             case Continuous =>
               return error(project.id, ValidationErrorList.MajorDiscontinuityFound)(lastProjectLinks)
             case EndOfRoad =>
