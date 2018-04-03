@@ -1474,7 +1474,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
     projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.modifiedBy)).keys.map(rn =>
       if (rn._2.nonEmpty){
-        RoadName(NewRoadName, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.get)
+        RoadName(NewRoadName, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
       } else {
         throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
       }
@@ -1493,6 +1493,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
       .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
     val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber))
+    if(existingNames.isEmpty && newNames.isEmpty){
+      throw new IllegalStateException("Road name was not found even in current addresses or project links.")
+    }
     RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
     getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = "TR")))
     projectLinks.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
