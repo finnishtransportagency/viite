@@ -62,7 +62,10 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
 
   test("encode road address") {
     val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
-    val roadAdressLink = RoadAddressLink(63298,5171208, geometry, GeometryUtils.geometryLength(geometry),Municipality, UnknownLinkType, NormalRoadLinkType,  InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,"Vt5", BigInt(0),None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,6,"2015-01-01","2016-01-01",0.0,0.0,SideCode.TowardsDigitizing,Some(CalibrationPoint(120,1,2)),None, Anomaly.None, 0)
+    val roadAdressLink = RoadAddressLink(63298, 5171208, geometry, GeometryUtils.geometryLength(geometry), Municipality,
+      UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"),
+      None, BigInt(0), None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01",
+      "2016-01-01", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None, 0)
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
@@ -78,9 +81,9 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       "ely_code" -> 0,
       "road_type" -> 3,
       "discontinuity" -> 0,
-      "start_date" ->  "2015-01-01",
-      "end_date" ->  "2016-01-01",
-      "calibration_points" -> Map("start" ->  Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1.0)), "end" -> None)
+      "start_date" -> "2015-01-01",
+      "end_date" -> "2016-01-01",
+      "calibration_points" -> Map("start" -> Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1.0)), "end" -> None)
     )))
   }
 
@@ -120,7 +123,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("No updated road names, Content-Type should be application/json and response should be empty array") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(Right(Seq()))
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(Right(Seq()))
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=9999-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.getHeader("Content-Type") should equal("application/json; charset=UTF-8")
@@ -129,46 +132,46 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("One update (new road), response should contain one road name") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(
       Right(Seq(
-        RoadName(1, 2, "MYROAD", date(2018, 1, 1), None, date(2017, 12, 1), None, "MOCK")
+        RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2018-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"tie\":2,\"tienimet\":[{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MYROAD\",\"voimassaolo_alku\":\"2018-01-01\",\"voimassaolo_loppu\":null}]}]"
+        "[{\"tie\":2,\"tienimet\":[{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MYROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}]}]"
       )
     }
   }
 
   test("Road name change") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(
       Right(Seq(
-        RoadName(3, 2, "MY ROAD", date(2018, 1, 1), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 1, 1), date(2018, 1, 1), date(2017, 12, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 1, 1), date(2000, 1, 1), date(1900, 1, 1), None, "MOCK")
+        RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2018-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
         "[{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-01-01\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-01-01\",\"voimassaolo_loppu\":\"2018-01-01\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-01-01\",\"voimassaolo_loppu\":\"2000-01-01\"}" +
+          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
+          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
+          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
           "]}]"
       )
     }
   }
 
   test("Road name change for two roads") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(3, 2, "MY ROAD", date(2018, 1, 1), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 1, 1), date(2018, 1, 1), date(2017, 12, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 1, 1), date(2000, 1, 1), date(1900, 1, 1), None, "MOCK")
+        RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2017, 12, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2017-12-01", "kalpa", "kalpa") {
@@ -176,9 +179,9 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       response.body should equal(
         "[" +
           "{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-01-01\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-01-01\",\"voimassaolo_loppu\":\"2018-01-01\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-01-01\",\"voimassaolo_loppu\":\"2000-01-01\"}" +
+          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
+          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
+          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
           "]}," +
           "{\"tie\":3,\"tienimet\":[" +
           "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"ANOTHER ROAD\",\"voimassaolo_alku\":\"2017-12-12\",\"voimassaolo_loppu\":null}" +

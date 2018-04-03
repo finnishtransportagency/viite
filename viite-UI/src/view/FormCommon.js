@@ -15,9 +15,9 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
-    var addRoadNameField = function (name) {
-      var nameToDisplay = _.isUndefined(name) ? " " : name;
-      var disabled = name !== " ";
+    var addRoadNameField = function (name, isBlocked) {
+      var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
+      var disabled = nameToDisplay !== "" && isBlocked;
       return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
     };
 
@@ -48,8 +48,8 @@
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
         roadTypeDropdown() + '<br>' +
-        addSmallLabel('NIMI')+
-        addRoadNameField(roadName, true) +
+        addSmallLabel('NIMI') +
+        addRoadNameField(roadName, selected[0].roadNameBlocked) +
         ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
@@ -266,7 +266,7 @@
     };
 
     var coordButton = function(index, coordinates){
-      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">Korjaa</button>';
       return {index:index, html:html, coordinates:coordinates};
     };
 
@@ -297,7 +297,7 @@
         }
         errorLines += '<div class="form-project-errors-list">' +
           addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
-          addSmallLabel('ERROR: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
+          addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
           '</div>';

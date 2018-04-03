@@ -37,6 +37,10 @@ package object viite {
 
   val NewCommonHistoryId: Long = -1000L
 
+  val newCalibrationPointId: Long = -1000L
+
+  val NewRoadName: Long = -1000L
+
   val MaxDistanceForConnectedLinks = 0.1
 
   /* Used for small jumps on discontinuity or self-crossing tracks */
@@ -44,8 +48,6 @@ package object viite {
 
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50.0
-
-  val newCalibrationPointId: Long = -1000L
 
   /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
   val MaxSuravageToleranceToGeometry = 0.5
@@ -86,7 +88,7 @@ package object viite {
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val RoadNotEndingInElyBorderMessage = "JATKUU-koodi virheellinen. Tieosa ei pääty ELY-rajalle."
   val RoadContinuesInAnotherElyMessage = "JATKUU-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
-  val MinorDiscontinuousWhenRampConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
+  val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle: %s."
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RampsMinBound = 20001
@@ -143,5 +145,16 @@ package object viite {
       case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
       case regex(x, y, _) => Point(toBD(x), toBD(y))
     }.toSeq
+  }
+
+  object CombineMaps {
+    type Mapped = Map[String,String]
+    def combine(x: Mapped, y: Mapped): Mapped = {
+      val x0 = x.withDefaultValue("")
+      val y0 = y.withDefaultValue("")
+      val keys = x.keys.toSet.union(y.keys.toSet)
+      keys.map{ k => k -> (x0(k) + y0(k)) }.toMap
+    }
+
   }
 }
