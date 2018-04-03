@@ -456,7 +456,6 @@
           canChangeDirection();
         }
         else if(this.value == LinkStatus.Numbering.description) {
-          debugger;
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
