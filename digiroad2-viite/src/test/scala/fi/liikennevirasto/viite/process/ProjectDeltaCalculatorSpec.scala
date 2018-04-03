@@ -45,7 +45,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   private def toProjectLinkWithMove(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue + project.id, roadAddress.endAddrMValue + project.id, roadAddress.startDate,
-      roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.endDate, createdBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status,
       roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely, false,
       None, 748800L)
@@ -164,22 +164,22 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
     val newLinks = Seq(ProjectLink(981, 5, 205, Track.RightSide,
       Discontinuity.MinorDiscontinuity, 36, 49, None, None,
-      modifiedBy=Option(project.createdBy), 0L, 981, 0.0, 12.1,
+      createdBy=Option(project.createdBy), 0L, 981, 0.0, 12.1,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, 8,false, None, 85900L),
       ProjectLink(982, 5, 205, Track.LeftSide,
       Discontinuity.MinorDiscontinuity, 40, 53, None, None,
-      modifiedBy=Option(project.createdBy), 0L, 982, 0.0, 12.2,
+      createdBy=Option(project.createdBy), 0L, 982, 0.0, 12.2,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.2)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.2, -1L, 8,false, None, 85900L),
       ProjectLink(983, 5, 205, Track.RightSide,
       Discontinuity.MinorDiscontinuity, 109, 124, None, None,
-      modifiedBy=Option(project.createdBy), 0L, 983, 0.0, 15.2,
+      createdBy=Option(project.createdBy), 0L, 983, 0.0, 15.2,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 15.2, -1L, 8,false, None, 85900L),
       ProjectLink(984, 5, 205, Track.LeftSide,
       Discontinuity.MinorDiscontinuity, 113, 127, None, None,
-      modifiedBy=Option(project.createdBy), 0L, 984, 0.0, 14.2,
+      createdBy=Option(project.createdBy), 0L, 984, 0.0, 14.2,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 14.2, -1L, 8,false, None, 85900L)
     )
@@ -230,7 +230,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
     val newLinks = Seq(ProjectLink(981, 5, 205, Track.Combined,
       Discontinuity.MinorDiscontinuity, 120, 130, None, None,
-      modifiedBy=Option(project.createdBy), 0L, 981, 0.0, 12.1,
+      createdBy=Option(project.createdBy), 0L, 981, 0.0, 12.1,
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, 8,false,
       None, 748800L))

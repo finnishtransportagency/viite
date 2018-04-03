@@ -120,7 +120,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("No updated road names, Content-Type should be application/json and response should be empty array") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(Right(Seq()))
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(Right(Seq()))
     getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=9999-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.getHeader("Content-Type") should equal("application/json; charset=UTF-8")
@@ -129,7 +129,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("One update (new road), response should contain one road name") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
@@ -143,7 +143,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("Road name change") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
         RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
@@ -163,7 +163,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("Road name change for two roads") {
-    when(mockRoadNameService.getUpdatedRoadNamesTx(Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any())).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),

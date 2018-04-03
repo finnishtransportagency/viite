@@ -167,7 +167,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
     } else {
       try {
         val changesSince = DateTime.parse(muutospvm.get, dateFormat)
-        val result = roadNameService.getUpdatedRoadNamesTx(changesSince)
+        val result = roadNameService.getUpdatedRoadNames(changesSince)
         if (result.isLeft) {
           BadRequest(result.left)
         } else if (result.isRight) {
