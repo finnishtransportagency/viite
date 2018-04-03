@@ -294,7 +294,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
           } else
             newLinks
-        ProjectDAO.create(createLinks.map(_.copy(modifiedBy = Some(user))))
+        ProjectDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
         None
     } catch {
@@ -573,7 +573,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         splitResult =>
           val splitLinks = splitResult.toSeqWithAllTerminated
           ProjectDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.map(_.linkId).toSet)
-          ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
+          ProjectDAO.create(splitLinks.map(x => x.copy(createdBy = Some(username))))
           ProjectDAO.updateProjectCoordinates(splitOptions.projectId, splitOptions.coordinates)
           recalculateProjectLinks(splitOptions.projectId, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
       }
@@ -1434,7 +1434,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pl.status match {
         case UnChanged =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
-            modifiedBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue, endMValue = pl.endMValue,
+            createdBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue, endMValue = pl.endMValue,
             adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry))
         case New =>
           Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
@@ -1447,16 +1447,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             //TODO we should check situations where we need to create one new commonHistory for new and transfer/unchanged
             // Transferred part, original values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = startAddr, endAddrMValue = endAddr,
-              endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), startMValue = startM, endMValue = endM),
+              endDate = Some(project.startDate), createdBy = Some(project.createdBy), startMValue = startM, endMValue = endM),
             // Transferred part, new values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
-              startDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId,
+              startDate = Some(project.startDate), createdBy = Some(project.createdBy), linkId = pl.linkId,
               startMValue = pl.startMValue, endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp,
               geometry = pl.geometry)
           )
         case Terminated => // TODO Check common_history_id
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
-            endDate = Some(project.startDate), modifiedBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue,
+            endDate = Some(project.startDate), createdBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue,
             endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, terminated = Termination))
         case _ =>
           logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
@@ -1541,7 +1541,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Seq()
     }
     val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewRoadAddress), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
-      pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
+      pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
       pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.commonHistoryId).getOrElse(0))
     pl.status match {
       case UnChanged =>
