@@ -397,10 +397,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.debug(s"Reserve $reservation")
           val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber)
           val (suravageSource, regular) = addressesOnPart.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-          val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet, false)
-            .map(rl => rl.linkId -> rl).toMap
-          val mapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, newTransaction = false, frozenTimeVVHAPIServiceEnabled = useFrozenVVHLinks)
-            .map(rl => rl.linkId -> rl).toMap
+          val suravageMapping = if (suravageSource.nonEmpty) {
+            roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet, false)
+              .map(rl => rl.linkId -> rl).toMap
+          } else {
+            Map.empty[Long, RoadLink]
+          }
+          val mapping = if (regular.nonEmpty) {
+            roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, newTransaction = false, frozenTimeVVHAPIServiceEnabled = useFrozenVVHLinks)
+              .map(rl => rl.linkId -> rl).toMap
+          } else {
+            Map.empty[Long, RoadLink]
+          }
           val fullMapping = mapping ++ suravageMapping
           val reserved = checkAndReserve(project, reservation)
           if (reserved._1.isEmpty)
