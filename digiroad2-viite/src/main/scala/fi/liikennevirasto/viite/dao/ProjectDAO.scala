@@ -77,7 +77,7 @@ case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       endDate: Option[DateTime] = None, createdBy: Option[String] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
@@ -206,7 +206,7 @@ object ProjectDAO {
       addressPS.setLong(7, pl.discontinuity.value)
       addressPS.setLong(8, pl.startAddrMValue)
       addressPS.setLong(9, pl.endAddrMValue)
-      addressPS.setString(10, pl.modifiedBy.orNull)
+      addressPS.setString(10, pl.createdBy.getOrElse(null))
       addressPS.setDouble(11, CalibrationCode.getFromAddress(pl).value)
       addressPS.setLong(12, pl.status.value)
       addressPS.setLong(13, pl.roadType.value)
@@ -362,6 +362,14 @@ object ProjectDAO {
     }
   }
 
+  def getProjectLinksByProjectRoadPart(road: Long, part: Long, projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+
+    val filter = if (linkStatusFilter.isEmpty) "" else s" PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
+    val query =
+      s"""$projectLinkQueryBase
+                where $filter PROJECT_LINK.ROAD_NUMBER = $road and PROJECT_LINK.ROAD_PART_NUMBER = $part AND PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+    listQuery(query)
+  }
 
   def fetchByProjectRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long): Seq[ProjectLink] = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber AND"

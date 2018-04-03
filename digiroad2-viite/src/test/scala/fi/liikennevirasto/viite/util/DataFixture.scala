@@ -2,12 +2,14 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
+import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
+import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
 import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite.dao._
@@ -223,8 +225,7 @@ object DataFixture {
           val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
-          roadAddressService.applyChanges(roadLinks, affectingChanges,
-            roadAddresses.groupBy(g => (g.linkId, g.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
+          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses)
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
@@ -322,8 +323,70 @@ object DataFixture {
 
   }
 
+  def fuseRoadAddressHistory(): Unit = {
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
+
+    elyCodes.foreach(ely => {
+      println(s"Going to fuse road history for ely $ely")
+      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
+      println(s"Got ${roads.size} history for ely $ely")
+      val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
+      val kept = fusedRoadAddresses.map(_.id).toSet
+      val removed = roads.map(_.id).toSet.diff(kept)
+      val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
+      println(s"Fusing ${roadAddressesToRegister.size} roads for ely $ely")
+      if (roadAddressesToRegister.nonEmpty)
+        roadAddressService.mergeRoadAddressHistory(RoadAddressMerge(removed, roadAddressesToRegister))
+    })
+  }
+
   private def showFreezeInfo() = {
     println("Road link geometry freeze is active; exiting without changes")
+  }
+
+  def flyway: Flyway = {
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setInitVersion("-1")
+    flyway.setInitOnMigrate(true)
+    flyway.setLocations("db.migration")
+    flyway
+  }
+
+  def migrateAll() = {
+    flyway.migrate()
+  }
+
+  def tearDown() {
+    flyway.clean()
+  }
+
+  def setUpTest() {
+    migrateAll()
+    SqlScriptRunner.runScripts(List(
+      "insert_test_fixture.sql",
+      "insert_users.sql",
+      "kauniainen_functional_classes.sql",
+      "kauniainen_traffic_directions.sql",
+      "kauniainen_link_types.sql",
+      "test_fixture_sequences.sql",
+      "kauniainen_lrm_positions.sql",
+      "insert_road_address_data.sql",
+      "insert_floating_road_addresses.sql",
+      "insert_project_link_data.sql"
+    ))
+  }
+
+  def importMunicipalityCodes() {
+    println("\nCommencing municipality code import at time: ")
+    println(DateTime.now())
+    new MunicipalityCodeImporter().importMunicipalityCodes()
+    println("Municipality code import complete at time: ")
+    println(DateTime.now())
+    println("\n")
   }
 
   def main(args:Array[String]) : Unit = {
@@ -391,6 +454,12 @@ object DataFixture {
         correctNullElyCodeProjects()
       case Some("check_lrm_position_history") =>
         checkLrmPositionHistory()
+      case Some("fuse_road_address_history") =>
+        fuseRoadAddressHistory()
+      case Some("test") =>
+        tearDown()
+        setUpTest()
+        importMunicipalityCodes()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
