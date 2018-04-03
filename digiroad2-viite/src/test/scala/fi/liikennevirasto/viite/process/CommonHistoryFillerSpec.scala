@@ -150,7 +150,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       mockForProject(saved.id, roadAddressesfetch)
       projectService.saveProject(saved.copy(reservedParts = addresses))
       val projectLinks = ProjectDAO.getProjectLinks(saved.id)
-      projectLinks.isEmpty should be(false)
+      projectLinks.isEmpty should be (false)
       val sortedLinks = projectLinks.sortBy(_.startAddrMValue)
       val (first, last) = (sortedLinks.head, sortedLinks.last)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
