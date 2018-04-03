@@ -148,16 +148,16 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       val search = RoadNameDAO.getCurrentRoadName(5)
 
       val roadNames = Seq(
-        RoadNameRows(search.get.id,List(RoadNameEditions("endDate","27.3.2018"))),
-        RoadNameRows(-1000,List(RoadNameEditions("roadNumber","5"), RoadNameEditions("orignalRoadId",search.get.id.toString), RoadNameEditions("roadName","Victory Road"), RoadNameEditions("startDate","27.3.2018")))
+        RoadNameRows(search.get.id, List(RoadNameEditions("endDate", "27.3.2018"))),
+        RoadNameRows(-1000, List(RoadNameEditions("roadNumber", "5"), RoadNameEditions("orignalRoadId", search.get.id.toString), RoadNameEditions("roadName", "Victory Road"), RoadNameEditions("startDate", "27.3.2018")))
       )
-     val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNames, User(1, "user", Configuration()))
-      afterInsert should be (None)
+      val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNames, User(1, "user", Configuration()))
+      afterInsert should be(None)
       val currentAferInsert = RoadNameDAO.getCurrentRoadName(5)
-      currentAferInsert.size should be (1)
-      currentAferInsert.get.roadName should be ("Victory Road")
-      }
+      currentAferInsert.size should be(1)
+      currentAferInsert.get.roadName should be("Victory Road")
     }
+  }
 
   ignore("updating name from current one should expire and create an copy of it, with the new name") {
     //TODO - test is failing
@@ -166,12 +166,12 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
         sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('5','VICTORY RD.',to_date('01.01.1989','DD.MM.RRRR'), null, to_date('01.01.1989','DD.MM.RRRR'),null,'User',to_timestamp('01.01.1989 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
         val search = RoadNameDAO.getCurrentRoadName(5)
         val roadNames = Seq(
-          RoadNameRows(search.get.id,List(RoadNameEditions("roadName","Victory Road"), RoadNameEditions("roadNumber", "5"), RoadNameEditions("endDate", "")))
+          RoadNameRows(search.get.id, List(RoadNameEditions("roadName", "Victory Road"), RoadNameEditions("roadNumber", "5"), RoadNameEditions("endDate", "")))
         )
         val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNames, User(1, "user", Configuration()))
         val currentAferInsert = RoadNameDAO.getCurrentRoadName(5)
-        currentAferInsert.size should be (1)
-        currentAferInsert.get.roadName should be ("Victory Road")
+        currentAferInsert.size should be(1)
+        currentAferInsert.get.roadName should be("Victory Road")
       }
     }
   }
