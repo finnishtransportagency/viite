@@ -225,8 +225,7 @@ object DataFixture {
           val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
-          roadAddressService.applyChanges(roadLinks, affectingChanges,
-            roadAddresses.groupBy(g => (g.linkId, g.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
+          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses)
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
@@ -322,6 +321,26 @@ object DataFixture {
       }
     })
 
+  }
+
+  def fuseRoadAddressHistory(): Unit = {
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
+
+    elyCodes.foreach(ely => {
+      println(s"Going to fuse road history for ely $ely")
+      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
+      println(s"Got ${roads.size} history for ely $ely")
+      val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
+      val kept = fusedRoadAddresses.map(_.id).toSet
+      val removed = roads.map(_.id).toSet.diff(kept)
+      val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
+      println(s"Fusing ${roadAddressesToRegister.size} roads for ely $ely")
+      if (roadAddressesToRegister.nonEmpty)
+        roadAddressService.mergeRoadAddressHistory(RoadAddressMerge(removed, roadAddressesToRegister))
+    })
   }
 
   private def showFreezeInfo() = {
@@ -435,6 +454,8 @@ object DataFixture {
         correctNullElyCodeProjects()
       case Some("check_lrm_position_history") =>
         checkLrmPositionHistory()
+      case Some("fuse_road_address_history") =>
+        fuseRoadAddressHistory()
       case Some("test") =>
         tearDown()
         setUpTest()

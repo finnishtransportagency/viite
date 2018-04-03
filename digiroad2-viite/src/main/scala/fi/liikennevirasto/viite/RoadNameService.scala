@@ -18,9 +18,9 @@ class RoadNameService() {
     RoadNameDAO.getRoadNamesByRoadNameAndRoadNumber(oRoadNumber, oRoadName, None, None, oStartDate, oEndDate)
   }
 
-  def getRoadAddressesInTx(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
+  def getRoadAddresses(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
     withDynTransaction {
-      getRoadAddresses(oRoadNumber, oRoadName, oStartDate, oEndDate)
+      getRoadAddressesInTX(oRoadNumber, oRoadName, oStartDate, oEndDate)
     }
   }
 
@@ -33,7 +33,7 @@ class RoadNameService() {
     * @param oEndDate    Option end date
     * @return Returns error message as left and right as seq of road names
     */
-  def getRoadAddresses(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
+  def getRoadAddressesInTX(oRoadNumber: Option[String], oRoadName: Option[String], oStartDate: Option[DateTime], oEndDate: Option[DateTime]): Either[String, Seq[RoadName]] = {
     try {
       (oRoadNumber, oRoadName) match {
         case (Some(roadNumber), Some(roadName)) =>
@@ -49,4 +49,27 @@ class RoadNameService() {
       case e if NonFatal(e) => Left("Unknown error")
     }
   }
+
+  def getUpdatedRoadNames(since: DateTime): Either[String, Seq[RoadName]] = {
+    withDynTransaction {
+      getUpdatedRoadNamesInTX(since)
+    }
+  }
+
+  /**
+    * Fetches road names that are updated after the given date.
+    *
+    * @param since
+    * @return Returns error message as left and seq of road names as right
+    */
+  def getUpdatedRoadNamesInTX(since: DateTime): Either[String, Seq[RoadName]] = {
+    try {
+      Right(RoadNameDAO.getUpdatedRoadNames(since))
+    } catch {
+      case e if NonFatal(e) =>
+        logger.error("Failed to fetch updated road names.", e)
+        Left(e.getMessage)
+    }
+  }
+
 }
