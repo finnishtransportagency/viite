@@ -4,15 +4,19 @@ import java.util.Locale
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
+
+import scala.util.control.NonFatal
 
 trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
   self: ScalatraBase =>
@@ -35,11 +39,13 @@ trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
   }
 }
 
-class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
+class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNameService: RoadNameService) extends ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+
+  val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   def clearCache() = {
     roadLinkService.clearCache()
@@ -115,4 +121,87 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
       BadRequest("Missing mandatory 'municipality' parameter")
     }
   }
+
+  /*
+   * Example JSON:
+   *
+   * [
+   *   {
+   *     "tie": 1,
+   *     "tienimet": [
+   *       {
+   *         "muutospvm": "2018-03-01",
+   *         "tienimi": "HELSINKI-TAMPERE",
+   *         "voimassaolo_alku": "2018-02-01",
+   *         "voimassaolo_loppu": null
+   *       },
+   *       {
+   *         "muutospvm": "2018-03-01",
+   *         "tienimi": "HELSINKI-TAMPERE-OLD",
+   *         "voimassaolo_alku": "2010-02-01",
+   *         "voimassaolo_loppu": "2018-02-01"
+   *       }
+   *     ]
+   *   },
+   *   {
+   *     "tie": 2,
+   *     "tienimet": [
+   *       {
+   *         "muutospvm": "2018-03-01",
+   *         "tienimi": "HELSINKI-TURKU",
+   *         "voimassaolo_alku": "2018-02-01",
+   *         "voimassaolo_loppu": null
+   *       }
+   *     ]
+   *   }
+   * ]
+   *
+   */
+  get("/tienimi/paivitetyt") {
+    contentType = formats("json")
+    val muutospvm = params.get("muutospvm")
+    if (!muutospvm.isDefined || muutospvm.get.isEmpty) {
+      val message = "Palvelun '/tienimi/paivitetyt' vaadittu parametri 'muutospvm' puuttuu."
+      logger.warn(message)
+      BadRequest(message)
+    } else {
+      try {
+        val changesSince = DateTime.parse(muutospvm.get, dateFormat)
+        val result = roadNameService.getUpdatedRoadNames(changesSince)
+        if (result.isLeft) {
+          BadRequest(result.left)
+        } else if (result.isRight) {
+          result.right.get.groupBy(_.roadNumber).values.map(
+            names => Map(
+              "tie" -> names.head.roadNumber,
+              "tienimet" -> names.map(
+                name => Map(
+                  "muutospvm" -> {
+                    if (name.validFrom.isDefined) name.validFrom.get.toString("yyyy-MM-dd") else null
+                  },
+                  "tienimi" -> name.roadName,
+                  "voimassaolo_alku" -> {
+                    if (name.startDate.isDefined) name.startDate.get.toString("yyyy-MM-dd") else null
+                  },
+                  "voimassaolo_loppu" -> {
+                    if (name.endDate.isDefined) name.endDate.get.toString("yyyy-MM-dd") else null
+                  }
+                )
+              ))
+          )
+        } else {
+          Seq.empty[Any]
+        }
+      } catch {
+        case e: IllegalArgumentException =>
+          val message = "Palvelun '/tienimi/paivitetyt' parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
+          logger.warn(message)
+          BadRequest(message)
+        case e if NonFatal(e) =>
+          logger.warn(e.getMessage, e)
+          BadRequest(e.getMessage)
+      }
+    }
+  }
+
 }

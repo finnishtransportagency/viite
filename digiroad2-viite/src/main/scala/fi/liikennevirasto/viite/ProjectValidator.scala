@@ -546,25 +546,22 @@ object ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        val otherTrackLinks = notCombinedLinks.filterNot(l => l.track == Combined || l.track==minTrackLink.track)
-        val minOtherTrackLink = otherTrackLinks.minBy(_.startAddrMValue)
-        val maxOtherTrackLink = otherTrackLinks.maxBy(_.endAddrMValue)
-        if (minTrackLink.startAddrMValue != minOtherTrackLink.startAddrMValue) {
+        if (!notCombinedLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
           Some(minTrackLink)
         }
-        else if (maxTrackLink.endAddrMValue != maxOtherTrackLink.endAddrMValue) {
+        else if (!notCombinedLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
           Some(maxTrackLink)
         } else None
       } else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if(trackInterval.size > 1){
+      if(trackInterval.nonEmpty){
         checkMinMaxTrack(trackInterval) match {
           case Some(link) => Seq(link)
           case None => {
             trackInterval.sliding(2).map(l => {
-              if (l.head.endAddrMValue != l.last.startAddrMValue) {
+               if (l.head.endAddrMValue != l.last.startAddrMValue && l.head.id != l.last.id) {
                 Some(l.head)
               } else None
             }).toSeq.flatten
@@ -727,11 +724,20 @@ object ProjectValidator {
 
     groupedProjectLinks.flatMap(group => {
       val projectLinks = group._2.filter(_.discontinuity == Discontinuity.ChangingELYCode)
-      val startRoad = projectLinks.head
-      val endRoad = projectLinks.last
-      val roadsValidation = evaluateBorderCheck(startRoad, endRoad, secondCheck = false)
-      val problemRoads = roadsValidation.filterNot(_.isEmpty).getOrElse(Seq())
-      error(ValidationErrorList.RoadNotEndingInElyBorder)(problemRoads)
+      val problemRoads = if (projectLinks.nonEmpty) {
+        val (startRoad, endRoad) = if (projectLinks.size == 1) {
+          (projectLinks.head, projectLinks.head)
+        } else {
+          (projectLinks.head, projectLinks.last)
+        }
+
+        val roadsValidation = evaluateBorderCheck(startRoad, endRoad, secondCheck = false)
+        roadsValidation.filterNot(_.isEmpty).getOrElse(Seq())
+      } else {
+        Seq.empty[BaseRoadAddress]
+      }
+      val uniqueProblemRoads = problemRoads.groupBy(_.id).map(_._2.head).toSeq
+      error(ValidationErrorList.RoadNotEndingInElyBorder)(uniqueProblemRoads)
     }).toSeq
   }
 
@@ -772,12 +778,20 @@ object ProjectValidator {
 
     val validationProblems = groupedProjectLinks.flatMap(group => {
       val projectLinks = group._2
-      val startRoad = projectLinks.head
-      val endRoad = projectLinks.last
-      val validationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, endRoad, secondCheck = true) else Option.empty[Seq[ProjectLink]]
+      val problemRoads = if (projectLinks.nonEmpty) {
+        val (startRoad, endRoad) = if (projectLinks.size == 1) {
+          (projectLinks.head, projectLinks.head)
+        } else {
+          (projectLinks.head, projectLinks.last)
+        }
+        val validationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, endRoad, secondCheck = true) else Option.empty[Seq[ProjectLink]]
+        validationResult.filterNot(_.isEmpty).getOrElse(Seq())
 
-      val problemRoads = validationResult.filterNot(_.isEmpty).getOrElse(Seq())
-      error(ValidationErrorList.RoadContinuesInAnotherEly)(problemRoads)
+      } else {
+        Seq.empty[BaseRoadAddress]
+      }
+      val uniqueProblemRoads = problemRoads.groupBy(_.id).map(_._2.head).toSeq
+      error(ValidationErrorList.RoadContinuesInAnotherEly)(uniqueProblemRoads)
 
     })
     validationProblems.toSeq
