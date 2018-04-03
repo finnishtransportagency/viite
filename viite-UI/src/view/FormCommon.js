@@ -48,7 +48,7 @@
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
         roadTypeDropdown() + '<br>' +
-        addSmallLabel('NIMI')+
+        addSmallLabel('NIMI') +
         addRoadNameField(roadName, selected[0].roadNameBlocked) +
         ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
