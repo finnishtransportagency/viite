@@ -396,12 +396,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap { reservation =>
           logger.debug(s"Reserve $reservation")
           val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber)
-          val mapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, newTransaction = false, frozenTimeVVHAPIServiceEnabled = useFrozenVVHLinks)
-            .map(rl => rl.linkId -> rl).toMap
+          val (suravageSource, regular) = addressesOnPart.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+          val suravageMapping = if (suravageSource.nonEmpty) {
+            roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet, false)
+              .map(rl => rl.linkId -> rl).toMap
+          } else {
+            Map.empty[Long, RoadLink]
+          }
+          val mapping = if (regular.nonEmpty) {
+            roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, newTransaction = false, frozenTimeVVHAPIServiceEnabled = useFrozenVVHLinks)
+              .map(rl => rl.linkId -> rl).toMap
+          } else {
+            Map.empty[Long, RoadLink]
+          }
+          val fullMapping = mapping ++ suravageMapping
           val reserved = checkAndReserve(project, reservation)
           if (reserved._1.isEmpty)
             throw new RuntimeException(s"Tie ${reservation.roadNumber} osa ${reservation.roadPartNumber} ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: ${reserved._2.get}.")
-          addressesOnPart.map(ra => newProjectTemplate(mapping(ra.linkId), ra, project))
+          addressesOnPart.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
         }
         logger.debug(s"Reserve done")
         val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
