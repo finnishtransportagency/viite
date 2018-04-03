@@ -215,6 +215,5 @@ object RoadNameDAO {
     val roads = roadNumbers.mkString(",")
     sqlu"""UPDATE ROAD_NAMES SET VALID_TO = ${new Date(endDate)} WHERE VALID_TO IS NULL AND ROAD_NUMBER in ($roads)""".execute
   }
-}
 
 }
