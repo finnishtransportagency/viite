@@ -482,7 +482,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       ProjectDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
       ProjectDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
-        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, modifiedBy = Some("I"))))
+        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, createdBy = Some("I"))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       ProjectValidator.checkRampContinuityCodes(updProject,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))) should have size 0
