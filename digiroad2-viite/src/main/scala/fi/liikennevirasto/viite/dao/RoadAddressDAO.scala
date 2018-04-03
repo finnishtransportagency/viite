@@ -1005,7 +1005,7 @@ object RoadAddressDAO {
        select distinct road_part_number
               from road_address ra
               where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL)
-              AND (END_DATE IS NULL OR END_DATE > sysdate)
+              AND (END_DATE IS NULL OR END_DATE > sysdate) order by road_part_number
       """.as[Long].list
   }
 
