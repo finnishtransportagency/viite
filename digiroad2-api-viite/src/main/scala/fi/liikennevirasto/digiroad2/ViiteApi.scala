@@ -670,7 +670,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectID = params.get("projectID").map(_.toLong)
 
     (rNumber, projectID) match{
-      case (Some(rNumber), Some(projectID)) =>{
+      case (Some(rNumber), Some(projectID)) => {
         try {
           roadNameService.getRoadNameByNumber(rNumber, projectID)
         } catch {
@@ -882,13 +882,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "originalGeometry" -> projectAddressLink.originalGeometry,
           "reversed" -> projectAddressLink.reversed,
           "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry),
-          "roadNameBlocked" -> (if(projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
         )
       else
         Map(
           "status" -> projectAddressLink.status.value,
           "reversed" -> projectAddressLink.reversed,
-          "roadNameBlocked" -> (if(projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
         ))
   }
 
