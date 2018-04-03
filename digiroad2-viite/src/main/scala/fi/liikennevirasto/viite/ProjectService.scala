@@ -1492,10 +1492,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
       .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
-    val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber))
-    if(existingNames.isEmpty && newNames.isEmpty){
-      throw new IllegalStateException("Road name was not found even in current addresses or project links.")
-    }
+    val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber) || l.roadName.isEmpty || l.roadName.get == null)
+
     RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
     getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = "TR")))
     projectLinks.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
