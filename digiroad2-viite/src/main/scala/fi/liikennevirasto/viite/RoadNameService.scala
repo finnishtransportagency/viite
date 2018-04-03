@@ -149,16 +149,16 @@ class RoadNameService() {
     }
   }
 
-  def getRoadNameByNumber(roadNumber: Long, projectID: Long) : Option[Map[String, Any]]= {
-    try{
-      withDynSession{
+  def getRoadNameByNumber(roadNumber: Long, projectID: Long): Option[Map[String, Any]] = {
+    try {
+      withDynSession {
         val currentRoadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
-        if(currentRoadNames.isEmpty){
+        if (currentRoadNames.isEmpty) {
           val projectRoadNames = ProjectLinkNameDAO.get(roadNumber, projectID)
-          if(projectRoadNames.isEmpty) {
+          if (projectRoadNames.isEmpty) {
             return None
           }
-          else{
+          else {
             Some(Map("roadName" -> projectRoadNames.get.roadName, "isCurrent" -> false))
           }
         }
@@ -167,12 +167,12 @@ class RoadNameService() {
       }
     }
     catch {
-      case longParsingException: NumberFormatException => Some(Map("error"->"Could not parse road number"))
-      case e if NonFatal(e) => Some(Map("error"->"Unknown error"))
+      case longParsingException: NumberFormatException => Some(Map("error" -> "Could not parse road number"))
+      case e if NonFatal(e) => Some(Map("error" -> "Unknown error"))
     }
   }
 
-  def getHasCurrentRoadName (roadNumber: Long): Boolean={
+  def getHasCurrentRoadName(roadNumber: Long): Boolean = {
     withDynSession {
       RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber).nonEmpty
     }
@@ -180,6 +180,6 @@ class RoadNameService() {
 
 }
 
-  class RoadNameException(string: String) extends RuntimeException {
-    override def getMessage: String = string
-  }
+class RoadNameException(string: String) extends RuntimeException {
+  override def getMessage: String = string
+}
