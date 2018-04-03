@@ -266,7 +266,7 @@
     };
 
     var coordButton = function(index, coordinates){
-      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">Korjaa</button>';
       return {index:index, html:html, coordinates:coordinates};
     };
 
@@ -297,7 +297,7 @@
         }
         errorLines += '<div class="form-project-errors-list">' +
           addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
-          addSmallLabel('ERROR: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
+          addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
           '</div>';
