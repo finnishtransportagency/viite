@@ -5,6 +5,7 @@ import java.sql.Date
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import org.joda.time.format.DateTimeFormat
@@ -134,6 +135,29 @@ object RoadNameDAO {
       Seq.empty[RoadName]
   }
 
+  /**
+    * Fetches road names that are updated after the given date.
+    *
+    * @param since
+    * @return
+    */
+  def getUpdatedRoadNames(since: DateTime): Seq[RoadName] = {
+    if (since != null) {
+      val sinceString = since.toString("yyyy-MM-dd")
+      val query =
+        s"""
+        SELECT * FROM road_names
+        WHERE road_number IN (
+            SELECT DISTINCT road_number FROM road_names
+            WHERE valid_to IS NULL AND valid_from >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
+          ) AND valid_to IS NULL
+        ORDER BY road_number, start_date desc"""
+      queryList(query)
+    } else {
+      Seq.empty[RoadName]
+    }
+  }
+
   def getRoadNamesById(id: Long): RoadName = {
     val query =
       s"""$roadsNameQueryBase Where id = $id AND valid_to IS NULL OR valid_to > sysdate"""
@@ -191,4 +215,6 @@ object RoadNameDAO {
     val roads = roadNumbers.mkString(",")
     sqlu"""UPDATE ROAD_NAMES SET VALID_TO = ${new Date(endDate)} WHERE VALID_TO IS NULL AND ROAD_NUMBER in ($roads)""".execute
   }
+}
+
 }

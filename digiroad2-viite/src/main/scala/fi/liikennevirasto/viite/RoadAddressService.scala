@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 import java.net.ConnectException
+import java.util.Date
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -13,6 +14,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
 import fi.liikennevirasto.viite.process._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.SortedMap
@@ -153,15 +155,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       )
     val (historyLinkAddresses, addresses, floating) = (roadAddressResults.historyLinkAddresses, roadAddressResults.current, roadAddressResults.floating)
     // We should not have any road address history for links that do not have current address (they should be terminated)
-    val addressMaps = addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val normalRoadLinkIds = roadLinks.map(_.linkId).toSet
     val suravageLinkIds = suravageLinks.map(_.linkId).toSet
     val allRoadLinks = roadLinks++complementaryLinks
     val linkIds = complementaryLinkIds ++ normalRoadLinkIds ++ suravageLinkIds
 
-    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(),
-      addressMaps)
+    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(),  addresses)
     val missedRL = withTiming(
       withDynTransaction {
         if (everything || !frozenTimeVVHAPIServiceEnabled) {
@@ -227,8 +227,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val missingViiteRoadAddress = if(!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
-    val addressMaps = addresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
-
     val addressLinkIds = addresses.map(_.linkId).toSet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = if (!frozenTimeVVHAPIServiceEnabled) roadLinkService.getChangeInfoFromVVHF(addressLinkIds) else Future(Seq())
@@ -240,12 +238,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val linkIds = roadLinks.map(_.linkId).toSet
 
-    val filteredChangedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf).filter(crl => crl.oldId.exists(id =>
-      linkIds.contains(id) && addresses.exists(ra => crl.affects(ra.linkId, ra.adjustedTimestamp))))
+    val changedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf)
     logger.info("End change info in %.3f sec".format((System.currentTimeMillis() - fetchVVHEndTime) * 0.001))
 
-    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(),
-      addressMaps)
+    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(), addresses)
 
     val (changedFloating, missingFloating) = historyLinkAddresses.partition(ral => linkIds.contains(ral.linkId))
 
@@ -310,16 +306,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
 
   def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
-    val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
-      || x.changeType == ChangeType.CombinedRemovedPart.value)
-    val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
-    val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
-      || x.changeType == ChangeType.CombinedRemovedPart.value)
-    sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
+      val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
+        || x.changeType == ChangeType.CombinedRemovedPart.value)
+      val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
+      val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
+        || x.changeType == ChangeType.CombinedRemovedPart.value)
+      sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
   }
 
-  def applyChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], addresses:
-  Map[(Long, Long), LinkRoadAddressHistory]): Seq[LinkRoadAddressHistory] = {
+  def filterRelevantChanges(roadAddresses: Seq[RoadAddress], allChanges: Seq[ChangeInfo]): Seq[ChangeInfo] = {
+    val groupedAddresses = roadAddresses.groupBy(_.linkId)
+    val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
+    allChanges.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
+  }
+
+  def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
+
+
+    val changes = filterRelevantChanges(roadAddresses, allChanges)
+    val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
+
     val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
@@ -578,7 +584,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def mergeRoadAddressHistory(data: RoadAddressMerge): Unit = {
+    try {
+      withDynTransaction {
+        mergeRoadAddressHistoryInTX(data)
+      }
+    } catch {
+      case ex: InvalidAddressDataException => logger.error("Duplicate merging(s) found, skipped.", ex)
+      case ex: ConnectException => logger.error("A connection problem has occurred.", ex)
+      case ex: Exception => logger.error("An unexpected error occurred.", ex)
+    }
+  }
+
   def mergeRoadAddressInTX(data: RoadAddressMerge): Unit = {
+    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
+    if (unMergedCount != data.merged.size)
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
+    val mergedCount = expireRoadAddresses(data.merged)
+    if (mergedCount == data.merged.size)
+      createMergedSegments(data.created)
+    else
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows not updated")
+  }
+
+  def mergeRoadAddressHistoryInTX(data: RoadAddressMerge): Unit = {
     val unMergedCount = RoadAddressDAO.queryById(data.merged).size
     if (unMergedCount != data.merged.size)
       throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
@@ -862,6 +891,62 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getRoadNumbers(): Seq[Long] = {
+    withDynSession {
+      RoadAddressDAO.getRoadNumbers()
+    }
+  }
+
+  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+    }
+  }
+
+  def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
+    withDynSession{
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumber(road, tracks))
+    }
+  }
+
+  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
+    }
+  }
+
+  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
+    }
+  }
+
+  def getRoadAddressByLinkIds(linkIds: Set[Long], withFloating: Boolean): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, false, false)
+    }
+  }
+
+  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
+
+    val roadAddresses =
+      withDynTransaction {
+        RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
+      }
+
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+
+    roadAddresses.flatMap { roadAddress =>
+      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+        ChangedRoadAddress(
+          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
+          link = roadLink
+        )
+      }
+    }
+  }
+
   /**
     * This will define what road_addresses should have a black outline according to the following rule:
     * Address must have road type = 3 (MunicipalityStreetRoad)
@@ -924,6 +1009,8 @@ case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val historySegments: Seq[RoadAddress] = v._2
   val allSegments: Seq[RoadAddress] = currentSegments ++ historySegments
 }
+
+case class ChangedRoadAddress(roadAddress : RoadAddress, link: RoadLink)
 
 object AddressConsistencyValidator {
 
