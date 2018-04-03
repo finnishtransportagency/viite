@@ -49,42 +49,44 @@ class RoadNameService() {
   }
 
   def addOrUpdateRoadNamesInTx(roadNames: Seq[RoadNameRows], user: User, newTransaction: Boolean = true): Option[String] = {
-    if(newTransaction)
-    withDynTransaction {
-      addOrUpdateRoadNames(roadNames, user)
-    } else
+    if (newTransaction) {
+      withDynTransaction {
+        addOrUpdateRoadNames(roadNames, user)
+      }
+    } else {
       addOrUpdateRoadNames(roadNames, user)
     }
+  }
 
   def addOrUpdateRoadNames(roadNames: Seq[RoadNameRows], user: User): Option[String] = {
     try {
-      if(singleEndDateExpiration(roadNames)._1)
+      if (singleEndDateExpiration(roadNames)._1)
         throw new RoadNameException(s"Setting end date would make current road name disabled")
       val (isRoadNameExpiration, newName) = singleNameExpiration(roadNames)
-      if(isRoadNameExpiration){
+      if (isRoadNameExpiration) {
         val road = RoadNameDAO.getRoadNamesById(roadNames.head.roadId)
         RoadNameDAO.expire(roadNames.head.roadId, user)
         RoadNameDAO.create(road.copy(createdBy = user.username, roadName = newName))
       } else {
-      roadNames.foreach(rn => {
-        val fieldMaps = decodeFields(rn.editions)
-        if (rn.roadId == NewRoadName) {
-          val roadNumber = fieldMaps.get("roadNumber")
-          val roadName = fieldMaps.get("roadName")
-          val startDate = fieldMaps.get("startDate") match {
-            case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
-            case _ => None
+        roadNames.foreach(rn => {
+          val fieldMaps = decodeFields(rn.editions)
+          if (rn.roadId == NewRoadName) {
+            val roadNumber = fieldMaps.get("roadNumber")
+            val roadName = fieldMaps.get("roadName")
+            val startDate = fieldMaps.get("startDate") match {
+              case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
+              case _ => None
+            }
+            val endDate = fieldMaps.get("endDate") match {
+              case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
+              case _ => None
+            }
+            val road = RoadName(rn.roadId, roadNumber.get.toLong, roadName.get, startDate, endDate, createdBy = user.username)
+            RoadNameDAO.create(road)
+          } else {
+            RoadNameDAO.update(rn.roadId, fieldMaps, user)
           }
-          val endDate = fieldMaps.get("endDate") match {
-            case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
-            case _ => None
-          }
-          val road = RoadName(rn.roadId, roadNumber.get.toLong, roadName.get, startDate, endDate, createdBy = user.username)
-          RoadNameDAO.create(road)
-        } else {
-          RoadNameDAO.update(rn.roadId, fieldMaps, user)
-        }
-      })
+        })
       }
       None
     } catch {
