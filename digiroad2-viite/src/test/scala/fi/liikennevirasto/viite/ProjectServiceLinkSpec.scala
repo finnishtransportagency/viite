@@ -533,9 +533,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val maxBefore = if(beforeChange.nonEmpty) beforeChange.maxBy(_.endAddrMValue).endAddrMValue else 0
       val maxAfter = if(changedLinks.nonEmpty) changedLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
-
       maxBefore should be (maxAfter)
-
       val combined = changedLinks.filter(_.track == Track.Combined)
       val right = changedLinks.filter(_.track == Track.RightSide)
       val left = changedLinks.filter(_.track == Track.LeftSide)
