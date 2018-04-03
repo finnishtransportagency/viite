@@ -138,7 +138,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       ProjectDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
-      ProjectDAO.create(projectLinks.map(l => l.copy(id = NewRoadAddress, roadPartNumber = 2L, modifiedBy = Some("User"),
+      ProjectDAO.create(projectLinks.map(l => l.copy(id = NewRoadAddress, roadPartNumber = 2L, createdBy = Some("User"),
         geometry = l.geometry.map(_ + Vector3d(0.0, 40.0, 0.0)))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(updProject, projectLinks)
@@ -317,7 +317,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       ProjectDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
       ProjectDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
-        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, modifiedBy = Some("I"))))
+        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, createdBy = Some("I"))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       ProjectValidator.checkRampContinuityCodes(updProject,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))) should have size 0
@@ -462,4 +462,58 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       validationErrors.size should be(0)
     }
   }
+
+  test("Minor discontinuous end ramp road between parts (of any kind) should not give error") {
+    runWithRollback {
+      val project = setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val errors = ProjectValidator.checkRampContinuityCodes(project, projectLinks)
+      errors should have size 0
+      val (starting, last) = projectLinks.splitAt(3)
+      val ra = Seq(
+        RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, AgainstDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          floating = false, Seq(Point(2.0, 30.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
+        RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          10L, 20L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          floating = false, Seq(Point(2.0, 30.0), Point(7.0, 35.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
+        RoadAddress(NewRoadAddress, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          20L, 30L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+          floating = false, Seq(Point(7.0, 35.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
+      RoadAddressDAO.create(ra)
+
+      ProjectDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
+      ProjectDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
+        .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, createdBy = Some("I"))))
+      val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
+      ProjectValidator.checkRampContinuityCodes(updProject,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))) should have size 0
+    }
+  }
+
+  test("Project Links could be both Minor discontinuity or Discontinuous if next part exists in road address / project link table and is not connected") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+        floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
+      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
+      errors should have size 1
+      errors.head.validationError should be(MajorDiscontinuityFound)
+
+      val (starting, last) = projectLinks.splitAt(3)
+      val errorsUpd = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous)))
+      errorsUpd should have size 0
+
+      val errorsUpd2 = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
+      errorsUpd2 should have size 0
+    }
+  }
+
 }
