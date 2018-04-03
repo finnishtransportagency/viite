@@ -17,47 +17,46 @@
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
-    // TODO: handle status-text for real
-    // TODO: table not responsive
-    changeTable.append('<div class="change-table-header font-resize">Validointi ok. Alla näet muutokset projektissa.</div>');
-    changeTable.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
-    changeTable.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
-    changeTable.append('<div class="change-table-borders">' +
+    var changeTableHeader = $('<div class="change-table-fixed-header"></div>');
+    changeTableHeader.append('<div class="change-table-header font-resize">Validointi ok. Alla näet muutokset projektissa.</div>');
+    changeTableHeader.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
+    changeTableHeader.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
+    changeTableHeader.append('<div class="change-table-borders">' +
       '<div id ="change-table-borders-changetype"></div>' +
       '<div id ="change-table-borders-source"></div>' +
       '<div id ="change-table-borders-reversed"></div>' +
       '<div id ="change-table-borders-target"></div></div>');
-    changeTable.append('<div class="change-table-sections">' +
+    changeTableHeader.append('<div class="change-table-sections">' +
       '<label class="change-table-heading-label" id="label-type">Ilmoitus</label>' +
       '<label class="change-table-heading-label" id="label-source">Nykyosoite</label>' +
       '<label class="change-table-heading-label" id="label-reverse"></label>' +
       '<label class="change-table-heading-label" id="label-target">Uusi osoite</label>');
-    changeTable.append('<div class="change-table-dimension-headers">' +
+    changeTableHeader.append('<div class="change-header">' +
+      '<label class="project-change-table-dimension-header">TIE</label>' +
+      '<label class="project-change-table-dimension-header">AJR</label>' +
+      '<label class="project-change-table-dimension-header">AOSA</label>' +
+      '<label class="project-change-table-dimension-header">AET</label>' +
+      '<label class="project-change-table-dimension-header">LET</label>' +
+      '<label class="project-change-table-dimension-header">PIT</label>' +
+      '<label class="project-change-table-dimension-header">JATK</label>' +
+      '<label class="project-change-table-dimension-header">TIETY</label>' +
+      '<label class="project-change-table-dimension-header">ELY</label>' +
+      '<label class="project-change-table-dimension-header target">KÄÄNTÖ</label>' +
+      '<label class="project-change-table-dimension-header">TIE</label>' +
+      '<label class="project-change-table-dimension-header">AJR</label>' +
+      '<label class="project-change-table-dimension-header">OSA</label>' +
+      '<label class="project-change-table-dimension-header">AET</label>' +
+      '<label class="project-change-table-dimension-header">LET</label>' +
+      '<label class="project-change-table-dimension-header">PIT</label>' +
+      '<label class="project-change-table-dimension-header">JATK</label>' +
+      '<label class="project-change-table-dimension-header">TIETY</label>' +
+      '<label class="project-change-table-dimension-header">ELY</label>');
+
+    changeTableHeader.append('<div class="change-table-dimension-headers" style="overflow-y: auto;">' +
       '<table class="change-table-dimensions">' +
-      '<tr>' +
-      '<td class="project-change-table-dimension-first-h"></td>' +
-      '<td class="project-change-table-dimension-h">TIE</td>' +
-      '<td class="project-change-table-dimension-h">AJR</td>' +
-      '<td class="project-change-table-dimension-h">OSA</td>' +
-      '<td class="project-change-table-dimension-h">AET</td>' +
-      '<td class="project-change-table-dimension-h">LET</td>' +
-      '<td class="project-change-table-dimension-h">PIT</td>' +
-      '<td class="project-change-table-dimension-h">JATK</td>' +
-      '<td class="project-change-table-dimension-h dimension-road-type">TIETY</td>' +
-      '<td class="project-change-table-dimension-h">ELY</td>' +
-      '<td class="project-change-table-dimension-h dimension-reversed">&nbsp;KÄÄNTÖ</td>' +
-      '<td class="project-change-table-dimension-h">TIE</td>' +
-      '<td class="project-change-table-dimension-h">AJR</td>' +
-      '<td class="project-change-table-dimension-h">OSA</td>' +
-      '<td class="project-change-table-dimension-h">AET</td>' +
-      '<td class="project-change-table-dimension-h">LET</td>' +
-      '<td class="project-change-table-dimension-h">PIT</td>' +
-      '<td class="project-change-table-dimension-h">JATK</td>' +
-      '<td class="project-change-table-dimension-h dimension-road-type-h">TIETY</td>' +
-      '<td class="project-change-table-dimension-h dimension-last-h">ELY</td>' +
-      '</tr>' +
       '</table>' +
       '</div>');
+    changeTable.append(changeTableHeader);
 
     function show() {
       $('.container').append(changeTable.toggle());
@@ -65,6 +64,7 @@
       interact('.change-table-frame').unset();
       bindEvents();
       getChanges();
+      setTableHeight();
       enableTableInteractions();
     }
 
@@ -94,6 +94,12 @@
       projectChangeInfoModel.getChanges(currentProject.project.id);
     }
 
+    function setTableHeight() {
+      var changeTableHeight = parseInt(changeTable.height());
+      var headerHeight = parseInt($('.change-table-header').height()) + parseInt($('.change-table-sections').height()) + parseInt($('.change-header').height());
+      $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
+    }
+
     function bindEvents(){
       $('.row-changes').remove();
       eventbus.once('projectChanges:fetched', function(projectChangeData) {
@@ -118,6 +124,7 @@
             }
             htmlTable += '</tr>';
           });
+          setTableHeight();
         }
         $('.row-changes').remove();
         $('.change-table-dimensions').append($(htmlTable));
@@ -161,6 +168,7 @@
           $('[id=sizeSymbol]').text("_");
           windowMaximized=true;
         }
+        setTableHeight();
       });
 
       changeTable.on('click', 'button.close', function (){
@@ -272,6 +280,7 @@
           $('[id=change-table-borders-source]').height(parseFloat(target.style.height) - 50 + 'px');
           $('[id=change-table-borders-reversed]').height(parseFloat(target.style.height) - 50 + 'px');
           $('[id=change-table-borders-changetype]').height(parseFloat(target.style.height) - 50 + 'px');
+          setTableHeight();
         });
     }
 
