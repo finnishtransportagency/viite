@@ -182,7 +182,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val newSize = currentSize + 1
       val roadAddress = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber)
       roadAddress should have size(newSize)
-      roadAddress.head.modifiedBy.get should be (username)
+      roadAddress.head.createdBy.get should be (username)
     }
   }
 
