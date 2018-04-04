@@ -929,10 +929,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)), userName)
   }
 
+  def revertRoadName(projectId: Long, roadNumber: Long): Unit = {
+    ProjectLinkNameDAO.revert(roadNumber, projectId)
+    val roadAddressName = RoadNameDAO.getCurrentRoadName(roadNumber)
+    val projectRoadName = ProjectLinkNameDAO.get(roadNumber, projectId)
+    if (roadAddressName.nonEmpty && projectRoadName.isEmpty) {
+      ProjectLinkNameDAO.create(projectId, roadNumber,roadAddressName.get.roadName)
+    }
+  }
+
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    ProjectLinkNameDAO.revert(roadNumber, projectId)
+    revertRoadName(projectId, roadNumber)
     RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet).foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) if mod.geometry.nonEmpty =>

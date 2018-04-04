@@ -1381,4 +1381,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("if road name exists the revert should put the original name in the project link name if no other exists in project") {
+    runWithRollback {
+      val testRoad: (Long, Long, String) = {(99999L, 1L, "new name")}
+      val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L),roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
+      sqlu"""INSERT INTO ROAD_NAMES VALUES (ROAD_NAME_SEQ.NEXTVAL, 99999, 'test name', sysdate, null, sysdate, null, 'test user', sysdate)""".execute
+      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be ("new name")
+      val linksToRevert = links.map(l => {
+        LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
+      })
+      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
+      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be ("test name")
+    }
+  }
+
 }
