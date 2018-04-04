@@ -10,15 +10,22 @@
     var preSplitData = null;
     var nearest = null;
 
-    var open = function (linkid, multiSelect) {
+    var open = function (linkId, multiSelect) {
       if (!multiSelect) {
-        current = projectLinkCollection.getByLinkId([linkid]);
-        ids = [linkid];
+        current = projectLinkCollection.getByLinkId([linkId]);
+        ids = [linkId];
       } else {
-        ids = projectLinkCollection.getMultiSelectIds(linkid);
+        ids = projectLinkCollection.getMultiSelectIds(linkId);
         current = projectLinkCollection.getByLinkId(ids);
       }
-      eventbus.trigger('projectLink:clicked', get(linkid));
+      eventbus.trigger('projectLink:clicked', get(linkId));
+    };
+
+    var openWithErrorMessage = function (linkId, errorMessage) {
+        current = projectLinkCollection.getByLinkId([linkId]);
+        ids = [linkId];
+
+        eventbus.trigger('projectLink:errorClicked', get(linkId), errorMessage);
     };
 
     var orderSplitParts = function(links) {
@@ -252,6 +259,7 @@
 
     return {
       open: open,
+      openWithErrorMessage: openWithErrorMessage,
       openShift: openShift,
       openSplit: openSplit,
       get: get,

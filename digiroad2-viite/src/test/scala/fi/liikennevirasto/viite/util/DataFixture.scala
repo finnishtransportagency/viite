@@ -323,6 +323,26 @@ object DataFixture {
 
   }
 
+  def fuseRoadAddressHistory(): Unit = {
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
+
+    elyCodes.foreach(ely => {
+      println(s"Going to fuse road history for ely $ely")
+      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
+      println(s"Got ${roads.size} history for ely $ely")
+      val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
+      val kept = fusedRoadAddresses.map(_.id).toSet
+      val removed = roads.map(_.id).toSet.diff(kept)
+      val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
+      println(s"Fusing ${roadAddressesToRegister.size} roads for ely $ely")
+      if (roadAddressesToRegister.nonEmpty)
+        roadAddressService.mergeRoadAddressHistory(RoadAddressMerge(removed, roadAddressesToRegister))
+    })
+  }
+
   private def showFreezeInfo() = {
     println("Road link geometry freeze is active; exiting without changes")
   }
@@ -434,6 +454,8 @@ object DataFixture {
         correctNullElyCodeProjects()
       case Some("check_lrm_position_history") =>
         checkLrmPositionHistory()
+      case Some("fuse_road_address_history") =>
+        fuseRoadAddressHistory()
       case Some("test") =>
         tearDown()
         setUpTest()
