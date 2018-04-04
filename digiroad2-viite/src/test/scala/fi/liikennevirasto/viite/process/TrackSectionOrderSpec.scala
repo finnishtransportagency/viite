@@ -171,7 +171,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     list.permutations.forall(l => !TrackSectionOrder.isRoundabout(l)) should be (true)
   }
 
-  test("Pick the most in right project link on orderProjectLinksTopologyByGeometry"){
+  test("Pick the most in right project link on orderProjectLinksTopologyByGeometry") {
     //                                 (25,15)
     //                                  / |
     //                                /   |
@@ -182,12 +182,12 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //   |---------0L---------|-----1L----|
     //(10,10)            (20,10)       (30,10)
     val projectLinks = List(
-      dummyProjectLink(1L, Seq(Point(20,10), Point(30,10))),
-      dummyProjectLink(0L, Seq(Point(10,10), Point(15,10), Point(20,10))),
-      dummyProjectLink(2L, Seq(Point(20,10), Point(25,15), Point(30,10)))
+      dummyProjectLink(1L, Seq(Point(20, 10), Point(30, 10))),
+      dummyProjectLink(0L, Seq(Point(10, 10), Point(15, 10), Point(20, 10))),
+      dummyProjectLink(2L, Seq(Point(20, 10), Point(25, 15), Point(30, 10)))
     )
 
-    val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10,10),Point(10,10)), projectLinks)
+    val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10, 10), Point(10, 10)), projectLinks)
 
     ordered.map(_.linkId) should be (List(0L, 1L, 2L))
   }

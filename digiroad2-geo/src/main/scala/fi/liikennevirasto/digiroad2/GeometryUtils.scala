@@ -289,10 +289,10 @@ object GeometryUtils {
     (180 + (rad * (180 / Math.PI))).asInstanceOf[Int]
   }
 
-  def splitFromPoint(geometry: Seq[Point], point: Point, epsilon: Double): Option[Seq[Point]] ={
-    calculatePointFromLinearReference(geometry, geometryLength(geometry) / 2).map{
+  def splitFromPoint(geometry: Seq[Point], point: Point, epsilon: Double): Option[Seq[Point]] = {
+    calculatePointFromLinearReference(geometry, geometryLength(geometry) / 2).map {
       midPoint =>
-        if(areAdjacent(geometry.head, point, epsilon))
+        if (areAdjacent(geometry.head, point, epsilon))
           Seq(point, midPoint)
         else
           Seq(midPoint, point)
@@ -309,6 +309,7 @@ object GeometryUtils {
 
   def connectionPoint(geometries: Seq[Seq[Point]], epsilon: Double): Option[Point] = {
     def getAdjacent(point: Point): Boolean = geometries.tail.forall(geometry => areAdjacent(geometry, point, epsilon))
+
     geometries.size match {
       case 0 => None
       case _ =>
