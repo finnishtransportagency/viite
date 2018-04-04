@@ -14,6 +14,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
 import fi.liikennevirasto.viite.process._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.SortedMap
@@ -583,7 +584,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def mergeRoadAddressHistory(data: RoadAddressMerge): Unit = {
+    try {
+      withDynTransaction {
+        mergeRoadAddressHistoryInTX(data)
+      }
+    } catch {
+      case ex: InvalidAddressDataException => logger.error("Duplicate merging(s) found, skipped.", ex)
+      case ex: ConnectException => logger.error("A connection problem has occurred.", ex)
+      case ex: Exception => logger.error("An unexpected error occurred.", ex)
+    }
+  }
+
   def mergeRoadAddressInTX(data: RoadAddressMerge): Unit = {
+    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
+    if (unMergedCount != data.merged.size)
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
+    val mergedCount = expireRoadAddresses(data.merged)
+    if (mergedCount == data.merged.size)
+      createMergedSegments(data.created)
+    else
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows not updated")
+  }
+
+  def mergeRoadAddressHistoryInTX(data: RoadAddressMerge): Unit = {
     val unMergedCount = RoadAddressDAO.queryById(data.merged).size
     if (unMergedCount != data.merged.size)
       throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
@@ -867,6 +891,62 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getRoadNumbers(): Seq[Long] = {
+    withDynSession {
+      RoadAddressDAO.getRoadNumbers()
+    }
+  }
+
+  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+    }
+  }
+
+  def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
+    withDynSession{
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumber(road, tracks))
+    }
+  }
+
+  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
+    }
+  }
+
+  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
+    }
+  }
+
+  def getRoadAddressByLinkIds(linkIds: Set[Long], withFloating: Boolean): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, false, false)
+    }
+  }
+
+  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
+
+    val roadAddresses =
+      withDynTransaction {
+        RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
+      }
+
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+
+    roadAddresses.flatMap { roadAddress =>
+      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+        ChangedRoadAddress(
+          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
+          link = roadLink
+        )
+      }
+    }
+  }
+
   /**
     * This will define what road_addresses should have a black outline according to the following rule:
     * Address must have road type = 3 (MunicipalityStreetRoad)
@@ -929,6 +1009,8 @@ case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val historySegments: Seq[RoadAddress] = v._2
   val allSegments: Seq[RoadAddress] = currentSegments ++ historySegments
 }
+
+case class ChangedRoadAddress(roadAddress : RoadAddress, link: RoadLink)
 
 object AddressConsistencyValidator {
 
