@@ -222,9 +222,28 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       mockForProject(id)
       projectService.changeDirection(id,5,207, projectLinks.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)),"test") should be (None)
       val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
+      val maxBefore = if(projectLinks.nonEmpty) projectLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
+      val maxAfter = if(updatedProjectLinks.nonEmpty) updatedProjectLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
+      maxBefore should be (maxAfter)
+      val combined = updatedProjectLinks.filter(_.track == Track.Combined)
+      val right = updatedProjectLinks.filter(_.track == Track.RightSide)
+      val left = updatedProjectLinks.filter(_.track == Track.LeftSide)
+
+      (combined++right).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]){ case (seq, plink) =>
+        if(seq.nonEmpty)
+          seq.last.endAddrMValue should be (plink.startAddrMValue)
+        seq++Seq(plink)
+      }
+
+      (combined++left).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]){ case (seq, plink) =>
+        if(seq.nonEmpty)
+          seq.last.endAddrMValue should be (plink.startAddrMValue)
+        seq++Seq(plink)
+      }
       updatedProjectLinks.foreach(x=>x.reversed should be (true))
       projectService.changeDirection(id,5,207, projectLinks.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)),"test")
       val secondUpdatedProjectLinks = ProjectDAO.getProjectLinks(id)
+      projectLinks.sortBy(_.endAddrMValue).map(_.geometry).zip(secondUpdatedProjectLinks.sortBy(_.endAddrMValue).map(_.geometry)).forall {case (x, y) => x == y}
       secondUpdatedProjectLinks.foreach(x=>x.reversed should be (false))
     }
   }
