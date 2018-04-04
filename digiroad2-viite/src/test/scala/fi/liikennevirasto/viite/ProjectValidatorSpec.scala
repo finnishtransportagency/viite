@@ -219,7 +219,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       ProjectDAO.createRoadAddressProject(project)
       ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
-      ProjectDAO.create(Seq(projectLink(0L, 10L, Combined, id, LinkStatus.Terminated)).zip(Seq(roadAddress)).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
+      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated)).zip(Seq(roadAddress)).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
         roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject)
@@ -402,48 +402,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("project track codes should be consistent when adding one simple link with track Combined") {
     runWithRollback {
-      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
-      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
       val validationErrors = ProjectValidator.checkTrackCode(project, projectLinks)
       validationErrors.size should be(0)
     }
   }
 
-  test("validator should return an issue whenever a road gets terminated and adjacent to that same road lies other roads with discontinuity value = 1") {
-    runWithRollback {
-      testDataForCheckTerminationContinuity()
-      val testRoad = {(27L, 1L, "name")}
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, Seq(testRoad), Discontinuity.ChangingELYCode)
-
-      val validationErrors = ProjectValidator.checkTerminationContinuity(project, projectLinks)
-      validationErrors.size should be(1)
-      validationErrors.head.validationError.value should be(TerminationContinuity.value)
-    }
-  }
-
-  test("validator should return an issue whenever a road gets terminated and adjacent to that same road lies other roads with discontinuity value = 1") {
-    runWithRollback {
-      testDataForCheckTerminationContinuity()
-      val testRoad = {(27L, 1L, "name")}
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, Seq(testRoad), Discontinuity.ChangingELYCode)
-
-      val validationErrors = ProjectValidator.checkTerminationContinuity(project, projectLinks)
-      validationErrors.size should be(1)
-      validationErrors.head.validationError.value should be(TerminationContinuity.value)
-    }
-  }
-
-  test("validator should NOT return an issue whenever a road gets terminated and adjacent lies other roads with discontinuity value = 1," +
-    "that share the same road number, track code and are adjacent between them") {
-    runWithRollback {
-      testDataForCheckTerminationContinuity(true)
-      val testRoad: (Long, Long, String) = {(16320L, 1L, "name")}
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.Terminated, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, Seq(testRoad), Discontinuity.ChangingELYCode)
-
-      val validationErrors = ProjectValidator.checkTerminationContinuity(project, projectLinks)
-      validationErrors.size should be(0)
-    }
-  }
 
   test("project track codes should be consistent when adding one simple link with track Combined") {
     runWithRollback {
@@ -455,7 +419,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("Minor discontinuous end ramp road between parts (of any kind) should not give error") {
     runWithRollback {
-      val project = setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
+      val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val errors = ProjectValidator.checkRampContinuityCodes(project, projectLinks)
       errors should have size 0
@@ -486,8 +450,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("Project Links could be both Minor discontinuity or Discontinuous if next part exists in road address / project link table and is not connected") {
     runWithRollback {
-      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
-      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
         floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
