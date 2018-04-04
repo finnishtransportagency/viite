@@ -222,7 +222,7 @@
       });
 
       eventbus.on('projectLink:errorClicked', function(selected, errorMessage) {
-          selectedProjectLink = selected;
+          selectedProjectLink = [selected[0]];
           var currentProject = projectCollection.getCurrentProject();
           formCommon.clearInformationContent();
           rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink, errorMessage));
