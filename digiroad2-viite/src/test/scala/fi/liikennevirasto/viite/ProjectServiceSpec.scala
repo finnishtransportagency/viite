@@ -819,6 +819,42 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("check the length of a road") {
+    val roadNumber = 1943845
+    val roadStartPart = 1
+    val roadEndPart = 2
+    val roadlink = RoadLink(12345L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadlink))
+    runWithRollback {
+      val id1 = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val reservation = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
+      reservation.right.get.size should be(0)
+      RoadAddressDAO.create(ra)
+      val id2 = RoadAddressDAO.getNextRoadAddressId
+      val ra2 = Seq(RoadAddress(id2, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      RoadAddressDAO.create(ra2)
+      //inserting a historic road for part 2
+      val id3 = RoadAddressDAO.getNextRoadAddressId
+      val ra3 = Seq(RoadAddress(id3, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 25L,
+        Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1901-02-03")), Option("tester"), 0, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 9.8), Point(0.0, 25)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      RoadAddressDAO.create(ra3)
+      val reservationAfterB = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
+      reservationAfterB.right.get.size should be(2)
+      reservationAfterB.right.get.map(_.roadNumber).distinct.size should be(1)
+      reservationAfterB.right.get.map(_.roadNumber).distinct.head should be(roadNumber)
+      val part2AddrLength = (ra2++ra3).filter(_.endDate.isEmpty).maxBy(_.endAddrMValue).endAddrMValue
+      reservationAfterB.right.get.filter(r =>r.roadPartNumber == roadEndPart).head.addressLength.get should be (part2AddrLength)
+    }
+  }
+
   test("get the road address project") {
     var count = 0
     runWithRollback {
