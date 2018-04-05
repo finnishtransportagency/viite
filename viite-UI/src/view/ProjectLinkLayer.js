@@ -85,6 +85,14 @@
       zIndex: RoadZIndex.VectorLayer.value
     });
 
+    var getSelectedId = function (selected) {
+      if (!_.isUndefined(selected.id) && selected.id > 0) {
+        return selected.id;
+      } else {
+        return selected.linkId;
+      }
+    };
+
     var showChangesAndSendButton = function () {
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
@@ -153,11 +161,11 @@
         return;
       if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)) {
-          var clickedIds = projectCollection.getMultiSelectIds(selection.projectLinkData.linkId);
+          var clickedIds = projectCollection.getMultiProjectLinks(getSelectedId(selection.projectLinkData));
           var previouslySelectedIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
             return selected.linkId;
           });
-          if (_.contains(previouslySelectedIds, selection.projectLinkData.linkId)) {
+          if (_.contains(previouslySelectedIds, getSelectedId(selection.projectLinkData))) {
             previouslySelectedIds = _.without(previouslySelectedIds, clickedIds);
           } else {
             previouslySelectedIds = _.union(previouslySelectedIds, clickedIds);
@@ -176,7 +184,7 @@
           if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
             selectedProjectLinkProperty.openSplit(selection.projectLinkData.linkId, true);
           } else {
-            selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+            selectedProjectLinkProperty.open(getSelectedId(selection.projectLinkData), true);
           }
         }
         else selectedProjectLinkProperty.cleanIds();
@@ -218,12 +226,12 @@
       if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)) {
           var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
-            return selected.linkId;
+            return getSelectedId(selected);
           });
-          if (_.contains(selectedLinkIds, selection.projectLinkData.linkId)) {
-            selectedLinkIds = _.without(selectedLinkIds, selection.projectLinkData.linkId);
+          if (_.contains(selectedLinkIds, getSelectedId(selection.projectLinkData))) {
+            selectedLinkIds = _.without(selectedLinkIds, getSelectedId(selection.projectLinkData));
           } else {
-            selectedLinkIds = selectedLinkIds.concat(selection.projectLinkData.linkId);
+            selectedLinkIds = selectedLinkIds.concat(getSelectedId(selection.projectLinkData));
           }
           selectedProjectLinkProperty.openShift(selectedLinkIds);
         }
@@ -234,7 +242,7 @@
           if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
             selectedProjectLinkProperty.openSplit(selection.projectLinkData.linkId, true);
           } else {
-            selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+            selectedProjectLinkProperty.open(getSelectedId(selection.projectLinkData));
           }
         }
         else selectedProjectLinkProperty.cleanIds();
@@ -285,7 +293,8 @@
       var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
-        selectionData.trackCode === currentlySelectedSample.trackCode;
+        selectionData.trackCode === currentlySelectedSample.trackCode &&
+        selectionData.roadType === currentlySelectedSample.roadType;
     };
 
     var clearHighlights = function(){
@@ -322,7 +331,7 @@
       _.each(vectorLayer.getSource().getFeatures(), function (feature) {
         var canIHighlight = ((!_.isUndefined(feature.projectLinkData.linkId) && _.isUndefined(feature.projectLinkData.connectedLinkId)) ||
         (!_.isUndefined(feature.projectLinkData.connectedLinkId) && feature.projectLinkData.status == LinkStatus.Terminated.value) ?
-          selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false);
+          selectedProjectLinkProperty.isSelected(getSelectedId(feature.projectLinkData)) : false);
         if (canIHighlight) {
           featuresToHighlight.push(feature);
         }
@@ -331,7 +340,7 @@
       _.each(suravageRoadProjectLayer.getSource().getFeatures(), function (feature) {
         var canIHighlight = (!_.isUndefined(feature.projectLinkData) && !_.isUndefined(feature.projectLinkData.linkId)) ?
 
-          selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
+          selectedProjectLinkProperty.isSelected(getSelectedId(feature.projectLinkData)) : false;
         if (canIHighlight) {
           suravageFeaturesToHighlight.push(feature);
         }
@@ -800,9 +809,9 @@
           selectedProjectLinkProperty.openSplit(selectedProjectLinkProperty.get()[0].linkId, true);
         } else
         if (selectedProjectLinkProperty.get().length > 1 && _.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId))
-          selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, true);
+          selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), true);
         else
-          selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, false);
+          selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), false);
       });
     });
 

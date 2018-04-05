@@ -342,13 +342,14 @@ object ProjectDAO {
     listQuery(query).seq
   }
 
-  def getProjectLinksByProjectAndLinkId(linkIds: Iterable[Long], projectId: Long): Seq[ProjectLink] = {
+  def getProjectLinksByProjectAndLinkId(linkIds: Iterable[Long], projectId: Long, roadType: Option[Long] = None): Seq[ProjectLink] = {
     if (linkIds.isEmpty)
       List()
     else {
+      val roadTypeFilter = if (roadType.nonEmpty) s"AND PROJECT_LINK.ROAD_TYPE = ${roadType.get}" else ""
       val query =
         s"""$projectLinkQueryBase
-                where link_id in (${linkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where link_id in (${linkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId ) $roadTypeFilter order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }
