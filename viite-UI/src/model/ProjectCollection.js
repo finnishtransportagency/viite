@@ -41,17 +41,27 @@
       fetchedProjectLinks = [];
     };
 
-    this.getMultiSelectIds = function (linkId) {
+    this.getMultiProjectLinks = function (id) {
       var chain = _.find(fetchedProjectLinks, function (linkChain) {
         var pureChain = _.map(linkChain, function(l) { return l.getData(); });
-        return _.some(pureChain, {"linkId": linkId});
+        return _.some(pureChain, {"id": id}) || _.some(pureChain, {"linkId": id});
       });
-      return _.map(chain, function (link) { return link.getData().linkId; });
+      return _.map(chain, function (link) {
+        if (link.getData().id > 0 ) {
+          return link.getData().id;
+        } else {
+          return link.getData().linkId;
+        }
+      });
     };
 
-    this.getByLinkId = function (ids) {
+    this.getProjectLink = function (ids) {
       var links = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
-        return _.contains(ids, projectLink.getData().linkId);
+        if (projectLink.getData().id > 0) {
+          return _.contains(ids, projectLink.getData().id);
+        } else {
+          return _.contains(ids, projectLink.getData().linkId);
+        }
       });
       return links;
     };
@@ -272,8 +282,8 @@
     this.saveProjectLinks = function(changedLinks, statusCode) {
       var validUserGivenAddrMValues = function(linkId, userEndAddr) {
         if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
-          var roadPartIds = self.getMultiSelectIds(linkId);
-          var roadPartLinks = self.getByLinkId(roadPartIds);
+          var roadPartIds = self.getMultiProjectLinks(linkId);
+          var roadPartLinks = self.getProjectLink(_.map(roadPartIds, function(road) { return road.id;}));
           var startAddrFromChangedLinks = _.min(_.map(roadPartLinks, function(link){return link.getData().startAddressM;}));
           var userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
           var roadPartGeometries = _.map(roadPartLinks, function (roadPart) {
