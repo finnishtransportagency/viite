@@ -573,25 +573,4 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("project validator should return an error if the we create a new road using the road and part from another ALREADY existing road") {
-    runWithRollback {
-      val (roadAddressId, linkId) = testDataForElyTest02()
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
-      val project = RoadAddressProject(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, Some(8), None)
-      ProjectDAO.createRoadAddressProject(project)
-      val projectLink = ProjectLink(NewRoadAddress, 27L, 20L, Track.Combined, EndOfRoad, 6109L, 6559L, Some(DateTime.now()), None, Option("TR"),
-        0L, linkId + 1, 0.0, 108.261, SideCode.AgainstDigitizing, (None, None),
-        false, Seq(Point(0.0, 40.0), Point(0.0, 50.0)),
-        projectId, LinkStatus.New, PublicRoad, LinkGeomSource.NormalLinkInterface, 10.0, roadAddressId, 8L, false, Some(linkId), 1476392565000L)
-      ProjectDAO.reserveRoadPart(projectId, 27L, 20L, "TR")
-      ProjectDAO.create(Seq(projectLink))
-      val validationErrors = ProjectValidator.checkNewAndExisting(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
-      validationErrors.size should be(1)
-      validationErrors.head.projectId should be(projectId)
-      validationErrors.head.affectedLinkIds.contains(linkId + 1) should be(true)
-      validationErrors.head.validationError.value should be(RoadNotAvailable.value)
-    }
-  }
-
 }
