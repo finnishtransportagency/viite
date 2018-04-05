@@ -18,7 +18,13 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ReservedRoadPart], None)
 
-  test("orderProjectLinksTopologyByGeometry") {
+  private def dummyProjectLink(id: Long, geometry: Seq[Point]) = {
+    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+  }
+
+  test("check that orderProjectLinksTopologyByGeometry is not dependent on the links order") {
     val idRoad0 = 0L //   >
     val idRoad1 = 1L //     <
     val idRoad2 = 2L //   >
@@ -163,5 +169,26 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
     list.permutations.forall(l => !TrackSectionOrder.isRoundabout(l)) should be (true)
+  }
+
+  test("Pick the most in right project link on orderProjectLinksTopologyByGeometry") {
+    //                                 (25,15)
+    //                                  / |
+    //                                /   |
+    //                              /     |
+    //                            2L      2L
+    //                           /        |
+    //                         /          |
+    //   |---------0L---------|-----1L----|
+    //(10,10)            (20,10)       (30,10)
+    val projectLinks = List(
+      dummyProjectLink(1L, Seq(Point(20, 10), Point(30, 10))),
+      dummyProjectLink(0L, Seq(Point(10, 10), Point(15, 10), Point(20, 10))),
+      dummyProjectLink(2L, Seq(Point(20, 10), Point(25, 15), Point(30, 10)))
+    )
+
+    val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10, 10), Point(10, 10)), projectLinks)
+
+    ordered.map(_.linkId) should be (List(0L, 1L, 2L))
   }
 }
