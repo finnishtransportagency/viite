@@ -8,6 +8,12 @@ class PointSpec extends FunSuite with Matchers {
 
   // Vector3d.angle
 
+  test("Angle between two zero vectors should be NaN") {
+    val vector1 = Vector3d(0, 0, 0)
+    val vector2 = Vector3d(0, 0, 0)
+    vector1.angle(vector2).isNaN should be(true)
+  }
+
   test("Angle should be π / 2 (90 degrees) xy") {
     val vector1 = Vector3d(1, 0, 0)
     val vector2 = Vector3d(0, -1, 0)
@@ -16,15 +22,15 @@ class PointSpec extends FunSuite with Matchers {
   }
 
   test("Angle should be π / 2 (90 degrees) xz") {
-    val vector1 = Vector3d(1, 0, 0)
-    val vector2 = Vector3d(0, 0, -1)
+    val vector1 = Vector3d(2, 0, 0)
+    val vector2 = Vector3d(0, 0, -2)
     vector1.angle(vector2) should be(Math.toRadians(90) +- tolerance)
     vector2.angle(vector1) should be(Math.toRadians(90) +- tolerance)
   }
 
   test("Angle should be π / 2 (90 degrees) yz") {
-    val vector1 = Vector3d(0, 1, 0)
-    val vector2 = Vector3d(0, 0, -1)
+    val vector1 = Vector3d(0, 3, 0)
+    val vector2 = Vector3d(0, 0, -3)
     vector1.angle(vector2) should be(Math.toRadians(90) +- tolerance)
     vector2.angle(vector1) should be(Math.toRadians(90) +- tolerance)
   }
@@ -37,15 +43,15 @@ class PointSpec extends FunSuite with Matchers {
   }
 
   test("Angle should be π (180 degrees) y") {
-    val vector1 = Vector3d(0, 1, 0)
-    val vector2 = Vector3d(0, -1, 0)
+    val vector1 = Vector3d(0, 2, 0)
+    val vector2 = Vector3d(0, -2, 0)
     vector1.angle(vector2) should be(Math.toRadians(180) +- tolerance)
     vector2.angle(vector1) should be(Math.toRadians(180) +- tolerance)
   }
 
   test("Angle should be π (180 degrees) z") {
-    val vector1 = Vector3d(0, 0, 1)
-    val vector2 = Vector3d(0, 0, -1)
+    val vector1 = Vector3d(0, 0, 3)
+    val vector2 = Vector3d(0, 0, -3)
     vector1.angle(vector2) should be(Math.toRadians(180) +- tolerance)
     vector2.angle(vector1) should be(Math.toRadians(180) +- tolerance)
   }
