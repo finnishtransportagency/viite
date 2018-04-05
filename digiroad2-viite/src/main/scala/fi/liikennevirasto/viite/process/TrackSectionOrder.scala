@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectL
 
 object TrackSectionOrder {
   private val RightVector = Vector3d(-1.0, 0.0, 0.0)
+  private val LeftVector = Vector3d(1.0, 0.0, -1.0)
   private val ForwardVector = Vector3d(0.0, 1.0, 0.0)
 
   def RotationMatrix(tangent: Vector3d): Matrix = {
@@ -149,7 +150,11 @@ object TrackSectionOrder {
     }
 
     def pickRightMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
-      pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), RightVector, candidates)
+      val cPoint = GeometryUtils.connectionPoint(candidates.map(_.geometry) :+ lastLink.geometry, MaxDistanceForConnectedLinks).getOrElse(throw new Exception("Candidates should have at least one connection point"))
+      val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
+      val (_, hVector) = vectors.head
+      val (candidate, _) = vectors.maxBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+      candidate
     }
 
     def pickForwardPointing(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {

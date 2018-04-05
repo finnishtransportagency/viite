@@ -497,7 +497,7 @@
       backend.deleteRoadAddressProject(projectId, function (result) {
         if (result.success) {
           dirtyRoadPartList = [];
-          currentProject = [];
+          currentProject = undefined;
         }
         else {
           eventbus.trigger('roadAddress:projectDeleteFailed', result.errorMessage);
