@@ -78,6 +78,12 @@ class PointSpec extends FunSuite with Matchers {
     vector2.angleXYWithNegativeValues(vector1) should be(0.0 +- tolerance)
   }
 
+  test("angleXYWithNegativeValues should be 135 degrees x") {
+    val vector1 = Vector3d(1, 0, 0)
+    val vector2 = Vector3d(-1, -1, 0)
+    vector1.angleXYWithNegativeValues(vector2) should be(Math.toRadians(135) +- tolerance)
+  }
+
   test("angleXYWithNegativeValues should be π (180 degrees) x") {
     val vector1 = Vector3d(1, 0, 0)
     val vector2 = Vector3d(-1, 0, 0)
@@ -88,6 +94,12 @@ class PointSpec extends FunSuite with Matchers {
     val vector1 = Vector3d(1, 0, 0)
     val vector2 = Vector3d(-1, 0, 0)
     vector1.angleXYWithNegativeValues(vector2) should be(Math.toRadians(-180) +- tolerance)
+  }
+
+  test("angleXYWithNegativeValues should be 135 degrees y") {
+    val vector1 = Vector3d(0, 1, 0)
+    val vector2 = Vector3d(1, -1, 0)
+    vector1.angleXYWithNegativeValues(vector2) should be(Math.toRadians(135) +- tolerance)
   }
 
   test("angleXYWithNegativeValues should be π (180 degrees) y") {
