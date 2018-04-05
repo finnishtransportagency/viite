@@ -146,7 +146,7 @@ object TrackSectionOrder {
   def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
 
     def pickMostAligned(rotationMatrix: Matrix, vector: Vector3d, candidates: Seq[ProjectLink]): ProjectLink = {
-        candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
+      candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
     }
 
     def pickRightMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
