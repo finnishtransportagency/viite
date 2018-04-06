@@ -9,6 +9,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.TrackSectionOrder
+import org.joda.time.format.DateTimeFormat
 
 object ProjectValidator {
 
@@ -247,10 +248,9 @@ object ProjectValidator {
       checkTrackCode(project, projectLinks)
     }
 
-    checkProjectContinuity  ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+    checkProjectContinuity ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
       checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++
       elyCodesResults ++ checkRemovedEndOfRoadParts(project)
-
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {
@@ -682,10 +682,15 @@ object ProjectValidator {
   }
 
   private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
-                           roadAndPart: Option[Seq[(Long,Long)]] = Option.empty[Seq[(Long,Long)]], discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]]) = {
-    case object formattedMessage extends ValidationError {
-      def value: Int = validationError.value
-      def message: String = validationError.message.format(if(elyBorderData.nonEmpty) {
+                           roadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
+                           discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]], projectDate: Option[String] = Option.empty[String]) = {
+    val formattedMessage =
+      if (projectDate.nonEmpty && roadAndPart.nonEmpty) {
+        val unzippedRoadAndPart = roadAndPart.get.unzip
+        val changedMsg = validationError.message.format(unzippedRoadAndPart._1.head, unzippedRoadAndPart._2.head, projectDate.get)
+        changedMsg
+      } else {
+        validationError.message.format(if (elyBorderData.nonEmpty) {
         elyBorderData.get.toSet.mkString(", ")
       } else if(roadAndPart.nonEmpty){
         roadAndPart.get.toSet.mkString(", ")
@@ -695,9 +700,15 @@ object ProjectValidator {
       else{
         validationError.message
       })
+      }
+
+    case object formattedMessageObject extends ValidationError {
+      def value: Int = validationError.value
+
+      def message: String = formattedMessage
       def notification: Boolean = validationError.notification
     }
-    formattedMessage
+    formattedMessageObject
   }
 
   /**
