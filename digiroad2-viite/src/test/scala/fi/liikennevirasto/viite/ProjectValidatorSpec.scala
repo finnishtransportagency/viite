@@ -151,6 +151,69 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Project Links should be discontinuous if geometry is discontinuous") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val lastLinkPart = projectLinks.init :+ projectLinks.last.copy(discontinuity = Discontinuity.Continuous)
+      val (road, part) = (lastLinkPart.last.roadNumber, lastLinkPart.last.roadPartNumber)
+      val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate).filter(_ > part)
+      val nextLinks = RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.head, includeFloating = true)
+        .filterNot(rp => projectLinks.exists(link => rp.roadPartNumber != link.roadPartNumber && rp.id == link.roadAddressId)).filter(_.startAddrMValue == 0L)
+
+      /*
+      1st case: |(x1)|---link A---|(x2)|  |(x2)|---link B---|(x3)|
+      x1 < x2 <3
+      A.discontinuity = Continuous
+      A.sideCode = AgainstDigitizing =>   last point A x1
+                                                         x1 != x2 => Discontinuity != A.discontinuity => error
+      B.sideCode = TowardsDigitizing =>  first point B x2
+
+       */
+      //defining geometry for last link so that the last Point of the last link geometry ends in same Point of the geometry of <nextLinks> of the next road part
+      val links = projectLinks match {
+        case Nil => Nil
+        case ls :+ last => ls :+ last.copy(geometry = last.geometry match {
+          case Nil => Nil
+          case points :+ last => points :+ nextLinks.head.geometry.head
+        }, sideCode = AgainstDigitizing)
+      }
+      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, links)
+      errors should have size 1
+      errors.head.validationError should be (MajorDiscontinuityFound)
+
+      /*
+      2nd case: |(x2)|---link A---|(x1)|  |(x2)|---link B---|(x3)|
+      x1 < x2 <3
+      A.discontinuity = Continuous
+      A.sideCode = AgainstDigitizing =>   last point A x2
+                                                         x2 == x2 => Continuous === A.discontinuity => no error
+      B.sideCode = TowardsDigitizing =>  first point B x2
+      */
+      val linksLastLinkGeomReversed = links match {
+        case Nil => Nil
+        case ls :+ last => ls :+ last.copy(geometry = last.geometry.reverse)
+      }
+      val errors2 = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, linksLastLinkGeomReversed)
+      errors2 should have size 0
+
+      /*
+      3rd case: |(x1)|---link A---|(x2)|  |(x2)|---link B---|(x3)|
+      x1 < x2 <3
+      A.discontinuity = Discontinuous (can also be MinorDiscontinuity)
+      A.sideCode = AgainstDigitizing =>   last point A x1
+                                                         x1 != x2 => Discontinuous === A.discontinuity => no error
+      B.sideCode = TowardsDigitizing =>  first point B x2
+     */
+      val linksDiscontinuousLastLink = links match {
+        case Nil => Nil
+        case l :+ last => l :+ last.copy(discontinuity = Discontinuity.Discontinuous)
+      }
+      val errors3 = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, linksDiscontinuousLastLink)
+      errors3 should have size 0
+    }
+  }
+
   test("Project Links missing end of road should be caught") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))

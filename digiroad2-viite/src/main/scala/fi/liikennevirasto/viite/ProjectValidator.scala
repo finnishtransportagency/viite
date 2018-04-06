@@ -571,7 +571,11 @@ object ProjectValidator {
   }
 
   private def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
-    GeometryUtils.areAdjacent(pl1.geometry, pl2.geometry, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+    val connectingPoint = pl1.sideCode match {
+      case AgainstDigitizing => pl1.geometry.head
+      case _ => pl1.geometry.last
+    }
+    GeometryUtils.areAdjacent(pl2.geometry, connectingPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 
   private def trackMatch(track1: Track, track2: Track) = {
