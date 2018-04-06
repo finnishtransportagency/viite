@@ -8,6 +8,7 @@ import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.{Incons
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 
 
@@ -82,7 +83,8 @@ class RoadNetworkService {
       } catch {
         case e: SQLIntegrityConstraintViolationException => logger.info("A road network check is already running")
         case _: Exception => {
-            logger.error("Error during road address network check")
+          logger.error("Error during road address network check")
+          dynamicSession.rollback()
           ExportLockDAO.delete
         }
       }
