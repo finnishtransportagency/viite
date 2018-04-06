@@ -9,10 +9,10 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList._
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{TerminationCode, _}
-import fi.liikennevirasto.viite.util.toProjectLink
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -130,12 +130,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   }
 
-  private def testDataForElyTest02() = {
+  private def testDataForElyTest02(): (Long, Long) = {
     val roadAddressId = RoadAddressDAO.getNextRoadAddressId
+    val linkId = 1817196L
     val ra = Seq(RoadAddress(roadAddressId, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 6109L, 6559L,
-      Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, 1817196, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), floating = false,
+      Some(DateTime.parse("1996-01-01")), None, Option("TR"), 0, linkId, 0.0, 108.261, SideCode.AgainstDigitizing, 1476392565000L, (None, None), floating = false,
       Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
     RoadAddressDAO.create(ra)
+    (roadAddressId, linkId)
   }
 
   test("Project Links should be continuous if geometry is continuous") {
@@ -618,7 +620,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
           floating = false, Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 0)))
-      
+
       val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L,10L), discontinuity = Discontinuity.Continuous, roadAddressId = ids.min)
       ProjectDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
       val addrMNew = Seq(0L,10L)
@@ -635,4 +637,5 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       errorsAfterTransfer.size should be (0)
     }
   }
+
 }
