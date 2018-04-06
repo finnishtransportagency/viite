@@ -1504,7 +1504,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
     projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.createdBy)).keys.map(rn =>
       if (rn._2.nonEmpty) {
-        RoadName(NewRoadName, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
+        RoadName(NewRoadNameId, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
       } else {
         throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
       }
