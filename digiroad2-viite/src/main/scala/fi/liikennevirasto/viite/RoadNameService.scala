@@ -83,7 +83,7 @@ class RoadNameService() {
       }
     } catch {
       case longParsingException: NumberFormatException => Left("Could not parse road number")
-      case e if NonFatal(e) => Left("Unknown error")
+      case e if NonFatal(e) => Left("Unknown error"+e)
     }
   }
 
