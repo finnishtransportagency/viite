@@ -157,6 +157,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val lastLinkPart = projectLinks.init :+ projectLinks.last.copy(discontinuity = Discontinuity.Continuous)
       val (road, part) = (lastLinkPart.last.roadNumber, lastLinkPart.last.roadPartNumber)
+
+      val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 10L, Some(DateTime.now()), None, None, 0L, 19999L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(19999L, 0.0, 0L)), Some(CalibrationPoint(19999L, 10.0, 10L))),
+        floating = false, Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
+
       val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate).filter(_ > part)
       val nextLinks = RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.head, includeFloating = true)
         .filterNot(rp => projectLinks.exists(link => rp.roadPartNumber != link.roadPartNumber && rp.id == link.roadAddressId)).filter(_.startAddrMValue == 0L)
@@ -170,13 +175,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       B.sideCode = TowardsDigitizing =>  first point B x2
 
        */
-      //defining geometry for last link so that the last Point of the last link geometry ends in same Point of the geometry of <nextLinks> of the next road part
+      //defining new growing geometry digitizing
       val links = projectLinks match {
         case Nil => Nil
-        case ls :+ last => ls :+ last.copy(geometry = last.geometry match {
-          case Nil => Nil
-          case points :+ last => points :+ nextLinks.head.geometry.head
-        }, sideCode = AgainstDigitizing)
+        case ls :+ last => ls :+ last.copy(sideCode = AgainstDigitizing)
       }
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, links)
       errors should have size 1
