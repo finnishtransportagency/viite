@@ -173,7 +173,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       //defining geometry for last link so that the last Point of the last link geometry ends in same Point of the geometry of <nextLinks> of the next road part
       val links = projectLinks match {
         case Nil => Nil
-        case ls :+ last => ls :+ last.copy(geometry = last.geometry match{
+        case ls :+ last => ls :+ last.copy(geometry = last.geometry match {
           case Nil => Nil
           case points :+ last => points :+ nextLinks.head.geometry.head
         }, sideCode = AgainstDigitizing)
