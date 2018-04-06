@@ -13,7 +13,7 @@ import org.joda.time.format.DateTimeFormatter
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
+case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
                     validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
 
 
@@ -39,7 +39,7 @@ object RoadNameDAO {
   def dateParser(oDate: Option[DateTime]):String = {
     oDate match {
       case Some(date) => {
-      val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+        val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
         dtfOut.print(date)
       }
       case _=>
@@ -66,6 +66,12 @@ object RoadNameDAO {
 
   private def queryList(query: String) = {
     Q.queryNA[RoadName](query).iterator.toSeq
+  }
+
+  private def withHistoryFilter(query: String, startDate: Option[DateTime], endDate: Option[DateTime]): String = {
+    val startDateQuery = if(startDate.isDefined) s" and start_date > ${startDate.get}" else ""
+    val endDateQuery = if(endDate.isDefined) s" and end_date > ${endDate.get}" else ""
+    s"""$query $startDateQuery $endDateQuery"""
   }
 
   def getCurrentRoadNames(roadNumbers: Set[Long]):  Seq[RoadName] = {
@@ -109,30 +115,35 @@ object RoadNameDAO {
     queryList(query)
   }
 
-  /** // TODO
-    * We probably want to use slightly slower prepared statement when we query with user given string to avoid sql injection
-    * @param oRoadNumber
-    * @param oValidFrom
-    * @param oValidTo
-    * @param startDate
-    * @param endDate
-    * @return
+  /**
+    * Return all the valid road names for the given road number
+    * @param roadNumber
     */
-  def getRoadNamesByRoadNameAndRoadNumber(oRoadNumber: Option[Long], oRoadName: Option[String], oValidFrom: Option[DateTime] = None, oValidTo: Option[DateTime] = None,
-                                          startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
-    val validFromFilter = if (oValidFrom.isDefined) s"AND valid_From >= to_date(' ${dateParser(oValidFrom)}', 'dd.MM.RRRR')" else ""
-    val validToFilter = if (oValidTo.isDefined) s"AND valid_To <= to_date('${dateParser(oValidTo)}', 'dd.MM.RRRR')" else ""
-    val startDateFilter = if (startDate.isDefined) s"AND start_Date >= to_date('${dateParser(startDate)}', 'dd.MM.RRRR')" else ""
-    val endDateFilter = if (endDate.isDefined) s"AND end_Date <= to_date('${dateParser(endDate)}', 'dd.MM.RRRR')" else ""
-    val roadName = if (oRoadName.isDefined) s"road_Name = '${oRoadName.getOrElse("")}'" else ""
-    val roadNameApplied = if (roadName == "") "" else " AND " //adds AND to SQL query if we already have roadname applied
-    val roadNumber = if (oRoadNumber.isDefined) s" $roadNameApplied road_number = ${oRoadNumber.getOrElse("")}" else ""
-    if (roadName + roadNumber != "") {
-      val query =
-        s"""$roadsNameQueryBase Where $roadName $roadNumber $validFromFilter $validToFilter $startDateFilter $endDateFilter"""
-      queryList(query)
-    } else
-      Seq.empty[RoadName]
+  def getAllByRoadNumber(roadNumber: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
+    val query =
+      withHistoryFilter(s"""$roadsNameQueryBase Where road_number = $roadNumber and (valid_to is null or valid_to > sysdate)""", startDate, endDate)
+    queryList(query)
+  }
+
+  /**
+    * Return all the valid road names for the given road name
+    * @param roadName
+    */
+  def getAllByRoadName(roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
+    val query =
+      withHistoryFilter(s"""$roadsNameQueryBase Where road_name = $roadName and (valid_to is null or valid_to > sysdate)""", startDate, endDate)
+    queryList(query)
+  }
+
+  /**
+    * Return all the valid road names for the given road name and road number
+    * @param roadNumber
+    * @param roadName
+    */
+  def getAllByRoadNumberAndName(roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
+    val query =
+      withHistoryFilter(s"""$roadsNameQueryBase Where road_name = $roadName and road_number = $roadNumber and (valid_to is null or valid_to > sysdate)""", startDate, endDate)
+    queryList(query)
   }
 
   /**
@@ -158,10 +169,10 @@ object RoadNameDAO {
     }
   }
 
-  def getRoadNamesById(id: Long): RoadName = {
+  def getRoadNamesById(id: Long): Option[RoadName] = {
     val query =
       s"""$roadsNameQueryBase Where id = $id AND valid_to IS NULL OR valid_to > sysdate"""
-    queryList(query).head
+    queryList(query).headOption
   }
 
   def expire(id: Long, user: User) = {
