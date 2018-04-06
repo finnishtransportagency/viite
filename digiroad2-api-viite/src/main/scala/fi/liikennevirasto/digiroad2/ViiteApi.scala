@@ -33,8 +33,6 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
 
-case class RoadNameExtractor(rows: Seq[RoadNameRows])
-
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
 case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
@@ -179,17 +177,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val oRoadName = params.get("roadName")
     val oStartDate = params.get("startDate")
     val oEndDate = params.get("endDate")
-    roadNameService.getRoadAddresses(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
+    roadNameService.getRoadNames(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
       case Right(roadNameList) => Map("success" -> true, "roadNameInfo" -> roadNameList.map(roadNameToApi))
       case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
     }
   }
 
-  put("/roadnames") {
+  put("/roadnames/:roadNumber") {
     val user = userProvider.getCurrentUser()
-    val roadNames = parsedBody.extract[RoadNameExtractor]
+    val roadNumber = params("roadNumber").toLong
+    val roadNames = parsedBody.extract[Seq[RoadNameRow]]
 
-    roadNameService.addOrUpdateRoadNames(roadNames.rows, user) match {
+    roadNameService.addOrUpdateRoadNames(roadNumber, roadNames, user) match {
       case Some(err) => Map("success" -> false, "errorMessage" -> err)
       case None => Map("success" -> true)
     }
@@ -280,7 +279,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
       Map("project" -> roadAddressProjectToApi(fetched),"publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
         "formInfo" ->
-        fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
+          fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
       case e: MappingException =>
@@ -864,13 +863,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
-      Map(
-        "id"-> roadName.id,
-        "roadNumber"-> roadName.roadNumber,
-        "roadNameFi"-> roadName.roadName,
-        "startDate" -> formatDateTimeToString(roadName.startDate).getOrElse(""),
-        "endDate" -> formatDateTimeToString(roadName.endDate).getOrElse("")
-      )
+    Map(
+      "id"-> roadName.id,
+      "roadNumber"-> roadName.roadNumber,
+      "name"-> roadName.roadName,
+      "startDate" -> formatDateTimeToString(roadName.startDate),
+      "endDate" -> formatDateTimeToString(roadName.endDate)
+    )
   }
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
