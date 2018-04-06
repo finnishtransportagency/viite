@@ -12,8 +12,6 @@ case class RoadNameRow(id: Long, name: String, startDate: String, endDate: Optio
 
 class RoadNameService() {
 
-  val NewRoadNameId = -1000
-
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -38,7 +36,7 @@ class RoadNameService() {
     try {
       roadNameRows.map{
         roadNameRow =>
-          val roadNameOption = if(roadNameRow.id < 0) None else RoadNameDAO.getRoadNamesById(roadNameRow.id)
+          val roadNameOption = if(roadNameRow.id == NewRoadNameId) None else RoadNameDAO.getRoadNamesById(roadNameRow.id)
           val endDate = roadNameRow.endDate match {
             case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
             case _ => None
