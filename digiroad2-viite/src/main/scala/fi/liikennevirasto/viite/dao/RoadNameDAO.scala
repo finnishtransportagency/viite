@@ -69,8 +69,8 @@ object RoadNameDAO {
   }
 
   private def withHistoryFilter(query: String, startDate: Option[DateTime], endDate: Option[DateTime]): String = {
-    val startDateQuery = if(startDate.isDefined) s" and start_date > to_date('${dateParser(startDate)}', 'dd.MM.RRRR')" else ""
-    val endDateQuery = if(endDate.isDefined) s" and end_date > to_date('${dateParser(endDate)}', 'dd.MM.RRRR')" else ""
+    val startDateQuery = if(startDate.isDefined) s" and start_date >= to_date('${dateParser(startDate)}', 'dd.MM.RRRR')" else ""
+    val endDateQuery = if(endDate.isDefined) s" and end_date <= to_date('${dateParser(endDate)}', 'dd.MM.RRRR')" else ""
     s"""$query $startDateQuery $endDateQuery"""
   }
 
