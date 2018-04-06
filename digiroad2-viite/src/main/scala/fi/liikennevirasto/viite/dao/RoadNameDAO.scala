@@ -142,7 +142,7 @@ object RoadNameDAO {
     */
   def getAllByRoadNumberAndName(roadNumber: Long, roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
     val query =
-      withHistoryFilter(s"""$roadsNameQueryBase Where road_name = $roadName and road_number = $roadNumber and (valid_to is null or valid_to > sysdate)""", startDate, endDate)
+      withHistoryFilter(s"""$roadsNameQueryBase Where road_name = '$roadName' and road_number = $roadNumber and (valid_to is null or valid_to > sysdate)""", startDate, endDate)
     queryList(query)
   }
 
