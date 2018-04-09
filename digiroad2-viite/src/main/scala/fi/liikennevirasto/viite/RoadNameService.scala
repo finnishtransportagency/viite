@@ -134,6 +134,13 @@ class RoadNameService() {
       RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber).nonEmpty
   }
 
+  def getCurrentRoadNames(roadNumbers: Seq[Long]): Seq[RoadName] = {
+    withDynSession{
+      RoadNameDAO.getCurrentRoadNamesByRoadNumbers(roadNumbers)
+    }
+
+  }
+
 }
 
 class RoadNameException(string: String) extends RuntimeException {
