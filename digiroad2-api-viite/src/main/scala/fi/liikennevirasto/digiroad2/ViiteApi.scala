@@ -745,8 +745,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
-    partitionedRoadLinks.map {
-      _.map(projectAddressLinkToApi)
+    withDynSession{
+      return partitionedRoadLinks.map {
+        _.map(projectAddressLinkToApi)
+      }
     }
   }
 
@@ -881,13 +883,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "originalGeometry" -> projectAddressLink.originalGeometry,
           "reversed" -> projectAddressLink.reversed,
           "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry),
-          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber) else false)
         )
       else
         Map(
           "status" -> projectAddressLink.status.value,
           "reversed" -> projectAddressLink.reversed,
-          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber) else false)
         ))
   }
 
