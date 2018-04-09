@@ -1,15 +1,23 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, RoadAddressProject}
+import fi.liikennevirasto.viite.dao._
 import org.joda.time.format.DateTimeFormat
 
 object RoadAddressValidator {
 
+  def checkReservedExistence(currentProject: RoadAddressProject, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
+    if (LinkStatus.New.value == linkStatus.value && RoadAddressDAO.fetchByRoadPart(newRoadNumber, newRoadPart, includeSuravage = true).nonEmpty) {
+      if (ProjectDAO.fetchReservedRoadParts(currentProject.id).find(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart).isEmpty) {
+        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+        throw new ProjectValidationException(RoadNotAvailableMessage.format(newRoadNumber, newRoadPart, currentProject.startDate.toString(fmt)))
+      }
+    }
+  }
+
   def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
     if (RoadAddressDAO.isNotAvailableForProject(number, part, currentProject.id)) {
       val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-      throw new ProjectValidationException(
-        s"TIE $number OSA $part on jo olemassa projektin alkupäivänä ${currentProject.startDate.toString(fmt)}, tarkista tiedot")
+      throw new ProjectValidationException(RoadNotAvailableMessage.format(number, part, currentProject.startDate.toString(fmt)))
     }
   }
 
