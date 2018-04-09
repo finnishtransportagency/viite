@@ -229,14 +229,19 @@ object ProjectValidator {
       }
     }
 
-    val elyCodesResults = checkProjectElyCodes(project, projectLinks)
+    def checkElyCodeChange = {
+      checkProjectElyCodes(project, projectLinks)
+    }
 
     def checkTrackCodePairing = {
       checkTrackCode(project, projectLinks)
     }
 
-    checkProjectContinuity ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++
-      elyCodesResults ++ checkRemovedEndOfRoadParts(project)
+    def checkRemovedEndOfRoadPart = {
+      checkRemovedEndOfRoadParts(project)
+    }
+
+    checkProjectContinuity ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ checkRemovedEndOfRoadPart ++ checkElyCodeChange
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {
@@ -406,8 +411,6 @@ object ProjectValidator {
         None
       }
     }
-
-
 
     // Checks inside road part (not including last links' checks)
     checkConnectedAreContinuous.toSeq ++ checkNotConnectedHaveMinorDiscontinuity.toSeq ++ checkDiscontinuityBetweenLinksOnRamps.toSeq ++
