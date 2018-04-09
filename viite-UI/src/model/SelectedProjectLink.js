@@ -22,8 +22,8 @@
     };
 
     var openWithErrorMessage = function (linkId, errorMessage) {
-        ids = projectLinkCollection.getMultiSelectIds(linkId);
-        current = projectLinkCollection.getByLinkId(ids);
+        current = projectLinkCollection.getByLinkId([linkId]);
+        ids = [linkId];
 
         eventbus.trigger('projectLink:errorClicked', get(linkId), errorMessage);
     };
