@@ -1353,7 +1353,7 @@ object RoadAddressDAO {
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
              INNER JOIN (Select  MAX(start_addr_m) as lol FROM road_address rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
-             rm.valid_from <= sysdate AND (rm.valid_to is null or rm.valid_to > sysdate) AND track_code in (0,1))  ra
+             rm.valid_from <= sysdate AND (rm.valid_to is null or rm.valid_to > sysdate) AND rm.end_date is null AND track_code in (0,1))  ra
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              r.valid_from <= sysdate AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""

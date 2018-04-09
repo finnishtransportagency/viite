@@ -242,50 +242,57 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
   }
 
   test("CommonHistoryIds: New addresses at the beginning and at the end of Transfer ones") {
+    val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 10.0))
+    val geom2 = Seq(Point(0.0, 10.0), Point(0.0, 0.0))
+    val geom3 = Seq(Point(4286.0, 0.0), Point(4296.0, 0.0))
+    val geom4 = Seq(Point(4296.0, 0.0), Point(4306.0, 0.0))
+    val linkId1 = 5168564
+    val linkId2 = 5168574
+    val linkId3 = 5166912
+    val linkId4 = 5167078
+    val roadNumber = 5
+    val roadPartNumber = 207
+    val id = 0
 
     runWithRollback {
-      val id = 0
       val parts = List(
-        ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+        ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, roadNumber: Long, roadPartNumber: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
       )
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
         "TestUser", DateTime.parse("2018-03-05"), DateTime.now(), "Some additional info", Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
-      val roadAddressesFetch= RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(saved))
+      val roadAddressesFetch = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(saved))
       mockForProject(saved.id, roadAddressesFetch)
       projectService.saveProject(saved.copy(reservedParts = parts))
 
       val projectLinks = ProjectDAO.getProjectLinks(saved.id)
       projectLinks.isEmpty should be(false)
 
-      val partitioned = projectLinks.partition(_.roadPartNumber == 207)
+      val partitioned = projectLinks.partition(_.roadPartNumber == roadPartNumber)
 
       val addressIds207 = partitioned._1.map(_.roadAddressId).toSet
       val filter = s" (${addressIds207.mkString(",")}) "
       sqlu""" update project_link set status=3 WHERE road_address_id in #$filter""".execute
 
-      val geom5168564 = Seq(Point(0.0 , 20.0), Point(0.0 , 10.0))
-      val geom5168574 = Seq(Point(0.0 , 10.0), Point(0.0 , 0.0))
-      val geom5166912 = Seq(Point(4286.0 , 0.0), Point(4296.0 , 0.0))
-      val geom5167078 = Seq(Point(4296.0 , 0.0), Point(4306.0 , 0.0))
-
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
 
+      val roadLinkTemplate = RoadLink(-1, null, -1, Private, 99, TrafficDirection.BothDirections, UnknownLinkType,
+        Some("19.07.2017 02:00:14"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
       val roadLinksNew = Seq(
-        RoadLink(5168564,geom5168564,64.34399229934398,Private,99, TrafficDirection.BothDirections, UnknownLinkType ,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface),
-        RoadLink(5168574,geom5168574,10.35728226922293,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface),
-        RoadLink(5166912,geom5166912,549.5011938749938,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface),
-        RoadLink(5167078,geom5167078,359.2242564221318,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("19.07.2017 02:00:14"),Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), ConstructionType.InUse,LinkGeomSource.NormalLinkInterface)
+        roadLinkTemplate.copy(linkId = linkId1, geometry = geom1, length = 64.34399229934398),
+        roadLinkTemplate.copy(linkId = linkId2, geometry = geom2, length = 10.35728226922293),
+        roadLinkTemplate.copy(linkId = linkId3, geometry = geom3, length = 549.5011938749938),
+        roadLinkTemplate.copy(linkId = linkId4, geometry = geom4, length = 359.2242564221318)
       )
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinksNew)
-      projectService.createProjectLinks(Seq(5168564, 5168574, 5166912, 5167078), saved.id, 5, 207, Track.apply(0), Discontinuity.apply(5), RoadType.apply(1), LinkGeomSource.apply(1), 8, "me", "road name")
+      projectService.createProjectLinks(Seq(linkId1, linkId2, linkId3, linkId4), saved.id, roadNumber, roadPartNumber, Track.apply(0), Discontinuity.apply(5), RoadType.apply(1), LinkGeomSource.apply(1), 8, "me", "road name")
 
       sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
       ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
-      ProjectDAO.getProjectLinks(saved.id).size should be (0)
-      val roadAddresses = RoadAddressDAO.fetchByRoadPart(5, 207)
-      roadAddresses.groupBy(_.commonHistoryId).size should be (3)
+      ProjectDAO.getProjectLinks(saved.id).size should be(0)
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+      roadAddresses.groupBy(_.commonHistoryId).size should be(3)
     }
   }
 
