@@ -581,11 +581,11 @@
           };
       });
 
-      this.saveRoadNamesChanges = _.throttle(function (data, success, failure) {
+      this.saveRoadNamesChanges = _.throttle(function (roadNumber, data, success, failure) {
           $.ajax({
               contentType: "application/json",
               type: "PUT",
-              url: "api/viite/roadnames",
+              url: "api/viite/roadnames/"+roadNumber,
               data: JSON.stringify(data),
               dataType: "json",
               success: success,
