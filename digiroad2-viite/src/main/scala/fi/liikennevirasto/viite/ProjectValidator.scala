@@ -371,7 +371,7 @@ object ProjectValidator {
             .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
         if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
           if (discontinuity != EndOfRoad)
-            error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
+            return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
         } else {
           val nextLinks =
             if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
