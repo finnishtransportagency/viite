@@ -285,8 +285,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
         roadLinkTemplate.copy(linkId = linkId4, geometry = geom4, length = 359.2242564221318)
       )
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinksNew)
-      projectService.createProjectLinks(Seq(5168564, 5168574, 5166912, 5167078), saved.id, 5, 207, Track.apply(0), Discontinuity.apply(5), RoadType.apply(1), LinkGeomSource.apply(1), 8, "me", "road name")
-      projectService.createProjectLinks(Seq(linkId1, linkId2, linkId3, linkId4), saved.id, roadNumber, roadPartNumber, Track.apply(0), Discontinuity.apply(5), RoadType.apply(1), LinkGeomSource.apply(1), 8, "me")
+      projectService.createProjectLinks(Seq(linkId1, linkId2, linkId3, linkId4), saved.id, roadNumber, roadPartNumber, Track.apply(0), Discontinuity.apply(5), RoadType.apply(1), LinkGeomSource.apply(1), 8, "me", "road name")
 
       sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
       ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
