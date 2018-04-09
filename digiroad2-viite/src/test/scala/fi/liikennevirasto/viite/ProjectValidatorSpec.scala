@@ -408,15 +408,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-
-  test("project track codes should be consistent when adding one simple link with track Combined") {
-    runWithRollback {
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
-      val validationErrors = ProjectValidator.checkTrackCode(project, projectLinks)
-      validationErrors.size should be(0)
-    }
-  }
-
   test("Minor discontinuous end ramp road between parts (of any kind) should not give error") {
     runWithRollback {
       val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
