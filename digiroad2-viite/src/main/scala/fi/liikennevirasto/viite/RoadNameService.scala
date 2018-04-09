@@ -131,9 +131,7 @@ class RoadNameService() {
   }
 
   def getHasCurrentRoadName(roadNumber: Long): Boolean = {
-    withDynSession {
       RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber).nonEmpty
-    }
   }
 
 }
