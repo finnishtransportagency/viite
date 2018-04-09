@@ -88,6 +88,7 @@
           if(fetchedSuravageProjectLinks.length !== 0){
             eventbus.trigger('suravageroadAddressProject:fetched',fetchedSuravageProjectLinks);
           }
+          eventbus.trigger('roadAddressProject:writeProjectErrors');
         });
     };
 
@@ -243,10 +244,8 @@
     };
 
     var createOrUpdate = function(dataJson, changedLinks){
-      if(!_.isEmpty(dataJson.linkIds) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0){
-        var ids = _.chain(changedLinks).map(function (cl) {
-          return cl.id;
-        }).uniq().value();
+      if((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0){
+        var ids = dataJson.ids;
         if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
@@ -283,7 +282,7 @@
       var validUserGivenAddrMValues = function(linkId, userEndAddr) {
         if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
           var roadPartIds = self.getMultiProjectLinks(linkId);
-          var roadPartLinks = self.getProjectLink(_.map(roadPartIds, function(road) { return road.id;}));
+          var roadPartLinks = self.getProjectLink(_.map(roadPartIds, function(road) { return road;}));
           var startAddrFromChangedLinks = _.min(_.map(roadPartLinks, function(link){return link.getData().startAddressM;}));
           var userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
           var roadPartGeometries = _.map(roadPartLinks, function (roadPart) {
@@ -298,16 +297,27 @@
         }
       };
 
+      var newAndOtherLinks = _.partition(changedLinks, function(l) { return l.id === 0;});
+      var newLinks = newAndOtherLinks[0];
+      var otherLinks = newAndOtherLinks[1];
+
       applicationModel.addSpinner();
-      var linkIds = _.unique(_.map(changedLinks,function (t){
+      var linkIds = _.unique(_.map(newLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
+        } else return t;
+      }));
+
+      var ids = _.unique(_.map(otherLinks,function (t){
+        if(!_.isUndefined(t.id)){
+          return t.id;
         } else return t;
       }));
 
       var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
+        ids: ids,
         linkIds: linkIds,
         linkStatus: statusCode,
         projectId: projectId,
@@ -333,10 +343,10 @@
       }).last().value();
       var isNewRoad = changedLink.status == LinkStatus.New.value;
 
-      if(isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.linkIds), dataJson.userDefinedEndAddressM)){
+      if(isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM)){
         new GenericConfirmPopup("Antamasi pituus eroaa yli 5% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
-            createOrUpdate(dataJson, changedLinks);
+            createOrUpdate(dataJson);
           },
           closeCallback: function () {
             applicationModel.removeSpinner();
@@ -344,14 +354,14 @@
           }
         });
       } else{
-        createOrUpdate(dataJson, changedLinks);
+        createOrUpdate(dataJson);
       }
       return true;
     };
 
     this.preSplitProjectLinks = function(suravage, nearestPoint){
       applicationModel.addSpinner();
-      var form = $('#roadAddressProjectFormCut');
+      //var form = $('#roadAddressProjectFormCut');
       var linkId = suravage.linkId;
       var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
@@ -671,7 +681,19 @@
     };
 
     this.getProjectErrors = function(){
-      return projectErrors;
+      var errors = _.each(projectErrors, function (error) {
+        var errorIds = error.ids;
+        error.linkIds = [];
+        if (error.errorCode == 8) {
+          error.linkIds = error.ids;
+        }
+        _.each(projectLinks(), function (pl) {
+          if (_.contains(errorIds, pl.getData().id)) {
+            error.linkIds.push(pl.getData().linkId);
+          }
+        });
+      });
+      return errors;
     };
 
     this.pushCoordinates = function(button) {
