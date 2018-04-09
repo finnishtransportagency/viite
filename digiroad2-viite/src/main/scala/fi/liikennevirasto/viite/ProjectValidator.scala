@@ -9,6 +9,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.TrackSectionOrder
+import org.joda.time.format.DateTimeFormat
 
 object ProjectValidator {
 
@@ -247,10 +248,9 @@ object ProjectValidator {
       checkTrackCode(project, projectLinks)
     }
 
-    checkProjectContinuity  ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
+    checkProjectContinuity ++ checkProjectContinuousSchema ++ checkProjectSharedLinks ++
       checkForUnsuccessfulRecalculation ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++
       elyCodesResults ++ checkRemovedEndOfRoadParts(project)
-
   }
 
   def checkRemovedEndOfRoadParts(project: RoadAddressProject): Seq[ValidationErrorDetails] = {
@@ -309,18 +309,18 @@ object ProjectValidator {
   def checkOrdinaryRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     def checkConnectedAreContinuous = {
-      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(seq.filterNot(pl =>
+      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(seq.sortBy(_.startAddrMValue).filterNot(pl =>
         // Check that pl is continuous or after it there is no connected project link
         pl.discontinuity == Continuous ||
-          !seq.exists(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track) && connected(pl2, pl))
+          !seq.exists(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track) && connected(pl, pl2))
       ))
     }
 
     def checkNotConnectedHaveMinorDiscontinuity = {
-      val possibleDiscontinuous = seq.filterNot { pl =>
+      val possibleDiscontinuous = seq.sortBy(_.startAddrMValue).filterNot{ pl =>
         // Check that pl has discontinuity or after it the project links are connected (except last, where forall is true for empty list)
         pl.discontinuity == MinorDiscontinuity ||
-          seq.filter(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track)).forall(pl2 => connected(pl2, pl))
+          seq.filter(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track)).forall(pl2 => connected(pl, pl2))
       }
       val adjacentRoadAddresses = possibleDiscontinuous.filterNot(pd => {
         val roadsDiscontinuity = RoadAddressDAO.fetchByRoadPart(pd.roadNumber, pd.roadPartNumber)
@@ -442,7 +442,7 @@ object ProjectValidator {
         // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
         val nextLink = seq.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
         (nextLink.nonEmpty && pl.discontinuity != Continuous) ||
-          nextLink.exists(pl2 => !connected(pl2, pl))
+          nextLink.exists(pl2 => !connected(pl, pl2))
       })
     }
 
@@ -571,7 +571,11 @@ object ProjectValidator {
   }
 
   private def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
-    GeometryUtils.areAdjacent(pl1.geometry, pl2.geometry, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+    val connectingPoint = pl1.sideCode match {
+      case AgainstDigitizing => pl1.geometry.head
+      case _ => pl1.geometry.last
+    }
+    GeometryUtils.areAdjacent(pl2.geometry, connectingPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 
   private def trackMatch(track1: Track, track2: Track) = {
@@ -678,10 +682,15 @@ object ProjectValidator {
   }
 
   private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
-                           roadAndPart: Option[Seq[(Long,Long)]] = Option.empty[Seq[(Long,Long)]], discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]]) = {
-    case object formattedMessage extends ValidationError {
-      def value: Int = validationError.value
-      def message: String = validationError.message.format(if(elyBorderData.nonEmpty) {
+                           roadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
+                           discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]], projectDate: Option[String] = Option.empty[String]) = {
+    val formattedMessage =
+      if (projectDate.nonEmpty && roadAndPart.nonEmpty) {
+        val unzippedRoadAndPart = roadAndPart.get.unzip
+        val changedMsg = validationError.message.format(unzippedRoadAndPart._1.head, unzippedRoadAndPart._2.head, projectDate.get)
+        changedMsg
+      } else {
+        validationError.message.format(if (elyBorderData.nonEmpty) {
         elyBorderData.get.toSet.mkString(", ")
       } else if(roadAndPart.nonEmpty){
         roadAndPart.get.toSet.mkString(", ")
@@ -691,9 +700,15 @@ object ProjectValidator {
       else{
         validationError.message
       })
+      }
+
+    case object formattedMessageObject extends ValidationError {
+      def value: Int = validationError.value
+
+      def message: String = formattedMessage
       def notification: Boolean = validationError.notification
     }
-    formattedMessage
+    formattedMessageObject
   }
 
   /**
