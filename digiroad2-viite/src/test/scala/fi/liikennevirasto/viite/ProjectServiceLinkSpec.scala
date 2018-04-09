@@ -527,9 +527,28 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(adjusted.map(toRoadLink))
       )
+      val beforeChange = ProjectDAO.getProjectLinks(7081807)
       projectService.changeDirection(7081807, 77997, 1, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)), "testuser")
       val changedLinks = ProjectDAO.getProjectLinks(7081807)
 
+      val maxBefore = if(beforeChange.nonEmpty) beforeChange.maxBy(_.endAddrMValue).endAddrMValue else 0
+      val maxAfter = if(changedLinks.nonEmpty) changedLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
+      maxBefore should be (maxAfter)
+      val combined = changedLinks.filter(_.track == Track.Combined)
+      val right = changedLinks.filter(_.track == Track.RightSide)
+      val left = changedLinks.filter(_.track == Track.LeftSide)
+
+      (combined++right).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]){ case (seq, plink) =>
+        if(seq.nonEmpty)
+          seq.last.endAddrMValue should be (plink.startAddrMValue)
+          seq++Seq(plink)
+      }
+
+      (combined++left).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]){ case (seq, plink) =>
+        if(seq.nonEmpty)
+          seq.last.endAddrMValue should be (plink.startAddrMValue)
+        seq++Seq(plink)
+      }
       // Test that for every link there should be the address before it or after it (unless it's the first or last link)
       changedLinks.foreach(l =>
         (l == changedLinks.head || changedLinks.exists(c => c.endAddrMValue == l.startAddrMValue &&
