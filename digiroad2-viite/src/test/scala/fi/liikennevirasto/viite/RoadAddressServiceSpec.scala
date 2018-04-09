@@ -106,7 +106,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       val roadLinks = Seq(RoadAddressLink(0, 5171208, Seq(Point(532837.14110884, 6993543.6296834, 0.0), Point(533388.14110884, 6994014.1296834, 0.0)),
         0.0, Municipality, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,
-        "Vt5", BigInt(0), None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01",
+        Some("Vt5"), None, BigInt(0), None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01",
         0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 0, 123))
       val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(roadLinks)
       partitionedRoadLinks.map {
@@ -131,7 +131,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("test createMissingRoadAddress should not add two equal roadAddresses"){
     runWithRollback {
       val roadAddressLinks = Seq(
-        RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PrivateRoadType, "Vt5", BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 0)
+        RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PrivateRoadType, Some("Vt5"), None, BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 0)
       )
       val oldMissingRA = RoadAddressDAO.getMissingRoadAddresses(Set()).size
       roadAddressLinks.foreach { links =>
@@ -192,7 +192,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback {
       val geom = Seq(Point(374668.195, 6676884.282, 0.0),Point(374643.384, 6676882.176, 0.0))
       val raLink = RoadAddressLink(0, 1611616, geom, 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType,
-                    InUse, NormalLinkInterface, RoadType.PrivateRoadType, "Vt5", BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
+                    InUse, NormalLinkInterface, RoadType.PrivateRoadType, Some("Vt5"), None, BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
                     Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown,
                     None, None, Anomaly.None, 0)
 
@@ -238,23 +238,23 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val roadAddressLinksMap = Map(l2 -> Seq(RoadAddressLink(333012, l2, Seq(Point(532686.507,6997280.405,0.0), Point(532682.145,6997307.366,0.0),
       Point(532673.695,6997367.113,0.0),Point(532665.336,6997428.384,0.0), Point(532655.448,6997496.461,0.0),
       Point(532647.278,6997553.917,0.0),Point(532640.024,6997604.115,0.0), Point(532635.796,6997630.174,0.0),
-      Point(532635.575,6997631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, "Vt5", BigInt(0), Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 0.0, 355.027, SideCode.BothDirections, None, None, Anomaly.None, 0)),
+      Point(532635.575,6997631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 0.0, 355.027, SideCode.BothDirections, None, None, Anomaly.None, 0)),
       l1 -> Seq(RoadAddressLink(333013, l1, Seq(Point(532686.507,6997280.405,0.0), Point(532682.145,6997307.366,0.0),
         Point(532673.695,6997367.113,0.0),Point(532665.336,6997428.384,0.0), Point(532655.448,6997496.461,0.0),
         Point(532647.278,6997553.917,0.0),Point(532640.024,6997604.115,0.0), Point(532635.796,6997630.174,0.0),
-        Point(532635.575,6997631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad,"Vt5", BigInt(0), Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 0.0, 355.027, SideCode.BothDirections, None, None, Anomaly.None, 0)),
+        Point(532635.575,6997631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad,Some("Vt5"), None, BigInt(0), Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 0.0, 355.027, SideCode.BothDirections, None, None, Anomaly.None, 0)),
       l4 -> Seq(RoadAddressLink(333014, l4, Seq(Point(532686.507,6997280.405,0.0), Point(532682.145,6997307.366,0.0),
         Point(532673.695,6997367.113,0.0),Point(532665.336,6997428.384,0.0), Point(532655.448,6997496.461,0.0),
         Point(532647.278,6997553.917,0.0),Point(532640.024,6997604.115,0.0), Point(532635.796,6997630.174,0.0),
-        Point(532635.575,6997631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, "Vt5", BigInt(0),Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 354.0276, 355.029, SideCode.BothDirections, None, None,Anomaly.None, 0)),
+        Point(532635.575,6997631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0),Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 354.0276, 355.029, SideCode.BothDirections, None, None,Anomaly.None, 0)),
       l3 -> Seq(RoadAddressLink(333015, l3, Seq(Point(532686.507,6997280.405,0.0), Point(532682.145,6997307.366,0.0),
         Point(532673.695,6997367.113,0.0),Point(532665.336,6997428.384,0.0), Point(532655.448,6997496.461,0.0),
         Point(532647.278,6997553.917,0.0),Point(532640.024,6997604.115,0.0), Point(532635.796,6997630.174,0.0),
-        Point(532637.575,6996631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, "Vt5", BigInt(0),Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 355.82666256921844, 355.927, SideCode.BothDirections, None, None, Anomaly.None, 0)),
+        Point(532637.575,6996631.749,0.0)), 355.02666256921844, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0),Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 355.82666256921844, 355.927, SideCode.BothDirections, None, None, Anomaly.None, 0)),
       l5 -> Seq(RoadAddressLink(333016, l5, Seq(Point(532686.507,6997280.405,0.0), Point(532682.145,6997307.366,0.0),
         Point(532673.695,6997367.113,0.0),Point(532665.336,6997428.384,0.0), Point(532655.448,6997496.461,0.0),
         Point(532647.278,6997553.917,0.0),Point(532640.024,6997604.115,0.0), Point(532635.796,6997630.174,0.0)),
-        352.0, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, "Vt5", BigInt(0),Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 355.82666256921844, 355.927, SideCode.BothDirections, None, None, Anomaly.None, 0))
+        352.0, State, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0),Some("29.10.2015 17:34:02"), Some("vvh_modified"), Map("linkId" -> 1611605, "segmentId" -> 63298), 5, 206, 0, 8, 5, 3446, 3800, "", "", 355.82666256921844, 355.927, SideCode.BothDirections, None, None, Anomaly.None, 0))
     )
 
     val (topology, changeSet) = RoadAddressFiller.fillTopology(roadLinksSeq, roadAddressLinksMap)
@@ -372,7 +372,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val floatGeomLength = GeometryUtils.geometryLength(floatGeom)
       val floatingLinks = Seq(
         RoadAddressLink(linkId1, linkId1, floatGeom, floatGeomLength, Municipality, SingleCarriageway,
-          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, "Vt5", BigInt(0),
+          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
           None, None, Map("linkId" -> linkId1, "segmentId" -> segmentId1), 5, 205, 1, 0, 0, 0, 500, "01.01.2015", "", 0.0, floatGeomLength,
           SideCode.TowardsDigitizing, Option(CalibrationPoint(linkId1, 0.0, 0)), Option(CalibrationPoint(linkId1, floatGeomLength, 500)), Anomaly.None, 0, commonHistoryId))
       RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(true)))
@@ -382,11 +382,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val geom2 = Seq(cutPoint, floatGeom.last)
       val targetLinks = Seq(
         RoadAddressLink(0, linkId1, geom1, GeometryUtils.geometryLength(geom1), Municipality, SingleCarriageway,
-          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, "Vt5", BigInt(0),
+          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
           None, None, Map("linkId" -> linkId1, "segmentId" -> segmentId1), 5, 205, 1, 0, 0, 0, 1, "01.01.2015", "", 0.0, 0.0,
           SideCode.Unknown, None, None, Anomaly.None, 0, commonHistoryId),
         RoadAddressLink(0, linkId2, geom2, GeometryUtils.geometryLength(geom2), Municipality, SingleCarriageway,
-          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, "Vt5", BigInt(0),
+          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
           None, None, Map("linkId" -> linkId2, "segmentId" -> segmentId2), 5, 205, 1, 0, 0, 1, 2, "01.01.2015", "", 0.0, 0.0,
           SideCode.Unknown, None, None, Anomaly.None, 0, commonHistoryId))
       when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((targetLinks.map(roadAddressLinkToRoadLink), floatingLinks.map(roadAddressLinkToHistoryLink)))
@@ -1165,7 +1165,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
                                     endCalibrationPoint: Boolean = false, lrmposition: Long = 0, commonHistoryId: Long = 0) = {
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(id, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
-      ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad,"Vt5", BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
+      ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad,Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
       trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
       if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,
       if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
