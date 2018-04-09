@@ -5,7 +5,6 @@
     var ids = [];
     var dirty = false;
     var splitSuravage = {};
-    //var LinkGeomSource = LinkValues.LinkGeomSource;
     var LinkStatus = LinkValues.LinkStatus;
     var preSplitData = null;
     var nearest = null;
@@ -21,11 +20,10 @@
       eventbus.trigger('projectLink:clicked', get(id));
     };
 
-    var openWithErrorMessage = function (linkId, errorMessage) {
-        ids = projectLinkCollection.getMultiProjectLinks(linkId);
-        current = projectLinkCollection.getProjectLink(ids);
-
-        eventbus.trigger('projectLink:errorClicked', get(linkId), errorMessage);
+    var openWithErrorMessage = function (id, errorMessage) {
+      current = projectLinkCollection.getProjectLink([id]);
+      ids = [id];
+      eventbus.trigger('projectLink:errorClicked', get(id), errorMessage);
     };
 
     var orderSplitParts = function(links) {
@@ -108,46 +106,7 @@
         endMValue: 0
       };
     };
-/*
-    var splitSuravageLinks = function(nearestSuravage, split, mousePoint, callback) {
-      var left = _.cloneDeep(nearestSuravage);
-      left.points = split.firstSplitVertices;
 
-      var right = _.cloneDeep(nearestSuravage);
-      right.points = split.secondSplitVertices;
-      var measureLeft = calculateMeasure(left);
-      var measureRight = calculateMeasure(right);
-      splitSuravage.created = left;
-      splitSuravage.created.endMValue = measureLeft;
-      splitSuravage.existing = right;
-      splitSuravage.existing.endMValue = measureRight;
-      splitSuravage.created.splitPoint = mousePoint;
-      splitSuravage.existing.splitPoint = mousePoint;
-
-      splitSuravage.created.id = null;
-      splitSuravage.splitMeasure = split.splitMeasure;
-
-      splitSuravage.created.marker = 'A';
-      splitSuravage.existing.marker = 'B';
-
-      callback(splitSuravage);
-    };
-
-    var getPoint = function(link) {
-      if (link.sideCode == LinkValues.SideCode.AgainstDigitizing.value) {
-        return _.first(link.points);
-      } else {
-        return _.last(link.points);
-      }
-    };
-
-    var calculateMeasure = function(link) {
-      var points = _.map(link.points, function(point) {
-        return [point.x, point.y];
-      });
-      return new ol.geom.LineString(points).getLength();
-    };
-*/
     var isDirty = function() {
       return dirty;
     };
@@ -284,7 +243,6 @@
       preSplitSuravageLink: preSplitSuravageLink,
       getPreSplitData: getPreSplitData,
       revertSuravage: revertSuravage,
-      //getNearestPoint: getNearestPoint,
       setNearestPoint: setNearestPoint
     };
   };
