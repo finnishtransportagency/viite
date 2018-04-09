@@ -145,9 +145,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val endOfRoadSet = projectLinks.init :+ projectLinks.last.copy(discontinuity = EndOfRoad)
-      ProjectValidator.checkOrdinaryRoadContinuityCodes(project, endOfRoadSet) should have size 0
+      ProjectValidator.checkRoadContinuityCodes(project, endOfRoadSet) should have size 0
       val brokenContinuity = endOfRoadSet.tail :+ endOfRoadSet.head.copy(geometry = projectLinks.head.geometry.map(_ + Vector3d(1.0, 1.0, 0.0)))
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, brokenContinuity)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, brokenContinuity)
       errors should have size 1
       errors.head.validationError should be(MinorDiscontinuityFound)
     }
@@ -182,7 +182,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         case Nil => Nil
         case ls :+ last => ls :+ last.copy(sideCode = AgainstDigitizing)
       }
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, links)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, links)
       errors should have size 1
       errors.head.validationError should be (MajorDiscontinuityFound)
 
@@ -198,7 +198,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         case Nil => Nil
         case ls :+ last => ls :+ last.copy(geometry = last.geometry.reverse)
       }
-      val errors2 = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, linksLastLinkGeomReversed)
+      val errors2 = ProjectValidator.checkRoadContinuityCodes(project, linksLastLinkGeomReversed)
       errors2 should have size 0
 
       /*
@@ -213,7 +213,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         case Nil => Nil
         case l :+ last => l :+ last.copy(discontinuity = Discontinuity.Discontinuous)
       }
-      val errors3 = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, linksDiscontinuousLastLink)
+      val errors3 = ProjectValidator.checkRoadContinuityCodes(project, linksDiscontinuousLastLink)
       errors3 should have size 0
     }
   }
@@ -222,7 +222,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 1
       errors.head.validationError should be(MissingEndOfRoad)
     }
@@ -236,11 +236,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       ProjectDAO.create(projectLinks.map(l => l.copy(id = NewRoadAddress, roadPartNumber = 2L, createdBy = Some("User"),
         geometry = l.geometry.map(_ + Vector3d(0.0, 40.0, 0.0)))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(updProject, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(updProject, projectLinks)
       ProjectDAO.getProjectLinks(project.id) should have size 8
       errors should have size 0
       val (starting, last) = projectLinks.splitAt(3)
-      val errorsUpd = ProjectValidator.checkOrdinaryRoadContinuityCodes(updProject,
+      val errorsUpd = ProjectValidator.checkRoadContinuityCodes(updProject,
         starting ++ last.map(_.copy(discontinuity = EndOfRoad)))
       errorsUpd should have size 1
       errorsUpd.head.validationError should be(EndOfRoadNotOnLastPart)
@@ -251,14 +251,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
-      ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks) should have size 1
+      ProjectValidator.checkRoadContinuityCodes(project, projectLinks) should have size 1
       RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
         floating = false, Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)))
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 0
       val (starting, last) = projectLinks.splitAt(3)
-      val errorsUpd = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+      val errorsUpd = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = EndOfRoad)))
       errorsUpd should have size 1
       errorsUpd.head.validationError should be(EndOfRoadNotOnLastPart)
@@ -272,18 +272,18 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
         floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 1
       errors.head.validationError should be(MajorDiscontinuityFound)
 
       val (starting, last) = projectLinks.splitAt(3)
-      val errorsUpd = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+      val errorsUpd = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous)))
       errorsUpd should have size 0
 
       RoadAddressDAO.updateGeometry(raId, Seq(Point(0.0, 40.0), Point(0.0, 50.0)))
 
-      val connectedError = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+      val connectedError = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous)))
       connectedError should have size 1
       connectedError.head.validationError should be(ConnectedDiscontinuousLink)
@@ -297,18 +297,18 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
         floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination, 0))).head
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 1
       errors.head.validationError should be(ElyCodeChangeDetected)
 
       val (starting, last) = projectLinks.splitAt(3)
-      val errorsUpd = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+      val errorsUpd = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.ChangingELYCode)))
       errorsUpd should have size 0
 
       RoadAddressDAO.updateGeometry(raId, Seq(Point(0.0, 40.0), Point(0.0, 50.0)))
 
-      val connectedError = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+      val connectedError = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Continuous)))
       connectedError should have size 1
       connectedError.head.validationError should be(ElyCodeChangeDetected)
@@ -383,16 +383,16 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     runWithRollback {
       val project = setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
-      val errors = ProjectValidator.checkRampContinuityCodes(project, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks, isRampValidation = true)
       errors should have size 0
 
       val (starting, last) = projectLinks.splitAt(3)
-      val errorsUpd = ProjectValidator.checkRampContinuityCodes(project,
-        starting ++ last.map(_.copy(discontinuity = Discontinuity.Continuous)))
+      val errorsUpd = ProjectValidator.checkRoadContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.Continuous)), isRampValidation = true)
       errorsUpd should have size 1
 
-      val errorsUpd2 = ProjectValidator.checkRampContinuityCodes(project,
-        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
+      val errorsUpd2 = ProjectValidator.checkRoadContinuityCodes(project,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)), isRampValidation = true)
       errorsUpd2 should have size 1
 
       val ra = Seq(
@@ -414,8 +414,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       ProjectDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
         .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, createdBy = Some("I"))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-      ProjectValidator.checkRampContinuityCodes(updProject,
-        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))) should have size 0
+      ProjectValidator.checkRoadContinuityCodes(updProject,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)), isRampValidation = true) should have size 0
     }
   }
 
@@ -562,7 +562,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     runWithRollback {
       val project = setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
-      val errors = ProjectValidator.checkRampContinuityCodes(project, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks, isRampValidation = true)
       errors should have size 0
       val (starting, last) = projectLinks.splitAt(3)
       val ra = Seq(
@@ -584,8 +584,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       ProjectDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
         .map(_.copy(id = NewRoadAddress, roadPartNumber = 20L, createdBy = Some("I"))))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-      ProjectValidator.checkRampContinuityCodes(updProject,
-        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))) should have size 0
+      ProjectValidator.checkRoadContinuityCodes(updProject,
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)), isRampValidation = true) should have size 0
     }
   }
 
@@ -596,16 +596,16 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
         floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
-      val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, projectLinks)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 1
       errors.head.validationError should be(MajorDiscontinuityFound)
 
       val (starting, last) = projectLinks.splitAt(3)
-      val errorsUpd = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+      val errorsUpd = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous)))
       errorsUpd should have size 0
 
-      val errorsUpd2 = ProjectValidator.checkOrdinaryRoadContinuityCodes(project,
+      val errorsUpd2 = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
       errorsUpd2 should have size 0
     }
@@ -629,11 +629,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       }
       ProjectDAO.create(links)
       val allLinks = ProjectDAO.getProjectLinks(project.id)
-      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkOrdinaryRoadContinuityCodes(project, g._2))
+      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkRoadContinuityCodes(project, g._2))
       errors.size should be (0)
       sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
       val linksAfterTransfer = ProjectDAO.getProjectLinks(project.id)
-      val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkOrdinaryRoadContinuityCodes(project, g._2))
+      val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkRoadContinuityCodes(project, g._2))
       errorsAfterTransfer.size should be (0)
     }
   }
