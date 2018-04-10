@@ -56,6 +56,18 @@ object CalibrationPointDAO {
     }
   }
 
+  def findEndCalibrationPoint(projectLinkId: Long, projectId: Long): Seq[UserDefinedCalibrationPoint] = {
+    val baseQuery =
+      s"""
+         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From CALIBRATION_POINT Where
+         PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId And ADDRESS_M > 0
+       """
+
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
+      case (id,linkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id,linkId, prId, linkM, addressM)
+    }
+  }
+
   def findCalibrationPointsOfRoad(projectId: Long, projectLinkId: Long): Seq[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
