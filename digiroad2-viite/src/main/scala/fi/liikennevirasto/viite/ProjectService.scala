@@ -918,11 +918,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet).foreach(ra =>
+    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet, newTransaction = false)
+    val roadAddresses = RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
+    roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
-        case Some(mod) if mod.geometry.nonEmpty =>
-          val geom = GeometryUtils.truncateGeometry3D(mod.geometry, ra.startMValue, ra.endMValue)
+        case Some(mod) if mod.geometry.nonEmpty => {
+          val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
+          val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
           ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+        }
         case _ => ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
       })
     if (recalculate)
