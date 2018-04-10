@@ -1119,6 +1119,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (toUpdateLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).size == 1) {
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.New, toUpdateLinks)
               updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode))))
+              roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
             } else {
               throw new RoadAddressException(s"Useamman kuin yhden tien/tieosan tallennus kerralla ei ole tuettu.")
             }
