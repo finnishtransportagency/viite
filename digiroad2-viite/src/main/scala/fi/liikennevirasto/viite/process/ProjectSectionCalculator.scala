@@ -135,15 +135,29 @@ object ProjectSectionCalculator {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
     }
     def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
-      Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength,
-        userDefinedCalibrationPoint.map(_.addressMValue).getOrElse(projectLink.endAddrMValue)))
+      val segmentValue = (if (userDefinedCalibrationPoint.map(_.addressMValue).nonEmpty && userDefinedCalibrationPoint.map(_.addressMValue).get > projectLink.startAddrMValue)
+        userDefinedCalibrationPoint.map(_.addressMValue).get else projectLink.endMValue) - projectLink.startMValue
+      val addressValue = (userDefinedCalibrationPoint, projectLink.calibrationPoints._2, (projectLink.startAddrMValue, projectLink.endAddrMValue)) match {
+        case (Some(usercp), Some(plcp), addr) => if(usercp.addressMValue < addr._1) plcp.addressMValue else usercp.addressMValue
+        case (Some(usercp), None, addr) => if(usercp.addressMValue < addr._1) addr._2 else usercp.addressMValue
+        case (None, Some(plcp), addr) => plcp.addressMValue
+        case (None, None, addr) => addr._2
+      }
+      Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else segmentValue,
+        addressValue))
     }
 
     def makeEndCPAtStartBorder(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
-      val segmentValue = (if (userDefinedCalibrationPoint.map(_.addressMValue).nonEmpty)
+      val segmentValue = (if (userDefinedCalibrationPoint.map(_.addressMValue).nonEmpty && userDefinedCalibrationPoint.map(_.addressMValue).get > projectLink.startAddrMValue)
         userDefinedCalibrationPoint.map(_.addressMValue).get else projectLink.endMValue) - projectLink.startMValue
+      val addressValue = (userDefinedCalibrationPoint, projectLink.calibrationPoints._2, (projectLink.startAddrMValue, projectLink.endAddrMValue)) match {
+        case (Some(usercp), Some(plcp), addr) => if(usercp.addressMValue < addr._1) plcp.addressMValue else usercp.segmentMValue.toLong
+        case (Some(usercp), None, addr) => if(usercp.addressMValue < addr._1) addr._2 else usercp.addressMValue
+        case (None, Some(plcp), addr) => plcp.segmentMValue.toLong
+        case (None, None, addr) => addr._2
+      }
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else segmentValue,
-        userDefinedCalibrationPoint.map(_.segmentMValue.toLong).getOrElse(projectLink.endAddrMValue)))
+        addressValue))
     }
 
     def makeLink(link: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint],
