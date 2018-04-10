@@ -284,6 +284,8 @@ object ProjectValidator {
     } else Seq.empty[ValidationErrorDetails]
   }
 
+
+
   /**
     * Check for non-ramp and roundabout roads:
     * 1) If inside a part there is a gap between links > .1 meters, discontinuity 4 (minor) is required
@@ -374,17 +376,35 @@ object ProjectValidator {
           .filter(p => p > part)
           .filterNot(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
             .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
-        if (nextProjectPart.isEmpty && nextAddressPart.isEmpty) {
-          if (discontinuity != EndOfRoad)
+        if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
             return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
-        } else {
-          val nextLinks =
-            if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
-              ProjectDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
-            else {
-              RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true)
-                .filterNot(rp => allProjectLinks.exists(link => rp.roadPartNumber != link.roadPartNumber && rp.id == link.roadAddressId)).filter(_.startAddrMValue == 0L)
-            }
+        }
+        else if(!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
+          return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
+        }
+        None
+      }
+    }
+
+    def checkDiscontinuityOnLastPart(lastProjectLinks: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+      val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
+      if (lastProjectLinks.exists(_.discontinuity != lastProjectLinks.head.discontinuity))
+        error(project.id, ValidationErrorList.IncompatibleDiscontinuityCodes)(lastProjectLinks)
+      else {
+        val (road, part) = (lastProjectLinks.head.roadNumber, lastProjectLinks.head.roadPartNumber)
+        val discontinuity = lastProjectLinks.head.discontinuity
+        val projectNextRoadParts = project.reservedParts.filter(rp =>
+          rp.roadNumber == road && rp.roadPartNumber > part)
+
+        val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
+          .map(_.roadPartNumber).sorted.headOption
+        val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt , project.startDate)
+          .filter(p => p > part)
+          .filterNot(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
+            .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
+
+        if(!(nextProjectPart.isEmpty && nextAddressPart.isEmpty)){
+          val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
 
           if (isConnectingRoundabout(lastProjectLinks) && isRampValidation) {
             discontinuity match {
@@ -401,8 +421,6 @@ object ProjectValidator {
           discontinuity match {
             case Continuous =>
               if(!isConnected) return error(project.id, ValidationErrorList.MajorDiscontinuityFound)(lastProjectLinks)
-            case EndOfRoad =>
-              return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
             case MinorDiscontinuity | Discontinuous =>
               if(isConnected) return error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(lastProjectLinks)
             case _ => // no error, continue
@@ -412,9 +430,23 @@ object ProjectValidator {
       }
     }
 
+    def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]) = {
+      if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
+        ProjectDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
+      else {
+        RoadAddressDAO.fetchByRoadPart(road, nextAddressPart.get, includeFloating = true)
+          .filterNot(rp => allProjectLinks.exists(link => rp.roadPartNumber != link.roadPartNumber && rp.id == link.roadAddressId)).filter(_.startAddrMValue == 0L)
+      }
+    }
+
+    def getLastValidLinkForParts = {
+      seq.filter(r => r.status != LinkStatus.Terminated && r.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)
+    }
+
     // Checks inside road part (not including last links' checks)
     checkConnectedAreContinuous.toSeq ++ checkNotConnectedHaveMinorDiscontinuity.toSeq ++ checkDiscontinuityBetweenLinksOnRamps.toSeq ++
-      checkEndOfRoadOnLastPart(seq.filter(r => r.status != LinkStatus.Terminated && r.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)).toSeq
+      checkEndOfRoadOnLastPart(getLastValidLinkForParts).toSeq ++
+      checkDiscontinuityOnLastPart(getLastValidLinkForParts).toSeq
   }
 
   def checkTrackCode(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
