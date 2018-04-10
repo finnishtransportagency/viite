@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao.AddressChangeType.{Termination, Transfer}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -73,6 +74,39 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
+                          roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadAddressId: Long = 0L) = {
+    ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
+      Some("User"), 0L, startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
+      floating = false, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
+      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadAddressId, ely, reversed = false, None, 0L)
+  }
+
+  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
+                                    roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadAddressId: Long = 0L) = {
+    val id = Sequences.nextViitePrimaryKeySeqValue
+
+    def withTrack(t: Track): Seq[ProjectLink] = {
+      addrM.init.zip(addrM.tail).map { case (st, en) =>
+        projectLink(st, en, t, id, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, roadAddressId)
+      }
+    }
+
+    val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+      "", Seq(), None, Some(8), None)
+    ProjectDAO.createRoadAddressProject(project)
+    val links =
+      if (changeTrack) {
+        withTrack(RightSide) ++ withTrack(LeftSide)
+      } else {
+        withTrack(Combined)
+      }
+    ProjectDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
+    ProjectDAO.create(links)
+    project
+  }
+
+
   private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int,
                                  discontinuity: Int, roadType: Int, roadLinkSource: Int,
                                  roadEly: Long, user: String): Map[String, Any] = {
@@ -105,6 +139,22 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
       ral.constructionType, ral.roadLinkSource)
+  }
+
+  private def addressToRoadLink(ral: RoadAddress): RoadLink = {
+    val geomLength = GeometryUtils.geometryLength(ral.geometry)
+    val adminClass = ral.roadType match {
+      case RoadType.FerryRoad => AdministrativeClass.apply(1)
+      case RoadType.PublicRoad => AdministrativeClass.apply(1)
+      case RoadType.MunicipalityStreetRoad => AdministrativeClass.apply(2)
+      case RoadType.PrivateRoadType => AdministrativeClass.apply(3)
+      case _ => AdministrativeClass.apply(99)
+    }
+    RoadLink(ral.linkId, ral.geometry, geomLength, adminClass, 1,
+      extractTrafficDirection(ral.sideCode, ral.track), LinkType.apply(99), Option(ral.startDate.toString), ral.createdBy, Map(
+        "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
+        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
+      ConstructionType.InUse, ral.linkGeomSource)
   }
 
   private def toMockAnswer(projectLinks: Seq[ProjectLink], roadLink: RoadLink, seq: Seq[RoadLink] = Seq()) = {
@@ -311,6 +361,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
       when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((Seq(roadLink), Seq()))
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink, suravageAddressLink))
       val rap = createProjectDataForSplit()
       val options = SplitOptions(Point(0, 25.3), LinkStatus.UnChanged, LinkStatus.New, 1, 1, Track.Combined, Discontinuity.Continuous,
         1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
@@ -343,6 +394,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
       when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((Seq(roadLink), Seq()))
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink, suravageAddressLink))
       val rap = createProjectDataForSplit()
       val options = SplitOptions(Point(0, 25.3), LinkStatus.UnChanged, LinkStatus.New, 1, 1, Track.Combined, Discontinuity.Continuous,
         1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
@@ -1327,34 +1379,43 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Reserve road part, renumber it and revert it; reservation should be freed") {
     runWithRollback {
       reset(mockRoadLinkService)
-      val addresses = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
-      val reservedRoadPart = ReservedRoadPart(addresses.head.id, addresses.head.roadNumber, addresses.head.roadPartNumber,
-        Some(addresses.last.endAddrMValue), Some(addresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
-      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
+      setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
+      val createdRoadAddresses = Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+        floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination, 0))
+      RoadAddressDAO.create(createdRoadAddresses).head
 
+      val reservedRoadPart = ReservedRoadPart(createdRoadAddresses.head.id, createdRoadAddresses.head.roadNumber, createdRoadAddresses.head.roadPartNumber,
+        Some(createdRoadAddresses.last.endAddrMValue), Some(createdRoadAddresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
       val project = projectService.createRoadLinkProject(rap)
-      mockForProject(project.id, addresses.map(toProjectLink(project)))
+
+      mockForProject(project.id, createdRoadAddresses.map(toProjectLink(project)))
       projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart)))
       val savedProject = projectService.getRoadAddressSingleProject(project.id).get
       savedProject.reservedParts should have size (1)
       reset(mockRoadLinkService)
 
-      projectService.updateProjectLinks(project.id, addresses.map(_.linkId).toSet, LinkStatus.Numbering, "TestUser",
+      projectService.updateProjectLinks(project.id, createdRoadAddresses.map(_.linkId).toSet, LinkStatus.Numbering, "TestUser",
         19998, 101, 0, Option.empty[Int]) should be(None)
 
       val upProject = projectService.getRoadAddressSingleProject(project.id)
       upProject.nonEmpty should be(true)
       upProject.get.reservedParts should have size (2)
-      upProject.get.reservedParts.map(_.roadNumber).toSet should be(Set(19998L, 5L))
-      upProject.get.reservedParts.map(_.roadPartNumber).toSet should be(Set(101L, 201L))
+      upProject.get.reservedParts.map(_.roadNumber).toSet should be(Set(19998L, 19999L))
+      upProject.get.reservedParts.map(_.roadPartNumber).toSet should be(Set(101L, 2L))
 
       val renumberedLinks = ProjectDAO.getProjectLinks(project.id, Some(LinkStatus.Numbering))
+      val mockRoadLinks = createdRoadAddresses.map(ra => {
+        addressToRoadLink(ra)
+      })
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(mockRoadLinks)
       projectService.revertLinks(renumberedLinks, "user") should be(None)
 
       val revertedProject = projectService.getRoadAddressSingleProject(project.id)
       revertedProject.nonEmpty should be(true)
       revertedProject.get.reservedParts should have size (1)
-      revertedProject.get.reservedParts.map(_.roadPartNumber).toSet should be(Set(201L))
+      revertedProject.get.reservedParts.map(_.roadPartNumber).toSet should be(Set(2L))
     }
   }
 
