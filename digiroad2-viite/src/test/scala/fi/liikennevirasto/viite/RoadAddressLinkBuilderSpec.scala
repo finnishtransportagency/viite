@@ -229,13 +229,13 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     pal1.roadNumber should be(1130)
     pal1.roadPartNumber should be(4)
     pal1.trackCode should be(99)
-    pal1.roadName should be("Evitskogintie")
+    pal1.VVHRoadName.get should be("Evitskogintie")
     pal1.municipalityCode should be(BigInt(257))
 
     pal2.roadNumber should be(1130)
     pal2.roadPartNumber should be(0)
     pal2.trackCode should be(0)
-    pal2.roadName should be("Evitskogsvägen")
+    pal2.VVHRoadName.get should be("Evitskogsvägen")
     pal2.municipalityCode should be(BigInt(0))
   }
 

@@ -33,8 +33,6 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
 
-case class RoadNameExtractor(id: Option[Long], roadNumber: Option[Long], roadName:String, startDate :String, endDate: String) //not use
-
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
 case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
@@ -45,7 +43,7 @@ case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], statu
 case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
                                             roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
                                             roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
-                                            coordinates: ProjectCoordinates)
+                                            coordinates: ProjectCoordinates, roadName: Option[String])
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -174,18 +172,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
   }
 
-
   get("/roadnames") {
     val oRoadNumber = params.get("roadNumber")
     val oRoadName = params.get("roadName")
     val oStartDate = params.get("startDate")
     val oEndDate = params.get("endDate")
-    roadNameService.getRoadAddresses(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
+    roadNameService.getRoadNames(oRoadNumber, oRoadName, optionStringToDateTime(oStartDate), optionStringToDateTime(oEndDate)) match {
       case Right(roadNameList) => Map("success" -> true, "roadNameInfo" -> roadNameList.map(roadNameToApi))
       case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
     }
   }
 
+  put("/roadnames/:roadNumber") {
+    val user = userProvider.getCurrentUser()
+    val roadNumber = params("roadNumber").toLong
+    val roadNames = parsedBody.extract[Seq[RoadNameRow]]
+
+    roadNameService.addOrUpdateRoadNames(roadNumber, roadNames, user) match {
+      case Some(err) => Map("success" -> false, "errorMessage" -> err)
+      case None => Map("success" -> true)
+    }
+  }
 
   get("/roadlinks/multiSourceAdjacents") {
     val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String, Any]]]
@@ -272,7 +279,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
       Map("project" -> roadAddressProjectToApi(fetched),"publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
         "formInfo" ->
-        fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
+          fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
       case e: MappingException =>
@@ -449,7 +456,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
       val writableProject = projectWritable(links.projectId)
       val response = writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-        Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username)
+        Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))))
       response.get("success") match {
         case Some(true) => {
           writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
@@ -481,7 +488,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val writableProject = projectWritable(links.projectId)
           writableProject.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.roadType, links.discontinuity, Some(links.roadEly)) match {
+            links.roadType, links.discontinuity, Some(links.roadEly), roadName = links.roadName) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               writableProject.saveProjectCoordinates(links.projectId, links.coordinates)
@@ -656,6 +663,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/roadname/:roadNumber/:projectID"){
+
+    val rNumber = params.get("roadNumber").map(_.toLong)
+    val projectID = params.get("projectID").map(_.toLong)
+
+    (rNumber, projectID) match{
+      case (Some(rNumber), Some(projectID)) => {
+        try {
+          roadNameService.getRoadNameByNumber(rNumber, projectID)
+        } catch {
+          case e: Exception => Map("success" -> false, "errorMessage" -> e.getMessage)
+        }
+      }
+      case _ => BadRequest("Missing road number from URL")
+    }
+  }
+
   delete("/project/split") {
     val user = userProvider.getCurrentUser()
     try {
@@ -721,9 +745,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
-    partitionedRoadLinks.map {
-      _.map(projectAddressLinkToApi)
+    val validRoadNumbers = partitionedRoadLinks.flatten.map(_.roadNumber).filter(value => value > 0).distinct
+    if(validRoadNumbers.nonEmpty){
+      val roadNames = roadNameService.getCurrentRoadNames(validRoadNumbers)
+      partitionedRoadLinks.map {
+        _.map(address => projectAddressLinkToApi(address, roadNames))
+      }
     }
+    else{
+      partitionedRoadLinks.map {
+        _.map(address => projectAddressLinkToApi(address))
+      }
+    }
+
+
   }
 
   private def chooseDrawType(zoomLevel: String) = {
@@ -798,7 +833,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value,
-      "blackUnderline" -> roadAddressLink.blackUnderline
+      "blackUnderline" -> roadAddressLink.blackUnderline,
+      "roadName" -> roadAddressLink.roadName
     )
   }
 
@@ -838,16 +874,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
-      Map(
-        "id"-> roadName.id,
-        "roadNumber"-> roadName.roadNumber,
-        "roadNameFi"-> roadName.roadName,
-        "startDate" -> formatDateTimeToString(roadName.startDate).getOrElse(""),
-        "endDate" -> formatDateTimeToString(roadName.endDate).getOrElse("")
-      )
+    Map(
+      "id"-> roadName.id,
+      "roadNumber"-> roadName.roadNumber,
+      "name"-> roadName.roadName,
+      "startDate" -> formatDateTimeToString(roadName.startDate),
+      "endDate" -> formatDateTimeToString(roadName.endDate)
+    )
   }
 
-  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
+  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames : Seq[RoadName] = Seq()): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
       (if (projectAddressLink.isSplit)
         Map(
@@ -855,12 +891,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "connectedLinkId" -> projectAddressLink.connectedLinkId,
           "originalGeometry" -> projectAddressLink.originalGeometry,
           "reversed" -> projectAddressLink.reversed,
-          "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry)
+          "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry),
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
         )
       else
         Map(
           "status" -> projectAddressLink.status.value,
-          "reversed" -> projectAddressLink.reversed
+          "reversed" -> projectAddressLink.reversed,
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
         ))
   }
 
@@ -874,7 +912,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "status" -> projectLink.status.value,
       "roadTypeId" -> projectLink.roadType.value,
       "discontinuity" -> projectLink.discontinuity.value,
-      "elyCode" -> projectLink.ely)
+      "elyCode" -> projectLink.ely,
+      "roadName" -> projectLink.roadName)
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {

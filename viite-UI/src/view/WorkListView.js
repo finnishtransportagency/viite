@@ -123,7 +123,7 @@
 
   var generateWorkListErrors = function(layerName, listP) {
     var title = {
-      linkProperty: 'Road address errors list'
+      linkProperty: 'Tieosoiteverkon virheet'
     };
     $('#work-list').append('' +
       '<div style="overflow: auto;">' +

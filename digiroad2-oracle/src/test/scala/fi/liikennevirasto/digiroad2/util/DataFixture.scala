@@ -97,7 +97,8 @@ object DataFixture {
       "kauniainen_lrm_positions.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
-      "insert_project_link_data.sql"
+      "insert_project_link_data.sql",
+      "insert_road_names.sql"
     ))
   }
 
