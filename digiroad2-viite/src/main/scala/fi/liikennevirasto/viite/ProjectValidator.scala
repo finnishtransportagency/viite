@@ -325,7 +325,8 @@ object ProjectValidator {
       val adjacentRoadAddresses = possibleDiscontinuous.filterNot(pd => {
         val roadsDiscontinuity = RoadAddressDAO.fetchByRoadPart(pd.roadNumber, pd.roadPartNumber)
         val sameDiscontinuity = roadsDiscontinuity.map(_.discontinuity).distinct.contains(pd.discontinuity)
-        val overlapping = roadsDiscontinuity.exists(p => GeometryUtils.overlaps((p.startMValue, p.endMValue), (pd.startMValue, pd.endMValue)))
+        val overlapping = roadsDiscontinuity.exists(p => p.id == pd.roadAddressId &&
+          (GeometryUtils.overlapAmount((p.startMValue, p.endMValue), (pd.startMValue, pd.endMValue)) < MaxDistanceForConnectedLinks))
         sameDiscontinuity && overlapping
       })
       error(project.id, ValidationErrorList.MinorDiscontinuityFound)(adjacentRoadAddresses)
