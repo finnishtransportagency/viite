@@ -80,6 +80,14 @@
     };
   };
 
+  dateutil.addSingleDatePicker = function (fromElement) {
+      var fromDateString = function (s) {
+          return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
+      };
+      var from = fromDateString(fromElement.val());
+      return dateutil.addFinnishDatePicker(fromElement);
+  };
+
   dateutil.removeDatePickersFromDom = function () {
     jQuery('.pika-single.is-bound.is-hidden').remove();
   };
