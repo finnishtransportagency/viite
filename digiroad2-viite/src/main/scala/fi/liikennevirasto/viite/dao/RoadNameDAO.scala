@@ -111,7 +111,13 @@ object RoadNameDAO {
     */
   def getCurrentRoadNamesByRoadNumber(roadNumber: Long): Seq[RoadName] = {
     val query =
-      s"""$roadsNameQueryBase where road_number = $roadNumber and end_date is null """
+      s"""$roadsNameQueryBase where road_number = $roadNumber and end_date is null and valid_to is null """
+    queryList(query)
+  }
+
+  def getCurrentRoadNamesByRoadNumbers(roadNumbers: Seq[Long]): Seq[RoadName] = {
+    val query =
+      s"""$roadsNameQueryBase where road_number in (${roadNumbers.mkString(",")}) and end_date is null and valid_to is null """
     queryList(query)
   }
 
