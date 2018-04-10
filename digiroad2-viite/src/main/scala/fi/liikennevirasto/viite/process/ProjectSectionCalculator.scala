@@ -67,7 +67,8 @@ object ProjectSectionCalculator {
       )
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
       val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
-      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, None, coEff)
+      val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, coEff)
     } else {
       mValued
     }
@@ -139,7 +140,9 @@ object ProjectSectionCalculator {
     }
 
     def makeEndCPAtStartBorder(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
-      Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength,
+      val segmentValue = (if (userDefinedCalibrationPoint.map(_.addressMValue).nonEmpty)
+        userDefinedCalibrationPoint.map(_.addressMValue).get else projectLink.endMValue) - projectLink.startMValue
+      Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else segmentValue,
         userDefinedCalibrationPoint.map(_.segmentMValue.toLong).getOrElse(projectLink.endAddrMValue)))
     }
 
@@ -261,7 +264,7 @@ object ProjectSectionCalculator {
 
     def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors): Seq[ProjectLink] = {
       val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
-      ProjectSectionMValueCalculator.assignLinkValues(seq, Some(st.toDouble), coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), coEff)
     }
     def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Option[Long], endM: Option[Long]) = {
       val (rst, lst, ren, len) = (right.head.startAddrMValue, left.head.startAddrMValue, right.last.endAddrMValue,
@@ -290,8 +293,8 @@ object ProjectSectionCalculator {
       }
     }
 
-    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.right.links))
-    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.left.links))
+    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.right.links), userDefinedCalibrationPoint)
+    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.left.links), userDefinedCalibrationPoint)
     val (right, left) = adjustTracksToMatch(rightLinks.sortBy(_.startAddrMValue), leftLinks.sortBy(_.startAddrMValue), None)
     TrackSectionOrder.createCombinedSections(right, left)
   }
