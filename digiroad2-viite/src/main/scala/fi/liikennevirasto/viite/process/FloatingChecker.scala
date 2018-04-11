@@ -56,7 +56,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   }
 
   def checkRoadNetwork(username: String = ""): List[RoadAddress] = {
-    val roadNumbers = if (username.startsWith("dr2dev") || username.startsWith("dr2test")) {
+    val roadNumbers = if (username.startsWith("dr2dev") || username.startsWith("viitetestuser")) {
       RoadAddressDAO.getValidRoadNumbersWithFilterToTestAndDevEnv
     } else {
       RoadAddressDAO.getCurrentValidRoadNumbers()
@@ -91,7 +91,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
 
       // If we get road addresses that were merged we check if they current road link is not overlapping, if it not, then there is a floating problem
       val filteredNonOverlapping = movedAddresses.filterNot(ma => {
-        val filterResult = ma.modifiedBy.getOrElse("") == "Automatic_merged" && GeometryUtils.overlaps((ma.startMValue, ma.endMValue), (0.0, roadLink.length))
+        val filterResult = ma.createdBy.getOrElse("") == "Automatic_merged" && GeometryUtils.overlaps((ma.startMValue, ma.endMValue), (0.0, roadLink.length))
         if (filterResult) {
           println(s"Road address ${ma.id} is a result of automatic merging and it overlaps, discarding.")
         }

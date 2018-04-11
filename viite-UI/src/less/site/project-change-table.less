@@ -7,7 +7,7 @@
   right: 500px;
   top: 620px;
   background-color: #e3e3e1;
-  overflow-y: auto;
+  z-index: 1020;
 }
 .change-table-header {
   padding: 10px;
@@ -27,6 +27,9 @@
   background-color: #cbcbc9;
   display: inline-flex;
   width: 100%;
+}
+.change-header {
+ margin-left: 10%;
 }
 .change-table-heading-label {
   font-size: 13px;
@@ -50,6 +53,20 @@
 .change-table-dimensions{
   width:100%;
 }
+.project-change-table-dimension-header {
+  width: 5.15%;
+  color: #5a5a57;
+  font-weight: bold;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.target {
+  margin-left: 1%;
+  margin-right: 1%;
+}
+
 .project-change-table-dimension-first-h {
   min-width: 65px;
   max-width: 65px;
@@ -80,7 +97,7 @@
 }
 .project-change-table-dimension {
   min-width: 30px;
-  max-width: 30px;
+  max-width: 45px;
   height: 28px;
   color: #5a5a57;
   font-size: 12px;
@@ -142,4 +159,20 @@
 }
 .dimension-reversed {
   padding-right: 8px;
+}
+.white-row {
+  background-color: #FFFFFF;
+}
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-button {
+  background: #888
+}
+::-webkit-scrollbar-track-piece {
+  background: #888
+}
+::-webkit-scrollbar-thumb {
+  background: #1c7fdd
 }

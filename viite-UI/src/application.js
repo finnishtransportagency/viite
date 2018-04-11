@@ -4,6 +4,7 @@
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
     var projectCollection = new ProjectCollection(backend);
+      var roadNameCollection = new RoadNameCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
@@ -41,16 +42,16 @@
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
-      startApplication(backend, models, tileMaps, startupParameters, projectChangeTable);
+        startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection);
     });
   };
 
-  var startApplication = function(backend, models, withTileMaps, startupParameters, projectChangeTable) {
+    var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection) {
     setupProjections();
     fetch('components/WMTSCapabilities.xml', {credentials: "include"}).then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
-      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable);
+        var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
@@ -95,7 +96,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable) {
+    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection) {
     var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -103,8 +104,9 @@
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
+        var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
-    new LinkPropertyForm(models.selectedLinkProperty);
+      new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);

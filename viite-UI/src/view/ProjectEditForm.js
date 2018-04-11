@@ -37,7 +37,7 @@
         return transitionModifiers(targetLinkStatus, linkStatus);
     };
 
-    var selectedProjectLinkTemplate = function(project, selected) {
+    var selectedProjectLinkTemplate = function(project, selected, errorMessage) {
       var road = {
         roadNumber: selected[0].roadNumber,
         roadPartNumber: selected[0].roadPartNumber,
@@ -51,6 +51,7 @@
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
         '<div class="edit-control-group project-choice-group">'+
+        insertErrorMessage(errorMessage) +
         formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
@@ -84,19 +85,15 @@
         '</form>';
     };
 
-    var distanceValue = function() {
-      return '<div id="distanceValue" hidden>' +
-        '<div class="form-group" style="margin-top: 15px">' +
-        '<img src="images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
-        '<label class="control-label-small" style="display: inline">ETÄISYYSLUKEMA VALINNAN</label>' +
-        '</div>' +
-        '<div class="form-group">' +
-        '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
-        formCommon.addSmallInputNumber('beginDistance', '--') +
-        '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
-        formCommon.addSmallInputNumber('endDistance', '--') +
-        '<span id="manualCPWarning" class="manualCPWarningSpan">!</span>' +
-        '</div></div>';
+    var insertErrorMessage = function (errorMessage) {
+      if(!_.isUndefined(errorMessage) && errorMessage !== ""){
+        return addSmallLabelLowercase( 'VIRHE: ' + errorMessage);
+      }
+      else return "";
+    };
+
+    var addSmallLabelLowercase = function(label){
+        return '<label class="control-label-small" style="text-transform: none">'+label+'</label>';
     };
 
     var emptyTemplate = function(project) {
@@ -222,6 +219,21 @@
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
+      });
+
+      eventbus.on('projectLink:errorClicked', function(selected, errorMessage) {
+          selectedProjectLink = [selected[0]];
+          var currentProject = projectCollection.getCurrentProject();
+          formCommon.clearInformationContent();
+          rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink, errorMessage));
+          formCommon.replaceAddressInfo(backend, selectedProjectLink);
+          checkInputs('.project-');
+          changeDropDownValue(selectedProjectLink[0].status);
+          disableFormInputs();
+          var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+              return projectLink.endAddressM;
+          }).discontinuity;
+          $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -458,7 +470,7 @@
         else if(this.value == LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
-          $('#discontinuityDropdown').prop('disabled',true);
+          $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
@@ -514,17 +526,39 @@
         $(this).empty();
         projectChangeTable.show();
         var projectChangesButton = showProjectChangeButton();
-        if(isProjectPublishable() && isProjectEditable()) {
+        if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
-        }
-        else
+        } else {
           $('footer').html(projectChangesButton);
+        }
       });
 
-      rootElement.on('keyup','.form-control.small-input', function () {
+      rootElement.on('keyup','.form-control.small-input', function (event) {
         checkInputs('.project-');
         setFormDirty();
+        if (event.target.id === "tie" && $('#dropdown_0').val() === 'New' || $('#dropdown_0').val() === 'Transfer' || $('#dropdown_0').val() === 'Numbering' ) {
+          backend.getRoadName($(this).val(),projectCollection.getCurrentProject().project.id, function(data) {
+            if (data !== null) {
+              $('#roadName').val(data.roadName).change();
+              if (data.isCurrent) {
+                $('#roadName').prop('disabled', true);
+              } else {
+                $('#roadName').prop('disabled', false);
+              }
+              checkInputs('.project-');
+            } else {
+              if ($('#roadName').prop('disabled')) {
+                $('#roadName').val('').change();
+              }
+              $('#roadName').prop('disabled', false);
+            }
+          });
+        }
+      });
+
+      rootElement.on('keyup','#roadName', function () {
+          checkInputs('.project-');
       });
 
       eventbus.on('projectLink:mapClicked', function () {
@@ -533,6 +567,12 @@
 
       rootElement.on('click', '.projectErrorButton', function (event) {
         eventbus.trigger('projectCollection:clickCoordinates', event, map);
+        var errorIndex = event.currentTarget.id;
+        if(projectCollection.getProjectErrors()[errorIndex].errorMessage !== ""){
+          var linkIds = projectCollection.getProjectErrors()[errorIndex].linkIds;
+          selectedProjectLinkProperty.openWithErrorMessage(linkIds[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
+        }
+
       });
 
     };

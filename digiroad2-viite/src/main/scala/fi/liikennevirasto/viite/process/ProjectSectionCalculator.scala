@@ -137,10 +137,16 @@ object ProjectSectionCalculator {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength,
         userDefinedCalibrationPoint.map(_.addressMValue).getOrElse(projectLink.endAddrMValue)))
     }
+
+    def makeEndCPAtStartBorder(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
+      Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength,
+        userDefinedCalibrationPoint.map(_.segmentMValue.toLong).getOrElse(projectLink.endAddrMValue)))
+    }
+
     def makeLink(link: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint],
                  startCP: Boolean, endCP: Boolean) = {
       val sCP = if (startCP) makeStartCP(link) else None
-      val eCP = if (endCP) makeEndCP(link, userDefinedCalibrationPoint) else None
+      val eCP = if (endCP) if(link.startAddrMValue == 0) makeEndCPAtStartBorder(link, userDefinedCalibrationPoint) else makeEndCP(link, userDefinedCalibrationPoint) else None
       link.copy(calibrationPoints = (sCP, eCP), endAddrMValue = eCP.map(_.addressMValue).getOrElse(link.endAddrMValue))
     }
     def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink],

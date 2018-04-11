@@ -418,7 +418,7 @@
       });
     };
 
-    eventbus.on('projectLink:clicked projectLink:split', function () {
+    eventbus.on('projectLink:clicked projectLink:split projectLink:errorClicked', function () {
       highlightFeatures();
     });
 

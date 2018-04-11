@@ -3,6 +3,7 @@
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkStatus = LinkValues.LinkStatus;
     var Track = LinkValues.Track;
+    var disabledInput = false;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -14,6 +15,12 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
+    var addRoadNameField = function (name, isBlocked) {
+      var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
+      var disabled = nameToDisplay !== "" && isBlocked;
+      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
+    };
+
     var projectButtons = function() {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
       '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
@@ -23,6 +30,7 @@
       var roadNumber = road.roadNumber;
       var part = road.roadPartNumber;
       var track = road.trackCode;
+      var roadName = selected[0].roadName;
       var link = _.first(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
@@ -39,7 +47,9 @@
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
-        roadTypeDropdown() +
+        roadTypeDropdown() + '<br>' +
+        addSmallLabel('NIMI') +
+        addRoadNameField(roadName, selected[0].roadNameBlocked) +
         ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
@@ -256,7 +266,7 @@
     };
 
     var coordButton = function(index, coordinates){
-      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">XY</button>';
+      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">Korjaa</button>';
       return {index:index, html:html, coordinates:coordinates};
     };
 
@@ -287,7 +297,7 @@
         }
         errorLines += '<div class="form-project-errors-list">' +
           addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
-          addSmallLabel('ERROR: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
+          addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
           (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
           '</div>';
