@@ -38,7 +38,7 @@ object CalibrationPointDAO {
        """
 
     val tuples = Q.queryNA[UserDefinedCalibrationPoint](baseQuery).list
-    tuples.groupBy(_.id).map{
+    tuples.groupBy(_.id).map {
       case (id, calibrationPointList) =>
         calibrationPointList.head
     }.toList.headOption
@@ -51,8 +51,8 @@ object CalibrationPointDAO {
          PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId And ABS(LINK_M - $segmentMValue) < $epsilon
        """
 
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
-      case (id,linkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id,linkId, prId, linkM, addressM)
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
+      case (id, linkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, linkId, prId, linkM, addressM)
     }
   }
 
@@ -63,8 +63,8 @@ object CalibrationPointDAO {
          PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId And ADDRESS_M > 0
        """
 
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
-      case (id,linkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id,linkId, prId, linkM, addressM)
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
+      case (id, linkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, linkId, prId, linkM, addressM)
     }
   }
 
@@ -74,8 +74,8 @@ object CalibrationPointDAO {
          Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID = ${projectId}
        """
 
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
-      case (id,projectLinkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id,projectLinkId, prId, linkM, addressM)
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
+      case (id, projectLinkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, projectLinkId, prId, linkM, addressM)
     }
   }
 
@@ -88,8 +88,8 @@ object CalibrationPointDAO {
          AND pl.PROJECT_ID = ${projectId}
        """
 
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
-      case (id,projectLinkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id,projectLinkId, prId, linkM, addressM)
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
+      case (id, projectLinkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, projectLinkId, prId, linkM, addressM)
     }
   }
 
@@ -126,6 +126,12 @@ object CalibrationPointDAO {
   def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long) = {
     sqlu"""
         Delete From CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID  = ${projectId}
+      """.execute
+  }
+
+  def removeAllCalibrationPoints(projectLinkIds: Set[Long]) = {
+    sqlu"""
+        Delete From CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
       """.execute
   }
 
