@@ -373,6 +373,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.updateProjectLinksToDB(projectLinks.map(x =>
           x.copy(reversed = isReversed(originalSideCodes)(x),
             discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))),username)
+        CalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
         recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
         None
       }
