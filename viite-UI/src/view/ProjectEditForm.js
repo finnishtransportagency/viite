@@ -537,7 +537,7 @@
       rootElement.on('keyup','.form-control.small-input', function (event) {
         checkInputs('.project-');
         setFormDirty();
-        if (event.target.id === "tie" && $('#dropdown_0').val() === 'New' || $('#dropdown_0').val() === 'Transfer' || $('#dropdown_0').val() === 'Numbering' ) {
+        if (event.target.id === "tie" && ($('#dropdown_0').val() === 'New' || $('#dropdown_0').val() === 'Transfer' || $('#dropdown_0').val() === 'Numbering' )) {
           backend.getRoadName($(this).val(),projectCollection.getCurrentProject().project.id, function(data) {
             if (data !== null) {
               $('#roadName').val(data.roadName).change();
