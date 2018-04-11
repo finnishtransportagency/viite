@@ -745,9 +745,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
-    partitionedRoadLinks.map {
-      _.map(projectAddressLinkToApi)
+    val validRoadNumbers = partitionedRoadLinks.flatten.map(_.roadNumber).filter(value => value > 0).distinct
+    if(validRoadNumbers.nonEmpty){
+      val roadNames = roadNameService.getCurrentRoadNames(validRoadNumbers)
+      partitionedRoadLinks.map {
+        _.map(address => projectAddressLinkToApi(address, roadNames))
+      }
     }
+    else{
+      partitionedRoadLinks.map {
+        _.map(address => projectAddressLinkToApi(address))
+      }
+    }
+
+
   }
 
   private def chooseDrawType(zoomLevel: String) = {
@@ -872,7 +883,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
-  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
+  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames : Seq[RoadName] = Seq()): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
       (if (projectAddressLink.isSplit)
         Map(
@@ -881,13 +892,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "originalGeometry" -> projectAddressLink.originalGeometry,
           "reversed" -> projectAddressLink.reversed,
           "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry),
-          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
         )
       else
         Map(
           "status" -> projectAddressLink.status.value,
           "reversed" -> projectAddressLink.reversed,
-          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNameService.getHasCurrentRoadName(projectAddressLink.roadNumber))
+          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
         ))
   }
 
