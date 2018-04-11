@@ -85,7 +85,7 @@ object ProjectLinkNameDAO {
 
   def revert(roadNumber: Long, projectId: Long): Unit = {
     sqlu"""
-        delete from project_link_name where road_number = $roadNumber and project_id = $projectId and not exists(select id from project_link where road_number = $roadNumber and project_id = $projectId)
+        delete from project_link_name where road_number = $roadNumber and project_id = $projectId and (select count(distinct(ROAD_PART_NUMBER)) from project_link where road_number = $roadNumber and status != 0) < 2
     """.execute
   }
 
