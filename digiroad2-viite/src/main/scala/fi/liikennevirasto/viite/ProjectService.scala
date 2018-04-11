@@ -621,6 +621,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
           rp.roadNumber == part.roadNumber))
       removed.foreach(p => ProjectDAO.removeReservedRoadPart(roadAddressProject.id, p))
+      removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
       addLinksToProject(roadAddressProject)
       val updatedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
       if (updatedProject.reservedParts.nonEmpty) {
@@ -642,9 +643,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       val project = ProjectDAO.getRoadAddressProjectById(projectId)
       val canBeDeleted = projectId != 0 && project.isDefined && project.get.status == ProjectState.Incomplete
-      if(canBeDeleted) {
+      if (canBeDeleted) {
+        val links = ProjectDAO.getProjectLinks(projectId)
         ProjectDAO.removeProjectLinksByProject(projectId)
         ProjectDAO.removeReservedRoadPartsByProject(projectId)
+        links.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, projectId))
         ProjectDAO.updateProjectStatus(projectId, ProjectState.Deleted)
         ProjectDAO.updateProjectStateInfo(ProjectState.Deleted.description, projectId)
       }
@@ -928,10 +931,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)), userName)
   }
 
+  def revertRoadName(projectId: Long, roadNumber: Long): Unit = {
+    ProjectLinkNameDAO.revert(roadNumber, projectId)
+    val roadAddressName = RoadNameDAO.getCurrentRoadName(roadNumber)
+    val projectRoadName = ProjectLinkNameDAO.get(roadNumber, projectId)
+    if (roadAddressName.nonEmpty && projectRoadName.isEmpty) {
+      ProjectLinkNameDAO.create(projectId, roadNumber, roadAddressName.get.roadName)
+    }
+  }
+
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    ProjectLinkNameDAO.revert(roadNumber, projectId)
+    revertRoadName(projectId, roadNumber)
     val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet, newTransaction = false)
     val roadAddresses = RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
     roadAddresses.foreach(ra =>
