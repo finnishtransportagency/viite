@@ -936,7 +936,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadAddressName = RoadNameDAO.getCurrentRoadName(roadNumber)
     val projectRoadName = ProjectLinkNameDAO.get(roadNumber, projectId)
     if (roadAddressName.nonEmpty && projectRoadName.isEmpty) {
-      ProjectLinkNameDAO.create(projectId, roadNumber,roadAddressName.get.roadName)
+      ProjectLinkNameDAO.create(projectId, roadNumber, roadAddressName.get.roadName)
     }
   }
 
