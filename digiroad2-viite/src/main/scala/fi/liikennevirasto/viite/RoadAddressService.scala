@@ -289,8 +289,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @return true if stays with in epsilon
     */
   private def changedLenghtStaySame(change: ChangeInfo): Boolean = {
-    val difference=(change.oldEndMeasure.getOrElse(0D) - change.oldStartMeasure.getOrElse(0D)) -
-      (change.newEndMeasure.getOrElse(0D) - change.newStartMeasure.getOrElse(0D))
+    val difference = Math.abs(change.oldEndMeasure.getOrElse(0D) - change.oldStartMeasure.getOrElse(0D)) -
+      Math.abs(change.newEndMeasure.getOrElse(0D) - change.newStartMeasure.getOrElse(0D))
     if (difference.abs < Epsilon) {
       return true
     } else
