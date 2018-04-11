@@ -362,7 +362,6 @@
 
     this.preSplitProjectLinks = function(suravage, nearestPoint){
       applicationModel.addSpinner();
-      //var form = $('#roadAddressProjectFormCut');
       var linkId = suravage.linkId;
       var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
