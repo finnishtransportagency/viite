@@ -82,7 +82,7 @@
           return styler.getRoadLinkStyle().getStyle(feature.projectLinkData, currentZoom);
         }
     },
-      zIndex: 10
+      zIndex: RoadZIndex.VectorLayer.value
     });
 
     var showChangesAndSendButton = function () {
@@ -836,9 +836,6 @@
       var toBeTerminated = _.partition(editedLinks, function (link) {
         return link.status === LinkStatus.Terminated.value;
       });
-      /*var toBeUnchanged = _.partition(editedLinks, function (link) {
-        return link.status === LinkStatus.Unchanged.value;
-      });*/
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
       var suravageProjectRoads = separated[0];
@@ -858,8 +855,7 @@
 
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var suravageDirectionRoadMarker = _.filter(suravageProjectRoads, function (projectLink) {
-        //return projectLink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
-        return projectLink.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && projectLink.id === 0;
+        return projectLink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
       });
 
       _.each(suravageDirectionRoadMarker, function (directionLink) {
