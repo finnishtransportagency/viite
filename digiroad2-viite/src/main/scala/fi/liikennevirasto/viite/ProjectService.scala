@@ -643,7 +643,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       val project = ProjectDAO.getRoadAddressProjectById(projectId)
       val canBeDeleted = projectId != 0 && project.isDefined && project.get.status == ProjectState.Incomplete
-      if(canBeDeleted) {
+      if (canBeDeleted) {
         val links = ProjectDAO.getProjectLinks(projectId)
         ProjectDAO.removeProjectLinksByProject(projectId)
         ProjectDAO.removeReservedRoadPartsByProject(projectId)
