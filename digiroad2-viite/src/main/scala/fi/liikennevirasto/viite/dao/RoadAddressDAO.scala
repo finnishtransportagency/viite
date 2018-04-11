@@ -16,8 +16,9 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{NewRoadAddress, NewCommonHistoryId, RoadCheckOptions, RoadType}
+import fi.liikennevirasto.viite.{NewCommonHistoryId, NewRoadAddress, RoadCheckOptions, RoadType}
 import org.joda.time.DateTime
+import org.joda.time.chrono.ISOChronology
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -112,7 +113,7 @@ trait BaseRoadAddress {
   def endAddrMValue: Long
   def startDate: Option[DateTime]
   def endDate: Option[DateTime]
-  def modifiedBy: Option[String]
+  def createdBy: Option[String]
   def lrmPositionId : Long
   def linkId: Long
   def startMValue: Double
@@ -125,6 +126,7 @@ trait BaseRoadAddress {
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
   def commonHistoryId: Long
+  def blackUnderline: Boolean
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -133,11 +135,12 @@ trait BaseRoadAddress {
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
-                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, modifiedBy: Option[String] = None,
+                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
                        lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, commonHistoryId: Long) extends BaseRoadAddress {
+                       terminated: TerminationCode = NoTermination, commonHistoryId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, blackUnderline: Boolean = false, roadName: Option[String] = None) extends BaseRoadAddress {
+
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -146,6 +149,11 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
   def addressBetween(a: Double, b: Double): (Long, Long) = {
     val (addrA, addrB) = (addrAt(a), addrAt(b))
     (Math.min(addrA,addrB), Math.max(addrA,addrB))
+  }
+
+  def isExpire(): Boolean = {
+    validFrom.getOrElse(throw new IllegalStateException("The valid from should be set before call isExpire method")).isAfterNow ||
+    validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
   }
 
   private def addrAt(a: Double) = {
@@ -211,7 +219,7 @@ object RoadAddressDAO {
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
         (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-        link_source, ra.ely, ra.terminated, ra.common_history_id
+        link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to, (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
@@ -283,10 +291,10 @@ object RoadAddressDAO {
       val endMValue = r.nextDouble()
       val sideCode = r.nextInt()
       val adjustedTimestamp = r.nextLong()
-      val startDate = r.nextDateOption.map(new DateTime(_))
-      val endDate = r.nextDateOption.map(new DateTime(_))
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val createdBy = r.nextStringOption.map(new String(_))
-      val createdDate = r.nextDateOption.map(new DateTime(_))
+      val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val calibrationCode = r.nextInt()
       val floating = r.nextBoolean()
       val x = r.nextDouble()
@@ -297,11 +305,13 @@ object RoadAddressDAO {
       val ely = r.nextLong()
       val terminated = TerminationCode.apply(r.nextInt())
       val commonHistoryId = r.nextLong()
+      val validTo = r.nextDateOption.map(new DateTime(_))
+      val roadName = r.nextStringOption()
       RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
         SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode),
           linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), floating,
-        Seq(Point(x,y), Point(x2,y2)), geomSource, ely, terminated, commonHistoryId)
+        Seq(Point(x,y), Point(x2,y2)), geomSource, ely, terminated, commonHistoryId, validFrom, validTo, blackUnderline = false, roadName)
     }
   }
 
@@ -339,7 +349,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -378,7 +389,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         $networkData
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -418,7 +430,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -446,7 +459,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -478,7 +492,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         $networkData
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -510,7 +525,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -532,7 +548,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -553,7 +570,7 @@ object RoadAddressDAO {
   }
 
   def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false,
-                      includeHistory: Boolean = false, includeSuravage: Boolean = true): List[RoadAddress] = {
+                      includeHistory: Boolean = false, includeSuravage: Boolean = true, fetchOnlyEnd: Boolean = false, fetchOnlyStart: Boolean = false): List[RoadAddress] = {
     val floating = if (!includeFloating)
       "floating='0' AND"
     else
@@ -570,17 +587,26 @@ object RoadAddressDAO {
       "link_source != 3 AND"
     else ""
     // valid_to > sysdate because we may expire and query the data again in same transaction
+
+    val endPart = if (fetchOnlyEnd) {
+      s"And ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+    } else ""
+    val startPart = if (fetchOnlyStart) {
+      s"And ra.start_addr_m = (Select min(road.start_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+    } else ""
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id 
+        $endPart $startPart
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
@@ -648,7 +674,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -668,7 +695,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
           ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
           pos.side_code, pos.adjusted_timestamp,
-          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+          (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
           from road_address ra cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -700,7 +728,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id,pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -986,7 +1015,7 @@ object RoadAddressDAO {
        select distinct road_part_number
               from road_address ra
               where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL)
-              AND (END_DATE IS NULL OR END_DATE > sysdate)
+              AND (END_DATE IS NULL OR END_DATE > sysdate) order by road_part_number
       """.as[Long].list
   }
 
@@ -1071,7 +1100,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -1099,7 +1129,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -1142,7 +1173,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL and rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -1173,7 +1205,8 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -1240,7 +1273,7 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      val newCreatedBy = createdBy.getOrElse(address.modifiedBy.getOrElse("-"))
+      val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
       addressPS.setString(11, if(newCreatedBy == null) "-" else newCreatedBy)
       val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
@@ -1286,7 +1319,8 @@ object RoadAddressDAO {
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
         (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-        ra.ely, ra.terminated, ra.common_history_id
+        ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where ra.lrm_position_id = ${id} and pos.link_id = ${linkId} and
@@ -1319,7 +1353,7 @@ object RoadAddressDAO {
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
              INNER JOIN (Select  MAX(start_addr_m) as lol FROM road_address rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
-             rm.valid_from <= sysdate AND (rm.valid_to is null or rm.valid_to > sysdate) AND track_code in (0,1))  ra
+             rm.valid_from <= sysdate AND (rm.valid_to is null or rm.valid_to > sysdate) AND rm.end_date is null AND track_code in (0,1))  ra
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              r.valid_from <= sysdate AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
@@ -1340,7 +1374,8 @@ object RoadAddressDAO {
     val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -1355,4 +1390,135 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
+
+  def getRoadAddressByFilter(queryFilter: String => String): Seq[RoadAddress] = {
+    val query = s"""
+         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+          pos.side_code, pos.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+          link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+      """
+
+    queryList(queryFilter(query))
+  }
+
+  def withRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double])(query: String): String = {
+    val trackFilter = track match {
+      case Some(t) => s"  AND ra.track_code = $t"
+      case None => ""
+    }
+    val mValueFilter = mValue match {
+      case Some(v) => s" AND ra.start_addr_M <= $v AND ra.end_addr_M > $v"
+      case None => ""
+    }
+    query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
+      s"$trackFilter $mValueFilter " + withValidatyCheck
+  }
+
+  def withRoadNumber(road: Long, trackCodes: Seq[Int])(query: String): String = {
+    val trackFilter = if(trackCodes.nonEmpty) {
+      s" AND ra.TRACK_CODE in (${trackCodes.mkString(",")})"
+    } else {
+       ""
+    }
+    query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidatyCheck
+  }
+
+  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => s"AND ra.floating = $floatingValue"
+      case None => ""
+    }
+
+    val endAddr = endM match {
+      case Some(endValue) => s"AND ra.start_addr_m <= $endValue"
+      case _ => ""
+    }
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
+      s" AND ra.TRACK_CODE = $track " + floating + withValidatyCheck +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
+  }
+
+  def withLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long])(query: String): String = {
+    val startFilter = startM match {
+      case Some(s) => s" AND pos.start_Measure <= $s"
+      case None => ""
+    }
+    val endFilter = endM match {
+      case Some(e) => s" AND pos.end_Measure > $endM"
+      case None => ""
+    }
+
+    query + s" WHERE pos.link_id = $linkId $startFilter $endFilter" + withValidatyCheck
+  }
+
+  def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
+    query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
+      s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
+  }
+
+  def withValidatyCheck(): String = {
+    s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
+      s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
+  }
+
+  def getRoadNumbers(): Seq[Long] = {
+    sql"""
+			select distinct (ra.road_number)
+      from road_address ra
+      where ra.valid_to is null OR ra.valid_to > SYSDATE
+		  """.as[Long].list
+  }
+
+  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Double], endAddrM: Option[Double]): Seq[RoadAddress] = {
+    val startEndFilter =
+      if (startAddrM.nonEmpty && endAddrM.nonEmpty)
+        s"""(( ra.start_addr_m >= ${startAddrM.get} and ra.end_addr_m <= ${endAddrM.get} ) or ( ${startAddrM.get} >= ra.start_addr_m and ${startAddrM.get} < ra.end_addr_m) or
+         ( ${endAddrM.get} > ra.start_addr_m and ${endAddrM.get} <= ra.end_addr_m)) and"""
+      else ""
+
+    val where =
+      s""" where $startEndFilter ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
+         and ra.floating = 0 """ + withValidatyCheck
+
+    val query = s"""
+         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+          pos.side_code, pos.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+          link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        $where
+      """
+    queryList(query)
+  }
+
+  def getRoadAddressByEly(ely: Long): List[RoadAddress] = {
+    val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, pos.adjusted_timestamp,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where t.id < t2.id and
+          valid_from <= sysdate and floating = 0 and ely = $ely"""
+    queryList(query)
+  }
 }

@@ -65,7 +65,19 @@
       });
     }, 1000);
 
-    this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
+
+      this.getRoadName =
+      _.debounce(function (roadNumber, projectID, callback) {
+          if (projectID !== 0) {
+              return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
+                  return _.isFunction(callback) && callback(data);
+              });
+          }
+      }, 500);
+
+
+
+      this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
       return $.getJSON('api/viite/roadlinks/adjacent?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });
@@ -500,7 +512,6 @@
       return self;
     };
 
-
     this.withSaveRoadAddressProject = function (returnData){
       self.saveRoadAddressProject = function (){
         return returnData;
@@ -539,6 +550,48 @@
       };
       return self;
     };
+
+      this.getDummyRoadAddressesByRoadNumber = function (roadNumber, callback) {
+          //add API call here
+          var dummyReturnObject = [{
+              id: 0,
+              roadNumber: 12345,
+              roadNameFi: "AAAAAAA",
+              startDate: "22-06-2018",
+              endDate: "11-02-2000"
+          }, {
+              id: 1,
+              roadNumber: 12345,
+              roadNameFi: "AAAAAAA",
+              startDate: "22-06-2018",
+              endDate: ""
+          }, {
+              id: 2,
+              roadNumber: 123456,
+              roadNameFi: "BBBBBBBB",
+              startDate: "22-06-2018",
+              endDate: ""
+          }];
+          return callback(dummyReturnObject);
+      };
+
+      this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
+          return {
+              url: 'api/viite/roadnames?roadNumber=' + roadNumber
+          };
+      });
+
+      this.saveRoadNamesChanges = _.throttle(function (roadNumber, data, success, failure) {
+          $.ajax({
+              contentType: "application/json",
+              type: "PUT",
+              url: "api/viite/roadnames/"+roadNumber,
+              data: JSON.stringify(data),
+              dataType: "json",
+              success: success,
+              error: failure
+          });
+      }, 1000);
 
   };
 }(this));

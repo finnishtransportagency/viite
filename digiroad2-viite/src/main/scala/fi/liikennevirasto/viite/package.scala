@@ -37,6 +37,10 @@ package object viite {
 
   val NewCommonHistoryId: Long = -1000L
 
+  val newCalibrationPointId: Long = -1000L
+
+  val NewRoadNameId = -1000
+
   val MaxDistanceForConnectedLinks = 0.1
 
   /* Used for small jumps on discontinuity or self-crossing tracks */
@@ -44,8 +48,6 @@ package object viite {
 
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50.0
-
-  val newCalibrationPointId: Long = -1000L
 
   /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
   val MaxSuravageToleranceToGeometry = 0.5
@@ -68,6 +70,7 @@ package object viite {
   val ErrorMultipleRoadNumbersOrParts = "Valitut linkit eivät ole samalta tieosalta. Tallennus tulee tehdä erikseen."
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
   val ErrorInconsistentTopology = "Topology have inconsistent data."
+  val ErrorInconsistentLrmHistory = "Lrm with inconsistent history."
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.description}, tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.description}, vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
@@ -85,8 +88,10 @@ package object viite {
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val RoadNotEndingInElyBorderMessage = "JATKUU-koodi virheellinen. Tieosa ei pääty ELY-rajalle."
   val RoadContinuesInAnotherElyMessage = "JATKUU-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
-  val MinorDiscontinuousWhenRampConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
+  val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle: %s."
+  val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
+  val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
@@ -141,5 +146,16 @@ package object viite {
       case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
       case regex(x, y, _) => Point(toBD(x), toBD(y))
     }.toSeq
+  }
+
+  object CombineMaps {
+    type Mapped = Map[String,String]
+    def combine(x: Mapped, y: Mapped): Mapped = {
+      val x0 = x.withDefaultValue("")
+      val y0 = y.withDefaultValue("")
+      val keys = x.keys.toSet.union(y.keys.toSet)
+      keys.map{ k => k -> (x0(k) + y0(k)) }.toMap
+    }
+
   }
 }
