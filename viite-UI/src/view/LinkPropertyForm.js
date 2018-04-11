@@ -444,15 +444,15 @@
     var addOpenProjectButton = function() {
       var rootElement = $('#feature-attributes');
       rootElement.empty();
-      var emptyFormDiv =
-        '<p class="center"><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
-        '<p class="center"><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">TIEOSOITEVERKON VIRHEET</a></p>' +
-        '<p class="form form-horizontal"></p>' +
-        '<div class="form-initial-state" id="emptyFormDiv">' +
-        '  <span class="header-noposition">Aloita valitsemalla projekti.</span>' +
-        '  <button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
-        '  <button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
-        '</div>';
+        var emptyFormDiv =
+            '<p class="center"><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
+            '<p class="center"><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">TIEOSOITEVERKON VIRHEET</a></p>' +
+            '<p class="form form-horizontal"></p>' +
+            '<div class="form-initial-state" id="emptyFormDiv">' +
+            '  <span class="header-noposition">Aloita valitsemalla projekti.</span>' +
+            '  <button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
+            '  <button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
+            '</div>';
       rootElement.append(emptyFormDiv);
       $('[id=formProjectButton]').click(function() {
         $('[id=projectListButton]').click();

@@ -7,13 +7,13 @@
         var currentRoadNameData = [];
         var minDate;
         var changedIds = [];
-        var newRoadName = { id: newId };
+        var newRoadName = {id: newId};
 
-        var findCurrentRoadName = function(id){
-            var roadName = _.find(currentRoadNameData, function(roadData){
+        var findCurrentRoadName = function (id) {
+            var roadName = _.find(currentRoadNameData, function (roadData) {
                 return roadData.id == id;
             });
-            roadName = roadName ? roadName: newRoadName;
+            roadName = roadName ? roadName : newRoadName;
             changedIds.push(roadName.id);
             return roadName;
         };
@@ -27,57 +27,61 @@
                     return rd.roadNumber == roadNumber;
                 }).map(function (road) {
                     var roadCopy = road;
-                    if(road.endDate)
+                    if (road.endDate)
                         roadCopy.endDate = moment(road.endDate, 'DD.MM.YYYY, HH:mm:ss');
-                    if(road.startDate)
+                    if (road.startDate)
                         roadCopy.startDate = moment(road.startDate, 'DD.MM.YYYY, HH:mm:ss');
                     return roadCopy;
                 }).sortBy('startDate').value();
                 currentRoadNameData = sortedRoadData;
                 var lastRoadName = _.last(sortedRoadData);
-                if(lastRoadName)
+                if (lastRoadName)
                     minDate = moment(lastRoadName.startDate).add(1, 'days');
                 eventbus.trigger("roadNameTool:roadsFetched", sortedRoadData);
             });
         };
 
-        this.setRoadName = function(id, name) {
+        this.setRoadName = function (id, name) {
             var roadName = findCurrentRoadName(id);
             roadName.name = name;
         };
 
-        this.setStartDate = function(id, startDate) {
+        this.setStartDate = function (id, startDate) {
             var roadName = findCurrentRoadName(id);
             roadName.startDate = startDate;
         };
 
-        this.setEndDate = function(id, endDate){
+        this.setEndDate = function (id, endDate) {
             var roadName = findCurrentRoadName(id);
-            if(endDate === '')
+            if (endDate === '')
                 delete roadName.endDate;
             else
                 roadName.endDate = endDate;
         };
 
-        this.getMinDate = function(){
-            if(minDate)
+        this.getMinDate = function () {
+            if (minDate)
                 return minDate.toDate();
         };
 
         this.clear = function () {
             currentRoadNameData = [];
             changedIds = [];
-            newRoadName = { id: newId };
+            newRoadName = {id: newId};
         };
 
-        this.undoNewRoadName = function(){
-            newRoadName = { id: newId };
-            changedIds = _.filter(changedIds, function(id){return id != newId; });
+        this.undoNewRoadName = function () {
+            newRoadName = {id: newId};
+            changedIds = _.filter(changedIds, function (id) {
+                return id != newId;
+            });
         };
 
         this.saveChanges = function () {
             applicationModel.addSpinner();
-            var changedData = _.filter(currentRoadNameData.concat(newRoadName), function(roadName){ return _.includes(changedIds, roadName.id); });
+            var changedData = _.filter(currentRoadNameData.concat(newRoadName), function (roadName) {
+                return _.includes(changedIds, roadName.id);
+            });
             backend.saveRoadNamesChanges(currentRoadNumber, changedData, function (result) {
                 if (result.success) {
                     me.clear();

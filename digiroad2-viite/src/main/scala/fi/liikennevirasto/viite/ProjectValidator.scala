@@ -317,7 +317,7 @@ object ProjectValidator {
     }
 
     def checkNotConnectedHaveMinorDiscontinuity = {
-      val possibleDiscontinuous = seq.sortBy(_.startAddrMValue).filterNot{ pl =>
+      val possibleDiscontinuous = seq.sortBy(_.startAddrMValue).filterNot { pl =>
         // Check that pl has discontinuity or after it the project links are connected (except last, where forall is true for empty list)
         pl.discontinuity == MinorDiscontinuity ||
           seq.filter(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track)).forall(pl2 => connected(pl, pl2))

@@ -663,12 +663,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/roadname/:roadNumber/:projectID"){
+  get("/roadlinks/roadname/:roadNumber/:projectID") {
 
     val rNumber = params.get("roadNumber").map(_.toLong)
     val projectID = params.get("projectID").map(_.toLong)
 
-    (rNumber, projectID) match{
+    (rNumber, projectID) match {
       case (Some(rNumber), Some(projectID)) => {
         try {
           roadNameService.getRoadNameByNumber(rNumber, projectID)
@@ -746,13 +746,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
     val validRoadNumbers = partitionedRoadLinks.flatten.map(_.roadNumber).filter(value => value > 0).distinct
-    if(validRoadNumbers.nonEmpty){
+    if (validRoadNumbers.nonEmpty) {
       val roadNames = roadNameService.getCurrentRoadNames(validRoadNumbers)
       partitionedRoadLinks.map {
         _.map(address => projectAddressLinkToApi(address, roadNames))
       }
     }
-    else{
+    else {
       partitionedRoadLinks.map {
         _.map(address => projectAddressLinkToApi(address))
       }
@@ -875,15 +875,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
     Map(
-      "id"-> roadName.id,
-      "roadNumber"-> roadName.roadNumber,
-      "name"-> roadName.roadName,
+      "id" -> roadName.id,
+      "roadNumber" -> roadName.roadNumber,
+      "name" -> roadName.roadName,
       "startDate" -> formatDateTimeToString(roadName.startDate),
       "endDate" -> formatDateTimeToString(roadName.endDate)
     )
   }
 
-  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames : Seq[RoadName] = Seq()): Map[String, Any] = {
+  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames: Seq[RoadName] = Seq()): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
       (if (projectAddressLink.isSplit)
         Map(
