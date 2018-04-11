@@ -76,7 +76,7 @@
             var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder]),.form-control[data-fieldName=endDate]:not([placeholder])');
             inputs.each(function (index, input) {
                 var datePicker = dateutil.addSingleDatePicker($(input));
-                if(minDate)
+                if (minDate)
                     datePicker.setMinDate(minDate);
             });
             $('.pika-single.is-bound').css("width", "auto");
@@ -97,7 +97,9 @@
 
         function toggleSaveButton() {
             $('#saveChangedRoads').prop("disabled",
-                !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function(element){ return $(element).val() !== '';})
+                !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
+                    return $(element).val() !== '';
+                })
             );
         }
 
@@ -107,20 +109,20 @@
             var fieldName = target.attr("data-FieldName");
             var fieldValue = target.val();
             var originalRoadId = target.closest("#newRoadName").attr("data-originalRoadId");
-            switch(fieldName) {
+            switch (fieldName) {
                 case "roadName":
                     roadNameCollection.setRoadName(roadId, fieldValue);
                     break;
                 case "startDate":
-                    if(roadId == newId){
-                        $('.form-control[data-roadId='+originalRoadId+'][data-fieldName=endDate]').val(fieldValue);
+                    if (roadId == newId) {
+                        $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
                     roadNameCollection.setStartDate(roadId, fieldValue);
                     break;
                 case "endDate":
-                    if(roadId != newId){
-                        $('.form-control[data-roadId='+newId+'][data-fieldName=startDate]').val(fieldValue);
+                    if (roadId != newId) {
+                        $('.form-control[data-roadId=' + newId + '][data-fieldName=startDate]').val(fieldValue);
                         roadNameCollection.setStartDate(newId, fieldValue);
                     }
                     roadNameCollection.setEndDate(roadId, fieldValue);

@@ -81,8 +81,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int,
-                         discontinuity: Int, roadType: Int, roadLinkSource: Int,
-                         roadEly: Long, user: String, roadName: String): Map[String, Any] = {
+                                 discontinuity: Int, roadType: Int, roadLinkSource: Int,
+                                 roadEly: Long, user: String, roadName: String): Map[String, Any] = {
     projectService.createProjectLinks(linkIds, projectId, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity),
       RoadType.apply(roadType), LinkGeomSource.apply(roadLinkSource), roadEly, user, roadName)
   }
@@ -531,9 +531,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectDAO.getProjectLinks(savedProject.id).size should be (66)
       when(mockRoadLinkService.getSuravageRoadLinksFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(newLinkTemplates.take(1).map(toRoadLink))
-      createProjectLinks(newLinkTemplates.take(1).map(_.linkId), savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U", "road name").get("success") should be (Some(true))
+      createProjectLinks(newLinkTemplates.take(1).map(_.linkId), savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U", "road name").get("success") should be(Some(true))
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(newLinkTemplates.tail.take(1).map(toRoadLink))
-      createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U", "road name").get("success") should be (Some(true))
+      createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U", "road name").get("success") should be(Some(true))
       ProjectDAO.getProjectLinks(savedProject.id).size should be (68)
       val changeInfo = projectService.getChangeProject(savedProject.id)
       projectService.allLinksHandled(savedProject.id) should be(true)
@@ -802,8 +802,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val project = projectService.getRoadAddressSingleProject(projectId)
       val namesAfterUpdate = RoadNameDAO.getCurrentRoadName(99999)
-      project.get.statusInfo.get should be (roadNameWasNotSavedInProject + s"${99999}")
-      namesAfterUpdate.get.roadName should be ("road name test")
+      project.get.statusInfo.get should be(roadNameWasNotSavedInProject + s"${99999}")
+      namesAfterUpdate.get.roadName should be("road name test")
     }
   }
 
@@ -820,8 +820,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val project = projectService.getRoadAddressSingleProject(projectId)
       val namesAfterUpdate = RoadNameDAO.getCurrentRoadName(99999)
-      project.get.statusInfo should be (None)
-      namesAfterUpdate.get.roadName should be ("road name test")
+      project.get.statusInfo should be(None)
+      namesAfterUpdate.get.roadName should be("road name test")
     }
   }
 
@@ -840,8 +840,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val project = projectService.getRoadAddressSingleProject(projectId)
       val namesAfterUpdate = RoadNameDAO.getCurrentRoadName(99999)
-      project.get.statusInfo should be (None)
-      namesAfterUpdate.get.roadName should be ("road name test")
+      project.get.statusInfo should be(None)
+      namesAfterUpdate.get.roadName should be("road name test")
     }
   }
 
@@ -1380,8 +1380,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       //Descending order by end address
       val projectLinks = ProjectDAO.getProjectLinks(project1.id).sortBy(-_.endAddrMValue)
-      projectLinks.tail.forall(_.discontinuity == Discontinuity.Continuous) should be (true)
-      projectLinks.head.discontinuity should be (Discontinuity.EndOfRoad)
+      projectLinks.tail.forall(_.discontinuity == Discontinuity.Continuous) should be(true)
+      projectLinks.head.discontinuity should be(Discontinuity.EndOfRoad)
     }
   }
 

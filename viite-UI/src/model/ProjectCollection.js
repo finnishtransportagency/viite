@@ -309,8 +309,8 @@
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: (!isNaN(Number($('#roadAddressProjectForm').find('#endDistance')[0].value)) ?  Number($('#roadAddressProjectForm').find('#endDistance')[0].value) : null),
-        coordinates:coordinates,
-        roadName: $('#roadAddressProjectForm').find('#roadName')[0].value
+          coordinates: coordinates,
+          roadName: $('#roadAddressProjectForm').find('#roadName')[0].value
       };
 
       if(dataJson.trackCode === Track.Unknown.value){
