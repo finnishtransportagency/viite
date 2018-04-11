@@ -524,7 +524,7 @@
         addFeaturesToSelection(featuresToHighlight);
     };
 
-    var highlightFeatureByLinkId = function (linkId) {
+    /*var highlightFeatureByLinkId = function (linkId) {
       var highlightFeatures = _.filter(roadLayer.layer.getSource().getFeatures(), function(roadlink) {
         return roadlink.roadLinkData.linkId === linkId;
       });
@@ -537,7 +537,7 @@
           feature.clear();
         }
       });
-    };
+    };*/
 
     var unhighlightFeatures = function() {
       _.each(roadLayer.layer.features, function(feature) {
@@ -678,11 +678,11 @@
     vectorLayer.setVisible(true);
     vectorLayer.set('name','vectorLayer');
 
-    var getSelectedFeatures = function() {
+    /*var getSelectedFeatures = function() {
       return _.filter(roadLayer.layer.getSource().getFeatures(), function (feature) {
         return selectedLinkProperty.isSelectedByLinkId(feature.roadLinkData.linkId);
       });
-    };
+    };*/
 
     var reselectRoadLink = function(targetFeature, adjacents) {
       var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);

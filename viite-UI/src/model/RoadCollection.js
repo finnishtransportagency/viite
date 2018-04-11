@@ -81,9 +81,9 @@
       });
     };
 
-    this.getLinkStatus = function () {
+    /*this.getLinkStatus = function () {
       return LinkStatus;
-    };
+    };*/
 
     this.getDate = function() {
       return date;
