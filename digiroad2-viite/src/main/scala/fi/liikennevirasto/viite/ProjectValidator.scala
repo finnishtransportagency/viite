@@ -350,7 +350,7 @@ object ProjectValidator {
     }
 
     def checkDiscontinuityBetweenLinksOnRamps = {
-      if(isRampValidation){
+      if (isRampValidation) {
         error(project.id, ValidationErrorList.DiscontinuityOnRamp)(seq.filter { pl =>
           // Check that pl has no discontinuity unless on last link and after it the possible project link is connected
           val nextLink = seq.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
@@ -378,9 +378,8 @@ object ProjectValidator {
           .filterNot(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
             .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
         if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
-            return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
-        }
-        else if(!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
+          return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
+        } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
           return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
         }
         None
@@ -404,7 +403,7 @@ object ProjectValidator {
           .filterNot(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
             .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
 
-        if(!(nextProjectPart.isEmpty && nextAddressPart.isEmpty)){
+        if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty)) {
           val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
 
           if (isConnectingRoundabout(lastProjectLinks) && isRampValidation) {
@@ -421,9 +420,9 @@ object ProjectValidator {
 
           discontinuity match {
             case Continuous =>
-              if(!isConnected) return error(project.id, ValidationErrorList.MajorDiscontinuityFound)(lastProjectLinks)
+              if (!isConnected) return error(project.id, ValidationErrorList.MajorDiscontinuityFound)(lastProjectLinks)
             case MinorDiscontinuity | Discontinuous =>
-              if(isConnected) return error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(lastProjectLinks)
+              if (isConnected) return error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(lastProjectLinks)
             case _ => // no error, continue
           }
         }
