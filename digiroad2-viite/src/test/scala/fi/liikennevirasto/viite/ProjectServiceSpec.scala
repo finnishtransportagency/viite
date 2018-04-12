@@ -1483,7 +1483,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Road address geometry after reverting should be the same as VVh") {
+  test("Road address geometry after reverting should be the same as VVH") {
     val projectId = 0L
     val user = "TestUser"
     val (roadNumber, roadPartNumber) = (26020L, 12L)
