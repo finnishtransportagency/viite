@@ -161,7 +161,7 @@ object ProjectSectionCalculator {
                  startCP: Boolean, endCP: Boolean) = {
       val sCP = if (startCP) makeStartCP(link) else None
       val eCP = if (endCP) if (link.startAddrMValue == 0) makeEndCPAtStartBorder(link, userDefinedCalibrationPoint) else makeEndCP(link, userDefinedCalibrationPoint) else None
-      link.copy(calibrationPoints = (sCP, eCP), endAddrMValue = eCP.map(_.addressMValue).getOrElse(link.endAddrMValue))
+      link.copy(calibrationPoints = (sCP, eCP))
     }
 
     def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink],
@@ -230,7 +230,8 @@ object ProjectSectionCalculator {
 
         // TODO: userCalibrationPoints to Long -> Seq[UserDefinedCalibrationPoint] in method params
         val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
-        val links = calculateSectionAddressValues(ordSections, calMap).flatMap { sec =>
+        val calculatedSections = calculateSectionAddressValues(ordSections, calMap)
+          val links = calculatedSections.flatMap{ sec =>
           if (sec.right == sec.left)
             assignCalibrationPoints(Seq(), sec.right.links, calMap)
           else {
@@ -294,17 +295,17 @@ object ProjectSectionCalculator {
       if (rightLinks.isEmpty && leftLinks.isEmpty)
         (Seq(), Seq())
       else {
-        val (right, rOthers) = getContinuousTrack(rightLinks)
-        val (left, lOthers) = getContinuousTrack(leftLinks)
-        if (right.nonEmpty && left.nonEmpty) {
-          val st = getFixedAddress(right.head, left.head).map(_._1)
-          val en = getFixedAddress(right.last, left.last,
-            userDefinedCalibrationPoint.get(right.last.id).orElse(userDefinedCalibrationPoint.get(left.last.id))).map(_._2)
-          val (r, l) = adjustTwoTracks(right, left, st, en)
-          val (ro, lo) = adjustTracksToMatch(rOthers, lOthers, Some(r.last.endAddrMValue))
+        val (firstRight, restRight) = getContinuousTrack(rightLinks)
+        val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
+        if (firstRight.nonEmpty && firstLeft.nonEmpty) {
+          val st = getFixedAddress(firstRight.head, firstLeft.head).map(_._1).orElse(fixedStart)
+          val en = getFixedAddress(firstRight.last, firstLeft.last,
+            userDefinedCalibrationPoint.get(firstRight.last.id).orElse(userDefinedCalibrationPoint.get(firstLeft.last.id))).map(_._2)
+          val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, en)
+          val (ro, lo) = adjustTracksToMatch(restRight, restLeft, en)
           (r ++ ro, l ++ lo)
         } else {
-          throw new RoadAddressException(s"Mismatching tracks, R ${right.size}, L ${left.size}")
+          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
         }
       }
     }
