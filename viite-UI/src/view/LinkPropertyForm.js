@@ -180,7 +180,7 @@
             '<p class="form-control-static">' + startAddress + '</p>' +
             '</div>';
         }
-      } else if (labelText === 'LOPPUETÄISUUS') {
+      } else if (labelText === 'LOPPUETÄISYYS') {
         var endAddress = _.max(_.pluck(selectedLinkProperty.get(), 'endAddressM'));
         if (floatingTransfer) {
           field = '<div class="form-group">' +
@@ -334,7 +334,7 @@
     var template = function(options, linkProperty) {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISYYS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISYYS');
       return _.template('' +
         '<header>' +
         title() +
@@ -361,7 +361,7 @@
 
     var templateFloating = function(options, linkProperty) {
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISYYS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISYYS');
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
@@ -389,7 +389,7 @@
 
     var templateFloatingEditMode = function(options, linkProperty) {
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISYYS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISYYS');
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
