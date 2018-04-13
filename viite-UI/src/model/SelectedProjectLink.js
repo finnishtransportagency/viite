@@ -5,27 +5,25 @@
     var ids = [];
     var dirty = false;
     var splitSuravage = {};
-    var LinkGeomSource = LinkValues.LinkGeomSource;
     var LinkStatus = LinkValues.LinkStatus;
     var preSplitData = null;
     var nearest = null;
 
-    var open = function (linkId, multiSelect) {
+    var open = function (id, multiSelect) {
       if (!multiSelect) {
-        current = projectLinkCollection.getByLinkId([linkId]);
-        ids = [linkId];
+        current = projectLinkCollection.getProjectLink([id]);
+        ids = [id];
       } else {
-        ids = projectLinkCollection.getMultiSelectIds(linkId);
-        current = projectLinkCollection.getByLinkId(ids);
+        ids = projectLinkCollection.getMultiProjectLinks(id);
+        current = projectLinkCollection.getProjectLink(ids);
       }
-      eventbus.trigger('projectLink:clicked', get(linkId));
+      eventbus.trigger('projectLink:clicked', get(id));
     };
 
-    var openWithErrorMessage = function (linkId, errorMessage) {
-        current = projectLinkCollection.getByLinkId([linkId]);
-        ids = [linkId];
-
-        eventbus.trigger('projectLink:errorClicked', get(linkId), errorMessage);
+    var openWithErrorMessage = function (id, errorMessage) {
+      current = projectLinkCollection.getProjectLink([id]);
+      ids = [id];
+      eventbus.trigger('projectLink:errorClicked', get(id), errorMessage);
     };
 
     var orderSplitParts = function(links) {
@@ -58,11 +56,11 @@
 
     var openSplit = function (linkid, multiSelect) {
       if (!multiSelect) {
-        current = projectLinkCollection.getByLinkId([linkid]);
+        current = projectLinkCollection.getProjectLink([linkid]);
         ids = [linkid];
       } else {
-        ids = projectLinkCollection.getMultiSelectIds(linkid);
-        current = projectLinkCollection.getByLinkId(ids);
+        ids = projectLinkCollection.getMultiProjectLinks(linkid);
+        current = projectLinkCollection.getProjectLink(ids);
       }
       var orderedSplitParts = orderSplitParts(get());
       var suravageA = getLinkMarker(orderedSplitParts, [LinkStatus.Transfer.value, LinkStatus.Unchanged.value]);
@@ -109,45 +107,6 @@
       };
     };
 
-    var splitSuravageLinks = function(nearestSuravage, split, mousePoint, callback) {
-      var left = _.cloneDeep(nearestSuravage);
-      left.points = split.firstSplitVertices;
-
-      var right = _.cloneDeep(nearestSuravage);
-      right.points = split.secondSplitVertices;
-      var measureLeft = calculateMeasure(left);
-      var measureRight = calculateMeasure(right);
-      splitSuravage.created = left;
-      splitSuravage.created.endMValue = measureLeft;
-      splitSuravage.existing = right;
-      splitSuravage.existing.endMValue = measureRight;
-      splitSuravage.created.splitPoint = mousePoint;
-      splitSuravage.existing.splitPoint = mousePoint;
-
-      splitSuravage.created.id = null;
-      splitSuravage.splitMeasure = split.splitMeasure;
-
-      splitSuravage.created.marker = 'A';
-      splitSuravage.existing.marker = 'B';
-
-      callback(splitSuravage);
-    };
-
-    var getPoint = function(link) {
-      if (link.sideCode == LinkValues.SideCode.AgainstDigitizing.value) {
-        return _.first(link.points);
-      } else {
-        return _.last(link.points);
-      }
-    };
-
-    var calculateMeasure = function(link) {
-      var points = _.map(link.points, function(point) {
-        return [point.x, point.y];
-      });
-      return new ol.geom.LineString(points).getLength();
-    };
-
     var isDirty = function() {
       return dirty;
     };
@@ -164,18 +123,28 @@
         var added = _.difference(linkIds, ids);
         ids = linkIds;
         current = _.filter(current, function(link) {
-          return _.contains(linkIds, link.getData().linkId);
+          return _.contains(linkIds, link.getData().id || link.getData().linkId);
           }
         );
-        current = current.concat(projectLinkCollection.getByLinkId(added));
+        current = current.concat(projectLinkCollection.getProjectLink(added));
         eventbus.trigger('projectLink:clicked', get());
       }
     };
 
-    var get = function(linkId) {
-      var clicked = _.filter(current, function (c) { return c.getData().linkId == linkId; });
+    var get = function(id) {
+      var clicked = _.filter(current, function (c) {
+        if (c.getData().id > 0) {
+          return c.getData().id === id;
+        } else {
+          return c.getData().linkId === id;
+        }
+      });
       var others = _.filter(_.map(current, function(projectLink) { return projectLink.getData(); }), function (link) {
-        return link.linkId != linkId;
+        if (link.id > 0) {
+          return link.id !== id;
+        } else {
+          return link.linkId !== id;
+        }
       });
       if (!_.isUndefined(clicked[0])) {
         return [clicked[0].getData()].concat(others);
@@ -241,8 +210,8 @@
       if (!terminatedC) {
         terminatedC = zeroLengthTerminated(suravageA);
       }
-      ids = projectLinkCollection.getMultiSelectIds(suravageA.linkId);
-      current = projectLinkCollection.getByLinkId(_.flatten(ids));
+      ids = projectLinkCollection.getMultiProjectLinks(suravageA.linkId);
+      current = projectLinkCollection.getProjectLink(_.flatten(ids));
       suravageA.marker = "A";
       suravageB.marker = "B";
       terminatedC.marker = "C";
@@ -274,7 +243,6 @@
       preSplitSuravageLink: preSplitSuravageLink,
       getPreSplitData: getPreSplitData,
       revertSuravage: revertSuravage,
-      getNearestPoint: getNearestPoint,
       setNearestPoint: setNearestPoint
     };
   };
