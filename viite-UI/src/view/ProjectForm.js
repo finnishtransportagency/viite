@@ -150,18 +150,16 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
-        errorsList()+
+        '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
 
     var errorsList = function(){
       if (projectCollection.getProjectErrors().length > 0){
-        return '<div class="form-group">' +
-          '<label>TARKASTUSILMOITUKSET:</label>' +
+        return '<label>TARKASTUSILMOITUKSET:</label>' +
           '<div id ="projectErrors">' +
           formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
-          '</div>' +
           '</div>' ;
       }
       else
@@ -442,6 +440,10 @@
 
       eventbus.on('roadAddressProject:reOpenCurrent', function () {
         reOpenCurrent();
+      });
+
+      eventbus.on('roadAddressProject:writeProjectErrors', function () {
+        $('#project-errors').html(errorsList());
       });
 
       rootElement.on('click', '[id^=editProject]', currentProject, function (eventObject) {

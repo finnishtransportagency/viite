@@ -45,7 +45,7 @@
       var directionMarkerColor= function(roadLink){
         if(roadLink.status === 2){
           return '#ff55dd';
-        } else if (roadLink.roadLinkSource===sourceSuravage) {
+        } else if (roadLink.roadLinkSource === sourceSuravage && roadLink.id === 0) {
           return '#d3aff6';
         }
         else if (roadLink.roadClass in colorMap) {
