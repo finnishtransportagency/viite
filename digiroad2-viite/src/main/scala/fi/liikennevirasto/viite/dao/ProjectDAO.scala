@@ -351,13 +351,15 @@ object ProjectDAO {
     listQuery(query).seq
   }
 
-  def getProjectLinksByProjectAndLinkId(linkIds: Iterable[Long], projectId: Long): Seq[ProjectLink] = {
-    if (linkIds.isEmpty)
+  def getProjectLinksByProjectAndLinkId(ids: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+    if (ids.isEmpty && linkIds.isEmpty) {
       List()
-    else {
+    } else {
+      val idsFilter = if (ids.nonEmpty) s"AND PROJECT_LINK.ID IN (${ids.mkString(",")})" else ""
+      val linkIdsFilter = if (linkIds.nonEmpty) s"AND LINK_ID IN (${linkIds.mkString(",")})" else ""
       val query =
         s"""$projectLinkQueryBase
-                where link_id in (${linkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where PROJECT_LINK.PROJECT_ID = $projectId $idsFilter $linkIdsFilter order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }
