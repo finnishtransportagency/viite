@@ -40,7 +40,7 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
                                             roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
                                             roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
                                             coordinates: ProjectCoordinates, roadName: Option[String])
@@ -486,7 +486,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.validateLinkTrack(links.trackCode) match {
         case true => {
           val writableProject = projectWritable(links.projectId)
-          writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet, LinkStatus.apply(links.linkStatus),
+          writableProject.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
             links.roadType, links.discontinuity, Some(links.roadEly), roadName = links.roadName) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
@@ -663,12 +663,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/roadname/:roadNumber/:projectID"){
+  get("/roadlinks/roadname/:roadNumber/:projectID") {
 
     val rNumber = params.get("roadNumber").map(_.toLong)
     val projectID = params.get("projectID").map(_.toLong)
 
-    (rNumber, projectID) match{
+    (rNumber, projectID) match {
       case (Some(rNumber), Some(projectID)) => {
         try {
           roadNameService.getRoadNameByNumber(rNumber, projectID)
@@ -746,13 +746,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
     val validRoadNumbers = partitionedRoadLinks.flatten.map(_.roadNumber).filter(value => value > 0).distinct
-    if(validRoadNumbers.nonEmpty){
+    if (validRoadNumbers.nonEmpty) {
       val roadNames = roadNameService.getCurrentRoadNames(validRoadNumbers)
       partitionedRoadLinks.map {
         _.map(address => projectAddressLinkToApi(address, roadNames))
       }
     }
-    else{
+    else {
       partitionedRoadLinks.map {
         _.map(address => projectAddressLinkToApi(address))
       }
@@ -791,7 +791,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map(
       "id" -> issue.projectId,
       "validationError" -> issue.validationError.value,
-      "affectedLinkIds" -> issue.affectedLinkIds.toArray,
+      "affectedIds" -> issue.affectedIds.toArray,
       "coordinates" -> issue.coordinates,
       "optionalInformation" -> issue.optionalInformation.getOrElse("")
     )
@@ -875,15 +875,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
     Map(
-      "id"-> roadName.id,
-      "roadNumber"-> roadName.roadNumber,
-      "name"-> roadName.roadName,
+      "id" -> roadName.id,
+      "roadNumber" -> roadName.roadNumber,
+      "name" -> roadName.roadName,
       "startDate" -> formatDateTimeToString(roadName.startDate),
       "endDate" -> formatDateTimeToString(roadName.endDate)
     )
   }
 
-  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames : Seq[RoadName] = Seq()): Map[String, Any] = {
+  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames: Seq[RoadName] = Seq()): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
       (if (projectAddressLink.isSplit)
         Map(
@@ -953,7 +953,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   def errorPartsToApi(errorParts: ValidationErrorDetails): Map[String, Any] = {
-    Map("linkIds" -> errorParts.affectedLinkIds,
+    Map("ids" -> errorParts.affectedIds,
       "errorCode" -> errorParts.validationError.value,
       "errorMessage" -> errorParts.validationError.message,
       "info" -> errorParts.optionalInformation,
