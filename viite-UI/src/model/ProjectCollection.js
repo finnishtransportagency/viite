@@ -658,7 +658,7 @@
 
     this.setReservedParts = function (list) {
       var reservedAndNew = _.groupBy(list, function (part) {
-        return (_.isUndefined(part.currentLength) && _.isUndefined(part.currentEly) && _.isUndefined(part.currentDiscontinuity));
+        return (_.isUndefined(part.currentDiscontinuity));
       });
       if (reservedAndNew.true) {
         newReservedParts = reservedAndNew.true;
