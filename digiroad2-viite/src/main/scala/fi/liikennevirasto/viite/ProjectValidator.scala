@@ -220,13 +220,13 @@ object ProjectValidator {
   }
 
   case class ValidationErrorDetails(projectId: Long, validationError: ValidationError,
-                                    affectedLinkIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
+                                    affectedIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
   def error(id: Long, validationError: ValidationError)(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
-    val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
-    if (linkIds.nonEmpty)
-      Some(ValidationErrorDetails(id, validationError, linkIds,
+    val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+    if (ids.nonEmpty)
+      Some(ValidationErrorDetails(id, validationError, ids,
         points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
     else
       None
@@ -264,7 +264,7 @@ object ProjectValidator {
       invalidUnchangedLinks.map { projectLink =>
         val point = GeometryUtils.midPointGeometry(projectLink.geometry)
         ValidationErrorDetails(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks,
-          Seq(projectLink.linkId), Seq(ProjectCoordinates(point.x, point.y, 12)),
+          Seq(projectLink.id), Seq(ProjectCoordinates(point.x, point.y, 12)),
           Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue)))
       }
     }
@@ -305,7 +305,7 @@ object ProjectValidator {
         validRoadPartNumbers.lastOption.map { roadPartNumber =>
           val validLinks = RoadAddressDAO.fetchByRoadPart(rrp.roadNumber, roadPartNumber, fetchOnlyEnd = true)
           ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((rrp.roadNumber, roadPartNumber)))),
-            Seq(validLinks.head.linkId),
+            Seq(validLinks.head.id),
             Seq(ProjectCoordinates(validLinks.head.geometry.head.x, validLinks.head.geometry.head.y, 12)), Some(""))
         }
       }
@@ -582,7 +582,7 @@ object ProjectValidator {
       * @return An optional value with eventual Validation error details
       */
     def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
-      val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+      val (linkIds, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
       if (linkIds.nonEmpty)
         Some(ValidationErrorDetails(project.id, validationError, linkIds.distinct,
           points.map(p => ProjectCoordinates(p.x, p.y, 12)).distinct, None))
@@ -630,7 +630,7 @@ object ProjectValidator {
       val (gLinkIds, gPoints, gDiscontinuity) = grouppedByDiscontinuity.flatMap(g => {
         val links = g._2
         val zoomPoint = GeometryUtils.midPointGeometry(links.minBy(_.endAddrMValue).geometry)
-        links.map(l => (l.linkId, zoomPoint, l.discontinuity))
+        links.map(l => (l.id, zoomPoint, l.discontinuity))
       }).unzip3
 
       if (gLinkIds.nonEmpty) {
