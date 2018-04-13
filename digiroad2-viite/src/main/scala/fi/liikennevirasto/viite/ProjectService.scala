@@ -214,12 +214,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String) = {
-      ProjectLinkNameDAO.get(roadNumber, projectId) match {
-        case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
-        case _ =>
-          val existingRoadName = RoadNameDAO.getCurrentRoadName(roadNumber).headOption
-          ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
-      }
+    ProjectLinkNameDAO.get(roadNumber, projectId) match {
+      case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
+      case _ =>
+        val existingRoadName = RoadNameDAO.getCurrentRoadName(roadNumber).headOption
+        ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
+    }
   }
 
 
@@ -305,9 +305,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             newLinks
         ProjectDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
-        newLinks.flatMap(_.roadName).headOption.foreach { roadName =>
-          setProjectRoadName(projectId, newRoadNumber, roadName)
-        }
+      newLinks.flatMap(_.roadName).headOption.foreach { roadName =>
+        setProjectRoadName(projectId, newRoadNumber, roadName)
+      }
         None
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
@@ -944,11 +944,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
     revertRoadName(projectId, roadNumber)
-    RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet).foreach(ra =>
+    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet, newTransaction = false)
+    val roadAddresses = RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
+    roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
-        case Some(mod) if mod.geometry.nonEmpty =>
-          val geom = GeometryUtils.truncateGeometry3D(mod.geometry, ra.startMValue, ra.endMValue)
+        case Some(mod) if mod.geometry.nonEmpty => {
+          val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
+          val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
           ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+        }
         case _ => ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
       })
     if (recalculate)

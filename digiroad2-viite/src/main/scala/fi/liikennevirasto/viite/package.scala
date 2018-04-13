@@ -149,12 +149,13 @@ package object viite {
   }
 
   object CombineMaps {
-    type Mapped = Map[String,String]
+    type Mapped = Map[String, String]
+
     def combine(x: Mapped, y: Mapped): Mapped = {
       val x0 = x.withDefaultValue("")
       val y0 = y.withDefaultValue("")
       val keys = x.keys.toSet.union(y.keys.toSet)
-      keys.map{ k => k -> (x0(k) + y0(k)) }.toMap
+      keys.map { k => k -> (x0(k) + y0(k)) }.toMap
     }
 
   }
