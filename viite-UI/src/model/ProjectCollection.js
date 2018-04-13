@@ -243,10 +243,10 @@
       }
     };
 
-    var createOrUpdate = function(dataJson, changedLinks){
+    var createOrUpdate = function(dataJson){
       if((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0){
         var ids = dataJson.ids;
-        if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
+        if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
               new ModalConfirm(successObject.errorMessage);
