@@ -36,7 +36,7 @@ object RoadNameDAO {
     }
   }
 
-  def dateParser(oDate: Option[DateTime]):String = {
+  def dateParser(oDate: Option[DateTime]): String = {
     oDate match {
       case Some(date) => {
         val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -69,12 +69,12 @@ object RoadNameDAO {
   }
 
   private def withHistoryFilter(query: String, startDate: Option[DateTime], endDate: Option[DateTime]): String = {
-    val startDateQuery = if(startDate.isDefined) s" and start_date >= to_date('${dateParser(startDate)}', 'dd.MM.RRRR')" else ""
-    val endDateQuery = if(endDate.isDefined) s" and end_date <= to_date('${dateParser(endDate)}', 'dd.MM.RRRR')" else ""
+    val startDateQuery = if (startDate.isDefined) s" and start_date >= to_date('${dateParser(startDate)}', 'dd.MM.RRRR')" else ""
+    val endDateQuery = if (endDate.isDefined) s" and end_date <= to_date('${dateParser(endDate)}', 'dd.MM.RRRR')" else ""
     s"""$query $startDateQuery $endDateQuery"""
   }
 
-  def getCurrentRoadNames(roadNumbers: Set[Long]):  Seq[RoadName] = {
+  def getCurrentRoadNames(roadNumbers: Set[Long]): Seq[RoadName] = {
     val roadNumbersStr = roadNumbers.mkString(",")
     val query =
       s"""$roadsNameQueryBase Where road_number in ($roadNumbersStr) and valid_From <= sysdate and (valid_to > sysdate or valid_to is null) and start_date <= sysdate and (end_date > sysdate or end_date is null)"""
@@ -123,6 +123,7 @@ object RoadNameDAO {
 
   /**
     * Return all the valid road names for the given road number
+    *
     * @param roadNumber
     */
   def getAllByRoadNumber(roadNumber: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
@@ -133,6 +134,7 @@ object RoadNameDAO {
 
   /**
     * Return all the valid road names for the given road name
+    *
     * @param roadName
     */
   def getAllByRoadName(roadName: String, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None): Seq[RoadName] = {
@@ -143,6 +145,7 @@ object RoadNameDAO {
 
   /**
     * Return all the valid road names for the given road name and road number
+    *
     * @param roadNumber
     * @param roadName
     */
