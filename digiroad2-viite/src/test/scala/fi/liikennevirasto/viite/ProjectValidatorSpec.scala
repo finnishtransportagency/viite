@@ -183,7 +183,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       }
       val errors = ProjectValidator.checkOrdinaryRoadContinuityCodes(project, links)
       errors should have size 1
-      errors.head.validationError should be (MajorDiscontinuityFound)
+      errors.head.validationError should be(MajorDiscontinuityFound)
 
       /*
       2nd case: |(x2)|---link A---|(x1)|  |(x2)|---link B---|(x3)|

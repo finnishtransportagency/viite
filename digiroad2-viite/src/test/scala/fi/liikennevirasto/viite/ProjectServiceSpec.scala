@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -43,6 +43,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockVVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
+  val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
@@ -1476,6 +1480,53 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       })
       projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("test name")
+    }
+  }
+
+  test("Road address geometry after reverting should be the same as VVH") {
+    val projectId = 0L
+    val user = "TestUser"
+    val (roadNumber, roadPartNumber) = (26020L, 12L)
+    val (newRoadNumber, newRoadPart) = (9999L, 1L)
+    val smallerRoadGeom = Seq(Point(0.0, 0.0), Point(0.0, 5.0))
+    val roadGeom = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
+    runWithRollback {
+
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+
+
+      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", user, DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val projectLinksFromRoadAddresses = roadAddresses.map(ra => toProjectLink(rap)(ra))
+
+      ProjectDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "Test")
+      ProjectDAO.create(projectLinksFromRoadAddresses)
+
+      val numberingLink = Seq(ProjectLink(-1000L, newRoadNumber, newRoadPart, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
+        Option(user), 0L, projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0, SideCode.Unknown, (None, None), false,
+        smallerRoadGeom, 0L, LinkStatus.Numbering, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 10.0, roadAddresses.head.id, 0, false,
+        None, 86400L))
+      ProjectDAO.reserveRoadPart(projectId, newRoadNumber, newRoadPart, "Test")
+      ProjectDAO.create(numberingLink)
+      val numberingLinks = ProjectDAO.getProjectLinks(projectId, Option(LinkStatus.Numbering))
+      numberingLinks.head.geometry should be equals (smallerRoadGeom)
+
+      val projectLinks = ProjectDAO.getProjectLinks(projectId)
+      val linksToRevert = projectLinks.filter(_.status != LinkStatus.NotHandled).map(pl => {
+        LinkToRevert(pl.id, pl.linkId, pl.status.value, pl.geometry)
+      })
+      val roadLinks = projectLinks.map(toRoadLink).head.copy(geometry = roadGeom)
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLinks))
+
+
+      projectService.revertLinks(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
+      val geomAfterRevert = GeometryUtils.truncateGeometry3D(roadGeom, projectLinksFromRoadAddresses.head.startMValue, projectLinksFromRoadAddresses.head.endMValue)
+      val linksAfterRevert = ProjectDAO.getProjectLinks(projectId)
+      linksAfterRevert.map(_.geometry).contains(geomAfterRevert) should be(true)
+
+
     }
   }
 
