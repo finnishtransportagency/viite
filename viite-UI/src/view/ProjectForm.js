@@ -443,7 +443,7 @@
       });
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
-        $('#project-errors').append(errorsList());
+        $('#project-errors').html(errorsList());
       });
 
       rootElement.on('click', '[id^=editProject]', currentProject, function (eventObject) {

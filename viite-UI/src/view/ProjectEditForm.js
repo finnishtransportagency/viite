@@ -549,6 +549,7 @@
 
       eventbus.on('projectLink:mapClicked', function () {
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
+         eventbus.trigger('roadAddressProject:writeProjectErrors') ;
       });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
