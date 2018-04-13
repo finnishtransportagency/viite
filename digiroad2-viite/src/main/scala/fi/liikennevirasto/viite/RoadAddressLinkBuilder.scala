@@ -105,25 +105,36 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 
 
-  def buildSuravageRoadAddressLink(roadLink: VVHRoadlink, roadAddress: Option[RoadAddress] = None): RoadAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,  0.0, roadLink.length)
+  def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
+    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId)).headOption
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
     val length = GeometryUtils.geometryLength(geom)
-    val sideCode= if (roadLink.trafficDirection==TrafficDirection.TowardsDigitizing) SideCode.TowardsDigitizing else if(roadLink.trafficDirection==TrafficDirection.AgainstDigitizing) SideCode.AgainstDigitizing
-    else if(roadLink.trafficDirection==TrafficDirection.BothDirections) SideCode.BothDirections else SideCode.Unknown
+    val sideCode = if (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) {
+      SideCode.TowardsDigitizing
+    } else if (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing) {
+      SideCode.AgainstDigitizing
+    } else if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+      SideCode.BothDirections
+    } else {
+      SideCode.Unknown
+    }
     val roadLinkRoadNumber = toLongNumber(roadAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
     val roadLinkRoadPartNumber = toLongNumber(roadAddress.map(_.roadNumber), roadLink.attributes.get(RoadPartNumber))
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val municipalityCode = roadLink.municipalityCode
-    val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
-    val trackValue=roadLink.attributes.getOrElse("TRACK_CODE",Track.Unknown.value).toString.toInt
-    val elyCode:Long = roadAddress match {
-      case Some (add) => add.ely
+    val anomalyType = {
+      if (roadLinkRoadNumber != 0 && roadLinkRoadPartNumber != 0) Anomaly.None else Anomaly.NoAddressGiven
+    }
+    val trackValue = roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+    val elyCode: Long = roadAddress match {
+      case Some(add) => add.ely
       case _ => municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1)
     }
-    RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
+    RoadAddressLink(toLongNumber(roadAddress.map(_.id), Some(0)), roadLink.linkId, geom,
+      length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLinkType, roadLink.constructionType,
+      roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes,roadLinkRoadNumber,
+      roadLink.attributes, roadLinkRoadNumber,
       roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }

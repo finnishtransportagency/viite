@@ -34,9 +34,9 @@ class RoadNameService() {
 
   def addOrUpdateRoadNamesInTX(roadNumber: Long, roadNameRows: Seq[RoadNameRow], user: User): Option[String] = {
     try {
-      roadNameRows.map{
+      roadNameRows.map {
         roadNameRow =>
-          val roadNameOption = if(roadNameRow.id == NewRoadNameId) None else RoadNameDAO.getRoadNamesById(roadNameRow.id)
+          val roadNameOption = if (roadNameRow.id == NewRoadNameId) None else RoadNameDAO.getRoadNamesById(roadNameRow.id)
           val endDate = roadNameRow.endDate match {
             case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
             case _ => None
@@ -81,7 +81,7 @@ class RoadNameService() {
       }
     } catch {
       case longParsingException: NumberFormatException => Left("Could not parse road number")
-      case e if NonFatal(e) => Left("Unknown error"+e)
+      case e if NonFatal(e) => Left("Unknown error" + e)
     }
   }
 
@@ -131,11 +131,11 @@ class RoadNameService() {
   }
 
   def getHasCurrentRoadName(roadNumber: Long): Boolean = {
-      RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber).nonEmpty
+    RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber).nonEmpty
   }
 
   def getCurrentRoadNames(roadNumbers: Seq[Long]): Seq[RoadName] = {
-    withDynSession{
+    withDynSession {
       RoadNameDAO.getCurrentRoadNamesByRoadNumbers(roadNumbers)
     }
 

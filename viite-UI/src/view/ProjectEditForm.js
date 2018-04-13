@@ -103,23 +103,9 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
-        errorsList()+
+        '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
-    };
-
-    var errorsList = function(){
-      if (projectCollection.getProjectErrors().length > 0){
-        return '<div class="form-group">' +
-          '<label>TARKASTUSILMOITUKSET:</label>' +
-          '<div id ="projectErrors">' +
-          formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
-          '</div>' +
-          '</div>' ;
-      }
-      else
-        return '';
-
     };
 
     var isProjectPublishable = function(){
@@ -432,7 +418,7 @@
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
@@ -455,13 +441,13 @@
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
         else if(this.value == LinkStatus.Transfer.description) {
           projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status === LinkStatus.Transfer.value;}).concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
@@ -473,7 +459,7 @@
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
@@ -526,51 +512,52 @@
         $(this).empty();
         projectChangeTable.show();
         var projectChangesButton = showProjectChangeButton();
-        if (isProjectPublishable() && isProjectEditable()) {
+          if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
-        } else {
+          } else {
           $('footer').html(projectChangesButton);
-        }
+          }
       });
 
-      rootElement.on('keyup','.form-control.small-input', function (event) {
+        rootElement.on('keyup', '.form-control.small-input', function (event) {
         checkInputs('.project-');
         setFormDirty();
-        if (event.target.id === "tie" && $('#dropdown_0').val() === 'New' || $('#dropdown_0').val() === 'Transfer' || $('#dropdown_0').val() === 'Numbering' ) {
-          backend.getRoadName($(this).val(),projectCollection.getCurrentProject().project.id, function(data) {
-            if (data !== null) {
-              $('#roadName').val(data.roadName).change();
-              if (data.isCurrent) {
-                $('#roadName').prop('disabled', true);
-              } else {
-                $('#roadName').prop('disabled', false);
-              }
-              checkInputs('.project-');
-            } else {
-              if ($('#roadName').prop('disabled')) {
-                $('#roadName').val('').change();
-              }
-              $('#roadName').prop('disabled', false);
+            if (event.target.id === "tie" && ($('#dropdown_0').val() === 'New' || $('#dropdown_0').val() === 'Transfer' || $('#dropdown_0').val() === 'Numbering')) {
+                backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
+                    if (data !== null) {
+                        $('#roadName').val(data.roadName).change();
+                        if (data.isCurrent) {
+                            $('#roadName').prop('disabled', true);
+                        } else {
+                            $('#roadName').prop('disabled', false);
+                        }
+                        checkInputs('.project-');
+                    } else {
+                        if ($('#roadName').prop('disabled')) {
+                            $('#roadName').val('').change();
+                        }
+                        $('#roadName').prop('disabled', false);
+                    }
+                });
             }
-          });
-        }
-      });
+        });
 
-      rootElement.on('keyup','#roadName', function () {
-          checkInputs('.project-');
-      });
+        rootElement.on('keyup', '#roadName', function () {
+            checkInputs('.project-');
+        });
 
       eventbus.on('projectLink:mapClicked', function () {
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
+         eventbus.trigger('roadAddressProject:writeProjectErrors') ;
       });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
         eventbus.trigger('projectCollection:clickCoordinates', event, map);
         var errorIndex = event.currentTarget.id;
         if(projectCollection.getProjectErrors()[errorIndex].errorMessage !== ""){
-          var linkIds = projectCollection.getProjectErrors()[errorIndex].linkIds;
-          selectedProjectLinkProperty.openWithErrorMessage(linkIds[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
+          var ids = projectCollection.getProjectErrors()[errorIndex].ids;
+          selectedProjectLinkProperty.openWithErrorMessage(ids[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
         }
 
       });

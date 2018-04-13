@@ -3,7 +3,7 @@
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkStatus = LinkValues.LinkStatus;
     var Track = LinkValues.Track;
-    var disabledInput = false;
+      var disabledInput = false;
 
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
@@ -15,11 +15,11 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
-    var addRoadNameField = function (name, isBlocked) {
-      var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
-      var disabled = nameToDisplay !== "" && isBlocked;
-      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
-    };
+      var addRoadNameField = function (name, isBlocked) {
+          var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
+          var disabled = nameToDisplay !== "" && isBlocked;
+          return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
+      };
 
     var projectButtons = function() {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
@@ -30,7 +30,7 @@
       var roadNumber = road.roadNumber;
       var part = road.roadPartNumber;
       var track = road.trackCode;
-      var roadName = selected[0].roadName;
+        var roadName = selected[0].roadName;
       var link = _.first(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
@@ -47,9 +47,9 @@
         addSmallInputNumberDisabled('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
-        roadTypeDropdown() + '<br>' +
-        addSmallLabel('NIMI') +
-        addRoadNameField(roadName, selected[0].roadNameBlocked) +
+          roadTypeDropdown() + '<br>' +
+          addSmallLabel('NIMI') +
+          addRoadNameField(roadName, selected[0].roadNameBlocked) +
         ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };

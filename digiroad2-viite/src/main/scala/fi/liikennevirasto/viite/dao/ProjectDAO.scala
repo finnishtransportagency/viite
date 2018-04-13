@@ -81,7 +81,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName : Option[String] = None)
+                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName: Option[String] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -119,14 +119,15 @@ object ProjectDAO {
   CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
   LRM_POSITION.ADJUSTED_TIMESTAMP,
   CASE
-    WHEN rn.road_name IS NOT NULL THEN rn.road_name
-    WHEN rn.road_name IS NULL THEN pln.road_name END AS road_name
+    WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
+    WHEN rn.road_name IS NULL AND pln.road_name IS NOT NULL THEN pln.road_name
+    END AS road_name_pl
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
   join LRM_POSITION
     on (LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID)
-   LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)
-   LEFT JOIN road_names rn ON (rn.road_number = project_link.road_number)
-	LEFT JOIN project_link_name pln ON (pln.road_number = project_link.road_number AND pln.project_id = project_link.project_id)"""
+    LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)
+    LEFT JOIN road_names rn ON (rn.road_number = project_link.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
+	  LEFT JOIN project_link_name pln ON (pln.road_number = project_link.road_number AND pln.project_id = project_link.project_id)  """
 
   implicit val getProjectLinkRow = new GetResult[ProjectLink] {
     def apply(r: PositionedResult) = {
@@ -314,12 +315,11 @@ object ProjectDAO {
     Q.queryNA[Long](query).firstOption
   }
 
-  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None, currentAddressFilter: Boolean = false): Seq[ProjectLink] = {
+  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
-    val currentFilter = if (currentAddressFilter) s"PROJECT_LINK.END_DATE IS NULL AND PROJECT_LINK.VALID_TO IS NULL " else s""
     val query =
       s"""$projectLinkQueryBase
-                where $filter $currentFilter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     listQuery(query)
   }
 
@@ -351,13 +351,15 @@ object ProjectDAO {
     listQuery(query).seq
   }
 
-  def getProjectLinksByProjectAndLinkId(linkIds: Iterable[Long], projectId: Long): Seq[ProjectLink] = {
-    if (linkIds.isEmpty)
+  def getProjectLinksByProjectAndLinkId(ids: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+    if (ids.isEmpty && linkIds.isEmpty) {
       List()
-    else {
+    } else {
+      val idsFilter = if (ids.nonEmpty) s"AND PROJECT_LINK.ID IN (${ids.mkString(",")})" else ""
+      val linkIdsFilter = if (linkIds.nonEmpty) s"AND LINK_ID IN (${linkIds.mkString(",")})" else ""
       val query =
         s"""$projectLinkQueryBase
-                where link_id in (${linkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where PROJECT_LINK.PROJECT_ID = $projectId $idsFilter $linkIdsFilter order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }
@@ -662,7 +664,8 @@ object ProjectDAO {
       s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
     Q.updateNA(sql).execute
 
-    val updateLastLinkWithDiscontinuity = s"""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = $discontinuity WHERE ID IN (
+    val updateLastLinkWithDiscontinuity =
+      s"""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = $discontinuity WHERE ID IN (
          SELECT ID FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value} AND END_ADDR_M = (SELECT MAX(END_ADDR_M) FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value}))"""
     Q.updateNA(updateLastLinkWithDiscontinuity).execute
   }
