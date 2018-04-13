@@ -21,7 +21,8 @@ import fi.liikennevirasto.viite.dao.ProjectState.{Saved2TR, Sent2TR}
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao.{LinkStatus, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
+import fi.liikennevirasto.viite.process.ProjectSectionCalculator.{calculateSectionAddressValues, findStartingPoints}
+import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, ProjectSectionCalculator, TrackSectionOrder}
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito.{when, _}
@@ -1409,4 +1410,173 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("New *double* user given addressMValues, even on Left/Right tracks, should keep continuous and incremented address values (calibration ones included) for all links") {
+    /**
+      * This test checks:
+      * 1.result of addressMValues for new given address value for one Track.Combined link
+      * 2.result of MValues (segment and address) in recalculated calibration points for new given address value for one link
+      * 3.result of addressMValues for yet another new given address value in other link, being that link Track.LeftSide or Track.RightSide
+      * 4.result of MValues (segment and address) in recalculated calibration points for second new given address value for Track.LeftSide or Track.RightSide link
+      */
+    val coeff = 1.0
+    runWithRollback {
+        /**
+          * Illustrative picture
+          *
+          *               |--Left--||--Left--|
+          * |--combined--|                    |--combined--|
+          *               |-------Right------|
+          */
+
+      /**
+        * Test data
+        */
+
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+
+      val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, false,
+        None, 86400L)
+      val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, false,
+        None, 86400L)
+      val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, false,
+        None, 86400L)
+      val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, false,
+        None, 86400L)
+      val pl5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, false,
+        None, 86400L)
+
+      val project = projectService.createRoadLinkProject(rap)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl1).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl4).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12348L), project.id, 9999, 1, Track.RightSide, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl2, pl3).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12346L, 12347L), project.id, 9999, 1, Track.LeftSide, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl5).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12349L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      val links = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
+
+      links.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        m should be (pl.startAddrMValue)
+          pl.endAddrMValue
+      }
+      links.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        m should be (pl.startAddrMValue)
+        pl.endAddrMValue
+      }
+
+      links.sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        if(pl.calibrationPoints._1.headOption.nonEmpty){
+          pl.calibrationPoints._1.get.addressMValue should be (pl.startAddrMValue)
+          pl.calibrationPoints._1.get.segmentMValue should be (pl.endMValue - pl.startMValue)
+        }
+        if(pl.calibrationPoints._2.headOption.nonEmpty){
+          pl.calibrationPoints._2.get.addressMValue should be (pl.endAddrMValue)
+          pl.calibrationPoints._2.get.addressMValue should be (pl.endMValue)
+        }
+          0.0//any double val, needed for expected type value in recursive scan
+      }
+
+
+      val linkidToIncrement = 12345L
+      val valueToIncrement = 2.0
+      val newEndAddressValue = Seq(links.filter(_.linkId == linkidToIncrement).head.endAddrMValue.toInt, valueToIncrement.toInt).sum
+      projectService.updateProjectLinks(project.id, Set(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
+      val linksAfterGivenAddrMValue = ProjectDAO.getProjectLinks(project.id)
+
+      /**
+        * Test 1.
+        */
+      linksAfterGivenAddrMValue.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        m should be (pl.startAddrMValue)
+        pl.endAddrMValue
+      }
+      linksAfterGivenAddrMValue.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        m should be (pl.startAddrMValue)
+        pl.endAddrMValue
+      }
+
+      /**
+        * Test 2.
+        */
+      linksAfterGivenAddrMValue.sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        if(pl.calibrationPoints._1.headOption.nonEmpty){
+          pl.calibrationPoints._1.get.addressMValue should be (pl.startAddrMValue)
+          pl.calibrationPoints._1.get.segmentMValue should be (pl.endMValue - pl.startMValue)
+        }
+        if(pl.calibrationPoints._2.headOption.nonEmpty){
+          pl.calibrationPoints._2.get.addressMValue should be (pl.endAddrMValue)
+          pl.calibrationPoints._2.get.addressMValue should be (pl.endMValue)
+        }
+        0.0//any double val, needed for expected type value in recursive scan
+      }
+
+      //only link and links after linkidToIncrement should be extended
+      val extendedLink = links.filter(_.linkId == linkidToIncrement).head
+      val linksBefore = links.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
+      val linksAfter = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
+      linksBefore.zip(linksAfter).foreach { case (st, en) =>
+        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement +coeff))
+      }
+
+
+      val secondLinkidToIncrement = 12348L
+      val secondValueToIncrement = 3.0
+      val secondNewEndAddressValue = Seq(links.filter(_.linkId == secondLinkidToIncrement).head.endAddrMValue.toInt, secondValueToIncrement.toInt).sum
+      projectService.updateProjectLinks(project.id, Set(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 1, Some(secondNewEndAddressValue), 1L, 5) should be(None)
+      val linksAfterSecondGivenAddrMValue = ProjectDAO.getProjectLinks(project.id)
+
+      /**
+      * Test 3.
+      */
+      linksAfterSecondGivenAddrMValue.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        m should be (pl.startAddrMValue)
+        pl.endAddrMValue
+      }
+      linksAfterSecondGivenAddrMValue.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        m should be (pl.startAddrMValue)
+        pl.endAddrMValue
+      }
+
+      /**
+        * Test 4.
+        */
+      linksAfterSecondGivenAddrMValue.sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
+        if(pl.calibrationPoints._1.headOption.nonEmpty){
+          pl.calibrationPoints._1.get.addressMValue should be (pl.startAddrMValue)
+          pl.calibrationPoints._1.get.segmentMValue should be (pl.endMValue - pl.startMValue)
+        }
+        if(pl.calibrationPoints._2.headOption.nonEmpty){
+          pl.calibrationPoints._2.get.addressMValue should be (pl.endAddrMValue)
+          pl.calibrationPoints._2.get.addressMValue should be (pl.endMValue)
+        }
+        0.0//any double val, needed for expected type value in recursive scan
+      }
+
+      //only link and links after secondLinkidToIncrement should be extended
+      val secondExtendedLink = linksAfterGivenAddrMValue.filter(_.linkId == secondLinkidToIncrement).head
+      val secondLinksBefore = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= secondExtendedLink.endAddrMValue).sortBy(_.endAddrMValue)
+      val secondLinksAfter = linksAfterSecondGivenAddrMValue.filter(_.endAddrMValue >= secondExtendedLink.endAddrMValue).sortBy(_.endAddrMValue)
+      secondLinksBefore.zip(secondLinksAfter).foreach { case (st, en) =>
+        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement + secondValueToIncrement - coeff, st.endAddrMValue + valueToIncrement + secondValueToIncrement +coeff))
+      }
+
+    }
+  }
+
+  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+    measure >= interval._1 && measure <= interval._2
+  }
 }
