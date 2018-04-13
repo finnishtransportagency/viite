@@ -484,7 +484,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         toMockAnswer(projectLinks, roadLink)
       )
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
-      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.filterNot(_ == 5168510L).toSeq , LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int])
+      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.filterNot(_ == 5168510L).toSeq, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int])
       projectService.allLinksHandled(savedProject.id) should be(true)
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       val change = changeProjectOpt.get
@@ -1530,6 +1530,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     }
   }
+
   test("New user given addressMValues, even on Left/Right tracks, should keep continuous and incremented address values (calibration ones included) for all links") {
     /**
       * This test checks:
@@ -1593,59 +1594,60 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.createProjectLinks(Seq(12349L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       val links = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
 
-      links.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        m should be (pl.startAddrMValue)
+      links.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        m should be(pl.startAddrMValue)
         pl.endAddrMValue
       }
-      links.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        m should be (pl.startAddrMValue)
+      links.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        m should be(pl.startAddrMValue)
         pl.endAddrMValue
       }
 
-      links.sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        if(pl.calibrationPoints._1.headOption.nonEmpty){
-          pl.calibrationPoints._1.get.addressMValue should be (pl.startAddrMValue)
-          pl.calibrationPoints._1.get.segmentMValue should be (pl.endMValue - pl.startMValue)
+      links.sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        if (pl.calibrationPoints._1.headOption.nonEmpty) {
+          pl.calibrationPoints._1.get.addressMValue should be(pl.startAddrMValue)
+          pl.calibrationPoints._1.get.segmentMValue should be(pl.endMValue - pl.startMValue)
         }
-        if(pl.calibrationPoints._2.headOption.nonEmpty){
-          pl.calibrationPoints._2.get.addressMValue should be (pl.endAddrMValue)
-          pl.calibrationPoints._2.get.addressMValue should be (pl.endMValue)
+        if (pl.calibrationPoints._2.headOption.nonEmpty) {
+          pl.calibrationPoints._2.get.addressMValue should be(pl.endAddrMValue)
+          pl.calibrationPoints._2.get.addressMValue should be(pl.endMValue)
         }
-        0.0//any double val, needed for expected type value in recursive scan
+        0.0 //any double val, needed for expected type value in recursive scan
       }
 
 
-      val linkidToIncrement = 12345L
+      val linkidToIncrement = pl1.linkId
+      val idsToIncrement = links.filter(_.linkId == linkidToIncrement).head.id
       val valueToIncrement = 2.0
       val newEndAddressValue = Seq(links.filter(_.linkId == linkidToIncrement).head.endAddrMValue.toInt, valueToIncrement.toInt).sum
-      projectService.updateProjectLinks(project.id, Set(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
+      projectService.updateProjectLinks(project.id, Set(idsToIncrement), Seq(), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
       val linksAfterGivenAddrMValue = ProjectDAO.getProjectLinks(project.id)
 
       /**
         * Test 1.
         */
-      linksAfterGivenAddrMValue.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        m should be (pl.startAddrMValue)
+      linksAfterGivenAddrMValue.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        m should be(pl.startAddrMValue)
         pl.endAddrMValue
       }
-      linksAfterGivenAddrMValue.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        m should be (pl.startAddrMValue)
+      linksAfterGivenAddrMValue.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        m should be(pl.startAddrMValue)
         pl.endAddrMValue
       }
 
       /**
         * Test 2.
         */
-      linksAfterGivenAddrMValue.sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        if(pl.calibrationPoints._1.headOption.nonEmpty){
-          pl.calibrationPoints._1.get.addressMValue should be (pl.startAddrMValue)
-          pl.calibrationPoints._1.get.segmentMValue should be (pl.endMValue - pl.startMValue)
+      linksAfterGivenAddrMValue.sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        if (pl.calibrationPoints._1.headOption.nonEmpty) {
+          pl.calibrationPoints._1.get.addressMValue should be(pl.startAddrMValue)
+          pl.calibrationPoints._1.get.segmentMValue should be(pl.endMValue - pl.startMValue)
         }
-        if(pl.calibrationPoints._2.headOption.nonEmpty){
-          pl.calibrationPoints._2.get.addressMValue should be (pl.endAddrMValue)
-          pl.calibrationPoints._2.get.addressMValue should be (pl.endMValue)
+        if (pl.calibrationPoints._2.headOption.nonEmpty) {
+          pl.calibrationPoints._2.get.addressMValue should be(pl.endAddrMValue)
+          pl.calibrationPoints._2.get.addressMValue should be(pl.endMValue)
         }
-        0.0//any double val, needed for expected type value in recursive scan
+        0.0 //any double val, needed for expected type value in recursive scan
       }
 
       //only link and links after linkidToIncrement should be extended
@@ -1653,41 +1655,42 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linksBefore = links.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
       val linksAfter = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
       linksBefore.zip(linksAfter).foreach { case (st, en) =>
-        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement +coeff))
+        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement + coeff))
       }
 
 
-      val secondLinkidToIncrement = 12348L
+      val secondLinkidToIncrement = pl4.linkId
+      val secondIdToIncrement = linksAfterGivenAddrMValue.filter(_.linkId == secondLinkidToIncrement).head.id
       val secondValueToIncrement = 3.0
       val secondNewEndAddressValue = Seq(links.filter(_.linkId == secondLinkidToIncrement).head.endAddrMValue.toInt, secondValueToIncrement.toInt).sum
-      projectService.updateProjectLinks(project.id, Set(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 1, Some(secondNewEndAddressValue), 1L, 5) should be(None)
+      projectService.updateProjectLinks(project.id, Set(secondIdToIncrement), Seq(), LinkStatus.New, "TestUserTwo", 9999, 1, 1, Some(secondNewEndAddressValue), 1L, 5) should be(None)
       val linksAfterSecondGivenAddrMValue = ProjectDAO.getProjectLinks(project.id)
 
       /**
         * Test 3.
         */
-      linksAfterSecondGivenAddrMValue.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        m should be (pl.startAddrMValue)
+      linksAfterSecondGivenAddrMValue.filterNot(_.track == Track.RightSide).sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        m should be(pl.startAddrMValue)
         pl.endAddrMValue
       }
-      linksAfterSecondGivenAddrMValue.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        m should be (pl.startAddrMValue)
+      linksAfterSecondGivenAddrMValue.filterNot(_.track == Track.LeftSide).sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        m should be(pl.startAddrMValue)
         pl.endAddrMValue
       }
 
       /**
         * Test 4.
         */
-      linksAfterSecondGivenAddrMValue.sortBy(_.endAddrMValue).scanLeft(0.0){ case (m, pl) =>
-        if(pl.calibrationPoints._1.headOption.nonEmpty){
-          pl.calibrationPoints._1.get.addressMValue should be (pl.startAddrMValue)
-          pl.calibrationPoints._1.get.segmentMValue should be (pl.endMValue - pl.startMValue)
+      linksAfterSecondGivenAddrMValue.sortBy(_.endAddrMValue).scanLeft(0.0) { case (m, pl) =>
+        if (pl.calibrationPoints._1.headOption.nonEmpty) {
+          pl.calibrationPoints._1.get.addressMValue should be(pl.startAddrMValue)
+          pl.calibrationPoints._1.get.segmentMValue should be(pl.endMValue - pl.startMValue)
         }
-        if(pl.calibrationPoints._2.headOption.nonEmpty){
-          pl.calibrationPoints._2.get.addressMValue should be (pl.endAddrMValue)
-          pl.calibrationPoints._2.get.addressMValue should be (pl.endMValue)
+        if (pl.calibrationPoints._2.headOption.nonEmpty) {
+          pl.calibrationPoints._2.get.addressMValue should be(pl.endAddrMValue)
+          pl.calibrationPoints._2.get.addressMValue should be(pl.endMValue)
         }
-        0.0//any double val, needed for expected type value in recursive scan
+        0.0 //any double val, needed for expected type value in recursive scan
       }
 
       //only link and links after secondLinkidToIncrement should be extended
@@ -1695,7 +1698,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val secondLinksBefore = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= secondExtendedLink.endAddrMValue).sortBy(_.endAddrMValue)
       val secondLinksAfter = linksAfterSecondGivenAddrMValue.filter(_.endAddrMValue >= secondExtendedLink.endAddrMValue).sortBy(_.endAddrMValue)
       secondLinksBefore.zip(secondLinksAfter).foreach { case (st, en) =>
-        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement + secondValueToIncrement - coeff, st.endAddrMValue + valueToIncrement + secondValueToIncrement +coeff))
+        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement + secondValueToIncrement - coeff, st.endAddrMValue + valueToIncrement + secondValueToIncrement + coeff))
       }
 
     }
@@ -1717,7 +1720,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       /**
         * Illustrative picture
         *
-        *               |--Left--||--Left--|
+    *                   |--Left--||--Left--|
         * |--combined--|                    |--combined--|
         *               |-------Right------|
         */
@@ -1762,10 +1765,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.createProjectLinks(Seq(12349L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       val links = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
 
-      val linkidToIncrement = 12345L
+      val linkidToIncrement = pl1.linkId
+      val idsToIncrement = links.filter(_.linkId == linkidToIncrement).head.id
       val valueToIncrement = 2.0
       val newEndAddressValue = Seq(links.filter(_.linkId == linkidToIncrement).head.endAddrMValue.toInt, valueToIncrement.toInt).sum
-      projectService.updateProjectLinks(project.id, Set(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
+      projectService.updateProjectLinks(project.id, Set(idsToIncrement), Seq(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
       val linksAfterGivenAddrMValue = ProjectDAO.getProjectLinks(project.id)
 
       //only link and links after linkidToIncrement should be extended
@@ -1773,7 +1777,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linksBefore = links.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
       val linksAfter = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
       linksBefore.zip(linksAfter).foreach { case (st, en) =>
-        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement +coeff))
+        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement + coeff))
       }
 
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), "TestUserTwo")
@@ -1781,8 +1785,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linksAfterReverse = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
 
       links.sortBy(_.endAddrMValue).zip(linksAfterReverse.sortBy(_.endAddrMValue)).foreach { case (st, en) =>
-        (st.startAddrMValue, st.endAddrMValue) should be (en.startAddrMValue, en.endAddrMValue)
-        (st.startMValue, st.endMValue) should be (en.startMValue, en.endMValue)
+        (st.startAddrMValue, st.endAddrMValue) should be(en.startAddrMValue, en.endAddrMValue)
+        (st.startMValue, st.endMValue) should be(en.startMValue, en.endMValue)
       }
     }
   }
