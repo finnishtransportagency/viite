@@ -180,7 +180,7 @@
             '<p class="form-control-static">' + startAddress + '</p>' +
             '</div>';
         }
-      } else if (labelText === 'LOPPUETÄISUUS') {
+      } else if (labelText === 'LOPPUETÄISYYS') {
         var endAddress = _.max(_.pluck(selectedLinkProperty.get(), 'endAddressM'));
         if (floatingTransfer) {
           field = '<div class="form-group">' +
@@ -334,7 +334,7 @@
     var template = function(options, linkProperty) {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISYYS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISYYS');
       return _.template('' +
         '<header>' +
         title() +
@@ -361,7 +361,7 @@
 
     var templateFloating = function(options, linkProperty) {
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISYYS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISYYS');
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
@@ -389,7 +389,7 @@
 
     var templateFloatingEditMode = function(options, linkProperty) {
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', linkProperty.startAddressM) : dynamicField('ALKUETÄISYYS');
-      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISUUS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISYYS', linkProperty.endAddressM) : dynamicField('LOPPUETÄISYYS');
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', linkProperty.roadTypeId) : dynamicField('TIETYYPPI');
       var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
@@ -444,15 +444,15 @@
     var addOpenProjectButton = function() {
       var rootElement = $('#feature-attributes');
       rootElement.empty();
-      var emptyFormDiv =
-        '<p class="center"><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
-        '<p class="center"><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">TIEOSOITEVERKON VIRHEET</a></p>' +
-        '<p class="form form-horizontal"></p>' +
-        '<div class="form-initial-state" id="emptyFormDiv">' +
-        '  <span class="header-noposition">Aloita valitsemalla projekti.</span>' +
-        '  <button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
-        '  <button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
-        '</div>';
+        var emptyFormDiv =
+            '<p class="center"><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
+            '<p class="center"><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">TIEOSOITEVERKON VIRHEET</a></p>' +
+            '<p class="form form-horizontal"></p>' +
+            '<div class="form-initial-state" id="emptyFormDiv">' +
+            '  <span class="header-noposition">Aloita valitsemalla projekti.</span>' +
+            '  <button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
+            '  <button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
+            '</div>';
       rootElement.append(emptyFormDiv);
       $('[id=formProjectButton]').click(function() {
         $('[id=projectListButton]').click();

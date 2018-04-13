@@ -118,7 +118,11 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.TowardsDigitizing
     val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
-    val suravageAddress = RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(newLinkId1, municipalityCode, List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30))
+    val suravageAddress = OracleDatabase.withDynSession {
+      RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(newLinkId1, municipalityCode,
+        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
+        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30))
+    }
 
     suravageAddress.linkId should be(newLinkId1)
     suravageAddress.administrativeClass should be(administrativeClass)

@@ -311,7 +311,7 @@ object RoadAddressDAO {
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
         SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode),
           linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), floating,
-        Seq(Point(x,y), Point(x2,y2)), geomSource, ely, terminated, commonHistoryId, validFrom, validTo, blackUnderline = false, roadName)
+        Seq(Point(x, y), Point(x2, y2)), geomSource, ely, terminated, commonHistoryId, validFrom, validTo, blackUnderline = false, roadName)
     }
   }
 
