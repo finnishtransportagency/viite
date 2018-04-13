@@ -150,7 +150,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
         RoadNameRow(search.get.id, "VICTORY RD.", "25.3.2018", Some("27.3.2018")),
         RoadNameRow(-1000L, "Victory Road", "27.3.2018", None)
       )
-      val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(65L ,roadNames, User(1, "user", Configuration()))
+      val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(65L, roadNames, User(1, "user", Configuration()))
       afterInsert should be(None)
       val currentAfterInsert = RoadNameDAO.getCurrentRoadName(65)
       currentAfterInsert.size should be(1)

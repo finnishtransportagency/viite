@@ -67,14 +67,13 @@
 
 
       this.getRoadName =
-      _.debounce(function (roadNumber, projectID, callback) {
-          if (projectID !== 0) {
-              return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
-                  return _.isFunction(callback) && callback(data);
-              });
-          }
-      }, 500);
-
+          _.debounce(function (roadNumber, projectID, callback) {
+              if (projectID !== 0) {
+                  return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
+                      return _.isFunction(callback) && callback(data);
+                  });
+              }
+          }, 500);
 
 
       this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
@@ -585,7 +584,7 @@
           $.ajax({
               contentType: "application/json",
               type: "PUT",
-              url: "api/viite/roadnames/"+roadNumber,
+              url: "api/viite/roadnames/" + roadNumber,
               data: JSON.stringify(data),
               dataType: "json",
               success: success,
