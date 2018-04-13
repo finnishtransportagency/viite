@@ -142,16 +142,7 @@ object ProjectSectionCalculator {
     def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
       val segmentValue = if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength
       val addressValue = (userDefinedCalibrationPoint, (projectLink.startAddrMValue, projectLink.endAddrMValue)) match {
-        case (Some(usercp), addr) => if (usercp.addressMValue < addr._1) addr._2 else usercp.segmentMValue.toLong
-        case (None, addr) => addr._2
-      }
-      Some(CalibrationPoint(projectLink.linkId, segmentValue, addressValue))
-    }
-
-    def makeEndCPAtStartBorder(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
-      val segmentValue = if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength
-      val addressValue = (userDefinedCalibrationPoint, (projectLink.startAddrMValue, projectLink.endAddrMValue)) match {
-        case (Some(usercp), addr) => if (usercp.addressMValue < addr._1) addr._2 else usercp.segmentMValue.toLong
+        case (Some(usercp), addr) => if (usercp.addressMValue < addr._1) addr._2 else usercp.addressMValue
         case (None, addr) => addr._2
       }
       Some(CalibrationPoint(projectLink.linkId, segmentValue, addressValue))
@@ -160,7 +151,7 @@ object ProjectSectionCalculator {
     def makeLink(link: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint],
                  startCP: Boolean, endCP: Boolean) = {
       val sCP = if (startCP) makeStartCP(link) else None
-      val eCP = if (endCP) if (link.startAddrMValue == 0) makeEndCPAtStartBorder(link, userDefinedCalibrationPoint) else makeEndCP(link, userDefinedCalibrationPoint) else None
+      val eCP = if (endCP) makeEndCP(link, userDefinedCalibrationPoint) else None
       link.copy(calibrationPoints = (sCP, eCP))
     }
 
