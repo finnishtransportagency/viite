@@ -27,9 +27,9 @@
       loader: function (extent, resolution, projection) {
         var zoom = Math.log(1024 / resolution) / Math.log(2);
 
-        var nonSuravageRoads = _.filter(projectCollection.getAll(), function (projectRoad) {
-          return projectRoad.roadLinkSource !== LinkGeomSource.SuravageLinkInterface.value;
-        });
+        var nonSuravageRoads = _.partition(projectCollection.getAll(), function (projectRoad) {
+          return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && projectRoad.id === 0;
+        })[1];
         var features = _.map(nonSuravageRoads, function (projectLink) {
           var points = _.map(projectLink.points, function (point) {
             return [point.x, point.y];
@@ -76,7 +76,7 @@
       name: layerName,
       style: function(feature) {
         var status = feature.projectLinkData.status;
-        if (status === LinkStatus.NotHandled.value || status === LinkStatus.Terminated.value || status  === LinkStatus.New.value || status == LinkStatus.Transfer.value || status === LinkStatus.Unchanged.value || status == LinkStatus.Numbering.value) {
+        if (status === LinkStatus.NotHandled.value || status === LinkStatus.Terminated.value || status  === LinkStatus.New.value || status === LinkStatus.Transfer.value || status === LinkStatus.Unchanged.value || status === LinkStatus.Numbering.value) {
           return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         } else {
           return styler.getRoadLinkStyle().getStyle(feature.projectLinkData, currentZoom);
@@ -330,7 +330,7 @@
       var suravageFeaturesToHighlight = [];
       _.each(vectorLayer.getSource().getFeatures(), function (feature) {
         var canIHighlight = ((!_.isUndefined(feature.projectLinkData.linkId) && _.isUndefined(feature.projectLinkData.connectedLinkId)) ||
-        (!_.isUndefined(feature.projectLinkData.connectedLinkId) && feature.projectLinkData.status == LinkStatus.Terminated.value) ?
+        (!_.isUndefined(feature.projectLinkData.connectedLinkId) && feature.projectLinkData.status === LinkStatus.Terminated.value) ?
           selectedProjectLinkProperty.isSelected(getSelectedId(feature.projectLinkData)) : false);
         if (canIHighlight) {
           featuresToHighlight.push(feature);
@@ -717,7 +717,7 @@
       var findNearestSuravageLink = function(point) {
 
         var possibleSplit = _.filter(vectorSource.getFeatures().concat(suravageRoadProjectLayer.getSource().getFeatures()), function(feature){
-          return !_.isUndefined(feature.projectLinkData) && (feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value);
+          return !_.isUndefined(feature.projectLinkData) && (feature.projectLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && feature.projectLinkData.id === 0);
         });
         return _.chain(possibleSplit)
             .map(function(feature) {
@@ -838,15 +838,12 @@
       });
 
       var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
-        return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
+        return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && projectRoad.id === 0;
       });
       calibrationPointLayer.getSource().clear();
 
       var toBeTerminated = _.partition(editedLinks, function (link) {
         return link.status === LinkStatus.Terminated.value;
-      });
-      var toBeUnchanged = _.partition(editedLinks, function (link) {
-        return link.status === LinkStatus.Unchanged.value;
       });
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');

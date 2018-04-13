@@ -81,10 +81,6 @@
       });
     };
 
-    this.getLinkStatus = function () {
-      return LinkStatus;
-    };
-
     this.getDate = function() {
       return date;
     };
