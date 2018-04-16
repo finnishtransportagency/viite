@@ -3,9 +3,9 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.viite.switchSideCode
-import fi.liikennevirasto.viite.dao.RoadAddress
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
-import fi.liikennevirasto.viite.{MaxAllowedMValueError, MaxDistanceDiffAllowed, MinAllowedRoadAddressLength, NewRoadAddress}
+import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
+import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnectedLinks, MinAllowedRoadAddressLength}
 
 object DefloatMapper extends RoadAddressMapper {
 
@@ -175,6 +175,24 @@ object DefloatMapper extends RoadAddressMapper {
         case _ => throw new InvalidAddressDataException("Non-contiguous road target geometry")
       }
     }
+
+    def sortLinks(startingPoint: Point): Seq[RoadAddressLink] = {
+      if (isRoundabout(targets)) {
+        val initSortLinks = targets.sortBy(t => minDistanceBetweenEndPoints(Seq(startingPoint), t.geometry))
+        val startEndLinks = initSortLinks.take(2) //Takes the start and end links
+        val vectors = startEndLinks.map(l => (l, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(l.geometry.head, startingPoint)) l.geometry else l.geometry.reverse)))
+        val (_, hVector) = vectors.head
+        val (roundaboutEnd, _) = vectors.maxBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+        val roundaboutStart = startEndLinks.filterNot(_.linkId == roundaboutEnd.linkId).head
+        val middleLinks = initSortLinks.filterNot(ad => ad.linkId == roundaboutStart.linkId || ad.linkId == roundaboutEnd.linkId)
+        Seq(roundaboutStart) ++ middleLinks ++ Seq(roundaboutEnd)
+      } else {
+        // Partition target links by counting adjacency: anything that touches only the neighbor (and itself) is a starting or ending link
+        val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
+        endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
+      }
+    }
+
     val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
     val startingPoint = orderedSources.head.sideCode match {
       case SideCode.TowardsDigitizing => orderedSources.head.geometry.head
@@ -185,9 +203,7 @@ object DefloatMapper extends RoadAddressMapper {
     if (hasIntersection(targets))
       throw new IllegalArgumentException("Non-contiguous road addressing")
 
-    // Partition target links by counting adjacency: anything that touches only the neighbor (and itself) is a starting or ending link
-    val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
-    val preSortedTargets = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
+    val preSortedTargets = sortLinks(startingPoint)
     val startingSideCode = if (isDirectionMatch(orderedSources.head.geometry, preSortedTargets.head.geometry))
       orderedSources.head.sideCode
     else
@@ -198,6 +214,23 @@ object DefloatMapper extends RoadAddressMapper {
   def invalidMapping(roadAddressMapping: RoadAddressMapping): Boolean = {
     roadAddressMapping.sourceStartM.isNaN || roadAddressMapping.sourceEndM.isNaN ||
       roadAddressMapping.targetStartM.isNaN || roadAddressMapping.targetEndM.isNaN
+  }
+
+  def findOnceConnectedLinks[T <: RoadAddressLink](seq: Iterable[T]): Map[Point, T] = {
+    val pointMap = seq.flatMap(l => {
+      val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
+      Seq(p1 -> l, p2 -> l)
+    }).groupBy(_._1).mapValues(_.map(_._2).toSeq.distinct)
+    pointMap.keys.map{ p =>
+      val links = pointMap.filterKeys(m => GeometryUtils.areAdjacent(p, m, MaxDistanceForConnectedLinks)).values.flatten
+      p -> links
+    }.toMap.filter(_._2.size == 1).mapValues(_.head)
+  }
+
+  def isRoundabout[T <: RoadAddressLink](seq: Iterable[T]): Boolean = {
+    seq.nonEmpty && seq.map(_.trackCode).toSet.size == 1 && findOnceConnectedLinks(seq).isEmpty && seq.forall(pl =>
+      seq.count(pl2 =>
+        GeometryUtils.areAdjacent(pl.geometry, pl2.geometry, MaxDistanceForConnectedLinks)) == 3) // the link itself and two connected
   }
 }
 
