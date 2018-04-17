@@ -130,6 +130,7 @@ object CalibrationPointDAO {
   }
 
   def removeAllCalibrationPoints(projectLinkIds: Set[Long]) = {
+    if(projectLinkIds.nonEmpty)
     sqlu"""
         Delete From CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
       """.execute
