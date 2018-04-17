@@ -543,6 +543,7 @@
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
           applicationModel.removeSpinner();
         } else {
+          projectErrors = successObject.projectErrors;
           eventbus.trigger('changeProjectDirection:clicked');
         }
       });
