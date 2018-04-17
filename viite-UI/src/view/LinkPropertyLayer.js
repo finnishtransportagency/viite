@@ -1423,6 +1423,7 @@
     eventListener.listenTo(eventbus, 'roadAddressProject:clearOnClose', function(){
       setGeneralOpacity(1);
       reservedRoadLayer.getSource().clear();
+      applicationModel.setReadOnly(true);
     });
     
     var show = function(map) {
