@@ -830,9 +830,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val buildStartTime = System.currentTimeMillis()
 
-    val projectRoadLinks = projectLinks.groupBy(l => (l.linkId, l.roadType)).flatMap {
-      pl => buildProjectRoadLink(pl._2)
+    val projectRoadLinks = withDynSession{
+       projectLinks.groupBy(l => (l.linkId, l.roadType)).flatMap {
+        pl => buildProjectRoadLink(pl._2)
+      }
     }
+
 
     val nonProjectRoadLinks = (normalLinks ++ complementaryLinks).filterNot(rl => projectRoadLinks.exists(_.linkId == rl.linkId))
 
@@ -875,8 +878,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     logger.info("fetch time: %.3f sec ".format((fetchEndTime - fetchStartTime) * 0.001))
 
     val buildStartTime = System.currentTimeMillis()
-    val projectRoadLinks = projectLinks.map {
-      pl =>pl._1 -> buildProjectRoadLink(pl._2)
+    val projectRoadLinks = withDynSession {
+      projectLinks.map {
+        pl => pl._1 -> buildProjectRoadLink(pl._2)
+      }
     }
 
     val nonProjecAddresses = addresses.filterNot(a=> projectLinks.contains(a._1))
@@ -1339,21 +1344,31 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     pl.map(l => ProjectAddressLinkBuilder.build(l))
   }
 
-  private def fuseProjectLinks(links: Seq[ProjectLink]) = {
+  private def fuseProjectLinks(links: Seq[ProjectLink]) : Seq[ProjectLink] = {
     val linkIds = links.map(_.linkId).distinct
-    if (linkIds.lengthCompare(1) != 0)
-      throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
-    if (links.exists(_.isSplit))
-      links
-    else {
-      val geom = links.head.sideCode match {
-        case SideCode.TowardsDigitizing => links.map(_.geometry).foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
-        case _ => links.map(_.geometry).reverse.foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
-      }
-      val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
-        links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
-      Seq(links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA, geometry = geom, discontinuity = links.sortBy(_.startAddrMValue).last.discontinuity))
+    val existingRoadAddresses = RoadAddressDAO.queryById(links.map(_.roadAddressId).toSet)
+    val groupedRoadAddresses = existingRoadAddresses.groupBy(record =>
+      (record.commonHistoryId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+
+    if(groupedRoadAddresses.size > 1){
+      return links
     }
+    else{
+      if (linkIds.lengthCompare(1) != 0)
+        throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
+      if (links.exists(_.isSplit))
+        links
+      else {
+        val geom = links.head.sideCode match {
+          case SideCode.TowardsDigitizing => links.map(_.geometry).foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
+          case _ => links.map(_.geometry).reverse.foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
+        }
+        val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
+          links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
+        Seq(links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA, geometry = geom, discontinuity = links.sortBy(_.startAddrMValue).last.discontinuity))
+      }
+    }
+
   }
 
   private def awaitRoadLinks(fetch: (Future[Seq[RoadLink]], Future[Seq[RoadLink]], Future[Seq[VVHRoadlink]])) = {
