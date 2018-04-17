@@ -1042,7 +1042,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         2. New road or part is different from existing one
         3. All New links in existing part are in selected links for New part
        */
-      val replaceable = (linkStatus == New || linkStatus == Transfer) && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.map(_.linkId).toSet.subsetOf(linkIds.toSet)
+      val replaceable = (linkStatus == New || linkStatus == Transfer) && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.map(_.id).toSet.subsetOf(ids)
       (replaceable, reservedPart.roadNumber, reservedPart.roadPartNumber)
     }
 
@@ -1065,7 +1065,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val reservedPart = ProjectDAO.fetchReservedRoadPart(road, part).get
             ProjectDAO.removeReservedRoadPart(projectId, reservedPart)
             val newProjectLinks: Seq[ProjectLink] = projectLinks.map(pl => pl.copy(id = NewRoadAddress, roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt), endAddrMValue = userDefinedEndAddressM.getOrElse(0).toLong))
-            addNewLinksToProject(sortRamps(newProjectLinks, linkIds), projectId, userName, linkIds.head, false)
+            if(linkIds.nonEmpty){
+              addNewLinksToProject(sortRamps(newProjectLinks, linkIds), projectId, userName, linkIds.head, false)
+            }
+            else{
+              val newSavedLinkIds = projectLinks.map(_.linkId)
+              addNewLinksToProject(sortRamps(newProjectLinks, newSavedLinkIds), projectId, userName, newSavedLinkIds.head, false)
+            }
+
           } else {
             if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
               ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
