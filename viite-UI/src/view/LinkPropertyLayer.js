@@ -51,12 +51,14 @@
 
     var suravageMarkerLayer = new ol.layer.Vector({
       source: suravageMarkerVector,
-      name: 'suravageMarkerLayer'
+      name: 'suravageMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
     });
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
-      name: 'directionMarkerLayer'
+      name: 'directionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
     });
 
     var geometryChangedLayer = new ol.layer.Vector({
