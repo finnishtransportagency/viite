@@ -463,6 +463,12 @@ object ProjectDAO {
          """.execute
   }
 
+  def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
+    sqlu"""
+         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}
+         """.execute
+  }
+
   def removeReservedRoadPartsByProject(projectId: Long): Unit = {
     sqlu"""
          DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId}
@@ -527,10 +533,10 @@ object ProjectDAO {
               MAX(ra.ely) as ELY,
               MAX(pl.ely) as ELY_NEW
               FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
-              ROAD_ADDRESS ra ON (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number)
-              LEFT JOIN
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
-                pl.road_part_number = rp.road_part_number AND pl.status != 5)
+              pl.road_part_number = rp.road_part_number AND pl.status != 5)
+              LEFT JOIN
+              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROAD_ADDRESS_ID)
               WHERE
                 rp.project_id = $projectId AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
@@ -567,10 +573,11 @@ object ProjectDAO {
               MAX(pl.END_ADDR_M) as length_new,
               MAX(ra.ely) as ELY,
               MAX(pl.ely) as ELY_NEW
-              FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
-              ROAD_ADDRESS ra ON (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number)
+              FROM PROJECT_RESERVED_ROAD_PART rp
               LEFT JOIN
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
+              LEFT JOIN
+              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROAD_ADDRESS_ID)
               WHERE
                 rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
@@ -830,9 +837,11 @@ object ProjectDAO {
   def fetchFirstLink(projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[ProjectLink] = {
     val query = s"""$projectLinkQueryBase
     where PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber AND
-      PROJECT_LINK.START_ADDR_M = (SELECT MIN(START_ADDR_M) FROM PROJECT_LINK WHERE
-      PROJECT_LINK.PROJECT_ID = $projectId AND PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber)
-    order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.TRACK_CODE"""
+    PROJECT_LINK.START_ADDR_M = (SELECT MIN(PROJECT_LINK.START_ADDR_M) FROM PROJECT_LINK
+      LEFT JOIN
+      ROAD_ADDRESS ON ((ROAD_ADDRESS.road_number = PROJECT_LINK.road_number AND ROAD_ADDRESS.road_part_number = PROJECT_LINK.road_part_number) OR ROAD_ADDRESS.id = PROJECT_LINK.ROAD_ADDRESS_ID)
+      WHERE PROJECT_LINK.PROJECT_ID = $projectId AND ((PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber) OR PROJECT_LINK.ROAD_ADDRESS_ID = ROAD_ADDRESS.ID))
+    order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.TRACK_CODE """
     listQuery(query).headOption
   }
 
