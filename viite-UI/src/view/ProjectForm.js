@@ -385,20 +385,8 @@
         var currentReserved = '';
         var newReserved = '';
         var index = 0;
-        _.each(projectCollection.getCurrentReservedParts(), function (line) {
-          var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
-          currentReserved += '<div id="" class="form-reserved-roads-list">' + button +
-            addSmallLabel(line.roadNumber) +
-            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.currentLength) + addSmallLabel(line.currentDiscontinuity) + addSmallLabel(line.currentEly) +
-            '</div>';
-        });
-        _.each(projectCollection.getNewReservedParts(), function (line) {
-          var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
-          newReserved += '<div id="" class="form-reserved-roads-list">' + button +
-            addSmallLabel(line.roadNumber) +
-            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.newLength) + addSmallLabel(line.newDiscontinuity) + addSmallLabel(line.newEly) +
-            '</div>';
-        });
+          currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
+          newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('.modal-overlay').remove();
         setTimeout(function () {
