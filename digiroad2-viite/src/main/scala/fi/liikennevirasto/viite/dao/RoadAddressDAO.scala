@@ -1401,7 +1401,7 @@ object RoadAddressDAO {
           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
           (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-          link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to
+          link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to, null as road_name
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
       """
