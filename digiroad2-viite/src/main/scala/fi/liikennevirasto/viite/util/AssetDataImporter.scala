@@ -294,9 +294,8 @@ class AssetDataImporter {
     var counter = 0
     var changed = 0
     OracleDatabase.withDynTransaction {
-      //      val testFilter = Set(4603L, 12473L)
       val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
-        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "") //"AND ROAD_NUMBER IN (4603, 12473)").filter(p => testFilter.contains(p))
+        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "")
       roadNumbers.foreach(roadNumber =>{
         counter += 1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
@@ -330,22 +329,7 @@ class AssetDataImporter {
                 changed +=1
               }
               else {
-                val segmentHeadToNewGeom = distanceFromHeadToHead > MinDistanceForGeometryUpdate &&
-                  distanceFromHeadToLast > MinDistanceForGeometryUpdate
-                val segmentLastToNewGeom = distanceFromLastToHead > MinDistanceForGeometryUpdate &&
-                  distanceFromLastToLast > MinDistanceForGeometryUpdate
-                println("------------------------------------------------------------------------------------")
                 println(s"Skipped geometry update on Road Address ID : ${segment.id} and linkId: ${segment.linkId}")
-                println("Reason:")
-                if (!segmentHeadToNewGeom) {
-                  println(s"Both distances from segment Head to newGeom Head and from segment Head to newGeom Last must be >" +
-                    s" ${MinDistanceForGeometryUpdate}, they are (${distanceFromHeadToHead}, ${distanceFromHeadToLast})")
-                }
-                if (!segmentLastToNewGeom) {
-                  println(s"Both distances from segment Last to newGeom Head and from segment Last to newGeom Last must be >" +
-                    s" ${MinDistanceForGeometryUpdate}, they are (${distanceFromLastToHead}, ${distanceFromLastToLast})")
-                }
-                println("------------------------------------------------------------------------------------")
               }
             }
           })
