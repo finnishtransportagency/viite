@@ -304,7 +304,9 @@ class AssetDataImporter {
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds, false)
         val unGroupedAddresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true)
         val addresses = unGroupedAddresses.groupBy(_.linkId)
-        val isLoop = GeometryUtils.isLoopGeometry(unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry))
+        val isLoopOrEmptyGeom = if (unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry).equals(Nil)) {
+          true
+        } else GeometryUtils.isLoopGeometry(unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry))
 
         roadLinksFromVVH.foreach(roadLink => {
           val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
@@ -321,9 +323,9 @@ class AssetDataImporter {
                 (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
-                (distanceDiff > (MinDistanceForGeometryUpdate * 2) && isLoop)) {
+                (distanceDiff > (MinDistanceForGeometryUpdate * 2) && isLoopOrEmptyGeom)) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println(s"Difference between lengths: $distanceDiff is it a loop? ${isLoop}")
+                println(s"Difference between lengths: $distanceDiff is it a loop? ${isLoopOrEmptyGeom}")
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
               }
