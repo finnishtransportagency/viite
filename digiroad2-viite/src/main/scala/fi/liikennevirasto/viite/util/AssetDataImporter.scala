@@ -323,7 +323,7 @@ class AssetDataImporter {
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
                 (distanceDiff > (MinDistanceForGeometryUpdate * 2) && isLoop)) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println(s"Difference between lengths: $distanceDiff")
+                println(s"Difference between lengths: $distanceDiff is it a loop? ${isLoop}")
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
               }
