@@ -288,46 +288,15 @@ class AssetDataImporter {
       })
   }
 
-  private def isGeometryChange(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Boolean = {
-    val movedAddresses = roadAddresses.filter(ra => {
-      GeometryUtils.geometryMoved(MinDistanceForGeometryUpdate)(
-        GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
-        ra.geometry) &&
-        GeometryUtils.geometryMoved(MinDistanceForGeometryUpdate)(
-          GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
-          ra.geometry.reverse) // Road Address geometry isn't necessarily directed: start and end may not be aligned by side code
-    }
-    )
-    val checkMaxMovedDistance = Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MinDistanceForGeometryUpdate
-    if (movedAddresses.nonEmpty) {
-      //      println(s"The following road addresses (${movedAddresses.map(_.id).mkString(", ")}) deviate by a factor of ${MinDistanceForGeometryUpdate} of the RoadLink: ${roadLink.linkId}")
-      //      println(s"Proceeding to check if the addresses are a result of automatic merging and if they overlap.")
-
-      // If we get road addresses that were merged we check if they current road link is not overlapping, if it not, then there is a floating problem
-      val filteredNonOverlapping = movedAddresses.filterNot(ma => {
-        val filterResult = ma.createdBy.getOrElse("") == "Automatic_merged" && GeometryUtils.overlaps((ma.startMValue, ma.endMValue), (0.0, roadLink.length))
-        if (filterResult) {
-          //          println(s"Road address ${ma.id} is a result of automatic merging and it overlaps, discarding.")
-        }
-        filterResult
-      })
-      filteredNonOverlapping.nonEmpty || checkMaxMovedDistance
-
-    } else {
-      movedAddresses.nonEmpty || checkMaxMovedDistance
-    }
-
-  }
-
   def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean) = {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var counter = 0
     var changed = 0
     OracleDatabase.withDynTransaction {
-      //      val testFilter = Set(4603L, 12473L)
+      val testFilter = Set(4603L, 12473L)
       val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
-        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "") //"AND ROAD_NUMBER IN (4603, 12473)").filter(p => testFilter.contains(p))
+        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "AND ROAD_NUMBER IN (4603, 12473)").filter(p => testFilter.contains(p))
       roadNumbers.foreach(roadNumber =>{
         counter += 1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
@@ -335,6 +304,7 @@ class AssetDataImporter {
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds, false)
         val unGroupedAddresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true)
         val addresses = unGroupedAddresses.groupBy(_.linkId)
+        val isLoop = GeometryUtils.isLoopGeometry(unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry))
 
         roadLinksFromVVH.foreach(roadLink => {
           val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
@@ -347,14 +317,13 @@ class AssetDataImporter {
               val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
               val estimatedSegmentGeometryLength = Math.abs(segment.endMValue - segment.startMValue)
               val distanceDiff = Math.abs(estimatedSegmentGeometryLength - roadLink.length)
-              val testMe11 = isGeometryChange(roadLink, unGroupedAddresses)
               if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
                 (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
-                (distanceDiff > (MinDistanceForGeometryUpdate * 2) && testMe11)) {
+                (distanceDiff > (MinDistanceForGeometryUpdate * 2) && isLoop)) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println(s"Difference between lengths: $distanceDiff and isGeometryChange: $testMe11")
+                println(s"Difference between lengths: $distanceDiff")
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
               }
