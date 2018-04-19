@@ -1454,11 +1454,11 @@ object RoadAddressDAO {
       case None => ""
     }
     val endFilter = endM match {
-      case Some(e) => s" AND pos.end_Measure > $endM"
+      case Some(e) => s" AND pos.end_Measure >= $endM"
       case None => ""
     }
 
-    query + s" WHERE pos.link_id = $linkId $startFilter $endFilter" + withValidatyCheck
+    query + s" WHERE pos.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidatyCheck
   }
 
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
