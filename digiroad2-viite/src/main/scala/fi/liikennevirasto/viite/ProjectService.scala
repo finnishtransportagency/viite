@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import java.sql.SQLException
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2._
@@ -1439,6 +1440,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Not going to check road network (status != Saved2TR)")
         }
       } catch {
+        case t: SQLException => logger.error(s"SQL error while importing project: $project! Check if any roads have multiple valid names with out end dates ",t.getStackTrace )
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
       }
     }
@@ -1456,6 +1458,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
           if (updatedStatus == Saved2TR)
+            logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
             updateRoadAddressWithProjectLinks(updatedStatus, projectID)
         }
         RoadAddressDAO.fetchAllFloatingRoadAddresses().isEmpty
@@ -1559,19 +1562,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
+      logger.error(s" Project state not at Saved2TR")
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
     val project=ProjectDAO.getRoadAddressProjectById(projectID).get
     val projectLinks=ProjectDAO.getProjectLinks(projectID)
-    if (projectLinks.isEmpty)
-      throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
-
+    if (projectLinks.isEmpty){
+      logger.error(s" There are no roadlinks to update  with names, rollbacking update ${project.id}")
+      throw new InvalidAddressDataException(s"There are no roadlinks to update with names, rollbacking update ${project.id}")
+    }
     val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
       .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
     val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber) || l.roadName.isEmpty || l.roadName.get == null)
 
     RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
-    getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = "TR")))
+    getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = project.createdBy)))
     projectLinks.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
     if (existingNames.nonEmpty) {
       logger.info(s"Found ${existingNames.size} names in project that differ from road address name")
@@ -1583,6 +1588,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
     if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size){
+      logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
     ProjectDAO.moveProjectLinksToHistory(projectID)
@@ -1595,6 +1601,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val newRoadAddressesWithHistory = CommonHistoryFiller.fillCommonHistory(projectLinks, newRoadAddresses, expiringRoadAddresses.values.toSeq)
 
       //Expiring all old addresses by their ID
+      logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
       val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
       updateTerminationForHistory(terminatedLinkIds, splitReplacements)
@@ -1603,7 +1610,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Some(s"${created.size} road addresses created")
     } catch {
       case e: ProjectValidationException =>
-        logger.info(e.getMessage)
+        logger.error("Failed to validate project message:" +e.getMessage)
         Some(e.getMessage)
     }
   }
