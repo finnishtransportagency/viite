@@ -260,6 +260,7 @@
           current = _.sortBy(adjacentsArray, function(curr){
               return curr.getData().endAddressM;
              });
+          applicationModel.setContinueButton(false);
       };
 
     var getLinkAdjacents = function(link) {
