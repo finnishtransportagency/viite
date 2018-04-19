@@ -288,14 +288,14 @@ class AssetDataImporter {
       })
   }
 
-  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean) = {
+  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean, customFilter: String = "") = {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var counter = 0
     var changed = 0
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
-        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "")
+        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else customFilter)
       roadNumbers.foreach(roadNumber =>{
         counter += 1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
