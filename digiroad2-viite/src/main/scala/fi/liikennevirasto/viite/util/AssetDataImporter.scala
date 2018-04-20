@@ -317,14 +317,12 @@ class AssetDataImporter {
               val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
               val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
               val estimatedSegmentGeometryLength = Math.abs(segment.endMValue - segment.startMValue)
-              val distanceDiff = Math.abs(estimatedSegmentGeometryLength - roadLink.length)
               if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
                 (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
-                (distanceDiff > (MinDistanceForGeometryUpdate * 2) && isLoopOrEmptyGeom)) {
+                (isLoopOrEmptyGeom)) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println(s"Difference between lengths: $distanceDiff is it a loop? ${isLoopOrEmptyGeom}")
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
               }
