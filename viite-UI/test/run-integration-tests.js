@@ -24,9 +24,9 @@ require.config({
 require(['chai',
          'chai-jquery',
          'TestHelpers',
-         //'FloatingRoadAddressSpec',
-         //'RoadAddressProjectSpec',
-         //'SplittingRoadAddressSpec'
+         'FloatingRoadAddressSpec',
+         'SplittingRoadAddressSpec',
+         'RoadAddressProjectSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
@@ -45,9 +45,7 @@ require(['chai',
     return { then: function(callback){
       callback({ text: function(){return '';} });
         return {  then: function(requestCallback){
-          $.get( url, function( data ) {
-            requestCallback(data);
-          });
+            requestCallback();
         }};
       }
     };
