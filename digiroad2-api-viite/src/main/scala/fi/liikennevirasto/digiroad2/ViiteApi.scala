@@ -382,17 +382,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    projectService.getRoadAddressSingleProject(projectId) match {
-      case Some(project) =>
-        val projectMap = roadAddressProjectToApi(project)
-        val parts = project.reservedParts.map(reservedRoadPartToApi)
-        val errorParts = projectService.validateProjectById(project.id)
-        val publishable = errorParts.isEmpty
-        val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
-        Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-          "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
-          "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
-      case _ => halt(NotFound("Project not found"))
+    try{
+      projectService.getRoadAddressSingleProject(projectId) match {
+        case Some(project) =>
+          val projectMap = roadAddressProjectToApi(project)
+          val parts = project.reservedParts.map(reservedRoadPartToApi)
+          val errorParts = projectService.validateProjectById(project.id)
+          val publishable = errorParts.isEmpty
+          val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
+          Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
+            "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
+            "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
+        case _ => halt(NotFound("Project not found"))
+      }
+    } catch {
+      case e: Exception => {
+        logger.error(e.toString, e)
+        InternalServerError(e.toString)
+      }
     }
   }
 

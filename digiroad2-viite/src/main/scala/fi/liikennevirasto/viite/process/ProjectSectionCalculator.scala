@@ -69,7 +69,7 @@ object ProjectSectionCalculator {
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
       val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
       val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
-      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, None, coEff)
     } else {
       mValued
     }
@@ -257,20 +257,20 @@ object ProjectSectionCalculator {
 
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
-      if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
+      if(rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged){
+        Some(Seq(rightLink.startAddrMValue, leftLink.startAddrMValue).sum/2, Seq(rightLink.endAddrMValue, leftLink.endAddrMValue).sum/2)
+      } else if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
+      } else if (leftLink.status == LinkStatus.UnChanged || leftLink.status == LinkStatus.Transfer) {
+        Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
       } else {
-        if (leftLink.status == LinkStatus.UnChanged || leftLink.status == LinkStatus.Transfer)
-          Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
-        else {
           maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
         }
       }
-    }
 
     def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors): Seq[ProjectLink] = {
       val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
-      ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff)
     }
 
     def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Option[Long], endM: Option[Long]) = {
