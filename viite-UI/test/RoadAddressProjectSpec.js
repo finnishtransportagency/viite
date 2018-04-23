@@ -11,7 +11,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        eventbus.on('roadLayer:featuresLoaded', function() {
+        eventbus.once('roadLayer:featuresLoaded', function() {
           done();
         });
       }, backend);
