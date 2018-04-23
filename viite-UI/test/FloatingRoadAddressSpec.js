@@ -15,7 +15,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         testHelpers.clickVisibleEditModeButton();
-        eventbus.on('roadLayer:featuresLoaded', function() {
+        eventbus.once('roadLayer:featuresLoaded', function() {
           done();
         });
       }, backend);
@@ -59,11 +59,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       });
     });
 
-
     describe('Selecting a unknown road to transfer the floatings', function(){
       before(function (done) {
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
-        expect(ol3Feature).to.not.be.undefined;
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
         setTimeout(function () {
           done();
