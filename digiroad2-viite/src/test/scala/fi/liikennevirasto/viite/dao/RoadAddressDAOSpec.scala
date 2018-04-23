@@ -460,6 +460,22 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Fetching road addresses by boundingbox should now ignore start dates") {
+    runWithRollback {
+      val addressId = RoadAddressDAO.getNextRoadAddressId
+      val futureDate = DateTime.now.plusDays(5)
+      val ra = Seq(RoadAddress(addressId, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(futureDate), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(1.0, 1.0), Point(1.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val returning = RoadAddressDAO.create(ra)
+      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
+      currentSize > 0 should be(true)
+      val bounding = BoundingRectangle(Point(0.0, 0.0), Point(10, 10))
+      val fetchedAddresses = RoadAddressDAO.fetchRoadAddressesByBoundingBox(bounding, false)
+      fetchedAddresses.exists(_.id == addressId) should be(true)
+    }
+  }
+
+
   private def createRoadAddress8888(startDate: Option[DateTime], endDate: Option[DateTime] = None): Unit = {
     RoadAddressDAO.create(
       Seq(
