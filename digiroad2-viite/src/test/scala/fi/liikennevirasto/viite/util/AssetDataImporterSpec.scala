@@ -256,9 +256,6 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val vvhRoadLinks = List(
         VVHRoadlink(linkId, 91, vvhGeom, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
       )
-      val roadlink = RoadLink(linkId, Seq(Point(10.0, 10.0, 10.0), Point(20.0, 20.0))
-        , 10.0, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-        InUse, NormalLinkInterface)
       //Set up mocked data
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHClient.complementaryData.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq.empty[VVHRoadlink])
