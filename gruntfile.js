@@ -1,7 +1,6 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    viitepkg: grunt.file.readJSON('viitepackage.json'),
     properties: {
       app: 'conf/dev/keys.properties'
     },
@@ -195,9 +194,12 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
           run: false,
           log: true,
-          timeout: 10000,
+          timeout: 100000,
           reporter: 'Spec'
         }
+      },
+      options: {
+        growlOnSuccess: false
       }
     },
     watch: {

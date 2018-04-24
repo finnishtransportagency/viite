@@ -30,10 +30,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
     });
 
     describe('select cut tool and make a split', function () {
-      before(function (done) {
+      before(function () {
         testHelpers.selectTool('Cut');
         eventbus.trigger('map:clicked', {x: 480905.40280654473, y: 7058825.968613995});
-        done();
       });
 
       it('check split form data', function () {
@@ -51,13 +50,12 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
     });
 
     describe('cancel the split', function () {
-      before(function (done) {
+      before(function () {
         testHelpers.clickCancelButton();
-        done();
       });
 
       it('verify that split form was cleared', function () {
-        expect($('#projectErrors').html()).not.to.have.length(0);
+          expect($('#projectErrors').length).to.equal(0);
       });
     });
   });
