@@ -34,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
+          'dist-viite/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -44,7 +44,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= viitepkg.name %>.min.js': ['dist-viite/js/<%= viitepkg.name %>.js']
+          'dist-viite/js/<%= pkg.name %>.min.js': ['dist-viite/js/<%= pkg.name %>.js']
         }
       }
     },
