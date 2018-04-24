@@ -197,6 +197,9 @@ module.exports = function(grunt) {
           timeout: 100000,
           reporter: 'Spec'
         }
+      },
+      options: {
+        growlOnSuccess: false
       }
     },
     watch: {
