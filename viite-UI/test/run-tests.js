@@ -47,8 +47,8 @@ require.config({
   waitSeconds: 10
 });
 require(['lodash',
-  'geometry-calculations-spec',
-  'LocationInputParserSpec'], function (lodash) {
+  'unit-tests/geometry-calculations-spec',
+  'unit-tests/LocationInputParserSpec'], function (lodash) {
   window._ = lodash;
   mocha.checkLeaks();
   if (window.mochaPhantomJS) {
