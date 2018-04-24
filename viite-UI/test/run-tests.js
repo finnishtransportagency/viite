@@ -1,8 +1,8 @@
 require.config({
   paths: {
-    'underscore': '../node_modules/underscore/underscore',
-    'jquery': '../node_modules/jquery/dist/jquery.min',
-    'lodash': '../node_modules/lodash/index',
+    'underscore': '../../node_modules/underscore/underscore',
+    'jquery': '../../node_modules/jquery/dist/jquery.min',
+    'lodash': '../../node_modules/lodash/index',
     'backbone': '../../node_modules/backbone/backbone',
     'chai': '../../node_modules/chai/chai',
     'EventBus': '../src/utils/eventbus',
