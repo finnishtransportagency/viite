@@ -12,17 +12,12 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         eventbus.once('roadLayer:featuresLoaded', function() {
+          $('[id^=projectListButton]:visible').prop('disabled', false);
+          $('[id^=projectListButton]:visible').attr('disabled', false);
+          testHelpers.clickProjectListButton();
           done();
         });
       }, backend);
-    });
-
-    //1-first -open project list
-    before(function(done) {
-      $('[id^=projectListButton]:visible').prop('disabled', false);
-      $('[id^=projectListButton]:visible').attr('disabled', false);
-      testHelpers.clickProjectListButton();
-      done();
     });
 
     it('open project list window', function () {
