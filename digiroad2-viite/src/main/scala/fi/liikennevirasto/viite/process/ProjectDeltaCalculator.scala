@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.Track.RightSide
+import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
@@ -252,7 +252,8 @@ object ProjectDeltaCalculator {
       })
     sectioned.flatMap { case (key, (src, target)) =>
       val matches = matchingTracks(sectioned, key)
-      if (matches.nonEmpty)
+      //exclusive 'or' operation, so we don't want to find a matching track when we want to reduce 2 tracks to track 0
+      if (matches.nonEmpty && !(key._3 == Track.Combined ^ key._6 == Track.Combined ))
         adjustTrack((src, matches.get._1)).zip(adjustTrack((target, matches.get._2)))
       else
         src.zip(target)
