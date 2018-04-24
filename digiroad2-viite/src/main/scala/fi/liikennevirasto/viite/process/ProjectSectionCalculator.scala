@@ -257,7 +257,7 @@ object ProjectSectionCalculator {
 
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
-      if(rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged){
+      if(rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer){
         Some(Seq(rightLink.startAddrMValue, leftLink.startAddrMValue).sum/2, Seq(rightLink.endAddrMValue, leftLink.endAddrMValue).sum/2)
       } else if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
