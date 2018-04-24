@@ -1018,6 +1018,14 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
+
+  /**
+    * Used in the ProjectValidator
+    *
+    * @param roadNumber
+    * @param startDate
+    * @return
+    */
   def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
     sql"""
        select distinct ra.road_part_number
@@ -1430,23 +1438,6 @@ object RoadAddressDAO {
     query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidatyCheck
   }
 
-  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
-    val floating = optFloating match {
-      case Some(floatingValue) => s"AND ra.floating = $floatingValue"
-      case None => ""
-    }
-
-    val endAddr = endM match {
-      case Some(endValue) => s"AND ra.start_addr_m <= $endValue"
-      case _ => ""
-    }
-
-    query + s" where ra.road_number = $roadNumber " +
-      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
-      s" AND ra.TRACK_CODE = $track " + floating + withValidatyCheck +
-      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
-  }
-
   def withLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long])(query: String): String = {
     val startFilter = startM match {
       case Some(s) => s" AND pos.start_Measure <= $s"
@@ -1460,11 +1451,24 @@ object RoadAddressDAO {
     query + s" WHERE pos.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidatyCheck
   }
 
+  /**
+    * Used in RoadAddressDAO.getRoadAddressByFilter and ChangeApi
+    *
+    * @param sinceDate
+    * @param untilDate
+    * @param query
+    * @return
+    */
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
+  /**
+    * Used by OTH SearchAPI
+    *
+    * @return
+    */
   def withValidatyCheck(): String = {
     s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
       s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
