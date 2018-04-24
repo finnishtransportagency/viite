@@ -549,7 +549,7 @@ object ProjectValidator {
 
     val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     groupedLinks.map(roadPart => {
-      recursiveCheckTrackChange(roadPart._2) match {
+      recursiveCheckTrackChange(roadPart._2.filterNot(_.status == LinkStatus.UnChanged)) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
