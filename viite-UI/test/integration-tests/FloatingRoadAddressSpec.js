@@ -90,6 +90,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Click the Siirrä button to start the simulation', function() {
       before(function(done){
         testHelpers.clickEnabledSiirraButton();
+        //TODO remove this timeout from here find the right event for
         setTimeout(function(){
           done();
         },2000);
@@ -116,10 +117,10 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Click the Tallenna button to save the simulated data', function(){
       before(function(done){
-        testHelpers.clickEnabledSaveButton();
-        setTimeout(function(){
+        eventbus.once('linkProperties:saved', function(){
           done();
-        },2000);
+        });
+        testHelpers.clickEnabledSaveButton();
       });
 
       it('Verify that the previous unknown link is now no longer unknown and there is only one feature', function(){
