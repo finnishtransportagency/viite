@@ -257,9 +257,9 @@
           };
 
           findAdjacents(current, selectedFeature);
-          current = _.sortBy(adjacentsArray, function(curr){
+          current = _.sortBy(adjacentsArray, function (curr) {
               return curr.getData().endAddressM;
-             });
+          });
           applicationModel.setContinueButton(false);
       };
 
