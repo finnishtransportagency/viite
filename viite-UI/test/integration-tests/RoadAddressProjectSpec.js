@@ -70,11 +70,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
-      before(function (done) {
-          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          done();
-      });
 
       it('Check if the project link was selected ', function(){
         var featureFromProjectLayerNotHandled = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
@@ -129,12 +124,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     });
 
     describe('when clicking Peruuta button', function() {
-      before(function (done) {
-          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          $('.cancelLink').click();
-          done();
-      });
 
       it('Check if it change to the road form', function(){
         $('.project-form button.next:visible').prop('disabled', false);
