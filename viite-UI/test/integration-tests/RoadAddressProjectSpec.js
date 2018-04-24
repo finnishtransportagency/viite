@@ -64,7 +64,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       it('Jatka button should be enabled', function () {
         var isJatkaButtonDisabled = $('#generalNext').is(":disabled");
         expect(isJatkaButtonDisabled).to.be.false;
-        testHelpers.clickNextButton();
       });
     });
 
