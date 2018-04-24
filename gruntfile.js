@@ -175,7 +175,8 @@ module.exports = function(grunt) {
         options: {
           // mocha options
           mocha: {
-            ignoreLeaks: false
+            ignoreLeaks: false,
+            "debug-brk": (grunt.option('debug-brk')) ? "" : 0
           },
 
           // URLs passed through as options
@@ -245,6 +246,8 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration', 'clean', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('deploy', ['clean', 'env:'+target, 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+
+  grunt.registerTask('unit-test', ['properties', 'jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_integration']);
 
