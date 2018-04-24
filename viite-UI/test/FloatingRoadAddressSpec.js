@@ -23,11 +23,12 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Selecting the first floating', function() {
       before(function(done){
+        eventbus.once('linkProperties:selected', function(){
+            done();
+        });
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadLayerName(), floatingsLinkIds[0]);
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
-        setTimeout(function () {
-          done();
-        }, 2000);
+
       });
 
       it('check if the form opened for the correct floatings', function() {
@@ -43,19 +44,17 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Clicking the \"Valinta\" button',function(){
       before(function(done) {
-        testHelpers.clickValintaButton();
-        setTimeout(function () {
+        eventbus.once('linkProperties:deactivateDoubleClick', function(){
           done();
-        },2000);
+        });
+        testHelpers.clickValintaButton();
       });
 
       it('check that the \"Valinta\" was pressed and the unknowns are \"forward\"', function () {
-        //setTimeout(function () {
           var isValintaButtonDisabled = $('.link-properties button.continue').is(":disabled");
           expect(isValintaButtonDisabled).to.be.true;
           var pickFeatures = testHelpers.getFeatures(openLayersMap, 'pickRoadsLayer');
           expect(pickFeatures).to.be.not.empty;
-        //}, 1000);
       });
     });
 
