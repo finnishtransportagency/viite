@@ -780,7 +780,8 @@
           if(fetchedLinksInSelection.length > 0){
             eventbus.trigger('linkProperties:deselectFeaturesSelected');
             selectedLinkProperty.setCurrent(fetchedLinksInSelection);
-            eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
+              if (applicationModel.getCurrentAction() !== applicationModel.actionCalculating)
+                  eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
           }
         });
       });
