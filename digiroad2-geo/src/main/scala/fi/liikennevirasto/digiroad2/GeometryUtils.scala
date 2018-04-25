@@ -403,5 +403,15 @@ object GeometryUtils {
     }
   }
 
+  def isLoopGeometry(points: List[Point]): Boolean = {
+    val firstPoint = (points.head.x, points.head.y)
+    val lastPoint = (points.last.x, points.last.y)
+    overlapAmount(firstPoint, lastPoint) >= 0.95
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
+
+  def scaleToThreeDigits(value: Double): Double = {
+    BigDecimal(value).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
 }
