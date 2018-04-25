@@ -410,4 +410,8 @@ object GeometryUtils {
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
+
+  def scaleToThreeDigits(value: Double): Double = {
+    BigDecimal(value).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
 }
