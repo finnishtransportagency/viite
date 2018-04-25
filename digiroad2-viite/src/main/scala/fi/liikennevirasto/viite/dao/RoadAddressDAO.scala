@@ -806,16 +806,21 @@ object RoadAddressDAO {
   }
 
   def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
-    if(!geometry.isEmpty){
-      val newFormat = new DecimalFormat("#.###");
+    if (!geometry.isEmpty) {
       val first = geometry.head
-
       val last = geometry.last
-      val (x1, y1, z1, x2, y2, z2) = (newFormat.format(first.x), newFormat.format(first.y), newFormat.format(first.z), newFormat.format(last.x), newFormat.format(last.y), newFormat.format(last.z))
+      val (x1, y1, z1, x2, y2, z2) = (
+        GeometryUtils.scaleToThreeDigits(first.x),
+        GeometryUtils.scaleToThreeDigits(first.y),
+        GeometryUtils.scaleToThreeDigits(first.z),
+        GeometryUtils.scaleToThreeDigits(last.x),
+        GeometryUtils.scaleToThreeDigits(last.y),
+        GeometryUtils.scaleToThreeDigits(last.z)
+      )
       val length = GeometryUtils.geometryLength(geometry)
       sqlu"""UPDATE ROAD_ADDRESS
-        SET geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-             $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+        SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+             MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
         WHERE id = ${roadAddressId}""".execute
     }
   }
