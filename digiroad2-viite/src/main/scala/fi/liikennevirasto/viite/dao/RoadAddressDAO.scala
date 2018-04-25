@@ -1001,25 +1001,25 @@ object RoadAddressDAO {
     changeRoadAddressFloatingWithHistory(if (float) 1 else 0, roadAddressId, geometry)
   }
 
-  def getCurrentValidRoadNumbers(filter: String = "") = {
+  def getAllValidRoadNumbers(filter: String = "") = {
     Q.queryNA[Long](s"""
        select distinct road_number
               from road_address ra
-              where ra.floating = '0' AND (end_date > sysdate OR end_date IS NULL) AND (valid_to > sysdate OR valid_to IS NULL)
+              where ra.floating = '0' AND valid_to IS NULL
               $filter
               order by road_number
       """).list
   }
 
   def getValidRoadNumbersWithFilterToTestAndDevEnv = {
-    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
+    getAllValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
   def getValidRoadParts(roadNumber: Long) = {
     sql"""
        select distinct road_part_number
               from road_address ra
-              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL)
+              where road_number = $roadNumber AND valid_to IS NULL
               AND (END_DATE IS NULL OR END_DATE > sysdate) order by road_part_number
       """.as[Long].list
   }
