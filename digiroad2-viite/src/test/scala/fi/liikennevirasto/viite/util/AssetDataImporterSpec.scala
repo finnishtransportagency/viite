@@ -274,15 +274,15 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       addressesBeforeUpdate.head.geometry.equals(geom1) should be(true)
       addressesBeforeUpdate.last.geometry.equals(geom2) should be(true)
       assetDataImporter.updateRoadAddressesGeometry(mockVVHClient, false, s"AND ROAD_NUMBER = $roadNumber")
-      val suposedGeom = GeometryUtils.truncateGeometry3D(vvhGeom, segmentStartMValue, segmentEndMValue).map(g => {
+      val supposedGeom = GeometryUtils.truncateGeometry3D(vvhGeom, segmentStartMValue, segmentEndMValue).map(g => {
         val roundedX = BigDecimal(g.x).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
         val roundedY = BigDecimal(g.y).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
         val roundedZ = 0.0
         Point(roundedX, roundedY, roundedZ)
       })
       val addressesAfterUpdate = RoadAddressDAO.fetchByLinkId(Set(linkId)).sortBy(_.endAddrMValue)
-      addressesAfterUpdate.head.geometry.equals(suposedGeom) should be(true)
-      addressesAfterUpdate.last.geometry.equals(suposedGeom) should be(true)
+      addressesAfterUpdate.head.geometry.equals(supposedGeom) should be(true)
+      addressesAfterUpdate.last.geometry.equals(supposedGeom) should be(true)
     }
 
   }

@@ -296,7 +296,7 @@ class AssetDataImporter {
     withDynTransaction {
       val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
         "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else customFilter)
-      roadNumbers.foreach(roadNumber =>{
+      roadNumbers.foreach(roadNumber => {
         counter += 1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
@@ -309,8 +309,8 @@ class AssetDataImporter {
 
         roadLinksFromVVH.foreach(roadLink => {
           val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
-          segmentsOnViiteDatabase.foreach(segment =>{
-              val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+          segmentsOnViiteDatabase.foreach(segment => {
+            val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
             if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
               val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
               val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
@@ -323,10 +323,9 @@ class AssetDataImporter {
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
                 (isLoopOrEmptyGeom)) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
-                changed +=1
-              }
-              else {
+                println("Changed geometry on roadAddress id " + segment.id + " and linkId =" + segment.linkId)
+                changed += 1
+              } else {
                 println(s"Skipped geometry update on Road Address ID : ${segment.id} and linkId: ${segment.linkId}")
               }
             }
