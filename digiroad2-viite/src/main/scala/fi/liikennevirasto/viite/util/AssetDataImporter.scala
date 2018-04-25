@@ -316,7 +316,6 @@ class AssetDataImporter {
               val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
               val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
               val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
-              val estimatedSegmentGeometryLength = Math.abs(segment.endMValue - segment.startMValue)
               if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
                 (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
