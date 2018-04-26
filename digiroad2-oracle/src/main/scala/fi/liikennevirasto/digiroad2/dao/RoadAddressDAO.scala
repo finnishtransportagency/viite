@@ -127,16 +127,17 @@ class RoadAddressDAO {
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
+  // TODO Maybe not used in VIITE, but if this is used, then start_date condition should probably be removed.
   def withValidatyCheck(): String = {
-    s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
-    s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
+    s" AND ra.valid_to IS NULL " +
+    s" AND ra.end_date IS NULL AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
   }
 
   def getRoadNumbers(): Seq[Long] = {
     sql"""
 			select distinct (ra.road_number)
       from road_address ra
-      where ra.valid_to is null OR ra.valid_to > SYSDATE
+      where ra.valid_to is null
 		  """.as[Long].list
   }
 
