@@ -12,10 +12,13 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         eventbus.once('roadLayer:featuresLoaded', function() {
+          eventbus.once('layer:selected', function(){
+            done();
+          });
           $('[id^=projectListButton]:visible').prop('disabled', false);
           $('[id^=projectListButton]:visible').attr('disabled', false);
+          testHelpers.selectLayer('roadAddressProject');
           testHelpers.clickProjectListButton();
-          done();
         });
       }, backend);
     });
