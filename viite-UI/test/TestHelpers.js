@@ -280,7 +280,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
           if(interaction.getFeatures()){
               interaction.getFeatures().clear();
           }else{
-              throw 'getFeatures not found!';
+              log('getFeatures not found!');
           }
           interaction.getFeatures().push(feature);
           interaction.dispatchEvent({
@@ -289,7 +289,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
               deselected: []
           });
       }else {
-          throw 'Interaction not found';
+          log('Interaction not found');
       }
     };
 
