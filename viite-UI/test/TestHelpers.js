@@ -275,13 +275,22 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       var interaction = _.find(map.getInteractions().getArray(), function(interaction) {
         return interaction.get('name') === interactionName;
       });
-      interaction.getFeatures().clear();
-      interaction.getFeatures().push(feature);
-      interaction.dispatchEvent({
-        type: 'select',
-        selected: [feature],
-        deselected: []
-      });
+
+      if(interaction){
+          if(interaction.getFeatures()){
+              interaction.getFeatures().clear();
+          }else{
+              throw 'getFeatures not found!';
+          }
+          interaction.getFeatures().push(feature);
+          interaction.dispatchEvent({
+              type: 'select',
+              selected: [feature],
+              deselected: []
+          });
+      }else {
+          throw 'Interaction not found';
+      }
     };
 
     var selectTool = function(tool) {
