@@ -42,7 +42,7 @@ object ProjectSectionMValueCalculator {
       val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
       pl.status match {
         case LinkStatus.New => addressValue
-        case LinkStatus.Transfer if pl.id == seq.maxBy(_.endAddrMValue).id =>  addrEn.getOrElse(pl.endAddrMValue)
+        case LinkStatus.Transfer if pl.id == seq.maxBy(_.endAddrMValue).id => m + addrEn.getOrElse(pl.endAddrMValue.toDouble) - pl.startAddrMValue
         case LinkStatus.Transfer | LinkStatus.NotHandled => m + pl.endAddrMValue - pl.startAddrMValue
         case LinkStatus.UnChanged | LinkStatus.Numbering => pl.endAddrMValue
         case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")

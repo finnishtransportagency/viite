@@ -252,7 +252,14 @@ object ProjectSectionCalculator {
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-      seq.span(_.track == track)
+      val continuousTrack = seq.filter(_.track == track ).foldLeft(Seq[ProjectLink]()) { case (previous, link) =>
+        if(previous.isEmpty || GeometryUtils.areAdjacent(previous.last.geometry, link.geometry)){
+            previous ++ Seq(link)
+        } else{
+           previous
+        }
+      }
+      seq.partition(link => continuousTrack.map(_.id).contains(link.id))
     }
 
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
