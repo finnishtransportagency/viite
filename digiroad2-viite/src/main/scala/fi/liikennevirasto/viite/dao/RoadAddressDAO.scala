@@ -223,11 +223,9 @@ object RoadAddressDAO {
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
-          terminated = '0' and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate) and
-          (end_date is null or end_date > sysdate) and
-          (start_date is null or start_date <= sysdate)
+          terminated = 0 and
+          valid_to is null and
+          end_date is null
       """
     queryList(query)
   }
@@ -356,8 +354,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where $floating $history $valid $idFilter and t.id < t2.id and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+           valid_to is null
       """
     queryList(query)
   }
@@ -398,8 +395,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $networkWhere
         $where $historyFilter and t.id < t2.id and
-          ra.valid_from <= sysdate and
-          (ra.valid_to is null or ra.valid_to > sysdate)
+          ra.valid_to is null
       """
     queryList(query)
   }
@@ -437,8 +433,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where AND $geomFilter $coarseWhere AND floating='0' and t.id < t2.id and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
     queryList(query)
   }
@@ -467,8 +462,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
         where t.id < t2.id $floating $history and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
         queryList(query)
     }
@@ -502,8 +496,7 @@ object RoadAddressDAO {
         join $idTableName i on i.id = pos.link_id
         $networkWhere
         where t.id < t2.id and
-          ra.valid_from <= sysdate and
-          (ra.valid_to is null or ra.valid_to > sysdate) $historyFilter
+          ra.valid_to is null $historyFilter
       """
         queryList(query)
     }
@@ -533,8 +526,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = ra.id
         where t.id < t2.id $floating $history and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
         queryList(query)
     }
@@ -556,8 +548,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         where t.id < t2.id AND ra.road_number = $roadNumber AND ra.road_part_number = $roadPartNumber AND
          ra.track_code = ${track.value} and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate) $startFilter $endFilter
+          valid_to is null $startFilter $endFilter
       """
     queryList(query).headOption
   }
@@ -576,7 +567,7 @@ object RoadAddressDAO {
     else
       ""
     val expiredFilter = if (!includeExpired)
-      "(valid_to IS NULL OR valid_to > sysdate) AND valid_from <= sysdate AND"
+      "valid_to IS NULL AND"
     else
       ""
     val historyFilter = if (!includeHistory)
@@ -589,10 +580,10 @@ object RoadAddressDAO {
     // valid_to > sysdate because we may expire and query the data again in same transaction
 
     val endPart = if (fetchOnlyEnd) {
-      s"And ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+      s"And ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And (road.valid_to IS NULL AND road.end_date is null))"
     } else ""
     val startPart = if (fetchOnlyStart) {
-      s"And ra.start_addr_m = (Select min(road.start_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And ((road.valid_to IS NULL OR road.valid_to > sysdate) AND road.valid_from <= sysdate AND road.end_date is null))"
+      s"And ra.start_addr_m = (Select min(road.start_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPartNumber And (road.valid_to IS NULL AND road.end_date is null))"
     } else ""
     val query =
       s"""
@@ -681,7 +672,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $floating road_number = $roadNumber AND t.id < t2.id AND
-        (valid_to IS NULL OR valid_to > sysdate) AND valid_from <= sysdate
+        valid_to IS NULL
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
@@ -702,8 +693,7 @@ object RoadAddressDAO {
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
           join lrm_position pos on ra.lrm_position_id = pos.id
           where t.id < t2.id and ra.floating = 1 $history and
-            valid_from <= sysdate and
-            (valid_to is null or valid_to > sysdate)
+            valid_to is null
           order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
       """
     queryList(query)
@@ -738,12 +728,12 @@ object RoadAddressDAO {
         select pos.link_id
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where road_number = $roadNumber AND valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+        where road_number = $roadNumber AND
+          valid_to is null
         GROUP BY link_id
         HAVING COUNT(*) > 1) AND
-        road_number = $roadNumber AND valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+        road_number = $roadNumber AND
+          valid_to is null
       """
     queryList(query)
   }
@@ -753,7 +743,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_number
             FROM road_address ra
-            WHERE and road_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
+            WHERE road_number > $current AND valid_to IS NULL
             ORDER BY road_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -766,7 +756,7 @@ object RoadAddressDAO {
           SELECT * FROM (
             SELECT ra.road_part_number
             FROM road_address ra
-            WHERE and road_number = $roadNumber  AND road_part_number > $current AND (valid_to > sysdate OR valid_to IS NULL)
+            WHERE road_number = $roadNumber AND road_part_number > $current AND valid_to IS NULL
             ORDER BY road_part_number ASC
           ) WHERE ROWNUM < 2
       """
@@ -853,7 +843,7 @@ object RoadAddressDAO {
              MDSYS.SDO_ORDINATE_ARRAY(${p1.x},${p1.y},0.0,0.0,${p2.x},${p2.y},0.0,0.0))
               FROM dual WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${mra.linkId}) AND
               NOT EXISTS (SELECT * FROM ROAD_ADDRESS ra JOIN LRM_POSITION pos ON (pos.id = lrm_position_id)
-                WHERE link_id = ${mra.linkId} AND (valid_to IS NULL OR valid_to > sysdate) ))
+                WHERE link_id = ${mra.linkId} AND valid_to IS NULL ))
            """.execute
   }
 
@@ -1028,7 +1018,7 @@ object RoadAddressDAO {
     sql"""
        select distinct ra.road_part_number
               from road_address ra
-              where road_number = $roadNumber AND (valid_to > sysdate OR valid_to IS NULL) AND START_DATE <= $startDate
+              where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
               AND (END_DATE IS NULL OR END_DATE > $startDate)
               AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
                = 1 and pl.status = 5)
@@ -1113,8 +1103,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
         where floating='1' and t.id < t2.id AND
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
         queryList(query)
     }
@@ -1141,8 +1130,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where AND floating='1' and t.id < t2.id and
-           valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
     queryList(query)
   }
@@ -1185,8 +1173,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where $historyFilter $terminatedFilter and t.id < t2.id and
-           valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
     queryList(query)
   }
@@ -1218,8 +1205,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = ra.id
         where t.id < t2.id $historyFilter $terminatedFilter and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
         queryList(query)
     }
@@ -1329,8 +1315,7 @@ object RoadAddressDAO {
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where ra.lrm_position_id = ${id} and pos.link_id = ${linkId} and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate)
+          valid_to is null
       """
     queryList(query).headOption
   }
@@ -1358,10 +1343,10 @@ object RoadAddressDAO {
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
              INNER JOIN (Select  MAX(start_addr_m) as lol FROM road_address rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
-             rm.valid_from <= sysdate AND (rm.valid_to is null or rm.valid_to > sysdate) AND rm.end_date is null AND track_code in (0,1))  ra
+             rm.valid_to is null AND rm.end_date is null AND track_code in (0,1)) ra
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
-             r.valid_from <= sysdate AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
+             r.valid_to is null AND track_code in (0,1)"""
     Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 
@@ -1386,8 +1371,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         where t.id < t2.id and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate) and terminated = 0 and end_date is null and floating = 0 $road"""
+          valid_to is null and terminated = 0 and end_date is null and floating = '0' $road"""
     queryList(query)
   }
 
@@ -1472,15 +1456,14 @@ object RoadAddressDAO {
   }
 
   def withValidatyCheck(): String = {
-    s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
-      s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
+    s" AND ra.valid_to IS NULL AND ra.end_date IS NULL "
   }
 
   def getRoadNumbers(): Seq[Long] = {
     sql"""
 			select distinct (ra.road_number)
       from road_address ra
-      where ra.valid_to is null OR ra.valid_to > SYSDATE
+      where ra.valid_to is null
 		  """.as[Long].list
   }
 
