@@ -460,6 +460,54 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Bounding box search should return the latest road address even if it's start date is in the future.") {
+    runWithRollback {
+      val id1 = RoadAddressDAO.getNextRoadAddressId
+      val id2 = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(
+
+        RoadAddress(id1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+          Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("2100-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8,
+          SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)),
+          LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+
+        RoadAddress(id2, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+          Some(DateTime.parse("2100-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8,
+          SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)),
+          LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+      )
+      RoadAddressDAO.create(ra)
+      val results = RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(Point(0, 0), Point(10, 10)), false)
+      results.exists(_.id == id1) should be (false)
+      results.exists(_.id == id2) should be (true)
+    }
+  }
+
+  test("Bounding box search should not return the road address even if it is currently not terminated but in the future.") {
+    runWithRollback {
+      val id1 = RoadAddressDAO.getNextRoadAddressId
+      val id2 = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(
+
+        RoadAddress(id1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+          Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("2100-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8,
+          SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)),
+          LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+
+        RoadAddress(id2, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+          Some(DateTime.parse("2100-01-01")), Some(DateTime.parse("2120-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8,
+          SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)),
+          LinkGeomSource.NormalLinkInterface, 8, TerminationCode.Termination, 0)
+
+      )
+      RoadAddressDAO.create(ra)
+      val results = RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(Point(0, 0), Point(10, 10)), false)
+      results.exists(_.id == id1) should be (false)
+      results.exists(_.id == id2) should be (false)
+    }
+  }
+
   private def createRoadAddress8888(startDate: Option[DateTime], endDate: Option[DateTime] = None): Unit = {
     RoadAddressDAO.create(
       Seq(
