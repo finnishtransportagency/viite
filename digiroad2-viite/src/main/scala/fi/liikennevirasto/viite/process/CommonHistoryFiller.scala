@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.NewRoadAddress
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, RoadAddress}
 
@@ -48,6 +49,15 @@ object CommonHistoryFiller {
 
   private def applyTransfer(currentRoadAddresses : Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
     val transferredLinks = projectLinks.filter(_.status == LinkStatus.Transfer)
+    val (trackChangedLinks, trackUnchangedLinks) = transferredLinks.partition(pl => {
+      val currentRoadAddress = currentRoadAddresses.find(ra => ra.id == pl.roadAddressId)
+      currentRoadAddress.nonEmpty && ((currentRoadAddress.get.track == Combined && pl.track != Combined) || (currentRoadAddress.get.track != Combined && pl.track == Combined))
+    })
+    generateValuesForTransfer(currentRoadAddresses, trackChangedLinks, newRoadAddresses) ++ generateValuesForTransfer(currentRoadAddresses, trackUnchangedLinks, newRoadAddresses) ++
+     newRoadAddresses.filterNot(ra => transferredLinks.map(_.roadAddressId).contains(ra.id ))
+  }
+
+  private def generateValuesForTransfer(currentRoadAddresses : Seq[RoadAddress], transferredLinks: Seq[ProjectLink],  newRoadAddresses: Seq[RoadAddress]) = {
     transferredLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
       case((_, _, _, _), groupedLinks) =>
         val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.sortBy(_.startAddrMValue).map(_.roadAddressId).contains(ra.id ) && ra.endDate.isEmpty)
@@ -67,7 +77,7 @@ object CommonHistoryFiller {
         else{
           assignNewCommonHistoryIds(roadAddressesToReturn)
         }
-    }.toSeq ++ newRoadAddresses.filterNot(ra => transferredLinks.map(_.roadAddressId).contains(ra.id ))
+    }.toSeq
   }
 
   private def applyNumbering(currentRoadAddresses : Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
