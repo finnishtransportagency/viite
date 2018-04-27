@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao._
 import org.slf4j.LoggerFactory
 
@@ -169,9 +170,17 @@ object ProjectSectionCalculator {
       } else if (unprocessed.tail.isEmpty) {
         ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), false, true))
       } else {
-        // a middle one, add to sequence and continue
-        assignCalibrationPoints(ready ++
-          Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), false, false)), unprocessed.tail, calibrationPoints)
+        //validate if are adjacent in the middle. If it has discontinuity, add a calibration point
+        if(!GeometryUtils.areAdjacent(unprocessed.head.geometry.last, unprocessed.tail.head.geometry.head)){
+          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), false, true)), unprocessed.tail, calibrationPoints)
+        }
+        else if(!GeometryUtils.areAdjacent(unprocessed.head.geometry.head, ready.last.geometry.last)){
+          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), true, false)), unprocessed.tail, calibrationPoints)
+        }
+        else{
+          // a middle one, add to sequence and continue
+          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), false, false)), unprocessed.tail, calibrationPoints)
+        }
       }
     }
 
@@ -183,12 +192,12 @@ object ProjectSectionCalculator {
             l.calibrationPoints match {
               case (None, None) => l.calibrationPoints
               case (Some(st), None) =>
-                if (links.exists(_.endAddrMValue == st.addressMValue))
+                if (links.exists(link => link.endAddrMValue == st.addressMValue && GeometryUtils.areAdjacent(link.geometry.last, roadPartLinks.filter(_.linkId == st.linkId).head.geometry.head)))
                   (None, None)
                 else
                   l.calibrationPoints
               case (None, Some(en)) =>
-                if (links.exists(_.startAddrMValue == en.addressMValue))
+                if (links.exists(link => link.startAddrMValue == en.addressMValue && GeometryUtils.areAdjacent(link.geometry.head, roadPartLinks.filter(_.linkId == en.linkId).head.geometry.last)))
                   (None, None)
                 else
                   l.calibrationPoints
