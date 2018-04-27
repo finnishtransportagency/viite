@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.{PreparedStatement, Timestamp}
-import java.text.DecimalFormat
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
@@ -18,7 +17,6 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.liikennevirasto.viite.{NewCommonHistoryId, NewRoadAddress, RoadCheckOptions, RoadType}
 import org.joda.time.DateTime
-import org.joda.time.chrono.ISOChronology
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -1408,7 +1406,7 @@ object RoadAddressDAO {
       case None => ""
     }
     query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
-      s"$trackFilter $mValueFilter " + withValidatyCheck
+      s"$trackFilter $mValueFilter " + withValidityCheck
   }
 
   def withRoadNumber(road: Long, trackCodes: Seq[Int])(query: String): String = {
@@ -1417,7 +1415,7 @@ object RoadAddressDAO {
     } else {
        ""
     }
-    query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidatyCheck
+    query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidityCheck
   }
 
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
@@ -1433,7 +1431,7 @@ object RoadAddressDAO {
 
     query + s" where ra.road_number = $roadNumber " +
       s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
-      s" AND ra.TRACK_CODE = $track " + floating + withValidatyCheck +
+      s" AND ra.TRACK_CODE = $track " + floating + withValidityCheck +
       s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
@@ -1447,7 +1445,7 @@ object RoadAddressDAO {
       case None => ""
     }
 
-    query + s" WHERE pos.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidatyCheck
+    query + s" WHERE pos.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidityCheck
   }
 
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
@@ -1455,7 +1453,7 @@ object RoadAddressDAO {
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
-  def withValidatyCheck(): String = {
+  def withValidityCheck(): String = {
     s" AND ra.valid_to IS NULL AND ra.end_date IS NULL "
   }
 
@@ -1476,7 +1474,7 @@ object RoadAddressDAO {
 
     val where =
       s""" where $startEndFilter ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
-         and ra.floating = 0 """ + withValidatyCheck
+         and ra.floating = 0 """ + withValidityCheck
 
     val query = s"""
          select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
