@@ -1,20 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
+import java.lang.management.ManagementFactory
 import java.util.Properties
-import java.util.logging.Logger
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-
-import org.eclipse.jetty.client.{HttpClient, HttpProxy, ProxyConfiguration}
-
-import scala.collection.JavaConversions._
-import org.eclipse.jetty.http.{HttpURI, MimeTypes}
-import org.eclipse.jetty.proxy.ProxyServlet
-import org.eclipse.jetty.server.{Handler, Server}
-import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.client.api.Request
-import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
+import org.eclipse.jetty.client.{HttpClient, HttpProxy}
+import org.eclipse.jetty.proxy.ProxyServlet
+import org.eclipse.jetty.server.handler.ContextHandlerCollection
+import org.eclipse.jetty.server.{Handler, Server}
 import org.eclipse.jetty.util.ssl.SslContextFactory
+import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.LoggerFactory
+import scala.collection.JavaConversions._
 
 
 trait DigiroadServer {
@@ -43,6 +41,9 @@ trait DigiroadServer {
   def startServer() {
     val server = new Server(9080)
     val handler = new ContextHandlerCollection()
+    val mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer)
+    server.addEventListener(mbContainer)
+    server.addBean(mbContainer)
     val handlers = Array(createViiteContext())
     handler.setHandlers(handlers.map(_.asInstanceOf[Handler]))
     server.setHandler(handler)
