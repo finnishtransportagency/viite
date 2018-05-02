@@ -1792,213 +1792,261 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Transfer last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part and transfer the rest of the part 2") {
-
+  test("Change direction should not alter discontinuity of road addresses that are not the same road number and road part number") {
     runWithRollback {
-      /**
-        * Test data
-        */
+
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1990-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None)
-      //part1
-      //track1
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 9.0, NULL, 12345, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 0, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 0.0, 0, 0, 5.0, 9.0, 0, 9)), NULL, 1, 1, 0, 9990)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 12.0, NULL, 12346, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 9, 21, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 9.0, 0, 0, 5.0, 21.0, 0, 21)), NULL, 1, 1, 0, 9991)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12347, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 21, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 21.0, 0, 0, 5.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9992)""".execute
-
-      //track2
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 10.0, NULL, 12348, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 0, 10, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 0.0, 0, 0, 0.0, 10.0, 0, 10)), NULL, 1, 1, 0, 9993)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12349, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 10, 18, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 10.0, 0, 0, 0.0, 18.0, 0, 18)), NULL, 1, 1, 0, 9994)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12350, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 18, 23, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 18.0, 0, 0, 0.0, 23.0, 0, 23)), NULL, 1, 1, 0, 9995)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12351, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 23, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 23.0, 0, 0, 0.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9996)""".execute
-
-      //part2
-      //track1
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 2.0, NULL, 12352, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 0, 2, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 26.0, 0, 0, 0.0, 28.0, 0, 2)), NULL, 1, 1, 0, 9997)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 7.0, NULL, 12353, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 2, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 28.0, 0, 0, 0.0, 35.0, 0, 9)), NULL, 1, 1, 0, 9998)""".execute
-
-      //track2
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12354, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 0, 3, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 26.0, 0, 0, 0.0, 29.0, 0, 3)), NULL, 1, 1, 0, 9999)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12355, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 3, 11, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 29.0, 0, 0, 0.0, 37.0, 0, 11)), NULL, 1, 1, 0, 10000)""".execute
-
-      val project = projectService.createRoadLinkProject(rap)
-      val id = project.id
-      val part1 = RoadAddressDAO.fetchByRoadPart(9999, 1)
-      val part2 = RoadAddressDAO.fetchByRoadPart(9999, 2)
-      val toProjectLinks = (part1++part2).map(toProjectLink(rap))
-      val roadLinks  = toProjectLinks.map(toRoadLink)
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
-      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 9999, 1, null, Some(Continuous), Some(1L), None, None, None, None, true), ReservedRoadPart(0L, 9999, 2, null, Some(Continuous), Some(1L), None, None, None, None, true))))
-
-      val projectLinks = ProjectDAO.getProjectLinks(id)
-      val part1track1 = Set(12345L, 12346L, 12347L)
-      val part1track2 = Set(12348L, 12349L, 12350L, 12351L)
-      val part1track1Links = projectLinks.filter(pl => part1track1.contains(pl.linkId)).map(_.id).toSet
-      val part1Track2Links = projectLinks.filter(pl => part1track2.contains(pl.linkId)).map(_.id).toSet
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1track1Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part1track1Links, LinkStatus.UnChanged, "test")
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part1Track2Links, LinkStatus.UnChanged, "test")
-
-      /**
-        * Tranfering adjacents of part1 to part2
-        */
-      val part1AdjacentToPart2IdRightSide = Set(12347L)
-      val part1AdjacentToPart2IdLeftSide = Set(12351L)
-      val part1AdjacentToPart2LinkRightSide = projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(_.id).toSet
-      val part1AdjacentToPart2LinkLeftSide = projectLinks.filter(pl => part1AdjacentToPart2IdLeftSide.contains(pl.linkId)).map(_.id).toSet
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(toRoadLink))
-      projectService.updateProjectLinks(id, part1AdjacentToPart2LinkRightSide, Seq(), LinkStatus.Transfer, "test",
-        9999, 2, 1, None, 1, 5, Some(1L), false, None)
-      val projectLinks2 = ProjectDAO.getProjectLinks(id)
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
-      projectService.updateProjectLinks(id, part1AdjacentToPart2LinkLeftSide, Seq(), LinkStatus.Transfer, "test",
-        9999, 2, 2, None, 1, 5, Some(1L), false, None)
-
-      val part2track1 = Set(12352L, 12353L)
-      val part2track2 = Set(12354L, 12355L)
-      val part2track1Links = projectLinks.filter(pl => part2track1.contains(pl.linkId)).map(_.id).toSet
-      val part2Track2Links = projectLinks.filter(pl => part2track2.contains(pl.linkId)).map(_.id).toSet
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2track1Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part2track1Links, LinkStatus.Transfer, "test")
-      val projectLinks3 = ProjectDAO.getProjectLinks(id)
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2Track2Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part2Track2Links, LinkStatus.Transfer, "test")
-      val projectLinks4 = ProjectDAO.getProjectLinks(id)
-
-    }
-  }
-
-  test("Transfer the rest of the part 2 and then the last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part") {
-
-    runWithRollback {
-      /**
-        * Test data
-        */
-      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1990-01-01"), DateTime.now(), "Some additional info",
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), None)
 
-      //part1
-      //track1
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 9.0, NULL, 12345, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 0, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 0.0, 0, 0, 5.0, 9.0, 0, 9)), NULL, 1, 1, 0, 9990)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 12.0, NULL, 12346, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 9, 21, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 9.0, 0, 0, 5.0, 21.0, 0, 21)), NULL, 1, 1, 0, 9991)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12347, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 21, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 21.0, 0, 0, 5.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9992)""".execute
-
-      //track2
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 10.0, NULL, 12348, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 0, 10, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 0.0, 0, 0, 0.0, 10.0, 0, 10)), NULL, 1, 1, 0, 9993)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12349, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 10, 18, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 10.0, 0, 0, 0.0, 18.0, 0, 18)), NULL, 1, 1, 0, 9994)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12350, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 18, 23, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 18.0, 0, 0, 0.0, 23.0, 0, 23)), NULL, 1, 1, 0, 9995)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12351, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 23, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 23.0, 0, 0, 0.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9996)""".execute
-
-      //part2
-      //track1
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 2.0, NULL, 12352, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 0, 2, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 26.0, 0, 0, 0.0, 28.0, 0, 2)), NULL, 1, 1, 0, 9997)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 7.0, NULL, 12353, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 2, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 28.0, 0, 0, 0.0, 35.0, 0, 9)), NULL, 1, 1, 0, 9998)""".execute
-
-      //track2
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12354, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 0, 3, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 26.0, 0, 0, 0.0, 29.0, 0, 3)), NULL, 1, 1, 0, 9999)""".execute
-
-      sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12355, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 3, 11, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 29.0, 0, 0, 0.0, 37.0, 0, 11)), NULL, 1, 1, 0, 10000)""".execute
+      val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, false,
+        None, 86400L)
+      val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, false,
+        None, 86400L)
+      val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, false,
+        None, 86400L)
+      val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 0L, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, false,
+        None, 86400L)
+      val pl5 = ProjectLink(-1000L, 9998L, 1L, Track.apply(0), Discontinuity.EndOfRoad, 0L, 0L, None, None,
+        None, 0L, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, false,
+        None, 86400L)
 
       val project = projectService.createRoadLinkProject(rap)
-      val id = project.id
-      val part1 = RoadAddressDAO.fetchByRoadPart(9999, 1)
-      val part2 = RoadAddressDAO.fetchByRoadPart(9999, 2)
-      val toProjectLinks = (part1++part2).map(toProjectLink(rap))
-      val roadLinks  = toProjectLinks.map(toRoadLink)
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
-      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 9999, 1, null, Some(Continuous), Some(1L), None, None, None, None, true), ReservedRoadPart(0L, 9999, 2, null, Some(Continuous), Some(1L), None, None, None, None, true))))
-
-      val projectLinks = ProjectDAO.getProjectLinks(id)
-      val part1track1 = Set(12345L, 12346L, 12347L)
-      val part1track2 = Set(12348L, 12349L, 12350L, 12351L)
-      val part1track1Links = projectLinks.filter(pl => part1track1.contains(pl.linkId)).map(_.id).toSet
-      val part1Track2Links = projectLinks.filter(pl => part1track2.contains(pl.linkId)).map(_.id).toSet
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1track1Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part1track1Links, LinkStatus.UnChanged, "test")
-      val projectLinks2 = ProjectDAO.getProjectLinks(id)
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part1Track2Links, LinkStatus.UnChanged, "test")
-
-      val projectLinks3 = ProjectDAO.getProjectLinks(id)
-
-      val part2track1 = Set(12352L, 12353L)
-      val part2track2 = Set(12354L, 12355L)
-      val part2track1Links = projectLinks.filter(pl => part2track1.contains(pl.linkId)).map(_.id).toSet
-      val part2Track2Links = projectLinks.filter(pl => part2track2.contains(pl.linkId)).map(_.id).toSet
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2track1Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part2track1Links, LinkStatus.Transfer, "test")
-      val projectLinks4 = ProjectDAO.getProjectLinks(id)
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2Track2Links.contains(pl.linkId)).map(toRoadLink))
-      ProjectDAO.updateProjectLinks(part2Track2Links, LinkStatus.Transfer, "test")
-      val projectLinks5 = ProjectDAO.getProjectLinks(id)
-      /**
-        * Tranfering adjacents of part1 to part2
-        */
-      val part1AdjacentToPart2IdRightSide = Set(12347L)
-      val part1AdjacentToPart2IdLeftSide = Set(12351L)
-      val part1AdjacentToPart2LinkRightSide = projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(_.id).toSet
-      val part1AdjacentToPart2LinkLeftSide = projectLinks.filter(pl => part1AdjacentToPart2IdLeftSide.contains(pl.linkId)).map(_.id).toSet
-
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(toRoadLink))
-      projectService.updateProjectLinks(id, part1AdjacentToPart2LinkRightSide, Seq(), LinkStatus.Transfer, "test",
-        9999, 2, 1, None, 1, 5, Some(1L), false, None)
-
-      val projectLinks6 = ProjectDAO.getProjectLinks(id)
-
-      val cenas=""
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
-      projectService.updateProjectLinks(id, part1AdjacentToPart2LinkLeftSide, Seq(), LinkStatus.Transfer, "test",
-        9999, 2, 2, None, 1, 5, Some(1L), false, None)
-
-      val projectLinks7 = ProjectDAO.getProjectLinks(id)
-
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl1).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl4).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12348L), project.id, 9999, 1, Track.RightSide, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl2, pl3).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12346L, 12347L), project.id, 9999, 1, Track.LeftSide, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(pl5).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12349L), project.id, 9998, 1, Track.Combined, Discontinuity.EndOfRoad, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      val linksBeforeChange = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val linkBC = linksBeforeChange.filter(_.roadNumber == 9998L)
+      linkBC.size should be(1)
+      linkBC.head.discontinuity.value should be(Discontinuity.EndOfRoad.value)
+      projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), "TestUserTwo")
+      val linksAfterChange = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val linkAC = linksAfterChange.filter(_.roadNumber == 9998L)
+      linkAC.size should be(1)
+      linkAC.head.discontinuity.value should be(linkBC.head.discontinuity.value)
     }
-  }
+
+    test("Transfer last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part and transfer the rest of the part 2") {
+
+      runWithRollback {
+        /**
+          * Test data
+          */
+        val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+          "TestUser", DateTime.parse("1990-01-01"), DateTime.now(), "Some additional info",
+          Seq(), None)
+        //part1
+        //track1
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 9.0, NULL, 12345, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 0, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 0.0, 0, 0, 5.0, 9.0, 0, 9)), NULL, 1, 1, 0, 9990)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 12.0, NULL, 12346, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 9, 21, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 9.0, 0, 0, 5.0, 21.0, 0, 21)), NULL, 1, 1, 0, 9991)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12347, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 21, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 21.0, 0, 0, 5.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9992)""".execute
+
+        //track2
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 10.0, NULL, 12348, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 0, 10, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 0.0, 0, 0, 0.0, 10.0, 0, 10)), NULL, 1, 1, 0, 9993)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12349, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 10, 18, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 10.0, 0, 0, 0.0, 18.0, 0, 18)), NULL, 1, 1, 0, 9994)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12350, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 18, 23, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 18.0, 0, 0, 0.0, 23.0, 0, 23)), NULL, 1, 1, 0, 9995)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12351, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 23, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 23.0, 0, 0, 0.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9996)""".execute
+
+        //part2
+        //track1
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 2.0, NULL, 12352, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 0, 2, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 26.0, 0, 0, 0.0, 28.0, 0, 2)), NULL, 1, 1, 0, 9997)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 7.0, NULL, 12353, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 2, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 28.0, 0, 0, 0.0, 35.0, 0, 9)), NULL, 1, 1, 0, 9998)""".execute
+
+        //track2
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12354, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 0, 3, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 26.0, 0, 0, 0.0, 29.0, 0, 3)), NULL, 1, 1, 0, 9999)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12355, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 3, 11, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 29.0, 0, 0, 0.0, 37.0, 0, 11)), NULL, 1, 1, 0, 10000)""".execute
+
+        val project = projectService.createRoadLinkProject(rap)
+        val id = project.id
+        val part1 = RoadAddressDAO.fetchByRoadPart(9999, 1)
+        val part2 = RoadAddressDAO.fetchByRoadPart(9999, 2)
+        val toProjectLinks = (part1++part2).map(toProjectLink(rap))
+        val roadLinks  = toProjectLinks.map(toRoadLink)
+        when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
+        projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 9999, 1, null, Some(Continuous), Some(1L), None, None, None, None, true), ReservedRoadPart(0L, 9999, 2, null, Some(Continuous), Some(1L), None, None, None, None, true))))
+
+        val projectLinks = ProjectDAO.getProjectLinks(id)
+        val part1track1 = Set(12345L, 12346L, 12347L)
+        val part1track2 = Set(12348L, 12349L, 12350L, 12351L)
+        val part1track1Links = projectLinks.filter(pl => part1track1.contains(pl.linkId)).map(_.id).toSet
+        val part1Track2Links = projectLinks.filter(pl => part1track2.contains(pl.linkId)).map(_.id).toSet
+
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1track1Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part1track1Links, LinkStatus.UnChanged, "test")
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part1Track2Links, LinkStatus.UnChanged, "test")
+
+        /**
+          * Tranfering adjacents of part1 to part2
+          */
+        val part1AdjacentToPart2IdRightSide = Set(12347L)
+        val part1AdjacentToPart2IdLeftSide = Set(12351L)
+        val part1AdjacentToPart2LinkRightSide = projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(_.id).toSet
+        val part1AdjacentToPart2LinkLeftSide = projectLinks.filter(pl => part1AdjacentToPart2IdLeftSide.contains(pl.linkId)).map(_.id).toSet
+
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(toRoadLink))
+        projectService.updateProjectLinks(id, part1AdjacentToPart2LinkRightSide, Seq(), LinkStatus.Transfer, "test",
+          9999, 2, 1, None, 1, 5, Some(1L), false, None)
+        val projectLinks2 = ProjectDAO.getProjectLinks(id)
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
+        projectService.updateProjectLinks(id, part1AdjacentToPart2LinkLeftSide, Seq(), LinkStatus.Transfer, "test",
+          9999, 2, 2, None, 1, 5, Some(1L), false, None)
+
+        val part2track1 = Set(12352L, 12353L)
+        val part2track2 = Set(12354L, 12355L)
+        val part2track1Links = projectLinks.filter(pl => part2track1.contains(pl.linkId)).map(_.id).toSet
+        val part2Track2Links = projectLinks.filter(pl => part2track2.contains(pl.linkId)).map(_.id).toSet
+
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2track1Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part2track1Links, LinkStatus.Transfer, "test")
+        val projectLinks3 = ProjectDAO.getProjectLinks(id)
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2Track2Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part2Track2Links, LinkStatus.Transfer, "test")
+        val projectLinks4 = ProjectDAO.getProjectLinks(id)
+
+      }
+    }
+
+    test("Transfer the rest of the part 2 and then the last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part") {
+
+      runWithRollback {
+        /**
+          * Test data
+          */
+        val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+          "TestUser", DateTime.parse("1990-01-01"), DateTime.now(), "Some additional info",
+          Seq(), None)
+
+        //part1
+        //track1
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 9.0, NULL, 12345, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 0, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 0.0, 0, 0, 5.0, 9.0, 0, 9)), NULL, 1, 1, 0, 9990)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 12.0, NULL, 12346, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 9, 21, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 9.0, 0, 0, 5.0, 21.0, 0, 21)), NULL, 1, 1, 0, 9991)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12347, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 1, 5, 21, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 21.0, 0, 0, 5.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9992)""".execute
+
+        //track2
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 10.0, NULL, 12348, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 0, 10, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 0.0, 0, 0, 0.0, 10.0, 0, 10)), NULL, 1, 1, 0, 9993)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12349, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 10, 18, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 10.0, 0, 0, 0.0, 18.0, 0, 18)), NULL, 1, 1, 0, 9994)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 5.0, NULL, 12350, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 18, 23, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 18.0, 0, 0, 0.0, 23.0, 0, 23)), NULL, 1, 1, 0, 9995)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12351, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 1, 2, 5, 23, 26, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 23.0, 0, 0, 0.0, 26.0, 0, 26)), NULL, 1, 1, 0, 9996)""".execute
+
+        //part2
+        //track1
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 2.0, NULL, 12352, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 0, 2, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 26.0, 0, 0, 0.0, 28.0, 0, 2)), NULL, 1, 1, 0, 9997)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 7.0, NULL, 12353, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 1, 5, 2, 9, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 28.0, 0, 0, 0.0, 35.0, 0, 9)), NULL, 1, 1, 0, 9998)""".execute
+
+        //track2
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 3.0, NULL, 12354, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 0, 3, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 26.0, 0, 0, 0.0, 29.0, 0, 3)), NULL, 1, 1, 0, 9999)""".execute
+
+        sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 2, 0, 8.0, NULL, 12355, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
+        sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 9999, 2, 2, 5, 3, 11, lrm_position_primary_key_seq.currval, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(0.0, 29.0, 0, 0, 0.0, 37.0, 0, 11)), NULL, 1, 1, 0, 10000)""".execute
+
+        val project = projectService.createRoadLinkProject(rap)
+        val id = project.id
+        val part1 = RoadAddressDAO.fetchByRoadPart(9999, 1)
+        val part2 = RoadAddressDAO.fetchByRoadPart(9999, 2)
+        val toProjectLinks = (part1++part2).map(toProjectLink(rap))
+        val roadLinks  = toProjectLinks.map(toRoadLink)
+        when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
+        projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 9999, 1, null, Some(Continuous), Some(1L), None, None, None, None, true), ReservedRoadPart(0L, 9999, 2, null, Some(Continuous), Some(1L), None, None, None, None, true))))
+
+        val projectLinks = ProjectDAO.getProjectLinks(id)
+        val part1track1 = Set(12345L, 12346L, 12347L)
+        val part1track2 = Set(12348L, 12349L, 12350L, 12351L)
+        val part1track1Links = projectLinks.filter(pl => part1track1.contains(pl.linkId)).map(_.id).toSet
+        val part1Track2Links = projectLinks.filter(pl => part1track2.contains(pl.linkId)).map(_.id).toSet
+
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1track1Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part1track1Links, LinkStatus.UnChanged, "test")
+        val projectLinks2 = ProjectDAO.getProjectLinks(id)
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part1Track2Links, LinkStatus.UnChanged, "test")
+
+        val projectLinks3 = ProjectDAO.getProjectLinks(id)
+
+        val part2track1 = Set(12352L, 12353L)
+        val part2track2 = Set(12354L, 12355L)
+        val part2track1Links = projectLinks.filter(pl => part2track1.contains(pl.linkId)).map(_.id).toSet
+        val part2Track2Links = projectLinks.filter(pl => part2track2.contains(pl.linkId)).map(_.id).toSet
+
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2track1Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part2track1Links, LinkStatus.Transfer, "test")
+        val projectLinks4 = ProjectDAO.getProjectLinks(id)
+
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part2Track2Links.contains(pl.linkId)).map(toRoadLink))
+        ProjectDAO.updateProjectLinks(part2Track2Links, LinkStatus.Transfer, "test")
+        val projectLinks5 = ProjectDAO.getProjectLinks(id)
+        /**
+          * Tranfering adjacents of part1 to part2
+          */
+        val part1AdjacentToPart2IdRightSide = Set(12347L)
+        val part1AdjacentToPart2IdLeftSide = Set(12351L)
+        val part1AdjacentToPart2LinkRightSide = projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(_.id).toSet
+        val part1AdjacentToPart2LinkLeftSide = projectLinks.filter(pl => part1AdjacentToPart2IdLeftSide.contains(pl.linkId)).map(_.id).toSet
+
+
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1AdjacentToPart2IdRightSide.contains(pl.linkId)).map(toRoadLink))
+        projectService.updateProjectLinks(id, part1AdjacentToPart2LinkRightSide, Seq(), LinkStatus.Transfer, "test",
+          9999, 2, 1, None, 1, 5, Some(1L), false, None)
+
+        val projectLinks6 = ProjectDAO.getProjectLinks(id)
+
+        val cenas=""
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
+        projectService.updateProjectLinks(id, part1AdjacentToPart2LinkLeftSide, Seq(), LinkStatus.Transfer, "test",
+          9999, 2, 2, None, 1, 5, Some(1L), false, None)
+
+        val projectLinks7 = ProjectDAO.getProjectLinks(id)
+
+      }
+    }
 }

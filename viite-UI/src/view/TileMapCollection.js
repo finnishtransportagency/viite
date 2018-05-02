@@ -35,12 +35,6 @@
       url: 'maasto/wmts/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
-    var parser = new ol.format.WMTSCapabilities();
-    var result = parser.read(arcgisConfig);
-    var config = {layer: "Taustakartat_Harmaasavy"};
-    var options = ol.source.WMTS.optionsFromCapabilities(result, config);
-    var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
-    greyscaleLayer.set('name','greyScaleLayer');
     var aerialMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
@@ -61,12 +55,22 @@
       }, terrainMapConfig))
     }, layerConfig));
     terrainMapLayer.set('name','terrainMapLayer');
-    var tileMapLayers = {
-      background: backgroundMapLayer,
-      greyscale: greyscaleLayer,
-      aerial: aerialMapLayer,
-      terrain: terrainMapLayer
-    };
+
+      var tileMapLayers = {
+          background: backgroundMapLayer,
+          aerial: aerialMapLayer,
+          terrain: terrainMapLayer
+      };
+
+    if(arcgisConfig) {
+        var parser = new ol.format.WMTSCapabilities();
+        var result = parser.read(arcgisConfig);
+        var config = {layer: "Taustakartat_Harmaasavy"};
+        var options = ol.source.WMTS.optionsFromCapabilities(result, config);
+        var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
+        greyscaleLayer.set('name', 'greyScaleLayer');
+        tileMapLayers.greyscale = greyscaleLayer;
+    }
 
     var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
@@ -82,7 +86,7 @@
     eventbus.on('tileMap:selected', selectMap);
 
     return {
-      layers: [backgroundMapLayer, aerialMapLayer, terrainMapLayer, greyscaleLayer]
+      layers: _.map(tileMapLayers, function(layer) { return layer; })
     };
   };
 })(this);

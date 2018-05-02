@@ -254,7 +254,7 @@
         if (selection.roadLinkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
           ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
           !applicationModel.isReadOnly()) {
-          selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+          selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
           floatingMarkerLayer.setOpacity(1);
         } else {
           selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === 3);
@@ -328,7 +328,7 @@
             ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
             !applicationModel.isReadOnly()) {
             selectedLinkProperty.close();
-            selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+            selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
             floatingMarkerLayer.setOpacity(1);
             anomalousMarkerLayer.setOpacity(1);
           } else if(selection.roadLinkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && 'floating' === applicationModel.getSelectionType() &&
@@ -780,7 +780,8 @@
           if(fetchedLinksInSelection.length > 0){
             eventbus.trigger('linkProperties:deselectFeaturesSelected');
             selectedLinkProperty.setCurrent(fetchedLinksInSelection);
-            eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
+              if (applicationModel.getCurrentAction() !== applicationModel.actionCalculating)
+                  eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
           }
         });
       });
@@ -919,7 +920,7 @@
           if (!_.isEmpty(features)) {
             currentRenderIntent = 'select';
             var featureToSelect = _.first(features);
-            selectedLinkProperty.openFloating(featureToSelect.roadLinkData.linkId, featureToSelect.roadLinkData.id, visibleFeatures);
+            selectedLinkProperty.openFloating(featureToSelect.roadLinkData.linkId, featureToSelect.roadLinkData.id, false, visibleFeatures);
             highlightFeatures();
           }
         }
@@ -1374,7 +1375,7 @@
       }
       var featureToReOpen = _.cloneDeep(_.first(selectedLinkProperty.getFeaturesToKeepFloatings()));
       var visibleFeatures = getVisibleFeatures(true,true,true);
-      selectedLinkProperty.openFloating(featureToReOpen.linkId, featureToReOpen.id, visibleFeatures);
+      selectedLinkProperty.openFloating(featureToReOpen.linkId, featureToReOpen.id, false, visibleFeatures);
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:deactivateDoubleClick', function(){

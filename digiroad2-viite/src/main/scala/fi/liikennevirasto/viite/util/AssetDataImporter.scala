@@ -11,11 +11,12 @@ import _root_.oracle.sql.STRUCT
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceResetterDAO}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.{MinDistanceForGeometryUpdate, RoadAddressLinkBuilder, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite._
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -287,34 +288,44 @@ class AssetDataImporter {
       })
   }
 
-  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean) = {
+  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean, customFilter: String = "") = {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var counter = 0
     var changed = 0
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
-        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else "")
-      roadNumbers.foreach(roadNumber =>{
+        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else customFilter)
+      roadNumbers.foreach(roadNumber => {
         counter += 1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds, false)
-        val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
+        val unGroupedAddresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true)
+        val addresses = unGroupedAddresses.groupBy(_.linkId)
+        val isLoopOrEmptyGeom = if (unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry).equals(Nil)) {
+          true
+        } else GeometryUtils.isLoopGeometry(unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry))
 
         roadLinksFromVVH.foreach(roadLink => {
           val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
-          segmentsOnViiteDatabase.foreach(segment =>{
-              val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+          segmentsOnViiteDatabase.foreach(segment => {
+            val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
             if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
-
-              if (((segment.geometry.head.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
-                (segment.geometry.head.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate)) ||
-                ((segment.geometry.last.distance2DTo(newGeom.head) > MinDistanceForGeometryUpdate) &&
-                  (segment.geometry.last.distance2DTo(newGeom.last) > MinDistanceForGeometryUpdate))) {
+              val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
+              val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
+              val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
+              val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
+              if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
+                (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
+                ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
+                  (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
+                (isLoopOrEmptyGeom)) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
-                changed +=1
+                println("Changed geometry on roadAddress id " + segment.id + " and linkId =" + segment.linkId)
+                changed += 1
+              } else {
+                println(s"Skipped geometry update on Road Address ID : ${segment.id} and linkId: ${segment.linkId}")
               }
             }
           })
@@ -323,7 +334,7 @@ class AssetDataImporter {
         println("RoadNumber:  %d: %d roadAddresses updated at time: %s".format(roadNumber, addresses.size, DateTime.now().toString))
 
       })
-      println("Geometries changed count: %d", changed)
+      println(s"Geometries changed count: $changed")
 
     }
   }
