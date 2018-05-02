@@ -1,7 +1,6 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    viitepkg: grunt.file.readJSON('viitepackage.json'),
     properties: {
       app: 'conf/dev/keys.properties'
     },
@@ -35,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
+          'dist-viite/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -45,7 +44,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= viitepkg.name %>.min.js': ['dist-viite/js/<%= viitepkg.name %>.js']
+          'dist-viite/js/<%= pkg.name %>.min.js': ['dist-viite/js/<%= pkg.name %>.js']
         }
       }
     },
@@ -195,9 +194,12 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
           run: false,
           log: true,
-          timeout: 10000,
+          timeout: 100000,
           reporter: 'Spec'
         }
+      },
+      options: {
+        growlOnSuccess: false
       }
     },
     watch: {
