@@ -1,10 +1,11 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.ProjectValidator.{connected, endPoint}
+import fi.liikennevirasto.viite.{RampsMaxBound, RampsMinBound, RoadType}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao._
@@ -163,23 +164,26 @@ object ProjectSectionCalculator {
         val link = unprocessed.head
         // If there is only one link in section we put two calibration points in it
         if (unprocessed.size == 1)
-          Seq(makeLink(link, calibrationPoints.get(link.id), true, true))
+          Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = true))
+        else if(link.discontinuity == MinorDiscontinuity){
+          assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = true)), unprocessed.tail, calibrationPoints)
+        }
         else
-          assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), true, false)), unprocessed.tail, calibrationPoints)
+          assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = false)), unprocessed.tail, calibrationPoints)
         // If last one
       } else if (unprocessed.tail.isEmpty) {
-        ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), false, true))
+        ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true))
       } else {
         //validate if are adjacent in the middle. If it has discontinuity, add a calibration point
         if(!GeometryUtils.areAdjacent(unprocessed.head.geometry.last, unprocessed.tail.head.geometry.head)){
-          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), false, true)), unprocessed.tail, calibrationPoints)
+          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true)), unprocessed.tail, calibrationPoints)
         }
         else if(!GeometryUtils.areAdjacent(unprocessed.head.geometry.head, ready.last.geometry.last)){
-          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), true, false)), unprocessed.tail, calibrationPoints)
+          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = true, endCP = false)), unprocessed.tail, calibrationPoints)
         }
         else{
           // a middle one, add to sequence and continue
-          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), false, false)), unprocessed.tail, calibrationPoints)
+          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = false)), unprocessed.tail, calibrationPoints)
         }
       }
     }
@@ -203,11 +207,11 @@ object ProjectSectionCalculator {
                   l.calibrationPoints
               case (Some(st), Some(en)) =>
                 (
-                  if (links.exists(_.endAddrMValue == st.addressMValue))
+                  if (links.exists(link => link.endAddrMValue == st.addressMValue && GeometryUtils.areAdjacent(link.geometry.last, roadPartLinks.filter(_.linkId == st.linkId).head.geometry.head)))
                     None
                   else
                     Some(st),
-                  if (links.exists(_.startAddrMValue == en.addressMValue))
+                  if (links.exists(link => link.startAddrMValue == en.addressMValue && GeometryUtils.areAdjacent(link.geometry.head, roadPartLinks.filter(_.linkId == en.linkId).head.geometry.last)))
                     None
                   else
                     Some(en)
@@ -262,7 +266,7 @@ object ProjectSectionCalculator {
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
       val continuousTrack = seq.filter(_.track == track ).foldLeft(Seq[ProjectLink]()) { case (previous, link) =>
-          if(previous.isEmpty || GeometryUtils.areAdjacent(previous.last.geometry, link.geometry)){
+          if(previous.isEmpty || GeometryUtils.areAdjacent(previous.last.geometry, link.geometry) || (previous.last.discontinuity == MinorDiscontinuity && previous.last.endAddrMValue == link.startAddrMValue && !isConnectingRoundabout(previous ++ Seq(link)))){
             previous ++ Seq(link)
           }
           else{
@@ -271,6 +275,39 @@ object ProjectSectionCalculator {
       }
       seq.partition(link => continuousTrack.map(_.id).contains(link.id))
     }
+
+    def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
+      // This code means that this road part (of a ramp) should be connected to a roundabout
+      val endPoints = pls.map(endPoint).map(p => (p.x, p.y)).unzip
+      val boundingBox = BoundingRectangle(Point(endPoints._1.min,
+        endPoints._2.min), Point(endPoints._1.max, endPoints._2.max))
+      // Fetch all ramps and roundabouts roads and parts this is connected to (or these, if ramp has multiple links)
+      val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, fetchOnlyFloating = false, onlyNormalRoads = false,
+        Seq((RampsMinBound, RampsMaxBound))).filter(ra =>
+        pls.exists(pl => connected(pl, ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
+
+      // Check all the fetched road parts to see if any of them is a roundabout
+      roadParts.keys.exists(rp => TrackSectionOrder.isRoundabout(
+        RoadAddressDAO.fetchByRoadPart(rp._1, rp._2, includeFloating = true)))
+    }
+
+    def connected(pl1: BaseRoadAddress, pl2: BaseRoadAddress) = {
+      val connectingPoint = pl1.sideCode match {
+        case AgainstDigitizing => pl1.geometry.head
+        case _ => pl1.geometry.last
+      }
+      GeometryUtils.areAdjacent(pl2.geometry, connectingPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+    }
+
+    // Utility method, will return correct GeometryEndpoint
+    def endPoint(b: BaseRoadAddress) = {
+      b.sideCode match {
+        case TowardsDigitizing => b.geometry.last
+        case AgainstDigitizing => b.geometry.head
+        case _ => Point(0.0, 0.0)
+      }
+    }
+
 
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
