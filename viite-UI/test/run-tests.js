@@ -44,9 +44,10 @@ require.config({
   },
   waitSeconds: 10
 });
-require(['lodash', 'moment',
+require(['lodash', 'moment', 'GeometryUtils',
   'unit-tests/geometry-calculations-spec',
-  'unit-tests/date-utils-spec.js',
+  'unit-tests/GeometryUtilsSpec',
+  'unit-tests/date-utils-spec',
   'unit-tests/LocationInputParserSpec'],
   function (lodash, moment) {
     window._ = lodash;
