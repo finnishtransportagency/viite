@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.ProjectValidator.{connected, endPoint}
@@ -189,7 +190,8 @@ object ProjectSectionCalculator {
     }
 
     def eliminateExpiredCalibrationPoints(roadPartLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      val tracks = roadPartLinks.groupBy(_.track)
+      //TODO - We need to review this code, since we can't expire the new implemented calibration points, that have a discontinuity on the opposite track, but is continuous
+      /*val tracks = roadPartLinks.groupBy(_.track)
       tracks.mapValues { links =>
         links.map { l =>
           val calibrationPoints =
@@ -219,7 +221,38 @@ object ProjectSectionCalculator {
             }
           l.copy(calibrationPoints = calibrationPoints)
         }
-      }.values.flatten.toSeq
+      }.values.flatten.toSeq*/
+      roadPartLinks
+    }
+
+    def validateCalibrationPointsDiscontinuityOnTracks(list: Seq[ProjectLink]): Seq[ProjectLink] = {
+      val projectLinks = list.filterNot(_.track == Combined).sortBy(_.track.value).sortBy(_.startAddrMValue)
+      projectLinks.foldLeft(Seq[ProjectLink]()){ case(previous, currentLink) =>
+        if(!previous.exists(_.id == currentLink.id)){
+          if(currentLink.discontinuity == MinorDiscontinuity ){
+            val beforeDiscontOtherTrackLink = list.find(link => link.endAddrMValue == currentLink.endAddrMValue && link.track != currentLink.track)
+            if(beforeDiscontOtherTrackLink.nonEmpty){
+              val linkToAdd1 = makeLink(beforeDiscontOtherTrackLink.head, None, startCP = beforeDiscontOtherTrackLink.head.calibrationPoints._1.nonEmpty, endCP = true)
+              val afterDiscontOtherTrackLink = list.find(link => link.startAddrMValue == linkToAdd1.endAddrMValue && link.track == linkToAdd1.track)
+              val linkToAdd2 = if(afterDiscontOtherTrackLink.nonEmpty) Seq(makeLink(afterDiscontOtherTrackLink.head, None, startCP = true, endCP = beforeDiscontOtherTrackLink.head.calibrationPoints._2.nonEmpty)) else Seq()
+              if(linkToAdd2.nonEmpty){
+                previous ++ Seq(linkToAdd1) ++ linkToAdd2
+              }
+              else if(!previous.exists(_.id == linkToAdd1.id)){
+                previous ++ Seq(linkToAdd1)
+              }
+              else
+                previous ++ Seq(currentLink)
+            }
+            else
+              previous ++ Seq(currentLink)
+          }
+          else
+            previous ++ Seq(currentLink)
+        }
+        else previous
+
+      } ++ list.filter(_.track == Combined)
     }
 
     val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
@@ -243,7 +276,7 @@ object ProjectSectionCalculator {
               assignCalibrationPoints(Seq(), sec.left.links, calMap)
           }
         }
-        eliminateExpiredCalibrationPoints(links)
+        eliminateExpiredCalibrationPoints(validateCalibrationPointsDiscontinuityOnTracks(links))
       } catch {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
@@ -260,6 +293,8 @@ object ProjectSectionCalculator {
       }
     }.toSeq
   }
+
+
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
