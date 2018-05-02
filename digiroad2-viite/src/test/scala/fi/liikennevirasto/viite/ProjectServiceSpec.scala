@@ -1839,6 +1839,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       linkAC.size should be(1)
       linkAC.head.discontinuity.value should be(linkBC.head.discontinuity.value)
     }
+  }
 
     test("Transfer last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part and transfer the rest of the part 2") {
 
