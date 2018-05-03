@@ -194,7 +194,7 @@ object RoadAddressDAO {
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
     val floatingFilter = fetchOnlyFloating match {
-      case true => " and ra.floating != '0'"
+      case true => " and ra.floating = '1'"
       case false => ""
     }
 
@@ -217,7 +217,8 @@ object RoadAddressDAO {
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
         (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-        link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to, (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
+        link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
@@ -1012,6 +1013,14 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
+
+  /**
+    * Used in the ProjectValidator
+    *
+    * @param roadNumber
+    * @param startDate
+    * @return
+    */
   def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
     sql"""
        select distinct ra.road_part_number
@@ -1448,11 +1457,24 @@ object RoadAddressDAO {
     query + s" WHERE pos.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidityCheck
   }
 
+  /**
+    * Used in RoadAddressDAO.getRoadAddressByFilter and ChangeApi
+    *
+    * @param sinceDate
+    * @param untilDate
+    * @param query
+    * @return
+    */
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
+  /**
+    * Used by OTH SearchAPI
+    *
+    * @return
+    */
   def withValidityCheck(): String = {
     s" AND ra.valid_to IS NULL AND ra.end_date IS NULL "
   }
