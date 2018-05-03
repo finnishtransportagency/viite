@@ -264,11 +264,11 @@ object ProjectSectionCalculator {
 
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
-      if((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) || (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)){
+      if(((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) || (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) && Math.abs(rightLink.endAddrMValue - leftLink.endAddrMValue) <= fi.liikennevirasto.viite.MaxAdjustmentRange) {
         Some(Seq(rightLink.startAddrMValue, leftLink.startAddrMValue).sum/2, Seq(rightLink.endAddrMValue, leftLink.endAddrMValue).sum/2)
-      } else if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
+      } else if (rightLink.status == LinkStatus.UnChanged) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
-      } else if (leftLink.status == LinkStatus.UnChanged || leftLink.status == LinkStatus.Transfer) {
+      } else if (leftLink.status == LinkStatus.UnChanged) {
         Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
       } else {
           maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
