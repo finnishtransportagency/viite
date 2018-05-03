@@ -164,7 +164,7 @@
           '</div>' ;
       }
       else
-        return ''
+        return '';
 
     };
 
