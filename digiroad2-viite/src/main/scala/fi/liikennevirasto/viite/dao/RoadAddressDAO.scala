@@ -196,7 +196,7 @@ object RoadAddressDAO {
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
     val floatingFilter = fetchOnlyFloating match {
-      case true => " and ra.floating != '0'"
+      case true => " and ra.floating = '1'"
       case false => ""
     }
 
@@ -219,15 +219,12 @@ object RoadAddressDAO {
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
         (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-        link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to, (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
+        link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
-          terminated = '0' and
-          valid_from <= sysdate and
-          (valid_to is null or valid_to > sysdate) and
-          (end_date is null or end_date > sysdate) and
-          (start_date is null or start_date <= sysdate)
+          terminated = 0 and valid_to is null and end_date is null
       """
     queryList(query)
   }
@@ -1024,6 +1021,14 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
+
+  /**
+    * Used in the ProjectValidator
+    *
+    * @param roadNumber
+    * @param startDate
+    * @return
+    */
   def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
     sql"""
        select distinct ra.road_part_number
@@ -1436,23 +1441,6 @@ object RoadAddressDAO {
     query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidatyCheck
   }
 
-  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
-    val floating = optFloating match {
-      case Some(floatingValue) => s"AND ra.floating = $floatingValue"
-      case None => ""
-    }
-
-    val endAddr = endM match {
-      case Some(endValue) => s"AND ra.start_addr_m <= $endValue"
-      case _ => ""
-    }
-
-    query + s" where ra.road_number = $roadNumber " +
-      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
-      s" AND ra.TRACK_CODE = $track " + floating + withValidatyCheck +
-      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
-  }
-
   def withLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long])(query: String): String = {
     val startFilter = startM match {
       case Some(s) => s" AND pos.start_Measure <= $s"
@@ -1466,11 +1454,24 @@ object RoadAddressDAO {
     query + s" WHERE pos.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidatyCheck
   }
 
+  /**
+    * Used in RoadAddressDAO.getRoadAddressByFilter and ChangeApi
+    *
+    * @param sinceDate
+    * @param untilDate
+    * @param query
+    * @return
+    */
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
+  /**
+    * Used by OTH SearchAPI
+    *
+    * @return
+    */
   def withValidatyCheck(): String = {
     s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
       s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
