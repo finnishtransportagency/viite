@@ -125,8 +125,13 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val anomalyType = {
       if (roadLinkRoadNumber != 0 && roadLinkRoadPartNumber != 0) Anomaly.None else Anomaly.NoAddressGiven
     }
-    val trackValue = roadAddress.headOption match {
-      case Some(add) => if (add.linkGeomSource == LinkGeomSource.SuravageLinkInterface) add.track.value else  roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+    val trackValue = roadAddress match {
+      case Some(add) =>
+        if (add.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
+          add.track.value
+        } else {
+          roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+        }
       case _ => roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
     }
 
