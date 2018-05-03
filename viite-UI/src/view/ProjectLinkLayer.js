@@ -240,6 +240,8 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
+        projectCollection.setTmpDirty([]);
+        projectCollection.setDirty([]);
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
           if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
             selectedProjectLinkProperty.openSplit(selection.projectLinkData.linkId, true);

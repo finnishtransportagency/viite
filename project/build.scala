@@ -134,6 +134,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % "9.2.10.v20150310" % "compile",
         "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "compile",
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "compile",
+        "org.eclipse.jetty" % "jetty-jmx" % "9.2.10.v20150310" % "compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
