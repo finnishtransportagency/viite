@@ -218,7 +218,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectLinkNameDAO.get(roadNumber, projectId) match {
       case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
       case _ =>
-        val existingRoadName = RoadNameDAO.getCurrentRoadName(roadNumber).headOption
+        val existingRoadName = RoadNameDAO.getLatestRoadName(roadNumber).headOption
         ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
     }
   }
@@ -944,7 +944,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def revertRoadName(projectId: Long, roadNumber: Long): Unit = {
     ProjectLinkNameDAO.revert(roadNumber, projectId)
-    val roadAddressName = RoadNameDAO.getCurrentRoadName(roadNumber)
+    val roadAddressName = RoadNameDAO.getLatestRoadName(roadNumber)
     val projectRoadName = ProjectLinkNameDAO.get(roadNumber, projectId)
     if (roadAddressName.nonEmpty && projectRoadName.isEmpty) {
       ProjectLinkNameDAO.create(projectId, roadNumber, roadAddressName.get.roadName)

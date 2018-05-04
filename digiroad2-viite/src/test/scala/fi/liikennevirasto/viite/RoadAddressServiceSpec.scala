@@ -161,8 +161,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def getFloatingCount(): Long = {
     sql"""
        select count(*)
-       from ROAD_ADDRESS where floating = 1 and (valid_from is null or valid_from <= sysdate)
-       and (valid_to is null or valid_to > sysdate) and END_DATE is null
+       from ROAD_ADDRESS where floating = '1'
+       and valid_to is null and END_DATE is null
     """.as[Long].first
   }
 
@@ -277,7 +277,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val modificationUser = "testUser"
       val query = s"""select pos.LINK_ID, pos.end_measure
         from ROAD_ADDRESS ra inner join LRM_POSITION pos on ra.LRM_POSITION_ID = pos.id
-        where $filter and (ra.valid_to > sysdate or ra.valid_to is null) order by ra.id asc"""
+        where $filter and ra.valid_to is null order by ra.id asc"""
       val (linkId, endM) = StaticQuery.queryNA[(Long, Double)](query).firstOption.get
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 1, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
       when(localMockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
