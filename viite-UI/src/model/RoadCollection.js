@@ -57,6 +57,9 @@
   };
 
   root.RoadCollection = function(backend, LinkVals) {
+      var currentAllRoadLinks = [];
+      var unknownRoadLinkGroups = [];
+      var currentZoom = -1;
     var roadLinkGroups = [];
     var roadLinkGroupsSuravage = [];
     var tmpRoadLinkGroups = [];
@@ -94,58 +97,83 @@
       var day = withHistory ? date[0] : -1;
       var month = withHistory ? date[1] : -1;
       var year = withHistory ? date[2] : -1;
+        currentZoom = zoom;
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom,
         withHistory: withHistory, day: day, month: month, year: year}, function(fetchedRoadLinks) {
-        var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
-          return roadLink.getId();
-        });
-        var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
-          return _.map(roadLinkGroup, function(roadLink) {
-            return new RoadLinkModel(roadLink);
-          });
-        });
-        roadLinkGroups = fetchedRoadLinkModels;
-
-        if(!_.isEmpty(getSelectedRoadLinks())){
-          var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinks(), function(selected) {
-            var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function(group){
-              return group.getData();
-            });
-            return _.contains(_.pluck(allGroups, 'linkId'), selected.getData().linkId);
-          });
-          roadLinkGroups.concat(nonFetchedLinksInSelection);
-        }
-        
-        historicRoadLinks = _.filter(roadLinkGroups, function(group) {
-          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
-        });
-
-        floatingRoadLinks = _.filter(roadLinkGroups, function(group) {
-          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
-        });
-
-        roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
-          return groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
-        });
-        var suravageRoadAddresses = _.partition(roadLinkGroupsSuravage, function(sur) {
-          return findSuravageRoadAddressInGroup(sur);
-        });
-        var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
-          return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
-        });
-        roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
-        eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups);
-        if(historicRoadLinks.length !== 0) {
-          eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
-        }
-        if(suravageRoadAddresses[1].length !== 0)
-          eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[1]);
-        if(applicationModel.isProjectButton()){
-          eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
-          applicationModel.setProjectButton(false);
-        }
+          currentAllRoadLinks = fetchedRoadLinks;
+          fetchProcess(fetchedRoadLinks, zoom);
       });
     };
+
+      eventbus.on("linkProperties:drawUnknowns", function () {
+          fetchProcess(currentAllRoadLinks, currentZoom, true);
+      });
+
+      var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknows) {
+          var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
+              return roadLink.getId();
+          });
+          var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
+              return _.map(roadLinkGroup, function (roadLink) {
+                  return new RoadLinkModel(roadLink);
+              });
+          });
+          var fetched = _.partition(fetchedRoadLinkModels, function (model) {
+              var isUnknownGroup = _.every(model, function (mod) {
+                  var modData = mod.getData();
+                  return modData.anomaly === 1 && modData.id === 0;
+              });
+              return isUnknownGroup;
+          });
+          unknownRoadLinkGroups = fetched[0];
+          if (Math.trunc(zoom) <= zoomlevels.minZoomForEditMode && (_.isUndefined(drawUnknows) && !drawUnknows)) {
+              roadLinkGroups = fetched[1];
+          } else {
+              roadLinkGroups = fetchedRoadLinkModels;
+          }
+
+          if(!_.isEmpty(getSelectedRoadLinks())){
+              var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinks(), function (selected) {
+                  var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function (group) {
+                      return group.getData();
+                  });
+                  return _.contains(_.pluck(allGroups, 'linkId'), selected.getData().linkId);
+              });
+              roadLinkGroups.concat(nonFetchedLinksInSelection);
+          }
+
+          historicRoadLinks = _.filter(roadLinkGroups, function(group) {
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+          });
+
+          floatingRoadLinks = _.filter(roadLinkGroups, function(group) {
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+          });
+
+          roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
+              return groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
+          });
+          var suravageRoadAddresses = _.partition(roadLinkGroupsSuravage, function(sur) {
+              return findSuravageRoadAddressInGroup(sur);
+          });
+          var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
+          });
+          roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
+          eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknows) && drawUnknows));
+          if(historicRoadLinks.length !== 0) {
+              eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
+          }
+          if(suravageRoadAddresses[1].length !== 0)
+              eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[1]);
+          if(applicationModel.isProjectButton()){
+              eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
+              applicationModel.setProjectButton(false);
+          }
+          if (!_.isUndefined(drawUnknows) && drawUnknows) {
+              eventbus.trigger('linkProperties:unknownsTreated');
+          }
+      };
 
     var findSuravageRoadAddressInGroup = function(group) {
       var groupData = _.map(group, function (data) {
