@@ -59,7 +59,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     val roadNumbers = if (username.startsWith("dr2dev") || username.startsWith("viitetestuser")) {
       RoadAddressDAO.getValidRoadNumbersWithFilterToTestAndDevEnv
     } else {
-      RoadAddressDAO.getCurrentValidRoadNumbers()
+      RoadAddressDAO.getAllValidRoadNumbers()
     }
 
     println(s"Got ${roadNumbers.size} roads")

@@ -93,7 +93,8 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
         val value = anythingToLong(map(key))
         key match {
           case "aosa" | "losa" if value > 0 && value <= 999 =>
-          case "tie" | "aet" | "let" if value >= 0 && value <= 99999 =>
+          case "tie" if value > 0 && value <= 99999 =>
+          case "aet" | "let" if value >= 0 && value <= 99999 =>
           case "ajr" if value >= 0 && value <= 2 =>
           case _ =>
             logger.info(s"Validation failed: $errorMessage")

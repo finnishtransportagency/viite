@@ -11,18 +11,16 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        eventbus.on('roadLayer:featuresLoaded', function() {
-          done();
+        eventbus.once('roadLayer:featuresLoaded', function() {
+          eventbus.once('layer:selected', function(){
+            done();
+          });
+          $('[id^=projectListButton]:visible').prop('disabled', false);
+          $('[id^=projectListButton]:visible').attr('disabled', false);
+          testHelpers.selectLayer('roadAddressProject');
+          testHelpers.clickProjectListButton();
         });
       }, backend);
-    });
-
-    //1-first -open project list
-    before(function(done) {
-      $('[id^=projectListButton]:visible').prop('disabled', false);
-      $('[id^=projectListButton]:visible').attr('disabled', false);
-      testHelpers.clickProjectListButton();
-      done();
     });
 
     it('open project list window', function () {
@@ -69,15 +67,16 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       it('Jatka button should be enabled', function () {
         var isJatkaButtonDisabled = $('#generalNext').is(":disabled");
         expect(isJatkaButtonDisabled).to.be.false;
-        testHelpers.clickNextButton();
       });
     });
 
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
-      before(function () {
-          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
+      before(function(done){
+          eventbus.once('roadAddress:projectSaved', function(){
+              done();
+          });
+          testHelpers.clickNextButton();
       });
 
       it('Check if the project link was selected ', function(){
@@ -95,50 +94,36 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         expect(featureFromProjectLayerNotReserved.projectLinkData.status).to.be.equal(99);
       });
 
-      it('Check if project link data is filled', function () {
+    });
 
-        //Check if when there is no data the inputs are empty
-        var feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499897070);
-        testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
-        expect(feature).to.not.be.undefined;
-        expect(feature.projectLinkData.linkId).to.be.equal(499897070);
-        expect($('#dropdown_0').val('New').is(':disabled')).to.be.false;
-        $('#dropDown_0').val('New').change();
-        expect($('#tie')).to.not.be.undefined;
-        expect($('#osa')).to.not.be.undefined;
-        expect($('#trackCodeDropdown')).to.not.be.undefined;
-        console.log($('#tie'));
-        var inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#trackCodeDropdown').val().length === 0);
-        expect(inputsEmpty).to.be.true;
-        //Check if Tallenna is disabled
-        expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
-
-        //Select another road to see the pop up
-        feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-        testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
-        $('.yes').click();
-
-        //Check if the values are filled in the input fields when data is valid
-        feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717395);
-        testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
-        expect(feature).to.not.be.undefined;
-        expect(feature.projectLinkData.linkId).to.be.equal(1717395);
-        expect($('#dropdown').val('uusi').is(':disabled')).to.be.false;
-        $('#dropDown').val('uusi').change();
-        inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#trackCodeDropdown').val().length === 0);
-        expect(inputsEmpty).to.be.false;
-        //Check if Tallenna is enabled
-        expect($('.update.btn.btn-save').is(':disabled')).to.be.false;
+    describe('when new project link is selected', function(){
+      before(function(){
+          eventbus.once('linkProperties:selected', function(){
+              done();
+          });
+          var feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499897070);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
       });
+
+      it('Check if there form inputs are empty', function(){
+          var feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499897070);
+          expect(feature).to.not.be.undefined;
+          expect(feature.projectLinkData.linkId).to.be.equal(499897070);
+          expect($('#dropdown_0').val('New').is(':disabled')).to.be.false;
+          $('#dropDown_0').val('New').change();
+          expect($('#tie')).to.not.be.undefined;
+          expect($('#osa')).to.not.be.undefined;
+          expect($('#trackCodeDropdown')).to.not.be.undefined;
+          console.log($('#tie'));
+          var inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#trackCodeDropdown').val() === '99');
+          expect(inputsEmpty).to.be.true;
+          //Check if Tallenna is disabled
+          expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
+      });
+
     });
 
     describe('when clicking Peruuta button', function() {
-      before(function (done) {
-          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          $('.cancelLink').click();
-          done();
-      });
 
       it('Check if it change to the road form', function(){
         $('.project-form button.next:visible').prop('disabled', false);

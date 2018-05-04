@@ -125,7 +125,16 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val anomalyType = {
       if (roadLinkRoadNumber != 0 && roadLinkRoadPartNumber != 0) Anomaly.None else Anomaly.NoAddressGiven
     }
-    val trackValue = roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+    val trackValue = roadAddress match {
+      case Some(add) =>
+        if (add.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
+          add.track.value
+        } else {
+          roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+        }
+      case _ => roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+    }
+
     val elyCode: Long = roadAddress match {
       case Some(add) => add.ely
       case _ => municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1)
@@ -134,9 +143,8 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLinkType, roadLink.constructionType,
       roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadLinkRoadNumber,
-      roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
-      0, 0, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
+      roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber,trackValue, elyCode, Discontinuity.Continuous.value,
+      roadAddress.map(_.startAddrMValue).getOrElse(0), roadAddress.map(_.endAddrMValue).getOrElse(0), "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
