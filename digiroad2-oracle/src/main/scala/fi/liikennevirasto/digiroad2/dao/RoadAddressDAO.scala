@@ -54,20 +54,20 @@ class RoadAddressDAO {
   }
 
   def withRoadNumber(road: Long, roadPart:Long, track: Int)(query: String): String = {
-    query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE = $track AND ra.road_part_number = $roadPart and ra.floating = 0" + withValidatyCheck
+    query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE = $track AND ra.road_part_number = $roadPart and ra.floating = 0" + withValidityCheck
   }
 
   def withRoadNumber(road: Long, trackCodes: Set[Int])(query: String): String = {
-    query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE in (${trackCodes.mkString(",")}) AND ra.floating = 0" + withValidatyCheck
+    query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE in (${trackCodes.mkString(",")}) AND ra.floating = 0" + withValidityCheck
   }
 
   def withRoadNumber(road: Long, roadPart:Long)(query: String): String = {
-    query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart and ra.floating = 0" +withValidatyCheck
+    query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart and ra.floating = 0" +withValidityCheck
   }
 
   def withRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double)(query: String): String = {
     query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
-      s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" + withValidatyCheck
+      s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" + withValidityCheck
   }
 
   def withLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None)(query: String): String = {
@@ -76,7 +76,7 @@ class RoadAddressDAO {
       case Some(road) => "AND road_number = " + road
       case (_) => " "
     }
-    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " + qfilter + withValidatyCheck
+    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " + qfilter + withValidityCheck
   }
 
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
@@ -92,7 +92,7 @@ class RoadAddressDAO {
 
     query + s" where ra.road_number = $roadNumber " +
       s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
-      s" AND ra.TRACK_CODE = $track " + floating + withValidatyCheck +
+      s" AND ra.TRACK_CODE = $track " + floating + withValidityCheck +
       s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
@@ -104,7 +104,7 @@ class RoadAddressDAO {
 
     query + s" where ra.road_number = $roadNumber " +
       s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM)) " +
-      s" AND ra.TRACK_CODE = $track " + floating + withValidatyCheck +
+      s" AND ra.TRACK_CODE = $track " + floating + withValidityCheck +
       s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
@@ -118,7 +118,7 @@ class RoadAddressDAO {
       s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) " +
       s" OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM) " +
       s" OR ((ra.road_part_number > $startRoadPartNumber) AND (ra.road_part_number < $endRoadPartNumber))) " +
-      s" AND ra.TRACK_CODE = $track " + floating + withValidatyCheck +
+      s" AND ra.TRACK_CODE = $track " + floating + withValidityCheck +
       s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
@@ -127,16 +127,17 @@ class RoadAddressDAO {
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
-  def withValidatyCheck(): String = {
-    s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " +
-    s" AND (ra.end_date IS NULL OR ra.end_date > sysdate) AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
+  // TODO Maybe not used in VIITE, but if this is used, then start_date condition should probably be removed.
+  def withValidityCheck(): String = {
+    s" AND ra.valid_to IS NULL " +
+    s" AND ra.end_date IS NULL AND (ra.start_date IS NULL OR ra.start_date <= sysdate) "
   }
 
   def getRoadNumbers(): Seq[Long] = {
     sql"""
 			select distinct (ra.road_number)
       from road_address ra
-      where ra.valid_to is null OR ra.valid_to > SYSDATE
+      where ra.valid_to is null
 		  """.as[Long].list
   }
 
@@ -144,7 +145,7 @@ class RoadAddressDAO {
     val where =
       s""" where (( ra.start_addr_m >= $startM and ra.end_addr_m <= $endM ) or ( $startM >= ra.start_addr_m and $startM < ra.end_addr_m) or
          ( $endM > ra.start_addr_m and $endM <= ra.end_addr_m)) and ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
-         and ra.floating = 0 """ + withValidatyCheck
+         and ra.floating = 0 """ + withValidityCheck
 
     val query =
       s"""
