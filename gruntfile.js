@@ -1,7 +1,6 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    viitepkg: grunt.file.readJSON('viitepackage.json'),
     properties: {
       app: 'conf/dev/keys.properties'
     },
@@ -35,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
+          'dist-viite/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -45,7 +44,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= viitepkg.name %>.min.js': ['dist-viite/js/<%= viitepkg.name %>.js']
+          'dist-viite/js/<%= pkg.name %>.min.js': ['dist-viite/js/<%= pkg.name %>.js']
         }
       }
     },
@@ -175,7 +174,8 @@ module.exports = function(grunt) {
         options: {
           // mocha options
           mocha: {
-            ignoreLeaks: false
+            ignoreLeaks: false,
+            "debug-brk": (grunt.option('debug-brk')) ? "" : 0
           },
 
           // URLs passed through as options
@@ -194,9 +194,12 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
           run: false,
           log: true,
-          timeout: 10000,
+          timeout: 100000,
           reporter: 'Spec'
         }
+      },
+      options: {
+        growlOnSuccess: false
       }
     },
     watch: {
@@ -245,6 +248,8 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration', 'clean', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('deploy', ['clean', 'env:'+target, 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+
+  grunt.registerTask('unit-test', ['properties', 'jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_integration']);
 

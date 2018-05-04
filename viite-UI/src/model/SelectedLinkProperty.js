@@ -117,38 +117,37 @@
       }
     };
 
-    var openFloating = function(linkId, id, visibleFeatures){
-      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId)  : !isSelectedById(id);
-      if (canIOpen) {
-        applicationModel.toggleSelectionTypeFloating();
-        if(!_.isUndefined(linkId)){
-          current = roadCollection.getGroupByLinkId(linkId);
-        } else {
-          current = roadCollection.getGroupById(id);
-        }
+    var openFloating = function (linkId, id, singleLinkSelect, visibleFeatures) {
+        var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) : !isSelectedById(id);
+        if (canIOpen) {
+            applicationModel.toggleSelectionTypeFloating();
+            if (!_.isUndefined(linkId)) {
+                current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+            } else {
+                current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+            }
+            var currentFloatings = getCurrentFloatings();
+            if (!_.isEmpty(currentFloatings)) {
+                setSources(currentFloatings);
+            }
+            //Segment to construct adjacency
+            getGroupAdjacents(linkId);
 
-        var currentFloatings = getCurrentFloatings();
-        if(!_.isEmpty(currentFloatings)){
-          setSources(currentFloatings);
-        }
-        //Segment to construct adjacency
-        fillAdjacents(linkId);
+            var data4Display = _.map(get(), function (feature) {
+                return extractDataForDisplay([feature]);
+            });
 
-        var data4Display = _.map(get(), function(feature){
-          return extractDataForDisplay([feature]);
-        });
-
-        if(!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === floatingRoadLinkType){
-          addToFeaturesToKeep(data4Display);
+            if (!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === floatingRoadLinkType) {
+                addToFeaturesToKeep(data4Display);
+            }
+            if (!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)) {
+                addToFeaturesToKeep(data4Display);
+            }
+            processOl3Features(visibleFeatures);
+            eventbus.trigger('adjacents:startedFloatingTransfer');
+            eventbus.trigger('linkProperties:selected', data4Display);
+            eventbus.trigger('linkProperties:deactivateInteractions');
         }
-        if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
-          addToFeaturesToKeep(data4Display);
-        }
-        processOl3Features(visibleFeatures);
-        eventbus.trigger('adjacents:startedFloatingTransfer');
-        eventbus.trigger('linkProperties:selected', data4Display);
-        eventbus.trigger('linkProperties:deactivateInteractions');
-      }
     };
 
     var openUnknown = function(linkId, id, visibleFeatures) {
@@ -226,63 +225,43 @@
       eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
     };
 
-    var fillAdjacents = function(linkId){
-      var orderedCurrent = _.sortBy(current, function(curr){
-        return curr.getData().endAddressM;
-      });
-      var previous = _.first(orderedCurrent);
-      var areAdjacent = true;
-      //Quick Check to find if the features in the group are all adjacent
-      _.forEach(_.rest(orderedCurrent),function (oc){
-        areAdjacent = areAdjacent && GeometryUtils.areAdjacents(previous.getPoints(),oc.getPoints());
-        previous = oc;
-      });
-      //If they are then no change to the current is needed, however if they aren't then we need to discover the adjacent network and put that as the current.
-      if(!areAdjacent) {
-        var adjacentNetwork = [];
-        var selectedFeature = _.find(orderedCurrent, function(oc){
-          return oc.getData().linkId === linkId;
-        });
-        var selectedFeatureIndex = _.findIndex(orderedCurrent, function(oc){
-          return oc.getData().linkId === linkId;
-        });
-        //We get the all the roads until the clicked target
-        var firstPart = orderedCurrent.slice(0, selectedFeatureIndex);
-        //Since the clicked target is not included in the slice we need to add it to the head
-        firstPart.push(selectedFeature);
-        //Then we get the roads from the clicked target to the finish
-        var rest = orderedCurrent.slice(selectedFeatureIndex);
-        previous = _.last(firstPart);
-        //we put the clicked target in the network
-        adjacentNetwork = adjacentNetwork.concat(previous);
-        //Then we keep adding to the network until we find the break in adjacency, terminating the cycle
-        for(var i = firstPart.length-2; i >= 0; i--) {
-          if(GeometryUtils.areAdjacents(firstPart[i].getPoints(), previous.getPoints())){
-            adjacentNetwork.push(firstPart[i]);
-            previous = firstPart[i];
-          } else {
-            i = -1;
-          }
-        }
-        previous = _.first(rest);
-        //Same logic as prior but since in this part the clicked target is the in the beginning we just look forward
-        for(var j = 1; j < rest.length; j++) {
-          if(GeometryUtils.areAdjacents(rest[j].getPoints(),previous.getPoints())){
-            adjacentNetwork.push(rest[j]);
-            previous = rest[j];
-          }
-          else {
-            j = rest.length +1;
-          }
-        }
-        //Now we just tidy up the adjacentNetwork by endAddressM again and set the current to this
-        applicationModel.setContinueButton(false);
-        current = _.sortBy(adjacentNetwork, function(curr){
-          return curr.getData().endAddressM;
-        });
-      }
-      applicationModel.setContinueButton(false);
-    };
+      var getGroupAdjacents = function (linkId) {
+          if (current.length === 1)
+              return current;
+          var orderedCurrent = _.sortBy(current, function (curr) {
+              return curr.getData().endAddressM;
+          });
+          var selectedFeature = _.find(orderedCurrent, function (oc) {
+              return oc.getData().linkId === linkId;
+          });
+          var adjacentsArray = [selectedFeature];
+
+          var findAdjacents = function (list, elem) {
+              if (list.length > 0) {
+                  var filteredList = _.filter(list, function (l) {
+                      return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
+                  });
+                  var existingAdjacents = _.filter(filteredList, function (le) {
+                      return !_.isUndefined(GeometryUtils.connectingEndPoint(le.getData().points, elem.getData().points));
+                  });
+                  //if in case we found more than one adjacent, we should process each possible adjacent
+                  _.each(existingAdjacents, function (adj) {
+                      adjacentsArray.push(adj);
+                  });
+                  _.each(existingAdjacents, function (adj) {
+                      findAdjacents(_.filter(list, function (l) {
+                          return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
+                      }), adj);
+                  });
+              }
+          };
+
+          findAdjacents(current, selectedFeature);
+          current = _.sortBy(adjacentsArray, function (curr) {
+              return curr.getData().endAddressM;
+          });
+          applicationModel.setContinueButton(false);
+      };
 
     var getLinkAdjacents = function(link) {
       var linkIds = {};

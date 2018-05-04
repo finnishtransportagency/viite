@@ -54,7 +54,8 @@
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
-      name: 'directionMarkerLayer'
+      name: 'directionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
     });
 
     var suravageRoadProjectLayer = new ol.layer.Vector({
@@ -68,7 +69,8 @@
 
     var suravageProjectDirectionMarkerLayer = new ol.layer.Vector({
       source: suravageProjectDirectionMarkerVector,
-      name: 'suravageProjectDirectionMarkerLayer'
+      name: 'suravageProjectDirectionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
     });
 
     vectorLayer = new ol.layer.Vector({
@@ -238,6 +240,8 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
+        projectCollection.setTmpDirty([]);
+        projectCollection.setDirty([]);
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
           if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
             selectedProjectLinkProperty.openSplit(selection.projectLinkData.linkId, true);

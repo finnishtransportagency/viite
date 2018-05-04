@@ -365,7 +365,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map("success" -> false, "errorMessage" -> errorMessage)
         case None =>
           writableProjectService.saveProjectCoordinates(roadInfo.projectId, roadInfo.coordinates)
-          Map("success" -> true)
+          Map("success" -> true, "projectErrors" -> projectService.validateProjectById(roadInfo.projectId).map(errorPartsToApi))
       }
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
