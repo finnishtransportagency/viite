@@ -294,7 +294,7 @@ class AssetDataImporter {
     var counter = 0
     var changed = 0
     withDynTransaction {
-      val roadNumbers = RoadAddressDAO.getCurrentValidRoadNumbers(if (filterRoadAddresses)
+      val roadNumbers = RoadAddressDAO.getAllValidRoadNumbers(if (filterRoadAddresses)
         "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else customFilter)
       roadNumbers.foreach(roadNumber => {
         counter += 1
