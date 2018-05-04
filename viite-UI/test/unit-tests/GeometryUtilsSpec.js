@@ -4,6 +4,7 @@ define(['chai', 'GeometryUtils'], function(chai, GeometryUtils) {
     describe('Geometry utils', function() {
 
         /*
+                // TODO Requires ol.geom.LineString
                 it('calculate measure at point', function() {
                     var f = GeometryUtils.calculateMeasureAtPoint;
                     assert.equal('TODO expected result', f('TODO linestring', 'TODO point'));
@@ -15,20 +16,11 @@ define(['chai', 'GeometryUtils'], function(chai, GeometryUtils) {
             assert.deepEqual({points: [], sideCode: 1}, f(0, {points: [], sideCode: 1}));
             assert.deepEqual({points: [], sideCode: 2}, f(0, {points: [], sideCode: 2}));
             assert.deepEqual({points: [], sideCode: 3}, f(0, {points: [], sideCode: 3}));
-            // TODO
+            assert.deepEqual({points: [{x: 10.5, y: 0}, {x: 10.5, y: 1}], sideCode: 1}, f(2, {points: [{x: 0, y: 0}, {x: 0, y: 1}], sideCode: 1}));
+            assert.deepEqual({points: [{x: 3.5, y: 0}, {x: 3.5, y: 1}], sideCode: 2}, f(2, {points: [{x: 0, y: 0}, {x: 0, y: 1}], sideCode: 2}));
+            assert.deepEqual({points: [{x: 0, y: 3.5}, {x: 1, y: 3.5}], sideCode: 3}, f(2, {points: [{x: 0, y: 0}, {x: 1, y: 0}], sideCode: 3}));
+            assert.deepEqual({points: [{x: 0, y: 3.5}, {x: 1, y: 3.5}], sideCode: 3}, f(5, {points: [{x: 0, y: 0}, {x: 1, y: 0}], sideCode: 3}));
         });
-
-        /*
-                it('split by point', function() {
-                    var f = GeometryUtils.splitByPoint; // Not used anywhere
-                    assert.equal('TODO expected result', f('TODO linestring', 'TODO point'));
-                });
-
-                it('offset point', function() {
-                    var f = GeometryUtils.offsetPoint; // Not used anywhere
-                    assert.equal('TODO expected result', f('TODO linestring', 'TODO point'));
-                });
-        */
 
         it('distance of points', function () {
             var f = GeometryUtils.distanceOfPoints;
@@ -78,13 +70,6 @@ define(['chai', 'GeometryUtils'], function(chai, GeometryUtils) {
             assert.equal(315, Math.round(f(mockLineString([[0, 0], [-1, 1]], 1.414213562373095)).angleFromNorth));
         });
 
-        /*
-                it('are adjacents', function() {
-                    var f = GeometryUtils.areAdjacents; // Not used anywhere
-                    assert.equal('TODO expected result', f('TODO geometry1', 'TODO geometry2'));
-                });
-        */
-
         it('connecting end point', function () {
             var f = GeometryUtils.connectingEndPoint;
             assert.deepEqual({x: 0, y: 0}, f([{x: 0, y: 0}, {x: 1, y: 1}], [{x: 0, y: 0}, {x: -2, y: -2}]));
@@ -98,12 +83,37 @@ define(['chai', 'GeometryUtils'], function(chai, GeometryUtils) {
             assert.deepEqual({x: -2.995, y: -2.995}, f([{x: 0, y: 0}, {x: -2.995, y: -2.995}], [{x: -3, y: -3}, {x: -4, y: -4}]));
         });
 
-        /*
-                it('geometry length', function() {
-                    var f = GeometryUtils.geometryLength;
-                    assert.equal('TODO expected result', f('TODO length', 'point', 'index', 'array'));
-                });
-        */
+        it('geometry length', function () {
+            var f = GeometryUtils.geometryLength;
+            assert.equal(2, f([
+                {x: 0, y: 0, z: 0},
+                {x: 1, y: 0, z: 0},
+                {x: 2, y: 0, z: 0}
+            ]));
+            assert.equal(2, f([
+                {x: 0, y: 0, z: 0},
+                {x: -1, y: 0, z: 0},
+                {x: -2, y: 0, z: 0}
+            ]));
+
+            // "roundabout"
+            assert.equal(8, f([
+                {x: -1, y: 1, z: 0},
+                {x: 1, y: 1, z: 0},
+                {x: 1, y: -1, z: 0},
+                {x: -1, y: -1, z: 0},
+                {x: -1, y: 1, z: 0}
+            ]));
+
+            // z should be ignored
+            assert.equal(2, f([
+                {x: 0, y: 0, z: 0},
+                {x: 1, y: 0, z: 100},
+                {x: 2, y: 0, z: 0}
+            ]));
+
+        });
+
     });
 
 });
