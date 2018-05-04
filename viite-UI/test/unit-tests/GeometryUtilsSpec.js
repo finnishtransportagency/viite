@@ -3,14 +3,6 @@ define(['chai', 'GeometryUtils'], function(chai, GeometryUtils) {
 
     describe('Geometry utils', function() {
 
-        /*
-                // TODO Requires ol.geom.LineString
-                it('calculate measure at point', function() {
-                    var f = GeometryUtils.calculateMeasureAtPoint;
-                    assert.equal('TODO expected result', f('TODO linestring', 'TODO point'));
-                });
-        */
-
         it('offset by side code', function() {
             var f = GeometryUtils.offsetBySideCode;
             assert.deepEqual({points: [], sideCode: 1}, f(0, {points: [], sideCode: 1}));
