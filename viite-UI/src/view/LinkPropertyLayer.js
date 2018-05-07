@@ -113,9 +113,15 @@
       greenStyle();
 
       if(!addToGreenLayer){
-        greenRoadLayer.getSource().addFeatures(features);
+          var filteredFeatures = _.reject(features, function (feat) {
+              return _.some(greenRoadLayer.getSource().getFeatures(), function (green) {
+                  console.log(green);
+                  return green.roadLinkData.id === feat.roadLinkData.id;
+              })
+          });
+          greenRoadLayer.getSource().addFeatures(filteredFeatures);
         selectSingleClick.getFeatures().clear();
-        addFeaturesToSelection(features);
+          addFeaturesToSelection(filteredFeatures);
       }
     };
 
@@ -814,6 +820,7 @@
         redrawNextSelectedTarget(targets, adjacents);
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
+          clearIndicators();
         drawIndicators(targets);
         _.map(_.rest(selectedLinkProperty.getFeaturesToKeep()), function (roads){
           editFeatureDataForGreen(roads);
@@ -1050,7 +1057,7 @@
         });
         if(!targetFeature){
           _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
-            if(feature.roadLinkData.linkId == targets){
+              if (feature.roadLinkData.linkId == targets.linkId) {
               var pickAnomalousMarker;
               if(feature.roadLinkData.anomaly === Anomaly.GeometryChanged.value) {
                 var roadLink = feature.roadLinkData;
