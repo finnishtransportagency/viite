@@ -180,6 +180,7 @@
                     $('#new-road-name').on("click", function (eventObject) {
                         var target = $(eventObject.target);
                         target.css("visibility", "hidden");
+                        $('.form-control').prop("readonly", true);
                         var originalRoadId = target.attr("data-roadId");
                         var roadNumber = target.attr("data-roadNumber");
                         $('#roadList-table').append('<tr class="roadList-item" id="newRoadName" data-originalRoadId ="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">' +
@@ -202,6 +203,7 @@
                             var roadNumber = target.attr("data-roadNumber");
                             $('#new-road-name[data-roadid|=' + roadId + '][data-roadnumber|=' + roadNumber + ']').css("visibility", "visible");
                             $('#newRoadName[data-originalRoadId|=' + roadId + '][data-roadnumber|=' + roadNumber + ']').remove();
+                            $('.form-control').prop("readonly", false);
                         });
                     });
 
