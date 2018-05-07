@@ -117,7 +117,7 @@
               return _.some(greenRoadLayer.getSource().getFeatures(), function (green) {
                   console.log(green);
                   return green.roadLinkData.id === feat.roadLinkData.id;
-              })
+              });
           });
           greenRoadLayer.getSource().addFeatures(filteredFeatures);
         selectSingleClick.getFeatures().clear();
@@ -765,6 +765,7 @@
 
         draw();
         _.defer(function(){
+            var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
           var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
             return feature.linkId;
           }).uniq().value();
@@ -772,8 +773,13 @@
           var featuresToReSelect = _.filter(visibleFeatures, function(feature){
             return _.contains(floatingsLinkIds, feature.roadLinkData.linkId);
           });
-          if(featuresToReSelect.length !== 0){
-            addFeaturesToSelection(featuresToReSelect);
+            var filteredFeaturesToReselect = _.reject(featuresToReSelect, function (feat) {
+                return _.some(currentGreenFeatures, function (green) {
+                    return green.roadLinkData.id === feat.roadLinkData.id;
+                })
+            });
+            if (filteredFeaturesToReselect.length !== 0) {
+                addFeaturesToSelection(filteredFeaturesToReselect);
           }
           var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function(feature){
             return _.contains(_.pluck(selectedLinkProperty.get(), 'linkId'), feature.roadLinkData.linkId);
