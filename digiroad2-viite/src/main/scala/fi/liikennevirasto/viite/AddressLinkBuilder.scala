@@ -80,6 +80,13 @@ trait AddressLinkBuilder {
     }
   }
 
+  protected def fromOptionalToLongNumber(valueOpt: Option[Any], longOpt: Option[Long]): Long = {
+    valueOpt match {
+      case Some(l) if toLongNumber(l) > 0 => valueOpt.map(toLongNumber).getOrElse(0L)
+      case _ => longOpt.getOrElse(0)
+    }
+  }
+
   protected def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
     def toLong(anyValue: Option[Any]) = {
       anyValue.map(_.asInstanceOf[BigInt].toLong)
