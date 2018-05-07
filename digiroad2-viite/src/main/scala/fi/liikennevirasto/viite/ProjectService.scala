@@ -1064,11 +1064,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
-    def checkAndMakeReservation(projectId: Long, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]) = {
+    def checkAndMakeReservation(projectId: Long, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): (Boolean, Option[Long], Option[Long]) = {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber, linkStatus, projectLinks)
       try {
         val (toReplace, road, part) = isCompletelyNewPart(projectLinks)
-        if (toReplace) {
+        if (toReplace && linkStatus == New) {
           val reservedPart = ProjectDAO.fetchReservedRoadPart(road, part).get
           ProjectDAO.removeReservedRoadPart(projectId, reservedPart)
           val newProjectLinks: Seq[ProjectLink] = projectLinks.map(pl => pl.copy(id = NewRoadAddress,
@@ -1084,8 +1084,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         } else if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         }
+        (toReplace, Some(road), Some(part))
       } catch {
         case e: Exception => println("Unexpected exception occurred: " + e)
+          (false, None, None)
       }
     }
 
@@ -1137,13 +1139,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
 
           case LinkStatus.Transfer =>
-            checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
+            val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
             val updated = toUpdateLinks.map(l => {
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
                 status = linkStatus, calibrationPoints = (None, None), roadType = RoadType.apply(roadType.toInt))
             })
             ProjectDAO.updateProjectLinksToDB(updated, userName)
             ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
+            //transfer cases should remove the part after the project link table update operation
+            if(replaceable){
+              ProjectDAO.removeReservedRoadPart(projectId, road.get, part.get)
+            }
             roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
