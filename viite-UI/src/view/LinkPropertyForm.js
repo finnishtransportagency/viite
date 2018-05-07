@@ -649,6 +649,7 @@
         $('[id^=VALITUTLINKIT]').remove();
 
           var nonFloatingFeatures = selectedLinkProperty.getFeaturesToKeep();
+          //TODO: Remove after finishing
           // _.reject(selectedLinkProperty.getFeaturesToKeep(), function(t){
           //     return t.roadLinkType == floatingRoadLinkType;
           // });
