@@ -39,8 +39,8 @@
             var readOnly = (writable ? "" : "readonly");
             var leftMargin = (writable ? "margin-left: 8px;" : "");
             if ((fieldName === "startDate" || fieldName === "endDate") && writable) {
-                field = '<div id="addDatePickerHere" value="' + dataField + '" data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
-                    '<input id="addDatePickerToInputHere" class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
+                field = '<div id="datePicker" value="' + dataField + '" data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
+                    '<input id="datePickerInput" class="' + inputClass + ' date-picker-input" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
                     '</div>';
             } else {
                 field = '<div>' +
@@ -174,7 +174,8 @@
                     retroactivelyAddDatePickers();
 
                     addSaveEvent();
-                    $('.form-control').on("change", editEvent);
+                    $('.form-control').on("input", editEvent);
+                    $('.date-picker-input').on("change", editEvent);
 
                     $('#new-road-name').on("click", function (eventObject) {
                         var target = $(eventObject.target);
@@ -191,7 +192,8 @@
                         retroactivelyAddDatePickers();
 
                         toggleSaveButton();
-                        $('.form-control').on("change", editEvent);
+                        $('.form-control').on("input", editEvent);
+                        $('.date-picker-input').on("change", editEvent);
 
                         $('#undo-new-road-name').on("click", function (eventObject) {
                             var target = $(eventObject.target);
