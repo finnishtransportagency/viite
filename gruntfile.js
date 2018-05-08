@@ -129,22 +129,9 @@ module.exports = function(grunt) {
       }
     },
     less: {
-      development: {
-        files: {
-          "dist/css/digiroad2.css": "UI/src/less/main.less"
-        }
-      },
       viitedev: {
         files: {
           "dist/css/viite.css": "UI/src/less/main.less"
-        }
-      },
-      production: {
-        options: {
-          cleancss: true
-        },
-        files: {
-          "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       },
       viiteprod: {
