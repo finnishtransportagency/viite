@@ -2,7 +2,7 @@
     root.RoadNamingToolWindow = function (roadNameCollection) {
 
         var newId = -1000;
-
+        var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
         nameToolSearchWindow.append('<button class="close btn-close" id="closeRoadNameTool">x</button>');
         nameToolSearchWindow.append('<div class="content">Tienimi</div>');
@@ -73,11 +73,13 @@
 
         var retroactivelyAddDatePickers = function () {
             var minDate = roadNameCollection.getMinDate();
-            var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder]),.form-control[data-fieldName=endDate]:not([placeholder])');
+            var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder])');
             inputs.each(function (index, input) {
-                var datePicker = dateutil.addSingleDatePicker($(input));
-                if (minDate)
-                    datePicker.setMinDate(minDate);
+                if(input.dataset.roadid == newId) {
+                    var datePicker = dateutil.addSingleDatePicker($(input));
+                    if (minDate)
+                        datePicker.setMinDate(minDate);
+                }
             });
             $('.pika-single.is-bound').css("width", "auto");
         };
@@ -119,13 +121,6 @@
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
                     roadNameCollection.setStartDate(roadId, fieldValue);
-                    break;
-                case "endDate":
-                    if (roadId != newId) {
-                        $('.form-control[data-roadId=' + newId + '][data-fieldName=startDate]').val(fieldValue);
-                        roadNameCollection.setStartDate(newId, fieldValue);
-                    }
-                    roadNameCollection.setEndDate(roadId, fieldValue);
                     break;
             }
             toggleSaveButton();
@@ -171,6 +166,10 @@
                     });
                     html += '</table>';
                     $('#road-list').html($(html));
+                    var prevEndDateInput = $('#road-list tr.roadList-item input[data-fieldname="endDate"]').last();
+                    if(prevEndDateInput[0].value === "")
+                    prevEndDateInput.val(FINNISH_HINT_TEXT);
+                    prevEndDateInput.prop("readonly", true);
                     retroactivelyAddDatePickers();
 
                     addSaveEvent();
@@ -185,10 +184,12 @@
                         prevRoadNameInput.addClass("input-road-details-readonly");
                         prevRoadNameInput.removeClass("form-control");
                         prevRoadNameInput.prop("readonly", true);
-                        var prevEndDateInput = $('#road-list tr.roadList-item input[data-fieldname="endDate"]').last();
-                        // TODO endDate VIITE-1320
-
                         var originalRoadId = target.attr("data-roadId");
+                        var prevEndDateInput = $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]');
+                        if(prevEndDateInput[0].value === "")
+                        prevEndDateInput.val(FINNISH_HINT_TEXT);
+                        prevEndDateInput.prop("readonly", true);
+
                         var roadNumber = target.attr("data-roadNumber");
                         $('#roadList-table').append('<tr class="roadList-item" id="newRoadName" data-originalRoadId ="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">' +
                             '<td style="width: 150px;">' + staticFieldRoadNumber(roadNumber, newId) + '</td>' +
@@ -197,8 +198,10 @@
                             '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "endDate") + '</td>' +
                             '<td>' + '<div id="plus_minus_buttons" data-roadId="' + newId + '" data-roadNumber="' + roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="undo-new-road-name" data-roadId="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">-</button></div>' + '</td>' +
                             '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>');
+                        var newEndDateInput = $('.form-control[data-roadId=' + newId + '][data-fieldName=endDate]');
+                        newEndDateInput.val(FINNISH_HINT_TEXT);
+                        newEndDateInput.prop("readonly", true);
                         retroactivelyAddDatePickers();
-
                         toggleSaveButton();
                         $('.form-control').on("input", editEvent);
                         $('.date-picker-input').on("change", editEvent);
@@ -215,9 +218,8 @@
                             prevRoadNameInput.addClass("form-control");
                             prevRoadNameInput.removeClass("input-road-details-readonly");
                             prevRoadNameInput.prop("readonly", false);
-                            var prevEndDateInput = $('#road-list tr.roadList-item input[data-fieldname="endDate"]').last();
-                            // TODO endDate VIITE-1320
-
+                            var prevEndDateInput = $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]');
+                            prevEndDateInput.val(FINNISH_HINT_TEXT);
                         });
                     });
 
