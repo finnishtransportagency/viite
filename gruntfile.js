@@ -19,12 +19,12 @@ module.exports = function(grunt) {
     preprocess: {
       development: {
         files: {
-          './viite-UI/index.html': './viite-UI/tmpl/index.html'
+          './UI/index.html': './UI/tmpl/index.html'
         }
       },
       production: {
         files: {
-          './viite-UI/index.html': './viite-UI/tmpl/index.html'
+          './UI/index.html': './UI/tmpl/index.html'
         }
       }
     },
@@ -34,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
+          'dist/js/<%= pkg.name %>.js': ['UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -44,7 +44,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= pkg.name %>.min.js': ['dist-viite/js/<%= pkg.name %>.js']
+          'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js']
         }
       }
     },
@@ -53,19 +53,19 @@ module.exports = function(grunt) {
         match: ['viite.css'],
         replacement: 'md5',
         src: {
-          path: 'dist-viite/css/viite.css'
+          path: 'dist/css/viite.css'
         }
       },
       files: {
-        src: ['viite-UI/index.html']
+        src: ['UI/index.html']
       }
     },
-    clean: ['dist-viite'],
+    clean: ['dist'],
     connect: {
       viite: {
         options: {
           port: 9003,
-          base: ['dist-viite', '.', 'viite-UI'],
+          base: ['dist', '.', 'UI'],
           middleware: function(connect, opts) {
             var config = [
               // Serve static files.
@@ -136,7 +136,7 @@ module.exports = function(grunt) {
       },
       viitedev: {
         files: {
-          "dist-viite/css/viite.css": "viite-UI/src/less/main.less"
+          "dist/css/viite.css": "UI/src/less/main.less"
         }
       },
       production: {
@@ -152,12 +152,12 @@ module.exports = function(grunt) {
           cleancss: true
         },
         files: {
-          "dist-viite/css/viite.css": "viite-UI/src/less/main.less"
+          "dist/css/viite.css": "UI/src/less/main.less"
         }
       }
     },
     jshint: {
-      files: ['Gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/**/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ],
+      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/' ],
       options: {
         reporterOutput: "",
         // options here to override JSHint defaults
@@ -204,7 +204,7 @@ module.exports = function(grunt) {
     },
     watch: {
       viite: {
-        files: ['<%= jshint.files %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
+        files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
         tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'mocha:viite_integration', 'configureProxies:viite'],
         options: {
           livereload: true
@@ -217,7 +217,7 @@ module.exports = function(grunt) {
         cwd: './node_modules/openlayers/'
       },
       viite_build_openlayers: {
-        cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
+        cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
         cwd: './node_modules/openlayers/'
       }
     }

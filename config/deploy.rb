@@ -32,7 +32,7 @@ namespace :deploy do
       execute "cd #{release_path} && cp revision.properties #{release_path}/conf/#{fetch(:stage)}/. || echo 'SKIP: No revision information available'"
       execute "cd #{release_path} && ln -s /data1/logs/viite logs"
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} assembly"
-      execute "cd #{release_path} && rsync -a dist-viite/ src/main/webapp/viite/"
+      execute "cd #{release_path} && rsync -a dist/ src/main/webapp/viite/"
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' UI/ src/main/webapp/viite/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/viite/"
       execute "cd #{release_path} && chmod 700 stop.sh"
