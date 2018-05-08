@@ -3,6 +3,7 @@ require.config({
     'underscore': '../../node_modules/underscore/underscore',
     'jquery': '../../node_modules/jquery/dist/jquery.min',
     'lodash': '../../node_modules/lodash/index',
+    'moment': '../../node_modules/moment/moment',
     'backbone': '../../node_modules/backbone/backbone',
     'chai': '../../node_modules/chai/chai',
     'EventBus': '../src/utils/eventbus',
@@ -11,6 +12,7 @@ require.config({
     'RoadCollection': '../src/model/RoadCollection',
     'zoomlevels': '../src/utils/zoom-levels',
     'geometrycalculator': '../src/utils/geometry-calculations',
+    'dateutil': '../src/utils/date-utils',
     'LocationInputParser': '../src/utils/LocationInputParser',
     'RoadAddressTestData': '../test_data/RoadAddressTestData',
     'RoadLinkTestData': '../test_data/RoadLinkTestData',
@@ -27,34 +29,34 @@ require.config({
     'EventBus': {
       deps: ['backbone']
     },
-    'Layer': {exports: 'Layer'},
-    'RoadCollection': {
-      exports: 'RoadCollection'
-    },
-    'geometrycalculator': {
-      exports: 'geometrycalculator'
-    },
+    'Layer': { exports: 'Layer' },
+    'RoadCollection': { exports: 'RoadCollection' },
+    'geometrycalculator': { exports: 'geometrycalculator' },
+    'moment': { exports: 'moment'},
+    'dateutil': { exports: 'dateutil' },
     'LocationInputParser': { exports: 'LocationInputParser' },
-    'GeometryUtils': {
-      exports: 'GeometryUtils'
-    },
-    'RoadAddressTestData': {exports: 'RoadAddressTestData'},
-    'RoadLinkTestData': {exports: 'RoadLinkTestData'},
-    'UserRolesTestData': {exports: 'UserRolesTestData'},
-    'validitydirections': {exports: 'validitydirections'},
-    'SplittingTestData': {exports: 'SplittingTestData'}
+    'GeometryUtils': { exports: 'GeometryUtils' },
+    'RoadAddressTestData': { exports: 'RoadAddressTestData' },
+    'RoadLinkTestData': { exports: 'RoadLinkTestData' },
+    'UserRolesTestData': { exports: 'UserRolesTestData' },
+    'validitydirections': { exports: 'validitydirections' },
+    'SplittingTestData': { exports: 'SplittingTestData' }
   },
   waitSeconds: 10
 });
-require(['lodash',
+require(['lodash', 'moment', 'GeometryUtils',
   'unit-tests/geometry-calculations-spec',
-  'unit-tests/LocationInputParserSpec'], function (lodash) {
-  window._ = lodash;
-  mocha.checkLeaks();
-  if (window.mochaPhantomJS) {
-    mochaPhantomJS.run();
+  'unit-tests/GeometryUtilsSpec',
+  'unit-tests/date-utils-spec',
+  'unit-tests/LocationInputParserSpec'],
+  function (lodash, moment) {
+    window._ = lodash;
+    window.moment = moment;
+    mocha.checkLeaks();
+    if (window.mochaPhantomJS) {
+      mochaPhantomJS.run();
+    } else {
+      mocha.run();
+    }
   }
-  else {
-    mocha.run();
-  }
-});
+);

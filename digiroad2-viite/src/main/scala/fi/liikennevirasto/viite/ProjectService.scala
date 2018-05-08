@@ -1074,7 +1074,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val newProjectLinks: Seq[ProjectLink] = projectLinks.map(pl => pl.copy(id = NewRoadAddress,
             roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
             roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt),
-            endAddrMValue = userDefinedEndAddressM.getOrElse(0).toLong))
+            endAddrMValue = userDefinedEndAddressM.getOrElse(pl.endAddrMValue.toInt).toLong))
           if (linkIds.nonEmpty) {
             addNewLinksToProject(sortRamps(newProjectLinks, linkIds), projectId, userName, linkIds.head, false)
           } else {
@@ -1460,9 +1460,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val errorMessage = getTRErrorMessage(trProjectState)
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
-          if (updatedStatus == Saved2TR)
+          if (updatedStatus == Saved2TR){
             logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
             updateRoadAddressWithProjectLinks(updatedStatus, projectID)
+          }
         }
         RoadAddressDAO.fetchAllFloatingRoadAddresses().isEmpty
       case None =>
