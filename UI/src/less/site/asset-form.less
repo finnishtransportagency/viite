@@ -16,7 +16,32 @@
       display: block;
       padding: @line-height-modifier * 2;
       line-height: (@line-height-modifier * 5) + 2;
+      float: left;
     }
+  }
+
+  .rightSideSpan {
+    display: block;
+    float: right;
+    width: max-content;
+    color: @blue-dark;
+    cursor: pointer;
+  }
+
+  .deleteSpan {
+    display: block;
+    float: right;
+    width: max-content;
+    color: @warning;
+    cursor: pointer;
+  }
+
+  .manualCPWarningSpan {
+    color: #FF0000;
+    font-size: 25px;
+    margin-top: 10px;
+    margin-bottom: -10px;
+    display: none;
   }
 
   .wrapper {
@@ -39,10 +64,6 @@
     text-align: right;
 
     .save {
-      margin-right: 5px;
-    }
-
-    .verify {
       margin-right: 5px;
     }
   }
@@ -85,7 +106,7 @@
         font-size: @font-icon-size-base;
         color: @warning;
         content: '\e805';
-      }      
+      }
     }
   }
 
@@ -108,7 +129,8 @@
   }
 
   .form-manoeuvre {
-    .control-label {
+    .control-label,
+    .control-label-projects {
       width: 100%;
       margin-bottom: 10px;
       text-align: left;
@@ -128,7 +150,8 @@
       }
       margin-left: 10px;
 
-      .form-control-static {
+      .form-control-static,
+      .form-control-static-floating {
         width: auto;
         margin-right: 10px;
       }
@@ -150,7 +173,8 @@
         font-weight: normal;
       }
 
-      .existing-validity-period .control-label {
+      .existing-validity-period .control-label,
+      .existing-validity-period .control-label-projects {
         width: 40px;
         text-align: left;
       }
@@ -197,23 +221,14 @@
   }
 
   .edit-mode {
-    label.control-label.required:before {
+    label.control-label.required:before,
+    label.control-label-projects.required:before {
       content: '* ';
     }
 
-    label.control-label.required {
+    label.control-label.required,
+    label.control-label-projects.required {
       color: @warning;
-    }
-
-    label.control-terminal-label.required:before {
-      content: '* ';
-    }
-
-    label.control-terminal-label.required {
-      color: @warning;
-      font-size: 13px;
-      margin-top: 9px;
-      margin-right: 30px;
     }
   }
 
@@ -229,11 +244,6 @@
     font-size: @font-size-xl;
     margin: auto;
     display:block
-  }
-
-  span.terminal-header {
-    width: 100px;
-    line-height: 17px;
   }
 
 }
@@ -281,7 +291,26 @@
     width: @control-label-width;
     margin-right: @control-label-margin;
     font-size: @font-size-xs;
-    margin-top: 5px;
+    margin-top: 10px;
+  }
+
+  .control-label-floating {
+    width: @control-label-width;
+    margin-right: @control-label-margin;
+    font-size: @font-size-xxs;
+  }
+
+  .control-label-projects {
+    width: @control-label-projects-width;
+    margin-right: @control-label-margin;
+    font-size: @font-size-xs;
+    margin-top: 10px;
+  }
+
+  .control-label-projects-list {
+    vertical-align: middle !important;
+    font-size: @font-size-large;
+    margin-left: 10px;
   }
 
   .form-control.sub-control {
@@ -289,13 +318,23 @@
   }
 
   .form-control,
+  .split-form-control,
   .checkbox,
   .select,
   .form-control-static,
   .choice-group,
   .btn-block {
     width: 210px;
-    margin-top: 6px;
+    margin-top: 10px;
+  }
+
+  .project-choice-group{
+    width: 370px;
+    margin-top: 10px;
+  }
+
+  .form-control-static-floating {
+    width: 210px;
   }
 
   .asset-log-info {
@@ -308,16 +347,13 @@
 
 
 #information-content {
-  a {
+  p {
     z-index: 1011;
-    color: @input-color-placeholder-dark;
-    text-decoration: underline;
-  }
-
-  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets, .unchecked-linear-assets {
+    color: @gray-lighter;
     position:absolute;
-    right: 10px;
-    bottom: 145px;
-    text-transform: uppercase;
+    right: 30px;
+    bottom: 170px;
+    font-size:14px;
+    text-align: center;
   }
 }

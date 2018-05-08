@@ -4,7 +4,7 @@ window.Confirm = function() {
         '<div class="modal-overlay confirm-modal">' +
             '<div class="modal-dialog">' +
                 '<div class="content">' +
-                    'Olet muokannut tietolajia.' +
+                    'Olet muokannut tietoja.' +
                     'Tallenna tai peru muutoksesi.' +
                 '</div>' +
                 '<div class="actions">' +

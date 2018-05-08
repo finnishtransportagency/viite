@@ -1,7 +1,5 @@
 (function(root) {
   root.LocationSearch = function(backend, applicationModel) {
-    var selectedLayer;
-
     /**
      * Search by street address
      *
@@ -12,103 +10,13 @@
       return backend.getGeocode(street.address).then(function(result) {
         var resultLength = _.get(result, 'results.length');
         var vkmResultToCoordinates = function(r) {
-          return { title: r.address, lon: r.x, lat: r.y ,resultType:"street" };
+          return { title: r.address, lon: r.x, lat: r.y};
         };
         if (resultLength > 0) {
           return _.map(result.results, vkmResultToCoordinates);
         } else {
           return $.Deferred().reject('Tuntematon katuosoite');
         }
-      });
-    };
-
-    /**
-     * Combined numerical value search (asset id and road number, which is part of road address)
-     *
-     * @param input
-     * @returns {*}
-     */
-    var idOrRoadNumber = function(input) {
-      if (selectedLayer === 'massTransitStop') {
-        return roadNumberAndNationalIdSearch(input);
-      } else if (selectedLayer === 'linkProperty') {
-        return roadNumberAndRoadLinkSearch(input);
-      } else if (selectedLayer === 'speedLimit') {
-        return roadNumberAndSpeedLimitSearch(input.text);
-      } else {
-        return getCoordinatesFromRoadAddress({roadNumber: input.text});
-      }
-    };
-
-    /**
-     * Speed limit id search, combined with road number search
-     *
-     * @param input
-     * @returns {*}
-     */
-    var roadNumberAndSpeedLimitSearch = function(input){
-      var roadNumberSearch = backend.getCoordinatesFromRoadAddress(input);
-      var speedlimitSearch= backend.getSpeedLimitsLinkIDFromSegmentID(input);
-      return $.when(
-        speedlimitSearch, roadNumberSearch).then(function(speedlimitdata,roadData) {
-        var returnObject = roadLocationAPIResultParser(roadData);
-        if (_.get(speedlimitdata[0], 'success')) {
-          var linkid = _.get(speedlimitdata[0], 'linkId');
-          var y = _.get(speedlimitdata[0], 'latitude');
-          var x= _.get(speedlimitdata[0], 'longitude');
-          var title = input + " (nopeusrajoituksen ID)";
-            returnObject.push({title: title, lon: x, lat: y, linkid:linkid, resultType:"SpeedLimit"});
-        }
-        if (returnObject.length===0){
-          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-        }
-        return returnObject;
-        });
-    };
-
-    /**
-     * Link id search, combined with road number search
-     *
-     * @param input
-     * @returns {*}
-     */
-    var roadNumberAndRoadLinkSearch= function(input) {
-      var roadLinkSearch = backend.getRoadLinkToPromise(input.text);
-      var roadNumberSearch = backend.getCoordinatesFromRoadAddress(input.text);
-      return $.when(roadLinkSearch, roadNumberSearch).then(function(linkdata,roadData) {
-        var returnObject = roadLocationAPIResultParser(roadData);
-        if (_.get(linkdata[0], 'success')) {
-          var x = _.get(linkdata[0], 'middlePoint.x');
-          var y = _.get(linkdata[0], 'middlePoint.y');
-          var title = input.text + " (linkin ID)";
-          returnObject.push({title: title, lon: x, lat: y, resultType: "Link-id"});
-        }
-          if (returnObject.length === 0){
-          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-          }
-        return returnObject;
-      });
-    };
-
-    /**
-     * Mass transit stop national id search, combined with road number search
-     *
-     * @param input
-     * @returns {*}
-     */
-    var roadNumberAndNationalIdSearch = function(input) {
-      return $.when(backend.getMassTransitStopByNationalIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
-        var returnObject = roadLocationAPIResultParser(roadData);
-         if (_.get(result[0], 'success')) {
-          var lon = _.get(result[0], 'lon');
-          var lat = _.get(result[0], 'lat');
-          var title = input.text + ' (valtakunnallinen ID)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text,resultType:"Mtstop"});
-         }
-        if (returnObject.length === 0){
-          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-        }
-            return returnObject;
       });
     };
 
@@ -134,28 +42,7 @@
       }
     }
 
-    /**
-     * Search by mass transit stop Livi-id
-     *
-     * @param input
-     * @returns {*}
-     */
-    var  massTransitStopLiviIdSearch = function(input) {
-      return $.when(backend.getMassTransitStopByLiviIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
-        var returnObject = roadLocationAPIResultParser(roadData);
-        if (_.get(result[0], 'success')) {
-          var lon = _.get(result[0], 'lon');
-          var lat = _.get(result[0], 'lat');
-          var nationalid=_.get(result[0], 'nationalId');
-          var title = input.text + ' (pysäkin Livi-tunniste)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: nationalid, resultType:"Mtstop"});
-        }
-          if (returnObject.length === 0){
-            return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-          }
-          return returnObject;
-      });
-    };
+
     /**
      * Get road address coordinates
      *
@@ -174,23 +61,11 @@
         });
     };
 
-    /**
-     * Search by coordinates
-     *
-     * @param coordinates
-     * @returns {*|String}
-     */
     var resultFromCoordinates = function(coordinates) {
-      var result = _.assign({}, coordinates, { title: coordinates.lat + ',' + coordinates.lon, resultType:"coordinates" });
+      var result = _.assign({}, coordinates, { title: coordinates.lat + ',' + coordinates.lon });
       return $.Deferred().resolve([result]);
     };
 
-    /**
-     * Main search method
-     *
-     * @param searchString
-     * @returns {*}
-     */
     this.search = function(searchString) {
       function addDistance(item) {
         var currentLocation = applicationModel.getCurrentLocation();
@@ -207,14 +82,11 @@
         });
       }
 
-      selectedLayer = applicationModel.getSelectedLayer();
-      var input = LocationInputParser.parse(searchString, selectedLayer);
+      var input = LocationInputParser.parse(searchString);
       var resultByInputType = {
         coordinate: resultFromCoordinates,
         street: geocode,
         road: getCoordinatesFromRoadAddress,
-        idOrRoadNumber: idOrRoadNumber,
-        liviId: massTransitStopLiviIdSearch,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
 

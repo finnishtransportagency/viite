@@ -2,10 +2,6 @@
   var selectToolIcon = '<img src="images/select-tool.svg"/>';
   var cutToolIcon = '<img src="images/cut-tool.svg"/>';
   var addToolIcon = '<img src="images/add-tool.svg"/>';
-  var rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
-  var polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
-  var terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
-  var checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
@@ -74,9 +70,6 @@
   ActionPanelBoxes.addToolIcon = addToolIcon;
   ActionPanelBoxes.Tool = Tool;
   ActionPanelBoxes.ToolSelection = ToolSelection;
-  ActionPanelBoxes.rectangleToolIcon = rectangleToolIcon;
-  ActionPanelBoxes.polygonToolIcon = polygonToolIcon;
-  ActionPanelBoxes.terminalToolIcon = terminalToolIcon;
 
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
@@ -86,37 +79,14 @@
                '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
              '</div>';
     }).join('');
-    var speedLimitHistoryCheckBox = [
-      '<div class="check-box-container">',
-          '<input id="historyCheckbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
-    '</div>'].join('');
-
-    var speedLimitComplementaryCheckBox = [
-      '<div class="check-box-container">' +
-        '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-      '</div>'
-    ].join('');
-
-    var speedLimitSignsCheckBox = [
-      '<div class="check-box-container">' +
-      '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
-      '</div>' +
-      '</div>'
-    ].join('');
-
-    var header = ['<div id="left-panel">    Nopeusrajoitukset</div>' +
-        ' <div id="right-panel">' + checkIcon + '</div>'].join('');
 
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      header,
+      '    Nopeusrajoitukset',
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
             speedLimitLegendTemplate,
-            speedLimitHistoryCheckBox,
-            speedLimitComplementaryCheckBox,
-            speedLimitSignsCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -129,11 +99,9 @@
       new Tool('Cut', cutToolIcon, selectedSpeedLimit)
     ]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
-    var userRoles;
 
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
         if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
@@ -152,55 +120,13 @@
       .hide();
 
     function show() {
-      if (editModeToggle.hasNoRolesPermission(userRoles)) {
-        editModeToggle.reset();
-      } else {
-        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
-      }
+      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
     }
 
     function hide() {
       element.hide();
     }
-
-    elements.expanded.find('#historyCheckbox').on('change', function (event) {
-      var eventTarget = $(event.currentTarget);
-      if (eventTarget.prop('checked')) {
-        eventbus.trigger('speedLimits:showSpeedLimitsHistory');
-      } else {
-        eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
-      }
-    });
-
-    elements.expanded.find('#compCheckbox').on('change', function (event) {
-      if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger('speedLimits:showSpeedLimitsComplementary');
-      } else {
-        if (applicationModel.isDirty()) {
-          $(event.currentTarget).prop('checked', true);
-          new Confirm();
-        } else {
-          eventbus.trigger('speedLimits:hideSpeedLimitsComplementary');
-        }
-      }
-    });
-
-    elements.expanded.find('#signsCheckbox').on('change', function (event) {
-      if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger('speedLimit:showReadOnlyTrafficSigns');
-      } else {
-        eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
-      }
-    });
-
-    eventbus.on('verificationInfo:fetched', function(visible) {
-      var img = elements.expanded.find('#right-panel');
-      if (visible)
-        img.css('display','inline');
-      else
-        img.css('display','none');
-    });
 
     return {
       title: 'Nopeusrajoitus',
@@ -211,103 +137,6 @@
     };
   };
 
-  ActionPanelBoxes.WinterSpeedLimitBox = function(asset) {
-    var speedLimits = [100, 80, 70, 60];
-    var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + speedLimit + '</div>' +
-        '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
-        '</div>';
-    }).join('');
-
-    var complementaryLinkCheckBox = asset.allowComplementaryLinks ? [
-        '<div class="check-box-container">' +
-        '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-        '</div>' +
-        '</div>'
-      ].join('') : '';
-
-
-    var expandedTemplate = [
-      '<div class="panel ' + asset.layerName +'">',
-      '  <header class="panel-header expanded">',
-      '    ' + asset.title + (asset.editControlLabels.showUnit ? ' ('+asset.unit+')': ''),
-      '  </header>',
-      '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
-      speedLimitLegendTemplate,
-      complementaryLinkCheckBox,
-      '  </div>',
-      '</div>'].join('');
-
-    var elements = {
-      expanded: $(expandedTemplate)
-    };
-
-    var toolSelection = new ToolSelection([
-      new Tool('Select', selectToolIcon, asset.selectedLinearAsset),
-      new Tool('Cut', cutToolIcon, asset.selectedLinearAsset),
-      new Tool('Rectangle', rectangleToolIcon, asset.selectedLinearAsset),
-      new Tool('Polygon', polygonToolIcon, asset.selectedLinearAsset)
-    ]);
-    var editModeToggle = new EditModeToggleButton(toolSelection);
-    var userRoles;
-
-    var bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
-          toolSelection.reset();
-          elements.expanded.append(toolSelection.element);
-          elements.expanded.append(editModeToggle.element);
-        }
-      });
-      eventbus.on('application:readOnly', function(readOnly) {
-        elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
-      });
-    };
-
-    bindExternalEventHandlers();
-
-    var element = $('<div class="panel-group winter-speed-limits"/>')
-      .append(elements.expanded)
-      .hide();
-
-    function show() {
-      if (editModeToggle.hasNoRolesPermission(userRoles)) {
-        editModeToggle.reset();
-      } else {
-        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
-      }
-      element.show();
-    }
-
-    function hide() {
-      element.hide();
-    }
-
-    elements.expanded.find('#complementaryLinkCheckBox').on('change', function (event) {
-      if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger('complementaryLinks:show');
-      } else {
-        if (applicationModel.isDirty()) {
-          $(event.currentTarget).prop('checked', true);
-          new Confirm();
-        } else {
-          eventbus.trigger('complementaryLinks:hide');
-        }
-      }
-    });
-
-    return {
-      title: asset.title,
-      layerName: asset.layerName,
-      element: element,
-      show: show,
-      hide: hide
-    };
-  };
-
-
   var executeOrShowConfirmDialog = function(f) {
     if (applicationModel.isDirty()) {
       new Confirm();
@@ -316,118 +145,10 @@
     }
   };
 
-  ActionPanelBoxes.ServiceRoadBox = function(asset) {
-    var serviceRoadValues = [
-      [ 0, 'Tieoikeus'],
-      [ 1, 'Tiekunnan osakkuus'],
-      [ 2, 'LiVin hallinnoimalla maa-alueella'],
-      [ 3, 'Kevyen liikenteen väylä'],
-      [ 4, 'Tuntematon']
-    ];
-    var serviceRoadLegendTemplate = _.map(serviceRoadValues, function(serviceRoadValue) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + serviceRoadValue[1] + '</div>' +
-        '<div class="symbol linear service-road-' + serviceRoadValue[0] + '" />' +
-        '</div>';
-    }).join('');
-
-    var complementaryLinkCheckBox = asset.allowComplementaryLinks ? [
-        '  <div class="panel-section roadLink-complementary-checkbox">' +
-        '<div class="check-box-container">' +
-        '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-        '</div>' +
-        '</div>'
-      ].join('') : '';
-
-
-    var expandedTemplate = [
-      '<div class="panel ' + asset.layerName +'">',
-      '  <header class="panel-header expanded">',
-      '    ' + asset.title + (asset.editControlLabels.showUnit ? ' ('+asset.unit+')': ''),
-      '  </header>',
-      '  <div class="panel-section panel-legend linear-asset-legend service-road-legend">',
-      serviceRoadLegendTemplate,
-      '  </div>',
-      complementaryLinkCheckBox,
-      '</div>'].join('');
-
-    var elements = {
-      expanded: $(expandedTemplate)
-    };
-
-    var toolSelection = new ToolSelection([
-      new Tool('Select', selectToolIcon, asset.selectedLinearAsset),
-      new Tool('Cut', cutToolIcon, asset.selectedLinearAsset),
-      new Tool('Rectangle', rectangleToolIcon, asset.selectedLinearAsset),
-      new Tool('Polygon', polygonToolIcon, asset.selectedLinearAsset)
-    ]);
-    var editModeToggle = new EditModeToggleButton(toolSelection);
-    var userRoles;
-
-    var bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')  || _.contains(roles, 'serviceRoadMaintainer')) {
-          toolSelection.reset();
-          elements.expanded.append(toolSelection.element);
-          elements.expanded.append(editModeToggle.element);
-        }
-      });
-      eventbus.on('application:readOnly', function(readOnly) {
-        elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
-      });
-    };
-
-    bindExternalEventHandlers();
-
-    var element = $('<div class="panel-group service-road"/>')
-      .append(elements.expanded)
-      .hide();
-
-    function show() {
-      if (editModeToggle.hasNoRolesPermission(userRoles)) {
-        editModeToggle.reset();
-      } else {
-        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
-      }
-      element.show();
-    }
-
-    function hide() {
-      element.hide();
-    }
-
-    elements.expanded.find('#complementaryLinkCheckBox').on('change', function (event) {
-      if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger('complementaryLinks:show');
-      } else {
-        if (applicationModel.isDirty()) {
-          $(event.currentTarget).prop('checked', true);
-          new Confirm();
-        } else {
-          eventbus.trigger('complementaryLinks:hide');
-        }
-      }
-    });
-
-    eventbus.on('maintenanceRoad:activeComplementaryLayer', function() {
-      elements.expanded.find('#complementaryLinkCheckBox').prop('checked', true);
-    });
-
-    return {
-      title: asset.title,
-      layerName: asset.layerName,
-      element: element,
-      show: show,
-      hide: hide
-    };
-  };
-
   ActionPanelBoxes.AssetBox = function(selectedMassTransitStopModel) {
     var toolSelection = new ToolSelection([
       new Tool('Select', selectToolIcon, selectedMassTransitStopModel),
-      new Tool('Add', setTitleTool(addToolIcon, 'Lisää pysäkki'), selectedMassTransitStopModel),
-      new Tool('AddTerminal', setTitleTool(terminalToolIcon, 'Lisää terminaalipysäkki'), selectedMassTransitStopModel)
+      new Tool('Add', addToolIcon, selectedMassTransitStopModel)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
@@ -451,27 +172,6 @@
         '     <div class="symbol linear unknown"/>',
         '   </div>',
         '  </div>'
-    ].join('');
-
-    var constructionTypeLegend = [
-      '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
-      '    <div class="legend-entry">',
-      '      <div class="label">Rakenteilla</div>',
-      '      <div class="symbol linear construction-type-1"/>',
-      '   </div>',
-      '   <div class="legend-entry">',
-      '     <div class="label">Suunnitteilla</div>',
-      '     <div class="symbol linear construction-type-3"/>',
-      '   </div>',
-      '  </div>'
-    ].join('');
-
-    var roadLinkComplementaryCheckBox = [
-      '  <div class="panel-section roadLink-complementary-checkbox">',
-          '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" checked/> <lable>Näytä täydentävä geometria</lable>' +
-          '</div>' +
-      '</div>'
     ].join('');
 
     var expandedTemplate = [
@@ -502,8 +202,6 @@
       '    </div>',
       '  </div>',
       roadTypeLegend,
-      constructionTypeLegend,
-      roadLinkComplementaryCheckBox,
       '</div>'].join('');
 
     var elements = {
@@ -534,27 +232,12 @@
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
-
-      elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
-        if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger('roadLinkComplementaryBS:show');
-        } else {
-          if (applicationModel.isDirty()) {
-            $(event.currentTarget).prop('checked', true);
-            new Confirm();
-          } else {
-            eventbus.trigger('roadLinkComplementaryBS:hide');
-          }
-        }
-      });
-
     };
 
     var toggleRoadType = function(bool) {
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
 
       elements.expanded.find('.road-link-legend').toggle(bool);
-      elements.expanded.find('.construction-type-legend').toggle(bool);
       expandedRoadTypeCheckboxSelector.prop("checked", bool);
     };
 
@@ -573,7 +256,7 @@
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles) || _.contains(roles, 'busStopMaintainer')) {
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles)) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
@@ -600,10 +283,6 @@
 
     function hide() {
       element.hide();
-    }
-
-    function setTitleTool(icon, title) {
-      return icon.replace('/>', ' title="'+title+'"/>');
     }
 
     return {

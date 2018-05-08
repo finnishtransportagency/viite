@@ -7,17 +7,16 @@ window.GenericConfirmPopup = function(message, options) {
         noButtonLbl: 'Ei',
         okCallback: function() {},
         successCallback: function(){},
-        closeCallback: function(){},
-        container: '.container'
+        closeCallback: function(){}
     };
 
     options = _.merge(defaultOptions, options);
 
     var confirmDiv =
-        '<div class="modal-overlay confirm-modal">' +
+        '<div class="modal-overlay confirm-modal" id="genericConfirmationDialog">' +
             '<div class="modal-dialog">' +
                 '<div class="content">' +
-                  message +   
+                  message +
                 '</div>' +
                 '<div class="actions">' +
                     '<button class = "btn btn-primary yes">' + options.yesButtonLbl + '</button>' +
@@ -43,7 +42,7 @@ window.GenericConfirmPopup = function(message, options) {
         if(options.type === 'alert')
             template = alertDiv;
 
-        jQuery(options.container).append(template);
+        jQuery('.container').append(template);
         var modal = $('.modal-dialog');
     };
 
@@ -69,7 +68,7 @@ window.GenericConfirmPopup = function(message, options) {
     };
 
     var purge = function() {
-        jQuery('.confirm-modal').remove();
+        jQuery('#genericConfirmationDialog').remove();
     };
 
     show();

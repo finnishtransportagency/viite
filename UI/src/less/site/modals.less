@@ -39,7 +39,42 @@
       background-color: @gray-darker-2;      
     }
 
-    .form-group {
+    .content-new {
+      color: @gray-dark-2;
+      font-weight: bold;
+      height: 40px;
+      font-size: 15px;
+      background-color: @gray-light-2;
+
+      .label{
+        width: 300px;
+        height: 30px;
+        margin-top: 10px;
+        margin-left: 10px;
+        display: inline-block;
+        float: left;
+      }
+    }
+
+    .name-tool-content-new {
+      color: @gray-dark-2;
+      font-weight: bold;
+      height: 93px;
+      font-size: 12px;
+      background-color: @gray-light-2;
+
+      .label {
+        width: 300px;
+        height: 30px;
+        margin-top: 10px;
+        margin-left: 10px;
+        margin-bottom: -10px;
+        display: inline-block;
+      }
+    }
+
+    .form-group,
+    .split-form-group {
       margin-bottom: 0;
       padding: @line-height-modifier * 2;
       border-bottom: 1px solid @gray-light-2;
@@ -47,7 +82,7 @@
       &:last-child {
         border-bottom: none;
       }
-    }    
+    }
 
     .actions {
       padding: @line-height-modifier * 2;
@@ -59,6 +94,10 @@
       }
     }
   }
+}
+
+.changeDirection {
+  margin-right: .5em;
 }
 
 .modal-overlay.confirm-modal {

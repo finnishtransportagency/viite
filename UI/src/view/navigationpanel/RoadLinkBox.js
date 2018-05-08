@@ -1,40 +1,12 @@
 (function(root) {
-  root.RoadLinkBox = function(linkPropertiesModel) {
+  root.RoadLinkBox = function(selectedProjectLinkProperty) {
     var className = 'road-link';
-    var title = 'Tielinkki';
-
-    var roadLinkCheckBoxs = '<div class="panel-section">' +
-          '<div class="check-box-container">' +
-            '<input id="historyCheckbox" type="checkbox" /> <span>Näytä poistuneet tielinkit</span>' +
-          '</div>' +
-          '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
-          '</div>' +
-        '</div>';
-
-    var roadLinkComplementaryCheckBox = '<div class="panel-section">' +
-          '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
-          '</div>' +
-        '</div>';
-
+    var title = 'Selite';
+    var selectToolIcon = '<img src="images/select-tool.svg"/>';
+    var cutToolIcon = '<img src="images/cut-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
-        '<div class="panel-section panel-legend road-link-legend">' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="functional-class" checked>Toiminnallinen luokka</input></label>' +
-          '</div>' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="link-type">Tielinkin tyyppi</input></label>' +
-          '</div>' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="administrative-class">Hallinnollinen luokka</input></label>' +
-          '</div>' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="vertical-level">Silta, alikulku tai tunneli</input></label>' +
-          '</div>' +
-        '</div>' +
         '<div class="legend-container"></div>' +
       '</div>');
 
@@ -58,84 +30,40 @@
         '</div>' +
       '</div>');
 
-    var functionalClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
-    var functionalClasses = [
-      [1, '1'],
-      [2, '2'],
-      [3, '3'],
-      [4, '4'],
-      [5, '5'],
-      [6, '6: Muu yksityistie'],
-      [7, '7: Ajopolku'],
-      [8, '8: Kevyen liikenteen väylä']
+    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
+
+    var floatingLegend = $('' +
+      '<div class="legend-entry">' +
+      '<div class="label">Irti geometriasta</div>' +
+      '</div>' +
+      '<div class="floating-flag-with-stick-image"></div>'+
+      '<div class="legend-entry">' +
+      '<div class="symbol linear linear-asset-12" /></div>' +
+      '</div>');
+
+    var calibrationPointPicture = $('' +
+      '<div class="legend-entry">' +
+      '<div class="label">Etäisyyslukema</div>' +
+      '</div>' +
+      '<div class="calibration-point-image"></div>');
+
+    var roadClasses = [
+      [1, 'Valtatie (1-39)'],
+      [2, 'Kantatie (40-99)'],
+      [3, 'Seututie (100-999)'],
+      [4, 'Yhdystie (1000-9999)'],
+      [5, 'Yhdystie (10001-19999)'],
+      [6, 'Numeroitu katu (40000-49999)'],
+      [7, 'Ramppi tai kiertoliittymä (20001 - 39999)'],
+      [8, 'Jalka- tai pyörätie (70001 - 89999, 90001 - 99999)'],
+      [9, 'Talvitie (60001 - 61999)'],
+      [10,'Polku (62001 - 62999)'],
+      [11,'Muu tieverkko'],
+      [99,'Tuntematon']
     ];
-    var functionalClassLegendEntries = _.map(functionalClasses, function(functionalClass) {
-      return '<div class="legend-entry">' +
-        '<div class="label">Luokka ' + functionalClass[1] + '</div>' +
-        '<div class="symbol linear linear-asset-' + functionalClass[0] + '" />' +
-        '</div>';
-    }).join('');
-    functionalClassLegend.append(functionalClassLegendEntries);
-
-    var linkTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend link-type-legend"></div>');
-    var linkTypes = [
-      [1, 'Moottoritie'],
-      [4, 'Moottoriliikennetie'],
-      [3, 'Yksiajoratainen tie'],
-      [2, 'Moniajoratainen tie'],
-      [6, 'Kiertoliittymä'],
-      [5, 'Ramppi'],
-      [9, 'Jalankulkualue'],
-      [8, 'Kevyen liikenteen väylä'],
-      [11, '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>'],
-      [12, 'Ajopolku'],
-      [21, 'Huoltoaukko moottoritiellä'],
-      [13, 'Lautta tai lossi']
-    ];
-    var linkTypeLegendEntries = _.map(linkTypes, function(linkType) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + linkType[1] + '</div>' +
-        '<div class="symbol linear linear-asset-' + linkType[0] + '" />' +
-        '</div>';
-    }).join('');
-    linkTypeLegend.append(linkTypeLegendEntries);
-
-    var verticalLevelLegend = $('<div class="panel-section panel-legend linear-asset-legend vertical-level-legend"></div>');
-    var verticalLevels = [
-      [4, 'Silta, Taso 4'],
-      [3, 'Silta, Taso 3'],
-      [2, 'Silta, Taso 2'],
-      [1, 'Silta, Taso 1'],
-      [0, 'Maan pinnalla'],
-      [-1, 'Alikulku'],
-      [-11, 'Tunneli']
-    ];
-    var verticalLevelLegendEntries = _.map(verticalLevels, function(verticalLevel) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + verticalLevel[1] + '</div>' +
-        '<div class="symbol linear linear-asset-' + verticalLevel[0] + '" />' +
-        '</div>';
-    }).join('');
-    verticalLevelLegend.append(verticalLevelLegendEntries);
-
-    var legends = {
-      'administrative-class': administrativeClassLegend,
-      'functional-class': functionalClassLegend,
-      'link-type': linkTypeLegend,
-      'vertical-level': verticalLevelLegend
-    };
-
-    var datasetAllCheckboxs = {
-      'administrative-class': roadLinkComplementaryCheckBox,
-      'functional-class': roadLinkCheckBoxs,
-      'link-type': roadLinkCheckBoxs,
-      'vertical-level': roadLinkComplementaryCheckBox
-    };
-
-    var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
     var constructionTypes = [
-      [1, 'Rakenteilla'], //Under construction
-      [3, 'Suunnitteilla'] //Planned
+      [0, 'Muu tieverkko, rakenteilla'],
+      [1, 'Tuntematon, rakenteilla']
     ];
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
       return '<div class="legend-entry">' +
@@ -143,13 +71,127 @@
           '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
           '</div>';
     }).join('');
-    constructionTypeLegend.append(constructionTypeLegendEntries);
+    var roadClassLegendEntries = _.map(roadClasses, function(roadClass) {
+      return '<div class="legend-entry">' +
+        '<div class="label">' + roadClass[1] + '</div>' +
+        '<div class="symbol linear linear-asset-' + roadClass[0] + '" />' +
+        '</div>';
+    }).join('');
 
-    var editModeToggle = new EditModeToggleButton({
-      hide: function() {},
-      reset: function() {},
-      show: function() {}
-    });
+    var roadProjectOperations = function () {
+      return '<div class="legend-entry">' +
+        '<div class="label">Ennallaan</div>' +
+        '<div class="symbol linear operation-type-unchanged" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Uusi</div>' +
+        '<div class="symbol linear operation-type-new" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Siirto</div>' +
+        '<div class="symbol linear operation-type-transfer" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Lakkautus</div>' +
+        '<div class="symbol linear operation-type-terminated" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Numerointi</div>' +
+        '<div class="symbol linear operation-type-renumbered" />' +
+        '</div>' +
+        '<div class="legend-entry">' +
+        '<div class="label">Käsittelemätön</div>' +
+        '<div class="symbol linear operation-type-unhandeled" />' +
+        '<div class="label">Suravage-linkit</div>' +
+        '<div class="symbol linear operation-type-suravage" />' +
+        '<div class="label">Muu tieverkko, rakenteilla</div>' +
+        '<div class="symbol linear construction-type-0" />' +
+        '</div>';
+    };
+
+    roadClassLegend.append(roadClassLegendEntries);
+    roadClassLegend.append(constructionTypeLegendEntries);
+    roadClassLegend.append(floatingLegend);
+    roadClassLegend.append(calibrationPointPicture);
+
+    var Tool = function(toolName, icon) {
+      var className = toolName.toLowerCase();
+      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
+        executeOrShowConfirmDialog(function() {
+          applicationModel.setSelectedTool(toolName);
+        });
+      });
+      var deactivate = function() {
+        element.removeClass('active');
+      };
+      var activate = function() {
+        element.addClass('active');
+      };
+
+      var executeOrShowConfirmDialog = function(f) {
+        if (selectedProjectLinkProperty.isDirty()) {
+          new Confirm();
+        } else {
+          f();
+        }
+      };
+
+      return {
+        element: element,
+        deactivate: deactivate,
+        activate: activate,
+        name: toolName
+      };
+    };
+
+    var ToolSelection = function(tools) {
+      var element = $('<div class="panel-section panel-actions" />');
+      _.each(tools, function(tool) {
+        element.append(tool.element);
+      });
+      var hide = function() {
+        element.hide();
+      };
+      var show = function() {
+        element.show();
+      };
+      var deactivateAll = function() {
+        _.each(tools, function(tool) {
+          tool.deactivate();
+        });
+      };
+      var reset = function() {
+        deactivateAll();
+        tools[0].activate();
+      };
+      eventbus.on('tool:changed', function(name) {
+        _.each(tools, function(tool) {
+          if (tool.name != name) {
+            tool.deactivate();
+          } else {
+            tool.activate();
+          }
+        });
+      });
+
+      hide();
+      
+      return {
+        element: element,
+        reset: reset,
+        show: show,
+        hide: hide
+      };
+    };
+
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon),
+      new Tool('Cut', cutToolIcon)
+    ]);
+
+    var editModeToggle = new EditModeToggleButton(
+      toolSelection
+    );
 
     var templateAttributes = {
       className: className,
@@ -160,97 +202,59 @@
       expanded: $(expandedTemplate(templateAttributes))
     };
 
-    var bindDOMEventHandlers = function() {
-      elements.expanded.find('input[name="dataset"]').change(function(event) {
-        var datasetName = $(event.target).val();
-        var legendContainer = $(elements.expanded.find('.legend-container'));
-
-        var complementaryCheckboxChecked = legendContainer.find('#complementaryCheckbox').prop('checked');
-
-        legendContainer.find('#historyCheckbox').prop('checked', false);
-        eventbus.trigger('roadLinkHistory:hide');
-
-        legendContainer.empty();
-        legendContainer.append(legends[datasetName]);
-        legendContainer.append(constructionTypeLegend);
-
-        var allCheckBoxs = datasetAllCheckboxs[datasetName];
-        if (allCheckBoxs) {
-          legendContainer.append(allCheckBoxs);
-          if (complementaryCheckboxChecked) {
-            legendContainer.find('#complementaryCheckbox').prop('checked', true);
-          } else {
-            legendContainer.find('#complementaryCheckbox').prop('checked', false);
-          }
-        }
-
-        linkPropertiesModel.setDataset(datasetName);
-
-        bindEventHandlers(legendContainer);
-      });
-    };
-
-    var bindEventHandlers = function(checkboxContainer){
-      checkboxContainer.find('#historyCheckbox').on('change', function(event) {
-        if($(event.currentTarget).prop('checked')){
-          eventbus.trigger('roadLinkHistory:show');
-        } else {
-          eventbus.trigger('roadLinkHistory:hide');
-        }
-      });
-
-      checkboxContainer.find('#complementaryCheckbox').on('change', function (event) {
-        if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger('roadLinkComplementary:show');
-        } else {
-          if (applicationModel.isDirty()) {
-            $(event.currentTarget).prop('checked', true);
-            new Confirm();
-          } else {
-            eventbus.trigger('roadLinkComplementary:hide');
-          }
-        }
-      });
-
-      eventbus.on('roadLinkComplementaryCheckBox:check', function() {
-        checkboxContainer.find('#complementaryCheckbox').prop('checked', true);
-      });
-    };
-
-    var userRoles;
-
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
-        userRoles = roles;
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+        if (_.contains(roles, 'viite')) {
           elements.expanded.append(editModeToggle.element);
+          $('#projectListButton').removeAttr('style');
         }
       });
     };
 
-    bindDOMEventHandlers();
+    eventbus.on('editMode:setReadOnly', function(mode) {
+      editModeToggle.toggleEditMode(mode);
+      elements.expanded.append(toolSelection.element);
+    });
+
+    eventbus.on('application:readOnly', function() {
+      if(applicationModel.getSelectedLayer() != "linkProperty")
+      elements.expanded.append(toolSelection.element);
+    });
+
+    eventbus.on('roadAddressProject:clearTool', function(){
+      toolSelection.hide();
+    });
+
+    eventbus.on('layer:selected roadAddressProject', toggleProjectLegends);
 
     bindExternalEventHandlers();
 
-    var initialLegendContainer = elements.expanded.find('.legend-container');
-    initialLegendContainer.append(functionalClassLegend);
-    initialLegendContainer.append(constructionTypeLegend);
-    initialLegendContainer.append(roadLinkCheckBoxs);
+    elements.expanded.find('.legend-container').append(roadClassLegend);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
-    bindEventHandlers(elements.expanded);
-
     function show() {
-      if (editModeToggle.hasNoRolesPermission(userRoles)) {
-        editModeToggle.reset();
-      } else {
-        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
-      }
+      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
     }
 
     function hide() {
       element.hide();
+    }
+
+    function toggleProjectLegends() {
+      var container = $('#legendDiv');
+      if(applicationModel.getSelectedLayer() !== "linkProperty") {
+        container.empty();
+        container.append(roadProjectOperations());
+        container.append(calibrationPointPicture);
+      } else {
+        $('.panel-actions').hide();
+        container.empty();
+        roadClassLegend.append(roadClassLegendEntries);
+        roadClassLegend.append(constructionTypeLegendEntries);
+        roadClassLegend.append(floatingLegend);
+        roadClassLegend.append(calibrationPointPicture);
+      }
     }
 
     return {
