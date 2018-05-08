@@ -1147,7 +1147,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             ProjectDAO.updateProjectLinksToDB(updated, userName)
             ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
             //transfer cases should remove the part after the project link table update operation
-            if(replaceable){
+            if (replaceable) {
               ProjectDAO.removeReservedRoadPart(projectId, road.get, part.get)
             }
             roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
@@ -1466,7 +1466,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val errorMessage = getTRErrorMessage(trProjectState)
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
-          if (updatedStatus == Saved2TR){
+          if (updatedStatus == Saved2TR) {
             logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
             updateRoadAddressWithProjectLinks(updatedStatus, projectID)
           }
