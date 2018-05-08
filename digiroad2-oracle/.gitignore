@@ -17,7 +17,3 @@ project/plugins/project/
 # IDEA
 .idea
 .idea_modules
-
-# Gatling
-gatling/target
-gatling/results
