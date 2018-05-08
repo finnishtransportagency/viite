@@ -828,7 +828,7 @@
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
           clearIndicators();
         drawIndicators(targets);
-        _.map(_.rest(selectedLinkProperty.getFeaturesToKeep()), function (roads){
+          _.map(selectedLinkProperty.getFeaturesToKeep(), function (roads) {
           editFeatureDataForGreen(roads);
         });
       });
