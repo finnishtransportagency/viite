@@ -8,7 +8,6 @@ target/
 .DS_Store
 logs/
 UI/index.html
-dist-viite/
 project/project/
 /viite.html
 yarn.lock
