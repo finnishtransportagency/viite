@@ -204,28 +204,28 @@ object RoadNameDAO {
 
   /**
     * generates required number of ? for preparedstatement when using (in) clause
+    *
     * @param roads
     * @return
     */
-  protected def qMarksGenerator(roads:Set[Long]): String ={
+  protected def qMarksGenerator(roads: Set[Long]): String = {
     val inClause = new StringBuilder
-    for (i<-roads){
+    for (i <- roads) {
       inClause.append("?,")
     }
     inClause.dropRight(1).toString()
   }
 
 
-
   def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
-  if (roadNumbers.isEmpty) return // dont even bother with empty set
-    val query=s" UPDATE  ROAD_NAMES  SET VALID_TO = ? WHERE VALID_TO IS NULL AND ROAD_NUMBER in (${qMarksGenerator(roadNumbers)})"
+    if (roadNumbers.isEmpty) return // dont even bother with empty set
+    val query = s" UPDATE  ROAD_NAMES  SET VALID_TO = ? WHERE VALID_TO IS NULL AND ROAD_NUMBER in (${qMarksGenerator(roadNumbers)})"
     val roadNamesPS = dynamicSession.prepareStatement(query)
-    roadNamesPS.setDate(1,new Date(endDate))
-    var index=2
-    for (roadNumber<-roadNumbers){
-      roadNamesPS.setLong(index,roadNumber)
-      index+=1
+    roadNamesPS.setDate(1, new Date(endDate))
+    var index = 2
+    for (roadNumber <- roadNumbers) {
+      roadNamesPS.setLong(index, roadNumber)
+      index += 1
     }
     roadNamesPS.addBatch()
     roadNamesPS.executeBatch()
