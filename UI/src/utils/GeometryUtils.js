@@ -23,7 +23,7 @@
 
   var segmentsOfLineString = function (lineString, point) {
     return _.reduce(lineString.getCoordinates(), function (acc, vertex, index, vertices) {
-      if(index === 0)
+      if (index === 0)
         return acc;
 
       var previousVertex = vertices[index - 1];
@@ -46,7 +46,7 @@
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
     var split = _.reduce(lineString.getCoordinates(), function (acc, vertex, index) {
-      var convertedVertex = { x: vertex[0] , y: vertex[1] };
+      var convertedVertex = {x: vertex[0], y: vertex[1]};
       if (acc.firstSplit) {
         if (acc.previousVertex) {
           acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(acc.previousVertex, convertedVertex));
@@ -67,14 +67,66 @@
   };
 
   root.offsetBySideCode = function (zoom, asset) {
-    if (asset.sideCode === 1) {
-      return asset;
-    }
     asset.points = _.map(asset.points, function (point, index, geometry) {
       var baseOffset = -3.5;
       return root.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
     });
     return asset;
+  };
+
+  var distanceToSegment = function (coordinate, segment) {
+    var x0 = coordinate[0];
+    var y0 = coordinate[1];
+    var start = segment[0];
+    var end = segment[1];
+    var x1 = start[0];
+    var y1 = start[1];
+    var x2 = end[0];
+    var y2 = end[1];
+    var dx = x2 - x1;
+    var dy = y2 - y1;
+    var along = (dx === 0 && dy === 0) ? 0 : ((dx * (x0 - x1)) + (dy * (y0 - y1))) /
+    (Math.pow(dx, 2) + Math.pow(dy, 2));
+    var x, y;
+    if (along <= 0) {
+      x = x1;
+      y = y1;
+    } else if (along >= 1) {
+      x = x2;
+      y = y2;
+    } else {
+      x = x1 + along * dx;
+      y = y1 + along * dy;
+    }
+    return {
+      distance: Math.sqrt(Math.pow(x - x0, 2) + Math.pow(y - y0, 2)),
+      x: x, y: y,
+      along: along
+    };
+  };
+
+  var distanceToPoint = function (geometry, point) {
+    var result, best = {};
+    var min = Number.POSITIVE_INFINITY;
+    var i = 0;
+    geometry.forEachSegment(function (segPoint1, segPoint2) {
+      result = distanceToSegment(point, [segPoint1, segPoint2]);
+      if (result.distance < min) {
+        min = result.distance;
+        best = {
+          distance: min,
+          x0: result.x, y0: result.y,
+          x1: point[0], y1: point[1],
+          index: i
+        };
+        if (min === 0) {
+          return best;
+        }
+      }
+      i++;
+    });
+    return best;
+
   };
 
   root.splitByPoint = function (lineString, point) {
@@ -116,12 +168,25 @@
   };
   root.distanceOfPoints = distanceOfPoints;
 
+  var distanceBetweenPoints = function (end, start) {
+    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+  };
+  root.distanceBetweenPoints = distanceBetweenPoints;
+
   var radiansToDegrees = function (radians) {
     return radians * (180 / Math.PI);
   };
 
   var calculateAngleFromNorth = function (vector) {
-    return Math.atan2(vector.x, vector.y);
+    var v = unitVector(vector);
+    var rad = ((Math.PI * 2) - (Math.atan2(v.y, v.x) + Math.PI)) + (3 * Math.PI / 2);
+    var ret = rad > (Math.PI * 2) ? rad - (Math.PI * 2) : rad;
+    return radiansToDegrees(ret);
+  };
+
+  var arePointsAdjacent = function (point1, point2) {
+    var epsilon = 0.01;
+    return distanceBetweenPoints(point1, point2) <= epsilon;
   };
 
   root.calculateMidpointOfLineString = function (lineString) {
@@ -136,7 +201,7 @@
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
       } else {
         vertex = {x: vertex[0], y: vertex[1]};
-        acc.previousVertex = {x: acc.previousVertex[0], y:acc.previousVertex[1] };
+        acc.previousVertex = {x: acc.previousVertex[0], y: acc.previousVertex[1]};
         return {
           midpoint: {
             x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
@@ -150,63 +215,36 @@
     else return firstVertex;
   };
 
-  var distanceToSegment  = function (coordinate, segment) {
-      var x0 = coordinate[0];
-      var y0 = coordinate[1];
-      var start = segment[0];
-      var end = segment[1];
-      var x1 = start[0];
-      var y1 = start[1];
-      var x2 = end[0];
-      var y2 = end[1];
-      var dx = x2 - x1;
-      var dy = y2 - y1;
-      var along = (dx === 0 && dy === 0) ? 0 : ((dx * (x0 - x1)) + (dy * (y0 - y1))) /
-          (Math.pow(dx, 2) + Math.pow(dy, 2));
-      var x, y;
-      if (along <= 0) {
-          x = x1;
-          y = y1;
-      } else if (along >= 1) {
-          x = x2;
-          y = y2;
-      } else {
-          x = x1 + along * dx;
-          y = y1 + along * dy;
-      }
-      return{
-          distance: Math.sqrt(Math.pow(x - x0, 2) + Math.pow(y - y0, 2)),
-          x: x, y: y,
-          along: along
-      };
+  root.areAdjacents = function (geometry1, geometry2) {
+    var epsilon = 0.01;
+    var geom1FirstPoint = _.first(geometry1);
+    var geom1LastPoint = _.last(geometry1);
+    var geom2FirstPoint = _.first(geometry2);
+    var geom2LastPoint = _.last(geometry2);
+    return distanceOfPoints(geom2FirstPoint, geom1FirstPoint) < epsilon ||
+      distanceOfPoints(geom2LastPoint, geom1FirstPoint) < epsilon ||
+      distanceOfPoints(geom2FirstPoint, geom1LastPoint) < epsilon ||
+      distanceOfPoints(geom2LastPoint, geom1LastPoint) < epsilon;
   };
 
-  var distanceToPoint = function (geometry, point) {
-      var result, best = {};
-      var min = Number.POSITIVE_INFINITY;
-      var i = 0;
-      geometry.forEachSegment(function (segPoint1, segPoint2) {
-          result = distanceToSegment(point, [segPoint1, segPoint2]);
-          if(result.distance < min) {
-              min = result.distance;
-              best = {
-                  distance: min,
-                  x0: result.x, y0: result.y,
-                  x1: point[0], y1: point[1],
-                  index: i
-              };
-              if(min === 0) {
-                  return best;
-              }
-          }
-          i++;
-      });
-      return best;
-
+  root.connectingEndPoint = function (geometry1, geometry2) {
+    var geom1FirstPoint = _.first(geometry1);
+    var geom1LastPoint = _.last(geometry1);
+    var geom2FirstPoint = _.first(geometry2);
+    var geom2LastPoint = _.last(geometry2);
+    var connectedEndPoint = _.find([geom1FirstPoint, geom1LastPoint], function (point) {
+      return arePointsAdjacent(point, geom2FirstPoint) || arePointsAdjacent(point, geom2LastPoint);
+    });
+    return connectedEndPoint;
   };
 
-
-
+  root.geometryLength = function (geometry) {
+      return _.reduce(geometry , function (length, point, index, array) {
+        if (index < array.length - 1)
+          return length + distanceBetweenPoints(point, array[index+1]);
+        return length;
+      }, 0.0);
+  };
 
 })(window.GeometryUtils = window.GeometryUtils || {});
 

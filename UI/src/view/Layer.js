@@ -22,10 +22,12 @@
       return me.eventListener.running;
     };
     this.activateSelection = function() {
-      me.selectControl.activate();
+      if(!_.isUndefined(me.selectControl))
+        me.selectControl.activate();
     };
     this.deactivateSelection = function() {
-      me.selectControl.deactivate();
+      if(!_.isUndefined(me.selectControl))
+        me.selectControl.deactivate();
     };
     this.start = function(event) {
       if (!me.isStarted()) {
@@ -56,18 +58,32 @@
         me.stop();
       }
     };
-    this.drawOneWaySigns = function(layer, roadLinks) {
-      var filteredLinks = _.filter(roadLinks, function(link) {
-        return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
-      });
-      var oneWaySigns = mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
-        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + Math.PI : middlePoint.angleFromNorth;
-        var attributes = _.merge({}, link, { rotation: rotation  });
-        return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
+    this.drawSigns = function(layer, roadLinks) {
+      var signs = mapOverLinkMiddlePoints(roadLinks, function(link, middlePoint) {
+        var attributes = _.merge({}, link, { rotation: 0 });
+        return new OpenLayers.Feature.Vector(new ol.geom.Point(middlePoint.x, middlePoint.y), attributes);
       });
 
-      layer.getSource().addFeatures(oneWaySigns);
+      layer.addFeatures(signs);
     };
+
+    this.drawCalibrationMarkers = function(layer, roadLinks) {
+      var calibrationPointsWithValue = [];
+      _.filter(roadLinks, function (roadLink) {
+          return roadLink.calibrationPoints.length > 0;
+        }
+      ).forEach(function (roadLink) {
+        roadLink.calibrationPoints.forEach(function (currentPoint) {
+          var point=currentPoint.point;
+          if(point)
+            calibrationPointsWithValue.push({points:point,calibrationCode:roadLink.calibrationCode});
+        });
+      });
+
+      return calibrationPointsWithValue;
+
+    };
+
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
@@ -79,5 +95,6 @@
       roadLayer.clear();
       eventbus.off('map:moved', me.handleMapMoved);
     };
+
   };
 })(this);

@@ -1,6 +1,9 @@
 //== Component variables
 
 //== Colors
+//** Construction type colors
+@constuction-type-1:#a4a4a2;
+@constuction-type-2:#ff9900;
 
 @gray-darkest:		#171717;
 @gray-darker-2:		#282826;
@@ -22,46 +25,47 @@
 @blue-lighter:		#81baef;
 @blue-lightest:		#cce3f9;
 
+@green:             #00a104;
+
+@orange:            #ff704d;
+@orange_lighter:    #fdc4a9;
 //** Linear asset colors
-@linear-asset-1:	#00ccdd; //cyan
-@linear-asset-2:	#ff55dd; //pink
-@linear-asset-3:	#11bb00; //green
-@linear-asset-4:	#ff0000; //red
-@linear-asset-5:	#0011bb; //blue
-@linear-asset-6:	#888; //gray
-@linear-asset-7:	#444; //dark gray
-@linear-asset-8:	#000000; //black
-@linear-asset-9:    #439232; //dark green
-
-//** Construction type colors
-@construction-type-1: #ff9900; //orange
-@construction-type-3: #cc99ff; //lilac
-
-@construction-type-node-1: #ffc266; //orange
-@construction-type-node-3: #b366ff; //lilac
+@linear-asset-1:	#f00; //red
+@linear-asset-2:	#f60; //reddish orange
+@linear-asset-3:	#f93; //orange
+@linear-asset-4:	#01b; //blue
+@linear-asset-5:	#3cc; //cyan
+@linear-asset-6:	#c0f; //purple
+@linear-asset-7:	#0cd; //cyan 2
+@linear-asset-8:	#fb9ebf; //lighter pink
+@linear-asset-9:	#ff55dd; //pink
+@linear-asset-10:	#ff55dd; //pink
+@linear-asset-11:	#a4a4a2; //gray
+@linear-asset-12:	#f7fe2e; //yellow
+@linear-asset-99:	#000000; //black
+@suravage-links:    #d3aff6;
 
 //** Speed limit colors
+
 @speed-limit-1: @linear-asset-1; //cyan
 @speed-limit-2: @linear-asset-2; //pink
 @speed-limit-3: @linear-asset-3; //green
 @speed-limit-4: @linear-asset-4; //red
 @speed-limit-5: @linear-asset-5; //blue
 
-@linear-asset-node-1: #00adbb; //cyan
-@linear-asset-node-2: #ff33d6; //pink
-@linear-asset-node-3: #0e9900; //green
-@linear-asset-node-4: #ee0000; //red
-@linear-asset-node-5: #000e99; //blue
-@linear-asset-node-6: #666; //gray
-@linear-asset-node-7: #222; //dark gray
-
-
-//**Service Road colors
-@service-road-0: @linear-asset-5; //cyan
-@service-road-1: @linear-asset-3; //pink
-@service-road-2: @linear-asset-2; //green
-@service-road-3: @linear-asset-1; //red
-@service-road-4: @linear-asset-4; //blue
+@linear-asset-node-1: #f00; //
+@linear-asset-node-2: #f60; //
+@linear-asset-node-3: #f93; //
+@linear-asset-node-4: #01b; //
+@linear-asset-node-5: #3cc; //
+@linear-asset-node-6: #c0f; //
+@linear-asset-node-7: #0cd; //
+@linear-asset-node-8: #fb9ebf; //
+@linear-asset-node-9: #ff55dd; //
+@linear-asset-node-10: #ff55dd; //
+@linear-asset-node-11: #a4a4a2; //
+@linear-asset-node-12: #f7fe2e; //
+@linear-asset-node-99: #000000; //
 
 //** Validation colors
 
@@ -82,6 +86,7 @@
 @font-size-large: 	13px;
 @font-size-small:	11px;
 @font-size-xs:		10px;
+@font-size-xxs:		9px;
 
 @font-icon-size-base:	24px;
 
@@ -129,6 +134,8 @@
 @input-group-addon-bg-dark:		@gray;
 @input-group-addon-border-color-dark:	@input-border-dark;
 @control-label-width:                   140px;
+@control-label-projects-width:          82px;
+@control-label-projects-list-width:     300px;
 @control-label-margin:                  10px;
 
 //== Tables
@@ -136,5 +143,17 @@
 @table-cell-padding:	8px;
 
 @table-border-color:	@gray-light-2;
+
+//== Project change table variables
+
+@change-table-sections-height: 40px;
+@project-changes-height: 110px;
+@table-borders-height: @project-changes-height + @change-table-sections-height + 30;
+
+//== Project operations colors
+
+@operation-numbering: #8B4513;
+@operation-unchanged: #0000FF;
+@operation-transfer: #FF0000;
 
 

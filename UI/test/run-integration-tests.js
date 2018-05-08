@@ -4,45 +4,32 @@ require.config({
     chai:                             '../../node_modules/chai/chai',
     'chai-jquery':                    '../../node_modules/chai-jquery/chai-jquery',
     eventbus:                         '../src/utils/eventbus',
-    AssetsTestData:                   '../test_data/AssetsTestData',
+    RoadAddressTestData:              '../test_data/RoadAddressTestData',
     RoadLinkTestData:                 '../test_data/RoadLinkTestData',
     UserRolesTestData:                '../test_data/UserRolesTestData',
-    EnumeratedPropertyValuesTestData: '../test_data/EnumeratedPropertyValuesTestData',
-    AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
-    SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
-    SpeedLimitSplitTestData:          '../test_data/SpeedLimitSplitTestData',
-    AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
+    RoadAddressProjectTestData:       '../test_data/RoadAddressProjectTestData',
+    SplittingTestData:                '../test_data/SplittingTestData'
   },
   shim: {
     'chai-jquery': ['jquery', 'chai'],
     'eventbus': { exports: 'eventbus' },
-    'AssetsTestData': { exports: 'AssetsTestData' },
+    'RoadAddressTestData': { exports: 'RoadAddressTestData' },
+    'RoadAddressProjectTestData': { exports: 'RoadAddressProjectTestData' },
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },
     'UserRolesTestData': { exports: 'UserRolesTestData' },
-    'EnumeratedPropertyValuesTestData': { exports: 'EnumeratedPropertyValuesTestData' },
-    'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
-    'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
-    'SpeedLimitSplitTestData': { exports: 'SpeedLimitSplitTestData' },
-    'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
+    'SplittingTestData': { exports: 'SplittingTestData' }
   },
   waitSeconds: 10
 });
 require(['chai',
          'chai-jquery',
          'TestHelpers',
-         'GroupingByValidityPeriodSpec',
-         'MassTransitStopCreationSpec',
-         'MassTransitStopMoveSpec',
-         'SpeedLimitVisualizationSpec',
-         'RegroupingMassTransitStopsSpec',
-         'GroupingInCreationSpec',
-         'SingleSegmentSpeedLimitSpec',
-         'SpeedLimitSplitSpec',
-         'MultiSegmentSpeedLimitSpec'
+         'integration-tests/FloatingRoadAddressSpec',
+         'integration-tests/SplittingRoadAddressSpec',
+         'integration-tests/RoadAddressProjectSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
-
   //Workaround to give PhantomJS openlayers support
   Function.prototype.bind = Function.prototype.bind || function (thisp) {
     var fn = this;
@@ -53,7 +40,16 @@ require(['chai',
   window.requestAnimationFrame = window.requestAnimationFrame || function(callback){
     window.setTimeout(callback, 1000 / 60);
   };
-
+  //Workaround to get WMTSCapabilities
+  window.fetch = function(url,options){
+    return { then: function(callback){
+      callback({ text: function(){return '';} });
+        return {  then: function(requestCallback){
+            requestCallback();
+        }};
+      }
+    };
+  };
   eventbus.once('map:initialized', function() {
     if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
     else { mocha.run(); }

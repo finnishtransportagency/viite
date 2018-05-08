@@ -244,7 +244,7 @@
         };
 
         this.getStyleByName = function(name, feature, extraProperties){
-            var context = _.merge({}, feature.getProperties(), extraProperties);
+            var context = _.merge({}, feature, extraProperties);
             var allRules = getRulesByName(name);
             var configObj = _.merge({}, defaultStyle);
             for(var i=0; i < allRules.length; i++){

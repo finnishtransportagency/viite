@@ -49,23 +49,13 @@ a {
   }
 
   .action-state {
-     display: inline-block;
-     padding: 0 10px;
-     border-radius: @border-radius-base;
-     font-size: @font-size-small;
-     line-height: @line-height-modifier * 6;
-     color: #fff;
-     background-color: @blue;
-   }
-
-  .controlTR {
     display: inline-block;
     padding: 0 10px;
     border-radius: @border-radius-base;
     font-size: @font-size-small;
     line-height: @line-height-modifier * 6;
     color: #fff;
-    background-color: #0000ff;
+    background-color: @blue;
   }
 }
 
@@ -73,7 +63,6 @@ a {
   display: inline-block;
   float: right;
   padding: 0 8px;
-  margin-left: 4px;
   border-radius: @border-radius-base;
   font-size: 11px;
   text-decoration: none;
@@ -153,12 +142,42 @@ a {
 #work-list {
   display: none;
 }
-
-#municipality-work-list {
-  display: none;
+.calibration-point-image {
+  .text-hide();
+  display: block;
+  float: left;
+  width: 75px;
+  height: 32px;
+  margin: 3px 0;
+  color: #fff;
+  background-image:url("../images/calibration-point.svg");
+  background-repeat: no-repeat;
+}
+img.calibration-point {
+  float: left;
+  width: 10px;
+  height: 20px;
+  margin: 3px;
 }
 
-.municipality-page {
-  .page;
-  max-width: 900px;
+.floating-flag-with-stick-image {
+  .text-hide();
+  display: block;
+  float: left;
+  width: 75px;
+  height: 32px;
+  margin: 3px 0;
+  color: #fff;
+  background-image: url("../images/link-properties/flag-floating-plus-stick.svg");
+  background-repeat: no-repeat;
+}
+
+.horizontal-line {
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #CCC;
+  margin: 1em 0;
+  padding: 0;
+  width: 300px;
 }

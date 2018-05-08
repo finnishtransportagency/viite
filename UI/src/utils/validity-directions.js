@@ -10,12 +10,10 @@
     },
     calculateRotation: function(bearing, validityDirection) {
       var bearingInPolarCoordinates = geometrycalculator.convertCompassToPolarCoordinates(bearing);
-      var bearingInPolarCoordinatesRadius = geometrycalculator.deg2rad(bearingInPolarCoordinates);
-
       if (validityDirection === validitydirections.oppositeDirection) {
-        return geometrycalculator.oppositeAngleRadius(bearingInPolarCoordinatesRadius);
+        return geometrycalculator.oppositeAngle(bearingInPolarCoordinates);
       } else {
-        return bearingInPolarCoordinatesRadius;
+        return bearingInPolarCoordinates;
       }
     }
   };

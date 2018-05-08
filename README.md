@@ -1,10 +1,10 @@
-Digiroad2
-=========
+VIITE
+=====
 
 Ympäristön pystytys
 ===================
 
-1. Kloonaa digiroad2-repo omalle koneellesi
+1. Kloonaa viite-repo omalle koneellesi
 
   ```
   git clone https://github.com/finnishtransportagency/viite.git
@@ -49,7 +49,7 @@ bonecp.password=<salasana>
 
 Tietokantayhteyden voi määrittää myös ulkoisessa properties tiedostossa joka noudattaa yllä olevaa muotoa.
 
-Tällöin digiroad2/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulkoiseen tiedostoon:
+Tällöin viite/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulkoiseen tiedostoon:
 
 ```
 digiroad2-oracle.externalBoneCPPropertiesFile=/etc/digiroad2/bonecp.properties
@@ -106,7 +106,7 @@ Windowsissa toimii komento:
 run fi.liikennevirasto.digiroad2.ProductionServer
 ```
 
-Avaa käyttöliittymä osoitteessa <http://localhost:9001/login.html>.
+Avaa käyttöliittymä osoitteessa <http://localhost:9003/login.html>.
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================

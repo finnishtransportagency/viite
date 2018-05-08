@@ -27,16 +27,6 @@
       background-color: @blue;
       cursor: inherit;
     }
-
-    #right-panel {
-      float: right;
-      display: none;
-    }
-
-    #left-panel {
-      display: inline-block;
-      width: 90%;
-    }
   }
 
   .panel-section {
@@ -47,21 +37,7 @@
     &:last-child {
       border-bottom: none;
     }
-  }
-
-  .roadLink-complementary-checkbox {
-    padding: 10px;
-    color: @gray-darker;
-    border-bottom: none;
-  }
-}
-.municipality-list {
-  padding: 10px;
-
-  .filter-box {
-    border-bottom: 1px solid @gray-light-2;
-    padding-bottom: 6px;
-  }
+  }  
 }
 
 .select-layer {
@@ -112,12 +88,6 @@
 .panel.road-link {
   .road-link-legend {
     display: block;
-  }
-  .check-box-container{
-    input {
-      position: relative;
-      top: 2px;
-    }
   }
 }
 
@@ -227,6 +197,12 @@
   background-size: 14px 14px;
   background-repeat: repeat-x;
 }
+.dark-dotted-linear-asset {
+  background-image: linear-gradient(to right, @gray-darker-2 50%, transparent 0%);
+  background-position: -5px top;
+  background-size: 14px 14px;
+  background-repeat: repeat-x;
+}
 
 .linear-asset-legend-entry(@color, @endpoint-color) {
   border-color: @color;
@@ -280,35 +256,6 @@
     .speed-limit-30  { .linear-asset-legend-entry(@speed-limit-2, @linear-asset-node-2); }
     .speed-limit-20  { .linear-asset-legend-entry(@speed-limit-1, @linear-asset-node-1); }
   }
-  .check-box-container{
-    input {
-      position: relative;
-      top: 2px;
-    }
-  }
-}
-
-.service-road-legend {
-  .legend-entry {
-    @labelWidth: 25px;
-    .label {
-      position: relative;
-      display: inline-block;
-      margin-bottom: 0;
-    }
-
-    .service-road-0 { .linear-asset-legend-entry(@service-road-0, @linear-asset-node-5); }
-    .service-road-1 { .linear-asset-legend-entry(@service-road-1, @linear-asset-node-3); }
-    .service-road-2 {  .linear-asset-legend-entry(@service-road-2, @linear-asset-node-2); }
-    .service-road-3 {  .linear-asset-legend-entry(@service-road-3, @linear-asset-node-1); }
-    .service-road-4 {  .linear-asset-legend-entry(@service-road-4, @linear-asset-node-4); }
-  }
-  .check-box-container{
-    input {
-      position: relative;
-      top: 2px;
-    }
-  }
 }
 
 .functional-class-legend {
@@ -319,30 +266,22 @@
       font-size: @font-size-xs;
       line-height: @line-height-base;
     }
-    .linear-asset-2, .linear-asset-4, .linear-asset-6, .linear-asset-8 {
+    .linear-asset-7, .linear-asset-10 {
       &:extend(.dotted-linear-asset);
     }
-    .linear-asset-1 { .linear-asset-legend-entry(@linear-asset-4, @linear-asset-node-4); }
-    .linear-asset-2 { .linear-asset-legend-entry(@linear-asset-4, @linear-asset-node-4); }
-    .linear-asset-3  { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
-    .linear-asset-4  { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
+    .linear-asset-1 { .linear-asset-legend-entry(@linear-asset-1, @linear-asset-node-1); }
+    .linear-asset-2 { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
+    .linear-asset-3  { .linear-asset-legend-entry(@linear-asset-3, @linear-asset-node-3); }
+    .linear-asset-4  { .linear-asset-legend-entry(@linear-asset-4, @linear-asset-node-4); }
     .linear-asset-5  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
-    .linear-asset-6  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
-    .linear-asset-7  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
-    .linear-asset-8  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
-  }
-}
-
-.construction-type-legend {
-  .legend-entry {
-    @labelWidth: 25px;
-    .label {
-      display: block;
-      font-size: @font-size-xs;
-      line-height: @line-height-base;
-    }
-    .construction-type-1 { .linear-asset-legend-entry(@construction-type-1, @construction-type-node-1); }
-    .construction-type-3 { .linear-asset-legend-entry(@construction-type-3, @construction-type-node-3); }
+    .linear-asset-6  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
+    .linear-asset-7  { .linear-asset-legend-entry(@linear-asset-7, @linear-asset-node-7); }
+    .linear-asset-8  { .linear-asset-legend-entry(@linear-asset-8, @linear-asset-node-8); }
+    .linear-asset-9  { .linear-asset-legend-entry(@linear-asset-9, @linear-asset-node-9); }
+    .linear-asset-10  { .linear-asset-legend-entry(@linear-asset-10, @linear-asset-node-10); }
+    .linear-asset-11  { .linear-asset-legend-entry(@linear-asset-11, @linear-asset-node-11); }
+    .linear-asset-12  { .linear-asset-legend-entry(@linear-asset-12, @linear-asset-node-12); }
+    .linear-asset-99  { .linear-asset-legend-entry(@linear-asset-99, @linear-asset-node-99); }
   }
 }
 
@@ -366,7 +305,7 @@
     .linear-asset-7  { .linear-asset-legend-entry(@linear-asset-3, @linear-asset-node-3); }
     .linear-asset-8  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
     .linear-asset-9  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
-    .linear-asset-10  { .linear-asset-legend-entry(@linear-asset-3, @linear-asset-node-3); }
+    .linear-asset-8 { .linear-asset-legend-entry(@linear-asset-3, @linear-asset-node-3); }
     .linear-asset-11  { .linear-asset-legend-entry(@linear-asset-3, @linear-asset-node-3); }
     .linear-asset-12  { .linear-asset-legend-entry(@linear-asset-3, @linear-asset-node-3); }
     .linear-asset-13  { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
@@ -390,12 +329,47 @@
     .linear-asset-4  { .linear-asset-legend-entry(@linear-asset-7, @linear-asset-node-7); }
   }
 }
-
+.road-class-legend {
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      display: block;
+      font-size: @font-size-xs;
+      line-height: @line-height-base;
+    }
+    .linear-asset-7, .linear-asset-8, .linear-asset-9, .linear-asset-10 {
+      &:extend(.dotted-linear-asset);
+    }
+    .construction-type-1, .construction-type-0 {&:extend(.dark-dotted-linear-asset);}
+    .linear-asset-1 { .linear-asset-legend-entry(@linear-asset-1, @linear-asset-node-1); }
+    .linear-asset-2 { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
+    .linear-asset-3  { .linear-asset-legend-entry(@linear-asset-3, @linear-asset-node-3); }
+    .linear-asset-4  { .linear-asset-legend-entry(@linear-asset-4, @linear-asset-node-4); }
+    .linear-asset-5  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
+    .linear-asset-6  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
+    .linear-asset-7  { .linear-asset-legend-entry(@linear-asset-7, @linear-asset-node-7); }
+    .linear-asset-8  { .linear-asset-legend-entry(@linear-asset-8, @linear-asset-node-8); }
+    .linear-asset-9  { .linear-asset-legend-entry(@linear-asset-9, @linear-asset-node-9); }
+    .linear-asset-10 { .linear-asset-legend-entry(@linear-asset-10, @linear-asset-node-10); }
+    .linear-asset-11  { .linear-asset-legend-entry(@linear-asset-11, @linear-asset-node-11); }
+    .linear-asset-12  { .linear-asset-legend-entry(@linear-asset-12, @linear-asset-node-12); }
+    .linear-asset-99  { .linear-asset-legend-entry(@linear-asset-99, @linear-asset-node-99); }
+    .construction-type-0  { .linear-asset-legend-entry(@constuction-type-1, @constuction-type-1); }
+    .construction-type-1  { .linear-asset-legend-entry(@constuction-type-2, @constuction-type-2); }
+    .operation-type-unchanged { .linear-asset-legend-entry(@operation-unchanged, @operation-unchanged);}
+    .operation-type-new { .linear-asset-legend-entry(@linear-asset-9, @linear-asset-9);}
+    .operation-type-transfer { .linear-asset-legend-entry(@operation-transfer, @operation-transfer);}
+    .operation-type-terminated { .linear-asset-legend-entry(@gray-darker,@gray-darker);}
+    .operation-type-renumbered { .linear-asset-legend-entry(@operation-numbering, @operation-numbering);}
+    .operation-type-unhandeled { .linear-asset-legend-entry(@linear-asset-node-12, @linear-asset-node-12);}
+    .operation-type-suravage   { .linear-asset-legend-entry(@suravage-links, @suravage-links)}
+  }
+}
+//background-image: url("@{base-url}/images/bg.png");
 .simple-limit {
   .legend-entry {
     .limit-0 { .linear-asset-color(@gray); }
     .limit-1 { .linear-asset-color(@linear-asset-4); }
-    .limit-2 { .linear-asset-color(@linear-asset-9); }
   }
 }
 
@@ -482,9 +456,9 @@
 }
 
 .asset-selection {
-  -webkit-column-count: 4;
-  -moz-column-count: 4;
-  column-count: 4;
+  -webkit-column-count: 3;
+  -moz-column-count: 3;
+  column-count: 3;
   -webkit-column-gap: 10px;  /* Chrome, Safari, Opera */
   -moz-column-gap: 10px; /* Firefox */
   column-gap: 10px;
@@ -494,16 +468,15 @@
   background-color: @gray-lighter;
   padding: 20px;
   padding-bottom: 4px;
-  width: 880px;
+  width: 660px;
   .down-arrow(94px, 7px, @gray-darker);
-
+  
   label {
     text-transform: none;
     font-weight: inherit;
     font-size: 13px;
     display: block;
     margin-bottom: 0;
-    margin-top: 0;
     cursor: hand;
     line-height: 16px;
 
@@ -523,5 +496,97 @@
     .radio {
       margin-bottom: 5px;
     }
+  }
+}
+
+.project-list {
+
+  background-color: @gray-lighter;
+  position:fixed;
+  left:50%;
+  top: 50%;
+  margin-top: -250px;
+  margin-left: -450px;
+  width: 810px;
+  height: 500px;
+
+  label {
+    text-transform: none;
+    font-weight: inherit;
+    font-size: 13px;
+    display: block;
+    margin-bottom: 0;
+    margin-top: 0;
+    cursor: hand;
+    line-height: 16px;
+
+    input {
+      cursor: hand;
+      margin-top: 1px;
+      margin-right: 5px;
+    }
+  }
+}
+
+.naming-list {
+
+  background-color: @gray-lighter;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  margin-top: -250px;
+  margin-left: -450px;
+  width: 810px;
+  height: 500px;
+
+  label {
+    text-transform: none;
+    font-weight: inherit;
+    font-size: 13px;
+    display: block;
+    margin-bottom: 0;
+    margin-top: 0;
+    cursor: hand;
+    line-height: 16px;
+
+    input {
+      cursor: hand;
+      margin-top: 1px;
+      margin-right: 5px;
+      margin-left: 10px;
+    }
+  }
+  .road-input {
+    cursor: hand;
+    margin-top: 1px;
+    margin-right: 5px;
+    margin-left: 10px;
+  }
+
+  .button-spacing {
+    margin-right: 5px;
+  }
+  .input-road-details-readonly {
+    border: none;
+    background-color: @gray-lighter;
+    vertical-align: middle !important;
+    font-size: @font-size-large;
+    margin-left: 10px;
+  }
+
+  .input-road-details-writable {
+    border: none;
+    border-bottom: 1px solid black;
+    background-color: @gray-lighter;
+    vertical-align: middle !important;
+    font-size: @font-size-large;
+    margin-left: 10px;
+    width: 85%;
+  }
+
+  .btn-save-road-data {
+    float: right;
+    margin-top: 20px;
+    margin-right: 20px;
   }
 }

@@ -1,5 +1,5 @@
 (function(root) {
-  root.TileMapCollection = function(map, arcgisConfig) {
+  root.TileMapCollection = function(arcgisConfig) {
     var layerConfig = {
       // minResolution: ?,
       // maxResolution: ?,
@@ -16,7 +16,10 @@
     var tileGridConfig = {
       extent: [-548576, 6291456, 1548576, 8388608],
       origin: [-548576, 8388608],
-      projection: 'EPSG:3067',
+      projection: 'EPSG:3067'
+    };
+
+    var resolutionConfig = {
       resolutions: [8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5]
     };
 
@@ -34,26 +37,40 @@
 
     var aerialMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
-        tileGrid: new ol.tilegrid.TileGrid(tileGridConfig)
+        tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, aerialMapConfig))
     }, layerConfig));
+    aerialMapLayer.set('name','aerialMapLayer');
 
     var backgroundMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
-        tileGrid: new ol.tilegrid.TileGrid(tileGridConfig)
+        tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, backgroundMapConfig))
     }, layerConfig));
+    backgroundMapLayer.set('name','backgroundMapLayer');
 
     var terrainMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
-        tileGrid: new ol.tilegrid.TileGrid(tileGridConfig)
+        tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, terrainMapConfig))
     }, layerConfig));
-    var tileMapLayers = {
-      background: backgroundMapLayer,
-      aerial: aerialMapLayer,
-      terrain: terrainMapLayer
-    };
+    terrainMapLayer.set('name','terrainMapLayer');
+
+      var tileMapLayers = {
+          background: backgroundMapLayer,
+          aerial: aerialMapLayer,
+          terrain: terrainMapLayer
+      };
+
+    if(arcgisConfig) {
+        var parser = new ol.format.WMTSCapabilities();
+        var result = parser.read(arcgisConfig);
+        var config = {layer: "Taustakartat_Harmaasavy"};
+        var options = ol.source.WMTS.optionsFromCapabilities(result, config);
+        var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
+        greyscaleLayer.set('name', 'greyScaleLayer');
+        tileMapLayers.greyscale = greyscaleLayer;
+    }
 
     var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
@@ -69,7 +86,7 @@
     eventbus.on('tileMap:selected', selectMap);
 
     return {
-      layers: [backgroundMapLayer, aerialMapLayer, terrainMapLayer]
+      layers: _.map(tileMapLayers, function(layer) { return layer; })
     };
   };
 })(this);

@@ -36,7 +36,6 @@
             id: vector.roadLinkId,
             roadLinkId: vector.roadLinkId,
             linkId: vector.linkId,
-            trafficDirection: vector.trafficDirection,
             start: start_point,
             end: end_point,
             distance: point_distance
@@ -82,13 +81,10 @@
     return (angle + 180) % 360;
   };
 
-  geometrycalculator.oppositeAngleRadius = function(angle) {
-      return angle + Math.PI;
-  };
-
-  //bounds corresponds to [-548576, 6291456, 1548576, 8388608]
   geometrycalculator.isInBounds = function(bounds, x, y) {
-      return (x > bounds[0] && x < bounds[2] && y > bounds[1] && y < bounds[3]);
+    //Bounds is now obtained using via map.getView().calculateExtent(map.getSize())
+    //returning an array with the following; [minx, miny, maxx, maxy]
+    return ((x >= bounds[0] || x <= bounds[2]) && (y >= bounds[1] || y <= bounds[3]));
   };
 
   geometrycalculator.getCentroid = function(points) {
