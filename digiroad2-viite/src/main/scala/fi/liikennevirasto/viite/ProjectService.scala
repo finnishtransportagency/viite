@@ -1578,6 +1578,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
     val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber) || l.roadName.isEmpty || l.roadName.get == null)
 
+    val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
+    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+    if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
+      logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
+      throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
+    }
     RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
     getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = project.createdBy)))
     projectLinks.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
@@ -1587,13 +1593,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
 
-    val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
-    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
-    if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size){
-      logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
-      throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
-    }
+
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
     try {
