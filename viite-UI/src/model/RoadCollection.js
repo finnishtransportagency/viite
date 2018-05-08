@@ -133,7 +133,7 @@
               roadLinkGroups = fetchedRoadLinkModels;
           }
 
-          if(!_.isEmpty(getSelectedRoadLinks())){
+          if (!_.isEmpty(getSelectedRoadLinks())) {
               var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinks(), function (selected) {
                   var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function (group) {
                       return group.getData();
@@ -151,23 +151,23 @@
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
           });
 
-          roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
+          roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group) {
               return groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
           });
           var suravageRoadAddresses = _.partition(roadLinkGroupsSuravage, function(sur) {
               return findSuravageRoadAddressInGroup(sur);
           });
-          var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
+          var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
           });
           roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
           eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknows) && drawUnknows));
-          if(historicRoadLinks.length !== 0) {
+          if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
-          if(suravageRoadAddresses[1].length !== 0)
+          if (suravageRoadAddresses[1].length !== 0)
               eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[1]);
-          if(applicationModel.isProjectButton()){
+          if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
           }
