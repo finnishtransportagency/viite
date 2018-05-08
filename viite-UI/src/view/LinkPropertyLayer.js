@@ -113,15 +113,15 @@
       greenStyle();
 
       if(!addToGreenLayer){
-          var filteredFeatures = _.reject(features, function (feat) {
-              return _.some(greenRoadLayer.getSource().getFeatures(), function (green) {
-                  console.log(green);
-                  return green.roadLinkData.id === feat.roadLinkData.id;
-              });
+        var filteredFeatures = _.reject(features, function (feat) {
+          return _.some(greenRoadLayer.getSource().getFeatures(), function (green) {
+            console.log(green);
+            return green.roadLinkData.id === feat.roadLinkData.id;
           });
-          greenRoadLayer.getSource().addFeatures(filteredFeatures);
+        });
+        greenRoadLayer.getSource().addFeatures(filteredFeatures);
         selectSingleClick.getFeatures().clear();
-          addFeaturesToSelection(filteredFeatures);
+        addFeaturesToSelection(filteredFeatures);
       }
     };
 

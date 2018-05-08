@@ -28,6 +28,7 @@
         applicationModel.setActiveButtons(false);
         eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
+        previousAdjacents = [];
         current = [];
         sources = [];
         targets = [];
