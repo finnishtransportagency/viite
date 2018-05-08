@@ -298,7 +298,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     if (difference.abs < Epsilon) {
       return true
     } else
-      logger.error("Change message for change " + change.toString + "failed due to lenghtg not being same before and after change")
+      logger.error("Change message for change " + change.toString + "failed due to length not being same before and after change")
     false
   }
 
