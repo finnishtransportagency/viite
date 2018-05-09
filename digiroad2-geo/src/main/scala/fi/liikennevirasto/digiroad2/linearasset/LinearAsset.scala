@@ -1,61 +1,5 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode, TrafficDirection}
-import org.joda.time.DateTime
-
-trait LinearAsset extends PolyLine {
-  val id: Long
-  val linkId: Long
-  val sideCode: SideCode
-  val value: Option[Value]
-  val vvhTimeStamp: Long
-  val geomModifiedDate: Option[DateTime]
-}
-
-sealed trait Value {
-  def toJson: Any
-}
-case class NumericValue(value: Int) extends Value {
-  override def toJson: Any = value
-}
-case class TextualValue(value: String) extends Value {
-  override def toJson: Any = value
-}
-case class MaintenanceRoad(properties: Seq[Properties]) extends Value{
-  override def toJson: Any = properties
-}
-case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
-  override def toJson: Any = prohibitions
-
-  override def equals(obj: scala.Any): Boolean = {
-    obj match {
-      case prohs: Prohibitions =>
-        prohibitions.size == prohs.prohibitions.size && prohibitions.forall(
-          argValue1  =>
-            prohs.prohibitions.find(_.typeId == argValue1.typeId) match {
-              case Some(argValue2) =>
-                argValue1.typeId == argValue2.typeId && argValue1.additionalInfo == argValue2.additionalInfo &&
-                  argValue1.exceptions.size == argValue2.exceptions.size && argValue1.validityPeriods.size == argValue2.validityPeriods.size &&
-                  argValue1.exceptions.subsetOf(argValue2.exceptions) && argValue1.validityPeriods.subsetOf(argValue2.validityPeriods)
-              case _ => false
-            }
-        )
-      case _ => super.equals(obj)
-    }
-
-  }
-}
-case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
-  override def toJson: Any = massLimitation
-}
-
-case class AssetTypes(typeId: Int, value: String)
-case class AssetProperties(name: String, value: String)
-case class ManoeuvreProperties(name: String, value: Any)
-
-case class Properties(publicId: String, propertyType: String, value: String)
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
@@ -143,19 +87,3 @@ object ValidityPeriodDayOfWeek {
   case object Sunday extends ValidityPeriodDayOfWeek { val value = 3 }
   case object Unknown extends ValidityPeriodDayOfWeek { val value = 99 }
 }
-
-case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[Value], geometry: Seq[Point], expired: Boolean,
-                                startMeasure: Double, endMeasure: Double,
-                                endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
-                                createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
-                                attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime]) extends LinearAsset
-
-case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
-                                startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
-                                modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime])
-
-case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
-                          vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
-

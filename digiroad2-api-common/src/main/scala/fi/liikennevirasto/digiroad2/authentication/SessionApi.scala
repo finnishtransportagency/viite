@@ -30,6 +30,7 @@ class SessionApi extends ScalatraServlet {
       case Some(u) => {
         logger.info("User exists: " + username + "(" + u + ")")
         BadRequest("User exists")
+        // TODO Should we allow updating of the existing user and call userProvider.saveUser(u)?
       }
       case _ => {
         userProvider.createUser(username, configMap)

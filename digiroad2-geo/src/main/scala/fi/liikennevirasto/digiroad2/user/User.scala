@@ -6,15 +6,12 @@ case class Configuration(
                         north: Option[Long] = None,
                         municipalityNumber: Option[Int]  = None,
                         authorizedMunicipalities: Set[Int] = Set(),
-                        authorizedAreas: Set[Int] = Set(),
                         roles: Set[String] = Set()
                         )
 case class User(id: Long, username: String, configuration: Configuration) {
   def hasWriteAccess() = !isViewer()
 
   def isViewer() = configuration.roles(Role.Viewer)
-
-  def isServiceRoadMaintainer(): Boolean= configuration.roles(Role.ServiceRoadMaintainer)
 
   def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
 
@@ -24,12 +21,8 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.Operator)
   }
 
-  def isBusStopMaintainer(): Boolean = {
-    configuration.roles(Role.BusStopMaintainer)
-  }
-
   def hasEarlyAccess(): Boolean = {
-    configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
+    configuration.roles(Role.Premium) || configuration.roles(Role.Operator)
   }
 
   def isAuthorizedToRead(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode) || isViewer()
@@ -37,7 +30,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
   def isAuthorizedToWrite(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode)
 
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
-    isOperator() || isBusStopMaintainer() || configuration.authorizedMunicipalities.contains(municipalityCode)
+    isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 }
 
 object Role {
@@ -46,6 +39,4 @@ object Role {
   val Premium = "premium"
   val Viewer = "viewer"
   val ViiteUser = "viite"
-  val BusStopMaintainer = "busStopMaintainer"
-  val ServiceRoadMaintainer = "serviceRoadMaintainer"
 }
