@@ -69,7 +69,7 @@ object ProjectSectionCalculator {
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
       val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
       val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
-      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, None, coEff)
     } else {
       mValued
     }
@@ -252,25 +252,34 @@ object ProjectSectionCalculator {
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-      seq.span(_.track == track)
+      val continuousTrack = seq.filter(_.track == track).foldLeft(Seq[ProjectLink]()) { case (previous, link) =>
+        if (previous.isEmpty || GeometryUtils.areAdjacent(previous.last.geometry, link.geometry)) {
+          previous ++ Seq(link)
+        } else {
+          previous
+        }
+      }
+      seq.partition(link => continuousTrack.map(_.id).contains(link.id))
     }
 
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
-      if (rightLink.status == LinkStatus.UnChanged) {
+      if (((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) ||
+        (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) &&
+        Math.abs(rightLink.endAddrMValue - leftLink.endAddrMValue) <= fi.liikennevirasto.viite.MaxAdjustmentRange) {
+        Some(Seq(rightLink.startAddrMValue, leftLink.startAddrMValue).sum / 2, Seq(rightLink.endAddrMValue, leftLink.endAddrMValue).sum / 2)
+      } else if (rightLink.status == LinkStatus.UnChanged) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
+      } else if (leftLink.status == LinkStatus.UnChanged) {
+        Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
       } else {
-        if (leftLink.status == LinkStatus.UnChanged)
-          Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
-        else {
-          maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
-        }
+        maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
       }
     }
 
     def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors): Seq[ProjectLink] = {
       val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
-      ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff)
     }
 
     def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Option[Long], endM: Option[Long]) = {
