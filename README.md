@@ -55,7 +55,7 @@ Tällöin viite/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulk
 digiroad2-oracle.externalBoneCPPropertiesFile=/etc/digiroad2/bonecp.properties
 ```
 
-Tietokanta ja skeema voidaan alustaa käyttäen `fixture-reset.sh` skriptiä.
+Tietokanta ja skeema voidaan alustaa käyttäen `viite-fixture-reset.sh` skriptiä.
 
 Ajaminen
 ========
