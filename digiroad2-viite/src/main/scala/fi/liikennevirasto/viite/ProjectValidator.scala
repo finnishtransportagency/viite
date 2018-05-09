@@ -511,21 +511,23 @@ object ProjectValidator {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
         val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        if (!notCombinedLinks.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
+        val notCombinedLinksInRoadPart = notCombinedLinks.filter(l => l.roadNumber == minTrackLink.roadNumber && l.roadPartNumber == minTrackLink.roadPartNumber)
+        if (!notCombinedLinksInRoadPart.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
           Some(minTrackLink)
         }
-        else if (!notCombinedLinks.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
+        else if (!notCombinedLinksInRoadPart.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
           Some(maxTrackLink)
         } else None
       } else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (trackInterval.nonEmpty) {
-        checkMinMaxTrack(trackInterval) match {
+      val validTrackInterval = trackInterval.filterNot(_.status == Terminated)
+      if (validTrackInterval.nonEmpty) {
+        checkMinMaxTrack(validTrackInterval) match {
           case Some(link) => Seq(link)
           case None =>
-            trackInterval.sliding(2).map(l => {
+            validTrackInterval.sliding(2).map(l => {
               if (l.head.endAddrMValue != l.last.startAddrMValue && l.head.id != l.last.id) {
                 Some(l.head)
               } else None
@@ -545,9 +547,9 @@ object ProjectValidator {
       }
     }
 
-    val groupedLinks = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
+    val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     groupedLinks.map(roadPart => {
-      recursiveCheckTrackChange(roadPart._2) match {
+      recursiveCheckTrackChange(roadPart._2.filterNot(_.status == LinkStatus.UnChanged)) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
