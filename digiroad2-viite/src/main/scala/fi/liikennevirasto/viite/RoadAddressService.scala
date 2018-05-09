@@ -265,7 +265,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val returningTopology = filledTopology.filterNot(p => p.anomaly == Anomaly.NoAddressGiven)
 
-    setBlackUnderline(returningTopology ++ missingFloating)
+    setBlackUnderline(filledTopology ++ missingFloating)
 
   }
 
