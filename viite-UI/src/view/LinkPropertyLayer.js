@@ -758,7 +758,7 @@
 
         eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection) {
         draw();
-            if (!noReselection && !(applicationModel.getSelectionType() === 'unknown')) {
+            if (!noReselection && applicationModel.getSelectionType() !== 'unknown') {
                 _.defer(function () {
                     var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function (feature) {
                         return feature.linkId;
