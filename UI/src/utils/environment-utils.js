@@ -8,7 +8,6 @@
     var environmentName = {
       'extranet.liikennevirasto.fi': 'production', // PROD
       'testiextranet.liikennevirasto.fi': 'integration', // QA
-      'apptest.liikennevirasto.fi': 'training',
       'devtest.liikennevirasto.fi': 'staging' // IT
     };
 
@@ -25,7 +24,6 @@
     var localizedEnvironmentName = {
       integration: 'Integraatiotestiympäristö', // Hyväksymistestausympäristö
       production: '',
-      training: 'Koulutusympäristö',
       staging: 'Testiympäristö',
       unknown: 'Kehitysympäristö'
     };
