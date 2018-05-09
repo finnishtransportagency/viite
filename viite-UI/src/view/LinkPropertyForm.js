@@ -736,13 +736,17 @@
       });
       rootElement.on('click', '.link-properties button.continue',function() {
         if (selectedLinkProperty.continueSelectUnknown()) {
-          rootElement.find('.link-properties button.continue').attr('disabled', true);
-          applicationModel.toggleSelectionTypeUnknown();
-          applicationModel.setContinueButton(false);
-          eventbus.trigger('linkProperties:deselectFeaturesSelected');
-          eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
-          eventbus.trigger('linkProperties:activateInteractions');
-          eventbus.trigger('linkProperties:deactivateDoubleClick');
+            eventbus.once('linkProperties:unknownsTreated', function () {
+                rootElement.find('.link-properties button.continue').attr('disabled', true);
+                eventbus.trigger('linkProperties:activateInteractions');
+                eventbus.trigger('linkProperties:deselectFeaturesSelected');
+                applicationModel.toggleSelectionTypeUnknown();
+                applicationModel.setContinueButton(false);
+                eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
+                eventbus.trigger('linkProperties:activateInteractions');
+                eventbus.trigger('linkProperties:deactivateDoubleClick');
+            });
+            eventbus.trigger('linkProperties:drawUnknowns');
         }
       });
 
