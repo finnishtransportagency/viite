@@ -7,7 +7,7 @@ tags
 target/
 .DS_Store
 logs/
-UI/index.html
+viite-UI/index.html
 project/project/
 /viite.html
 yarn.lock
