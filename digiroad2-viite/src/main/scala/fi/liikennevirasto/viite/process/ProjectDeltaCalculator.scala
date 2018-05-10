@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
@@ -163,21 +164,34 @@ object ProjectDeltaCalculator {
     fusedValues.toLong
   }
 
+  private def partitionByDiscontinuity[T <: BaseRoadAddress](roadAddresses: Seq[T]) : Seq[Seq[T]] = {
+      val (p, result) = roadAddresses.sortBy(_.startAddrMValue).foldLeft((Seq[T](), Seq[Seq[T]]())){
+        case ((previous, partitioned), roadAddress) =>
+          roadAddress.discontinuity match {
+            case MinorDiscontinuity => (Seq(), partitioned :+ (previous :+ roadAddress))
+            case _ => (previous :+ roadAddress, partitioned)
+          }
+      }
+    result :+ p
+  }
+
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
-      .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      .mapValues(v =>  partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue))) ).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
-    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track, section.commonHistoryId))
+//    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track, section.commonHistoryId))
 
-    paired.flatMap { case (key, target) =>
-      val matches = matchingTracks(paired, key)
-      if (matches.nonEmpty)
-        adjustTrack((target, matches.get))
-      else
-        target
-    }.toSeq
+//    paired.flatMap { case (key, target) =>
+//      val matches = matchingTracks(paired, key)
+//      if (matches.nonEmpty)
+//        adjustTrack((target, matches.get))
+//      else
+//        target
+//    }.toSeq
+
+    grouped
   }
 
   def pair(roadAddress: Seq[RoadAddress], projectLink: Map[Long, Seq[ProjectLink]]): Seq[(RoadAddress,ProjectLink)] = {
