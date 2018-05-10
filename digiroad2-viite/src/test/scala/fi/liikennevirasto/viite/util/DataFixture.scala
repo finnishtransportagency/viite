@@ -207,6 +207,7 @@ object DataFixture {
 
     //For each municipality get all VVH Roadlinks
     municipalities.par.foreach { municipality =>
+      if(municipality == 142){
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
@@ -224,13 +225,13 @@ object DataFixture {
           val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
           println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
 
-          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses)
+          roadAddressService.applyChanges(roadLinks, affectingChanges, roadAddresses)
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
       }
-
       println("End processing municipality %d".format(municipality))
+      }
     }
 
   }
