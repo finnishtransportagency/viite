@@ -282,7 +282,8 @@ object ProjectSectionCalculator {
               assignCalibrationPoints(Seq(), sec.left.links, calMap)
           }
         }
-        validateCalibrationPointsDiscontinuityOnTracks(eliminateExpiredCalibrationPoints(links))
+        //validateCalibrationPointsDiscontinuityOnTracks()
+        eliminateExpiredCalibrationPoints(links)
       } catch {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
@@ -361,7 +362,14 @@ object ProjectSectionCalculator {
       } else if (leftLink.status == LinkStatus.UnChanged) {
         Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
       } else {
-        maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
+        if (rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.New) {
+          Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
+        }
+        else if (leftLink.status == LinkStatus.Transfer && rightLink.status == LinkStatus.New)
+          Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
+        else {
+          maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
+        }
       }
     }
 
