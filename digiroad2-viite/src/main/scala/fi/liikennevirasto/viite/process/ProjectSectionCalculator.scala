@@ -198,30 +198,29 @@ object ProjectSectionCalculator {
     }
 
     def eliminateExpiredCalibrationPoints(roadPartLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      //TODO - We need to review this code, since we can't expire the new implemented calibration points, that have a discontinuity on the opposite track, but is continuous
-      /*val tracks = roadPartLinks.groupBy(_.track)
+      val tracks = roadPartLinks.groupBy(_.track)
       tracks.mapValues { links =>
         links.map { l =>
           val calibrationPoints =
             l.calibrationPoints match {
               case (None, None) => l.calibrationPoints
               case (Some(st), None) =>
-                if (links.exists(link => link.endAddrMValue == st.addressMValue && GeometryUtils.areAdjacent(link.geometry.last, roadPartLinks.filter(_.linkId == st.linkId).head.geometry.head)))
+                if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity))
                   (None, None)
                 else
                   l.calibrationPoints
               case (None, Some(en)) =>
-                if (links.exists(link => link.startAddrMValue == en.addressMValue && GeometryUtils.areAdjacent(link.geometry.head, roadPartLinks.filter(_.linkId == en.linkId).head.geometry.last)))
+                if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity))
                   (None, None)
                 else
                   l.calibrationPoints
               case (Some(st), Some(en)) =>
                 (
-                  if (links.exists(link => link.endAddrMValue == st.addressMValue && GeometryUtils.areAdjacent(link.geometry.last, roadPartLinks.filter(_.linkId == st.linkId).head.geometry.head)))
+                  if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity))
                     None
                   else
                     Some(st),
-                  if (links.exists(link => link.startAddrMValue == en.addressMValue && GeometryUtils.areAdjacent(link.geometry.head, roadPartLinks.filter(_.linkId == en.linkId).head.geometry.last)))
+                  if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity))
                     None
                   else
                     Some(en)
@@ -229,8 +228,7 @@ object ProjectSectionCalculator {
             }
           l.copy(calibrationPoints = calibrationPoints)
         }
-      }.values.flatten.toSeq*/
-      roadPartLinks
+      }.values.flatten.toSeq
     }
 
     def validateCalibrationPointsDiscontinuityOnTracks(list: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -284,7 +282,7 @@ object ProjectSectionCalculator {
               assignCalibrationPoints(Seq(), sec.left.links, calMap)
           }
         }
-        eliminateExpiredCalibrationPoints(validateCalibrationPointsDiscontinuityOnTracks(links))
+        validateCalibrationPointsDiscontinuityOnTracks(eliminateExpiredCalibrationPoints(links))
       } catch {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
