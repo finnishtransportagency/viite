@@ -397,7 +397,7 @@ object ProjectSectionCalculator {
           val st = getFixedAddress(firstRight.head, firstLeft.head).map(_._1).orElse(fixedStart)
           val en = getFixedAddress(firstRight.last, firstLeft.last,
             userDefinedCalibrationPoint.get(firstRight.last.id).orElse(userDefinedCalibrationPoint.get(firstLeft.last.id))).map(_._2)
-          val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, en)
+          val (r, l) = adjustTwoTracks(firstRight, firstLeft, if( fixedStart.nonEmpty && st.get > fixedStart.get) fixedStart else st, en)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, en)
           (r ++ ro, l ++ lo)
         } else {
