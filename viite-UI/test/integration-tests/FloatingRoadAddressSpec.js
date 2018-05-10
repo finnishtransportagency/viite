@@ -15,7 +15,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         testHelpers.clickVisibleEditModeButton();
-        eventbus.on('roadLayer:featuresLoaded', function() {
+        eventbus.once('roadLayer:featuresLoaded', function() {
           done();
         });
       }, backend);
@@ -23,11 +23,12 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Selecting the first floating', function() {
       before(function(done){
+        eventbus.once('linkProperties:selected', function(){
+            done();
+        });
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadLayerName(), floatingsLinkIds[0]);
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
-        setTimeout(function () {
-          done();
-        }, 2000);
+
       });
 
       it('check if the form opened for the correct floatings', function() {
@@ -43,27 +44,23 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Clicking the \"Valinta\" button',function(){
       before(function(done) {
-        testHelpers.clickValintaButton();
-        setTimeout(function () {
+        eventbus.once('linkProperties:deactivateDoubleClick', function(){
           done();
-        },2000);
+        });
+        testHelpers.clickValintaButton();
       });
 
       it('check that the \"Valinta\" was pressed and the unknowns are \"forward\"', function () {
-        //setTimeout(function () {
           var isValintaButtonDisabled = $('.link-properties button.continue').is(":disabled");
           expect(isValintaButtonDisabled).to.be.true;
           var pickFeatures = testHelpers.getFeatures(openLayersMap, 'pickRoadsLayer');
           expect(pickFeatures).to.be.not.empty;
-        //}, 1000);
       });
     });
-
 
     describe('Selecting a unknown road to transfer the floatings', function(){
       before(function (done) {
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
-        expect(ol3Feature).to.not.be.undefined;
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
         setTimeout(function () {
           done();
@@ -93,6 +90,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Click the Siirrä button to start the simulation', function() {
       before(function(done){
         testHelpers.clickEnabledSiirraButton();
+        //TODO remove this timeout from here find the right event for
         setTimeout(function(){
           done();
         },2000);
@@ -119,10 +117,10 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Click the Tallenna button to save the simulated data', function(){
       before(function(done){
-        testHelpers.clickEnabledSaveButton();
-        setTimeout(function(){
+        eventbus.once('linkProperties:saved', function(){
           done();
-        },2000);
+        });
+        testHelpers.clickEnabledSaveButton();
       });
 
       it('Verify that the previous unknown link is now no longer unknown and there is only one feature', function(){

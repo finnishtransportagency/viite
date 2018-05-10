@@ -10,12 +10,11 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
-import fi.liikennevirasto.digiroad2.util.DataFixture.migrateAll
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.viite._
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
@@ -46,14 +45,14 @@ object DataFixture {
 
   private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
-  private def loopRoadParts(roadNumber: Int) = {
+  private def loopRoadParts(roadNumber: Int): Unit = {
     var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
     while (partNumberOpt.nonEmpty) {
       val partNumber = partNumberOpt.get
-      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber, true)
+      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber, includeFloating = true)
       try {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-        assert(adjusted.size == roads.size) // Must not lose any
+        assert(adjusted.lengthCompare(roads.size) == 0) // Must not lose any
         val (changed, unchanged) = adjusted.partition(ra =>
             roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
           )
@@ -135,7 +134,7 @@ object DataFixture {
       val checker = new FloatingChecker(roadLinkService)
       val roads = checker.checkRoadNetwork(username)
       println(s"${roads.size} segment(s) found")
-      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, true)
+      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, float = true)
     }
     println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
     println()
@@ -157,12 +156,12 @@ object DataFixture {
     println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
-      RoadAddressDAO.getCurrentValidRoadNumbers().foreach(road => {
+      RoadAddressDAO.getAllValidRoadNumbers().foreach(road => {
         val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
         val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
         roadAddresses.foreach{ case (linkId, list) =>
           val currReplacement = replacements(linkId)
-          if (list.size != currReplacement.size) {
+          if (list.lengthCompare(currReplacement.size) != 0) {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
             val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
@@ -217,7 +216,7 @@ object DataFixture {
       if(roadLinks.nonEmpty) {
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-          RoadAddressDAO.fetchByLinkId(changedRoadLinks.map(cr => cr.oldId.getOrElse(cr.newId.getOrElse(0L))).toSet, false, true, false)
+          RoadAddressDAO.fetchByLinkId(changedRoadLinks.map(cr => cr.oldId.getOrElse(cr.newId.getOrElse(0L))).toSet, includeTerminated = false)
         }
         try {
           val groupedAddresses = roadAddresses.groupBy(_.linkId)
@@ -269,7 +268,7 @@ object DataFixture {
     //Get All Roads
     val roads: Seq[Long] =
       OracleDatabase.withDynTransaction {
-        RoadAddressDAO.getCurrentValidRoadNumbers()
+        RoadAddressDAO.getAllValidRoadNumbers()
       }
 
     //For each municipality get all VVH Roadlinks
@@ -343,7 +342,7 @@ object DataFixture {
     })
   }
 
-  private def showFreezeInfo() = {
+  private def showFreezeInfo(): Unit = {
     println("Road link geometry freeze is active; exiting without changes")
   }
 
@@ -356,7 +355,7 @@ object DataFixture {
     flyway
   }
 
-  def migrateAll() = {
+  def migrateAll(): Int = {
     flyway.migrate()
   }
 

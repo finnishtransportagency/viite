@@ -250,19 +250,6 @@ object Queries {
       """.as[Int].list
   }
 
-  def getDistinctRoadNumbers(filterRoadAddresses : Boolean) : Seq[Int] = {
-    if(filterRoadAddresses){
-      sql"""
-      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000)) and floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-    else{
-      sql"""
-       select distinct road_number from road_address where floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-  }
-
   def getLinkIdsByRoadNumber(roadNumber: Int) : Set[Long] = {
     sql"""
        select distinct pos.LINK_ID from road_address ra join LRM_POSITION pos on ra.lrm_position_id = pos.id where ra.road_number = $roadNumber

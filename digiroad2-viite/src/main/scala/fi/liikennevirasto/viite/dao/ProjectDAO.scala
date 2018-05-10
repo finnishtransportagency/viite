@@ -207,7 +207,7 @@ object ProjectDAO {
       addressPS.setLong(7, pl.discontinuity.value)
       addressPS.setLong(8, pl.startAddrMValue)
       addressPS.setLong(9, pl.endAddrMValue)
-      addressPS.setString(10, pl.createdBy.getOrElse(null))
+      addressPS.setString(10, pl.createdBy.orNull)
       addressPS.setDouble(11, CalibrationCode.getFromAddress(pl).value)
       addressPS.setLong(12, pl.status.value)
       addressPS.setLong(13, pl.roadType.value)
@@ -234,8 +234,9 @@ object ProjectDAO {
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
     val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
     val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+    val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
     val links = projectLinks.map{ pl =>
-      if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId)) {
+      if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId) && !maxInEachTracks.contains(pl.id)) {
         val ra = addresses(pl.roadAddressId)
         // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
         pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
@@ -400,11 +401,11 @@ object ProjectDAO {
       s"""
          $projectLinkQueryBase
                 where ROAD_ADDRESS.road_number = $roadNumber and ROAD_ADDRESS.road_part_number = $roadPartNumber and ROAD_ADDRESS.TRACK_CODE = PROJECT_LINK.TRACK_CODE and PROJECT_LINK.status = ${LinkStatus.UnChanged.value}
-                and (ROAD_ADDRESS.valid_to IS NULL OR ROAD_ADDRESS.valid_to > sysdate) AND (ROAD_ADDRESS.valid_from IS NULL OR ROAD_ADDRESS.valid_from <= sysdate)
+                and ROAD_ADDRESS.valid_to IS NULL
                 and ROAD_ADDRESS.start_addr_m in
                 (select ra.end_addr_m from road_address ra, project_link pl
                 where ra.id = pl.road_address_id and ra.road_number = $roadNumber and ra.road_part_number = $roadPartNumber and ra.TRACK_CODE = pl.TRACK_CODE and pl.status NOT IN (${LinkStatus.NotHandled.value}, ${LinkStatus.UnChanged.value})
-                and (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate)) order by START_ADDR_M
+                and ra.valid_to IS NULL) order by START_ADDR_M
        """
     listQuery(query)
   }

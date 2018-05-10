@@ -103,6 +103,7 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
+        '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
@@ -138,7 +139,7 @@
         $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
         $("#dropDown_0 option[value="+ LinkStatus.Unchanged.description +"]").attr('selected', 'selected').change();
       }
-      else if(statusCode === LinkStatus.New.value){
+      else if (statusCode === LinkStatus.New.value){
         $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").attr('selected', 'selected').change();
         projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         rootElement.find('.new-road-address').prop("hidden", false);
