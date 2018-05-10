@@ -163,8 +163,13 @@ object DataFixture {
           val currReplacement = replacements(linkId)
           if (list.lengthCompare(currReplacement.size) != 0) {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
-            val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
+            val created = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
+            removed.foreach{ l =>
+              println(s"\nremoved link : ${l.linkId}")
+            }
+            println(s"\nremoved links : ${created.head.linkId}")
             RoadAddressDAO.remove(removed)
+            println(s"\nbefore creating link : ${created.head.linkId}")
             RoadAddressDAO.create(created, Some("Automatic_merged"))
           }
         }
