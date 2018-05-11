@@ -282,8 +282,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   private def createProjectDataForSplit(): RoadAddressProject = {
     val projectId = Sequences.nextViitePrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val lrmPositionId2 = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextViitePrimaryKeySeqValue
+    val lrmPositionId2 = Sequences.nextViitePrimaryKeySeqValue
     val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
     ProjectDAO.createRoadAddressProject(rap)
     val raId = Sequences.nextViitePrimaryKeySeqValue
