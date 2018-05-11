@@ -961,37 +961,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
   private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
     logger.info("Starting the setting of the blackUnderline")
-    val groupedAddresses = addresses.groupBy(a => (a.roadNumber, a.roadPartNumber))
-    groupedAddresses.flatMap(grouped => {
-      val (number, part) = grouped._1
-      val addresses = grouped._2
-      val (municipalityAddresses, regularAddresses) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
-      if (municipalityAddresses.nonEmpty) {
-        logger.info(s"Found municipality roads, fetching by roadNumber: $number and roadPartNumber: $part")
-        withDynTransaction {
-          val fullRoads = RoadAddressDAO.fetchByRoadPart(number, part)
-          val allMunicipalityAddresses = fullRoads.filter(_.roadType == RoadType.MunicipalityStreetRoad)
-          if (allMunicipalityAddresses.nonEmpty) {
-            logger.info(s"Within the fetch, found municipality roads, testing lengths")
-            val fullRoadLength = fullRoads.map(r => GeometryUtils.geometryLength(r.geometry)).sum
-            val municipalityLength = allMunicipalityAddresses.map(r => GeometryUtils.geometryLength(r.geometry)).sum
-            if (municipalityLength >= fullRoadLength / 2) {
-              logger.info(s"Municipality roads summed geometryLength >= fetchedRoads summed geometryLength / 2, all are eligible for black underline")
-              (municipalityAddresses.map(_.copy(blackUnderline = true)) ++ regularAddresses).sortBy(_.endAddressM)
-            } else {
-              addresses
-            }
-          } else {
-            addresses
-          }
-        }
-      } else {
-        addresses
-      }
-    }).toSeq
+    val (streetRoads, othersRoads) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
+    streetRoads.map(_.copy(blackUnderline = true)) ++ othersRoads
   }
 }
-
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 case class ReservedRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None,
