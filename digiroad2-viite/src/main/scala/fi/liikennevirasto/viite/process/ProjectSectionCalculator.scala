@@ -355,13 +355,17 @@ object ProjectSectionCalculator {
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
       if (((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) ||
         (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) &&
-        Math.abs(rightLink.endAddrMValue - leftLink.endAddrMValue) <= fi.liikennevirasto.viite.MaxAdjustmentRange) {
+        Math.abs(rightLink.endAddrMValue - leftLink.endAddrMValue) <= fi.liikennevirasto.viite.MaxAdjustmentRange && (rightLink.track != Track.Combined && leftLink.track != Track.Combined)) {
         Some(Seq(rightLink.startAddrMValue, leftLink.startAddrMValue).sum / 2, Seq(rightLink.endAddrMValue, leftLink.endAddrMValue).sum / 2)
       } else if (rightLink.status == LinkStatus.UnChanged) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
       } else if (leftLink.status == LinkStatus.UnChanged) {
         Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
-      } else {
+      }
+      else if((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) && (rightLink.track == Track.Combined && leftLink.track == Track.Combined)){
+        Some(Math.min(rightLink.startAddrMValue, leftLink.startAddrMValue), Math.min(rightLink.endAddrMValue, leftLink.endAddrMValue))
+      }
+      else {
         if (rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.New) {
           Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
         }
@@ -397,7 +401,7 @@ object ProjectSectionCalculator {
           val st = getFixedAddress(firstRight.head, firstLeft.head).map(_._1).orElse(fixedStart)
           val en = getFixedAddress(firstRight.last, firstLeft.last,
             userDefinedCalibrationPoint.get(firstRight.last.id).orElse(userDefinedCalibrationPoint.get(firstLeft.last.id))).map(_._2)
-          val (r, l) = adjustTwoTracks(firstRight, firstLeft, if( fixedStart.nonEmpty && st.get > fixedStart.get) fixedStart else st, en)
+          val (r, l) = adjustTwoTracks(firstRight, firstLeft, if(fixedStart.nonEmpty && fixedStart.get < st.get) fixedStart else st, en)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, en)
           (r ++ ro, l ++ lo)
         } else {
