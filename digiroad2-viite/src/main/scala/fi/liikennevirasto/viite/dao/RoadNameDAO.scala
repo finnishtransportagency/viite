@@ -211,9 +211,9 @@ object RoadNameDAO {
   protected def qMarksGenerator(roads: Set[Long]): String = {
     val inClause = new StringBuilder
     for (i <- roads) {
-      inClause.append("?,")
+      inClause.append("?, ")
     }
-    inClause.dropRight(1).toString()
+    inClause.dropRight(2).toString()
   }
 
 
