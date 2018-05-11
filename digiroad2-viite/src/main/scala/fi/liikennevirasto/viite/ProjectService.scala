@@ -1580,7 +1580,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
-    if(expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
+    if (expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
