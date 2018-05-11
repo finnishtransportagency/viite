@@ -626,6 +626,7 @@
       rootElement.on('click', '#saveEdit', function () {
         saveAndNext();
         eventbus.trigger('roadAddressProject:enableInteractions');
+        eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
       rootElement.on('click', '#cancelEdit', function () {
