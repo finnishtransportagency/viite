@@ -176,22 +176,11 @@ object ProjectDeltaCalculator {
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
-    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
+    roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
       .mapValues(v =>  partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue))) ).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
-//    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track, section.commonHistoryId))
-
-//    paired.flatMap { case (key, target) =>
-//      val matches = matchingTracks(paired, key)
-//      if (matches.nonEmpty)
-//        adjustTrack((target, matches.get))
-//      else
-//        target
-//    }.toSeq
-
-    grouped
   }
 
   def pair(roadAddress: Seq[RoadAddress], projectLink: Map[Long, Seq[ProjectLink]]): Seq[(RoadAddress,ProjectLink)] = {
