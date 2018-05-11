@@ -89,7 +89,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         })
         ProjectCoordinates(centerX, centerY, zoom.max)
       } else {
-        ProjectCoordinates(0,0,0)
+        ProjectCoordinates(0, 0, 0)
       }
     }
   }
