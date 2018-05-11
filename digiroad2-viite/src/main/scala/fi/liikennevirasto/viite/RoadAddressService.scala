@@ -318,14 +318,27 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def filterRelevantChanges(roadAddresses: Seq[RoadAddress], allChanges: Seq[ChangeInfo]): Seq[ChangeInfo] = {
     val groupedAddresses = roadAddresses.groupBy(_.linkId)
-    val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
-    allChanges.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
+    val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).max)
+    val affectedChanges = allChanges.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
+    println ("Affecting changes -> " + affectedChanges.size)
+    affectedChanges
   }
 
-  def applyChanges(roadLinks: Seq[RoadLink], relevantChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
+  def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
     val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
 
-    val changedRoadLinks = changesSanityCheck(relevantChanges)
+    addresses.forall {
+      a =>
+        a._2.currentSegments.foreach{
+          c => println("address id %d".format(c.id))
+        }
+        a._2.historySegments.foreach{
+          h => println("historic address id %d".format(h.id))
+        }
+        true
+    }
+    val changes = filterRelevantChanges(roadAddresses, allChanges)
+    val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
     else
