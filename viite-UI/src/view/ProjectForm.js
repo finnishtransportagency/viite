@@ -629,24 +629,29 @@
       });
 
       rootElement.on('click', '#cancelEdit', function () {
-        new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-          successCallback: function () {
+        if($('#generalNext').is(':enabled') || $('#saveEdit').is(':enabled')){
+          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+            successCallback: function () {
 
-            if (!disabledInput) {
-              saveAndNext();
-            } else {
-              reOpenCurrent();
+              if (!disabledInput) {
+                saveAndNext();
+              } else {
+                reOpenCurrent();
+              }
+              eventbus.trigger('roadAddressProject:enableInteractions');
+            },
+            closeCallback: function () {
+              cancelChanges();
             }
-            eventbus.trigger('roadAddressProject:enableInteractions');
-          },
-          closeCallback: function () {
-            cancelChanges();
-          }
-        });
+          });
+        }else{
+          cancelChanges();
+        }
         eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
+        console.log("cancel dialogue");
         var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
         displayCloseConfirmMessage(defaultPopupMessage, true);
       });
