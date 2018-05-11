@@ -176,10 +176,10 @@ object ProjectSectionCalculator {
         ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true))
       } else {
         //validate if are adjacent in the middle. If it has discontinuity, add a calibration point
-        if(!GeometryUtils.areAdjacent(GetLastPoint(unprocessed.head), GetFirstPoint(unprocessed.tail.head))){
+        if(!GeometryUtils.areAdjacent(getLastPoint(unprocessed.head), getFirstPoint(unprocessed.tail.head))){
           assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true)), unprocessed.tail, calibrationPoints)
         }
-        else if(!GeometryUtils.areAdjacent(GetFirstPoint(unprocessed.head), GetLastPoint(ready.last))){
+        else if(!GeometryUtils.areAdjacent(getFirstPoint(unprocessed.head), getLastPoint(ready.last))){
           assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = true, endCP = false)), unprocessed.tail, calibrationPoints)
         }
         else{
@@ -189,11 +189,11 @@ object ProjectSectionCalculator {
       }
     }
 
-    def GetFirstPoint(projectLink: ProjectLink) : Point = {
+    def getFirstPoint(projectLink: ProjectLink) : Point = {
       if(projectLink.sideCode == SideCode.TowardsDigitizing) projectLink.geometry.head else projectLink.geometry.last
     }
 
-    def GetLastPoint(projectLink: ProjectLink) : Point = {
+    def getLastPoint(projectLink: ProjectLink) : Point = {
       if(projectLink.sideCode == SideCode.TowardsDigitizing) projectLink.geometry.last else projectLink.geometry.head
     }
 
