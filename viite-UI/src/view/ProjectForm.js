@@ -629,7 +629,7 @@
       });
 
       rootElement.on('click', '#cancelEdit', function () {
-        if($('#generalNext').is(':enabled') || $('#saveEdit').is(':enabled')){
+        if($('#saveEdit').is(':enabled')){
           new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
             successCallback: function () {
 
@@ -651,7 +651,6 @@
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
-        console.log("cancel dialogue");
         var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
         displayCloseConfirmMessage(defaultPopupMessage, true);
       });
