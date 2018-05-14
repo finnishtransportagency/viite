@@ -775,7 +775,7 @@
           var filteredFeaturesToReselect = _.reject(featuresToReSelect, function (feat) {
                 return _.some(currentGreenFeatures, function (green) {
                     return green.roadLinkData.id === feat.roadLinkData.id;
-                })
+                });
             });
             if (filteredFeaturesToReselect.length !== 0){
             addFeaturesToSelection(filteredFeaturesToReselect);
