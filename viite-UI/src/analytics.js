@@ -3,7 +3,6 @@
     var properties = {
       integration: 'UA-57190819-5',
       production: 'UA-57190819-4',
-      training: 'UA-57190819-3',
       staging: 'UA-57190819-2',
       unknown: 'UA-57190819-1'
     };
@@ -14,7 +13,6 @@
     var configurations = {
       integration: 'auto',
       production: 'auto',
-      training: 'auto',
       staging: 'auto',
       unknown: 'none'
     };
