@@ -1,18 +1,21 @@
 #!/bin/bash
-
-# viite          Start up the Viite server daemon
+#
+# Start up script for the VIITE server
+#
+# chkconfig: 345 85 15
+# description: VIITE
 
 case "$1" in
   start)
     runuser web -lc $"
       cd /home/web/viite/current
-	    ./start.sh
-	;;
+            ./start.sh &"
+        ;;
   stop)
     cd /home/web/viite/current
-    ./stop.sh
-	;;
+    ./stop.sh || true
+        ;;
   *)
-	  echo $"Usage: $0 {start|stop}"
-	  exit 2
+          echo $"Usage: $0 {start|stop}"
+          exit 2
 esac

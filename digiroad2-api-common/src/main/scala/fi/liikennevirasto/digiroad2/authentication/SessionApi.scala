@@ -23,18 +23,4 @@ class SessionApi extends ScalatraServlet {
     redirect(url("index.html"))
   }
 
-  post("/user") {
-    val (username, municipalityNumber) = (request.getParameter("username"), request.getParameter("municipalityNumber"))
-    val configMap = defaultConfig(municipalityNumber)
-    userProvider.getUser(username) match {
-      case Some(u) => {
-        logger.info("User exists: " + username + "(" + u + ")")
-        BadRequest("User exists")
-      }
-      case _ => {
-        userProvider.createUser(username, configMap)
-        Ok("User created")
-      }
-    }
-  }
 }

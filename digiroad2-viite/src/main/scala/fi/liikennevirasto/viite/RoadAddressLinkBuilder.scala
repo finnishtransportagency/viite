@@ -106,7 +106,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
 
   def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
-    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId)).headOption
+    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId), includeHistory = false).headOption
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
     val length = GeometryUtils.geometryLength(geom)
     val sideCode = if (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) {
@@ -118,8 +118,8 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     } else {
       SideCode.Unknown
     }
-    val roadLinkRoadNumber = fromOptionalToLongNumber(roadLink.attributes.get(RoadNumber), roadAddress.map(_.roadNumber))
-    val roadLinkRoadPartNumber = fromOptionalToLongNumber(roadLink.attributes.get(RoadPartNumber), roadAddress.map(_.roadNumber))
+    val roadLinkRoadNumber = toLongNumber(roadAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
+    val roadLinkRoadPartNumber = toLongNumber(roadAddress.map(_.roadPartNumber), roadLink.attributes.get(RoadPartNumber))
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val municipalityCode = roadLink.municipalityCode
     val anomalyType = {

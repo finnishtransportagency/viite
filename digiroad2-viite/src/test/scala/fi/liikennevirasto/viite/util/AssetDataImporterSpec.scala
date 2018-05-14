@@ -1,12 +1,11 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.Unknown
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.util.{TestTransactions, Track}
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
@@ -14,9 +13,6 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.dao.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.RoadType
@@ -51,7 +47,6 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
   val mockVVHFrozenTimeRoadLinkClient = MockitoSugar.mock[VVHFrozenTimeRoadLinkClientServicePoint]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
 
   /**
     * TODO Fix this so that it will roll back the changes made in database.
