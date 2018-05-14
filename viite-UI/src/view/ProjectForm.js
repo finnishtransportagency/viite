@@ -244,7 +244,7 @@
         return text;
       };
 
-      var toggleAditionalControls = function () {
+      var toggleAdditionalControls = function () {
         rootElement.find('header').replaceWith('<header>' +
         titleWithEditingTool(currentProject.name) +
         '</header>');
@@ -306,7 +306,7 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject));
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
-          toggleAditionalControls();
+          toggleAdditionalControls();
         });
       };
 
@@ -324,7 +324,7 @@
           rootElement.html(selectedProjectLinkTemplate(currentProject));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');
-            toggleAditionalControls();
+            toggleAdditionalControls();
             selectedProjectLinkProperty.setDirty(false);
             eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
           });
@@ -619,7 +619,7 @@
         selectedProjectLinkProperty.setDirty(false);
         nextStage();
         rootElement.html(selectedProjectLinkTemplate(currentProject));
-        toggleAditionalControls();
+        toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
       };
 
