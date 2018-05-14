@@ -34,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
+          'dist/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -44,7 +44,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist-viite/js/<%= pkg.name %>.min.js': ['dist-viite/js/<%= pkg.name %>.js']
+          'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js']
         }
       }
     },
@@ -53,19 +53,19 @@ module.exports = function(grunt) {
         match: ['viite.css'],
         replacement: 'md5',
         src: {
-          path: 'dist-viite/css/viite.css'
+          path: 'dist/css/viite.css'
         }
       },
       files: {
         src: ['viite-UI/index.html']
       }
     },
-    clean: ['dist-viite'],
+    clean: ['dist'],
     connect: {
       viite: {
         options: {
           port: 9003,
-          base: ['dist-viite', '.', 'viite-UI'],
+          base: ['dist', '.', 'viite-UI'],
           middleware: function(connect, opts) {
             var config = [
               // Serve static files.
@@ -129,22 +129,9 @@ module.exports = function(grunt) {
       }
     },
     less: {
-      development: {
-        files: {
-          "dist/css/digiroad2.css": "UI/src/less/main.less"
-        }
-      },
       viitedev: {
         files: {
-          "dist-viite/css/viite.css": "viite-UI/src/less/main.less"
-        }
-      },
-      production: {
-        options: {
-          cleancss: true
-        },
-        files: {
-          "dist/css/digiroad2.css": "UI/src/less/main.less"
+          "dist/css/viite.css": "viite-UI/src/less/main.less"
         }
       },
       viiteprod: {
@@ -152,7 +139,7 @@ module.exports = function(grunt) {
           cleancss: true
         },
         files: {
-          "dist-viite/css/viite.css": "viite-UI/src/less/main.less"
+          "dist/css/viite.css": "viite-UI/src/less/main.less"
         }
       }
     },
