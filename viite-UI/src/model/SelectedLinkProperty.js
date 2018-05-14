@@ -227,40 +227,42 @@
     };
 
       var getGroupAdjacents = function (linkId) {
-          if (current.length === 1)
-              return current;
-          var orderedCurrent = _.sortBy(current, function (curr) {
-              return curr.getData().endAddressM;
-          });
-          var selectedFeature = _.find(orderedCurrent, function (oc) {
-              return oc.getData().linkId === linkId;
-          });
-          var adjacentsArray = [selectedFeature];
+          if (!_.isUndefined(current)) {
+              if (current.length === 1)
+                  return current;
+              var orderedCurrent = _.sortBy(current, function (curr) {
+                  return curr.getData().endAddressM;
+              });
+              var selectedFeature = _.find(orderedCurrent, function (oc) {
+                  return oc.getData().linkId === linkId;
+              });
+              var adjacentsArray = [selectedFeature];
 
-          var findAdjacents = function (list, elem) {
-              if (list.length > 0) {
-                  var filteredList = _.filter(list, function (l) {
-                      return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
-                  });
-                  var existingAdjacents = _.filter(filteredList, function (le) {
-                      return !_.isUndefined(GeometryUtils.connectingEndPoint(le.getData().points, elem.getData().points));
-                  });
-                  //if in case we found more than one adjacent, we should process each possible adjacent
-                  _.each(existingAdjacents, function (adj) {
-                      adjacentsArray.push(adj);
-                  });
-                  _.each(existingAdjacents, function (adj) {
-                      findAdjacents(_.filter(list, function (l) {
+              var findAdjacents = function (list, elem) {
+                  if (list.length > 0) {
+                      var filteredList = _.filter(list, function (l) {
                           return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
-                      }), adj);
-                  });
-              }
-          };
+                      });
+                      var existingAdjacents = _.filter(filteredList, function (le) {
+                          return !_.isUndefined(GeometryUtils.connectingEndPoint(le.getData().points, elem.getData().points));
+                      });
+                      //if in case we found more than one adjacent, we should process each possible adjacent
+                      _.each(existingAdjacents, function (adj) {
+                          adjacentsArray.push(adj);
+                      });
+                      _.each(existingAdjacents, function (adj) {
+                          findAdjacents(_.filter(list, function (l) {
+                              return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
+                          }), adj);
+                      });
+                  }
+              };
 
-          findAdjacents(current, selectedFeature);
-          current = _.sortBy(adjacentsArray, function (curr) {
-              return curr.getData().endAddressM;
-          });
+              findAdjacents(current, selectedFeature);
+              current = _.sortBy(adjacentsArray, function (curr) {
+                  return curr.getData().endAddressM;
+              });
+          }
           applicationModel.setContinueButton(false);
       };
 

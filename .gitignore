@@ -7,11 +7,8 @@ tags
 target/
 .DS_Store
 logs/
-bower_components/
-stops.txt
-UI/index.html
 viite-UI/index.html
-dist-viite/
 project/project/
 /viite.html
 yarn.lock
+package-lock.json

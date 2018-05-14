@@ -150,6 +150,7 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
+        '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
