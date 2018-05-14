@@ -1,12 +1,21 @@
 package fi.liikennevirasto.viite.process
 
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.NewRoadAddress
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, RoadAddress}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus, ProjectLink, RoadAddress}
+import fi.liikennevirasto.viite.process.ProjectSectionCalculator.getClass
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils.fillCPs
+import org.slf4j.LoggerFactory
 
 object CommonHistoryFiller {
+
+  private val logger = LoggerFactory.getLogger(getClass)
+
   private def applyUnchanged(currentRoadAddresses : Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val unchangedLinks = projectLinks.filter(_.status == LinkStatus.UnChanged)
 
@@ -103,10 +112,14 @@ object CommonHistoryFiller {
       applyNumbering(currentRoadAddresses)
     )
 
-    fillOperations.foldLeft(newRoadAddresses){
+    val processedAddresses = fillOperations.foldLeft(newRoadAddresses) {
       case (pNewRoadAddresses, operation) =>
         operation(projectLinks, pNewRoadAddresses)
     }
+    processedAddresses.groupBy(_.commonHistoryId).mapValues(addresses => {
+      logger.info(s"Processing calibration points for common history id ${addresses.head.commonHistoryId}")
+      setCalibrationPoints(addresses.sortBy(_.startAddrMValue))
+    }).values.flatten.toSeq
   }
 
   private def assignNewCommonHistoryIds(roadAddresses: Seq[RoadAddress]) : Seq[RoadAddress] = {
@@ -116,6 +129,29 @@ object CommonHistoryFiller {
       }
       changedAddresses
     }.values.flatten.toSeq
+  }
+
+  private def setCalibrationPoints(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+    if (roadAddresses.isEmpty) {
+      roadAddresses
+    } else {
+      val startNeedsCP = roadAddresses.head
+      val endNeedsCP = roadAddresses.last
+
+      val returnObject = roadAddresses.length match {
+        case 2 => {
+          Seq(fillCPs(startNeedsCP, atStart = true)) ++ Seq(fillCPs(endNeedsCP, atEnd = true))
+        }
+        case 1 => {
+          Seq(fillCPs(startNeedsCP, true, true))
+        }
+        case _ => {
+          val middle = roadAddresses.drop(1).dropRight(1)
+          Seq(fillCPs(startNeedsCP, atStart = true)) ++ middle ++ Seq(fillCPs(endNeedsCP, atEnd = true))
+        }
+      }
+      returnObject
+    }
   }
 
 
