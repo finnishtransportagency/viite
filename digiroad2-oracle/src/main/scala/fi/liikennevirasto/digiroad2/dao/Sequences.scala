@@ -5,23 +5,16 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 
 object Sequences {
-  def nextPrimaryKeySeqValue = {
-    nextPrimaryKeyId.as[Long].first
-  }
 
-  def nextLrmPositionPrimaryKeySeqValue = {
-    nextLrmPositionPrimaryKeyId.as[Long].first
-  }
-
-  def nextViitePrimaryKeySeqValue = {
+  def nextViitePrimaryKeySeqValue: Long = {
     nextViitePrimaryKeyId.as[Long].first
   }
 
-  def fetchViitePrimaryKeySeqValues(len: Int) = {
+  def fetchViitePrimaryKeySeqValues(len: Int): List[Long] = {
     fetchViitePrimaryKeyId(len)
   }
 
-  def nextCommonHistorySeqValue = {
+  def nextCommonHistorySeqValue: Long = {
     nextCommonHistoryValue.as[Long].first
   }
 }

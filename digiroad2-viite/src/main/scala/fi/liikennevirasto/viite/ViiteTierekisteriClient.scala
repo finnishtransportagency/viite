@@ -169,7 +169,7 @@ object ViiteTierekisteriClient {
     val isTREnabled = properties.getProperty("digiroad2.tierekisteri.enabled") == "true"
     val loadedKeyString = if(isTREnabled){
       properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
-    }  else "http://localhost:8080/trrest/"
+    }  else "http://localhost:8080/api/trrest/"
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString

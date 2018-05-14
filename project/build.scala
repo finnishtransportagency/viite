@@ -1,10 +1,8 @@
-import io.gatling.sbt.GatlingPlugin
-import sbt._
-import sbt.Keys._
 import org.scalatra.sbt._
+import sbt.Keys._
+import sbt._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.MergeStrategy
-import org.scalatra.sbt.PluginKeys._
 
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"
@@ -177,40 +175,6 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar % "compile->compile;test->test")
 
-  val Digiroad2OTHApiName = "digiroad2-api-oth"
-  lazy val othApiJar = Project (
-    Digiroad2OTHApiName,
-    file(Digiroad2OTHApiName),
-    settings = Defaults.defaultSettings ++ Seq(
-      organization := Organization,
-      name := Digiroad2OTHApiName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      //      parallelExecution in Test := false,
-      testOptions in Test ++= (
-        if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
-      libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % "3.2.11",
-        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.mockito" % "mockito-core" % "1.9.5" % "test",
-        "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
-        "commons-io" % "commons-io" % "2.4",
-        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.3.3"
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
-    )
-  ) dependsOn(geoJar, oracleJar, commonApiJar % "compile->compile;test->test")
-
   lazy val warProject = Project (
     Digiroad2Name,
     file("."),
@@ -249,15 +213,8 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
     )
-  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar, othApiJar) aggregate
-    (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar, othApiJar)
-
-  lazy val gatling = project.in(file("digiroad2-gatling"))
-    .enablePlugins(GatlingPlugin)
-    .settings(scalaVersion := ScalaVersion)
-    .settings(libraryDependencies ++= Seq(
-    "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
-    "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
+  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar) aggregate
+    (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar)
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),

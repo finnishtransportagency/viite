@@ -4,10 +4,6 @@ import akka.actor.ActorRef
 import akka.event.{EventBus, LookupClassification}
 import fi.liikennevirasto.digiroad2.asset.{Property, Modification}
 
-case class EventBusMassTransitStop(municipalityNumber: Int, municipalityName: String, nationalId: Long,
-                                   lon: Double, lat: Double, bearing: Option[Int], validityDirection: Option[Int],
-                                   created: Modification, modified: Modification, propertyData: Seq[Property] = List())
-
 class DigiroadEventBus extends EventBus with LookupClassification {
   case class Event(name: String, value: Any)
   type Classifier = String

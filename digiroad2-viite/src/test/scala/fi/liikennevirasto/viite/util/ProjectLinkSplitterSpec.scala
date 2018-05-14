@@ -436,7 +436,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   test("Preview the split") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
-      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextViitePrimaryKeySeqValue
       val geom = Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
       val roadLink = RoadLink(1, geom , GeometryUtils.geometryLength(geom), State, 99, TrafficDirection.AgainstDigitizing,
         UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
