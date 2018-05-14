@@ -229,6 +229,8 @@ object ProjectSectionCalculator {
       }.values.flatten.toSeq
     }
 
+    //This method currently is not used anyplace, because we don't have a clear idea of how to handle the situation, where we have two road address with different tracks and one of those with a minor discontinuity.
+    //This method can be used when we decide how to handle those cases.
     def validateCalibrationPointsDiscontinuityOnTracks(list: Seq[ProjectLink]): Seq[ProjectLink] = {
       val projectLinks = list.filterNot(_.track == Combined).sortBy(_.track.value).sortBy(_.startAddrMValue)
       projectLinks.foldLeft(Seq[ProjectLink]()) { case (previous, currentLink) =>
@@ -280,7 +282,7 @@ object ProjectSectionCalculator {
               assignCalibrationPoints(Seq(), sec.left.links, calMap)
           }
         }
-        //validateCalibrationPointsDiscontinuityOnTracks()
+
         eliminateExpiredCalibrationPoints(links)
       } catch {
         case ex: InvalidAddressDataException =>
