@@ -1,9 +1,10 @@
 package fi.liikennevirasto.viite.util
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, CalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, CalibrationPoint, ProjectLink, RoadAddress}
 
 object CalibrationPointsUtils {
 
@@ -31,4 +32,33 @@ object CalibrationPointsUtils {
         Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
     }
   }
+
+  def makeStartCP(roadAddress: RoadAddress) = {
+    Some(CalibrationPoint(roadAddress.linkId, if (roadAddress.sideCode == TowardsDigitizing)
+      0.0 else
+      GeometryUtils.geometryLength(roadAddress.geometry),
+      roadAddress.startAddrMValue))
+  }
+
+  def makeEndCP(roadAddress: RoadAddress) = {
+    Some(CalibrationPoint(roadAddress.linkId, if (roadAddress.sideCode == AgainstDigitizing)
+      0.0 else
+      GeometryUtils.geometryLength(roadAddress.geometry),
+      roadAddress.endAddrMValue))
+  }
+
+  def fillCPs(roadAddress: RoadAddress, atStart: Boolean = false, atEnd: Boolean = false): RoadAddress = {
+    val startCP = makeStartCP(roadAddress)
+    val endCP = makeEndCP(roadAddress)
+    if (atStart && atEnd) {
+      roadAddress.copy(calibrationPoints = (startCP, endCP))
+    } else {
+      if (atEnd) {
+        roadAddress.copy(calibrationPoints = (None, endCP))
+      } else if (atStart) {
+        roadAddress.copy(calibrationPoints = (startCP, None))
+      } else roadAddress
+    }
+  }
+
 }
