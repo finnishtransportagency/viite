@@ -164,20 +164,20 @@ object ProjectDeltaCalculator {
     fusedValues.toLong
   }
 
-  private def partitionByDiscontinuity[T <: BaseRoadAddress](roadAddresses: Seq[T]) : Seq[Seq[T]] = {
-      val (p, result) = roadAddresses.sortBy(_.startAddrMValue).foldLeft((Seq[T](), Seq[Seq[T]]())){
-        case ((previous, partitioned), roadAddress) =>
-          roadAddress.discontinuity match {
-            case MinorDiscontinuity => (Seq(), partitioned :+ (previous :+ roadAddress))
-            case _ => (previous :+ roadAddress, partitioned)
-          }
-      }
+  private def partitionByDiscontinuity[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[Seq[T]] = {
+    val (p, result) = roadAddresses.sortBy(_.startAddrMValue).foldLeft((Seq[T](), Seq[Seq[T]]())) {
+      case ((previous, partitioned), roadAddress) =>
+        roadAddress.discontinuity match {
+          case MinorDiscontinuity => (Seq(), partitioned :+ (previous :+ roadAddress))
+          case _ => (previous :+ roadAddress, partitioned)
+        }
+    }
     result :+ p
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
     roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
-      .mapValues(v =>  partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue))) ).values.flatten.map(ra =>
+      .mapValues(v => partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue)))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
@@ -225,28 +225,13 @@ object ProjectDeltaCalculator {
     }
   }
 
-  /**
-    * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
-    * It is impossible to tell afterwards the exact mapping unless done at this point
-    * Deprecated: Use partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection]
-    * instead! To be removed in December
-    *
-    * @param roadAddresses Road Addresses that were the source
-    * @param projectLinks Project Links that have the transfer address values
-    * @return Map between the sections old -> new
-    */
-  @Deprecated
-  //TODO: Remove method
-  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
-    throw new RuntimeException("This method does not work properly and is not used - remove from all test use as well")
-  }
-
   def partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection] = {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId))
     }
+
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))
       .mapValues(v => {
@@ -256,7 +241,7 @@ object ProjectDeltaCalculator {
     sectioned.flatMap { case (key, (src, target)) =>
       val matches = matchingTracks(sectioned, key)
       //exclusive 'or' operation, so we don't want to find a matching track when we want to reduce 2 tracks to track 0
-      if (matches.nonEmpty && !(key._3 == Track.Combined ^ key._6 == Track.Combined ))
+      if (matches.nonEmpty && !(key._3 == Track.Combined ^ key._6 == Track.Combined))
         adjustTrack((src, matches.get._1)).zip(adjustTrack((target, matches.get._2)))
       else
         src.zip(target)
