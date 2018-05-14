@@ -41,7 +41,7 @@ package object viite {
 
   val newCalibrationPointId: Long = -1000L
 
-  val NewRoadNameId = -1000
+  val NewRoadNameId: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
 
