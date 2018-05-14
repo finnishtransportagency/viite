@@ -106,7 +106,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
 
   def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
-    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId)).headOption
+    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId), includeHistory = false).headOption
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
     val length = GeometryUtils.geometryLength(geom)
     val sideCode = if (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) {
