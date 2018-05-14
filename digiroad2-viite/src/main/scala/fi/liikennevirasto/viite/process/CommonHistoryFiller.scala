@@ -47,34 +47,33 @@ object CommonHistoryFiller {
     }.toSeq ++ newRoadAddresses.filterNot(_.id == NewRoadAddress)
   }
 
-  private def applyTransfer(currentRoadAddresses : Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
+  private def applyTransfer(currentRoadAddresses: Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val transferredLinks = projectLinks.filter(_.status == LinkStatus.Transfer)
     val (trackChangedLinks, trackUnchangedLinks) = transferredLinks.partition(pl => {
       val currentRoadAddress = currentRoadAddresses.find(ra => ra.id == pl.roadAddressId)
       currentRoadAddress.nonEmpty && ((currentRoadAddress.get.track == Combined && pl.track != Combined) || (currentRoadAddress.get.track != Combined && pl.track == Combined))
     })
     generateValuesForTransfer(currentRoadAddresses, trackChangedLinks, newRoadAddresses) ++ generateValuesForTransfer(currentRoadAddresses, trackUnchangedLinks, newRoadAddresses) ++
-     newRoadAddresses.filterNot(ra => transferredLinks.map(_.roadAddressId).contains(ra.id ))
+      newRoadAddresses.filterNot(ra => transferredLinks.map(_.roadAddressId).contains(ra.id))
   }
 
-  private def generateValuesForTransfer(currentRoadAddresses : Seq[RoadAddress], transferredLinks: Seq[ProjectLink],  newRoadAddresses: Seq[RoadAddress]) = {
+  private def generateValuesForTransfer(currentRoadAddresses: Seq[RoadAddress], transferredLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) = {
     transferredLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
-      case((_, _, _, _), groupedLinks) =>
-        val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.sortBy(_.startAddrMValue).map(_.roadAddressId).contains(ra.id ) && ra.endDate.isEmpty)
-        val roadAddressesToCompare = currentRoadAddresses.filter(ra => groupedLinks.map(_.roadAddressId).contains(ra.id ) && ra.endDate.isEmpty).sortBy(_.startAddrMValue)
+      case ((_, _, _, _), groupedLinks) =>
+        val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.sortBy(_.startAddrMValue).map(_.roadAddressId).contains(ra.id) && ra.endDate.isEmpty)
+        val roadAddressesToCompare = currentRoadAddresses.filter(ra => groupedLinks.map(_.roadAddressId).contains(ra.id) && ra.endDate.isEmpty).sortBy(_.startAddrMValue)
 
         //if the length of the transferred part is the same in road address table
-        if(roadAddressesToReturn.nonEmpty && roadAddressesToCompare.nonEmpty && groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue){
-          val allExistingAddresses = currentRoadAddresses.filter(ra=> ra.roadNumber == roadAddressesToCompare.head.roadNumber && ra.roadPartNumber == roadAddressesToCompare.head.roadPartNumber
+        if (roadAddressesToReturn.nonEmpty && roadAddressesToCompare.nonEmpty && groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue) {
+          val allExistingAddresses = currentRoadAddresses.filter(ra => ra.roadNumber == roadAddressesToCompare.head.roadNumber && ra.roadPartNumber == roadAddressesToCompare.head.roadPartNumber
             && ra.track == roadAddressesToCompare.head.track && ra.roadType == roadAddressesToCompare.head.roadType)
 
-          if(allExistingAddresses.nonEmpty && allExistingAddresses.lengthCompare(roadAddressesToCompare.length) == 0){
+          if (allExistingAddresses.nonEmpty && allExistingAddresses.lengthCompare(roadAddressesToCompare.length) == 0) {
             roadAddressesToReturn
-          }
-          else
+          } else {
             assignNewCommonHistoryIds(roadAddressesToReturn)
-        }
-        else{
+          }
+        } else {
           assignNewCommonHistoryIds(roadAddressesToReturn)
         }
     }.toSeq
