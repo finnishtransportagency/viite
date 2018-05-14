@@ -83,6 +83,7 @@
         ErroredInTR:                {value: 3, description: "Virhe tierekisterissä"},
         TRProcessing:               {value: 4, description: "Tierekisterissä käsittelyssä"},
         Saved2TR:                   {value: 5, description: "Viety tierekisteriin"},
+      ErrorInViite: {value: 8, description: "Virhe viitteessä"},
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
 
