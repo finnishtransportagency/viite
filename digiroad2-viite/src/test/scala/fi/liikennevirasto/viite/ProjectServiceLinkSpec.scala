@@ -282,8 +282,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   private def createProjectDataForSplit(): RoadAddressProject = {
     val projectId = Sequences.nextViitePrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val lrmPositionId2 = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextViitePrimaryKeySeqValue
+    val lrmPositionId2 = Sequences.nextViitePrimaryKeySeqValue
     val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
     ProjectDAO.createRoadAddressProject(rap)
     val raId = Sequences.nextViitePrimaryKeySeqValue
@@ -1246,12 +1246,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(
         mockRoadLinksWithStaticTestData((address1 ++ address2).map(_.linkId).toSet))
       projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart1, reservedRoadPart2)))
-
       projectService.updateProjectLinks(project.id, Set(), Seq(2226690, 2226637), LinkStatus.Terminated, "TestUser", 0, 0, 0, Option.empty[Int]) should be(None)
       projectService.updateProjectLinks(project.id, Set(), Seq(2226636), LinkStatus.Terminated, "TestUser", 0, 0, 0, Option.empty[Int]) should be(None)
       projectService.updateProjectLinks(project.id, Set(), Seq(2226676, 2226658), LinkStatus.Terminated, "TestUser", 0, 0, 0, Option.empty[Int]) should be(None)
       projectService.updateProjectLinks(project.id, Set(), Seq(2226677, 2226482), LinkStatus.Terminated, "TestUser", 0, 0, 0, Option.empty[Int]) should be(None)
-
       val mappedGeomsNewLinks = StaticTestData.mappedGeoms(Seq(2226681, 6564541, 2226632, 2226660, 2226480))
       val geom1 = mappedGeomsNewLinks(2226681)
       val geom2 = mappedGeomsNewLinks(6564541)

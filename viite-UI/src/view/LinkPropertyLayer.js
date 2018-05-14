@@ -440,6 +440,7 @@
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
+        map.updateSize();
     };
 
     var clearLayers = function(){
@@ -755,35 +756,38 @@
         indicatorLayer.getSource().clear();
       });
 
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', function(eventData){
-
+        eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection) {
         draw();
-        _.defer(function(){
-          var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
-            return feature.linkId;
-          }).uniq().value();
-          var visibleFeatures = getVisibleFeatures(true,false,true);
-          var featuresToReSelect = _.filter(visibleFeatures, function(feature){
-            return _.contains(floatingsLinkIds, feature.roadLinkData.linkId);
-          });
-          if(featuresToReSelect.length !== 0){
-            addFeaturesToSelection(featuresToReSelect);
-          }
-          var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function(feature){
-            return _.contains(_.pluck(selectedLinkProperty.get(), 'linkId'), feature.roadLinkData.linkId);
-          }), function(feat){return feat.roadLinkData;});
+            if (!noReselection && applicationModel.getSelectionType() !== 'unknown') {
+                _.defer(function () {
+                    var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function (feature) {
+                        return feature.linkId;
+                    }).uniq().value();
+                    var visibleFeatures = getVisibleFeatures(true, false, true);
+                    var featuresToReSelect = _.filter(visibleFeatures, function (feature) {
+                        return _.contains(floatingsLinkIds, feature.roadLinkData.linkId);
+                    });
+                    if (featuresToReSelect.length !== 0) {
+                        addFeaturesToSelection(featuresToReSelect);
+                    }
+                    var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function (feature) {
+                        return _.contains(_.pluck(selectedLinkProperty.get(), 'linkId'), feature.roadLinkData.linkId);
+                    }), function (feat) {
+                        return feat.roadLinkData;
+                    });
 
-          var groups = _.flatten(eventData);
-          var fetchedLinksInSelection = _.filter(groups, function(group) {
-            return _.contains(_.pluck(fetchedDataInSelection, 'linkId'), group.getData().linkId);
-          });
-          if(fetchedLinksInSelection.length > 0){
-            eventbus.trigger('linkProperties:deselectFeaturesSelected');
-            selectedLinkProperty.setCurrent(fetchedLinksInSelection);
-              if (applicationModel.getCurrentAction() !== applicationModel.actionCalculating)
-                  eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
-          }
-        });
+                    var groups = _.flatten(eventData);
+                    var fetchedLinksInSelection = _.filter(groups, function (group) {
+                        return _.contains(_.pluck(fetchedDataInSelection, 'linkId'), group.getData().linkId);
+                    });
+                    if (fetchedLinksInSelection.length > 0) {
+                        eventbus.trigger('linkProperties:deselectFeaturesSelected');
+                        selectedLinkProperty.setCurrent(fetchedLinksInSelection);
+                        if (applicationModel.getCurrentAction() !== applicationModel.actionCalculating)
+                            eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
+                    }
+                }, noReselection);
+            }
       });
       eventListener.listenTo(eventbus, 'suravageRoadLinks:fetched', function(suravageRoads){
         var ol3SuravageRoads = _.map(_.flatten(suravageRoads), function(road) {
@@ -1323,8 +1327,6 @@
     eventbus.on('linkProperties:addFeaturesToInteractions', function(){
       activateSelectInteractions();
     });
-    
-    
     
     eventbus.on('linkProperty:fetchedHistoryLinks', function(historyLinkData) {
       var points = _.map(historyLinkData.geometry, function(point) {

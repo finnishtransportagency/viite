@@ -787,7 +787,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   /**
     * Returns VVH road links by link ids.
     * Used by VVHClient.fetchByLinkId, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
-    * OracleLinearAssetDao.getLinksWithLengthFromVVH, OracleLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
+    * OracleLinearAssetDao.getLinksWithLengthFromVVH and OracleLinearAssetDao.getSpeedLimitLinksById
     */
   def fetchByLinkIds(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, withLinkIdFilter)

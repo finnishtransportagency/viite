@@ -26,10 +26,10 @@
     };
 
     var defineOptionModifiers = function(option, selection) {
-      var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId;
+      var isSplitMode = selection.length === 2 && selection[0].linkId === selection[1].linkId && applicationModel.getSelectedTool() === 'Cut';
       var linkStatus = selection[0].status;
       var targetLinkStatus = _.find(LinkStatus, function (ls) {
-        return ls.description === option || (option === '' && ls.value == 99);
+        return ls.description === option || (option === '' && ls.value === 99);
       });
       if (isSplitMode)
         console.log("NOT A SPLIT FORM!");
@@ -103,7 +103,7 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
-        '<label style="color: #fff">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
+        '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
         '<div class="form-group" id="project-errors"></div>' +
         '</div></div></br></br>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
@@ -139,7 +139,7 @@
         $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
         $("#dropDown_0 option[value="+ LinkStatus.Unchanged.description +"]").attr('selected', 'selected').change();
       }
-      else if(statusCode === LinkStatus.New.value){
+      else if (statusCode === LinkStatus.New.value){
         $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").attr('selected', 'selected').change();
         projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         rootElement.find('.new-road-address').prop("hidden", false);
