@@ -221,10 +221,10 @@ object DataFixture {
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
+        val changedLinkIds = changedRoadLinks.map(c => c.oldId.getOrElse(c.newId.getOrElse(0L))).toSet
         //  Get road address from viite DB from the roadLinks ids
-        //TODO get mapped (linkId -> timestamp) in order to reduce roadAddresses list
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-          RoadAddressDAO.fetchByLinkId(changedRoadLinks.map(cr => cr.oldId.getOrElse(cr.newId.getOrElse(0L))).toSet, includeTerminated = false)
+          RoadAddressDAO.fetchByLinkId(changedLinkIds, includeTerminated = false)
         }
         try {
           roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses)
