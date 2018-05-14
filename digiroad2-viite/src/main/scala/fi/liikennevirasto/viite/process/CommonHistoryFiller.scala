@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.NewRoadAddress
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus, ProjectLink, RoadAddress}
 import fi.liikennevirasto.viite.process.ProjectSectionCalculator.getClass
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils.fillCPs
 import org.slf4j.LoggerFactory
 
 object CommonHistoryFiller {
@@ -122,53 +123,26 @@ object CommonHistoryFiller {
   }
 
   private def setCalibrationPoints(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    def makeStartCP(roadAddress: RoadAddress) = {
-      Some(CalibrationPoint(roadAddress.linkId, if (roadAddress.sideCode == TowardsDigitizing)
-        0.0 else
-        GeometryUtils.geometryLength(roadAddress.geometry),
-        roadAddress.startAddrMValue))
-    }
+    if (roadAddresses.isEmpty) {
+      roadAddresses
+    } else {
+      val startNeedsCP = roadAddresses.head
+      val endNeedsCP = roadAddresses.last
 
-    def makeEndCP(roadAddress: RoadAddress) = {
-      Some(CalibrationPoint(roadAddress.linkId, if (roadAddress.sideCode == AgainstDigitizing)
-        0.0 else
-        GeometryUtils.geometryLength(roadAddress.geometry),
-        roadAddress.endAddrMValue))
-    }
-
-    def fillCPs(roadAddress: RoadAddress, both: Boolean = false, putCPAtStart: Boolean = false): RoadAddress = {
-      val startCP = makeStartCP(roadAddress)
-      val endCP = makeEndCP(roadAddress)
-      if (both) {
-        roadAddress.copy(calibrationPoints = (startCP, endCP))
-      } else {
-        if (!putCPAtStart) {
-          roadAddress.copy(calibrationPoints = (None, endCP))
-        } else {
-          roadAddress.copy(calibrationPoints = (startCP, None))
+      val returnObject = roadAddresses.length match {
+        case 2 => {
+          Seq(fillCPs(startNeedsCP, atStart = true)) ++ Seq(fillCPs(endNeedsCP, atEnd = true))
+        }
+        case 1 => {
+          Seq(fillCPs(startNeedsCP, true, true))
+        }
+        case _ => {
+          val middle = roadAddresses.drop(1).dropRight(1)
+          Seq(fillCPs(startNeedsCP, atStart = true)) ++ middle ++ Seq(fillCPs(endNeedsCP, atEnd = true))
         }
       }
+      returnObject
     }
-
-    val startNeedsCP = roadAddresses.head
-    val endNeedsCP = roadAddresses.last
-
-    val returnObject = roadAddresses.length match {
-      case 2 => {
-        Seq(fillCPs(startNeedsCP, putCPAtStart = true)) ++ Seq(fillCPs(endNeedsCP))
-      }
-      case 1 => {
-        Seq(fillCPs(startNeedsCP, both = true))
-      }
-      case 0 => {
-        roadAddresses
-      }
-      case _ => {
-        val middle = roadAddresses.drop(1).dropRight(1)
-        Seq(fillCPs(startNeedsCP, putCPAtStart = true)) ++ middle ++ Seq(fillCPs(endNeedsCP))
-      }
-    }
-    returnObject
   }
 
 
