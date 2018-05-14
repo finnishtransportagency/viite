@@ -954,18 +954,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    revertRoadName(projectId, roadNumber)
     val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet, newTransaction = false)
     val roadAddresses = RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
+
         case Some(mod) if mod.geometry.nonEmpty => {
+          checkAndReserve(ProjectDAO.getRoadAddressProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
           val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
           ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
         }
-        case _ => ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
+        case _ => {
+          checkAndReserve(ProjectDAO.getRoadAddressProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
+          ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
+        }
       })
+    if(!ProjectDAO.getProjectLinks(projectId).exists(pl => pl.roadNumber == roadNumber)){
+      revertRoadName(projectId, roadNumber)
+    }
     if (recalculate)
       try {
         recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
@@ -984,6 +991,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projects.isEmpty)
       return false
     true
+  }
+
+  def toReservedRoadPart(roadNumber: Long, roadPartNumber: Long, ely: Long): ReservedRoadPart = {
+    ReservedRoadPart(0L, roadNumber, roadPartNumber,
+      None, None, Some(ely),
+      None, None, None, None, false)
   }
 
 
