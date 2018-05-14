@@ -119,7 +119,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       SideCode.Unknown
     }
     val roadLinkRoadNumber = toLongNumber(roadAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
-    val roadLinkRoadPartNumber = toLongNumber(roadAddress.map(_.roadNumber), roadLink.attributes.get(RoadPartNumber))
+    val roadLinkRoadPartNumber = toLongNumber(roadAddress.map(_.roadPartNumber), roadLink.attributes.get(RoadPartNumber))
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val municipalityCode = roadLink.municipalityCode
     val anomalyType = {
