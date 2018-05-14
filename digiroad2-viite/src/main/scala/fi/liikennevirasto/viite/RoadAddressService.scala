@@ -326,17 +326,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
     val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
-
-    addresses.forall {
-      a =>
-        a._2.currentSegments.foreach{
-          c => println("address id %d".format(c.id))
-        }
-        a._2.historySegments.foreach{
-          h => println("historic address id %d".format(h.id))
-        }
-        true
-    }
     val changes = filterRelevantChanges(roadAddresses, allChanges)
     val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
@@ -344,25 +333,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     else
       withDynTransaction {
         val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadLinks, changedRoadLinks)
-        newRoadAddresses.forall {
-          a =>
-            a._2.currentSegments.foreach{
-              c => println("after map changes address id %d".format(c.id))
-            }
-            a._2.historySegments.foreach{
-              h => println("after map changes historic address id %d".format(h.id))
-            }
-            true
-        }
         val roadLinkMap = roadLinks.map(rl => rl.linkId -> rl).toMap
 
         val (addressesToCreate, unchanged) = newRoadAddresses.flatMap(_._2.allSegments).toSeq.partition(_.id == NewRoadAddress)
         val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
           r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
             r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
-        savedRoadAddresses.foreach (
-          a =>println("savedRoadAddresses address id %d".format(a.id))
-        )
         val removedIds = addresses.values.flatMap(_.allSegments).map(_.id).toSet -- (savedRoadAddresses++unchanged).map(x=>x.id)
         removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
           logger.debug("Expired: "+s.mkString(","))
