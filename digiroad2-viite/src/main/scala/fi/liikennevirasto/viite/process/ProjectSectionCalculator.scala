@@ -164,37 +164,35 @@ object ProjectSectionCalculator {
       if (ready.isEmpty) {
         val link = unprocessed.head
         // If there is only one link in section we put two calibration points in it
-        if (unprocessed.size == 1)
+        if (unprocessed.size == 1) {
           Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = true))
-        else if(link.discontinuity == MinorDiscontinuity){
+        } else if (link.discontinuity == MinorDiscontinuity) {
           assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = true)), unprocessed.tail, calibrationPoints)
-        }
-        else
+        } else {
           assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = false)), unprocessed.tail, calibrationPoints)
+        }
         // If last one
       } else if (unprocessed.tail.isEmpty) {
         ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true))
       } else {
         //validate if are adjacent in the middle. If it has discontinuity, add a calibration point
-        if(!GeometryUtils.areAdjacent(getLastPoint(unprocessed.head), getFirstPoint(unprocessed.tail.head))){
+        if (!GeometryUtils.areAdjacent(getLastPoint(unprocessed.head), getFirstPoint(unprocessed.tail.head))) {
           assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true)), unprocessed.tail, calibrationPoints)
-        }
-        else if(!GeometryUtils.areAdjacent(getFirstPoint(unprocessed.head), getLastPoint(ready.last))){
+        } else if (!GeometryUtils.areAdjacent(getFirstPoint(unprocessed.head), getLastPoint(ready.last))) {
           assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = true, endCP = false)), unprocessed.tail, calibrationPoints)
-        }
-        else{
+        } else {
           // a middle one, add to sequence and continue
           assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = false)), unprocessed.tail, calibrationPoints)
         }
       }
     }
 
-    def getFirstPoint(projectLink: ProjectLink) : Point = {
-      if(projectLink.sideCode == SideCode.TowardsDigitizing) projectLink.geometry.head else projectLink.geometry.last
+    def getFirstPoint(projectLink: ProjectLink): Point = {
+      if (projectLink.sideCode == SideCode.TowardsDigitizing) projectLink.geometry.head else projectLink.geometry.last
     }
 
-    def getLastPoint(projectLink: ProjectLink) : Point = {
-      if(projectLink.sideCode == SideCode.TowardsDigitizing) projectLink.geometry.last else projectLink.geometry.head
+    def getLastPoint(projectLink: ProjectLink): Point = {
+      if (projectLink.sideCode == SideCode.TowardsDigitizing) projectLink.geometry.last else projectLink.geometry.head
     }
 
     def eliminateExpiredCalibrationPoints(roadPartLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -233,18 +231,18 @@ object ProjectSectionCalculator {
 
     def validateCalibrationPointsDiscontinuityOnTracks(list: Seq[ProjectLink]): Seq[ProjectLink] = {
       val projectLinks = list.filterNot(_.track == Combined).sortBy(_.track.value).sortBy(_.startAddrMValue)
-      projectLinks.foldLeft(Seq[ProjectLink]()){ case(previous, currentLink) =>
-        if(!previous.exists(_.id == currentLink.id)){
-          if(currentLink.discontinuity == MinorDiscontinuity ){
+      projectLinks.foldLeft(Seq[ProjectLink]()) { case (previous, currentLink) =>
+        if (!previous.exists(_.id == currentLink.id)) {
+          if (currentLink.discontinuity == MinorDiscontinuity) {
             val beforeDiscontOtherTrackLink = list.find(link => link.endAddrMValue == currentLink.endAddrMValue && link.track != currentLink.track)
-            if(beforeDiscontOtherTrackLink.nonEmpty){
+            if (beforeDiscontOtherTrackLink.nonEmpty) {
               val linkToAdd1 = makeLink(beforeDiscontOtherTrackLink.head, None, startCP = beforeDiscontOtherTrackLink.head.calibrationPoints._1.nonEmpty, endCP = true)
               val afterDiscontOtherTrackLink = list.find(link => link.startAddrMValue == linkToAdd1.endAddrMValue && link.track == linkToAdd1.track)
-              val linkToAdd2 = if(afterDiscontOtherTrackLink.nonEmpty) Seq(makeLink(afterDiscontOtherTrackLink.head, None, startCP = true, endCP = beforeDiscontOtherTrackLink.head.calibrationPoints._2.nonEmpty)) else Seq()
-              if(linkToAdd2.nonEmpty){
+              val linkToAdd2 = if (afterDiscontOtherTrackLink.nonEmpty) Seq(makeLink(afterDiscontOtherTrackLink.head, None, startCP = true, endCP = beforeDiscontOtherTrackLink.head.calibrationPoints._2.nonEmpty)) else Seq()
+              if (linkToAdd2.nonEmpty) {
                 previous ++ Seq(linkToAdd1) ++ linkToAdd2
               }
-              else if(!previous.exists(_.id == linkToAdd1.id)){
+              else if (!previous.exists(_.id == linkToAdd1.id)) {
                 previous ++ Seq(linkToAdd1)
               }
               else
@@ -307,13 +305,13 @@ object ProjectSectionCalculator {
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-      val continuousTrack = seq.filter(_.track == track ).foldLeft(Seq[ProjectLink]()) { case (previous, link) =>
-          if(previous.isEmpty || GeometryUtils.areAdjacent(previous.last.geometry, link.geometry) || (previous.last.discontinuity == MinorDiscontinuity && previous.last.endAddrMValue == link.startAddrMValue && !isConnectingRoundabout(previous ++ Seq(link)))){
-            previous ++ Seq(link)
-          }
-          else{
-            previous
-          }
+      val continuousTrack = seq.filter(_.track == track).foldLeft(Seq[ProjectLink]()) { case (previous, link) =>
+        if (previous.isEmpty || GeometryUtils.areAdjacent(previous.last.geometry, link.geometry) || (previous.last.discontinuity == MinorDiscontinuity && previous.last.endAddrMValue == link.startAddrMValue && !isConnectingRoundabout(previous ++ Seq(link)))) {
+          previous ++ Seq(link)
+        }
+        else {
+          previous
+        }
       }
       seq.partition(link => continuousTrack.map(_.id).contains(link.id))
     }
@@ -350,7 +348,6 @@ object ProjectSectionCalculator {
       }
     }
 
-
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
       if (((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) ||
@@ -361,17 +358,14 @@ object ProjectSectionCalculator {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
       } else if (leftLink.status == LinkStatus.UnChanged) {
         Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
-      }
-      else if((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) && (rightLink.track == Track.Combined && leftLink.track == Track.Combined)){
+      } else if ((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) && (rightLink.track == Track.Combined && leftLink.track == Track.Combined)) {
         Some(Math.min(rightLink.startAddrMValue, leftLink.startAddrMValue), Math.min(rightLink.endAddrMValue, leftLink.endAddrMValue))
-      }
-      else {
+      } else {
         if (rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.New) {
           Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
-        }
-        else if (leftLink.status == LinkStatus.Transfer && rightLink.status == LinkStatus.New)
+        } else if (leftLink.status == LinkStatus.Transfer && rightLink.status == LinkStatus.New) {
           Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
-        else {
+        } else {
           maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
         }
       }
@@ -392,16 +386,16 @@ object ProjectSectionCalculator {
     }
 
     def adjustTracksToMatch(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], fixedStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      if (rightLinks.isEmpty && leftLinks.isEmpty)
+      if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
-      else {
+      } else {
         val (firstRight, restRight) = getContinuousTrack(rightLinks)
         val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
         if (firstRight.nonEmpty && firstLeft.nonEmpty) {
           val st = getFixedAddress(firstRight.head, firstLeft.head).map(_._1).orElse(fixedStart)
           val en = getFixedAddress(firstRight.last, firstLeft.last,
             userDefinedCalibrationPoint.get(firstRight.last.id).orElse(userDefinedCalibrationPoint.get(firstLeft.last.id))).map(_._2)
-          val (r, l) = adjustTwoTracks(firstRight, firstLeft, if(fixedStart.nonEmpty && fixedStart.get < st.get) fixedStart else st, en)
+          val (r, l) = adjustTwoTracks(firstRight, firstLeft, if (fixedStart.nonEmpty && fixedStart.get < st.get) fixedStart else st, en)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, en)
           (r ++ ro, l ++ lo)
         } else {
