@@ -543,7 +543,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         ci.changeType match {
           case Termination =>
             ci.source.startAddressM should be(Some(0))
-            ci.source.endAddressM should be(Some(546))
+            //TODO check if the average should be removed from here.
+            ci.source.endAddressM should be(Some(512))
             ci.target.startAddressM should be(None)
             ci.target.endAddressM should be(None)
           case Transfer =>
