@@ -8,9 +8,6 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.format.DateTimeFormatter
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
@@ -205,9 +202,33 @@ object RoadNameDAO {
     nextId
   }
 
-  def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
-    val roads = roadNumbers.mkString(",")
-    sqlu"""UPDATE ROAD_NAMES SET VALID_TO = ${new Date(endDate)} WHERE VALID_TO IS NULL AND ROAD_NUMBER in ($roads)""".execute
+  /**
+    * generates required number of ? for preparedstatement when using (in) clause
+    *
+    * @param roads
+    * @return
+    */
+  protected def qMarksGenerator(roads: Set[Long]): String = {
+    val inClause = new StringBuilder
+    for (i <- roads) {
+      inClause.append("?, ")
+    }
+    inClause.dropRight(2).toString()
   }
 
+
+  def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
+    if (roadNumbers.isEmpty) return // dont even bother with empty set
+    val query = s" UPDATE  ROAD_NAMES  SET VALID_TO = ? WHERE VALID_TO IS NULL AND ROAD_NUMBER in (${qMarksGenerator(roadNumbers)})"
+    val roadNamesPS = dynamicSession.prepareStatement(query)
+    roadNamesPS.setDate(1, new Date(endDate))
+    var index = 2
+    for (roadNumber <- roadNumbers) {
+      roadNamesPS.setLong(index, roadNumber)
+      index += 1
+    }
+    roadNamesPS.addBatch()
+    roadNamesPS.executeBatch()
+    roadNamesPS.close()
+  }
 }
