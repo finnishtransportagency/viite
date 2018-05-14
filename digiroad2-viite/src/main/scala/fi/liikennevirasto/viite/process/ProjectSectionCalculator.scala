@@ -241,20 +241,20 @@ object ProjectSectionCalculator {
               val linkToAdd2 = if (afterDiscontOtherTrackLink.nonEmpty) Seq(makeLink(afterDiscontOtherTrackLink.head, None, startCP = true, endCP = beforeDiscontOtherTrackLink.head.calibrationPoints._2.nonEmpty)) else Seq()
               if (linkToAdd2.nonEmpty) {
                 previous ++ Seq(linkToAdd1) ++ linkToAdd2
-              }
-              else if (!previous.exists(_.id == linkToAdd1.id)) {
+              } else if (!previous.exists(_.id == linkToAdd1.id)) {
                 previous ++ Seq(linkToAdd1)
-              }
-              else
+              } else {
                 previous ++ Seq(currentLink)
-            }
-            else
+              }
+            } else {
               previous ++ Seq(currentLink)
-          }
-          else
+            }
+          } else {
             previous ++ Seq(currentLink)
+          }
+        } else {
+          previous
         }
-        else previous
 
       } ++ list.filter(_.track == Combined)
     }
