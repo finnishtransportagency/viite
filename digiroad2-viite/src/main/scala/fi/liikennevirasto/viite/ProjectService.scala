@@ -970,7 +970,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
         }
       })
-    if(!ProjectDAO.getProjectLinks(projectId).exists(pl => pl.roadNumber == roadNumber)){
+    if (!ProjectDAO.getProjectLinks(projectId).exists(pl => pl.roadNumber == roadNumber)) {
       revertRoadName(projectId, roadNumber)
     }
     if (recalculate)
@@ -980,7 +980,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case _: Exception => logger.info("Couldn't recalculate after reverting a link (this may happen)")
       }
     val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-    if (afterUpdateLinks.isEmpty){
+    if (afterUpdateLinks.isEmpty) {
       releaseRoadPart(projectId, roadNumber, roadPartNumber, userName)
     }
   }
