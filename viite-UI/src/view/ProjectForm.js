@@ -256,9 +256,9 @@
         applicationModel.addSpinner();
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
-          projectCollection.createProject(data, map.getView().getResolution());
+          projectCollection.createProject(data, map.getView().getResolution()); //true if project successfully created
         } else {
-          projectCollection.saveProject(data, map.getView().getResolution());
+          projectCollection.saveProject(data, map.getView().getResolution()); //true if project successfully saved
         }
       };
 
@@ -577,10 +577,13 @@
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
             if (isDirty && !disabledInput) {
-              createOrSaveProject();
-              _.defer(function () {
-                closeProjectMode(changeLayerMode);
+              createOrSaveProject()
+              eventbus.once('roadAddress:projectSaved', function () {
+                  _.defer(function () {
+                      closeProjectMode(changeLayerMode);
+                  });
               });
+              applicationModel.removeSpinner();
             } else {
               closeProjectMode(changeLayerMode);
             }
