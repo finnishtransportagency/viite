@@ -620,20 +620,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectFound(roadAddressProject).isEmpty)
       throw new IllegalArgumentException("Project not found")
     withDynTransaction {
-      val storedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-      val removed = storedProject.reservedParts.filterNot(part =>
-        roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
-          rp.roadNumber == part.roadNumber))
-      removed.foreach(p => ProjectDAO.removeReservedRoadPart(roadAddressProject.id, p))
-      removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
-      addLinksToProject(roadAddressProject)
-      val updatedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-      if (updatedProject.reservedParts.nonEmpty) {
-        ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = ProjectDAO.getElyFromProjectLinks(roadAddressProject.id)))
+      if(ProjectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)){
+        val storedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+        val removed = storedProject.reservedParts.filterNot(part =>
+          roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
+            rp.roadNumber == part.roadNumber))
+        removed.foreach(p => ProjectDAO.removeReservedRoadPart(roadAddressProject.id, p))
+        removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
+        addLinksToProject(roadAddressProject)
+        val updatedProject = ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+        if (updatedProject.reservedParts.nonEmpty) {
+          ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = ProjectDAO.getElyFromProjectLinks(roadAddressProject.id)))
+        }
+        else //in empty case we release ely
+          ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = None))
+        ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+      }else{
+        throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
       }
-      else //in empty case we release ely
-        ProjectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = None))
-      ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
     }
   }
 
@@ -663,7 +667,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (roadAddressProject.id != 0)
       throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")
     withDynTransaction {
-      createProject(roadAddressProject)
+      if(ProjectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)){
+        createProject(roadAddressProject)
+      }else{
+        throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
+      }
     }
   }
 
