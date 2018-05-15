@@ -244,7 +244,7 @@
         return text;
       };
 
-      var toggleAditionalControls = function () {
+      var toggleAdditionalControls = function () {
         rootElement.find('header').replaceWith('<header>' +
         titleWithEditingTool(currentProject.name) +
         '</header>');
@@ -306,7 +306,7 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject));
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
-          toggleAditionalControls();
+          toggleAdditionalControls();
         });
       };
 
@@ -324,7 +324,7 @@
           rootElement.html(selectedProjectLinkTemplate(currentProject));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');
-            toggleAditionalControls();
+            toggleAdditionalControls();
             selectedProjectLinkProperty.setDirty(false);
             eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
           });
@@ -619,7 +619,7 @@
         selectedProjectLinkProperty.setDirty(false);
         nextStage();
         rootElement.html(selectedProjectLinkTemplate(currentProject));
-        toggleAditionalControls();
+        toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
       };
 
@@ -629,20 +629,24 @@
       });
 
       rootElement.on('click', '#cancelEdit', function () {
-        new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-          successCallback: function () {
+        if($('#saveEdit').is(':enabled')){
+          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+            successCallback: function () {
 
-            if (!disabledInput) {
-              saveAndNext();
-            } else {
-              reOpenCurrent();
+              if (!disabledInput) {
+                saveAndNext();
+              } else {
+                reOpenCurrent();
+              }
+              eventbus.trigger('roadAddressProject:enableInteractions');
+            },
+            closeCallback: function () {
+              cancelChanges();
             }
-            eventbus.trigger('roadAddressProject:enableInteractions');
-          },
-          closeCallback: function () {
-            cancelChanges();
-          }
-        });
+          });
+        }else{
+          cancelChanges();
+        }
         eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
