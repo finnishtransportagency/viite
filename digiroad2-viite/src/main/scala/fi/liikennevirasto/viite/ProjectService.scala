@@ -943,11 +943,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def revertRoadName(projectId: Long, roadNumber: Long): Unit = {
-    ProjectLinkNameDAO.revert(roadNumber, projectId)
-    val roadAddressName = RoadNameDAO.getLatestRoadName(roadNumber)
-    val projectRoadName = ProjectLinkNameDAO.get(roadNumber, projectId)
-    if (roadAddressName.nonEmpty && projectRoadName.isEmpty) {
-      ProjectLinkNameDAO.create(projectId, roadNumber, roadAddressName.get.roadName)
+    if(ProjectDAO.getProjectLinks(projectId).exists(pl => pl.roadNumber == roadNumber) && RoadNameDAO.getLatestRoadName(roadNumber).nonEmpty ){
+      ProjectLinkNameDAO.revert(roadNumber, projectId)
+      val roadAddressName = RoadNameDAO.getLatestRoadName(roadNumber)
+      val projectRoadName = ProjectLinkNameDAO.get(roadNumber, projectId)
+      if (roadAddressName.nonEmpty && projectRoadName.isEmpty) {
+        ProjectLinkNameDAO.create(projectId, roadNumber, roadAddressName.get.roadName)
+      }
+    }
+    if(!ProjectDAO.getProjectLinks(projectId).exists(pl => pl.roadNumber == roadNumber)){
+      ProjectLinkNameDAO.revert(roadNumber, projectId)
     }
   }
 
@@ -958,7 +963,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadAddresses = RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
-
         case Some(mod) if mod.geometry.nonEmpty => {
           checkAndReserve(ProjectDAO.getRoadAddressProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
@@ -970,9 +974,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
         }
       })
-    if(!ProjectDAO.getProjectLinks(projectId).exists(pl => pl.roadNumber == roadNumber)){
-      revertRoadName(projectId, roadNumber)
-    }
+
+    revertRoadName(projectId, roadNumber)
+
     if (recalculate)
       try {
         recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
