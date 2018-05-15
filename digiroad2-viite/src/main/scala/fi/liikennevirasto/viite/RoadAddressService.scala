@@ -292,7 +292,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @param change change case class
     * @return true if stays with in epsilon
     */
-  private def changedLenghtStaySame(change: ChangeInfo): Boolean = {
+  private def changedLengthStaySame(change: ChangeInfo): Boolean = {
     val difference = Math.abs(change.oldEndMeasure.getOrElse(0D) - change.oldStartMeasure.getOrElse(0D)) -
       Math.abs(change.newEndMeasure.getOrElse(0D) - change.newStartMeasure.getOrElse(0D))
     if (difference.abs < Epsilon) {
@@ -310,26 +310,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
 
   def changesSanityCheck(changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
-      val typesOneTwo = changes.filter(x => x.changeType == ChangeType.CombinedModifiedPart.value
+      val (combinedParts, nonCheckedChangeTypes)  = changes.partition(x => x.changeType == ChangeType.CombinedModifiedPart.value
         || x.changeType == ChangeType.CombinedRemovedPart.value)
-      val sanityCheckedTypeOneTwo = typesOneTwo.filter(x => changedLenghtStaySame(x))
-      val nonCheckedChangeTypes = changes.filterNot(x => x.changeType == ChangeType.CombinedModifiedPart.value
-        || x.changeType == ChangeType.CombinedRemovedPart.value)
+      val sanityCheckedTypeOneTwo = combinedParts.filter(x => changedLengthStaySame(x))
       sanityCheckedTypeOneTwo ++ nonCheckedChangeTypes
   }
 
   def filterRelevantChanges(roadAddresses: Seq[RoadAddress], allChanges: Seq[ChangeInfo]): Seq[ChangeInfo] = {
     val groupedAddresses = roadAddresses.groupBy(_.linkId)
-    val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
+    val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).max)
     allChanges.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
   }
 
   def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
-
-
-    val changes = filterRelevantChanges(roadAddresses, allChanges)
     val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
-
+    val changes = filterRelevantChanges(roadAddresses, allChanges)
     val changedRoadLinks = changesSanityCheck(changes)
     if (changedRoadLinks.isEmpty)
       addresses.values.toSeq
