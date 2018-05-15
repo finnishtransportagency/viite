@@ -63,7 +63,10 @@
                 '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.ely)+'</td>'+
                 '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.createdBy)+'</td>'+
                 '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>';
-            if(proj.statusCode === projectStatus.ErroredInTR.value) {
+            if (proj.statusCode === projectStatus.ErrorInViite.value) {
+              html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom:6px; margin-left: 45px; visibility: hidden"">Avaa uudelleen</button>' + '</td>' +
+                  '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
+            } else if (proj.statusCode === projectStatus.ErroredInTR.value) {
               html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom:6px; margin-left: 45px"" id="reopen-project-' + proj.id + '" value="' + proj.id + '"">Avaa uudelleen</button>' + '</td>' +
                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
             }
