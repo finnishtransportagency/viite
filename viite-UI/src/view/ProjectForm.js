@@ -256,9 +256,9 @@
         applicationModel.addSpinner();
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
-          projectCollection.createProject(data, map.getView().getResolution()); //true if project successfully created
+          projectCollection.createProject(data, map.getView().getResolution());
         } else {
-          projectCollection.saveProject(data, map.getView().getResolution()); //true if project successfully saved
+          projectCollection.saveProject(data, map.getView().getResolution());
         }
       };
 
