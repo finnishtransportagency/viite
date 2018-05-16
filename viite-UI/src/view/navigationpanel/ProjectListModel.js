@@ -52,7 +52,7 @@
 
       eventbus.once('roadAddressProjects:fetched', function(projects){
         var unfinishedProjects = _.filter(projects, function(proj){
-          return (proj.statusCode < 6 && proj.statusCode > 0) || proj.statusCode === 8;
+          return (proj.statusCode >= 1 && proj.statusCode <= 5) || proj.statusCode === 8;
         });
         var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
         if(!_.isEmpty(unfinishedProjects)){
