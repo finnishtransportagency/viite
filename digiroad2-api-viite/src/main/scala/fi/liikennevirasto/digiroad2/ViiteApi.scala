@@ -287,7 +287,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         BadRequest("Missing mandatory ProjectLink parameter")
       case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
       case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
-
+      case ex: NameExistsException =>  Map("success" -> false, "errorMessage" -> ex.getMessage)
     }
   }
 

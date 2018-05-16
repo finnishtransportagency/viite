@@ -933,6 +933,17 @@ object ProjectDAO {
     dateTime.map(dt => new Timestamp(dt.getMillis))
   }
 
+  def uniqueName(projectId: Long, projectName: String): Boolean = {
+    val query =
+      s"""
+         SELECT *
+         FROM project
+         WHERE UPPER(name)=UPPER('$projectName') and state<>7 and ROWNUM=1
+       """
+    val projects = Q.queryNA[Long](query).list
+    projects.isEmpty || projects.contains(projectId)
+  }
+
   implicit val getDiscontinuity = new GetResult[Option[Discontinuity]] {
     def apply(r: PositionedResult) = {
       r.nextLongOption().map(l => Discontinuity.apply(l))
