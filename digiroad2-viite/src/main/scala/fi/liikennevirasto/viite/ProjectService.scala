@@ -1322,12 +1322,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it =>
             setProjectStatusToSend2TR(projectId)
-            logger.info(s"Sending to TR successful reasoning: ${trProjectStateMessage.reason}")
+            logger.info(s"Sending to TR successful: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
 
           case _ =>
             //rollback
-            logger.info(s"Sending to TR unsuccessful reasoning: ${trProjectStateMessage.reason}")
+            logger.info(s"Sending to TR failed: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
       } catch {
@@ -1437,11 +1437,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): (ProjectState) = {
     if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
-      logger.info(s"Status update is needed as Project Current status (${currentStatus}) differs from  TR Status(${newStatus})")
+      logger.info(s"Status update is needed as Project Current status (${currentStatus}) differs from TR Status(${newStatus})")
       val projects = ProjectDAO.getRoadAddressProjects(projectId)
       if (projects.nonEmpty && newStatus == ProjectState.ErroredInTR) {
         // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
-        logger.info(s"Wrinting error message and clearing old TR_ID \r\n ($errorMessage)")
+        logger.info(s"Writing error message and clearing old TR_ID: ($errorMessage)")
         ProjectDAO.updateProjectStateInfo(errorMessage, projectId)
       }
       ProjectDAO.updateProjectStatus(projectId, newStatus)
