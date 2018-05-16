@@ -825,7 +825,7 @@
         }
         redrawNextSelectedTarget(targets, adjacents);
       });
-      eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
+      eventListener.listenTo(eventbus, 'adjacents:added adjacents:additionalSourceFound', function(sources,targets, additionalLinkId){
           clearIndicators();
         drawIndicators(targets);
           _.map(selectedLinkProperty.getFeaturesToKeep(), function (roads) {

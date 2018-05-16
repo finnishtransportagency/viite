@@ -128,7 +128,7 @@
       newReservedParts = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
-      projectInfo=undefined;
+      projectInfo = undefined;
       backend.abortLoadingProject();
     };
 
@@ -136,9 +136,9 @@
       var projectId = 0;
       if (projectInfo !== undefined) {
         projectId = projectInfo.id;
-      } else if (currentProject!==undefined && currentProject.project.id!==undefined)
+      } else if (currentProject !== undefined && currentProject.project.id !== undefined)
       {
-        projectId=currentProject.project.id;
+        projectId = currentProject.project.id;
       }
       var dataJson = {
         id: projectId,
