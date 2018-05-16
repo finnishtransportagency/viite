@@ -46,11 +46,17 @@ object ProjectState {
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
 
   case object ErrorInViite extends ProjectState {
-    def value = 8;
+    def value = 8
 
-    def description = "Virhe viitteessä"
+    def description = "Virhe Viite-sovelluksessa"
   }
-  case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
+
+  case object Unknown extends ProjectState {
+    def value = 99
+
+    def description = "Tuntematon"
+  }
+
 }
 
 sealed trait LinkStatus {
