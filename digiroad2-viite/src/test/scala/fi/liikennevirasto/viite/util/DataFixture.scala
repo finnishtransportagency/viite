@@ -163,7 +163,7 @@ object DataFixture {
           val currReplacement = replacements(linkId)
           if (list.lengthCompare(currReplacement.size) != 0) {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
-            val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
+            val created = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
             RoadAddressDAO.create(created, Some("Automatic_merged"))
           }
@@ -214,22 +214,17 @@ object DataFixture {
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
+        val changedLinkIds = changedRoadLinks.map(c => c.oldId.getOrElse(c.newId.getOrElse(0L))).toSet
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-          RoadAddressDAO.fetchByLinkId(changedRoadLinks.map(cr => cr.oldId.getOrElse(cr.newId.getOrElse(0L))).toSet, includeTerminated = false)
+          RoadAddressDAO.fetchByLinkId(changedLinkIds, includeTerminated = false)
         }
         try {
-          val groupedAddresses = roadAddresses.groupBy(_.linkId)
-          val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
-          val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
-          println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
-
           roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses)
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
       }
-
       println("End processing municipality %d".format(municipality))
     }
 
