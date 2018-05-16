@@ -1578,6 +1578,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ).toSeq
   }
 
+  /**
+    * This will insert new historic road addresses (valid_to = null and end_date = sysdate)
+    *
+    * @param projectLinks          ProjectLinks
+    * @param expiringRoadAddresses A map of (RoadAddressId -> RoadAddress)
+    */
+  def createHistoryRows(projectLinks: Seq[ProjectLink], expiringRoadAddresses: Map[Long, RoadAddress]): Seq[Long] = {
+    val idsToHistory = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).map(_.roadAddressId)
+    val roadsToCreate = expiringRoadAddresses.filter(ex => {
+      idsToHistory.contains(ex._1)
+    }).mapValues(r => {
+      r.copy(id = NewRoadAddress, lrmPositionId = NewRoadAddress, endDate = Some(DateTime.now()))
+    }).values
+    RoadAddressDAO.create(roadsToCreate)
+  }
+
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
@@ -1619,6 +1635,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       val newRoadAddressesWithHistory = CommonHistoryFiller.fillCommonHistory(projectLinks, newRoadAddresses, expiringRoadAddresses.values.toSeq)
 
+      logger.info(s"Creating history rows based on operation")
+      createHistoryRows(projectLinks, expiringRoadAddresses)
       //Expiring all old addresses by their ID
       logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
