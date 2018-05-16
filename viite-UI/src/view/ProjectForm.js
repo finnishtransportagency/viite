@@ -577,10 +577,13 @@
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
             if (isDirty && !disabledInput) {
-              createOrSaveProject();
-              _.defer(function () {
-                closeProjectMode(changeLayerMode);
+              createOrSaveProject()
+              eventbus.once('roadAddress:projectSaved', function () {
+                  _.defer(function () {
+                      closeProjectMode(changeLayerMode);
+                  });
               });
+              applicationModel.removeSpinner();
             } else {
               closeProjectMode(changeLayerMode);
             }
@@ -626,13 +629,13 @@
       rootElement.on('click', '#saveEdit', function () {
         saveAndNext();
         eventbus.trigger('roadAddressProject:enableInteractions');
+        eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
       rootElement.on('click', '#cancelEdit', function () {
-        if($('#saveEdit').is(':enabled')){
+        if ($('#saveEdit').is(':enabled')) {
           new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
             successCallback: function () {
-
               if (!disabledInput) {
                 saveAndNext();
               } else {
@@ -644,7 +647,7 @@
               cancelChanges();
             }
           });
-        }else{
+        } else {
           cancelChanges();
         }
         eventbus.trigger("roadAddressProject:startAllInteractions");
