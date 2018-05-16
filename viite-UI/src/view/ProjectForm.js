@@ -651,9 +651,14 @@
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
-        var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
-        displayCloseConfirmMessage(defaultPopupMessage, true);
+        if (currentProject.isDirty) {
+          var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
+          displayCloseConfirmMessage(defaultPopupMessage, true);
+        } else {
+          closeProjectMode(true);
+        }
       });
+
       rootElement.on('click', '#closeProjectSpan', function () {
         closeProjectMode(true);
       });
