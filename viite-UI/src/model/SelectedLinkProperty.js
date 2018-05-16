@@ -742,11 +742,9 @@
 
     var isFloatingHomogeneous = function(floatingFeature) {
       var firstFloating = _.first(featuresToKeep);
-      if(floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) && floatingFeature.data.trackCode === firstFloating.trackCode && floatingFeature.data.roadNumber === firstFloating.roadNumber){
-        return true;
-      }else{
-        return false;
-      }
+      return floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) &&
+          floatingFeature.data.trackCode === firstFloating.trackCode &&
+          floatingFeature.data.roadNumber === firstFloating.roadNumber;
     };
 
     var filterFeaturesAfterSimulation = function(features){
