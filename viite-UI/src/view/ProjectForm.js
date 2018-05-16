@@ -633,10 +633,9 @@
       });
 
       rootElement.on('click', '#cancelEdit', function () {
-        if($('#saveEdit').is(':enabled')){
+        if ($('#saveEdit').is(':enabled')) {
           new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
             successCallback: function () {
-
               if (!disabledInput) {
                 saveAndNext();
               } else {
@@ -648,7 +647,7 @@
               cancelChanges();
             }
           });
-        }else{
+        } else {
           cancelChanges();
         }
         eventbus.trigger("roadAddressProject:startAllInteractions");
