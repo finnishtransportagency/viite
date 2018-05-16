@@ -577,7 +577,7 @@
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
             if (isDirty && !disabledInput) {
-              createOrSaveProject()
+              createOrSaveProject();
               eventbus.once('roadAddress:projectSaved', function () {
                   _.defer(function () {
                       closeProjectMode(changeLayerMode);
