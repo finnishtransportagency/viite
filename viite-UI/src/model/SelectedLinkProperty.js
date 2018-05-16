@@ -417,7 +417,7 @@
           var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
             return _.merge({}, a, {"marker": markers[index]});
           }), "links": newSources};
-          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
+          eventbus.trigger("adjacents:additionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
         }
       });
     });
@@ -533,7 +533,7 @@
         return adjacent.linkId == target;
       });
       if(!_.isEmpty(targetData)){
-        $('#aditionalSource').remove();
+        $('#additionalSource').remove();
         $('#adjacentsData').remove();
         getLinkAdjacents(_.first(targetData));
       }
