@@ -188,6 +188,25 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("try to create a road link project with same name as an existing project") {
+    runWithRollback {
+      val roadAddressProject1 = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser1", DateTime.now(), "TestUser1", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      projectService.createRoadLinkProject(roadAddressProject1)
+
+      val roadAddressProject2 = RoadAddressProject(0, ProjectState.apply(1), "TESTPROJECT", "TestUser2", DateTime.now(), "TestUser2", DateTime.parse("1902-03-03"), DateTime.now(), "Some other info", List.empty[ReservedRoadPart], None)
+      val error = intercept[NameExistsException] {
+        projectService.createRoadLinkProject(roadAddressProject2)
+      }
+      error.getMessage should be("Nimellä TESTPROJECT on jo olemassa projekti. Muuta nimeä.")
+
+      val roadAddressProject3 = RoadAddressProject(0, ProjectState.apply(1), "testproject", "TestUser3", DateTime.now(), "TestUser3", DateTime.parse("1903-03-03"), DateTime.now(), "Some other info", List.empty[ReservedRoadPart], None)
+      val error2 = intercept[NameExistsException] {
+        projectService.createRoadLinkProject(roadAddressProject3)
+      }
+      error2.getMessage should be("Nimellä testproject on jo olemassa projekti. Muuta nimeä.")
+    }
+  }
+
   test("Adding and removing TR_ID") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
