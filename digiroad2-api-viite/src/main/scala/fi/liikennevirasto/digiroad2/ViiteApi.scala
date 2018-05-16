@@ -490,7 +490,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-      if( projectService.validateLinkTrack(links.trackCode) ){
+      if (projectService.validateLinkTrack(links.trackCode)) {
         val writableProject = projectWritable(links.projectId)
         writableProject.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
           user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
@@ -503,7 +503,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                 "publishable" -> projectErrors.isEmpty,
                 "projectErrors" -> projectErrors)
           }
-      }else{
+      } else {
         Map("success" -> false, "errorMessage" -> "Invalid track code")
       }
     } catch {
