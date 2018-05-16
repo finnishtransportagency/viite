@@ -755,9 +755,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     changeProjectData
   }
 
+  def prettyPrintLog(roadAddressChanges: List[ProjectRoadAddressChange]) = {
+    roadAddressChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
+      val (projectId, projectName, projectStartDate, projectEly) = g._1
+      val changes = g._2
+      logger.info(s"Changes for project [ID: $projectId; Name: ${projectName.getOrElse("")}; StartDate: $projectStartDate; Ely: $projectEly ]")
+      changes.foreach(c => {
+        logger.info(s"Change: ${c.toString}")
+      })
+    })
+  }
+
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]): ProjectChangeStatus = {
+    logger.info(s"Fetching all road address changes for projects: ${projectId.toString()}")
     val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(projectId)
-    ViiteTierekisteriClient.sendChanges(roadAddressChanges)
+    prettyPrintLog(roadAddressChanges)
+    logger.info(s"Sending changes to TR")
+    val sentObj = ViiteTierekisteriClient.sendChanges(roadAddressChanges)
+    logger.info(s"Changes Sent to TR")
+    sentObj
   }
 
   def getProjectRoadLinksByLinkIds(linkIdsToGet: Set[Long], newTransaction: Boolean = true): Seq[ProjectAddressLink] = {
@@ -1293,6 +1309,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def publishProject(projectId: Long): PublishResult = {
     // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
     // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
+    logger.info(s"Preparing to send Project ID: $projectId to TR")
     withDynTransaction {
       try {
         if(!recalculateChangeTable(projectId)) {
@@ -1305,10 +1322,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it =>
             setProjectStatusToSend2TR(projectId)
+            logger.info(s"Sending to TR successful reasoning: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
 
           case _ =>
             //rollback
+            logger.info(s"Sending to TR unsuccessful reasoning: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
       } catch {
@@ -1418,9 +1437,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): (ProjectState) = {
     if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
+      logger.info(s"Status update is needed as Project Current status (${currentStatus}) differs from  TR Status(${newStatus})")
       val projects = ProjectDAO.getRoadAddressProjects(projectId)
-      if (projects.nonEmpty && newStatus == ProjectState.ErroredInTR) // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
+      if (projects.nonEmpty && newStatus == ProjectState.ErroredInTR) {
+        // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
+        logger.info(s"Wrinting error message and clearing old TR_ID \r\n ($errorMessage)")
         ProjectDAO.updateProjectStateInfo(errorMessage, projectId)
+      }
       ProjectDAO.updateProjectStatus(projectId, newStatus)
     }
     if (newStatus != ProjectState.Unknown) {
@@ -1437,7 +1460,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def updateProjectsWaitingResponseFromTR(): Unit = {
+    logger.info(s"Starting getting status from TR, fetching list of projects pending for TR response.")
     val listOfPendingProjects = getProjectsPendingInTR
+    logger.info(s"List fetched, projects: ${listOfPendingProjects.toString()}")
     for (project <- listOfPendingProjects) {
       try {
         if (withDynTransaction {
@@ -1460,8 +1485,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectDAO.getRotatingTRProjectId(projectID).headOption match {
       case Some(trId) =>
         ProjectDAO.getProjectStatus(projectID).map { currentState =>
-          logger.info(s"Current status is $currentState")
+          logger.info(s"Current status is $currentState, fetching TR state")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
+          logger.info(s"Retrived TR status: ${trProjectState.getOrElse(None)}")
           val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
           val errorMessage = getTRErrorMessage(trProjectState)
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
@@ -1581,6 +1607,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.error(s" There are no roadlinks to update  with names, rollbacking update ${project.id}")
       throw new InvalidAddressDataException(s"There are no roadlinks to update with names, rollbacking update ${project.id}")
     }
+    logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
     val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
       .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
     val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber) || l.roadName.isEmpty || l.roadName.get == null)
@@ -1601,7 +1628,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
-
+    logger.info(s"Moving project links to project link history.")
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
     try {
@@ -1615,6 +1642,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
       val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
+      logger.info(s"Updating the following terminated linkids to history ${terminatedLinkIds} ")
       updateTerminationForHistory(terminatedLinkIds, splitReplacements)
       //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
       val created = RoadAddressDAO.create(newRoadAddressesWithHistory.map(_.copy(id = NewRoadAddress)))
