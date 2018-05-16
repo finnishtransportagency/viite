@@ -570,6 +570,7 @@
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
         }
+        applicationModel.removeSpinner();
       };
 
       var displayCloseConfirmMessage = function (popupMessage, changeLayerMode) {
@@ -578,9 +579,12 @@
           successCallback: function () {
             if (isDirty && !disabledInput) {
               createOrSaveProject();
-              _.defer(function () {
-                closeProjectMode(changeLayerMode);
+              eventbus.once('roadAddress:projectSaved', function () {
+                  _.defer(function () {
+                      closeProjectMode(changeLayerMode);
+                  });
               });
+              applicationModel.removeSpinner();
             } else {
               closeProjectMode(changeLayerMode);
             }
@@ -626,6 +630,7 @@
       rootElement.on('click', '#saveEdit', function () {
         saveAndNext();
         eventbus.trigger('roadAddressProject:enableInteractions');
+        eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
       rootElement.on('click', '#cancelEdit', function () {
@@ -646,26 +651,28 @@
         } else {
           cancelChanges();
         }
-        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('roadAddressProject:startAllInteractions');
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
         if (currentProject.isDirty) {
-          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-            successCallback: function () {
-              if (!disabledInput) {
-                createOrSaveProject();
-                _.defer(function () {
+            new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+                successCallback: function () {
+                    if (!disabledInput) {
+                        createOrSaveProject();
+                        eventbus.once('roadAddress:projectSaved', function () {
+                            _.defer(function () {
+                                closeProjectMode(true);
+                            });
+                        });
+                    } else {
+                        closeProjectMode(true);
+                    }
+                },
+                closeCallback: function () {
                     closeProjectMode(true);
-                });
-              } else {
-                closeProjectMode(true);
-              }
-              },
-              closeCallback: function () {
-                closeProjectMode(true);
-              }
-          });
+                }
+            });
         } else {
           closeProjectMode(true);
         }
