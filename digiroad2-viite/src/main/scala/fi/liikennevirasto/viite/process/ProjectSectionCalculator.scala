@@ -353,17 +353,16 @@ object ProjectSectionCalculator {
     def getFixedAddress(rightLink: ProjectLink, leftLink: ProjectLink,
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
       if (((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) ||
-        (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) &&
-        Math.abs(rightLink.endAddrMValue - leftLink.endAddrMValue) <= fi.liikennevirasto.viite.MaxAdjustmentRange && (rightLink.track != Track.Combined && leftLink.track != Track.Combined)) {
+        (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) && (rightLink.track != Track.Combined && leftLink.track != Track.Combined)) {
         Some(averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue))
       } else if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
       } else if (leftLink.status == LinkStatus.UnChanged || leftLink.status == LinkStatus.Transfer) {
         Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
-      } else if (rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.New) {
-        Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
-      } else if (leftLink.status == LinkStatus.Transfer && rightLink.status == LinkStatus.New) {
-        Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
+//      } else if (rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.New) {
+//        Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
+//      } else if (leftLink.status == LinkStatus.Transfer && rightLink.status == LinkStatus.New) {
+//        Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
       } else {
         maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
       }
@@ -395,7 +394,7 @@ object ProjectSectionCalculator {
           val en = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
           val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, en)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, Some(en))
-          (r ++ ro, l ++ lo)
+          ((r.init :+ r.last.copy(endAddrMValue = en)) ++ ro, (l.init :+ l.last.copy(endAddrMValue = en)) ++ lo)
         } else {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
         }
