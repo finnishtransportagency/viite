@@ -355,7 +355,7 @@ object ProjectSectionCalculator {
       if (((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) ||
         (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) &&
         Math.abs(rightLink.endAddrMValue - leftLink.endAddrMValue) <= fi.liikennevirasto.viite.MaxAdjustmentRange && (rightLink.track != Track.Combined && leftLink.track != Track.Combined)) {
-        Some(Seq(rightLink.startAddrMValue, leftLink.startAddrMValue).sum / 2, Seq(rightLink.endAddrMValue, leftLink.endAddrMValue).sum / 2)
+        Some(averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue))
       } else if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
       } else if (leftLink.status == LinkStatus.UnChanged || leftLink.status == LinkStatus.Transfer) {
@@ -379,10 +379,6 @@ object ProjectSectionCalculator {
     }
 
     def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long) = {
-//      val (rst, lst, ren, len) = (right.head.startAddrMValue, left.head.startAddrMValue, right.last.endAddrMValue,
-//        left.last.endAddrMValue)
-//      val st = startM.getOrElse(if (rst > lst) Math.ceil(0.5 * (rst + lst)).round else Math.floor(0.5 * (rst + lst)).round)
-//      val en = endM.getOrElse(if (ren > len) Math.ceil(0.5 * (ren + len)).round else Math.floor(0.5 * (ren + len)).round)
       (assignValues(right, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(right)),
         assignValues(left, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(left)))
     }
