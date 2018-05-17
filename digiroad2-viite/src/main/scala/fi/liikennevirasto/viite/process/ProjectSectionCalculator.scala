@@ -359,10 +359,6 @@ object ProjectSectionCalculator {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
       } else if (leftLink.status == LinkStatus.UnChanged || leftLink.status == LinkStatus.Transfer) {
         Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
-//      } else if (rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.New) {
-//        Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
-//      } else if (leftLink.status == LinkStatus.Transfer && rightLink.status == LinkStatus.New) {
-//        Some((leftLink.startAddrMValue, leftLink.endAddrMValue))
       } else {
         maybeDefinedCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).orElse(None)
       }
