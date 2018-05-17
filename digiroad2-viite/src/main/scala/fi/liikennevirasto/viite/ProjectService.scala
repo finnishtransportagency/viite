@@ -1559,16 +1559,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.create(splitAddresses)
   }
 
-  private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
-    projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.createdBy)).keys.map(rn =>
-      if (rn._2.nonEmpty) {
-        RoadName(NewRoadNameId, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
-      } else {
-        throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
-      }
-    ).toSeq
-  }
-
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
@@ -1580,29 +1570,30 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.error(s" There are no roadlinks to update  with names, rollbacking update ${project.id}")
       throw new InvalidAddressDataException(s"There are no roadlinks to update with names, rollbacking update ${project.id}")
     }
-    val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
-      .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
-    val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber) || l.roadName.isEmpty || l.roadName.get == null)
-
+    val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
+    val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
+    val (existingLinkNames, newLinkNames) = projectLinkNames.partition(pln => existingInRoadNames.contains(pln.roadNumber))
+    val newNames = (existingLinkNames++newLinkNames).map{
+      ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
+    }
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     if (expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
-    RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
-    getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = project.createdBy)))
-    projectLinks.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
-    if (existingNames.nonEmpty) {
-      logger.info(s"Found ${existingNames.size} names in project that differ from road address name")
-      val nameString = s"${existingNames.map(_.roadNumber).mkString(",")}"
+    if(existingLinkNames.nonEmpty)
+    RoadNameDAO.expireByRoadNumber(existingLinkNames.map(_.roadNumber).toSet, System.currentTimeMillis())
+    newNames.map(n => RoadNameDAO.create(n._2))
+
+    projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
+    if (projectLinkNames.nonEmpty) {
+      logger.info(s"Found ${projectLinkNames.size} names in project that differ from road address name")
+      val nameString = s"${projectLinkNames.map(_.roadNumber).mkString(",")}"
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
-
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
-
     ProjectDAO.moveProjectLinksToHistory(projectID)
-
     try {
       val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
       val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
