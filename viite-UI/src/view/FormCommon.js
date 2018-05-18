@@ -61,8 +61,10 @@
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
-            $('#roadName').val(response.roadName);
-            $('#roadName').prop('disabled', true);
+            if(response.roadName !== ''){
+                $('#roadName').val(response.roadName);
+                $('#roadName').prop('disabled', true);
+            }
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
               $('#trackCodeDropdown').val("0");
           }
