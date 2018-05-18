@@ -1572,8 +1572,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
     val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
-    val (existingLinkNames, newLinkNames) = projectLinkNames.partition(pln => existingInRoadNames.contains(pln.roadNumber))
-    val newNames = (existingLinkNames++newLinkNames).map{
+    val newLinkNames = projectLinkNames.filterNot(pln => existingInRoadNames.contains(pln.roadNumber))
+    val newNames = newLinkNames.map{
       ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
     }
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
@@ -1582,8 +1582,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
-    if(existingLinkNames.nonEmpty)
-    RoadNameDAO.expireByRoadNumber(existingLinkNames.map(_.roadNumber).toSet, System.currentTimeMillis())
     newNames.map(n => RoadNameDAO.create(n._2))
 
     projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
