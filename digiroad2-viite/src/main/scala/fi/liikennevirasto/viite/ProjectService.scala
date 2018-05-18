@@ -1567,14 +1567,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val project=ProjectDAO.getRoadAddressProjectById(projectID).get
     val projectLinks=ProjectDAO.getProjectLinks(projectID)
     if (projectLinks.isEmpty){
-      logger.error(s" There are no roadlinks to update  with names, rollbacking update ${project.id}")
-      throw new InvalidAddressDataException(s"There are no roadlinks to update with names, rollbacking update ${project.id}")
-    }
-    val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
-    val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
-    val newLinkNames = projectLinkNames.filterNot(pln => existingInRoadNames.contains(pln.roadNumber))
-    val newNames = newLinkNames.map{
-      ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
+      logger.error(s" There are no road addresses to update, rollbacking update ${project.id}")
+      throw new InvalidAddressDataException(s"There are no road addresses to update, rollbacking update ${project.id}")
     }
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
@@ -1582,23 +1576,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
-    newNames.map(n => RoadNameDAO.create(n._2))
-
-    projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
-    if (projectLinkNames.nonEmpty) {
-      logger.info(s"Found ${projectLinkNames.size} names in project that differ from road address name")
-      val nameString = s"${projectLinkNames.map(_.roadNumber).mkString(",")}"
-      appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
-    }
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
     ProjectDAO.moveProjectLinksToHistory(projectID)
+    handleNewRoadNames(projectLinks, project)
     try {
       val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
       val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
         expiringRoadAddresses, project)
 
       val newRoadAddressesWithHistory = CommonHistoryFiller.fillCommonHistory(projectLinks, newRoadAddresses, expiringRoadAddresses.values.toSeq)
-
       //Expiring all old addresses by their ID
       logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
@@ -1611,6 +1597,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case e: ProjectValidationException =>
         logger.error("Failed to validate project message:" +e.getMessage)
         Some(e.getMessage)
+    }
+  }
+
+  def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject) = {
+    val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
+    val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
+    val newLinkNames = projectLinkNames.filterNot(pln => existingInRoadNames.contains(pln.roadNumber))
+    val newNames = newLinkNames.map{
+      ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
+    }
+    newNames.map(n => RoadNameDAO.create(n._2))
+    projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
+    if (projectLinkNames.nonEmpty) {
+      logger.info(s"Found ${projectLinkNames.size} names in project that differ from road address name")
+      val nameString = s"${projectLinkNames.map(_.roadNumber).mkString(",")}"
+      appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
   }
 
