@@ -131,7 +131,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val vvhLink = vvhRoadLinks.head
         (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
           case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
-            Right(PreFillInfo(roadNumber, roadPartNumber, RoadNameDAO.getLatestRoadName(roadNumber.toLong).getOrElse("").asInstanceOf[RoadName].roadName))
+            val roadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong)
+            Right(PreFillInfo(roadNumber, roadPartNumber, if( roadName.isEmpty) "" else roadName.get.roadName))
           case _ => Left("Link does not contain valid prefill info")
         }
       }
