@@ -31,7 +31,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt)
+case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String)
 
 case class LinkToRevert(id: Long, linkId: Long, status: Long, geometry: Seq[Point])
 
@@ -123,15 +123,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def parsePreFillData(vvhRoadLinks: Seq[VVHRoadlink]): Either[String, PreFillInfo] = {
-    if (vvhRoadLinks.isEmpty) {
-      Left("Link could not be found in VVH")
-    }
-    else {
-      val vvhLink = vvhRoadLinks.head
-      (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
-        case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
-          Right(PreFillInfo(roadNumber, roadPartNumber))
-        case _ => Left("Link does not contain valid prefill info")
+    withDynSession{
+      if (vvhRoadLinks.isEmpty) {
+        Left("Link could not be found in VVH")
+      }
+      else {
+        val vvhLink = vvhRoadLinks.head
+        (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
+          case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
+            val roadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong)
+            Right(PreFillInfo(roadNumber, roadPartNumber, if( roadName.isEmpty) "" else roadName.get.roadName))
+          case _ => Left("Link does not contain valid prefill info")
+        }
       }
     }
   }
