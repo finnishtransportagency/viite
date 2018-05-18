@@ -765,7 +765,7 @@
         draw();
         if (!noReselection && applicationModel.getSelectionType() !== 'unknown') {_.defer(function(){
           var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
-          varfloatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
+          var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
             return feature.linkId;
           }).uniq().value();
           var visibleFeatures = getVisibleFeatures(true,false,true);
@@ -825,7 +825,7 @@
         }
         redrawNextSelectedTarget(targets, adjacents);
       });
-      eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
+      eventListener.listenTo(eventbus, 'adjacents:added adjacents:additionalSourceFound', function(sources,targets, additionalLinkId){
           clearIndicators();
         drawIndicators(targets);
           _.map(selectedLinkProperty.getFeaturesToKeep(), function (roads) {

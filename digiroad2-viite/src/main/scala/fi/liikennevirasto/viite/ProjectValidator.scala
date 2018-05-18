@@ -750,3 +750,7 @@ object ProjectValidator {
 class ProjectValidationException(s: String) extends RuntimeException {
   override def getMessage: String = s
 }
+
+class NameExistsException(s: String) extends RuntimeException {
+  override def getMessage: String = s
+}
