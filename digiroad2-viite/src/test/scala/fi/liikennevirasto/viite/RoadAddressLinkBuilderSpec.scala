@@ -166,7 +166,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Suravage link builder") {
+  test("Suravage link builder when link is not in DB") {
     val newLinkId1 = 5000
     val municipalityCode = 564
     val administrativeClass = Municipality
@@ -181,7 +181,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     suravageAddress.linkId should be(newLinkId1)
     suravageAddress.administrativeClass should be(administrativeClass)
     suravageAddress.constructionType should be(ConstructionType.UnderConstruction)
-    suravageAddress.sideCode should be(SideCode.TowardsDigitizing)
+    suravageAddress.sideCode should be(SideCode.Unknown)
     suravageAddress.roadNumber should be(99)
     suravageAddress.roadPartNumber should be(24)
     suravageAddress.startMValue should be(0)
