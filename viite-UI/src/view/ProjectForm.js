@@ -570,6 +570,7 @@
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
         }
+        applicationModel.removeSpinner();
       };
 
       var displayCloseConfirmMessage = function (popupMessage, changeLayerMode) {
@@ -594,7 +595,7 @@
         });
       };
 
-      var displayDeleteConfirmMessage= function (popupMessage) {
+      var displayDeleteConfirmMessage = function (popupMessage) {
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
               deleteProject();
@@ -633,7 +634,7 @@
       });
 
       rootElement.on('click', '#cancelEdit', function () {
-        if ($('#saveEdit').is(':enabled')) {
+        if (currentProject.isDirty) {
           new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
             successCallback: function () {
               if (!disabledInput) {
@@ -650,13 +651,33 @@
         } else {
           cancelChanges();
         }
-        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('roadAddressProject:startAllInteractions');
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
-        var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
-        displayCloseConfirmMessage(defaultPopupMessage, true);
+        if (currentProject.isDirty) {
+            new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+                successCallback: function () {
+                    if (!disabledInput) {
+                        createOrSaveProject();
+                        eventbus.once('roadAddress:projectSaved', function () {
+                            _.defer(function () {
+                                closeProjectMode(true);
+                            });
+                        });
+                    } else {
+                        closeProjectMode(true);
+                    }
+                },
+                closeCallback: function () {
+                    closeProjectMode(true);
+                }
+            });
+        } else {
+          closeProjectMode(true);
+        }
       });
+
       rootElement.on('click', '#closeProjectSpan', function () {
         closeProjectMode(true);
       });
