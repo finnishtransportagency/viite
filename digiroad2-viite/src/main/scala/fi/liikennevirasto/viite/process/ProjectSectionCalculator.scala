@@ -274,7 +274,7 @@ object ProjectSectionCalculator {
         // TODO: userCalibrationPoints to Long -> Seq[UserDefinedCalibrationPoint] in method params
         val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
         val calculatedSections = calculateSectionAddressValues(ordSections, calMap)
-          val links = calculatedSections.flatMap{ sec =>
+        val links = calculatedSections.flatMap{ sec =>
           if (sec.right == sec.left)
             assignCalibrationPoints(Seq(), sec.right.links, calMap)
           else {
@@ -390,7 +390,7 @@ object ProjectSectionCalculator {
           val en = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
           val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, en)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, Some(en))
-          ((r.init :+ r.last.copy(endAddrMValue = en)) ++ ro, (l.init :+ l.last.copy(endAddrMValue = en)) ++ lo)
+          (r ++ ro, l ++ lo)
         } else {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
         }
