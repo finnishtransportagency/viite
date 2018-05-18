@@ -105,11 +105,14 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 
 
-  def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
-    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId)).headOption
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    val length = GeometryUtils.geometryLength(geom)
-    val sideCode = if (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) {
+  /** Converts VVH traficdirection to sidecode... not sure about the validity of the results
+    *
+    * @param roadLink VVHRoadlink
+    * @return returns Sidecode from TRAFICDIRECTION
+    */
+  private def roadlinkSideCodeGuesser(roadLink: VVHRoadlink) :SideCode = {
+
+    if (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) {
       SideCode.TowardsDigitizing
     } else if (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing) {
       SideCode.AgainstDigitizing
@@ -117,6 +120,16 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       SideCode.BothDirections
     } else {
       SideCode.Unknown
+    }
+  }
+
+  def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
+    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId)).headOption
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
+    val length = GeometryUtils.geometryLength(geom)
+    val sideCode =roadAddress match {
+      case Some(road) => road.sideCode
+      case _ => roadlinkSideCodeGuesser(roadLink)
     }
     val roadLinkRoadNumber = toLongNumber(roadAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
     val roadLinkRoadPartNumber = toLongNumber(roadAddress.map(_.roadPartNumber), roadLink.attributes.get(RoadPartNumber))
