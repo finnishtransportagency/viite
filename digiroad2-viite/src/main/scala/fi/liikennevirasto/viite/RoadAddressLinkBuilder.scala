@@ -110,7 +110,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val headAddress = roadAddresses.headOption
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
     val length = GeometryUtils.geometryLength(geom)
-    val sideCode =roadAddress match {
+    val sideCode =headAddress match {
       case Some(road) => road.sideCode
       case _ => SideCode.Unknown
     }
