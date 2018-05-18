@@ -106,21 +106,30 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
 
   def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
-    val roadAddress = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId)).headOption
+    val roadAddresses = RoadAddressDAO.fetchByLinkId(Set(roadLink.linkId), includeHistory = false)
+    val headAddress = roadAddresses.headOption
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
     val length = GeometryUtils.geometryLength(geom)
     val sideCode =roadAddress match {
       case Some(road) => road.sideCode
       case _ => SideCode.Unknown
     }
-    val roadLinkRoadNumber = toLongNumber(roadAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
-    val roadLinkRoadPartNumber = toLongNumber(roadAddress.map(_.roadPartNumber), roadLink.attributes.get(RoadPartNumber))
+    val startAddrM = roadAddresses.nonEmpty match {
+      case true => roadAddresses.map(_.startAddrMValue).min
+      case false => 0L
+    }
+    val endAddrM = roadAddresses.nonEmpty match {
+      case true => roadAddresses.map(_.endAddrMValue).max
+      case false => 0L
+    }
+    val roadLinkRoadNumber = toLongNumber(headAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
+    val roadLinkRoadPartNumber = toLongNumber(headAddress.map(_.roadPartNumber), roadLink.attributes.get(RoadPartNumber))
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val municipalityCode = roadLink.municipalityCode
     val anomalyType = {
       if (roadLinkRoadNumber != 0 && roadLinkRoadPartNumber != 0) Anomaly.None else Anomaly.NoAddressGiven
     }
-    val trackValue = roadAddress match {
+    val trackValue = headAddress match {
       case Some(add) =>
         if (add.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
           add.track.value
@@ -130,16 +139,16 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case _ => roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
     }
 
-    val elyCode: Long = roadAddress match {
+    val elyCode: Long = headAddress match {
       case Some(add) => add.ely
       case _ => municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1)
     }
-    RoadAddressLink(toLongNumber(roadAddress.map(_.id), Some(0)), roadLink.linkId, geom,
+    RoadAddressLink(toLongNumber(headAddress.map(_.id), Some(0)), roadLink.linkId, geom,
       length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLinkType, roadLink.constructionType,
       roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber,trackValue, elyCode, Discontinuity.Continuous.value,
-      roadAddress.map(_.startAddrMValue).getOrElse(0), roadAddress.map(_.endAddrMValue).getOrElse(0), "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
+      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {

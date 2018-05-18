@@ -371,21 +371,15 @@
       };
 
       var cancelChanges = function() {
-        selectedProjectLinkProperty.setDirty(false);
-        if(projectCollection.isDirty()) {
-          projectCollection.revertLinkStatus();
-          projectCollection.setDirty([]);
-          projectCollection.setTmpDirty([]);
-          projectLinkLayer.clearHighlights();
-          $('.wrapper').remove();
-          formCommon.toggleAdditionalControls();
-          eventbus.trigger('roadAddress:projectLinksEdited');
-          eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
-          eventbus.trigger('roadAddressProject:reOpenCurrent');
-        } else {
-          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
-          eventbus.trigger('roadLinks:refreshView');
-        }
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        projectCollection.setTmpDirty([]);
+        projectLinkLayer.clearHighlights();
+        selectedProjectLinkProperty.cleanIds();
+        $('.wrapper').remove();
+        eventbus.trigger('roadAddress:projectLinksEdited');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+        eventbus.trigger('roadAddressProject:reOpenCurrent');
       };
 
       rootElement.on('change', '#endDistance', function(eventData){

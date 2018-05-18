@@ -28,6 +28,7 @@
         applicationModel.setActiveButtons(false);
         eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
+        previousAdjacents = [];
         current = [];
         sources = [];
         targets = [];
@@ -416,7 +417,7 @@
           var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
             return _.merge({}, a, {"marker": markers[index]});
           }), "links": newSources};
-          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
+          eventbus.trigger("adjacents:additionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
         }
       });
     });
@@ -532,7 +533,7 @@
         return adjacent.linkId == target;
       });
       if(!_.isEmpty(targetData)){
-        $('#aditionalSource').remove();
+        $('#additionalSource').remove();
         $('#adjacentsData').remove();
         getLinkAdjacents(_.first(targetData));
       }
@@ -741,11 +742,9 @@
 
     var isFloatingHomogeneous = function(floatingFeature) {
       var firstFloating = _.first(featuresToKeep);
-      if(floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) && floatingFeature.data.trackCode === firstFloating.trackCode && floatingFeature.data.roadNumber === firstFloating.roadNumber){
-        return true;
-      }else{
-        return false;
-      }
+      return floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) &&
+          floatingFeature.data.trackCode === firstFloating.trackCode &&
+          floatingFeature.data.roadNumber === firstFloating.roadNumber;
     };
 
     var filterFeaturesAfterSimulation = function(features){

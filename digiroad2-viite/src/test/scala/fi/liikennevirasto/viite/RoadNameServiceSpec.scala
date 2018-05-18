@@ -142,31 +142,35 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
   }
 
   test("new roadname, setting end date in current one") {
+    val roadNumber = 99
     runWithRollback {
-      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('65','VICTORY RD.',to_date('01.01.1989','DD.MM.RRRR'), null, to_date('01.01.1989','DD.MM.RRRR'),null,'User',to_timestamp('01.01.1989 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
-      val search = RoadNameDAO.getLatestRoadName(65)
+      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
+            values ($roadNumber, 'VICTORY RD.', to_date('01.01.1989','DD.MM.RRRR'), null, to_date('01.01.1989','DD.MM.RRRR'), null, 'User', to_timestamp('01.01.1989 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
+      val search = RoadNameDAO.getLatestRoadName(roadNumber)
 
       val roadNames = Seq(
         RoadNameRow(search.get.id, "VICTORY RD.", "25.3.2018", Some("27.3.2018")),
-        RoadNameRow(-1000L, "Victory Road", "27.3.2018", None)
+        RoadNameRow(NewRoadNameId, "Victory Road", "27.3.2018", None)
       )
-      val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(65L, roadNames, User(1, "user", Configuration()))
+      val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, User(1, "user", Configuration()))
       afterInsert should be(None)
-      val latestAfterInsert = RoadNameDAO.getLatestRoadName(65)
+      val latestAfterInsert = RoadNameDAO.getLatestRoadName(roadNumber)
       latestAfterInsert.size should be(1)
       latestAfterInsert.get.roadName should be("Victory Road")
     }
   }
 
   test("updating name from current one should expire and create an copy of it, with the new name") {
+    val roadNumber = 99
     runWithRollback {
-      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('65','VICTORY RD.',to_date('01.01.1989','DD.MM.RRRR'), null, to_date('01.01.1989','DD.MM.RRRR'),null,'User',to_timestamp('01.01.1989 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
-      val search = RoadNameDAO.getLatestRoadName(65)
+      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME)
+            values ($roadNumber, 'VICTORY RD.', to_date('01.01.1989','DD.MM.RRRR'), null, to_date('01.01.1989','DD.MM.RRRR'), null, 'User', to_timestamp('01.01.1989 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
+      val search = RoadNameDAO.getLatestRoadName(roadNumber)
       val roadNames = Seq(
         RoadNameRow(search.get.id, "Victory Road", "27.3.2018", None)
       )
-      roadNameService.addOrUpdateRoadNamesInTX(65, roadNames, User(1, "user", Configuration()))
-      val latestAfterInsert = RoadNameDAO.getLatestRoadName(65)
+      roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, User(1, "user", Configuration()))
+      val latestAfterInsert = RoadNameDAO.getLatestRoadName(roadNumber)
       latestAfterInsert.size should be(1)
       latestAfterInsert.get.roadName should be("Victory Road")
     }
