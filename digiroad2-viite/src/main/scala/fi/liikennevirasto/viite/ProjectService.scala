@@ -1607,7 +1607,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     newNames.map(n => RoadNameDAO.create(n._2))
     projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
-    if (projectLinkNames.nonEmpty) {
+    if (newNames.nonEmpty) {
       logger.info(s"Found ${newNames.size} names in project that differ from road address name")
       val nameString = s"${newNames.map(_._2.roadNumber).mkString(",")}"
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
