@@ -344,22 +344,14 @@
         if (newParts.length === 0 && currParts.length === 0) {
           hasReservedRoadParts = false;
         }
-        /*
-        if (newParts.length === 0 && currParts.length === 0 && currentProject.id === 0) {
-          rootElement.html(newProjectTemplate());
-          addDatePicker();
-        } else {
-        */
         updateReservedParts(writeHtmlList(currParts), writeHtmlList(newParts));
-        //rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, writeHtmlList(currParts), writeHtmlList(newParts)));
-        //}
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
         rootElement.find('.btn-save').prop("disabled", false);
-        rootElement.find('.btn-next').prop("disabled", false); //There's no buttons with class .btn-next
+        rootElement.find('.btn-next').prop("disabled", false);
       };
 
       var disableFormInputs = function () {
@@ -550,7 +542,6 @@
           new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
             successCallback: function () {
               removePart(roadNumber, roadPartNumber);
-              //loadEditbuttons();
               _.defer(function () {
                 textFieldChangeHandler({removedReserved: true});
               });
