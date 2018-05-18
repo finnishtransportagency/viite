@@ -1268,7 +1268,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   private def appendStatusInfo(project: RoadAddressProject, appendMessage: String): Unit = {
     val maxStringLength = 1000
-    project.statusInfo match { // before removing tr-id we want to save it in statusInfo if we need it later. Currently it is overwriten when we resend and get new error
+    project.statusInfo match { // before removing tr-id we want to save it in statusInfo if we need it later. Currently it is overwritten when we resend and get new error
       case Some(statusInfo) =>
         if ((statusInfo + appendMessage).length < maxStringLength)
           ProjectDAO.updateProjectStateInfo(appendMessage + statusInfo, project.id)
@@ -1279,8 +1279,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ProjectDAO.updateProjectStateInfo(appendMessage, project.id)
     }
     ProjectDAO.removeRotatingTRProjectId(project.id)
-
-
   }
 
   /**
@@ -1610,8 +1608,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     newNames.map(n => RoadNameDAO.create(n._2))
     projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
     if (projectLinkNames.nonEmpty) {
-      logger.info(s"Found ${projectLinkNames.size} names in project that differ from road address name")
-      val nameString = s"${projectLinkNames.map(_.roadNumber).mkString(",")}"
+      logger.info(s"Found ${newNames.size} names in project that differ from road address name")
+      val nameString = s"${newNames.map(_._2.roadNumber).mkString(",")}"
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
   }
