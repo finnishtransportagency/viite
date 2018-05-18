@@ -88,7 +88,7 @@ class RoadNameService() {
   /**
     * Fetches road names that are updated after the given date.
     *
-    * @param since
+    * @param since tells from which date roads are wanted
     * @return Returns error message as left and seq of road names as right
     */
   def getUpdatedRoadNames(since: DateTime): Either[String, Seq[RoadName]] = {
