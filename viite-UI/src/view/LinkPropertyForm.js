@@ -228,15 +228,15 @@
 
     var additionalSource = function(linkId, marker) {
       return (!_.isUndefined(marker)) ? '' +
-      '<div class = "form-group" id = "aditionalSource">' +
+      '<div class = "form-group" id = "additionalSource">' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
       '<label class="control-label-floating"> LINK ID:</label>' +
       '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
       '<span class="marker">' + marker + '</span>' +
-      '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
+      '<button class="add-source btn btn-new" id="additionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
       '</div>' +
       '</div>' : '' +
-      '<div class = "form-group" id = "aditionalSource">' +
+      '<div class = "form-group" id = "additionalSource">' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
       '<label class="control-label-floating"> LINK ID:</label>' +
       '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
@@ -428,7 +428,7 @@
       }
     };
 
-    var processAditionalFloatings = function(floatingRoads, value) {
+    var processAdditionalFloatings = function(floatingRoads, value) {
       var floatingRoadsLinkId = _.map(floatingRoads, function (fr) {
         return fr.linkId;
       });
@@ -615,8 +615,8 @@
         applicationModel.removeSpinner();
       });
 
-      eventbus.on('adjacents:aditionalSourceFound', function(sources, targets, additionalSourceLinkId) {
-        $('#aditionalSource').remove();
+      eventbus.on('adjacents:additionalSourceFound', function(sources, targets, additionalSourceLinkId) {
+        $('#additionalSource').remove();
         $('#adjacentsData').remove();
         processAdjacents(sources, targets, additionalSourceLinkId);
         applicationModel.removeSpinner();
@@ -629,7 +629,7 @@
 
         //singleLinkSelection case
         var floatingAdjacents = [];
-        if (selectedLinkProperty.count() === 1) {
+          if (selectedLinkProperty.count() >= 1) {
           floatingAdjacents = _.filter(targets, function(t) {
             return t.roadLinkType == floatingRoadLinkType;
           });
@@ -648,9 +648,7 @@
 
         $('[id^=VALITUTLINKIT]').remove();
 
-        var nonFloatingFeatures = _.reject(selectedLinkProperty.getFeaturesToKeep(), function(t){
-          return t.roadLinkType == floatingRoadLinkType;
-        });
+          var nonFloatingFeatures = selectedLinkProperty.getFeaturesToKeep();
 
         var fields = formFields(_.map(nonFloatingFeatures, function(sId){
           return {'linkId' : sId.linkId};
@@ -668,8 +666,8 @@
           rootElement.find('.link-properties button.cancel').attr('disabled', false);
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.setActiveButtons(true);
-          $('[id*="aditionalSourceButton"]').click(sources,function(event) {
-            processAditionalFloatings(sources, event.currentTarget.value);
+          $('[id*="additionalSourceButton"]').click(sources,function(event) {
+            processAdditionalFloatings(sources, event.currentTarget.value);
           });
         }
       };
@@ -751,7 +749,7 @@
       });
 
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
-        $('#aditionalSource').remove();
+        $('#additionalSource').remove();
         $('#adjacentsData').remove();
         rootElement.find('.link-properties button.save').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
@@ -786,12 +784,12 @@
           floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker);
         });
         $(".form-group:last").after(floatingPart);
-        $('[id*="aditionalSourceButton"]').click(floatingRoads,function(event) {
-          processAditionalFloatings(floatingRoads,event.currentTarget.value);
+        $('[id*="additionalSourceButton"]').click(floatingRoads,function(event) {
+          processAdditionalFloatings(floatingRoads,event.currentTarget.value);
         });
       });
       eventbus.on('linkProperties:additionalFloatingSelected',function(data) {
-        processAditionalFloatings(data.selectedFloatings, data.selectedLinkId);
+        processAdditionalFloatings(data.selectedFloatings, data.selectedLinkId);
       });
 
       eventbus.on('linkProperties:transferFailed',function(errorCode) {
