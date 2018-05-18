@@ -33,10 +33,10 @@ object ProjectSectionMValueCalculator {
         }
       }))
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
-    unchanged ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption)
+    unchanged ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
   }
 
-  def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
+  def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     val newAddressValues = seq.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
       val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
