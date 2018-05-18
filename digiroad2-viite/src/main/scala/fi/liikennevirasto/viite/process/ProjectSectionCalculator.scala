@@ -72,7 +72,7 @@ object ProjectSectionCalculator {
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
       val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
       val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
-      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, calMap, None, None, coEff)
     } else {
       mValued
     }
@@ -366,7 +366,7 @@ object ProjectSectionCalculator {
 
     def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors): Seq[ProjectLink] = {
       val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
-      ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), coEff)
+      ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff)
     }
 
     def averageOfAddressMValues(rAddrM: Double, lAddrM: Double) : Long = {
