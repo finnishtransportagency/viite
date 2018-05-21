@@ -129,13 +129,10 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Saved Suravage Link gets roadaddress from DB if exists") {
     runWithRollback {
       sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
-      println("first-lrm")
       sqlu"""Insert into lrm_position (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
           values ('62019094','0','2','0','67,768',null,'7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
-      println("second-lrm")
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('62019097',null,'2','0','67,768',null,'7096025','1516719259000',to_timestamp('23.04.2018 16:26:44,137893000','DD.MM.RRRR HH24:MI:SSXFF'),'3')
              """.execute
-      println("road-address")
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,
           VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID) values ('9124288','62555','2','0','1','0','68','62019097',
           to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
@@ -191,6 +188,38 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     suravageAddress.municipalityCode should be(municipalityCode)
     suravageAddress.geometry.size should be(2)
   }
+
+
+  test("Suravage link builder when link is in DB") {
+    runWithRollback {
+      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
+      sqlu"""Insert into lrm_position (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
+          values ('62019094','0','2','0','67,768',null,'7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,
+          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID) values ('9124288','62555','2','0','1','0','68','62019094',
+          to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022')""".execute
+      val suravageLinkId1 = 7096025
+      val municipalityCode = 564
+      val administrativeClass = Municipality
+      val trafficDirection = TrafficDirection.TowardsDigitizing
+      val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
+      val suravageAddress =   RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(suravageLinkId1, municipalityCode,
+          List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
+          attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30))
+
+      suravageAddress.sideCode should be(SideCode.TowardsDigitizing)
+      suravageAddress.endAddressM should be (68)
+      suravageAddress.startAddressM should be (0)
+      suravageAddress.elyCode should be (8)
+      suravageAddress.trackCode should be (0)
+      suravageAddress.roadNumber should be (62555)
+      suravageAddress.roadPartNumber should be (2)
+    }
+  }
+
+
+
 
   test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {
     val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))
