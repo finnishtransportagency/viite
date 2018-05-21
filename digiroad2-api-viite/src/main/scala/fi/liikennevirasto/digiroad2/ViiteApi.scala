@@ -148,7 +148,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/project/prefillfromvvh/:linkId") {
     val linkId = params("linkId").toLong
     projectService.fetchPreFillFromVVH(linkId) match {
-      case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart)
+      case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName)
       case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
     }
   }

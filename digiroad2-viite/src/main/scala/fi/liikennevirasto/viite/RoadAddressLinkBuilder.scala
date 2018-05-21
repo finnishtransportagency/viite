@@ -119,8 +119,14 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     } else {
       SideCode.Unknown
     }
-    val startAddrM = roadAddresses.map(_.startAddrMValue).min
-    val endAddrM = roadAddresses.map(_.endAddrMValue).max
+    val startAddrM = roadAddresses.nonEmpty match {
+      case true => roadAddresses.map(_.startAddrMValue).min
+      case false => 0L
+    }
+    val endAddrM = roadAddresses.nonEmpty match {
+      case true => roadAddresses.map(_.endAddrMValue).max
+      case false => 0L
+    }
     val roadLinkRoadNumber = toLongNumber(headAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
     val roadLinkRoadPartNumber = toLongNumber(headAddress.map(_.roadPartNumber), roadLink.attributes.get(RoadPartNumber))
     val VVHRoadName = getVVHRoadName(roadLink.attributes)

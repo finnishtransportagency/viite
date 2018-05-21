@@ -61,6 +61,11 @@
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
+            if(response.roadName !== ''){
+                $('#roadName').val(response.roadName);
+                $('#roadName').prop('disabled', true);
+                $('.project-form button.update').prop("disabled", false);
+            }
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
               $('#trackCodeDropdown').val("0");
           }
@@ -126,12 +131,17 @@
     };
 
     var addTrackCodeDropdown = function (trackDefaultValue, properties){
+      var trackDefaultValueToShow = '';
       if(trackDefaultValue === ''){
         trackDefaultValue = Track.Unknown.value;
+        trackDefaultValueToShow = '--';
+      }
+      else{
+        trackDefaultValueToShow = trackDefaultValue;
       }
 
       return '<select class="form-select-small-control" id="trackCodeDropdown" size="1" '+properties+'>' +
-        '<option value = "'+trackDefaultValue+'" selected hidden>'+trackDefaultValue+'</option>' +
+        '<option value = "'+trackDefaultValue+'" selected hidden>'+trackDefaultValueToShow+'</option>' +
         '<option value="0" >0</option>' +
         '<option value="1" >1</option>' +
         '<option value="2" >2</option>' +
