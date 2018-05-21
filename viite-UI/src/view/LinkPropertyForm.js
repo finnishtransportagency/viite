@@ -670,6 +670,20 @@
             processAditionalFloatings(sources, event.currentTarget.value);
           });
         }
+        if (!_.isEmpty(sources) && _.isEmpty(targets)) {
+          var startingIndex = parseInt($(".form-group[id^='VALITUTLINKIT']:last")[0].id.slice(-1)) + 1;
+          var newDivs = "";
+          _.each(sources, function (road, index) {
+            var divId = "VALITUTLINKIT" + (startingIndex + index);
+            newDivs = newDivs +
+                '<div class="form-group" id=' + divId + '>' +
+                '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+                '<p class="form-control-static-floating">' + road.linkId + '</p>' +
+                '</div>';
+          });
+          $(".form-group[id^='VALITUTLINKIT']:last").append(newDivs);
+        }
+
       };
 
       eventbus.on('linkProperties:changed', function() {

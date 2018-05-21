@@ -402,6 +402,12 @@
       });
     };
 
+    this.toRoadLinkModel = function (roadDataArray) {
+      return _.map(roadDataArray, function (rda) {
+        return new RoadLinkModel(rda);
+      });
+    };
+
     eventbus.on('linkProperty:fetchedHistoryLinks',function (date){
 
     });
