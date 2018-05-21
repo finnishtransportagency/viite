@@ -1602,7 +1602,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
     val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
     val newLinkNames = projectLinkNames.filterNot(pln => existingInRoadNames.contains(pln.roadNumber))
-    val newNames = newLinkNames.map{
+    val newNames = newLinkNames.map {
       ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
     }
     newNames.map(n => RoadNameDAO.create(n._2))
