@@ -1604,8 +1604,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val project=ProjectDAO.getRoadAddressProjectById(projectID).get
     val projectLinks=ProjectDAO.getProjectLinks(projectID)
     if (projectLinks.isEmpty){
-      logger.error(s" There are no roadlinks to update  with names, rollbacking update ${project.id}")
-      throw new InvalidAddressDataException(s"There are no roadlinks to update with names, rollbacking update ${project.id}")
+      logger.error(s" There are no roadaddresses to update  with names, rollbacking update ${project.id}")
+      throw new InvalidAddressDataException(s"There are no roadaddresses to update with names, rollbacking update ${project.id}")
     }
     logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
     val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
