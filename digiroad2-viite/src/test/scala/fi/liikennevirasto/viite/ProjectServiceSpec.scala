@@ -1135,9 +1135,20 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("parsePrefillData contains correct info") {
-    val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
-    val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
-    projectService.parsePreFillData(Seq(newRoadLink1)) should be(Right(PreFillInfo(100, 100)))
+    runWithRollback{
+      val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
+      val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+      projectService.parsePreFillData(Seq(newRoadLink1)) should be(Right(PreFillInfo(100, 100, "")))
+    }
+  }
+
+  test("parsePrefillData contains correct info with road name pre fillled") {
+    runWithRollback{
+      sqlu"""INSERT INTO ROAD_NAMES VALUES (ROAD_NAME_SEQ.nextval, 100, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
+      val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
+      val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+      projectService.parsePreFillData(Seq(newRoadLink1)) should be(Right(PreFillInfo(100, 100, "road name test")))
+    }
   }
 
   test("parsePrefillData incomplete data") {
@@ -1436,12 +1447,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("revert transfer/new road should remove road name") {
+  test("revert all new road should remove road name") {
     runWithRollback {
       val testRoad: (Long, Long, String) = {
         (99999L, 1L, "Test name")
       }
-      val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
+
+      val (project, links) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
+      val roadLinks = links.map(toRoadLink)
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
@@ -1495,6 +1509,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         (99999L, 1L, "new name")
       }
       val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
+      val roadLinks = links.map(toRoadLink)
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
       sqlu"""INSERT INTO ROAD_NAMES VALUES (ROAD_NAME_SEQ.NEXTVAL, 99999, 'test name', sysdate, null, sysdate, null, 'test user', sysdate)""".execute
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("new name")
       val linksToRevert = links.map(l => {
