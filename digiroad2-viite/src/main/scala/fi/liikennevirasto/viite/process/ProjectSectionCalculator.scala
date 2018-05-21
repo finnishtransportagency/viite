@@ -376,6 +376,13 @@ object ProjectSectionCalculator {
         assignValues(left, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(left)))
     }
 
+    def forceLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddrMValue: Long): Seq[ProjectLink] ={
+      if(projectLinks.last.status != LinkStatus.NotHandled)
+        projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddrMValue)
+      else
+        projectLinks
+    }
+
     def adjustTracksToMatch(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
@@ -385,10 +392,11 @@ object ProjectSectionCalculator {
         if (firstRight.nonEmpty && firstLeft.nonEmpty) {
           val availableCalibrationPoint = userDefinedCalibrationPoint.get(firstRight.last.id).orElse(userDefinedCalibrationPoint.get(firstLeft.last.id))
           val st = previousStart.getOrElse(getFixedAddress(firstRight.head, firstLeft.head).map(_._1).getOrElse(averageOfAddressMValues(firstRight.head.startAddrMValue, firstLeft.head.startAddrMValue)))
-          val en = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
-          val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, en)
+          val estimatedEnd = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
+          val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, estimatedEnd)
+          val en = averageOfAddressMValues(r.last.endAddrMValue, l.last.endAddrMValue)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, Some(en))
-          ((r.init :+ r.last.copy(endAddrMValue = en)) ++ ro, (l.init :+ l.last.copy(endAddrMValue = en)) ++ lo)
+          (forceLastEndAddrMValue(r, en) ++ ro, forceLastEndAddrMValue(l, en) ++ lo)
         } else {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
         }
