@@ -111,13 +111,12 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
         endAddrMValue = t.endAddrMValue - d)))
     })
 
-    //The average was removed from partition to be handle on the project links
     val termPart = ProjectDeltaCalculator.partition(terminations)
     termPart should have size(2)
-    termPart.head.startMAddr should be (0L)
-    termPart.head.endMAddr should be (10L)
-    termPart.last.startMAddr should be (0L)
-    termPart.last.endMAddr should be (12L)
+    termPart.foreach(x => {
+      x.startMAddr should be (0L)
+      x.endMAddr should be (11L)
+    })
 
     val transferParts = ProjectDeltaCalculator.partition(transfers)
     transferParts should have size(2)
@@ -136,13 +135,12 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     val terminations = Seq(addresses.last, addresses2.last)
     val unchanged = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
-    //The average was removed from partition to be handle on the project links
     val termPart = ProjectDeltaCalculator.partition(terminations)
     termPart should have size(2)
-    termPart.head.startMAddr should be (110L)
-    termPart.head.endMAddr should be (120L)
-    termPart.last.startMAddr should be (108L)
-    termPart.last.endMAddr should be (120L)
+    termPart.foreach(x => {
+      x.startMAddr should be (109L)
+      x.endMAddr should be (120L)
+    })
 
     val transferParts = ProjectDeltaCalculator.partition(unchanged)
     transferParts should have size(2)
@@ -186,13 +184,12 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 14.2, -1L, 8,false, None, 85900L)
     )
 
-    //The average was removed from partition to be handle on the project links
     val termPart = ProjectDeltaCalculator.partition(terminations)
     termPart should have size(2)
-    termPart.head.startMAddr should be (50L)
-    termPart.head.endMAddr should be (70L)
-    termPart.last.startMAddr should be (48L)
-    termPart.last.endMAddr should be (72L)
+    termPart.foreach(x => {
+      x.startMAddr should be (49L)
+      x.endMAddr should be (71L)
+    })
 
 
     val uncParts = ProjectDeltaCalculator.partition(unchanged)
@@ -213,20 +210,16 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       to.endMAddr should be (111L)
     })
 
-    //The average was removed from partition to be handle on the project links
     val newParts = ProjectDeltaCalculator.partition(newLinks)
     newParts should have size(4)
-    val lessThan100MAddr = newParts.filter(_.startMAddr < 100)
-    lessThan100MAddr.head.startMAddr should be (40L)
-    lessThan100MAddr.head.endMAddr should be (53L)
-    lessThan100MAddr.last.startMAddr should be (36L)
-    lessThan100MAddr.last.endMAddr should be (49L)
-
-    val greaterThan100MAddr = newParts.filter(_.startMAddr >= 100)
-    greaterThan100MAddr.head.startMAddr should be (113L)
-    greaterThan100MAddr.head.endMAddr should be (127L)
-    greaterThan100MAddr.last.startMAddr should be (109L)
-    greaterThan100MAddr.last.endMAddr should be (124L)
+    newParts.filter(_.startMAddr < 100).foreach(to => {
+      to.startMAddr should be (38)
+      to.endMAddr should be (51)
+    })
+    newParts.filter(_.startMAddr >= 100).foreach(to => {
+      to.startMAddr should be (111)
+      to.endMAddr should be (125)
+    })
   }
 
   test("unchanged with road type change in between + new") {
