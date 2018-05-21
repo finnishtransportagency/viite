@@ -186,7 +186,7 @@ object ProjectDeltaCalculator {
 
     val result = paired.flatMap { case (key, target) =>
       val matches = matchingTracks(paired, key)
-      if (matches.nonEmpty && matches.get.lengthCompare(target.length) ==  0)
+      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0)
         adjustTrack((target, matches.get))
       else
         target
