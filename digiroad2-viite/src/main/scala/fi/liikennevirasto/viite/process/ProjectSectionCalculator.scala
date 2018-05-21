@@ -301,8 +301,6 @@ object ProjectSectionCalculator {
     }.toSeq
   }
 
-
-
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
@@ -390,7 +388,7 @@ object ProjectSectionCalculator {
           val en = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
           val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, en)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, Some(en))
-          (r ++ ro, l ++ lo)
+          ((r.init :+ r.last.copy(endAddrMValue = en)) ++ ro, (l.init :+ l.last.copy(endAddrMValue = en)) ++ lo)
         } else {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
         }
