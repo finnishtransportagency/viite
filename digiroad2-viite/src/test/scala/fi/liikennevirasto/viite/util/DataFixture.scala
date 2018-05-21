@@ -220,7 +220,11 @@ object DataFixture {
           RoadAddressDAO.fetchByLinkId(changedLinkIds, includeTerminated = false)
         }
         try {
-          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses)
+          val groupedAddresses = roadAddresses.groupBy(_.linkId)
+          val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
+          val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
+          println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
+          roadAddressService.applyChanges(roadLinks, affectingChanges, roadAddresses)
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
@@ -370,7 +374,8 @@ object DataFixture {
       "kauniainen_lrm_positions.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
-      "insert_project_link_data.sql"
+      "insert_project_link_data.sql",
+      "insert_road_names.sql"
     ))
   }
 
