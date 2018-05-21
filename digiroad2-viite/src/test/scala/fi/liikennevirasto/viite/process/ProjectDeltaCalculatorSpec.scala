@@ -183,12 +183,14 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 14.2, -1L, 8,false, None, 85900L)
     )
+
     val termPart = ProjectDeltaCalculator.partition(terminations)
     termPart should have size(2)
     termPart.foreach(x => {
       x.startMAddr should be (49L)
       x.endMAddr should be (71L)
     })
+
 
     val uncParts = ProjectDeltaCalculator.partition(unchanged)
     uncParts should have size(2)
@@ -207,6 +209,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       to.startMAddr should be (51L)
       to.endMAddr should be (111L)
     })
+
     val newParts = ProjectDeltaCalculator.partition(newLinks)
     newParts should have size(4)
     newParts.filter(_.startMAddr < 100).foreach(to => {
