@@ -417,7 +417,15 @@
           var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
             return _.merge({}, a, {"marker": markers[index]});
           }), "links": newSources};
-          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
+          eventbus.trigger("adjacents:additionalSourceFound", calculatedRoads.links, calculatedRoads.adjacents);
+        } else {
+          var calculatedRoads = {
+            "adjacents": _.map(adjacents, function (a, index) {
+              return _.merge({}, a, {"marker": markers[index]});
+            }), "links": newSources
+          };
+          sources = sources.concat(roadCollection.toRoadLinkModel(calculatedRoads.links));
+          eventbus.trigger("adjacents:additionalSourceFound", calculatedRoads.links, calculatedRoads.adjacents);
         }
       });
     });
