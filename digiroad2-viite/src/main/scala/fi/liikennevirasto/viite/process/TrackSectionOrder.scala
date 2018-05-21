@@ -184,7 +184,7 @@ object TrackSectionOrder {
               val l = pickRightMost(ready.last, connected)
               (getOppositeEnd(l.geometry, currentPoint), l)
             }
-          case _ =>
+            case _ =>
             val l = pickForwardPointing(ready.last, connected)
             (getOppositeEnd(l.geometry, currentPoint), l)
         }
