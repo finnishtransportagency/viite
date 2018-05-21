@@ -658,23 +658,23 @@
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
         if (currentProject.isDirty) {
-            new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-                successCallback: function () {
-                    if (!disabledInput) {
-                        createOrSaveProject();
-                        eventbus.once('roadAddress:projectSaved', function () {
-                            _.defer(function () {
-                                closeProjectMode(true);
-                            });
-                        });
-                    } else {
-                        closeProjectMode(true);
-                    }
-                },
-                closeCallback: function () {
+          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+            successCallback: function () {
+              if (!disabledInput) {
+                eventbus.once('roadAddress:projectSaved', function () {
+                  _.defer(function () {
                     closeProjectMode(true);
-                }
-            });
+                  });
+                });
+                createOrSaveProject();
+              } else {
+                closeProjectMode(true);
+              }
+            },
+            closeCallback: function () {
+              closeProjectMode(true);
+            }
+          });
         } else {
           closeProjectMode(true);
         }
