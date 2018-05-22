@@ -817,13 +817,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""INSERT INTO LRM_POSITION VALUES (lrm_position_primary_key_seq.nextval, 0, 2, 0, 85.617, NULL, 5170979, 1500079296000, TIMESTAMP '2018-03-23 00:00:00.000000', 1)""".execute
       sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 99999, 1, 0, 86, lrm_position_primary_key_seq.currval, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]')""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 99999, 'another road name test')""".execute
-
+      val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(99999)
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val project = projectService.getRoadAddressSingleProject(projectId)
       val namesAfterUpdate = RoadNameDAO.getLatestRoadName(99999)
-      project.get.statusInfo.get should be(roadNameWasNotSavedInProject + s"${99999}")
-      namesAfterUpdate.get.roadName should be("road name test")
+      project.get.statusInfo.getOrElse("") should be(roadNameWasNotSavedInProject + s"${99999}")
+      namesAfterUpdate.get.roadName should be(namesBeforeUpdate.get.roadName)
     }
   }
 
@@ -835,13 +835,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""INSERT INTO LRM_POSITION VALUES (lrm_position_primary_key_seq.nextval, 0, 2, 0, 85.617, NULL, 5170979, 1500079296000, TIMESTAMP '2018-03-23 00:00:00.000000', 1)""".execute
       sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 99999, 1, 0, 86, lrm_position_primary_key_seq.currval, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]')""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 99999, 'road name test')""".execute
-
+      val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(99999)
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val project = projectService.getRoadAddressSingleProject(projectId)
       val namesAfterUpdate = RoadNameDAO.getLatestRoadName(99999)
       project.get.statusInfo should be(None)
-      namesAfterUpdate.get.roadName should be("road name test")
+      namesAfterUpdate.get.roadName should be(namesBeforeUpdate.get.roadName)
     }
   }
 
@@ -2099,14 +2099,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""INSERT INTO LRM_POSITION VALUES (lrm_position_primary_key_seq.nextval, 0, 2, 0, 85.617, NULL, 5170979, 1500079296000, TIMESTAMP '2018-03-23 00:00:00.000000', 1)""".execute
       sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 99999, 1, 0, 86, lrm_position_primary_key_seq.currval, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]')""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 99999, 'ROAD TEST')""".execute
-
+      val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(99999)
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val project = projectService.getRoadAddressSingleProject(projectId)
       val validNamesAfterUpdate = RoadNameDAO.getCurrentRoadNamesByRoadNumber(99999)
       validNamesAfterUpdate.size should be (1)
-      validNamesAfterUpdate.head.roadName should be("ROAD TEST")
-      project.get.statusInfo should be(None)
+      validNamesAfterUpdate.head.roadName should be(namesBeforeUpdate.get.roadName)
+      project.get.statusInfo.getOrElse("") should be(roadNameWasNotSavedInProject + s"${99999}")
     }
   }
 }
