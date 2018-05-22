@@ -336,7 +336,7 @@ object ProjectDAO {
     }
   }
 
-  def getProjectLinksByLinkId(projectLinkId: Long): Seq[ProjectLink] = {
+  def getProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
     val query =
       s"""$projectLinkQueryBase
                 where LRM_POSITION.link_id = $projectLinkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
@@ -352,11 +352,11 @@ object ProjectDAO {
     listQuery(query).seq
   }
 
-  def getProjectLinksByProjectAndLinkId(ids: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
-    if (ids.isEmpty && linkIds.isEmpty) {
+  def getProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+    if (projectLinkIds.isEmpty && linkIds.isEmpty) {
       List()
     } else {
-      val idsFilter = if (ids.nonEmpty) s"AND PROJECT_LINK.ID IN (${ids.mkString(",")})" else ""
+      val idsFilter = if (projectLinkIds.nonEmpty) s"AND PROJECT_LINK.ID IN (${projectLinkIds.mkString(",")})" else ""
       val linkIdsFilter = if (linkIds.nonEmpty) s"AND LINK_ID IN (${linkIds.mkString(",")})" else ""
       val query =
         s"""$projectLinkQueryBase
