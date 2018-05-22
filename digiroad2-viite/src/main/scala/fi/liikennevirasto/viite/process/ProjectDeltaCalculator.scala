@@ -185,7 +185,7 @@ object ProjectDeltaCalculator {
     val (targetStartMAddr, targetEndMAddr) = (target.map(_.startMAddr).min, target.map(_.endMAddr).max)
     val (matcherStartMAddr, matcherEndMAddr) = (matchers.map(_.startMAddr).min, matchers.map(_.endMAddr).max)
     (targetStartMAddr <= matcherStartMAddr && targetEndMAddr >= matcherStartMAddr) || (targetStartMAddr <= matcherEndMAddr && targetEndMAddr >= matcherEndMAddr) ||
-    (matcherStartMAddr <= targetStartMAddr && matcherStartMAddr >= targetEndMAddr) || (matcherEndMAddr <= targetStartMAddr && matcherEndMAddr >= targetEndMAddr)
+    (matcherStartMAddr <= targetStartMAddr && matcherEndMAddr >= targetStartMAddr) || (matcherStartMAddr <= targetEndMAddr && matcherEndMAddr >= targetEndMAddr)
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
