@@ -732,9 +732,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
     val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
-    val suravageList = (withDynSession {
+    val suravageList = withDynSession {
       Await.result(fetch.suravageF, Duration.Inf)
-    }.map(x => (x, None))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    .map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
     val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, useFrozenVVHLinks, fetch)
     val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
     keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
