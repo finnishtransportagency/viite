@@ -1662,7 +1662,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject) = {
     val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
     val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
-    val newLinkNames = projectLinkNames.filterNot(pln => existingInRoadNames.contains(pln.roadNumber))
+    val (existingLinkNames, newLinkNames) = projectLinkNames.partition(pln => existingInRoadNames.contains(pln.roadNumber))
     val newNames = newLinkNames.map {
       ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
     }
@@ -1670,7 +1670,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
     if (newNames.nonEmpty) {
       logger.info(s"Found ${newNames.size} names in project that differ from road address name")
-      val nameString = s"${newNames.map(_._2.roadNumber).mkString(",")}"
+    }
+    if (existingLinkNames.nonEmpty) {
+      val nameString = s"${existingLinkNames.map(_.roadNumber).mkString(",")}"
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
   }
