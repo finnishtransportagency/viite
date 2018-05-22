@@ -569,7 +569,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
             ci.source.startAddressM should be(Some(546))
             ci.source.endAddressM should be(Some(6730))
             ci.target.startAddressM should be(Some(57))
-            (ci.source.startAddressM.get - ci.target.startAddressM.get) should be((ci.source.endAddressM.get - ci.target.endAddressM.get) +- 1)
           case AddressChangeType.New =>
             ci.source.startAddressM should be(None)
             ci.target.startAddressM should be(Some(0))
