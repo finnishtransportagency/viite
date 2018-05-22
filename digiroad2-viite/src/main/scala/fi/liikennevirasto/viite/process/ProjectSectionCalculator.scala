@@ -376,8 +376,8 @@ object ProjectSectionCalculator {
         assignValues(left, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(left)))
     }
 
-    def forceLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddrMValue: Long): Seq[ProjectLink] ={
-      if(projectLinks.last.status != LinkStatus.NotHandled)
+    def forceLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddrMValue: Long): Seq[ProjectLink] = {
+      if (projectLinks.last.status != LinkStatus.NotHandled)
         projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddrMValue)
       else
         projectLinks
