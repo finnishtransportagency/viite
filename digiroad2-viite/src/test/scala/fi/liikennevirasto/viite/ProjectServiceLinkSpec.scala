@@ -1284,8 +1284,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val (new201R, new201L) = newLinks.filter(_.roadPartNumber == 201).partition(_.track == Track.RightSide)
       val (new202R, new202L) = newLinks.filter(_.roadPartNumber == 202).partition(_.track == Track.RightSide)
-      new201R.maxBy(_.startAddrMValue).endAddrMValue should be(new201L.maxBy(_.startAddrMValue).endAddrMValue +- 1)
-      new202R.maxBy(_.startAddrMValue).endAddrMValue should be(new202L.maxBy(_.startAddrMValue).endAddrMValue +- 1)
+      new201R.maxBy(_.startAddrMValue).endAddrMValue should be(new201L.maxBy(_.startAddrMValue).endAddrMValue)
 
       projectService.getChangeProject(project.id).isEmpty should be(false)
 
@@ -1303,11 +1302,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val terminationChangesLeftSide202 = changesList.filter(cl => {
         cl.changeInfo.source.startRoadPartNumber.getOrElse(-1L) == 202 && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.getOrElse(-1L) == Track.LeftSide.value
       })
-      //TODO check if it suppose to remove average from termination
-//      terminationChangesRightSide201.head.changeInfo.source.startAddressM should be(terminationChangesLeftSide201.head.changeInfo.source.startAddressM)
-//      terminationChangesRightSide201.head.changeInfo.source.endAddressM should be(terminationChangesLeftSide201.head.changeInfo.source.endAddressM)
-//      terminationChangesRightSide202.head.changeInfo.source.startAddressM should be(terminationChangesLeftSide202.head.changeInfo.source.startAddressM)
-//      terminationChangesRightSide202.head.changeInfo.source.endAddressM should be(terminationChangesLeftSide202.head.changeInfo.source.endAddressM)
+
+      terminationChangesRightSide201.head.changeInfo.source.startAddressM should be(terminationChangesLeftSide201.head.changeInfo.source.startAddressM)
+      terminationChangesRightSide201.head.changeInfo.source.endAddressM should be(terminationChangesLeftSide201.head.changeInfo.source.endAddressM)
+      terminationChangesRightSide202.head.changeInfo.source.startAddressM should be(terminationChangesLeftSide202.head.changeInfo.source.startAddressM)
+      terminationChangesRightSide202.head.changeInfo.source.endAddressM should be(terminationChangesLeftSide202.head.changeInfo.source.endAddressM)
 
       val newChanges = changesList.filter(_.changeInfo.changeType == AddressChangeType.New)
       newChanges.foreach(nc => {
