@@ -383,6 +383,17 @@ object ProjectSectionCalculator {
         projectLinks
     }
 
+    def getEndRoadAddrMValue(rProjectLink: ProjectLink, lProjectLink: ProjectLink): Long ={
+      if(rProjectLink.status != LinkStatus.New && lProjectLink.status == LinkStatus.New){
+        rProjectLink.endAddrMValue
+      }else if(rProjectLink.status == LinkStatus.New && lProjectLink.status != LinkStatus.New){
+        lProjectLink.endAddrMValue
+      }else{
+        averageOfAddressMValues(rProjectLink.endAddrMValue, lProjectLink.endAddrMValue)
+      }
+
+    }
+
     def adjustTracksToMatch(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
@@ -394,7 +405,7 @@ object ProjectSectionCalculator {
           val st = previousStart.getOrElse(getFixedAddress(firstRight.head, firstLeft.head).map(_._1).getOrElse(averageOfAddressMValues(firstRight.head.startAddrMValue, firstLeft.head.startAddrMValue)))
           val estimatedEnd = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
           val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, estimatedEnd)
-          val en = averageOfAddressMValues(r.last.endAddrMValue, l.last.endAddrMValue)
+          val en = getEndRoadAddrMValue(r.last, l.last)
           val (ro, lo) = adjustTracksToMatch(restRight, restLeft, Some(en))
           (forceLastEndAddrMValue(r, en) ++ ro, forceLastEndAddrMValue(l, en) ++ lo)
         } else {
