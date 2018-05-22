@@ -521,8 +521,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
-  //TODO check if it makes sense to remove the average on the project delta because of the transfer
-  ignore("Terminate, new links and then transfer") {
+  test("Terminate, new links and then transfer") {
     val roadLink = RoadLink(51L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 1, TrafficDirection.AgainstDigitizing, Motorway,
       Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -570,7 +569,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
             ci.source.startAddressM should be(Some(546))
             ci.source.endAddressM should be(Some(6730))
             ci.target.startAddressM should be(Some(57))
-            (ci.source.startAddressM.get - ci.target.startAddressM.get) should be((ci.source.endAddressM.get - ci.target.endAddressM.get) +-1)
+            (ci.source.startAddressM.get - ci.target.startAddressM.get) should be((ci.source.endAddressM.get - ci.target.endAddressM.get) +- 1)
           case AddressChangeType.New =>
             ci.source.startAddressM should be(None)
             ci.target.startAddressM should be(Some(0))
@@ -783,7 +782,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val proj = projectService.createRoadLinkProject(project)
       projectId = proj.id
       val projectLinkId = proj.reservedParts.head.startingLinkId.get
-      val link = ProjectDAO.getProjectLinksByLinkId(projectLinkId).head
+      val link = ProjectDAO.getProjectLinksByLinkIdAndProjectId(projectLinkId, projectId).head
       val terminatedValue = LinkStatus.Terminated.value
       //Changing the status of the test link
       sqlu"""Update Project_Link Set Status = $terminatedValue
@@ -1431,7 +1430,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       val createdLink = projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       createdLink.get("success").get.asInstanceOf[Boolean] should be(true)
-      val updatedLink = ProjectDAO.getProjectLinksByLinkId(12345L)
+      val updatedLink = ProjectDAO.getProjectLinksByLinkIdAndProjectId(12345L, project.id)
 
       projectService.updateProjectLinks(project.id, Set(updatedLink.head.id), Seq(), LinkStatus.New, "TestUserTwo", 9999, 2, 1, Some(30), 5L, 2) should be(None)
       val reservedParts = ProjectDAO.fetchReservedRoadParts(project.id)
@@ -1439,7 +1438,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       reservedParts.head.roadPartNumber should be(2)
       reservedParts.head.newDiscontinuity.get should be(Discontinuity.apply(2))
 
-      val link = ProjectDAO.getProjectLinksByLinkId(12345L).head
+      val link = ProjectDAO.getProjectLinksByLinkIdAndProjectId(12345L, project.id).head
       link.status should be(LinkStatus.New)
       link.discontinuity should be(Discontinuity.apply(2))
       link.track should be(Track.apply(1))
@@ -1586,9 +1585,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       /**
         * Illustrative picture
         *
-        *               |--Left--||--Left--|
+        * |--Left--||--Left--|
         * |--combined--|                    |--combined--|
-        *               |-------Right------|
+        * |-------Right------|
         */
 
       /**
@@ -1757,9 +1756,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       /**
         * Illustrative picture
         *
-    *                   |--Left--||--Left--|
+        * |--Left--||--Left--|
         * |--combined--|                    |--combined--|
-        *               |-------Right------|
+        * |-------Right------|
         */
 
       /**
