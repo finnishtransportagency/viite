@@ -229,6 +229,14 @@
         fillForm(projectCollection.getCurrentReservedParts(), projectCollection.getNewReservedParts());
       };
 
+      var updateReservedParts = function (currParts, newParts) {
+          var reservedParts = $("#reservedRoads");
+          var newReservedParts = $("#newReservedRoads");
+
+          reservedParts.append(reservedParts.html(currParts));
+          newReservedParts.append(newReservedParts.html(newParts));
+      };
+
       var writeHtmlList = function (list) {
         var text = '';
         var index = 0;
@@ -336,12 +344,7 @@
         if (newParts.length === 0 && currParts.length === 0) {
           hasReservedRoadParts = false;
         }
-        if (newParts.length === 0 && currParts.length === 0 && currentProject.id === 0) {
-          rootElement.html(newProjectTemplate());
-          addDatePicker();
-        } else {
-          rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, writeHtmlList(currParts), writeHtmlList(newParts)));
-        }
+        updateReservedParts(writeHtmlList(currParts), writeHtmlList(newParts));
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
@@ -539,7 +542,6 @@
           new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
             successCallback: function () {
               removePart(roadNumber, roadPartNumber);
-              loadEditbuttons();
               _.defer(function () {
                 textFieldChangeHandler({removedReserved: true});
               });
@@ -570,6 +572,7 @@
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
         }
+        applicationModel.removeSpinner();
       };
 
       var displayCloseConfirmMessage = function (popupMessage, changeLayerMode) {
@@ -594,7 +597,7 @@
         });
       };
 
-      var displayDeleteConfirmMessage= function (popupMessage) {
+      var displayDeleteConfirmMessage = function (popupMessage) {
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
               deleteProject();
@@ -633,7 +636,7 @@
       });
 
       rootElement.on('click', '#cancelEdit', function () {
-        if ($('#saveEdit').is(':enabled')) {
+        if (currentProject.isDirty) {
           new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
             successCallback: function () {
               if (!disabledInput) {
@@ -650,13 +653,33 @@
         } else {
           cancelChanges();
         }
-        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('roadAddressProject:startAllInteractions');
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
-        var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
-        displayCloseConfirmMessage(defaultPopupMessage, true);
+        if (currentProject.isDirty) {
+          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+            successCallback: function () {
+              if (!disabledInput) {
+                eventbus.once('roadAddress:projectSaved', function () {
+                  _.defer(function () {
+                    closeProjectMode(true);
+                  });
+                });
+                createOrSaveProject();
+              } else {
+                closeProjectMode(true);
+              }
+            },
+            closeCallback: function () {
+              closeProjectMode(true);
+            }
+          });
+        } else {
+          closeProjectMode(true);
+        }
       });
+
       rootElement.on('click', '#closeProjectSpan', function () {
         closeProjectMode(true);
       });
