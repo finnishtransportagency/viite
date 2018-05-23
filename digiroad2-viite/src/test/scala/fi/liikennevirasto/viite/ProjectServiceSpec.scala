@@ -13,16 +13,14 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
-import fi.liikennevirasto.viite.ProjectValidator.{ValidationError, ValidationErrorDetails}
-import fi.liikennevirasto.viite.RoadType.{MunicipalityStreetRoad, PublicRoad}
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
-import fi.liikennevirasto.viite.dao.ProjectState.{Saved2TR, Sent2TR}
+import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao.{LinkStatus, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.ProjectSectionCalculator.{calculateSectionAddressValues, findStartingPoints}
-import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, ProjectSectionCalculator, TrackSectionOrder}
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito.{when, _}
@@ -2084,52 +2082,53 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val project = projectService.getRoadAddressSingleProject(projectId)
       val validNamesAfterUpdate = RoadNameDAO.getCurrentRoadNamesByRoadNumber(99999)
-      validNamesAfterUpdate.size should be (1)
+      validNamesAfterUpdate.size should be(1)
       validNamesAfterUpdate.head.roadName should be(namesBeforeUpdate.get.roadName)
       project.get.statusInfo.getOrElse("") should be(roadNameWasNotSavedInProject + s"${99999}")
     }
 
-  // Based on the "Terminate then transfer" test, this one checks for
-  test("Provoke a NonFatal exception when publishing a project and then check if the project state is changed to 8") {
+    // Based on the "Terminate then transfer" test, this one checks for
+    test("Provoke a NonFatal exception when publishing a project and then check if the project state is changed to 8") {
 
-    var count = 0
-    val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
-      99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"),
-      Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
-    runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects
-      val id = 0
-      val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")),
-        Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
-      val savedProject = projectService.createRoadLinkProject(roadAddressProject)
-      mockForProject(savedProject.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(savedProject)))
-      projectService.saveProject(savedProject.copy(reservedParts = addresses))
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be(count)
-      projectService.allLinksHandled(savedProject.id) should be(false)
-      val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
-      val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-      val linkIds207 = partitioned._1.map(_.linkId).toSet
-      reset(mockRoadLinkService)
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
-        toMockAnswer(projectLinks, roadLink)
-      )
-      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-      projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-      projectService.allLinksHandled(savedProject.id) should be(true)
-      val changeProjectOpt = projectService.getChangeProject(savedProject.id)
-      projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-      // This will result in a NonFatal exception being thrown and caught inside the publish, making the update of the project for the state ErrorInViite
-      // If the tests ever get a way to have TR connectivity then this needs to be somewhat addressed
-      projectService.publishProject(savedProject.id)
-      val currentProjectStatus = ProjectDAO.getProjectStatus(savedProject.id)
-      currentProjectStatus.isDefined should be(true)
-      currentProjectStatus.get.value should be(ProjectState.ErrorInViite.value)
+      var count = 0
+      val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
+        99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"),
+        Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
+      runWithRollback {
+        val countCurrentProjects = projectService.getRoadAddressAllProjects
+        val id = 0
+        val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")),
+          Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+        val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+          "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+        val savedProject = projectService.createRoadLinkProject(roadAddressProject)
+        mockForProject(savedProject.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(savedProject)))
+        projectService.saveProject(savedProject.copy(reservedParts = addresses))
+        val countAfterInsertProjects = projectService.getRoadAddressAllProjects
+        count = countCurrentProjects.size + 1
+        countAfterInsertProjects.size should be(count)
+        projectService.allLinksHandled(savedProject.id) should be(false)
+        val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
+        val partitioned = projectLinks.partition(_.roadPartNumber == 207)
+        val linkIds207 = partitioned._1.map(_.linkId).toSet
+        reset(mockRoadLinkService)
+        when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
+          toMockAnswer(projectLinks, roadLink)
+        )
+        projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int]) should be(None)
+        projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
+        projectService.allLinksHandled(savedProject.id) should be(true)
+        val changeProjectOpt = projectService.getChangeProject(savedProject.id)
+        projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
+        // This will result in a NonFatal exception being thrown and caught inside the publish, making the update of the project for the state ErrorInViite
+        // If the tests ever get a way to have TR connectivity then this needs to be somewhat addressed
+        projectService.publishProject(savedProject.id)
+        val currentProjectStatus = ProjectDAO.getProjectStatus(savedProject.id)
+        currentProjectStatus.isDefined should be(true)
+        currentProjectStatus.get.value should be(ProjectState.ErrorInViite.value)
+      }
+
     }
-
   }
 }
