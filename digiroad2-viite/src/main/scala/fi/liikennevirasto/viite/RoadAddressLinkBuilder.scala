@@ -120,12 +120,10 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case Some(road) => road.sideCode
       case _ => SideCode.Unknown
     }
-
     val startAddrM = roadAddresses.nonEmpty match {
       case true => roadAddresses.map(_.startAddrMValue).min
       case false => 0L
     }
-
     val endAddrM = roadAddresses.nonEmpty match {
       case true => roadAddresses.map(_.endAddrMValue).max
       case false => 0L
