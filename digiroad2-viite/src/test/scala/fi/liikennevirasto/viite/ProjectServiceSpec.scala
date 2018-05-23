@@ -2086,6 +2086,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       validNamesAfterUpdate.head.roadName should be(namesBeforeUpdate.get.roadName)
       project.get.statusInfo.getOrElse("") should be(roadNameWasNotSavedInProject + s"${99999}")
     }
+  }
 
     // Based on the "Terminate then transfer" test, this one checks for
     test("Provoke a NonFatal exception when publishing a project and then check if the project state is changed to 8") {
@@ -2130,5 +2131,5 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
 
     }
-  }
+
 }
