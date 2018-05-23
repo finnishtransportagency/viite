@@ -169,7 +169,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def projectWritableCheck(projectId: Long): Option[String] = {
     ProjectDAO.getProjectStatus(projectId) match {
       case Some(projectState) =>
-        if (projectState == ProjectState.Incomplete)
+        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
@@ -1358,7 +1358,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
       } catch {
-        case NonFatal(_) => PublishResult(validationSuccess = false, sendSuccess = false, None)
+        case NonFatal(_) => {
+          ProjectDAO.updateProjectStatus(projectId, ErrorInViite)
+          PublishResult(validationSuccess = false, sendSuccess = false, None)
+        }
       }
     }
   }
