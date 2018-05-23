@@ -383,7 +383,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
     try {
-      projectService.getRoadAddressSingleProject(projectId) match {
+      projectService.getRoadAddressSingleProject(projectId, false) match {
         case Some(project) =>
           val projectMap = roadAddressProjectToApi(project)
           val parts = project.reservedParts.map(reservedRoadPartToApi)
