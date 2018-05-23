@@ -414,13 +414,14 @@
           "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
       backend.getAdjacentsFromMultipleSources(data, function(adjacents){
+        var calculatedRoads;
         if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-          var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
+           calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
             return _.merge({}, a, {"marker": markers[index]});
           }), "links": newSources};
           eventbus.trigger("adjacents:additionalSourceFound", calculatedRoads.links, calculatedRoads.adjacents);
         } else {
-          var calculatedRoads = {
+           calculatedRoads = {
             "adjacents": _.map(adjacents, function (a, index) {
               return _.merge({}, a, {"marker": markers[index]});
             }), "links": newSources
