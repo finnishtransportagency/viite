@@ -118,7 +118,16 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val length = GeometryUtils.geometryLength(geom)
     val sideCode = headAddress match {
       case Some(road) => road.sideCode
-      case _ => SideCode.Unknown
+      case _ =>
+        if (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) {
+        SideCode.TowardsDigitizing
+      } else if (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing) {
+        SideCode.AgainstDigitizing
+      } else if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+        SideCode.BothDirections
+      } else {
+        SideCode.Unknown
+      }
     }
     val startAddrM = roadAddresses.nonEmpty match {
       case true => roadAddresses.map(_.startAddrMValue).min
