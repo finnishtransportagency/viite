@@ -18,6 +18,7 @@ import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
+import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
 import scala.language.postfixOps
 
 object DataFixture {
@@ -199,14 +200,17 @@ object DataFixture {
     roadLinkService.clearCache()
     println("Cache cleaned.")
 
+    val THREAD_POOL = 2
+
     //Get All Municipalities
-    val municipalities: Seq[Long] =
+    val municipalities: ParSeq[Long] =
       OracleDatabase.withDynTransaction {
         MunicipalityDAO.getMunicipalityMapping.keySet.toSeq
-      }
+      }.par
 
     //For each municipality get all VVH Roadlinks
-    municipalities.par.foreach { municipality =>
+    val municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(THREAD_POOL))
+    municipalities.map { municipality =>
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
