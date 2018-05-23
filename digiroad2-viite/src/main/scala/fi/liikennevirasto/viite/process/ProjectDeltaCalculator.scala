@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
+import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao.LinkStatus._
@@ -190,7 +190,7 @@ object ProjectDeltaCalculator {
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
-    var grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
+    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
       .mapValues(v => partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue)))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
