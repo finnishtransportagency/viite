@@ -177,15 +177,16 @@ object ProjectDeltaCalculator {
 
   /**
     * Check if the matches (opposite side of right or left track) road address measures fit on the target road address sections
-    * @param target The target road address sections
+    *
+    * @param target   The target road address sections
     * @param matchers The matcher road address sections
     * @return
     */
-  def matchesFitOnTarget(target: Seq[RoadAddressSection], matchers: Seq[RoadAddressSection]): Boolean ={
+  def matchesFitOnTarget(target: Seq[RoadAddressSection], matchers: Seq[RoadAddressSection]): Boolean = {
     val (targetStartMAddr, targetEndMAddr) = (target.map(_.startMAddr).min, target.map(_.endMAddr).max)
     val (matcherStartMAddr, matcherEndMAddr) = (matchers.map(_.startMAddr).min, matchers.map(_.endMAddr).max)
     (targetStartMAddr <= matcherStartMAddr && targetEndMAddr >= matcherStartMAddr) || (targetStartMAddr <= matcherEndMAddr && targetEndMAddr >= matcherEndMAddr) ||
-    (matcherStartMAddr <= targetStartMAddr && matcherEndMAddr >= targetStartMAddr) || (matcherStartMAddr <= targetEndMAddr && matcherEndMAddr >= targetEndMAddr)
+      (matcherStartMAddr <= targetStartMAddr && matcherEndMAddr >= targetStartMAddr) || (matcherStartMAddr <= targetEndMAddr && matcherEndMAddr >= targetEndMAddr)
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {

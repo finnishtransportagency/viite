@@ -383,15 +383,14 @@ object ProjectSectionCalculator {
         projectLinks
     }
 
-    def getEndRoadAddrMValue(rProjectLink: ProjectLink, lProjectLink: ProjectLink): Long ={
-      if(rProjectLink.status != LinkStatus.New && lProjectLink.status == LinkStatus.New){
+    def getEndRoadAddrMValue(rProjectLink: ProjectLink, lProjectLink: ProjectLink): Long = {
+      if (rProjectLink.status != LinkStatus.New && lProjectLink.status == LinkStatus.New) {
         rProjectLink.endAddrMValue
-      }else if(rProjectLink.status == LinkStatus.New && lProjectLink.status != LinkStatus.New){
+      } else if (rProjectLink.status == LinkStatus.New && lProjectLink.status != LinkStatus.New) {
         lProjectLink.endAddrMValue
-      }else{
+      } else {
         averageOfAddressMValues(rProjectLink.endAddrMValue, lProjectLink.endAddrMValue)
       }
-
     }
 
     def adjustTracksToMatch(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
