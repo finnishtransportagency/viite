@@ -887,25 +887,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         val (roadLinks, changes, complementary) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
         if (dir.nonEmpty) {
           try {
-            logger.info("Ignoring cache creation due to low disk space")
-//            val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-//            if (vvhSerializer.writeCache(newGeomFile, roadLinks)) {
-//              logger.info("New cached file created: " + newGeomFile + " containing " + roadLinks.size + " items")
-//            } else {
-//              logger.error("Writing cached geom file failed!")
-//            }
-//            val newChangeFile = new File(dir.get, changeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-//            if (vvhSerializer.writeCache(newChangeFile, changes)) {
-//              logger.info("New cached file created: " + newChangeFile + " containing " + changes.size + " items")
-//            } else {
-//              logger.error("Writing cached changes file failed!")
-//            }
-//            val newComplementaryFile = new File(dir.get, complementaryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-//            if (vvhSerializer.writeCache(newComplementaryFile, complementary)) {
-//              logger.info("New cached file created: " + newComplementaryFile + " containing " + complementary.size + " items")
-//            } else {
-//              logger.error("Writing cached complementary file failed!")
-//            }
+            val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            if (vvhSerializer.writeCache(newGeomFile, roadLinks)) {
+              logger.info("New cached file created: " + newGeomFile + " containing " + roadLinks.size + " items")
+            } else {
+              logger.error("Writing cached geom file failed!")
+            }
+            val newChangeFile = new File(dir.get, changeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            if (vvhSerializer.writeCache(newChangeFile, changes)) {
+              logger.info("New cached file created: " + newChangeFile + " containing " + changes.size + " items")
+            } else {
+              logger.error("Writing cached changes file failed!")
+            }
+            val newComplementaryFile = new File(dir.get, complementaryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            if (vvhSerializer.writeCache(newComplementaryFile, complementary)) {
+              logger.info("New cached file created: " + newComplementaryFile + " containing " + complementary.size + " items")
+            } else {
+              logger.error("Writing cached complementary file failed!")
+            }
           } catch {
             case ex: Exception => logger.warn("Failed cache IO when writing:", ex)
           }
