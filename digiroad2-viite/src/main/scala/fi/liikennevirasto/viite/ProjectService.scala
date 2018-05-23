@@ -169,7 +169,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def projectWritableCheck(projectId: Long): Option[String] = {
     ProjectDAO.getProjectStatus(projectId) match {
       case Some(projectState) =>
-        if (projectState == ProjectState.Incomplete)
+        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
@@ -1148,7 +1148,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         userDefinedEndAddressM.map(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
-          // TODO: remove calibration points that exist elsewhere except at the link end or start
           val foundCalibrationPoint = CalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
           if (foundCalibrationPoint.isEmpty)
             CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
@@ -1314,7 +1313,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   private def appendStatusInfo(project: RoadAddressProject, appendMessage: String): Unit = {
     val maxStringLength = 1000
-    project.statusInfo match { // before removing tr-id we want to save it in statusInfo if we need it later. Currently it is overwriten when we resend and get new error
+    project.statusInfo match { // before removing tr-id we want to save it in statusInfo if we need it later. Currently it is overwritten when we resend and get new error
       case Some(statusInfo) =>
         if ((statusInfo + appendMessage).length < maxStringLength)
           ProjectDAO.updateProjectStateInfo(appendMessage + statusInfo, project.id)
@@ -1325,8 +1324,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ProjectDAO.updateProjectStateInfo(appendMessage, project.id)
     }
     ProjectDAO.removeRotatingTRProjectId(project.id)
-
-
   }
 
   /**
@@ -1361,7 +1358,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
       } catch {
-        case NonFatal(_) => PublishResult(validationSuccess = false, sendSuccess = false, None)
+        case NonFatal(_) => {
+          ProjectDAO.updateProjectStatus(projectId, ErrorInViite)
+          PublishResult(validationSuccess = false, sendSuccess = false, None)
+        }
       }
     }
   }
@@ -1649,36 +1649,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.error(s" Project state not at Saved2TR")
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
-    val project = ProjectDAO.getRoadAddressProjectById(projectID).get
-    val projectLinks = ProjectDAO.getProjectLinks(projectID)
-    if (projectLinks.isEmpty) {
-      logger.error(s" There are no roadaddresses to update  with names, rollbacking update ${project.id}")
-      throw new InvalidAddressDataException(s"There are no roadaddresses to update with names, rollbacking update ${project.id}")
+    val project=ProjectDAO.getRoadAddressProjectById(projectID).get
+    val projectLinks=ProjectDAO.getProjectLinks(projectID)
+    if (projectLinks.isEmpty){
+      logger.error(s" There are no road addresses to update  , rollbacking update ${project.id}")
+      throw new InvalidAddressDataException(s"There are no road addresses to update , rollbacking update ${project.id}")
     }
-    logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
-    val existingNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
-      .filter(en => projectLinks.exists(pl => pl.roadNumber == en.roadNumber && pl.roadName.getOrElse("").toUpperCase() != en.roadName.toUpperCase()))
-    val newNames = projectLinks.filterNot(l => existingNames.exists(_.roadNumber == l.roadNumber) || l.roadName.isEmpty || l.roadName.get == null)
-
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
+    logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
     val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
     if (expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
-    RoadNameDAO.expireByRoadNumber(newNames.map(_.roadNumber).toSet, System.currentTimeMillis())
-    getRoadNamesFromProjectLinks(newNames).map(n => RoadNameDAO.create(n.copy(createdBy = project.createdBy)))
-    projectLinks.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
-    if (existingNames.nonEmpty) {
-      logger.info(s"Found ${existingNames.size} names in project that differ from road address name")
-      val nameString = s"${existingNames.map(_.roadNumber).mkString(",")}"
-      appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
-    }
-
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
-    logger.info(s"Moving project links to project link history.")
     ProjectDAO.moveProjectLinksToHistory(projectID)
-
+    logger.info(s"Moving project links to project link history.")
+    handleNewRoadNames(projectLinks, project)
     try {
       val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
       val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
@@ -1701,6 +1688,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case e: ProjectValidationException =>
         logger.error("Failed to validate project message:" + e.getMessage)
         Some(e.getMessage)
+    }
+  }
+
+  def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject) = {
+    val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id)
+    val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
+    val (existingLinkNames, newLinkNames) = projectLinkNames.partition(pln => existingInRoadNames.contains(pln.roadNumber))
+    val newNames = newLinkNames.map {
+      ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
+    }
+    newNames.map(n => RoadNameDAO.create(n._2))
+    projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
+    if (newNames.nonEmpty) {
+      logger.info(s"Found ${newNames.size} names in project that differ from road address name")
+    }
+    if (existingLinkNames.nonEmpty) {
+      val nameString = s"${existingLinkNames.map(_.roadNumber).mkString(",")}"
+      appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
   }
 
