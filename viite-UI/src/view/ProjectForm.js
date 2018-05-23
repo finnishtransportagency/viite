@@ -229,6 +229,14 @@
         fillForm(projectCollection.getCurrentReservedParts(), projectCollection.getNewReservedParts());
       };
 
+      var updateReservedParts = function (currParts, newParts) {
+          var reservedParts = $("#reservedRoads");
+          var newReservedParts = $("#newReservedRoads");
+
+          reservedParts.append(reservedParts.html(currParts));
+          newReservedParts.append(newReservedParts.html(newParts));
+      };
+
       var writeHtmlList = function (list) {
         var text = '';
         var index = 0;
@@ -244,7 +252,7 @@
         return text;
       };
 
-      var toggleAditionalControls = function () {
+      var toggleAdditionalControls = function () {
         rootElement.find('header').replaceWith('<header>' +
         titleWithEditingTool(currentProject.name) +
         '</header>');
@@ -306,7 +314,7 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject));
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
-          toggleAditionalControls();
+          toggleAdditionalControls();
         });
       };
 
@@ -324,7 +332,7 @@
           rootElement.html(selectedProjectLinkTemplate(currentProject));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');
-            toggleAditionalControls();
+            toggleAdditionalControls();
             selectedProjectLinkProperty.setDirty(false);
             eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
           });
@@ -336,12 +344,7 @@
         if (newParts.length === 0 && currParts.length === 0) {
           hasReservedRoadParts = false;
         }
-        if (newParts.length === 0 && currParts.length === 0 && currentProject.id === 0) {
-          rootElement.html(newProjectTemplate());
-          addDatePicker();
-        } else {
-          rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, writeHtmlList(currParts), writeHtmlList(newParts)));
-        }
+        updateReservedParts(writeHtmlList(currParts), writeHtmlList(newParts));
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
@@ -539,7 +542,6 @@
           new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
             successCallback: function () {
               removePart(roadNumber, roadPartNumber);
-              loadEditbuttons();
               _.defer(function () {
                 textFieldChangeHandler({removedReserved: true});
               });
@@ -570,6 +572,7 @@
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
         }
+        applicationModel.removeSpinner();
       };
 
       var displayCloseConfirmMessage = function (popupMessage, changeLayerMode) {
@@ -578,9 +581,12 @@
           successCallback: function () {
             if (isDirty && !disabledInput) {
               createOrSaveProject();
-              _.defer(function () {
-                closeProjectMode(changeLayerMode);
+              eventbus.once('roadAddress:projectSaved', function () {
+                  _.defer(function () {
+                      closeProjectMode(changeLayerMode);
+                  });
               });
+              applicationModel.removeSpinner();
             } else {
               closeProjectMode(changeLayerMode);
             }
@@ -591,7 +597,7 @@
         });
       };
 
-      var displayDeleteConfirmMessage= function (popupMessage) {
+      var displayDeleteConfirmMessage = function (popupMessage) {
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
               deleteProject();
@@ -619,37 +625,61 @@
         selectedProjectLinkProperty.setDirty(false);
         nextStage();
         rootElement.html(selectedProjectLinkTemplate(currentProject));
-        toggleAditionalControls();
+        toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
       };
 
       rootElement.on('click', '#saveEdit', function () {
         saveAndNext();
         eventbus.trigger('roadAddressProject:enableInteractions');
-      });
-
-      rootElement.on('click', '#cancelEdit', function () {
-        new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-          successCallback: function () {
-
-            if (!disabledInput) {
-              saveAndNext();
-            } else {
-              reOpenCurrent();
-            }
-            eventbus.trigger('roadAddressProject:enableInteractions');
-          },
-          closeCallback: function () {
-            cancelChanges();
-          }
-        });
         eventbus.trigger("roadAddressProject:startAllInteractions");
       });
 
-      rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
-        var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
-        displayCloseConfirmMessage(defaultPopupMessage, true);
+      rootElement.on('click', '#cancelEdit', function () {
+        if (currentProject.isDirty) {
+          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+            successCallback: function () {
+              if (!disabledInput) {
+                saveAndNext();
+              } else {
+                reOpenCurrent();
+              }
+              eventbus.trigger('roadAddressProject:enableInteractions');
+            },
+            closeCallback: function () {
+              cancelChanges();
+            }
+          });
+        } else {
+          cancelChanges();
+        }
+        eventbus.trigger('roadAddressProject:startAllInteractions');
       });
+
+      rootElement.on('click', '#saveAndCancelDialogue', function (eventData) {
+        if (currentProject.isDirty) {
+          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+            successCallback: function () {
+              if (!disabledInput) {
+                eventbus.once('roadAddress:projectSaved', function () {
+                  _.defer(function () {
+                    closeProjectMode(true);
+                  });
+                });
+                createOrSaveProject();
+              } else {
+                closeProjectMode(true);
+              }
+            },
+            closeCallback: function () {
+              closeProjectMode(true);
+            }
+          });
+        } else {
+          closeProjectMode(true);
+        }
+      });
+
       rootElement.on('click', '#closeProjectSpan', function () {
         closeProjectMode(true);
       });

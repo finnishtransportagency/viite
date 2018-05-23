@@ -124,8 +124,9 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
 
     // Show environment name next to Digiroad logo
-    jQuery('#notification').append(Environment.localizedName());
-    jQuery('#notification').append(' Päivämäärä: ' + startupParameters.deploy_date);
+    var notification = jQuery('#notification');
+    notification.append(Environment.localizedName());
+    notification.append(' Päivämäärä: ' + startupParameters.deploy_date);
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {

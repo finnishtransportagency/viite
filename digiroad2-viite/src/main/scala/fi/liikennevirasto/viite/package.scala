@@ -3,7 +3,7 @@ package fi.liikennevirasto
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.BaseRoadAddress
+import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
@@ -41,7 +41,7 @@ package object viite {
 
   val newCalibrationPointId: Long = -1000L
 
-  val NewRoadNameId = -1000
+  val NewRoadNameId: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
 
@@ -105,7 +105,7 @@ package object viite {
   val DefaultLongitude = 6900000.0
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
-
+  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Terminated, LinkStatus.Numbering)
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2

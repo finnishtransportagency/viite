@@ -128,7 +128,7 @@
       newReservedParts = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
-      projectInfo=undefined;
+      projectInfo = undefined;
       backend.abortLoadingProject();
     };
 
@@ -136,9 +136,9 @@
       var projectId = 0;
       if (projectInfo !== undefined) {
         projectId = projectInfo.id;
-      } else if (currentProject!==undefined && currentProject.project.id!==undefined)
+      } else if (currentProject !== undefined && currentProject.project.id !== undefined)
       {
-        projectId=currentProject.project.id;
+        projectId = currentProject.project.id;
       }
       var dataJson = {
         id: projectId,
@@ -316,21 +316,22 @@
 
       var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
-      var dataJson = {
+        var roadAddressProjectForm = $('#roadAddressProjectForm');
+        var dataJson = {
         ids: ids,
         linkIds: linkIds,
         linkStatus: statusCode,
         projectId: projectId,
-        roadNumber: Number($('#roadAddressProjectForm').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProjectForm').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectForm').find('#trackCodeDropdown')[0].value),
-        discontinuity: Number($('#roadAddressProjectForm').find('#discontinuityDropdown')[0].value),
-        roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
+        roadNumber: Number(roadAddressProjectForm.find('#tie')[0].value),
+        roadPartNumber: Number(roadAddressProjectForm.find('#osa')[0].value),
+        trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
+        discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
+        roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: (!isNaN(Number($('#roadAddressProjectForm').find('#endDistance')[0].value)) ?  Number($('#roadAddressProjectForm').find('#endDistance')[0].value) : null),
+        roadType: Number(roadAddressProjectForm.find('#roadTypeDropDown')[0].value),
+        userDefinedEndAddressM: (!isNaN(Number(roadAddressProjectForm.find('#endDistance')[0].value)) ?  Number(roadAddressProjectForm.find('#endDistance')[0].value) : null),
           coordinates: coordinates,
-          roadName: $('#roadAddressProjectForm').find('#roadName')[0].value
+          roadName: roadAddressProjectForm.find('#roadName')[0].value
       };
 
       if(dataJson.trackCode === Track.Unknown.value){
@@ -587,8 +588,9 @@
       return '<label class="control-label-small" id='+ id+'>'+label+'</label>';
     };
 
-    var updateFormInfo = function (formInfo) {
-      $("#reservedRoads").append($("#reservedRoads").html(formInfo));
+    var updateReservedRoads = function (newInfo) {
+        var reservedRoads = $("#reservedRoads");
+        reservedRoads.append(reservedRoads.html(newInfo));
     };
 
     var parseRoadPartInfoToResultRow = function () {
@@ -732,7 +734,7 @@
         eventbus.trigger('roadAddress:projectValidationFailed', validationResult.success);
       } else {
         addToDirtyRoadPartList(validationResult);
-        updateFormInfo(parseRoadPartInfoToResultRow());
+        updateReservedRoads(parseRoadPartInfoToResultRow());
         eventbus.trigger('roadAddress:projectValidationSucceed');
       }
     });

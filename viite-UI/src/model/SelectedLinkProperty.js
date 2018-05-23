@@ -146,6 +146,7 @@
             }
             processOl3Features(visibleFeatures);
             eventbus.trigger('adjacents:startedFloatingTransfer');
+          if (!_.isEmpty(data4Display))
             eventbus.trigger('linkProperties:selected', data4Display);
             eventbus.trigger('linkProperties:deactivateInteractions');
         }
@@ -541,7 +542,7 @@
         return adjacent.linkId == target;
       });
       if(!_.isEmpty(targetData)){
-        $('#aditionalSource').remove();
+        $('#additionalSource').remove();
         $('#adjacentsData').remove();
         getLinkAdjacents(_.first(targetData));
       }
@@ -627,6 +628,12 @@
         resetSources();
         resetTargets();
         previousAdjacents = [];
+        _.defer(function () {
+          if (!_.isEmpty(featuresToKeep)) {
+            current = roadCollection.toRoadLinkModel(featuresToKeep);
+            eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
+          }
+        });
       }
     };
 
@@ -750,11 +757,9 @@
 
     var isFloatingHomogeneous = function(floatingFeature) {
       var firstFloating = _.first(featuresToKeep);
-      if(floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) && floatingFeature.data.trackCode === firstFloating.trackCode && floatingFeature.data.roadNumber === firstFloating.roadNumber){
-        return true;
-      }else{
-        return false;
-      }
+      return floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) &&
+          floatingFeature.data.trackCode === firstFloating.trackCode &&
+          floatingFeature.data.roadNumber === firstFloating.roadNumber;
     };
 
     var filterFeaturesAfterSimulation = function(features){
