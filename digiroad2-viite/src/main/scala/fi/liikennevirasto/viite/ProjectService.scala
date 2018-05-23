@@ -169,7 +169,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def projectWritableCheck(projectId: Long): Option[String] = {
     ProjectDAO.getProjectStatus(projectId) match {
       case Some(projectState) =>
-        if (projectState == ProjectState.Incomplete)
+        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
@@ -732,9 +732,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
     val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
-    val suravageList = (withDynSession {
+    val suravageList = withDynSession {
       Await.result(fetch.suravageF, Duration.Inf)
-    }.map(x => (x, None))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    .map(x => (x, Some(projectId))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
     val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, useFrozenVVHLinks, fetch)
     val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
     keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
@@ -1358,7 +1359,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
       } catch {
-        case NonFatal(_) => PublishResult(validationSuccess = false, sendSuccess = false, None)
+        case NonFatal(_) => {
+          ProjectDAO.updateProjectStatus(projectId, ErrorInViite)
+          PublishResult(validationSuccess = false, sendSuccess = false, None)
+        }
       }
     }
   }
@@ -1615,6 +1619,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.create(splitAddresses)
   }
 
+  private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
+    projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.createdBy)).keys.map(rn =>
+      if (rn._2.nonEmpty) {
+        RoadName(NewRoadNameId, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
+      } else {
+        throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
+      }
+    ).toSeq
+  }
+
+  /**
+    * This will insert new historic road addresses (valid_to = null and end_date = sysdate)
+    *
+    * @param projectLinks          ProjectLinks
+    * @param expiringRoadAddresses A map of (RoadAddressId -> RoadAddress)
+    */
+  def createHistoryRows(projectLinks: Seq[ProjectLink], expiringRoadAddresses: Map[Long, RoadAddress]): Seq[Long] = {
+    val idsToHistory = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).map(_.roadAddressId)
+    val roadsToCreate = expiringRoadAddresses.filter(ex => {
+      idsToHistory.contains(ex._1)
+    }).mapValues(r => {
+      r.copy(id = NewRoadAddress, lrmPositionId = NewRoadAddress, endDate = Some(DateTime.now()))
+    }).values
+    RoadAddressDAO.create(roadsToCreate)
+  }
+
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
@@ -1643,6 +1673,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         expiringRoadAddresses, project)
 
       val newRoadAddressesWithHistory = CommonHistoryFiller.fillCommonHistory(projectLinks, newRoadAddresses, expiringRoadAddresses.values.toSeq)
+
+      logger.info(s"Creating history rows based on operation")
+      createHistoryRows(projectLinks, expiringRoadAddresses)
       //Expiring all old addresses by their ID
       logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
       roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
