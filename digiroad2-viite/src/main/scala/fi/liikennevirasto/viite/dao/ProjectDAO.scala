@@ -27,7 +27,7 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR, Failed2GenerateTRIdInViite, Deleted, Unknown)
+  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR, Failed2GenerateTRIdInViite, Deleted, ErrorInViite, Unknown)
 
   // These states are final
   val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
@@ -44,7 +44,19 @@ object ProjectState {
   case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
   case object Failed2GenerateTRIdInViite extends ProjectState { def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
-  case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
+
+  case object ErrorInViite extends ProjectState {
+    def value = 8
+
+    def description = "Virhe Viite-sovelluksessa"
+  }
+
+  case object Unknown extends ProjectState {
+    def value = 99
+
+    def description = "Tuntematon"
+  }
+
 }
 
 sealed trait LinkStatus {
