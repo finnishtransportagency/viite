@@ -522,13 +522,17 @@ object ProjectDAO {
     }.headOption
   }
 
-  def fetchReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
+  def fetchReservedRoadParts(projectId: Long, withActiveRoadAddresses: Boolean = true): Seq[ReservedRoadPart] = {
+    val (activeDiscontinuity, activeMain) =
+      if (withActiveRoadAddresses) {
+        ("AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL", "AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL")
+      } else ("", "")
     val sql =
       s"""
         SELECT id, road_number, road_part_number, length, length_new,
           ely, ely_new,
           (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
-            ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+            ra.road_part_number = gr.road_part_number $activeDiscontinuity
             AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
@@ -551,8 +555,7 @@ object ProjectDAO {
               LEFT JOIN
               ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROAD_ADDRESS_ID)
               WHERE
-                rp.project_id = $projectId AND
-                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+                rp.project_id = $projectId $activeMain
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
