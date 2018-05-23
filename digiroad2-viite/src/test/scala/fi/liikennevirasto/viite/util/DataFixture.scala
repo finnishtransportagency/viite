@@ -18,7 +18,8 @@ import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
-import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
+import scala.collection.parallel.immutable.ParSet
+import scala.collection.parallel.{ForkJoinTaskSupport}
 import scala.language.postfixOps
 
 object DataFixture {
@@ -203,13 +204,13 @@ object DataFixture {
     val THREAD_POOL = 2
 
     //Get All Municipalities
-    val municipalities: ParSeq[Long] =
+    val municipalities: ParSet[Long] =
       OracleDatabase.withDynTransaction {
-        MunicipalityDAO.getMunicipalityMapping.keySet.toSeq
+        MunicipalityDAO.getMunicipalityMapping.keySet
       }.par
 
     //For each municipality get all VVH Roadlinks
-    val municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(THREAD_POOL))
+    municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(THREAD_POOL))
     municipalities.map { municipality =>
       println("Start processing municipality %d".format(municipality))
 
