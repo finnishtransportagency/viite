@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
+import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao.LinkStatus._
@@ -175,6 +175,20 @@ object ProjectDeltaCalculator {
     result :+ p
   }
 
+  /**
+    * Check if the matches (opposite side of right or left track) road address measures fit on the target road address sections
+    *
+    * @param target   The target road address sections
+    * @param matchers The matcher road address sections
+    * @return
+    */
+  def matchesFitOnTarget(target: Seq[RoadAddressSection], matchers: Seq[RoadAddressSection]): Boolean = {
+    val (targetStartMAddr, targetEndMAddr) = (target.map(_.startMAddr).min, target.map(_.endMAddr).max)
+    val (matcherStartMAddr, matcherEndMAddr) = (matchers.map(_.startMAddr).min, matchers.map(_.endMAddr).max)
+    (targetStartMAddr <= matcherStartMAddr && targetEndMAddr >= matcherStartMAddr) || (targetStartMAddr <= matcherEndMAddr && targetEndMAddr >= matcherEndMAddr) ||
+      (matcherStartMAddr <= targetStartMAddr && matcherEndMAddr >= targetStartMAddr) || (matcherStartMAddr <= targetEndMAddr && matcherEndMAddr >= targetEndMAddr)
+  }
+
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
       .mapValues(v => partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue)))).values.flatten.map(ra =>
@@ -186,7 +200,7 @@ object ProjectDeltaCalculator {
 
     val result = paired.flatMap { case (key, target) =>
       val matches = matchingTracks(paired, key)
-      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0)
+      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get))
         adjustTrack((target, matches.get))
       else
         target
