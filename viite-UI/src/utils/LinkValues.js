@@ -95,8 +95,8 @@
     };
 
     root.RoadZIndex = {
-        VectorLayer:                {value: 2},
-        SuravageLayer:              {value: 1},
+        VectorLayer:                {value: 1},
+        SuravageLayer:              {value: 2},
         AnomalousMarkerLayer:       {value: 3},
         CalibrationPointLayer:      {value: 4},
         GeometryChangedLayer:       {value: 5},
