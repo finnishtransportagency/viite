@@ -1530,10 +1530,10 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def getLinkCPValue(roadAddressId: Long): Long = {
+  def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
     val query = s"""SELECT ra.calibration_points
                     FROM road_address ra
-                    WHERE ra.id=$roadAddressId AND ROWNUM=1"""
-    Q.queryNA[Long](query).firstOption.getOrElse(0L)
+                    WHERE ra.id=$roadAddressId"""
+    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
   }
 }
