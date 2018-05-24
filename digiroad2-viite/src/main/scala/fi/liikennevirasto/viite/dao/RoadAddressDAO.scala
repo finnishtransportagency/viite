@@ -1530,8 +1530,6 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def withCalibrationPoints()
-
   def linkHasCPs(roadAddressId: Long): Boolean = {
     val query = s"""SELECT 1
                     FROM road_address ra
