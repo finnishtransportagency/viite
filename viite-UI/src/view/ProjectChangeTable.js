@@ -107,7 +107,7 @@
         if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
           _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
             var rowColorClass = '';
-            if (index % 2 !== 0) {
+            if (index % 2 !== 1) {
               rowColorClass = 'white-row';
             }
             htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
