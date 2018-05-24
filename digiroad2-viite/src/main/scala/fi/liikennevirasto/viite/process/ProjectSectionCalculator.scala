@@ -162,9 +162,9 @@ object ProjectSectionCalculator {
                                 calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
       val link = unprocessed.head
       //checks calibration points which the link had before starting the project
-      val raCPValue = RoadAddressDAO.getLinkCPValue(link.roadAddressId)
-      val raStartCP = raCPValue == CalibrationCode.AtBeginning.value || raCPValue == CalibrationCode.AtBoth.value
-      val raEndCP = raCPValue == CalibrationCode.AtEnd.value || raCPValue == CalibrationCode.AtBoth.value
+      val raCalibrationCode = RoadAddressDAO.getRoadAddressCalibrationCode(link.roadAddressId)
+      val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
+      val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
       // If first one
       if (ready.isEmpty) {
         // If there is only one link in section we put two calibration points in it
@@ -204,9 +204,9 @@ object ProjectSectionCalculator {
       tracks.mapValues { links =>
         links.map { l =>
           //Doesn't eliminate calibration points which road link had before starting the project
-          val raCPValue = RoadAddressDAO.getLinkCPValue(l.roadAddressId)
-          val raStartCP = raCPValue == CalibrationCode.AtBeginning.value || raCPValue == CalibrationCode.AtBoth.value
-          val raEndCP = raCPValue == CalibrationCode.AtEnd.value || raCPValue == CalibrationCode.AtBoth.value
+          val raCalibrationCode = RoadAddressDAO.getRoadAddressCalibrationCode(l.roadAddressId)
+          val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
+          val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
           val calibrationPoints =
             l.calibrationPoints match {
               case (None, None) => l.calibrationPoints
