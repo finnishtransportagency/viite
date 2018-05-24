@@ -1530,17 +1530,10 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def linkHasCPs(roadAddressId: Long): Boolean = {
-    val query = s"""SELECT 1
+  def getLinkCPValue(roadAddressId: Long): Long = {
+    val query = s"""SELECT ra.calibration_points
                     FROM road_address ra
-                    WHERE ra.id=$roadAddressId AND ra.calibration_points <> 0"""
-    Q.queryNA[Long](query).list.nonEmpty
-  }
-
-  def linkHasCP(roadAddressId: Long, calibrationValue: Int): Boolean = {
-    val query = s"""SELECT 1
-                    FROM road_address ra
-                    WHERE ra.id=$roadAddressId AND ra.calibration_points=$calibrationValue"""
-    Q.queryNA[Long](query).list.nonEmpty
+                    WHERE ra.id=$roadAddressId AND ROWNUM=1"""
+    Q.queryNA[Long](query).firstOption.getOrElse(0L)
   }
 }

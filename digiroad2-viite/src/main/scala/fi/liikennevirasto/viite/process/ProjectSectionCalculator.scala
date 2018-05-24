@@ -153,36 +153,40 @@ object ProjectSectionCalculator {
 
     def makeLink(link: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint],
                  startCP: Boolean, endCP: Boolean) = {
-      val sCP = if (startCP || RoadAddressDAO.linkHasCP(link.roadAddressId, 2)) makeStartCP(link) else None
-      val eCP = if (endCP || RoadAddressDAO.linkHasCP(link.roadAddressId, 1)) makeEndCP(link, userDefinedCalibrationPoint) else None
+      val sCP = if (startCP) makeStartCP(link) else None
+      val eCP = if (endCP) makeEndCP(link, userDefinedCalibrationPoint) else None
       link.copy(calibrationPoints = (sCP, eCP))
     }
 
     def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink],
                                 calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+      val link = unprocessed.head
+      //checks calibration points which the link had before starting the project
+      val raCPValue = RoadAddressDAO.getLinkCPValue(link.roadAddressId)
+      val raStartCP = raCPValue == CalibrationCode.AtBeginning.value || raCPValue == CalibrationCode.AtBoth.value
+      val raEndCP = raCPValue == CalibrationCode.AtEnd.value || raCPValue == CalibrationCode.AtBoth.value
       // If first one
       if (ready.isEmpty) {
-        val link = unprocessed.head
         // If there is only one link in section we put two calibration points in it
         if (unprocessed.size == 1) {
           Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = true))
         } else if (link.discontinuity == MinorDiscontinuity) {
           assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = true)), unprocessed.tail, calibrationPoints)
         } else {
-          assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = false)), unprocessed.tail, calibrationPoints)
+          assignCalibrationPoints(Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = raEndCP)), unprocessed.tail, calibrationPoints)
         }
         // If last one
       } else if (unprocessed.tail.isEmpty) {
-        ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true))
+        ready ++ Seq(makeLink(link, calibrationPoints.get(link.id), startCP = raStartCP, endCP = true))
       } else {
         //validate if are adjacent in the middle. If it has discontinuity, add a calibration point
-        if (!GeometryUtils.areAdjacent(getLastPoint(unprocessed.head), getFirstPoint(unprocessed.tail.head))) {
-          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = true)), unprocessed.tail, calibrationPoints)
-        } else if (!GeometryUtils.areAdjacent(getFirstPoint(unprocessed.head), getLastPoint(ready.last))) {
-          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = true, endCP = false)), unprocessed.tail, calibrationPoints)
+        if (!GeometryUtils.areAdjacent(getLastPoint(link), getFirstPoint(unprocessed.tail.head))) {
+          assignCalibrationPoints(ready ++ Seq(makeLink(link, calibrationPoints.get(link.id), startCP = raStartCP, endCP = true)), unprocessed.tail, calibrationPoints)
+        } else if (!GeometryUtils.areAdjacent(getFirstPoint(link), getLastPoint(ready.last))) {
+          assignCalibrationPoints(ready ++ Seq(makeLink(link, calibrationPoints.get(link.id), startCP = true, endCP = raEndCP)), unprocessed.tail, calibrationPoints)
         } else {
           // a middle one, add to sequence and continue
-          assignCalibrationPoints(ready ++ Seq(makeLink(unprocessed.head, calibrationPoints.get(unprocessed.head.id), startCP = false, endCP = false)), unprocessed.tail, calibrationPoints)
+          assignCalibrationPoints(ready ++ Seq(makeLink(link, calibrationPoints.get(link.id), startCP = raStartCP, endCP = raEndCP)), unprocessed.tail, calibrationPoints)
         }
       }
     }
@@ -199,27 +203,30 @@ object ProjectSectionCalculator {
       val tracks = roadPartLinks.groupBy(_.track)
       tracks.mapValues { links =>
         links.map { l =>
-          val hasOldCPs = RoadAddressDAO.linkHasCPs(l.roadAddressId)
+          //Doesn't eliminate calibration points which road link had before starting the project
+          val raCPValue = RoadAddressDAO.getLinkCPValue(l.roadAddressId)
+          val raStartCP = raCPValue == CalibrationCode.AtBeginning.value || raCPValue == CalibrationCode.AtBoth.value
+          val raEndCP = raCPValue == CalibrationCode.AtEnd.value || raCPValue == CalibrationCode.AtBoth.value
           val calibrationPoints =
             l.calibrationPoints match {
               case (None, None) => l.calibrationPoints
               case (Some(st), None) =>
-                if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity) && !hasOldCPs)
+                if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity) && !raStartCP)
                   (None, None)
                 else
                   l.calibrationPoints
               case (None, Some(en)) =>
-                if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity) && !hasOldCPs)
+                if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity) && !raEndCP)
                   (None, None)
                 else
                   l.calibrationPoints
               case (Some(st), Some(en)) =>
                 (
-                  if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity) && !hasOldCPs)
+                  if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity) && !raStartCP)
                     None
                   else
                     Some(st),
-                  if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity) && !hasOldCPs)
+                  if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity) && !raEndCP)
                     None
                   else
                     Some(en)
