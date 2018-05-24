@@ -301,8 +301,6 @@ object ProjectSectionCalculator {
     }.toSeq
   }
 
-
-
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
@@ -378,6 +376,23 @@ object ProjectSectionCalculator {
         assignValues(left, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(left)))
     }
 
+    def forceLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddrMValue: Long): Seq[ProjectLink] = {
+      if (projectLinks.last.status != LinkStatus.NotHandled)
+        projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddrMValue)
+      else
+        projectLinks
+    }
+
+    def getEndRoadAddrMValue(rProjectLink: ProjectLink, lProjectLink: ProjectLink): Long = {
+      if (rProjectLink.status != LinkStatus.New && lProjectLink.status == LinkStatus.New) {
+        rProjectLink.endAddrMValue
+      } else if (rProjectLink.status == LinkStatus.New && lProjectLink.status != LinkStatus.New) {
+        lProjectLink.endAddrMValue
+      } else {
+        averageOfAddressMValues(rProjectLink.endAddrMValue, lProjectLink.endAddrMValue)
+      }
+    }
+
     def adjustTracksToMatch(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
@@ -386,11 +401,12 @@ object ProjectSectionCalculator {
         val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
         if (firstRight.nonEmpty && firstLeft.nonEmpty) {
           val availableCalibrationPoint = userDefinedCalibrationPoint.get(firstRight.last.id).orElse(userDefinedCalibrationPoint.get(firstLeft.last.id))
-          val st = previousStart.getOrElse(getFixedAddress(firstRight.head, firstLeft.head).map(_._1).getOrElse(averageOfAddressMValues(firstRight.head.startAddrMValue, firstLeft.head.startAddrMValue)))
-          val en = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
-          val (r, l) = adjustTwoTracks(firstRight, firstLeft, st, en)
-          val (ro, lo) = adjustTracksToMatch(restRight, restLeft, Some(en))
-          (r ++ ro, l ++ lo)
+          val start = previousStart.getOrElse(getFixedAddress(firstRight.head, firstLeft.head).map(_._1).getOrElse(averageOfAddressMValues(firstRight.head.startAddrMValue, firstLeft.head.startAddrMValue)))
+          val estimatedEnd = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
+          val (adjustedFirstRight, adjustedFirstLeft) = adjustTwoTracks(firstRight, firstLeft, start, estimatedEnd)
+          val endMValue = getEndRoadAddrMValue(adjustedFirstRight.last, adjustedFirstLeft.last)
+          val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restRight, restLeft, Some(endMValue))
+          (forceLastEndAddrMValue(adjustedFirstRight, endMValue) ++ adjustedRestRight, forceLastEndAddrMValue(adjustedFirstLeft, endMValue) ++ adjustedRestLeft)
         } else {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
         }

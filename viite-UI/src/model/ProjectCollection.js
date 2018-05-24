@@ -588,9 +588,9 @@
       return '<label class="control-label-small" id='+ id+'>'+label+'</label>';
     };
 
-    var updateFormInfo = function (formInfo) {
+    var updateReservedRoads = function (newInfo) {
         var reservedRoads = $("#reservedRoads");
-        reservedRoads.append(reservedRoads.html(formInfo));
+        reservedRoads.append(reservedRoads.html(newInfo));
     };
 
     var parseRoadPartInfoToResultRow = function () {
@@ -734,7 +734,7 @@
         eventbus.trigger('roadAddress:projectValidationFailed', validationResult.success);
       } else {
         addToDirtyRoadPartList(validationResult);
-        updateFormInfo(parseRoadPartInfoToResultRow());
+        updateReservedRoads(parseRoadPartInfoToResultRow());
         eventbus.trigger('roadAddress:projectValidationSucceed');
       }
     });
