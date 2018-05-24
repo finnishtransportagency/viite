@@ -153,8 +153,8 @@ object ProjectSectionCalculator {
 
     def makeLink(link: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint],
                  startCP: Boolean, endCP: Boolean) = {
-      val sCP = if (startCP) makeStartCP(link) else None
-      val eCP = if (endCP) makeEndCP(link, userDefinedCalibrationPoint) else None
+      val sCP = if (startCP || RoadAddressDAO.linkHasCP(link.roadAddressId, 2)) makeStartCP(link) else None
+      val eCP = if (endCP || RoadAddressDAO.linkHasCP(link.roadAddressId, 1)) makeEndCP(link, userDefinedCalibrationPoint) else None
       link.copy(calibrationPoints = (sCP, eCP))
     }
 
@@ -199,26 +199,27 @@ object ProjectSectionCalculator {
       val tracks = roadPartLinks.groupBy(_.track)
       tracks.mapValues { links =>
         links.map { l =>
+          val hasOldCPs = RoadAddressDAO.linkHasCPs(l.roadAddressId)
           val calibrationPoints =
             l.calibrationPoints match {
               case (None, None) => l.calibrationPoints
               case (Some(st), None) =>
-                if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity))
+                if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity) && !hasOldCPs)
                   (None, None)
                 else
                   l.calibrationPoints
               case (None, Some(en)) =>
-                if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity))
+                if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity) && !hasOldCPs)
                   (None, None)
                 else
                   l.calibrationPoints
               case (Some(st), Some(en)) =>
                 (
-                  if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity))
+                  if (links.exists(link => link.endAddrMValue == st.addressMValue && link.discontinuity != MinorDiscontinuity) && !hasOldCPs)
                     None
                   else
                     Some(st),
-                  if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity))
+                  if (links.exists(_.startAddrMValue == en.addressMValue && l.discontinuity != MinorDiscontinuity) && !hasOldCPs)
                     None
                   else
                     Some(en)
@@ -282,7 +283,6 @@ object ProjectSectionCalculator {
               assignCalibrationPoints(Seq(), sec.left.links, calMap)
           }
         }
-
         eliminateExpiredCalibrationPoints(links)
       } catch {
         case ex: InvalidAddressDataException =>
