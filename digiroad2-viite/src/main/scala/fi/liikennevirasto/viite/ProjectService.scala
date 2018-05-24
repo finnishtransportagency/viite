@@ -771,9 +771,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadAddressChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
       val (projectId, projectName, projectStartDate, projectEly) = g._1
       val changes = g._2
-      logger.info(s"Changes for project [ID: $projectId; Name: ${projectName.getOrElse("")}; StartDate: $projectStartDate; Ely: $projectEly ]")
+      logger.info(s"Changes for project [ID: $projectId; Name: ${projectName.getOrElse("")}; StartDate: $projectStartDate; Ely: $projectEly]:")
       changes.foreach(c => {
-        logger.info(s"Change: ${c.toString}")
+        logger.info(s"Change: ${c.toStringWithFields}")
       })
     })
   }
