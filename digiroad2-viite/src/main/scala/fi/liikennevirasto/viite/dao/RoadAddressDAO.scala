@@ -1529,4 +1529,20 @@ object RoadAddressDAO {
           valid_from <= sysdate and floating = 0 and ely = $ely"""
     queryList(query)
   }
+
+  def withCalibrationPoints()
+
+  def linkHasCPs(roadAddressId: Long): Boolean = {
+    val query = s"""SELECT 1
+                    FROM road_address ra
+                    WHERE ra.id=$roadAddressId AND ra.calibration_points <> 0"""
+    Q.queryNA[Long](query).list.nonEmpty
+  }
+
+  def linkHasCP(roadAddressId: Long, calibrationValue: Int): Boolean = {
+    val query = s"""SELECT 1
+                    FROM road_address ra
+                    WHERE ra.id=$roadAddressId AND ra.calibration_points=$calibrationValue"""
+    Q.queryNA[Long](query).list.nonEmpty
+  }
 }
