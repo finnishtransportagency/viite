@@ -1531,12 +1531,12 @@ object RoadAddressDAO {
   }
 
   /*
-   * Used to get calibration codes of a road address
+   * Get the calibration code of the given road address.
    *
    * @param roadAddressId id of the road link in ROAD_ADDRESS table
-   * @return Calibration code of road address wanted (0 = No, 1 = AtEnd, 2 = AtBeginning, 3 = AtBoth).
+   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
    *
-   * Note that function returns 0 if no road address was found with roadAddressId
+   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
    */
   def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
     val query = s"""SELECT ra.calibration_points
