@@ -828,17 +828,7 @@
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:additionalSourceFound', function(sources,targets, additionalLinkId){
         clearIndicators();
         drawIndicators(targets);
-        var selType = applicationModel.getSelectionType();
-        var keepMe = _.filter(selectedLinkProperty.getFeaturesToKeep(), function (feat) {
-          if (selType === 'floating') {
-            return feat.roadLinkType === -1;
-          } else if (selType === 'unknown') {
-            return feat.anomaly === 1 && feat.id === 0;
-          } else if (selType === 'all') {
-            return true;
-          }
-        });
-        _.map(keepMe, function (roads) {
+        _.map(selectedLinkProperty.getFeaturesToKeep(), function (roads) {
           editFeatureDataForGreen(roads);
         });
       });
