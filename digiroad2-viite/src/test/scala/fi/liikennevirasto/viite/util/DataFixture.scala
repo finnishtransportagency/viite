@@ -310,30 +310,63 @@ object DataFixture {
 
   }
 
-  def checkLrmPositionHistory(): Unit = {
+  def checkLrmPosition(): Unit = {
 
-    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
-    elyCodes.foreach(ely => {
-      println(s"Going to check roads for ely $ely")
-      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
-      println(s"Got ${roads.size} road addresses for ely $ely")
-      val roadErrors = roads.groupBy(r => (r.linkId, r.commonHistoryId)).foldLeft(Seq.empty[RoadAddress])((errorList, group) => {
-        val roadGroup = group._2
-        val errorRoad = roadGroup.find(
-          r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue || r.sideCode != roadGroup.head.sideCode)
-        errorRoad match {
-          case Some(road) =>
-            println(s"Error in lrm check for road address with id ${road.id} ")
-            errorList :+ road
-          case None => errorList
+    def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+      val (chunks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
+        case ((fchunks, index), linkId) =>
+          if (index > 0 && index % chunkNumber == 0) {
+            (fchunks ++ Seq(linkId), index + 1)
+          } else {
+            (fchunks, index + 1)
+          }
+      }
+      val result = if (chunks.last == linkIds.last) {
+        chunks
+      } else {
+        chunks ++ Seq(linkIds.last)
+      }
+
+      result.zip(result.tail)
+    }
+    OracleDatabase.withDynSession {
+      val elyCodes =  MunicipalityDAO.getMunicipalityMapping.values.toSet
+      elyCodes.foreach(ely => {
+        println(s"Going to check roads for ely $ely")
+        //We must get current and history separately => Nothing guarantees that the history ones havent changed their ELY meanwhile
+        val roads = RoadAddressDAO.getRoadAddressByEly(ely, onlyCurrent = true)
+        println(s"Got a total of ${roads.size} road addresses for ely $ely")
+        val chunks = generateChunks(roads.map(_.linkId), 25000l)
+
+        chunks.foreach {
+          case (min, max) =>
+
+            print(s"${DateTime.now()} - ")
+            println(s"Processing chunk ($min, $max)")
+
+            val current = roads.filter(r => (min to max).contains(r.linkId))
+            val history = RoadAddressDAO.fetchByLinkId(current.map(_.linkId).toSet, includeCurrent = false)
+
+            val chunksRoads = current ++ history
+
+            val roadErrors = chunksRoads.groupBy(r => (r.linkId, r.commonHistoryId)).foldLeft(Seq.empty[RoadAddress])((errorList, group) => {
+              val roadGroup = group._2
+              val errorRoad = roadGroup.find(
+                r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue || r.sideCode != roadGroup.head.sideCode)
+              errorRoad match {
+                case Some(road) =>
+                  println(s"Error in lrm check for road address with id ${road.id} ")
+                  errorList :+ road
+                case None => errorList
+              }
+            })
+            println(s"Found ${roadErrors.size} errors for ely $ely")
+            OracleDatabase.withDynTransaction {
+              roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+            }
         }
       })
-      println(s"Found ${roadErrors.size} errors for ely $ely")
-      OracleDatabase.withDynTransaction {
-        roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
-      }
-    })
-
+    }
   }
 
   def fuseRoadAddressWithHistory(): Unit = {
@@ -467,8 +500,8 @@ object DataFixture {
         importRoadNames()
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
-      case Some("check_lrm_position_history") =>
-        checkLrmPositionHistory()
+      case Some("check_lrm_position") =>
+        checkLrmPosition()
       case Some("fuse_road_address_with_history") =>
         fuseRoadAddressWithHistory()
       case Some("test") =>

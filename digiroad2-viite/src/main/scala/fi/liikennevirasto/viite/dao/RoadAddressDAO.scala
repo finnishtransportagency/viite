@@ -312,7 +312,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true,
+  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true, includeCurrent: Boolean = true,
                     filterIds: Set[Long] = Set()): List[RoadAddress] = {
     if (linkIds.size > 1000 || filterIds.size > 1000) {
       return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
@@ -328,6 +328,10 @@ object RoadAddressDAO {
       ""
     val history = if (!includeHistory)
       "AND ra.end_date is null"
+    else
+      ""
+    val current = if (!includeCurrent)
+      "AND ra.end_date is not null"
     else
       ""
     val idFilter = if (filterIds.nonEmpty)
@@ -352,7 +356,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating $history $valid $idFilter and t.id < t2.id and
+        $where $floating $history $current $valid $idFilter and t.id < t2.id and
            valid_to is null
       """
     queryList(query)
@@ -1515,7 +1519,13 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def getRoadAddressByEly(ely: Long): List[RoadAddress] = {
+  def getRoadAddressByEly(ely: Long, onlyCurrent: Boolean = false): List[RoadAddress] = {
+
+    val current = onlyCurrent match {
+      case true => " and ra.end_date IS NULL "
+      case false => ""
+    }
+
     val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
        pos.side_code, pos.adjusted_timestamp,
@@ -1526,7 +1536,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         where t.id < t2.id and
-          valid_from <= sysdate and floating = 0 and valid_to is null and ely = $ely"""
+          valid_from <= sysdate and floating = 0 and valid_to IS NULL and ely = $ely $current"""
     queryList(query)
   }
 }
