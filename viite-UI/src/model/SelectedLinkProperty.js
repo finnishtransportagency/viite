@@ -146,7 +146,7 @@
             }
             processOl3Features(visibleFeatures);
             eventbus.trigger('adjacents:startedFloatingTransfer');
-          if (!_.isEmpty(data4Display))
+
             eventbus.trigger('linkProperties:selected', data4Display);
             eventbus.trigger('linkProperties:deactivateInteractions');
         }
@@ -629,12 +629,6 @@
         resetSources();
         resetTargets();
         previousAdjacents = [];
-        _.defer(function () {
-          if (!_.isEmpty(featuresToKeep)) {
-            current = roadCollection.toRoadLinkModel(featuresToKeep);
-            eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
-          }
-        });
       }
     };
 
