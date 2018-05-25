@@ -1803,10 +1803,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def validateProjectById(projectId: Long): Seq[ValidationErrorDetails] = {
-//    withDynSession {
-//      ProjectValidator.validateProject(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
-//    }
-    Seq()
+    withDynSession {
+      ProjectValidator.validateProject(ProjectDAO.getRoadAddressProjectById(projectId).get, ProjectDAO.getProjectLinks(projectId))
+    }
   }
 
   def validateLinkTrack(track: Int): Boolean = {
