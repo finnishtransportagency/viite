@@ -33,7 +33,7 @@ object ProjectSectionMValueCalculator {
         }
       }))
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
-    unchanged ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
+    unchanged.map(pl => pl.copy(endAddrMValue = pl.startAddrMValue + pl.roadAddressLength.getOrElse(pl.endAddrMValue - pl.startAddrMValue))) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
   }
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
@@ -42,7 +42,7 @@ object ProjectSectionMValueCalculator {
       val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
       pl.status match {
         case LinkStatus.New => addressValue
-        case LinkStatus.Transfer | LinkStatus.NotHandled => m + pl.endAddrMValue - pl.startAddrMValue
+        case LinkStatus.Transfer | LinkStatus.NotHandled => m + pl.roadAddressLength.getOrElse(pl.endAddrMValue - pl.startAddrMValue)
         case LinkStatus.UnChanged | LinkStatus.Numbering => pl.endAddrMValue
         case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
       }
