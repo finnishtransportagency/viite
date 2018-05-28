@@ -114,7 +114,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     }
   }
 
-  def addrMLenght() = {
+  def addrMLength() = {
     if(isSplit)
       endAddrMValue - startAddrMValue
     else
