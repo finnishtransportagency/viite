@@ -201,6 +201,7 @@ object ViiteTierekisteriClient {
   def createJsonMessage(trProject:ChangeProject): StringEntity = {
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val json = Serialization.write(Extraction.decompose(trProject))
+    logger.info("Message to TR: $json")
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
