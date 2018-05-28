@@ -18,6 +18,8 @@ import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
+import scala.collection.parallel.immutable.ParSet
+import scala.collection.parallel.{ForkJoinTaskSupport}
 import scala.language.postfixOps
 
 object DataFixture {
@@ -44,6 +46,8 @@ object DataFixture {
   private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits(2) printZeroAlways() appendHours() appendSeparator(":") appendMinutes() appendSuffix(":") appendSeconds() toFormatter
 
   private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+
+  private lazy val numberThreads: Int = 2
 
   private def loopRoadParts(roadNumber: Int): Unit = {
     var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
@@ -76,6 +80,16 @@ object DataFixture {
     }
   }
 
+  private def toIntNumber(value: Any): Int = {
+    try {
+      value match {
+        case b: Int => b.intValue()
+        case _ => value.asInstanceOf[String].toInt
+      }
+    } catch {
+      case e: Exception => numberThreads
+    }
+  }
 
   def importRoadAddresses(isDevDatabase: Boolean, importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
@@ -191,7 +205,7 @@ object DataFixture {
     println()
   }
 
-  private def applyChangeInformationToRoadAddressLinks(): Unit = {
+  private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
 
@@ -200,13 +214,14 @@ object DataFixture {
     println("Cache cleaned.")
 
     //Get All Municipalities
-    val municipalities: Seq[Long] =
+    val municipalities: ParSet[Long] =
       OracleDatabase.withDynTransaction {
-        MunicipalityDAO.getMunicipalityMapping.keySet.toSeq
-      }
+        MunicipalityDAO.getMunicipalityMapping.keySet
+      }.par
 
     //For each municipality get all VVH Roadlinks
-    municipalities.par.foreach { municipality =>
+    municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
+    municipalities.map { municipality =>
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
@@ -440,7 +455,8 @@ object DataFixture {
       case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
         showFreezeInfo()
       case Some("apply_change_information_to_road_address_links") =>
-        applyChangeInformationToRoadAddressLinks()
+        val numThreads = if(args.length > 1) toIntNumber(args(1)) else numberThreads
+        applyChangeInformationToRoadAddressLinks(numThreads)
       case Some("update_road_address_link_source") if geometryFrozen =>
         showFreezeInfo()
       case Some("update_road_address_link_source") =>

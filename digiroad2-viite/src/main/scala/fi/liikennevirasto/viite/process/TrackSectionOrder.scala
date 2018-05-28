@@ -140,7 +140,7 @@ object TrackSectionOrder {
 
   private def getOppositeEnd(geometry: Seq[Point], point: Point): Point = {
     val (st, en) = GeometryUtils.geometryEndpoints(geometry)
-    if ((st - point).length() < (en - point).length()) en else st
+    if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
   }
 
   def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
@@ -184,7 +184,7 @@ object TrackSectionOrder {
               val l = pickRightMost(ready.last, connected)
               (getOppositeEnd(l.geometry, currentPoint), l)
             }
-          case _ =>
+            case _ =>
             val l = pickForwardPointing(ready.last, connected)
             (getOppositeEnd(l.geometry, currentPoint), l)
         }
