@@ -1529,4 +1529,19 @@ object RoadAddressDAO {
           valid_from <= sysdate and floating = 0 and ely = $ely"""
     queryList(query)
   }
+
+  /*
+   * Get the calibration code of the given road address.
+   *
+   * @param roadAddressId id of the road link in ROAD_ADDRESS table
+   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
+   *
+   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
+   */
+  def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
+    val query = s"""SELECT ra.calibration_points
+                    FROM road_address ra
+                    WHERE ra.id=$roadAddressId"""
+    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
+  }
 }
