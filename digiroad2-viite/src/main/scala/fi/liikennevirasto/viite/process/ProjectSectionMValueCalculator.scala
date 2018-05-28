@@ -16,7 +16,7 @@ object ProjectSectionMValueCalculator {
 
     // Reset the end address measure if have changed
     def resetEndAddrMValue(pl: ProjectLink): ProjectLink = {
-      val endAddrMValue = pl.startAddrMValue + pl.addrMLenght
+      val endAddrMValue = pl.startAddrMValue + pl.addrMLength
       if(endAddrMValue != pl.endAddrMValue)
         pl.copy(endAddrMValue = endAddrMValue)
       else
@@ -51,7 +51,7 @@ object ProjectSectionMValueCalculator {
       val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
       pl.status match {
         case LinkStatus.New => addressValue
-        case LinkStatus.Transfer | LinkStatus.NotHandled => m + pl.addrMLenght
+        case LinkStatus.Transfer | LinkStatus.NotHandled => m + pl.addrMLength
         case LinkStatus.UnChanged | LinkStatus.Numbering => pl.endAddrMValue
         case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
       }
@@ -64,8 +64,8 @@ object ProjectSectionMValueCalculator {
   def calculateAddressingFactors(seq: Seq[ProjectLink]): TrackAddressingFactors = {
     seq.foldLeft[TrackAddressingFactors](TrackAddressingFactors(0, 0, 0.0)) { case (a, pl) =>
       pl.status match {
-        case UnChanged | Numbering => a.copy(unChangedLength = a.unChangedLength + pl.addrMLenght)
-        case Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLenght)
+        case UnChanged | Numbering => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
+        case Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
         case New => a.copy(newLength = a.newLength + pl.geometryLength)
         case _ => throw new InvalidAddressDataException(s"Invalid status found at factor assignment ${pl.status}, linkId: ${pl.linkId}")
       }
