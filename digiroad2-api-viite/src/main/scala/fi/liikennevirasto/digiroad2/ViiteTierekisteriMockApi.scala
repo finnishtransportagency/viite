@@ -15,7 +15,7 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
   val TargetXNotNullMessage = "Target %s is not null"
   val ProjectIdAlreadyExists = Map("error_message" -> "Tierekisterissä on jo olemassa projekti tällä id:llä!")
   val MandatoryFieldMissing = Map("error_message" -> "%s is missing!")
-  val IncorrectLengthOrValue = Map("error_message" -> "Field %s length or value is wrong!")
+  val IncorrectLengthOrValue = Map("error_message" -> "Kentän %s arvo tai arvon pituus on väärin.")
 
   override protected implicit def jsonFormats: Formats = DefaultFormats
 

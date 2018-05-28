@@ -684,16 +684,16 @@ _Muutosilmoituspainike oikeassa alakulmassa._
 
 Kun muutosilmoitus on l&auml;hetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle "L&auml;hetetty tierekisteriin". Viite-sovellus tarkistaa minuutin v&auml;lein Tierekisterist&auml;, onko muutos k&auml;sitelty Tierekisteriss&auml; loppuun asti. Kun t&auml;m&auml; on tehty onnistuneesti, muuttuu Tila-tieto statukselle "Viety tierekisteriin". T&auml;ll&ouml;in tieosoiteprojekti on viety onnistuneesti Tierekisteriin, ja se on valmis. Mik&auml;li muutosilmoitus ei ole mennyt l&auml;pi tierekisteriin, lukee tilana "Virhe tierekisteriss&auml;" ja listalla on oranssi painike "Avaa uudelleen". Tarkemmin virheen tiedot p&auml;&auml;see tarkistamaan viem&auml;ll&auml; hiiren "Virhe tierekisteriss&auml;" -tekstin p&auml;&auml;lle, jolloin infolaatikko virheest&auml; tulee n&auml;kyviin. Virhe korjataan avaamalla projekti oranssista painikkeesta ja tekem&auml;ll&auml; tarvittavat muokkaukset sek&auml; l&auml;hett&auml;m&auml;ll&auml; ilmoitukset uudelleen tierekisteriin.  
 
-Projektia ei voi muokata, kun sen tila on joko "L&auml;hetetty tierekisteriin" tai "Viety tierekisteriin."
+Projektia ei voi muokata, kun sen tila on joko "L&auml;hetetty tierekisteriin", "Tierekisteriss&auml; k&auml;sittelyss&auml;" tai "Viety tierekisteriin."
 
 |Tieosoiteprojektin tila|Selitys|
 |-|-|
 |Keskener&auml;inen|Projekti on ty&ouml;n alla ja sit&auml; ei ole viel&auml; l&auml;hetetty tierekisteriin.|
-|L&auml;hetetty tierekisteriin|Projekti on l&auml;hetetty tierekisteriin. Tierekisteri k&auml;sittelee projektin sis&auml;lt&auml;mi&auml; muutosilmoituksia.|
-|Viety tierekisteriin|Projekti on hyv&auml;ksytty tierekisteriss&auml;. Muutokset n&auml;kyv&auml;t my&ouml;s Viite-sovelluksessa.
+|L&auml;hetetty tierekisteriin|Projekti on l&auml;hetetty tierekisteriin.|
+|Tierekisteriss&auml; k&auml;sittelyss&auml;|Projekti on tierekisteriss&auml; k&auml;sittelyss&auml;. Tierekisteri k&auml;sittelee projektin sis&auml;lt&auml;mi&auml; muutosilmoituksia.|
+|Viety tierekisteriin|Projekti on hyv&auml;ksytty tierekisteriss&auml;. Muutokset n&auml;kyv&auml;t my&ouml;s Viite-sovelluksessa.|
 |Virhe tierekisteriss&auml;|Tierekisteri ei hyv&auml;ksynyt projektia. Tierekisterin tarkempi virheilmoitus tulee n&auml;kyviin viem&auml;ll&auml; osoittimen "Virhe tierekisteriss&auml;"-tekstin p&auml;&auml;lle. Projektin voi avata uudelleen.|
 |Virhetilanne Viitessa|Projekti on l&auml;hetty Tierekisteriin ja se on Tierekisterin hyv&auml;ksym&auml;, mutta projektin tiedot eiv&auml;t piirry Viite-sovelluksessa.| 
-
 ![Tila-statuksia](k39.JPG)
 
 _Tila-statuksia tieosoiteprojektit -listassa._
