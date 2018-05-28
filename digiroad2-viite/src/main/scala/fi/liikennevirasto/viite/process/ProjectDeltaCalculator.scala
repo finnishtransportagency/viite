@@ -201,7 +201,7 @@ object ProjectDeltaCalculator {
     val result = paired.flatMap { case (key, target) =>
       val matches = matchingTracks(paired, key)
       if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get))
-        adjustTrack((target, matches.get))
+        adjustTrackEndAddr((target, matches.get))
       else
         target
     }.toSeq
@@ -248,6 +248,13 @@ object ProjectDeltaCalculator {
       case (e1, e2) =>
         e1.copy(startMAddr = adjustAddrValues(e1.startMAddr + e2.startMAddr, e1.startMAddr, e1.track),
           endMAddr = adjustAddrValues(e1.endMAddr + e2.endMAddr, e1.endMAddr, e1.track))
+    }
+  }
+
+  private def adjustTrackEndAddr(group: (Seq[RoadAddressSection], Seq[RoadAddressSection])): Seq[RoadAddressSection] = {
+    group._1.zip(group._2).map {
+      case (e1, e2) =>
+        e1.copy(endMAddr = adjustAddrValues(e1.endMAddr + e2.endMAddr, e1.endMAddr, e1.track))
     }
   }
 
