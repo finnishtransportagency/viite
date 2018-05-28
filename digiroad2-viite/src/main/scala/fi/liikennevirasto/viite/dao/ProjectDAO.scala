@@ -113,6 +113,13 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
   }
+
+  def addrMLenght() = {
+    if(isSplit)
+      endAddrMValue - startAddrMValue
+    else
+      roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
+  }
 }
 
 object ProjectDAO {
