@@ -1378,7 +1378,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ra.endAddrMValue, ra.startDate, ra.endDate, Some(project.modifiedBy), 0L, ra.linkId, ra.startMValue, ra.endMValue,
       ra.sideCode, ra.calibrationPoints, ra.floating, geometry,
       project.id, LinkStatus.NotHandled, ra.roadType, ra.linkGeomSource, GeometryUtils.geometryLength(geometry),
-      ra.id, ra.ely, reversed = false, None, ra.adjustedTimestamp)
+      ra.id, ra.ely, reversed = false, None, ra.adjustedTimestamp, roadAddressLength = Some(ra.endAddrMValue - ra.startAddrMValue))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, roadNumber: Long,
