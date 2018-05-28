@@ -531,6 +531,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         discontinuity = discontinuity.getOrElse(Continuous))
     }
 
+    /**
+      * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
+      *
+      * @param projectLink
+      * @return
+      */
+    def fillRoadNames(projectLink: ProjectLink): ProjectLink = {
+      val projectLinkName = ProjectLinkNameDAO.get(projectLink.roadNumber, projectLink.projectId)
+      val trueRoadName = if (projectLinkName.isEmpty) {
+        val roadName = RoadNameDAO.getLatestRoadName(projectLink.roadNumber)
+        if (roadName.isEmpty) {
+          projectLink.roadName
+        } else {
+          Option(roadName.get.roadName)
+        }
+      } else {
+        Option(projectLinkName.get.roadName)
+      }
+      projectLink.copy(roadName = trueRoadName)
+    }
+
     withDynTransaction {
       val previousSplit = ProjectDAO.fetchSplitLinks(splitOptions.projectId, linkId)
       val updatedSplitOptions =
@@ -540,7 +561,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           splitOptions
       val r = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
       dynamicSession.rollback()
-      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._1.get.allTerminatedProjectLinks, r._2, r._3)
+      val allTerminatedProjectLinks = if (r._1.isEmpty) {
+        Seq.empty[ProjectLink]
+      } else {
+        r._1.get.allTerminatedProjectLinks.map(fillRoadNames)
+      }
+      val splitWithMergeTerminated = r._1.map(rs => rs.toSeqWithMergeTerminated.map(fillRoadNames))
+      (splitWithMergeTerminated, allTerminatedProjectLinks, r._2, r._3)
     }
   }
 
