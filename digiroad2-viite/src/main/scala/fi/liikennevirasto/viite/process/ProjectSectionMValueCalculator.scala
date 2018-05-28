@@ -14,6 +14,15 @@ object ProjectSectionMValueCalculator {
         (thisPL.track == ext.track || Set(thisPL.track, ext.track).contains(Track.Combined))
     }
 
+    // Reset the end address measure if have changed
+    def resetEndAddrMValue(pl: ProjectLink): ProjectLink = {
+      val endAddrMValue = pl.startAddrMValue + pl.roadAddressLength.getOrElse(pl.endAddrMValue - pl.startAddrMValue)
+      if(endAddrMValue != pl.endAddrMValue)
+        pl.copy(endAddrMValue = endAddrMValue)
+      else
+        pl
+    }
+
     // Group all consecutive links with same status
     val (unchanged, others) = seq.partition(_.status == LinkStatus.UnChanged)
     val mapped = unchanged.groupBy(_.startAddrMValue)
@@ -33,7 +42,7 @@ object ProjectSectionMValueCalculator {
         }
       }))
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
-    unchanged.map(pl => pl.copy(endAddrMValue = pl.startAddrMValue + pl.roadAddressLength.getOrElse(pl.endAddrMValue - pl.startAddrMValue))) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
+    unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
   }
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
