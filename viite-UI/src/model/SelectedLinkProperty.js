@@ -393,42 +393,45 @@
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       sources = current;
-      var fetchedFeature = roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId));
-      if(!_.isUndefined(fetchedFeature)){
-        sources.push(fetchedFeature);
-        featuresToKeep.push(fetchedFeature.getData());
-      }
-      var chainLinks = [];
-      _.each(sources, function(link){
-        if(!_.isUndefined(link))
-          chainLinks.push(link.getData().linkId);
-      });
-      _.each(targets, function(link){
-        chainLinks.push(link.getData().linkId);
-      });
-      var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
-      if(!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
-        newSources.push(fetchedFeature.getData());
-      var data = _.map(newSources, function (ns){
-        return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
-          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
-      });
-      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
-        var calculatedRoads;
-        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-           calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
-            return _.merge({}, a, {"marker": markers[index]});
-          }), "links": newSources};
-          eventbus.trigger("adjacents:additionalSourceFound", calculatedRoads.links, calculatedRoads.adjacents);
-        } else {
-           calculatedRoads = {
-            "adjacents": _.map(adjacents, function (a, index) {
-              return _.merge({}, a, {"marker": markers[index]});
-            }), "links": newSources
-          };
-          sources = sources.concat(roadCollection.toRoadLinkModel(calculatedRoads.links));
-          eventbus.trigger("adjacents:additionalSourceFound", calculatedRoads.links, calculatedRoads.adjacents);
+      backend.getRoadLinkByLinkId(parseInt(additionalSourceLinkId), function (response) {
+        var fetchedFeature =  roadCollection.toRoadLinkModel([response])[0];
+
+        if(!_.isUndefined(fetchedFeature)){
+          sources.push(fetchedFeature);
+          featuresToKeep.push(fetchedFeature.getData());
         }
+        var chainLinks = [];
+        _.each(sources, function(link){
+          if(!_.isUndefined(link))
+            chainLinks.push(link.getData().linkId);
+        });
+        _.each(targets, function(link){
+          chainLinks.push(link.getData().linkId);
+        });
+        var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
+        if(!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
+          newSources.push(fetchedFeature.getData());
+        var data = _.map(newSources, function (ns){
+          return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
+            "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
+        });
+        backend.getAdjacentsFromMultipleSources(data, function(adjacents){
+          var calculatedRoads;
+          if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
+             calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
+              return _.merge({}, a, {"marker": markers[index]});
+            }), "links": newSources};
+              eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
+          } else {
+             calculatedRoads = {
+              "adjacents": _.map(adjacents, function (a, index) {
+                return _.merge({}, a, {"marker": markers[index]});
+              }), "links": newSources
+            };
+            sources = sources.concat(roadCollection.toRoadLinkModel(calculatedRoads.links));
+            eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
+          }
+        });
       });
     });
 
