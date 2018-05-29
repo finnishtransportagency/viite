@@ -51,10 +51,13 @@ class JsonSerializer extends VVHSerializer {
     tmpFile.deleteOnExit()
 
     val fw = new FileWriter(tmpFile)
-    fw.write("[")
-    writeObjects(objects, fw)
-    fw.write("]")
-    fw.close()
+    try {
+      fw.write("[")
+      writeObjects(objects, fw)
+      fw.write("]")
+    } finally {
+      fw.close()
+    }
 
     if (file.exists())
       file.delete()
