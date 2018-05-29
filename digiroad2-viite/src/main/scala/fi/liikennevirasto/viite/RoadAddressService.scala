@@ -71,21 +71,29 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false,
                                               onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     val (floatingAddresses, nonFloatingAddresses) = withDynTransaction {
-      RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating, onlyNormalRoads, roadNumberLimits).partition(_.floating)
+      time(logger, "Fetch floating and non-floating addresses") {
+        RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating, onlyNormalRoads, roadNumberLimits).partition(_.floating)
+      }
     }
     val floatingHistoryRoadLinks = withDynTransaction {
-      roadLinkService.getRoadLinksHistoryFromVVH(floatingAddresses.map(_.linkId).toSet)
+      time(logger, "Fetch floating history links") {
+        roadLinkService.getRoadLinksHistoryFromVVH(floatingAddresses.map(_.linkId).toSet)
+      }
     }
-    val historyLinkAddresses = floatingHistoryRoadLinks.flatMap(fh => {
-      buildFloatingRoadAddressLink(fh, floatingAddresses.filter(_.linkId == fh.linkId))
-    })
+    val historyLinkAddresses = time(logger, "Build history link addresses") {
+      floatingHistoryRoadLinks.flatMap(fh => {
+        buildFloatingRoadAddressLink(fh, floatingAddresses.filter(_.linkId == fh.linkId))
+      })
+    }
 
     RoadAddressResult(historyLinkAddresses, nonFloatingAddresses, floatingAddresses)
   }
 
   private def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
     withDynTransaction {
-      RoadAddressDAO.fetchMissingRoadAddressesByBoundingBox(boundingRectangle).groupBy(_.linkId)
+      time(logger, "RoadAddressDAO.fetchMissingRoadAddressesByBoundingBox") {
+        RoadAddressDAO.fetchMissingRoadAddressesByBoundingBox(boundingRectangle).groupBy(_.linkId)
+      }
     }
   }
 
@@ -231,7 +239,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (historyLinkAddresses, addresses) = (fetchResult.historyLinkAddresses, fetchResult.current)
 
     val missingViiteRoadAddress = if (!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
-    logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
+    logger.info("Fetch addresses completed in %d ms".format((System.currentTimeMillis() - fetchAddrStartTime)))
 
     val addressLinkIds = addresses.map(_.linkId).toSet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
@@ -240,14 +248,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressLinkIds, newTransaction, frozenTimeVVHAPIServiceEnabled)
 
     val fetchVVHEndTime = System.currentTimeMillis()
-    logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
+    logger.info("Fetch VVH road links completed in %d ms".format((fetchVVHEndTime - fetchVVHStartTime)))
 
     val linkIds = roadLinks.map(_.linkId).toSet
 
     val changedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf)
-    logger.info("End change info in %.3f sec".format((System.currentTimeMillis() - fetchVVHEndTime) * 0.001))
+    logger.info("Change info fetched in %d sec".format((System.currentTimeMillis() - fetchVVHEndTime)))
 
-    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(), addresses)
+    val complementedWithChangeAddresses = time(logger, "Complemented with change addresses") {
+      applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(), addresses)
+    }
 
     val (changedFloating, missingFloating) = historyLinkAddresses.partition(ral => linkIds.contains(ral.linkId))
 
@@ -259,7 +269,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
     }.toMap
     val buildEndTime = System.currentTimeMillis()
-    logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
+    logger.info("Build road addresses completed in %d ms".format((buildEndTime - buildStartTime)))
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
@@ -275,17 +285,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating = false, onlyNormalRoads = true, roadNumberLimits))
 
-    val fetchResult = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    val fetchResult = time(logger, "fetchRoadAddressesByBoundingBox") {
+      Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    }
     val (historyLinkAddresses, addresses) = (fetchResult.historyLinkAddresses, fetchResult.current)
 
-    val buildStartTime = System.currentTimeMillis()
-    val viiteRoadLinks = addresses.map { address =>
-      address.linkId -> RoadAddressLinkBuilder.buildSimpleLink(address)
-    }.toMap
-    val buildEndTime = System.currentTimeMillis()
-    logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
+    val viiteRoadLinks = time(logger, "Build road addresses") {
+      addresses.map { address =>
+        address.linkId -> RoadAddressLinkBuilder.buildSimpleLink(address)
+      }.toMap
+    }
 
-    setBlackUnderline(viiteRoadLinks.values.toSeq)
+    time(logger, "Set black underline") {
+      setBlackUnderline(viiteRoadLinks.values.toSeq)
+    }
   }
 
   /**
@@ -966,9 +979,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @return Sequence of road addresses properly tagged in order to get the
     */
   private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    logger.info("Starting the setting of the blackUnderline")
-    val (streetRoads, othersRoads) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
-    streetRoads.map(_.copy(blackUnderline = true)) ++ othersRoads
+    time(logger, "Set the black underline") {
+      val (streetRoads, othersRoads) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
+      streetRoads.map(_.copy(blackUnderline = true)) ++ othersRoads
+    }
   }
 }
 

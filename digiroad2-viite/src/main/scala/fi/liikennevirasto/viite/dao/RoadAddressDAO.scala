@@ -15,7 +15,7 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{NewCommonHistoryId, NewRoadAddress, RoadCheckOptions, RoadType}
+import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
@@ -401,8 +401,10 @@ object RoadAddressDAO {
 
 
   private def queryList(query: String): List[RoadAddress] = {
-    val tuples = Q.queryNA[RoadAddress](query).list
-    tuples.groupBy(_.id).map{
+    val tuples = time(logger, "Fetch list of road addresses") {
+      Q.queryNA[RoadAddress](query).list
+    }
+    tuples.groupBy(_.id).map {
       case (id, roadAddressList) =>
         roadAddressList.head
     }.toList
