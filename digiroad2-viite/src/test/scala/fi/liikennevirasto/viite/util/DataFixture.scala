@@ -314,12 +314,10 @@ object DataFixture {
     OracleDatabase.withDynTransaction {
       val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
       elyCodes.foreach(ely => {
-        println(s"Going to check roads for ely $ely")
         //We must get current and history separately => Nothing guarantees that the history ones havent changed their ELY meanwhile
         val roads = RoadAddressDAO.getRoadAddressByEly(ely, onlyCurrent = true)
-        println(s"Got a total of ${roads.size} road addresses for ely $ely")
 
-        roads.grouped(25000).map { group =>
+        roads.grouped(25000).foreach { group =>
 
           val current = group
           val history = RoadAddressDAO.fetchByLinkId(group.map(_.linkId).toSet, includeCurrent = false)
@@ -353,7 +351,7 @@ object DataFixture {
       val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
 
       elyCodes.foreach(ely => {
-        println(s"Going to fuse road history for ely $ely")
+        println(s"Going to fuse roads for ely $ely")
         val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely)}
         println(s"Got ${roads.size} addresses for ely $ely")
         val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
