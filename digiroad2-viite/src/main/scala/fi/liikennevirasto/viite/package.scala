@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
+import org.slf4j.Logger
 
 import scala.util.matching.Regex.Match
 
@@ -106,6 +107,18 @@ package object viite {
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
   val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Terminated, LinkStatus.Numbering)
+
+  val timeLoggingThresholdInMs = 1
+
+  def time[R](logger: Logger, operationName: String)(f: => R): R = {
+    val begin = System.currentTimeMillis()
+    val result = f
+    val duration = System.currentTimeMillis() - begin
+    if (duration >= timeLoggingThresholdInMs) {
+      logger.info(s"$operationName completed in $duration ms")
+    }
+    result
+  }
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
