@@ -329,7 +329,7 @@ object DataFixture {
 
       result.zip(result.tail)
     }
-    OracleDatabase.withDynSession {
+    OracleDatabase.withDynTransaction {
       val elyCodes =  MunicipalityDAO.getMunicipalityMapping.values.toSet
       elyCodes.foreach(ely => {
         println(s"Going to check roads for ely $ely")
@@ -349,21 +349,26 @@ object DataFixture {
 
             val chunksRoads = current ++ history
 
-            val roadErrors = chunksRoads.groupBy(r => (r.linkId, r.commonHistoryId)).foldLeft(Seq.empty[RoadAddress])((errorList, group) => {
-              val roadGroup = group._2
-              val errorRoad = roadGroup.find(
-                r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue || r.sideCode != roadGroup.head.sideCode)
-              errorRoad match {
-                case Some(road) =>
-                  println(s"Error in lrm check for road address with id ${road.id} ")
-                  errorList :+ road
-                case None => errorList
-              }
-            })
+           val groupedChunks = chunksRoads.groupBy(r => (r.linkId, r.commonHistoryId))
+            val roadErrors: Seq[RoadAddress] = groupedChunks.mapValues { g =>
+              val errors: Seq[RoadAddress] = g.sortBy(_.startAddrMValue).scanLeft((Seq.empty[RoadAddress], Seq.empty[RoadAddress])){ case ((list, errors), road) =>
+                if(list.size > 1) {
+                  val el = list.last
+                  val newErrors = if (el.endMValue != road.startMValue || el.sideCode != road.sideCode){
+                    println(s"Error in lrm check for road address with id ${road.id} ")
+                    errors :+ road
+                  } else {
+                    errors
+                  }
+                  (list :+ road, newErrors)
+                } else {
+                  (list :+ road, errors)
+                }
+              }.flatMap(_._2)
+              errors
+            }.values.flatten.toSeq
             println(s"Found ${roadErrors.size} errors for ely $ely")
-            OracleDatabase.withDynTransaction {
               roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
-            }
         }
       })
     }
