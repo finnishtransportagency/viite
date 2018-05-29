@@ -113,14 +113,9 @@
       greenStyle();
 
       if(!addToGreenLayer){
-        var filteredFeatures = _.reject(features, function (feat) {
-          return _.some(greenRoadLayer.getSource().getFeatures(), function (green) {
-            return green.roadLinkData.id === feat.roadLinkData.id;
-          });
-        });
-        greenRoadLayer.getSource().addFeatures(filteredFeatures);
+        greenRoadLayer.getSource().addFeatures(features);
         selectSingleClick.getFeatures().clear();
-        addFeaturesToSelection(filteredFeatures);
+        addFeaturesToSelection(features);
       }
     };
 
@@ -825,12 +820,19 @@
         }
         redrawNextSelectedTarget(targets, adjacents);
       });
-      eventListener.listenTo(eventbus, 'adjacents:added adjacents:additionalSourceFound', function(sources,targets, additionalLinkId){
+      eventListener.listenTo(eventbus, 'adjacents:added', function(sources,targets){
         clearIndicators();
         drawIndicators(targets);
-        _.map(selectedLinkProperty.getFeaturesToKeep(), function (roads) {
+        _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(link){
+          return link.roadNumber === 0;
+        }), function (roads) {
           editFeatureDataForGreen(roads);
         });
+      });
+
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources,targets){
+          clearIndicators();
+          drawIndicators(targets);
       });
 
       eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings){
@@ -1096,7 +1098,7 @@
             }
           });
           addFeaturesToSelection(features);
-          greenRoads(features);
+          greenRoads(features, true);
         }
       }
       if(features.length === 0)
