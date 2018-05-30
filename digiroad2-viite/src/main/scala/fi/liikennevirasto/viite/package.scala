@@ -108,18 +108,6 @@ package object viite {
   val DefaultZoomLevel = 2
   val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Terminated, LinkStatus.Numbering)
 
-  val timeLoggingThresholdInMs = 1
-
-  def time[R](logger: Logger, operationName: String)(f: => R): R = {
-    val begin = System.currentTimeMillis()
-    val result = f
-    val duration = System.currentTimeMillis() - begin
-    if (duration >= timeLoggingThresholdInMs) {
-      logger.info(s"$operationName completed in $duration ms")
-    }
-    result
-  }
-
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)

@@ -7,6 +7,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -354,17 +355,16 @@ trait VVHClientOperations {
   }
 
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
-    val fetchVVHStartTime = System.currentTimeMillis()
-    val request = new HttpGet(url)
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    try {
-      mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-    } finally {
-      response.close()
-      val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
-      if(fetchVVHTimeSec > 5)
-        logger.info("fetch vvh took %.3f sec with the following url %s".format(fetchVVHTimeSec, url))
+    time(logger, s"Fetch VVH features with url '$url'") {
+      val fetchVVHStartTime = System.currentTimeMillis()
+      val request = new HttpGet(url)
+      val client = HttpClientBuilder.create().build()
+      val response = client.execute(request)
+      try {
+        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      } finally {
+        response.close()
+      }
     }
   }
 
