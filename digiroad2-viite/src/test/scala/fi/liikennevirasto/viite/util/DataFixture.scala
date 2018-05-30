@@ -58,8 +58,8 @@ object DataFixture {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.lengthCompare(roads.size) == 0) // Must not lose any
         val (changed, unchanged) = adjusted.partition(ra =>
-            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-          )
+          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+        )
         println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
@@ -101,7 +101,7 @@ object DataFixture {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
       importTableName match {
         case None => // shouldn't get here because args size test
-         throw new Exception("****** Import failed! conversiontable name required as second input ******")
+          throw new Exception("****** Import failed! conversiontable name required as second input ******")
         case Some(tableName) =>
           val importOptions = ImportOptions(
             onlyComplementaryLinks = false,
@@ -112,7 +112,6 @@ object DataFixture {
 
       }
       println(s"Road address import complete at time: ${DateTime.now()}")
-      println()
     }
 
   }
@@ -310,175 +309,184 @@ object DataFixture {
 
   }
 
-  def checkLrmPositionHistory(): Unit = {
+  def checkLrmPosition(): Unit = {
 
-    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
-    elyCodes.foreach(ely => {
-      println(s"Going to check roads for ely $ely")
-      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
-      println(s"Got ${roads.size} road addresses for ely $ely")
-      val roadErrors = roads.groupBy(r => (r.linkId, r.commonHistoryId)).foldLeft(Seq.empty[RoadAddress])((errorList, group) => {
-        val roadGroup = group._2
-        val errorRoad = roadGroup.find(
-          r => r.startMValue != roadGroup.head.startMValue || r.endMValue != roadGroup.head.endMValue || r.sideCode != roadGroup.head.sideCode)
-        errorRoad match {
-          case Some(road) =>
-            println(s"Error in lrm check for road address with id ${road.id} ")
-            errorList :+ road
-          case None => errorList
+    OracleDatabase.withDynTransaction {
+      val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
+      elyCodes.foreach(ely => {
+        //We must get current and history separately => Nothing guarantees that the history ones havent changed their ELY meanwhile
+        val roads = RoadAddressDAO.getRoadAddressByEly(ely, onlyCurrent = true)
+
+        roads.grouped(25000).foreach { group =>
+
+          val current = group
+          val history = RoadAddressDAO.fetchByLinkId(group.map(_.linkId).toSet, includeCurrent = false)
+          val combined = current ++ history
+
+          val groupedRoads = combined.groupBy(r => (r.linkId, r.commonHistoryId))
+
+          val roadErrors: Seq[RoadAddress] = groupedRoads.mapValues { g =>
+            val (curr, hist) = g.partition(_.endDate.isEmpty)
+
+            val errors: Seq[RoadAddress] = curr.sortBy(_.startAddrMValue).zip(hist.sortBy(_.startAddrMValue)).flatMap { case (c, h) =>
+              if (c.startMValue != h.startMValue || c.endMValue != h.endMValue || c.sideCode != h.sideCode) {
+                println(s"Error in lrm check for road address with id ${c.id} ")
+                Seq(c, h)
+              }
+              else Seq.empty[RoadAddress]
+            }
+            errors
+          }.values.flatten.toSeq
+          println(s"Found ${roadErrors.size} errors for ely $ely")
+          roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
         }
       })
-      println(s"Found ${roadErrors.size} errors for ely $ely")
-      OracleDatabase.withDynTransaction {
-        roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
-      }
-    })
-
+    }
   }
 
-  def fuseRoadAddressHistory(): Unit = {
+    def fuseRoadAddressWithHistory(): Unit = {
 
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
-    val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
+      val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+      val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+      val elyCodes = OracleDatabase.withDynSession { MunicipalityDAO.getMunicipalityMapping.values.toSet}
 
-    elyCodes.foreach(ely => {
-      println(s"Going to fuse road history for ely $ely")
-      val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely) }
-      println(s"Got ${roads.size} history for ely $ely")
-      val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
-      val kept = fusedRoadAddresses.map(_.id).toSet
-      val removed = roads.map(_.id).toSet.diff(kept)
-      val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
-      println(s"Fusing ${roadAddressesToRegister.size} roads for ely $ely")
-      if (roadAddressesToRegister.nonEmpty)
-        roadAddressService.mergeRoadAddressHistory(RoadAddressMerge(removed, roadAddressesToRegister))
-    })
-  }
+      elyCodes.foreach(ely => {
+        println(s"Going to fuse roads for ely $ely")
+        val roads =  OracleDatabase.withDynSession {RoadAddressDAO.getRoadAddressByEly(ely)}
+        println(s"Got ${roads.size} addresses for ely $ely")
+        val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
+        val kept = fusedRoadAddresses.map(_.id).toSet
+        val removed = roads.map(_.id).toSet.diff(kept)
+        val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
+        println(s"Fusing ${roadAddressesToRegister.size} roads for ely $ely")
+        if (roadAddressesToRegister.nonEmpty)
+          roadAddressService.mergeRoadAddressHistory(RoadAddressMerge(removed, roadAddressesToRegister))
+      })
+    }
 
-  private def showFreezeInfo(): Unit = {
-    println("Road link geometry freeze is active; exiting without changes")
-  }
+    private def showFreezeInfo(): Unit = {
+      println("Road link geometry freeze is active; exiting without changes")
+    }
 
-  def flyway: Flyway = {
-    val flyway = new Flyway()
-    flyway.setDataSource(ds)
-    flyway.setInitVersion("-1")
-    flyway.setInitOnMigrate(true)
-    flyway.setLocations("db.migration")
-    flyway
-  }
+    def flyway: Flyway = {
+      val flyway = new Flyway()
+      flyway.setDataSource(ds)
+      flyway.setInitVersion("-1")
+      flyway.setInitOnMigrate(true)
+      flyway.setLocations("db.migration")
+      flyway
+    }
 
-  def migrateAll(): Int = {
-    flyway.migrate()
-  }
+    def migrateAll(): Int = {
+      flyway.migrate()
+    }
 
-  def tearDown() {
-    flyway.clean()
-  }
+    def tearDown() {
+      flyway.clean()
+    }
 
-  def setUpTest() {
-    migrateAll()
-    SqlScriptRunner.runScripts(List(
-      "insert_test_fixture.sql",
-      "insert_users.sql",
-      "kauniainen_functional_classes.sql",
-      "kauniainen_traffic_directions.sql",
-      "kauniainen_link_types.sql",
-      "test_fixture_sequences.sql",
-      "kauniainen_lrm_positions.sql",
-      "insert_road_address_data.sql",
-      "insert_floating_road_addresses.sql",
-      "insert_project_link_data.sql",
-      "insert_road_names.sql"
-    ))
-  }
+    def setUpTest() {
+      migrateAll()
+      SqlScriptRunner.runScripts(List(
+        "insert_test_fixture.sql",
+        "insert_users.sql",
+        "kauniainen_functional_classes.sql",
+        "kauniainen_traffic_directions.sql",
+        "kauniainen_link_types.sql",
+        "test_fixture_sequences.sql",
+        "kauniainen_lrm_positions.sql",
+        "insert_road_address_data.sql",
+        "insert_floating_road_addresses.sql",
+        "insert_project_link_data.sql",
+        "insert_road_names.sql"
+      ))
+    }
 
-  def importMunicipalityCodes() {
-    println("\nCommencing municipality code import at time: ")
-    println(DateTime.now())
-    new MunicipalityCodeImporter().importMunicipalityCodes()
-    println("Municipality code import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
+    def importMunicipalityCodes() {
+      println("\nCommencing municipality code import at time: ")
+      println(DateTime.now())
+      new MunicipalityCodeImporter().importMunicipalityCodes()
+      println("Municipality code import complete at time: ")
+      println(DateTime.now())
+      println("\n")
+    }
 
-  def main(args:Array[String]) : Unit = {
-    import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
-      println("*************************************************************************************")
-      println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
-      println("*************************************************************************************")
-      breakable {
-        while (true) {
-          val input = Console.readLine()
-          if (input.trim() == "YES") {
-            break()
+    def main(args:Array[String]) : Unit = {
+      import scala.util.control.Breaks._
+      val username = properties.getProperty("bonecp.username")
+      if (!username.startsWith("dr2dev")) {
+        println("*************************************************************************************")
+        println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+        println("*************************************************************************************")
+        breakable {
+          while (true) {
+            val input = Console.readLine()
+            if (input.trim() == "YES") {
+              break()
+            }
           }
         }
       }
-    }
 
-    args.headOption match {
-      case Some("find_floating_road_addresses") if geometryFrozen =>
-        showFreezeInfo()
-      case Some("find_floating_road_addresses") =>
-        findFloatingRoadAddresses()
-      case Some("import_road_addresses") =>
-        if (args.length > 1)
-          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("viitetestuser"), Some(args(1)))
-        else
-          throw new Exception("****** Import failed! conversiontable name required as second input ******")
-      case Some("import_complementary_road_address") =>
-        importComplementaryRoadAddress()
-      case Some("update_road_addresses_ely_and_road_type") =>
-        updateRoadAddressesValues(vvhClient)
-      case Some("recalculate_addresses") =>
-        recalculate()
-      case Some("update_missing") if geometryFrozen =>
-        showFreezeInfo()
-      case Some("update_missing") =>
-        updateMissingRoadAddresses()
-      case Some("fuse_multi_segment_road_addresses") =>
-        combineMultipleSegmentsOnLinks()
-      case Some("update_road_addresses_geometry_no_complementary") if geometryFrozen =>
-        showFreezeInfo()
-      case Some("update_road_addresses_geometry_no_complementary") =>
-        updateRoadAddressesGeometry(true)
-      case Some("update_road_addresses_geometry") if geometryFrozen =>
-        showFreezeInfo()
-      case Some("update_road_addresses_geometry") =>
-        updateRoadAddressesGeometry(false)
-      case Some("import_road_address_change_test_data") =>
-        importRoadAddressChangeTestData()
-      case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
-        showFreezeInfo()
-      case Some("apply_change_information_to_road_address_links") =>
-        val numThreads = if(args.length > 1) toIntNumber(args(1)) else numberThreads
-        applyChangeInformationToRoadAddressLinks(numThreads)
-      case Some("update_road_address_link_source") if geometryFrozen =>
-        showFreezeInfo()
-      case Some("update_road_address_link_source") =>
-        updateRoadAddressGeometrySource()
-      case Some("update_project_link_geom") =>
-        updateProjectLinkGeom()
-      case Some("import_road_names") =>
-        importRoadNames()
-      case Some("correct_null_ely_code_projects") =>
-        correctNullElyCodeProjects()
-      case Some("check_lrm_position_history") =>
-        checkLrmPositionHistory()
-      case Some("fuse_road_address_history") =>
-        fuseRoadAddressHistory()
-      case Some("test") =>
-        tearDown()
-        setUpTest()
-        importMunicipalityCodes()
-      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
-        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
-        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names ")
+      args.headOption match {
+        case Some("find_floating_road_addresses") if geometryFrozen =>
+          showFreezeInfo()
+        case Some("find_floating_road_addresses") =>
+          findFloatingRoadAddresses()
+        case Some("import_road_addresses") =>
+          if (args.length > 1)
+            importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("viitetestuser"), Some(args(1)))
+          else
+            throw new Exception("****** Import failed! conversiontable name required as second input ******")
+        case Some("import_complementary_road_address") =>
+          importComplementaryRoadAddress()
+        case Some("update_road_addresses_ely_and_road_type") =>
+          updateRoadAddressesValues(vvhClient)
+        case Some("recalculate_addresses") =>
+          recalculate()
+        case Some("update_missing") if geometryFrozen =>
+          showFreezeInfo()
+        case Some("update_missing") =>
+          updateMissingRoadAddresses()
+        case Some("fuse_multi_segment_road_addresses") =>
+          combineMultipleSegmentsOnLinks()
+        case Some("update_road_addresses_geometry_no_complementary") if geometryFrozen =>
+          showFreezeInfo()
+        case Some("update_road_addresses_geometry_no_complementary") =>
+          updateRoadAddressesGeometry(true)
+        case Some("update_road_addresses_geometry") if geometryFrozen =>
+          showFreezeInfo()
+        case Some("update_road_addresses_geometry") =>
+          updateRoadAddressesGeometry(false)
+        case Some("import_road_address_change_test_data") =>
+          importRoadAddressChangeTestData()
+        case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
+          showFreezeInfo()
+        case Some("apply_change_information_to_road_address_links") =>
+          val numThreads = if(args.length > 1) toIntNumber(args(1)) else numberThreads
+          applyChangeInformationToRoadAddressLinks(numThreads)
+        case Some("update_road_address_link_source") if geometryFrozen =>
+          showFreezeInfo()
+        case Some("update_road_address_link_source") =>
+          updateRoadAddressGeometrySource()
+        case Some("update_project_link_geom") =>
+          updateProjectLinkGeom()
+        case Some("import_road_names") =>
+          importRoadNames()
+        case Some("correct_null_ely_code_projects") =>
+          correctNullElyCodeProjects()
+        case Some("check_lrm_position") =>
+          checkLrmPosition()
+        case Some("fuse_road_address_with_history") =>
+          fuseRoadAddressWithHistory()
+        case Some("test") =>
+          tearDown()
+          setUpTest()
+          importMunicipalityCodes()
+        case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
+          "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
+          "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
+          "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names ")
+      }
     }
   }
-}
