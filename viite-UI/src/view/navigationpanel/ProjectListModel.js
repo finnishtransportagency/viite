@@ -80,11 +80,12 @@
         if ($('#userNameBox').val() === "") {
           $('#userNameBox').val(applicationModel.getSessionUser());
           filterByUser();
+        } else {
+          filterByUser();
         }
       } else {
         $('#userFilterSpan').css("display", "none");
         $('#userFilterSpan').css("visibility", "hidden");
-
       }
     };
 
