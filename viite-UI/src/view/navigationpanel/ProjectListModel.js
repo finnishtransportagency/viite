@@ -154,7 +154,7 @@
           case 'sortStatus':
             func = function(a,b) {
               return a.statusCode - b.statusCode;
-            }
+            };
         }
         var cmp = 0;
         // Use the function chosen to sort the list
