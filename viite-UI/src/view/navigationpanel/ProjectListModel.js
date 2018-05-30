@@ -55,7 +55,7 @@
     function bindEvents() {
 
       eventbus.once('roadAddressProjects:fetched', function(projects) {
-          projectArray = projects;
+        projectArray = projects;
         createProjectList(projects);
       });
 
@@ -118,11 +118,15 @@
         return name.length > maxNameLength ? name.substring(0, maxNameLength) + "..." : name;
       };
 
+      /*
+      User can sort project list by clicking column header label. By clicking same label again, user can reverse the order.
+       */
       projectList.on('click', '[id^=sort]', function (event) {
         $('#project-list').empty();
         var id = event.target.id;
-        order = (listSortedBy === id) ? order * -1 : 1;
+        order = (listSortedBy === id) ? order * -1 : 1; // keeps track if the list should be sorted ascending or descending
         listSortedBy = id;
+        // Choose a function based on which label the user has pressed
         var func;
         switch (id) {
           case 'sortName':
@@ -140,7 +144,7 @@
               return a.createdBy.localeCompare(b.createdBy, 'fi');
             };
             break;
-          case 'sortDate':
+            case 'sortDate': // Dates can't be sorted in DD.MM.YYYY format so here the format is changed to YYYY-MM-DD
             func = function(a,b) {
               var aDate = a.startDate.split('.').reverse().join('-');
               var bDate = b.startDate.split('.').reverse().join('-');
@@ -153,6 +157,7 @@
             }
         }
         var cmp = 0;
+        // Use the function chosen to sort the list
         createProjectList(projectArray.sort(function (a, b) {
           cmp = func(a,b);
           return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
