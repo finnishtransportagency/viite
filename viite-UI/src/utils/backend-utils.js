@@ -249,8 +249,9 @@
 
 
     this.getUserRoles = function () {
-      $.get('api/viite/user/roles', function (roles) {
-        eventbus.trigger('roles:fetched', roles);
+      $.get('api/viite/user/roles', function (response) {
+        eventbus.trigger('roles:fetched', response.roles);
+        eventbus.trigger('user:setSessionUsername', response.userName)
       });
     };
 

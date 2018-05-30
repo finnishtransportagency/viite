@@ -1081,7 +1081,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
 
   get("/user/roles") {
-    userProvider.getCurrentUser().configuration.roles
+    val test = userProvider.getCurrentUser().configuration.roles
+    Map("userName" -> userProvider.getCurrentUser().username, "roles" -> userProvider.getCurrentUser().configuration.roles)
   }
 
 }
