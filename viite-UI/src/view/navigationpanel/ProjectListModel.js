@@ -68,7 +68,7 @@
             _.each(unfinishedProjects, function(proj) {
               var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
               html += '<tr class="project-item">' +
-                '<td style="width: 270px;">' + staticFieldProjectName(cutProjectName(proj.name)) + '</td>' +
+                '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
                 '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                 '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
                 '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
@@ -111,11 +111,6 @@
             $('.edit-mode-btn:visible').click();
           }
         });
-      };
-
-      var cutProjectName = function (name) {
-        var maxNameLength = 24;
-        return name.length > maxNameLength ? name.substring(0, maxNameLength) + "..." : name;
       };
 
       /*
