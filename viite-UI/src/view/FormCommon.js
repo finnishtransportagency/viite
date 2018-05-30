@@ -10,14 +10,9 @@
     };
 
     var titleWithProjectName = function(projectName, project) {
-      return '<span class ="edit-mode-title">' + cutProjectName(projectName) + '<button id="editProject_' + project.id + '" ' +
+      return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + project.id + '" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + project.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
-    };
-
-    var cutProjectName = function (name) {
-      var maxNameLength = 20;
-      return name.length > maxNameLength ? name.substring(0, maxNameLength) + "..." : name;
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
     };
 
     var addRoadNameField = function (name, isBlocked) {
