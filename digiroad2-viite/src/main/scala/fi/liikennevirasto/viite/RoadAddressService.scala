@@ -252,7 +252,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val linkIds = roadLinks.map(_.linkId).toSet
 
     val changedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf)
-    logger.info("Change info fetched in %d ms".format((System.currentTimeMillis() - fetchVVHEndTime)))
+    logger.info("Fetch change info completed in %d ms".format((System.currentTimeMillis() - fetchVVHEndTime)))
 
     val complementedWithChangeAddresses = time(logger, "Complemented with change addresses") {
       applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(), addresses)
