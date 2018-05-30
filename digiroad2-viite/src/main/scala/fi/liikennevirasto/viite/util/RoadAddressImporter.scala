@@ -8,6 +8,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.viite.dao.CalibrationCode
 import fi.liikennevirasto.viite.dao.RoadAddressDAO.formatter
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
@@ -18,7 +19,7 @@ case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCo
                                  startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
                                  terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode, directionFlag: Long = 0)
+                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
 
@@ -42,8 +43,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   def printConversionRoadAddress(r: ConversionRoadAddress): String = {
-    s"""linkid: %d, alku: %.2f, loppu: %.2f, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s, ajorataId: %s""".
-      format(r.linkId, r.startM, r.endM, r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.commonHistoryId)
+    s"""linkid: %d, alku: %.2f, loppu: %.2f, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s, ajorataId: %s, kalibrointpiste: %s""".
+      format(r.linkId, r.startM, r.endM, r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.commonHistoryId, r.calibrationCode)
   }
 
   private def lrmPositionStatement() =
@@ -62,9 +63,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def roadAddressStatement() =
     dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, start_addr_m, end_addr_m, start_date, end_date, created_by, " +
-      "valid_from, geometry, floating, road_type, ely, common_history_id) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "valid_from, geometry, floating, road_type, ely, common_history_id, calibration_points) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?)")
+      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?, ?)")
 
   private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit = {
     def datePrinter(date: Option[DateTime]): String = {
@@ -94,6 +95,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadAddressStatement.setLong(18, roadAddress.roadType)
     roadAddressStatement.setLong(19, roadAddress.ely)
     roadAddressStatement.setLong(20, roadAddress.commonHistoryId)
+    roadAddressStatement.setLong(21, roadAddress.calibrationCode.value)
 
     roadAddressStatement.addBatch()
   }
@@ -119,7 +121,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
                TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid, kaannetty from #$tableName
+               loppuy, (linkid * 10000 + ajr * 1000 + aet) as id, ajorataid, kaannetty, alku_kalibrointpiste, loppu_kalibrointpiste from #$tableName
                WHERE linkid > $minLinkId AND linkid <= $maxLinkId AND  aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter """
         .as[ConversionRoadAddress].list
     }
@@ -274,6 +276,16 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val lrmId = r.nextLong()
       val commonHistoryId = r.nextLong()
       val directionFlag = r.nextLong()
+      val startCalibrationPoint = r.nextLongOption()
+      val endCalibrationPoint = r.nextLongOption()
+
+
+      val calibrationCode = (startCalibrationPoint, endCalibrationPoint) match {
+        case (Some(1), Some(1)) => CalibrationCode.AtBoth
+        case (Some(1), _) => CalibrationCode.AtBeginning
+        case (_, Some(1)) => CalibrationCode.AtEnd
+        case _ => CalibrationCode.No
+      }
 
       val viiteEndDate = endDateOption match {
         case Some(endDate) => Some(endDate.plusDays(1))
@@ -282,11 +294,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
       if (startAddrM < endAddrM) {
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, SideCode.TowardsDigitizing, directionFlag)
+          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, SideCode.TowardsDigitizing, calibrationCode, directionFlag)
       } else {
         //switch startAddrM, endAddrM, the geometry and set the side code to AgainstDigitizing
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, SideCode.AgainstDigitizing, directionFlag)
+          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, SideCode.AgainstDigitizing, calibrationCode, directionFlag)
       }
     }
   }
