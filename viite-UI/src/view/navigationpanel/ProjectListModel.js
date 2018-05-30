@@ -1,15 +1,18 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
     var projectStatus = LinkValues.ProjectStatus;
+    var projectArray = [];
+    var listSortedBy = '';
+    var order = 1; // 1 -> ascending order, -1 -> descending order
     var projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
     projectList.append('<div class="content-new">' +
-      '<label class="content-new label" style="width: 260px">PROJEKTIN NIMI</label>' +
-      '<label class="content-new label" style="width: 50px">ELY</label>' +
-      '<label class="content-new label" style="width: 100px">KÄYTTÄJÄ</label>' +
-      '<label class="content-new label" style="width: 100px">ALKUPVM</label>' +
-      '<label class="content-new label" style="width: 50px">TILA</label>' +
+      '<label id="sortName" class="content-new label" style="width: 255px">PROJEKTIN NIMI</label>' +
+      '<label id="sortELY" class="content-new label" style="width: 50px">ELY</label>' +
+      '<label id="sortUser" class="content-new label" style="width: 110px">KÄYTTÄJÄ</label>' +
+      '<label id="sortDate" class="content-new label" style="width: 100px">ALKUPVM</label>' +
+      '<label id="sortStatus" class="content-new label" style="width: 60px">TILA</label>' +
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
@@ -52,48 +55,53 @@
     function bindEvents() {
 
       eventbus.once('roadAddressProjects:fetched', function(projects) {
+          projectArray = projects;
+        createProjectList(projects);
+      });
+
+      var createProjectList = function(projects) {
         var unfinishedProjects = _.filter(projects, function(proj) {
           return (proj.statusCode >= 1 && proj.statusCode <= 5) || proj.statusCode === 8;
         });
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
-        if (!_.isEmpty(unfinishedProjects)) {
-          _.each(unfinishedProjects, function(proj) {
-            var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
+          if (!_.isEmpty(unfinishedProjects)) {
+            _.each(unfinishedProjects, function(proj) {
+              var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
               html += '<tr class="project-item">' +
                 '<td style="width: 270px;">' + staticFieldProjectName(cutProjectName(proj.name)) + '</td>' +
                 '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
-                '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
+                '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
                 '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
-                '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
-            if (proj.statusCode === projectStatus.ErrorInViite.value) {
-              html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +
+                '<td style="width: 70px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
+              if (proj.statusCode === projectStatus.ErrorInViite.value) {
+                html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +
                   '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
-            } else if (proj.statusCode === projectStatus.ErroredInTR.value) {
-              html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>' +
-                '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
-            } else {
-              html += '<td>' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 55px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>' +
-                '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
-            }
-          });
-          html += '</table>';
-          $('#project-list').html($(html));
-          $('[id*="open-project"]').click(function(event) {
-            if (this.className === "project-open btn btn-new-error") {
-              projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-              eventbus.once("roadAddressProject:reOpenedProject", function(successData) {
+              } else if (proj.statusCode === projectStatus.ErroredInTR.value) {
+                html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>' +
+                  '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
+              } else {
+                html += '<td>' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 80px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>' +
+                  '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
+              }
+            });
+            html += '</table>';
+            $('#project-list').html($(html));
+            $('[id*="open-project"]').click(function(event) {
+              if (this.className === "project-open btn btn-new-error") {
+                projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
+                eventbus.once("roadAddressProject:reOpenedProject", function(successData) {
+                  openProjectSteps(event);
+                });
+              } else {
                 openProjectSteps(event);
-              });
-            } else {
-              openProjectSteps(event);
-            }
-          });
-        } else {
-          html += '</table>';
-          $('#project-list').html($(html));
-        }
-        applicationModel.removeSpinner();
-      });
+              }
+            });
+          } else {
+            html += '</table>';
+            $('#project-list').html($(html));
+          }
+          applicationModel.removeSpinner();
+      };
 
       var openProjectSteps = function(event) {
         projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
@@ -109,6 +117,47 @@
         var maxNameLength = 24;
         return name.length > maxNameLength ? name.substring(0, maxNameLength) + "..." : name;
       };
+
+      projectList.on('click', '[id^=sort]', function (event) {
+        $('#project-list').empty();
+        var id = event.target.id;
+        order = (listSortedBy === id) ? order * -1 : 1;
+        listSortedBy = id;
+        var func;
+        switch (id) {
+          case 'sortName':
+            func = function(a,b) {
+              return a.name.localeCompare(b.name, 'fi');
+            };
+            break;
+          case 'sortELY':
+            func = function(a,b) {
+              return a.ely - b.ely;
+            };
+            break;
+          case 'sortUser':
+            func = function(a,b) {
+              return a.createdBy.localeCompare(b.createdBy, 'fi');
+            };
+            break;
+          case 'sortDate':
+            func = function(a,b) {
+              var aDate = a.startDate.split('.').reverse().join('-');
+              var bDate = b.startDate.split('.').reverse().join('-');
+              return new Date(aDate) - new Date(bDate);
+            };
+            break;
+          case 'sortStatus':
+            func = function(a,b) {
+              return a.statusCode - b.statusCode;
+            }
+        }
+        var cmp = 0;
+        createProjectList(projectArray.sort(function (a, b) {
+          cmp = func(a,b);
+          return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
+        }));
+      });
 
       projectList.on('click', 'button.cancel', function() {
         hide();
