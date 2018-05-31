@@ -6,16 +6,17 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite.{NewCommonHistoryId, NewRoadAddress, RoadCheckOptions, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
@@ -302,7 +303,7 @@ object RoadAddressDAO {
       val ely = r.nextLong()
       val terminated = TerminationCode.apply(r.nextInt())
       val commonHistoryId = r.nextLong()
-      val validTo = r.nextDateOption.map(new DateTime(_))
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
       RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
@@ -312,7 +313,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true,
+  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true, includeCurrent: Boolean = true,
                     filterIds: Set[Long] = Set()): List[RoadAddress] = {
     if (linkIds.size > 1000 || filterIds.size > 1000) {
       return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
@@ -328,6 +329,10 @@ object RoadAddressDAO {
       ""
     val history = if (!includeHistory)
       "AND ra.end_date is null"
+    else
+      ""
+    val current = if (!includeCurrent)
+      "AND ra.end_date is not null"
     else
       ""
     val idFilter = if (filterIds.nonEmpty)
@@ -352,7 +357,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating $history $valid $idFilter and t.id < t2.id and
+        $where $floating $history $current $valid $idFilter and t.id < t2.id and
            valid_to is null
       """
     queryList(query)
@@ -401,8 +406,10 @@ object RoadAddressDAO {
 
 
   private def queryList(query: String): List[RoadAddress] = {
-    val tuples = Q.queryNA[RoadAddress](query).list
-    tuples.groupBy(_.id).map{
+    val tuples = time(logger, "Fetch list of road addresses") {
+      Q.queryNA[RoadAddress](query).list
+    }
+    tuples.groupBy(_.id).map {
       case (id, roadAddressList) =>
         roadAddressList.head
     }.toList
@@ -1515,18 +1522,24 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def getRoadAddressByEly(ely: Long): List[RoadAddress] = {
+  def getRoadAddressByEly(ely: Long, onlyCurrent: Boolean = false): List[RoadAddress] = {
+
+    val current = onlyCurrent match {
+      case true => " and ra.end_date IS NULL "
+      case false => ""
+    }
+
     val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
-        pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id,
-        (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+       pos.side_code, pos.adjusted_timestamp,
+       ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+       (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         where t.id < t2.id and
-          valid_from <= sysdate and floating = 0 and ely = $ely"""
+          valid_from <= sysdate and floating = 0 and valid_to IS NULL and ely = $ely $current"""
     queryList(query)
   }
 
