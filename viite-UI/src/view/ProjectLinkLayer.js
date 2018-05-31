@@ -28,7 +28,7 @@
         var zoom = Math.log(1024 / resolution) / Math.log(2);
 
         var nonSuravageRoads = _.partition(projectCollection.getAll(), function (projectRoad) {
-          return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && projectRoad.id === 0;
+          return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
         })[1];
         var features = _.map(nonSuravageRoads, function (projectLink) {
           var points = _.map(projectLink.points, function (point) {
@@ -721,7 +721,7 @@
       var findNearestSuravageLink = function(point) {
 
         var possibleSplit = _.filter(vectorSource.getFeatures().concat(suravageRoadProjectLayer.getSource().getFeatures()), function(feature){
-          return !_.isUndefined(feature.projectLinkData) && (feature.projectLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && feature.projectLinkData.id === 0);
+          return !_.isUndefined(feature.projectLinkData) && (feature.projectLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
         });
         return _.chain(possibleSplit)
             .map(function(feature) {
@@ -842,7 +842,7 @@
       });
 
       var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
-        return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && projectRoad.id === 0;
+        return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
       });
       calibrationPointLayer.getSource().clear();
 
@@ -851,9 +851,14 @@
       });
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
-      var suravageProjectRoads = separated[0];
+      var suravageProjectRoads = separated[0].filter(function(val){
+        return _.find(separated[1], function (link) {
+          return link.linkId === val.linkId;
+        }) !== 0;
+      });
       var suravageFeatures = [];
       suravageProjectDirectionMarkerLayer.getSource().clear();
+      suravageRoadProjectLayer.getSource().clear();
 
       _.map(suravageProjectRoads, function (projectLink) {
         var points = _.map(projectLink.points, function (point) {
