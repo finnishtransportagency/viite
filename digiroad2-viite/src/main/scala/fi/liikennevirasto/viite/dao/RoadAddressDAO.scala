@@ -194,19 +194,22 @@ object RoadAddressDAO {
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
-    val floatingFilter = fetchOnlyFloating match {
-      case true => " and ra.floating = '1'"
-      case false => ""
+    val floatingFilter = if (fetchOnlyFloating) {
+      " and ra.floating = '1'"
+    } else {
+      ""
     }
 
-    val normalRoadsFilter = onlyNormalRoads match {
-      case true => " and pos.link_source = 1"
-      case false => ""
+    val normalRoadsFilter = if (onlyNormalRoads) {
+      " and pos.link_source = 1"
+    } else {
+      ""
     }
 
-    val roadNumbersFilter = roadNumberLimits.nonEmpty match {
-      case true => withRoadNumbersFilter(roadNumberLimits)
-      case false => ""
+    val roadNumbersFilter = if (roadNumberLimits.nonEmpty) {
+      withRoadNumbersFilter(roadNumberLimits)
+    } else {
+      ""
     }
 
     val query = s"""
@@ -374,9 +377,10 @@ object RoadAddressDAO {
       return fetchByLinkIdMassQueryToApi(linkIds, useLatestNetwork)
     }
     val linkIdString = linkIds.mkString(",")
-    val where = linkIds.isEmpty match {
-      case true => return List()
-      case false => s""" where pos.link_id in ($linkIdString)"""
+    val where = if (linkIds.isEmpty) {
+      return List()
+    } else {
+      s""" where pos.link_id in ($linkIdString)"""
     }
 
     val historyFilter = if (ignoreHistory) {
@@ -419,13 +423,15 @@ object RoadAddressDAO {
     val geomFilter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
     val filter = roadNumbers.map(n => "road_number >= " + n._1 + " and road_number <= " + n._2)
       .mkString("(", ") OR (", ")")
-    val where = roadNumbers.isEmpty match {
-      case true => return List()
-      case false => s""" where track_code in (0,1) AND $filter"""
+    val where = if (roadNumbers.isEmpty) {
+      return List()
+    } else {
+      s""" where track_code in (0,1) AND $filter"""
     }
-    val coarseWhere = coarse match {
-      case true => " AND calibration_points != 0"
-      case false => ""
+    val coarseWhere = if (coarse) {
+      " AND calibration_points != 0"
+    } else {
+      ""
     }
     val query =
       s"""
@@ -905,9 +911,10 @@ object RoadAddressDAO {
     if (linkIds.size > 500) {
       getMissingByLinkIdMassQuery(linkIds)
     } else {
-      val where = linkIds.isEmpty match {
-        case true => return List()
-        case false => s""" where link_id in (${linkIds.mkString(",")})"""
+      val where = if (linkIds.isEmpty) {
+        return List()
+      } else {
+        s""" where link_id in (${linkIds.mkString(",")})"""
       }
       val query =
         s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code,
@@ -1128,9 +1135,10 @@ object RoadAddressDAO {
       return queryFloatingByLinkIdMassQuery(linkIds)
     }
     val linkIdString = linkIds.mkString(",")
-    val where = linkIds.isEmpty match {
-      case true => return List()
-      case false => s""" where pos.link_id in ($linkIdString)"""
+    val where = if (linkIds.isEmpty) {
+      return List()
+    } else {
+      s""" where pos.link_id in ($linkIdString)"""
     }
     val query =
       s"""
@@ -1524,9 +1532,10 @@ object RoadAddressDAO {
 
   def getRoadAddressByEly(ely: Long, onlyCurrent: Boolean = false): List[RoadAddress] = {
 
-    val current = onlyCurrent match {
-      case true => " and ra.end_date IS NULL "
-      case false => ""
+    val current = if (onlyCurrent) {
+      " and ra.end_date IS NULL "
+    } else {
+      ""
     }
 
     val query = s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
