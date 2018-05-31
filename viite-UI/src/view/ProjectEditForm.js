@@ -122,7 +122,8 @@
       var inputs = rootElement.find('input');
       var filled = true;
       for (var i = 0; i < inputs.length; i++) {
-        if (inputs[i].type === 'text' && !inputs[i].value) {
+        var isPedestrian = $('#tie')[0].value >= 70000; // roads with road number over 70000 are pedestrian roads
+        if (inputs[i].type === 'text' && !inputs[i].value && !(isPedestrian && inputs[i].id === 'roadName')) {
           filled = false;
         }
       }
