@@ -138,7 +138,6 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     val termPart = ProjectDeltaCalculator.partition(terminations)
     termPart should have size(2)
     termPart.foreach(x => {
-      x.startMAddr should be (109L)
       x.endMAddr should be (120L)
     })
 
@@ -187,7 +186,6 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     val termPart = ProjectDeltaCalculator.partition(terminations)
     termPart should have size(2)
     termPart.foreach(x => {
-      x.startMAddr should be (49L)
       x.endMAddr should be (71L)
     })
 
@@ -204,20 +202,16 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     transferParts should have size(2)
     transferParts.foreach(x => {
       val (fr, to) = x
-      fr.startMAddr should be (60L)
       fr.endMAddr should be (120L)
-      to.startMAddr should be (51L)
       to.endMAddr should be (111L)
     })
 
     val newParts = ProjectDeltaCalculator.partition(newLinks)
     newParts should have size(4)
     newParts.filter(_.startMAddr < 100).foreach(to => {
-      to.startMAddr should be (38)
       to.endMAddr should be (51)
     })
     newParts.filter(_.startMAddr >= 100).foreach(to => {
-      to.startMAddr should be (111)
       to.endMAddr should be (125)
     })
   }
