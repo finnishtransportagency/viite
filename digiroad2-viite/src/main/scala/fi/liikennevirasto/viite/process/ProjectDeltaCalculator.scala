@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.Track.{LeftSide, RightSide}
+import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao.LinkStatus._
@@ -175,12 +175,38 @@ object ProjectDeltaCalculator {
     result :+ p
   }
 
+  /**
+    * Check if the matches (opposite side of right or left track) road address measures fit on the target road address sections
+    *
+    * @param target   The target road address sections
+    * @param matchers The matcher road address sections
+    * @return
+    */
+  def matchesFitOnTarget(target: Seq[RoadAddressSection], matchers: Seq[RoadAddressSection]): Boolean = {
+    val (targetStartMAddr, targetEndMAddr) = (target.map(_.startMAddr).min, target.map(_.endMAddr).max)
+    val (matcherStartMAddr, matcherEndMAddr) = (matchers.map(_.startMAddr).min, matchers.map(_.endMAddr).max)
+    (targetStartMAddr <= matcherStartMAddr && targetEndMAddr >= matcherStartMAddr) || (targetStartMAddr <= matcherEndMAddr && targetEndMAddr >= matcherEndMAddr) ||
+      (matcherStartMAddr <= targetStartMAddr && matcherEndMAddr >= targetStartMAddr) || (matcherStartMAddr <= targetEndMAddr && matcherEndMAddr >= targetEndMAddr)
+  }
+
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
-    roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
+    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
       .mapValues(v => partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue)))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
+
+    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track, section.commonHistoryId))
+
+    val result = paired.flatMap { case (key, target) =>
+      val matches = matchingTracks(paired, key)
+      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get))
+        adjustTrackEndAddr((target, matches.get))
+      else
+        target
+    }.toSeq
+
+    result
   }
 
   def pair(roadAddress: Seq[RoadAddress], projectLink: Map[Long, Seq[ProjectLink]]): Seq[(RoadAddress,ProjectLink)] = {
@@ -222,6 +248,13 @@ object ProjectDeltaCalculator {
       case (e1, e2) =>
         e1.copy(startMAddr = adjustAddrValues(e1.startMAddr + e2.startMAddr, e1.startMAddr, e1.track),
           endMAddr = adjustAddrValues(e1.endMAddr + e2.endMAddr, e1.endMAddr, e1.track))
+    }
+  }
+
+  private def adjustTrackEndAddr(group: (Seq[RoadAddressSection], Seq[RoadAddressSection])): Seq[RoadAddressSection] = {
+    group._1.zip(group._2).map {
+      case (e1, e2) =>
+        e1.copy(endMAddr = adjustAddrValues(e1.endMAddr + e2.endMAddr, e1.endMAddr, e1.track))
     }
   }
 

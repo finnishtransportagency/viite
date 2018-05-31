@@ -27,7 +27,7 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR, Failed2GenerateTRIdInViite, Deleted, Unknown)
+  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR, Failed2GenerateTRIdInViite, Deleted, ErrorInViite, Unknown)
 
   // These states are final
   val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
@@ -44,7 +44,19 @@ object ProjectState {
   case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
   case object Failed2GenerateTRIdInViite extends ProjectState { def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
-  case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
+
+  case object ErrorInViite extends ProjectState {
+    def value = 8
+
+    def description = "Virhe Viite-sovelluksessa"
+  }
+
+  case object Unknown extends ProjectState {
+    def value = 99
+
+    def description = "Tuntematon"
+  }
+
 }
 
 sealed trait LinkStatus {
@@ -81,7 +93,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName: Option[String] = None)
+                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -100,6 +112,13 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
         startAddrMValue + Math.round((a-startMValue) * coefficient)
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
+  }
+
+  def addrMLength() = {
+    if(isSplit)
+      endAddrMValue - startAddrMValue
+    else
+      roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
   }
 }
 
@@ -121,7 +140,9 @@ object ProjectDAO {
   CASE
     WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
     WHEN rn.road_name IS NULL AND pln.road_name IS NOT NULL THEN pln.road_name
-    END AS road_name_pl
+    END AS road_name_pl,
+  ROAD_ADDRESS.START_ADDR_M as RA_START_ADDR_M,
+  ROAD_ADDRESS.END_ADDR_M as RA_END_ADDR_M
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
   join LRM_POSITION
     on (LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID)
@@ -162,10 +183,12 @@ object ProjectDAO {
       val endDate = r.nextDateOption().map(d => new DateTime(d.getTime))
       val geometryTimeStamp = r.nextLong()
       val roadName = r.nextString()
+      val roadAddressStartAddrM = r.nextLongOption()
+      val roadAddressEndAddrM = r.nextLongOption()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         modifiedBy, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeometry(geom.getOrElse("")), projectId,
-        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName))
+        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName), roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)))
     }
   }
 
@@ -336,7 +359,7 @@ object ProjectDAO {
     }
   }
 
-  def getProjectLinksByLinkId(projectLinkId: Long): Seq[ProjectLink] = {
+  def getProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
     val query =
       s"""$projectLinkQueryBase
                 where LRM_POSITION.link_id = $projectLinkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
@@ -352,11 +375,11 @@ object ProjectDAO {
     listQuery(query).seq
   }
 
-  def getProjectLinksByProjectAndLinkId(ids: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
-    if (ids.isEmpty && linkIds.isEmpty) {
+  def getProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+    if (projectLinkIds.isEmpty && linkIds.isEmpty) {
       List()
     } else {
-      val idsFilter = if (ids.nonEmpty) s"AND PROJECT_LINK.ID IN (${ids.mkString(",")})" else ""
+      val idsFilter = if (projectLinkIds.nonEmpty) s"AND PROJECT_LINK.ID IN (${projectLinkIds.mkString(",")})" else ""
       val linkIdsFilter = if (linkIds.nonEmpty) s"AND LINK_ID IN (${linkIds.mkString(",")})" else ""
       val query =
         s"""$projectLinkQueryBase
@@ -537,10 +560,9 @@ object ProjectDAO {
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
               pl.road_part_number = rp.road_part_number AND pl.status != 5)
               LEFT JOIN
-              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROAD_ADDRESS_ID)
+              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL) OR ra.id = pl.ROAD_ADDRESS_ID)
               WHERE
-                rp.project_id = $projectId AND
-                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+                rp.project_id = $projectId
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr"""
     Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
