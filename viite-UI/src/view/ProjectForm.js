@@ -420,6 +420,7 @@
         $('#saveEdit:disabled').prop('disabled', formIsInvalid(rootElement));
         currentProject.isDirty = true;
         hasReservedRoadParts = true;
+        emptyFields(['tie', 'aosa', 'losa']);
       });
 
       eventbus.on('layer:selected', function (layer) {
@@ -508,6 +509,12 @@
           $('#saveEdit:disabled').prop('disabled', false);
           currentProject.isDirty = true;
         }
+      };
+
+      var emptyFields = function (fieldIds) {
+        fieldIds.forEach( function(id) {
+          $('#' + id).val('');
+        });
       };
 
       rootElement.on('change', '#nimi', function () {
