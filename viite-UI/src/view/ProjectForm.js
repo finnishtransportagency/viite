@@ -39,8 +39,8 @@
     };
 
     var titleWithDeletingTool = function (projectName) {
-      var name = '<span class ="edit-mode-title">' + cutProjectName(projectName) + '</span>';
-      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI  <button id="deleteProject_' + currentProject.id + '" ' +
+      var name = '<span class ="edit-mode-title">' + projectName + '</span>';
+      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA <button id="deleteProject_' + currentProject.id + '" ' +
         'class="btn-delete-project" value="' + currentProject.id + '"></button></span>';
       if(currentProject.statusCode === ProjectStatus.Incomplete.value)
         return name + deleteButtons;
@@ -49,14 +49,9 @@
     };
 
     var titleWithEditingTool = function (projectName) {
-      return '<span class ="edit-mode-title">' + cutProjectName(projectName) + '<button id="editProject_' + currentProject.id + '" ' +
+      return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + currentProject.id + '" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
-    };
-
-    var cutProjectName = function (name) {
-        var maxNameLength = 20;
-        return name.length > maxNameLength ? name.substring(0, maxNameLength) + "..." : name;
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
     };
 
     var actionButtons = function () {
@@ -425,6 +420,7 @@
         $('#saveEdit:disabled').prop('disabled', formIsInvalid(rootElement));
         currentProject.isDirty = true;
         hasReservedRoadParts = true;
+        emptyFields(['tie', 'aosa', 'losa']);
       });
 
       eventbus.on('layer:selected', function (layer) {
@@ -513,6 +509,12 @@
           $('#saveEdit:disabled').prop('disabled', false);
           currentProject.isDirty = true;
         }
+      };
+
+      var emptyFields = function (fieldIds) {
+        fieldIds.forEach( function(id) {
+          $('#' + id).val('');
+        });
       };
 
       rootElement.on('change', '#nimi', function () {
