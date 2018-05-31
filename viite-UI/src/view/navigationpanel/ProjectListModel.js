@@ -16,7 +16,8 @@
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:810px; height:400px; overflow:auto;"></div>');
+    projectList.append('<div id="project-list" style="width:810px; height:390px; overflow:auto;"></div>' +
+      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin lähetetyt projektit</label>');
 
     var staticFieldProjectName = function(dataField) {
       var field;
@@ -60,8 +61,9 @@
       });
 
       var createProjectList = function(projects) {
+        var showTRProjects = $('#TRProjectsVisibleCheckbox')[0].checked;
         var unfinishedProjects = _.filter(projects, function(proj) {
-          return (proj.statusCode >= 1 && proj.statusCode <= 5) || proj.statusCode === 8;
+          return (proj.statusCode >= 1 && proj.statusCode <= 4) || (proj.statusCode === 5 && (showTRProjects)) || proj.statusCode === 8;
         });
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
           if (!_.isEmpty(unfinishedProjects)) {
@@ -159,6 +161,11 @@
         }));
       });
 
+      $('#TRProjectsVisibleCheckbox').change(function() {
+        createProjectList(projectArray);
+      });
+
+
       projectList.on('click', 'button.cancel', function() {
         hide();
       });
@@ -173,6 +180,7 @@
 
       projectList.on('click', 'button.close', function() {
         $('.project-item').remove();
+        $('#TRProjectsVisibleCheckbox').prop('checked', false);
         hide();
       });
     }
