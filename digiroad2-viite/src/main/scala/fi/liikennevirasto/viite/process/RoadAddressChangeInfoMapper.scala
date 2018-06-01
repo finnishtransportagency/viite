@@ -153,10 +153,10 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     preTransferCheckBySection(originalAddressSections)
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
     val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses.mapValues(_.allSegments))
-    val currentSectionChanges = groupByCurrentRoadSection(currentSections, appliedChanges.values.map(
-      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
-    val historySectionChanges = groupByHistoryRoadSection(historySections, appliedChanges.values.map(
-      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
+    val mappedChanges = appliedChanges.values.map(
+      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
+    val currentSectionChanges = groupByCurrentRoadSection(currentSections, mappedChanges)
+    val historySectionChanges = groupByHistoryRoadSection(historySections, mappedChanges)
     val result = postTransferCheckBySection(currentSectionChanges, historySectionChanges, originalAddressSections, historyAddressSections)
     result.values.flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
   }
