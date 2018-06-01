@@ -778,7 +778,6 @@
         $('#additionalSource').remove();
         $('#control-label-floating').remove();
         $('#adjacentsData').empty();
-        //$('#adjacentsData').remove();
         rootElement.find('.link-properties button.save').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         rootElement.find('.link-properties button.calculate').attr('disabled', true);
@@ -814,7 +813,6 @@
         if(floatingRoads.length === 0){
           applicationModel.setContinueButton(true);
           rootElement.find('.link-properties button.continue').attr('disabled', false);
-          //eventbus.trigger('adjacents:startedFloatingTransfer');
         }
         else{
           $(".form-group:last").after(floatingPart);
