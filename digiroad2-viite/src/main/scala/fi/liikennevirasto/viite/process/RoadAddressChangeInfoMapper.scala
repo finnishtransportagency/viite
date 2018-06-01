@@ -186,7 +186,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   private def postTransferCheckBySection(currentSections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], historySections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]],
                                          original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], history: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    currentSections.map(s =>
+    val currentCheck = currentSections.map(s =>
       try {
         postTransferChecksForCurrent(s)
         s
@@ -196,7 +196,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           s._1 -> original(s._1)
       }
     )
-    historySections.map(s =>
+    val historyCheck = historySections.map(s =>
       try {
         postTransferChecksForHistory(s)
         s
@@ -206,7 +206,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           s._1 -> history(s._1)
       }
     )
-
+    currentCheck ++ historyCheck
   }
 
 
