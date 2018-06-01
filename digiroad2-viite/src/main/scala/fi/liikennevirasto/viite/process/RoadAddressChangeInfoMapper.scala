@@ -145,19 +145,30 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changedRoadLinks: Seq[RoadLink],
                           changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
     val current = roadAddresses.flatMap(_._2.currentSegments).toSeq
-    val sections = partition(current)
-    val originalAddressSections = groupByRoadSection(sections, roadAddresses.values)
+    val history = roadAddresses.flatMap(_._2.historySegments).toSeq
+    val currentSections = partition(current)
+    val historySections = partition(history)
+    val originalAddressSections = groupByCurrentRoadSection(currentSections, roadAddresses.values)
+    val historyAddressSections = groupByHistoryRoadSection(historySections, roadAddresses.values)
     preTransferCheckBySection(originalAddressSections)
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
     val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses.mapValues(_.allSegments))
-    val result = postTransferCheckBySection(groupByRoadSection(sections, appliedChanges.values.map(
-      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))), originalAddressSections)
+    val currentSectionChanges = groupByCurrentRoadSection(currentSections, appliedChanges.values.map(
+      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
+    val historySectionChanges = groupByHistoryRoadSection(historySections, appliedChanges.values.map(
+      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty))))
+    val result = postTransferCheckBySection(currentSectionChanges, historySectionChanges, originalAddressSections, historyAddressSections)
     result.values.flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
   }
 
-  private def groupByRoadSection(sections: Seq[RoadAddressSection],
+  private def groupByCurrentRoadSection(sections: Seq[RoadAddressSection],
                                  roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
     sections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).toSeq).toMap
+  }
+
+  private def groupByHistoryRoadSection(sections: Seq[RoadAddressSection],
+                                 roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
+    sections.map(section => section -> roadAddresses.filter(lh => lh.historySegments.exists(section.includes)).toSeq).toMap
   }
 
   // TODO: Don't try to apply changes to invalid sections
@@ -173,11 +184,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       })
   }
 
-  private def postTransferCheckBySection(sections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]],
-                                         original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    sections.map(s =>
+  private def postTransferCheckBySection(currentSections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], historySections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]],
+                                         original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], history: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
+    currentSections.map(s =>
       try {
-        postTransferChecksWithHistory(s)
+        postTransferChecksForCurrent(s)
         s
       } catch {
         case ex: InvalidAddressDataException =>
@@ -185,6 +196,17 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           s._1 -> original(s._1)
       }
     )
+    historySections.map(s =>
+      try {
+        postTransferChecksForHistory(s)
+        s
+      } catch {
+        case ex: InvalidAddressDataException =>
+          logger.info(s"Invalid address data after transfer on ${s._1}, not applying changes (${ex.getMessage})")
+          s._1 -> history(s._1)
+      }
+    )
+
   }
 
 
