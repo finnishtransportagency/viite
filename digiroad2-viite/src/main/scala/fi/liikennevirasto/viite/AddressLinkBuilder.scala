@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
@@ -213,7 +214,7 @@ trait AddressLinkBuilder {
           right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else endMValue)))
       }
 
-      if(nextSegment.sideCode.value != previousSegment.sideCode.value)
+      if(nextSegment.sideCode.value != previousSegment.sideCode.value && GeometryUtils.geometryLength(previousSegment.geometry) != 0 && GeometryUtils.geometryLength(nextSegment.geometry) != 0)
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
       val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geometry.head, nextSegment.geometry.last), startMValue, endMValue)
       val discontinuity = {

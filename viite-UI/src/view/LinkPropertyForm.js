@@ -432,9 +432,13 @@
       var floatingRoadsLinkId = _.map(floatingRoads, function (fr) {
         return fr.linkId;
       });
-      if (!_.contains(floatingRoadsLinkId, value)) {
+      if (_.contains(floatingRoadsLinkId, parseInt(value))) {
+        var floatingToAdd = _.filter(floatingRoads, function(floating){
+          return floating.linkId === parseInt(value);
+        });
+
         applicationModel.addSpinner();
-        eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
+        eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, value);
         $('#feature-attributes').find('.link-properties button.continue').attr('disabled', false);
         $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
@@ -616,7 +620,7 @@
       });
 
       eventbus.on('adjacents:floatingAdded', function(sources, targets, additionalSourceLinkId) {
-        $('#additionalSource').remove();
+        $('[id^=additionalSource]').remove();
         $('#control-label-floating').remove();
         $('#adjacentsData').empty();
         $('[id^=VALITUTLINKIT]').remove();
@@ -835,13 +839,16 @@
         _.each(floatingRoads,function(fr) {
           floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker);
         });
-        $(".form-group:last").after(floatingPart);
-        $('[id*="additionalSourceButton"]').click(floatingRoads,function(event) {
-          processAdditionalFloatings(floatingRoads,event.currentTarget.value);
-        });
         if(floatingRoads.length === 0){
           applicationModel.setContinueButton(true);
+          rootElement.find('.link-properties button.continue').attr('disabled', false);
           //eventbus.trigger('adjacents:startedFloatingTransfer');
+        }
+        else{
+          $(".form-group:last").after(floatingPart);
+          $('[id*="additionalSourceButton"]').click(floatingRoads,function(event) {
+              processAdditionalFloatings(floatingRoads,event.currentTarget.value);
+          });
         }
       });
       eventbus.on('linkProperties:additionalFloatingSelected',function(data) {
@@ -849,13 +856,13 @@
       });
 
       eventbus.on('linkProperties:transferFailed',function(errorCode) {
-        if (errorCode == 400) {
+        if (errorCode === 400) {
           return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
-        } else if (errorCode == 401) {
+        } else if (errorCode === 401) {
           return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
-        } else if (errorCode == 412) {
+        } else if (errorCode === 412) {
           return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
-        } else if (errorCode == 500) {
+        } else if (errorCode === 500) {
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
         } else {
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
