@@ -276,14 +276,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val lrmId = r.nextLong()
       val commonHistoryId = r.nextLong()
       val directionFlag = r.nextLong()
-      val startCalibrationPoint = r.nextLongOption()
-      val endCalibrationPoint = r.nextLongOption()
+      val startCalibrationPoint = r.nextLong()
+      val endCalibrationPoint = r.nextLong()
 
 
       val calibrationCode = (startCalibrationPoint, endCalibrationPoint) match {
-        case (Some(1), Some(1)) => CalibrationCode.AtBoth
-        case (Some(1), _) => CalibrationCode.AtBeginning
-        case (_, Some(1)) => CalibrationCode.AtEnd
+        case (1, 1) => CalibrationCode.AtBoth
+        case (1, 0) => CalibrationCode.AtBeginning
+        case (0, 1) => CalibrationCode.AtEnd
         case _ => CalibrationCode.No
       }
 
