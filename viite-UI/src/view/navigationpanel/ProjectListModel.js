@@ -61,9 +61,15 @@
       });
 
       var createProjectList = function(projects) {
-        var showTRProjects = $('#TRProjectsVisibleCheckbox')[0].checked;
+        var showAllTRProjects = $('#TRProjectsVisibleCheckbox')[0].checked;
         var unfinishedProjects = _.filter(projects, function(proj) {
-          return (proj.statusCode >= 1 && proj.statusCode <= 4) || (proj.statusCode === 5 && (showTRProjects)) || proj.statusCode === 8;
+          var isTooOld = false;
+          if (proj.statusCode === 5) {
+            var hoursInDay = 24;
+            var millisecondsToHours = 1000*60*60;
+            isTooOld = (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours > hoursInDay * 2;
+          }
+          return (proj.statusCode >= 1 && proj.statusCode <= 4) || (proj.statusCode === 5 && (showAllTRProjects || !isTooOld)) || proj.statusCode === 8;
         });
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
           if (!_.isEmpty(unfinishedProjects)) {
