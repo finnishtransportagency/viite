@@ -81,38 +81,52 @@ trait RoadAddressMapper {
     commonPostTransferChecks(seq, addrMin, addrMax)
   }
 
-  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress])): Unit = {
-    val (section, seq) = s
-    if (seq.groupBy(_.linkId).exists{ case (_, addresses) =>
+  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress], Seq[RoadAddress])): Unit = {
+    val (section, current, history) = s
+    if(current.nonEmpty){
+      if (current.groupBy(_.linkId).exists{ case (_, addresses) =>
         partition(addresses).size > 1})
-      throw new InvalidAddressDataException(s"Address gaps generated for links ${seq.groupBy(_.linkId).filter{ case (_, addresses) =>
+      throw new InvalidAddressDataException(s"Address gaps generated for links ${current.groupBy(_.linkId).filter{ case (_, addresses) =>
         partition(addresses).size > 1}.keySet.mkString(", ")}")
-    commonPostTransferChecks(seq, section.startMAddr, section.endMAddr)
+    commonPostTransferChecks(current, section.startMAddr, section.endMAddr)
+    }
+
+    if(history.nonEmpty){
+      if (history.groupBy(_.linkId).exists{ case (_, addresses) =>
+        partition(addresses).size > 1})
+        throw new InvalidAddressDataException(s"Address gaps generated for links ${history.groupBy(_.linkId).filter{ case (_, addresses) =>
+          partition(addresses).size > 1}.keySet.mkString(", ")}")
+      commonPostTransferChecks(history, section.startMAddr, section.endMAddr)
+    }
+
   }
 
-  def postTransferChecksWithHistory(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
-    postTransferChecks((s._1, s._2.flatMap(_.currentSegments)))
+  def postTransferChecksForCurrent(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
+    postTransferChecks((s._1, s._2.flatMap(_.currentSegments), Seq()))
+  }
+
+  def postTransferChecksForHistory(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
+    postTransferChecks((s._1, Seq(), s._2.flatMap(_.historySegments)))
   }
 
   protected def commonPostTransferChecks(seq: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
-    val nonHistoric = seq.filter(_.endDate.isEmpty)
-    calibrationPointCountCheck(false, nonHistoric)
-    nonHistoric.find(_.startCalibrationPoint.nonEmpty) match {
+    calibrationPointCountCheck(false, seq)
+    seq.find(_.startCalibrationPoint.nonEmpty) match {
       case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, seq)
       case _ =>
     }
-    nonHistoric.find(_.endCalibrationPoint.nonEmpty) match {
+    seq.find(_.endCalibrationPoint.nonEmpty) match {
       case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, seq)
       case _ =>
     }
-    checkSingleSideCodeForLink(false, nonHistoric.groupBy(_.linkId))
-    if (!nonHistoric.exists(_.startAddrMValue == addrMin))
+    checkSingleSideCodeForLink(false, seq.groupBy(_.linkId))
+    if (!seq.exists(_.startAddrMValue == addrMin))
       throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${seq.map(_.startAddrMValue).min}")
-    if (!nonHistoric.exists(_.endAddrMValue == addrMax))
+    if (!seq.exists(_.endAddrMValue == addrMax))
       throw new InvalidAddressDataException(s"Generated address list does not end at $addrMax but ${seq.map(_.endAddrMValue).max}")
-    if (!nonHistoric.forall(ra => ra.startAddrMValue == addrMin || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
+    if (!seq.forall(ra => ra.startAddrMValue == addrMin || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-    if (!nonHistoric.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
+    if (!seq.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
 
   }
