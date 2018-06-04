@@ -651,19 +651,21 @@ object ProjectDAO {
   }
 
   def getRoadAddressProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
-    val filter = projectId match {
-      case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
-      case _ => if (withNullElyFilter) s""" where id =$projectId AND ELY IS NULL """ else s""" where id =$projectId """
-    }
+    time(logger, "Get road address projects") {
+      val filter = projectId match {
+        case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
+        case _ => if (withNullElyFilter) s""" where id =$projectId AND ELY IS NULL """ else s""" where id =$projectId """
+      }
 
-    val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
+      val query =
+        s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
             add_info, status_info, ely, coord_x, coord_y, zoom
            FROM project $filter order by ely nulls first, name, id """
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
-        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
-          modifiedDate, addInfo, fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+      Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
+        case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
+          RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
+            modifiedDate, addInfo, fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+        }
       }
     }
   }
