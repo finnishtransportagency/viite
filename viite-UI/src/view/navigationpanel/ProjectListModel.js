@@ -60,15 +60,12 @@
       }
       rows.hide();
       var filteredRowIds = _.uniq(rows.filter(function () {
-        var $t = $(this);
-        return $t.find('#innerCreatedBy').find("label").text().toLowerCase().indexOf(input.toLowerCase()) !== -1;
+        return $(this).find('#innerCreatedBy').find("label").text().toLowerCase().indexOf(input.toLowerCase()) !== -1;
       }).map(function () {
-        var row = $(this);
-        return row.attr('id');
+        return $(this).attr('id');
       }));
       rows.filter(function () {
-        var $t = $(this);
-        return _.contains(filteredRowIds, $t.attr('id'));
+        return _.contains(filteredRowIds, $(this).attr('id'));
       }).show();
     };
 
@@ -79,10 +76,8 @@
         $('#userFilterSpan').css("visibility", "visible");
         if ($('#userNameBox').val() === "") {
           $('#userNameBox').val(applicationModel.getSessionUser());
-          filterByUser();
-        } else {
-          filterByUser();
         }
+        filterByUser();
       } else {
         $('#userFilterSpan').css("display", "none");
         $('#userFilterSpan').css("visibility", "hidden");
