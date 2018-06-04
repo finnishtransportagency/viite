@@ -60,7 +60,7 @@
       }
       rows.hide();
       var filteredRowIds = _.uniq(rows.filter(function () {
-        return $(this).find('#innerCreatedBy').find("label").text().toLowerCase().indexOf(input.toLowerCase()) !== -1;
+        return $(this).find('.innerCreatedBy').find("label").text().toLowerCase().indexOf(input.toLowerCase()) !== -1;
       }).map(function () {
         return $(this).attr('id');
       }));
@@ -72,15 +72,13 @@
 
     var userFilterVisibility = function (showFilters) {
       if (showFilters) {
-        $('#userFilterSpan').css("display", "block");
-        $('#userFilterSpan').css("visibility", "visible");
+        $('#userFilterSpan').show();
         if ($('#userNameBox').val() === "") {
           $('#userNameBox').val(applicationModel.getSessionUser());
         }
         filterByUser();
       } else {
-        $('#userFilterSpan').css("display", "none");
-        $('#userFilterSpan').css("visibility", "hidden");
+        $('#userFilterSpan').hide();
       }
     };
 
@@ -96,19 +94,19 @@
           _.each(unfinishedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
             html += '<tr id="' + uniqueId + '" class="project-item">' +
-                '<td id="innerName" style="width: 310px;">' + staticFieldProjectName(proj.name) + '</td>' +
-                '<td id="innerEly" style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
-                '<td id="innerCreatedBy" style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-                '<td id="innerStatus" style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
+                '<td style="width: 310px;">' + staticFieldProjectName(proj.name) + '</td>' +
+                '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
+                '<td class="innerCreatedBy" style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
+                '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             if (proj.statusCode === projectStatus.ErrorInViite.value) {
               html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +
-                  '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
+                  '</tr>';
             } else if (proj.statusCode === projectStatus.ErroredInTR.value) {
               html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>' +
-                '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
+                  '</tr>';
             } else {
               html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 70px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>' +
-                  '</tr>' + '<tr id="' + uniqueId + '" style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
+                  '</tr>';
             }
             uniqueId = uniqueId + 1;
           });
