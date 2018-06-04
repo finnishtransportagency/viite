@@ -5,11 +5,11 @@
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
     projectList.append('<div class="content-new">' +
-      '<label class="content-new label" style="width: 260px">PROJEKTIN NIMI</label>' +
-      '<label class="content-new label" style="width: 50px">ELY</label>' +
+        '<label class="content-new label" style="width: 260px">PROJEKTIN NIMI</label>' +
+        '<label class="content-new label" style="width: 50px">ELY</label>' +
       '<label class="content-new label" style="width: 100px">KÄYTTÄJÄ</label>' +
-      '<label class="content-new label" style="width: 100px">ALKUPVM</label>' +
-      '<label class="content-new label" style="width: 50px">TILA</label>' +
+        '<label class="content-new label" style="width: 100px">ALKUPVM</label>' +
+        '<label class="content-new label" style="width: 50px">TILA</label>' +
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
@@ -60,10 +60,10 @@
           _.each(unfinishedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
               html += '<tr class="project-item">' +
-                '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
-                '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
+                  '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
+                  '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                 '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-                '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
+                  '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
                 '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             if (proj.statusCode === projectStatus.ErrorInViite.value) {
               html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +

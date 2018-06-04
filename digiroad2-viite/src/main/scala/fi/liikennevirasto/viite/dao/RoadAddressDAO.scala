@@ -1618,7 +1618,8 @@ object RoadAddressDAO {
    * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
    */
   def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
-    val query = s"""SELECT ra.calibration_points
+    val query =
+      s"""SELECT ra.calibration_points
                     FROM road_address ra
                     WHERE ra.id=$roadAddressId"""
     CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
