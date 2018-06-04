@@ -413,26 +413,17 @@ object ProjectValidator {
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
           rp.roadNumber == road && rp.roadPartNumber > part)
-        println("end of road on last part")
         val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
           .map(_.roadPartNumber).sorted.headOption
-
-        val nextAddressPart1 = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
+        val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
           .filter(p => p > part).sorted
-
-        val nextAddressPart = time(logger, "find ") {
-
-            nextAddressPart1.find(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
-              .forall(ra => !allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber)))
+          .find(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
+            .forall(ra => !allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber)))
+        if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
+          return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
+        } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
+          return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
         }
-
-
-          println(s"next: $nextAddressPart")
-          if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
-            return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
-          } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
-            return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
-          }
         None
       }
     }
@@ -446,14 +437,12 @@ object ProjectValidator {
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
           rp.roadNumber == road && rp.roadPartNumber > part)
-        println("discontinuity on last part")
         val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
           .map(_.roadPartNumber).sorted.headOption
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
           .filter(p => p > part).sorted
           .find(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
             .forall(ra => !allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber)))
-        println(s"next cont: $nextAddressPart")
         if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty)) {
           val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
 
