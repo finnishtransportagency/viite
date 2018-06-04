@@ -549,7 +549,7 @@ object ProjectDAO {
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
               pl.road_part_number = rp.road_part_number AND pl.status != 5)
               LEFT JOIN
-              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL) OR ra.id = pl.ROAD_ADDRESS_ID)
+              ROAD_ADDRESS ra ON (ra.id = pl.ROAD_ADDRESS_ID OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
               WHERE
                 rp.project_id = $projectId
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
@@ -562,46 +562,6 @@ object ProjectDAO {
     }
   }
 
-  def fetchAllReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
-    val sql =
-      s"""
-        SELECT id, road_number, road_part_number, length, length_new,
-          ely, ely_new,
-          (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
-            ra.road_part_number = gr.road_part_number
-            AND END_ADDR_M = gr.length and ROWNUM < 2
-            Order by ra.end_date DESC NULLS FIRST, ra.valid_to DESC NULLS FIRST) as discontinuity,
-          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
-            AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
-          (SELECT LINK_ID FROM PROJECT_LINK pl JOIN LRM_POSITION lrm ON (lrm.id = pl.LRM_POSITION_ID)
-            WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
-                   FROM (
-            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
-              MAX(ra.END_ADDR_M) as length,
-              MAX(pl.END_ADDR_M) as length_new,
-              MAX(ra.ely) as ELY,
-              MAX(pl.ely) as ELY_NEW
-              FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
-              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
-              pl.road_part_number = rp.road_part_number AND pl.status != 5)
-              LEFT JOIN
-              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROAD_ADDRESS_ID)
-              WHERE
-                rp.project_id = $projectId
-                GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-            ) gr"""
-    Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
-      Option[Long], Option[Long])](sql).list.map {
-      case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
-        ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
-          newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
-    }
-  }
 
   def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ReservedRoadPart] = {
     val sql =
@@ -645,7 +605,7 @@ object ProjectDAO {
     }
   }
 
-  def getRoadAddressProjects(projectId: Long = 0, withNullElyFilter: Boolean = false, withActiveRoadAddress: Boolean = true): List[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
     val filter = projectId match {
       case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
       case _ => if(withNullElyFilter) s""" where id =$projectId AND ELY IS NULL """ else s""" where id =$projectId """
@@ -657,13 +617,8 @@ object ProjectDAO {
           FROM project $filter order by ely nulls first, name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
-        val reservedParts = if (withActiveRoadAddress) {
-          fetchReservedRoadParts(id)
-        } else {
-          fetchAllReservedRoadParts(id)
-        }
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
-          modifiedDate, addInfo, reservedParts, statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          modifiedDate, addInfo, fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
       }
     }
   }

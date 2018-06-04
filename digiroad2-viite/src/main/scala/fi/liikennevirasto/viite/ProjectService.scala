@@ -678,9 +678,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getRoadAddressSingleProject(projectId: Long, withActiveRoadAddress: Boolean = true): Option[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long): Option[RoadAddressProject] = {
     withDynTransaction {
-      ProjectDAO.getRoadAddressProjects(projectId, withActiveRoadAddress = withActiveRoadAddress).headOption
+      ProjectDAO.getRoadAddressProjects(projectId).headOption
     }
   }
 
