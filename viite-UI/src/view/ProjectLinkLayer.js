@@ -807,6 +807,7 @@
 
     eventbus.on('changeProjectDirection:clicked', function () {
       vectorLayer.getSource().clear();
+      directionMarkerLayer.getSource().clear();
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
       eventbus.once('roadAddressProject:fetched', function () {
         if (selectedProjectLinkProperty.get().length > 1 && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId)) {
