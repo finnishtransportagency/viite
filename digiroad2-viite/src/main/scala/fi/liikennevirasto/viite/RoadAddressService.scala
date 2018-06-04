@@ -294,9 +294,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }.toMap
     }
 
-    time(logger, "Set black underline") {
-      setBlackUnderline(viiteRoadLinks.values.toSeq)
-    }
+    setBlackUnderline(viiteRoadLinks.values.toSeq)
   }
 
   /**
