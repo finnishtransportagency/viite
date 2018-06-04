@@ -163,12 +163,16 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   private def groupByCurrentRoadSection(sections: Seq[RoadAddressSection],
                                  roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    sections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).toSeq).toMap
+    sections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).map{
+      l=> LinkRoadAddressHistory((l.currentSegments, Seq()))
+    } .toSeq).toMap
   }
 
   private def groupByHistoryRoadSection(sections: Seq[RoadAddressSection],
                                  roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    sections.map(section => section -> roadAddresses.filter(lh => lh.historySegments.exists(section.includes)).toSeq).toMap
+    sections.map(section => section -> roadAddresses.filter(lh => lh.historySegments.exists(section.includes)).map{
+      l=> LinkRoadAddressHistory((Seq(), l.historySegments))
+    } .toSeq).toMap
   }
 
   // TODO: Don't try to apply changes to invalid sections
@@ -186,7 +190,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   private def postTransferCheckBySection(currentSections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], historySections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]],
                                          original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], history: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    val currentCheck = currentSections.map(s =>
+    val curr = currentSections.map(s =>
       try {
         postTransferChecksForCurrent(s)
         s
@@ -196,7 +200,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           s._1 -> original(s._1)
       }
     )
-    val historyCheck = historySections.map(s =>
+    val hist = historySections.map(s =>
       try {
         postTransferChecksForHistory(s)
         s
@@ -206,7 +210,8 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           s._1 -> history(s._1)
       }
     )
-    currentCheck ++ historyCheck
+    curr ++ hist
+
   }
 
 
