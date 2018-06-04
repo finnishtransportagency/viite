@@ -9,8 +9,14 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.TrackSectionOrder
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.getClass
+import org.slf4j.LoggerFactory
+
 
 object ProjectValidator {
+
+  private def logger = LoggerFactory.getLogger(getClass)
 
   private def distanceToPoint = 10.0
 
@@ -357,7 +363,6 @@ object ProjectValidator {
       val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, fetchOnlyFloating = false, onlyNormalRoads = false,
         Seq((RampsMinBound, RampsMaxBound))).filter(ra =>
         pls.exists(pl => connected(pl, ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
-
       // Check all the fetched road parts to see if any of them is a roundabout
       roadParts.keys.exists(rp => TrackSectionOrder.isRoundabout(
         RoadAddressDAO.fetchByRoadPart(rp._1, rp._2, includeFloating = true)))
@@ -408,18 +413,26 @@ object ProjectValidator {
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
           rp.roadNumber == road && rp.roadPartNumber > part)
-
+        println("end of road on last part")
         val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
           .map(_.roadPartNumber).sorted.headOption
-        val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
-          .filter(p => p > part)
-          .filterNot(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
-            .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
-        if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
-          return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
-        } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
-          return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
+
+        val nextAddressPart1 = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
+          .filter(p => p > part).sorted
+
+        val nextAddressPart = time(logger, "find ") {
+
+            nextAddressPart1.find(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
+              .forall(ra => !allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber)))
         }
+
+
+          println(s"next: $nextAddressPart")
+          if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
+            return error(project.id, ValidationErrorList.MissingEndOfRoad)(lastProjectLinks)
+          } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
+            return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
+          }
         None
       }
     }
@@ -433,14 +446,14 @@ object ProjectValidator {
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
           rp.roadNumber == road && rp.roadPartNumber > part)
-
+        println("discontinuity on last part")
         val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
           .map(_.roadPartNumber).sorted.headOption
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
-          .filter(p => p > part)
-          .filterNot(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
-            .forall(ra => allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber))).sorted.headOption
-
+          .filter(p => p > part).sorted
+          .find(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
+            .forall(ra => !allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber)))
+        println(s"next cont: $nextAddressPart")
         if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty)) {
           val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
 
