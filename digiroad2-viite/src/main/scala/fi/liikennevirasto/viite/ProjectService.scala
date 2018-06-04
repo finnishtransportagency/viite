@@ -538,18 +538,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       * @return
       */
     def fillRoadNames(projectLink: ProjectLink): ProjectLink = {
-      val projectLinkName = ProjectLinkNameDAO.get(projectLink.roadNumber, projectLink.projectId)
-      val trueRoadName = if (projectLinkName.isEmpty) {
-        val roadName = RoadNameDAO.getLatestRoadName(projectLink.roadNumber)
-        if (roadName.isEmpty) {
-          projectLink.roadName
-        } else {
-          Option(roadName.get.roadName)
-        }
-      } else {
-        Option(projectLinkName.get.roadName)
-      }
-      projectLink.copy(roadName = trueRoadName)
+      val projectLinkName = ProjectLinkNameDAO.get(projectLink.roadNumber, projectLink.projectId).map(_.roadName)
+        .getOrElse(RoadNameDAO.getLatestRoadName(projectLink.roadNumber).map(_.roadName).getOrElse(projectLink.roadName.get))
+      projectLink.copy(roadName = Option(projectLinkName))
     }
 
     withDynTransaction {
