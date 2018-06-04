@@ -550,15 +550,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           previousSplitToSplitOptions(previousSplit, splitOptions)
         } else
           splitOptions
-      val r = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
+      val (splitResultOption, errorMessage, splitVector) = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
       dynamicSession.rollback()
-      val allTerminatedProjectLinks = if (r._1.isEmpty) {
+      val allTerminatedProjectLinks = if (splitResultOption.isEmpty) {
         Seq.empty[ProjectLink]
       } else {
-        r._1.get.allTerminatedProjectLinks.map(fillRoadNames)
+        splitResultOption.get.allTerminatedProjectLinks.map(fillRoadNames)
       }
-      val splitWithMergeTerminated = r._1.map(rs => rs.toSeqWithMergeTerminated.map(fillRoadNames))
-      (splitWithMergeTerminated, allTerminatedProjectLinks, r._2, r._3)
+      val splitWithMergeTerminated = splitResultOption.map(rs => rs.toSeqWithMergeTerminated.map(fillRoadNames))
+      (splitWithMergeTerminated, allTerminatedProjectLinks, errorMessage, splitVector)
     }
   }
 
