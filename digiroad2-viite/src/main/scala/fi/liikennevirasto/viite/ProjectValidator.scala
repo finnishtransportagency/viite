@@ -9,14 +9,8 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.TrackSectionOrder
-import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.RoadAddressDAO.getClass
-import org.slf4j.LoggerFactory
-
 
 object ProjectValidator {
-
-  private def logger = LoggerFactory.getLogger(getClass)
 
   private def distanceToPoint = 10.0
 
@@ -413,6 +407,7 @@ object ProjectValidator {
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
           rp.roadNumber == road && rp.roadPartNumber > part)
+
         val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
           .map(_.roadPartNumber).sorted.headOption
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)
@@ -437,6 +432,7 @@ object ProjectValidator {
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
           rp.roadNumber == road && rp.roadPartNumber > part)
+
         val nextProjectPart = (projectNextRoadParts filter (pnrp => pnrp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == pnrp.roadPartNumber)))
           .map(_.roadPartNumber).sorted.headOption
         val nextAddressPart = RoadAddressDAO.getValidRoadParts(road.toInt, project.startDate)

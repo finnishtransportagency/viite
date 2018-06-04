@@ -219,7 +219,7 @@ object RoadAddressDAO {
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
         (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-        link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+        pos.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
         (SELECT road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
@@ -937,10 +937,11 @@ object RoadAddressDAO {
     if (linkIds.size > 500) {
       getMissingByLinkIdMassQuery(linkIds)
     } else {
-      val where = linkIds.isEmpty match {
-        case true => return List()
-        case false => s""" where link_id in (${linkIds.mkString(",")})"""
-      }
+      val where = if (linkIds.isEmpty)
+        return List()
+      else
+        s""" where link_id in (${linkIds.mkString(",")})"""
+
       val query =
         s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code,
            (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as X,
@@ -1576,6 +1577,7 @@ object RoadAddressDAO {
 
   def getRoadAddressByEly(ely: Long, onlyCurrent: Boolean = false): List[RoadAddress] = {
     time(logger, "Get road addresses by ELY") {
+
       val current = if (onlyCurrent) {
         " and ra.end_date IS NULL "
       } else {
