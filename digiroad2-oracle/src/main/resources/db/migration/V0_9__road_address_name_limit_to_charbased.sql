@@ -2,6 +2,6 @@ ALTER TABLE
    Project
 MODIFY
    (
-   name VARCHAR2(33 CHAR) not null
+   name VARCHAR2(32 CHAR)
    )
 ;
