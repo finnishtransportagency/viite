@@ -8,11 +8,11 @@
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
     projectList.append('<div class="content-new">' +
-      '<label id="sortName" class="content-new label" style="width: 255px">PROJEKTIN NIMI</label>' +
-      '<label id="sortELY" class="content-new label" style="width: 50px">ELY</label>' +
-      '<label id="sortUser" class="content-new label" style="width: 110px">KÄYTTÄJÄ</label>' +
-      '<label id="sortDate" class="content-new label" style="width: 100px">ALKUPVM</label>' +
-      '<label id="sortStatus" class="content-new label" style="width: 60px">TILA</label>' +
+      '<label class="content-new label" style="width: 255px">PROJEKTIN NIMI <i  id="sortName" class="sort fas fa-sort"></i></label>' +
+      '<label class="content-new label" style="width: 50px">ELY <i id="sortELY" class="sort fas fa-sort-up"></i></label>' +
+      '<label class="content-new label" style="width: 110px">KÄYTTÄJÄ <i id="sortUser" class="sort fas fa-sort"></i></label>' +
+      '<label class="content-new label" style="width: 100px">ALKUPVM <i id="sortDate" class="sort fas fa-sort"></i></label>' +
+      '<label class="content-new label" style="width: 60px">TILA <i id="sortStatus" class="sort fas fa-sort"></i></label>' +
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
@@ -121,6 +121,9 @@
         var id = event.target.id;
         order = (listSortedBy === id) ? order * -1 : 1; // keeps track if the list should be sorted ascending or descending
         listSortedBy = id;
+        $('.sort').removeClass('fa-sort fa-sort-up fa-sort-down').addClass('fa-sort');
+        var sortIcon = order === 1 ? 'fa-sort-up' : 'fa-sort-down';
+        $('#' + listSortedBy).toggleClass('fa-sort ' + sortIcon);
         // Choose a function based on which label the user has pressed
         var func;
         switch (id) {
@@ -173,6 +176,11 @@
 
       projectList.on('click', 'button.close', function() {
         $('.project-item').remove();
+        $('.sort').each( function() {
+          this.removeClass('fa-sort fa-sort-up fa-sort-down');
+          var initClass = this.id === 'sortELY' ? 'fa-sort-up' : 'fa-sort';
+          this.addClass(initClass);
+        });
         hide();
       });
     }
