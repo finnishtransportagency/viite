@@ -2,14 +2,17 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.viite.{ChangedRoadAddress, RoadAddressService}
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
+import org.slf4j.LoggerFactory
 
 
 class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+  val logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -24,7 +27,9 @@ class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet 
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
-    roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
+    time(logger, s"GET request for /road_numbers (since: $since, until: $until)") {
+      roadNumberToGeoJson(since, roadAddressService.getChanged(since, until))
+    }
   }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
