@@ -128,10 +128,15 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case true => roadAddresses.map(_.endAddrMValue).max
       case false => 0L
     }
+
     val roadLinkRoadNumber = toLongNumber(headAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
     val roadLinkRoadPartNumber = toLongNumber(headAddress.map(_.roadPartNumber), roadLink.attributes.get(RoadPartNumber))
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val municipalityCode = roadLink.municipalityCode
+    val roadNames = RoadNameDAO.getLatestRoadName(roadLinkRoadNumber)
+
+    val roadName =  if(roadNames.isEmpty) Some("") else Some(roadNames.get.roadName)
+
     val anomalyType = {
       if (roadLinkRoadNumber != 0 && roadLinkRoadPartNumber != 0) Anomaly.None else Anomaly.NoAddressGiven
     }
@@ -152,7 +157,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     RoadAddressLink(toLongNumber(headAddress.map(_.id), Some(0)), roadLink.linkId, geom,
       length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLinkType, roadLink.constructionType,
       roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
-      VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
       startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
