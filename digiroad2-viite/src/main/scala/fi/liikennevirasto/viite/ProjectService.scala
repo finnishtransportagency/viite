@@ -518,6 +518,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       userName, recalculate = false)
   }
 
+  /**
+    * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
+    *
+    * @param projectLink
+    * @return
+    */
+  def fillRoadNames(projectLink: ProjectLink): ProjectLink = {
+    val projectLinkName = ProjectLinkNameDAO.get(projectLink.roadNumber, projectLink.projectId).map(_.roadName)
+      .getOrElse(RoadNameDAO.getLatestRoadName(projectLink.roadNumber).map(_.roadName).getOrElse(projectLink.roadName.get))
+    projectLink.copy(roadName = Option(projectLinkName))
+  }
+
   def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Seq[ProjectLink], Option[String], Option[(Point, Vector3d)]) = {
     def previousSplitToSplitOptions(plSeq: Seq[ProjectLink], splitOptions: SplitOptions): SplitOptions = {
       val splitsAB = plSeq.filter(_.linkId == linkId)
@@ -529,18 +541,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       splitOptions.copy(statusA = splitA.map(_.status).getOrElse(splitOptions.statusA),
         roadNumber = linkData._1, roadPartNumber = linkData._2, trackCode = linkData._3, ely = linkData._4,
         discontinuity = discontinuity.getOrElse(Continuous))
-    }
-
-    /**
-      * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
-      *
-      * @param projectLink
-      * @return
-      */
-    def fillRoadNames(projectLink: ProjectLink): ProjectLink = {
-      val projectLinkName = ProjectLinkNameDAO.get(projectLink.roadNumber, projectLink.projectId).map(_.roadName)
-        .getOrElse(RoadNameDAO.getLatestRoadName(projectLink.roadNumber).map(_.roadName).getOrElse(projectLink.roadName.get))
-      projectLink.copy(roadName = Option(projectLinkName))
     }
 
     withDynTransaction {
