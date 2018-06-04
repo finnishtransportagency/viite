@@ -1408,7 +1408,6 @@ object RoadAddressDAO {
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
       """
-
     queryList(queryFilter(query))
   }
 
