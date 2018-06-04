@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import org.slf4j.Logger
 
 object LogUtils {
-  val timeLoggingThresholdInMs = 1
+  val timeLoggingThresholdInMs = 10
 
   def time[R](logger: Logger, operationName: String)(f: => R): R = {
     val begin = System.currentTimeMillis()
