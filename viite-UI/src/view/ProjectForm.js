@@ -51,7 +51,7 @@
     var titleWithEditingTool = function (projectName) {
       return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + currentProject.id + '" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
+          '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
     };
 
     var actionButtons = function () {
@@ -512,7 +512,7 @@
       };
 
       var emptyFields = function (fieldIds) {
-        fieldIds.forEach( function(id) {
+        fieldIds.forEach(function (id) {
           $('#' + id).val('');
         });
       };

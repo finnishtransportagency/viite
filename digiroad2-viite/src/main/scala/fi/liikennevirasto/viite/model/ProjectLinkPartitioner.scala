@@ -27,18 +27,18 @@ object ProjectLinkPartitioner extends GraphPartitioner {
     clusters.map(linksFromCluster) ++ splitGroups.values.toSeq ++ groupedUnnamedRoads
   }
 
-  def groupRoadsWithoutName[T <: ProjectAddressLinkLike](ready: Seq[Seq[T]], prepared: Seq[T],  unprocessed: Seq[T], allLinks: Seq[T]): Seq[Seq[T]] = {
-    if(unprocessed.isEmpty){
+  def groupRoadsWithoutName[T <: ProjectAddressLinkLike](ready: Seq[Seq[T]], prepared: Seq[T], unprocessed: Seq[T], allLinks: Seq[T]): Seq[Seq[T]] = {
+    if (unprocessed.isEmpty) {
       ready ++ Seq(prepared)
     }
 
-    else if(prepared.isEmpty){
+    else if (prepared.isEmpty) {
       val initialLink = findNotConnectedLink(unprocessed).getOrElse(unprocessed.head)
       groupRoadsWithoutName(ready, Seq(initialLink), unprocessed.filterNot(_.linkId == initialLink.linkId), allLinks)
     }
-    else{
+    else {
       val linksConnectedToPrepared = allLinks.filterNot(link => prepared.map(_.linkId).contains(link.linkId)).filter(link => GeometryUtils.areAdjacent(link.geometry, prepared.last.geometry))
-      if(linksConnectedToPrepared.lengthCompare(1) == 0){
+      if (linksConnectedToPrepared.lengthCompare(1) == 0) {
         groupRoadsWithoutName(ready, prepared ++ Seq(linksConnectedToPrepared.head), unprocessed.filterNot(_.linkId == linksConnectedToPrepared.head.linkId), allLinks)
       }
       else {
@@ -48,7 +48,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
   }
 
   def findNotConnectedLink[T <: ProjectAddressLinkLike](unprocessed: Seq[T]): Option[T] = {
-    unprocessed.find(link =>{
+    unprocessed.find(link => {
       !unprocessed.filterNot(_.linkId == link.linkId).flatMap(_.geometry).contains(link.geometry.head) || !unprocessed.filterNot(_.linkId == link.linkId).flatMap(_.geometry).contains(link.geometry.last)
     })
   }
