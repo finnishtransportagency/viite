@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
+import org.slf4j.Logger
 
 import scala.util.matching.Regex.Match
 

@@ -7,6 +7,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -354,33 +355,30 @@ trait VVHClientOperations {
   }
 
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
-    val fetchVVHStartTime = System.currentTimeMillis()
-    val request = new HttpGet(url)
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    try {
-      mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-    } finally {
-      response.close()
-      val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
-      if(fetchVVHTimeSec > 5)
-        logger.info("fetch vvh took %.3f sec with the following url %s".format(fetchVVHTimeSec, url))
+    time(logger, s"Fetch VVH features with url '$url'") {
+      val fetchVVHStartTime = System.currentTimeMillis()
+      val request = new HttpGet(url)
+      val client = HttpClientBuilder.create().build()
+      val response = client.execute(request)
+      try {
+        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      } finally {
+        response.close()
+      }
     }
   }
 
   protected def fetchVVHFeatures(url: String, formparams: ArrayList[NameValuePair]): Either[List[Map[String, Any]], VVHError] = {
-    val fetchVVHStartTime = System.currentTimeMillis()
-    val request = new HttpPost(url)
-    request.setEntity(new UrlEncodedFormEntity(formparams, "utf-8"))
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    try {
-      mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-    } finally {
-      response.close()
-      val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
-      if(fetchVVHTimeSec > 5)
-        logger.info("fetch vvh took %.3f sec with the following url %s".format(fetchVVHTimeSec, url))
+    time(logger, s"Fetch VVH features with url '$url'") {
+      val request = new HttpPost(url)
+      request.setEntity(new UrlEncodedFormEntity(formparams, "utf-8"))
+      val client = HttpClientBuilder.create().build()
+      val response = client.execute(request)
+      try {
+        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      } finally {
+        response.close()
+      }
     }
   }
 
@@ -1056,33 +1054,35 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
 
   def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], VVHError] = {
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/0/updateFeatures"
-    val request = new HttpPost(url)
-    request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    try {
-      val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
-      content.get("updateResults").getOrElse(None) match {
-        case None =>
-          content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
-            case None => Right(VVHError(Map("error" -> "Error Without Details "), url))
-            case value => Right(VVHError(Map("error details" -> value), url))
-          }
-        case _ =>
-          content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
-            case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
-            case true => Left(List(content))
-            case false =>
-              content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
-                case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
-                case value => Right(VVHError(Map("error" -> value), url))
-              }
-          }
+    time(logger, s"Update VVH features with url: '$url'") {
+      val request = new HttpPost(url)
+      request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
+      val client = HttpClientBuilder.create().build()
+      val response = client.execute(request)
+      try {
+        val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
+        content.get("updateResults").getOrElse(None) match {
+          case None =>
+            content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
+              case None => Right(VVHError(Map("error" -> "Error Without Details "), url))
+              case value => Right(VVHError(Map("error details" -> value), url))
+            }
+          case _ =>
+            content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
+              case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
+              case true => Left(List(content))
+              case false =>
+                content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
+                  case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
+                  case value => Right(VVHError(Map("error" -> value), url))
+                }
+            }
+        }
+      } catch {
+        case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
+      } finally {
+        response.close()
       }
-    } catch {
-      case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
     }
   }
 }
