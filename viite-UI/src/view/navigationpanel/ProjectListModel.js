@@ -5,13 +5,13 @@
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
     projectList.append('<div class="content-new">' +
-      '<label class="content-new label" style="width: 260px">PROJEKTIN NIMI</label>' +
-      '<label class="content-new label" style="width: 50px">ELY</label>' +
-      '<label class="content-new label" style="width: 100px">KÄYTTÄJÄ</label>' +
-      '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
-      '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>' +
-      '<label class="content-new label" style="width: 100px">ALKUPVM</label>' +
-      '<label class="content-new label" style="width: 50px">TILA</label>' +
+        '<label class="content-new label" style="width: 260px">PROJEKTIN NIMI</label>' +
+        '<label class="content-new label" style="width: 50px">ELY</label>' +
+        '<label class="content-new label" style="width: 100px">KÄYTTÄJÄ</label>' +
+        '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
+        '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>' +
+        '<label class="content-new label" style="width: 100px">ALKUPVM</label>' +
+        '<label class="content-new label" style="width: 50px">TILA</label>' +
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
@@ -90,7 +90,7 @@
           var uniqueId = 0;
           _.each(unfinishedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
-              html += '<tr id="' + uniqueId + '" class="project-item">' +
+            html += '<tr id="' + uniqueId + '" class="project-item">' +
                 '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
                 '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                 '<td class="innerCreatedBy" style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +

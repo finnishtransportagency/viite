@@ -12,13 +12,13 @@
     var titleWithProjectName = function(projectName, project) {
       return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + project.id + '" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + project.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
+          '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
     };
 
     var addRoadNameField = function (name, isBlocked) {
-        var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
-        var disabled = nameToDisplay !== "" && isBlocked;
-        return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
+      var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
+      var disabled = nameToDisplay !== "" && isBlocked;
+      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
     };
 
     var projectButtons = function() {
