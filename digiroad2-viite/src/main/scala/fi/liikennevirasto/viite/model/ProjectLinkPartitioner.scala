@@ -2,12 +2,8 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
-import fi.liikennevirasto.viite.process.InvalidGeometryException
-
-import scala.Predef.augmentString
+import fi.liikennevirasto.viite.dao.LinkStatus
 
 object ProjectLinkPartitioner extends GraphPartitioner {
 
@@ -19,7 +15,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
         sl.linkId else sl.connectedLinkId.get)
     val (outside, inProject) = links.partition(_.status == LinkStatus.Unknown)
     val inProjectGroups = inProject.groupBy(l => (l.status, l.roadNumber, l.roadPartNumber, l.trackCode, l.roadType))
-    val (outsideWithRoadName, outsideWithoutRoadName) = outside.partition(link => link.VVHRoadName.get != "none" && link.VVHRoadName.get != "" && link.VVHRoadName.get != " ")
+    val (outsideWithRoadName, outsideWithoutRoadName) = outside.partition(link => link.VVHRoadName.get != "none" && link.VVHRoadName.get != "" && link.VVHRoadName.get != " " || (link.roadNumber != 0 && link.roadPartNumber != 0))
     val groupedUnnamedRoads = groupRoadsWithoutName(Seq(), Seq(), outsideWithoutRoadName, outsideWithoutRoadName)
     val outsideGroup = outsideWithRoadName.groupBy(link => (link.roadLinkSource, link.partitioningName))
     val clusters = for (linkGroup <- inProjectGroups.values.toSeq ++ outsideGroup.values.toSeq;
@@ -34,8 +30,10 @@ object ProjectLinkPartitioner extends GraphPartitioner {
 
     else if(prepared.isEmpty){
       val initialLink = findNotConnectedLink(unprocessed).getOrElse(unprocessed.head)
-      val linksConnectedToPreparedHead = allLinks.filterNot(link => ready.flatMap(_.map(_.linkId)).contains(link.linkId)).filter(link => GeometryUtils.areAdjacent(link.geometry, initialLink.geometry.head))
-      val linksConnectedToPreparedLast = allLinks.filterNot(link => ready.flatMap(_.map(_.linkId)).contains(link.linkId)).filter(link => GeometryUtils.areAdjacent(link.geometry, initialLink.geometry.last))
+      val mappedLinks = ready.flatMap(_.map(_.linkId))
+      val filteredLinks = allLinks.filterNot(link => mappedLinks.contains(link.linkId))
+      val linksConnectedToPreparedHead = filteredLinks.filter(link => GeometryUtils.areAdjacent(link.geometry, initialLink.geometry.head))
+      val linksConnectedToPreparedLast = filteredLinks.filter(link => GeometryUtils.areAdjacent(link.geometry, initialLink.geometry.last))
       if(linksConnectedToPreparedHead.length > linksConnectedToPreparedLast.length)
         groupRoadsWithoutName(ready, Seq(initialLink), unprocessed.filterNot(_.linkId == initialLink.linkId), allLinks, initialLink.geometry.head)
       else
@@ -57,8 +55,9 @@ object ProjectLinkPartitioner extends GraphPartitioner {
   }
 
   def findNotConnectedLink[T <: ProjectAddressLinkLike](unprocessed: Seq[T]): Option[T] = {
-    unprocessed.find(link =>{
-      !unprocessed.filterNot(_.linkId == link.linkId).flatMap(_.geometry).contains(link.geometry.head) || !unprocessed.filterNot(_.linkId == link.linkId).flatMap(_.geometry).contains(link.geometry.last)
+      unprocessed.find(link =>{
+      !unprocessed.filterNot(_.linkId == link.linkId).flatMap(_.geometry).contains(link.geometry.head , link.geometry.last)
     })
+
   }
 }
