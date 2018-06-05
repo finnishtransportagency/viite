@@ -59,14 +59,11 @@
         return;
       }
       rows.hide();
-      var filteredRowIds = _.uniq(rows.filter(function () {
-        return $(this).find('.innerCreatedBy').find("label").text().toLowerCase().indexOf(input.toLowerCase()) !== -1;
-      }).map(function () {
-        return $(this).attr('id');
-      }));
-      rows.filter(function () {
-        return _.contains(filteredRowIds, $(this).attr('id'));
-      }).show();
+      rows.each(function () {
+        var label = $(this).find('.innerCreatedBy').find("label").text();
+        if (label.toLowerCase().indexOf(input.toLowerCase()) !== -1)
+          $(this).show();
+      });
     };
 
 
