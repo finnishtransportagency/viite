@@ -34,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
+          'dist-viite/js/<%= pkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -44,7 +44,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js']
+          'dist-viite/js/<%= pkg.name %>.min.js': ['dist-viite/js/<%= pkg.name %>.js']
         }
       }
     },
@@ -53,19 +53,19 @@ module.exports = function(grunt) {
         match: ['viite.css'],
         replacement: 'md5',
         src: {
-          path: 'dist/css/viite.css'
+          path: 'dist-viite/css/viite.css'
         }
       },
       files: {
         src: ['viite-UI/index.html']
       }
     },
-    clean: ['dist'],
+    clean: ['dist-viite'],
     connect: {
       viite: {
         options: {
           port: 9003,
-          base: ['dist', '.', 'viite-UI'],
+          base: ['dist-viite', '.', 'viite-UI'],
           middleware: function(connect, opts) {
             var config = [
               // Serve static files.
@@ -100,11 +100,14 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: 'karttamoottori.maanmittauslaitos.fi',
+            host: '172.17.204.46',
+            port: '8080',
             https: false,
             changeOrigin: true,
             xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+            rewrite: {
+              '^/maasto': '/digiroad/maasto'
+            }
           },
           {
             context: '/vkm',
@@ -129,9 +132,22 @@ module.exports = function(grunt) {
       }
     },
     less: {
+      development: {
+        files: {
+          "dist/css/digiroad2.css": "UI/src/less/main.less"
+        }
+      },
       viitedev: {
         files: {
-          "dist/css/viite.css": "viite-UI/src/less/main.less"
+          "dist-viite/css/viite.css": "viite-UI/src/less/main.less"
+        }
+      },
+      production: {
+        options: {
+          cleancss: true
+        },
+        files: {
+          "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       },
       viiteprod: {
@@ -139,7 +155,7 @@ module.exports = function(grunt) {
           cleancss: true
         },
         files: {
-          "dist/css/viite.css": "viite-UI/src/less/main.less"
+          "dist-viite/css/viite.css": "viite-UI/src/less/main.less"
         }
       }
     },
