@@ -121,8 +121,8 @@
       jQuery('.spinner-overlay').remove();
     };
 
-    eventbus.on("user:setSessionUsername", function (userName) {
-      sessionUser = userName;
+    eventbus.on("userData:fetched", function (userData) {
+      sessionUser = userData.userName;
     });
 
     return {
