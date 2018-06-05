@@ -142,8 +142,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }
   }
 
-  def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changedRoadLinks: Seq[RoadLink],
-                          changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
+  def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
     val current = roadAddresses.flatMap(_._2.currentSegments).toSeq
     val history = roadAddresses.flatMap(_._2.historySegments).toSeq
     val currentSections = partition(current)
@@ -155,8 +154,8 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     val mappedChanges = appliedChanges.values.map(
       s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
     val (changedCurrentSections, changedHistorySections) = groupByRoadSections(currentSections, historySections, mappedChanges)
-    val result = postTransferCheckBySection(changedCurrentSections, changedHistorySections, originalCurrentSections, originalHistorySections)
-    result.values.flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
+    val (resultCurr, resultHist) = postTransferCheckBySection(changedCurrentSections, changedHistorySections, originalCurrentSections, originalHistorySections)
+    (resultCurr.values++resultHist.values).flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
   }
 
   private def groupByRoadSections (currentSections: Seq[RoadAddressSection], historySections: Seq[RoadAddressSection], roadAddresses: Iterable[LinkRoadAddressHistory]): (Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) ={
@@ -186,7 +185,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   private def postTransferCheckBySection(currentSections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], historySections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]],
-                                         original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], history: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
+                                         original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], history: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): (Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) = {
     val curr = currentSections.map(s =>
       try {
         postTransferChecksForCurrent(s)
@@ -207,7 +206,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           s._1 -> history(s._1)
       }
     )
-    curr ++ hist
+    (curr, hist)
 
   }
 

@@ -332,7 +332,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       addresses.values.toSeq
     else
       withDynTransaction {
-        val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadLinks, changedRoadLinks)
+        val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, changedRoadLinks)
         val roadLinkMap = roadLinks.map(rl => rl.linkId -> rl).toMap
 
         val (addressesToCreate, unchanged) = newRoadAddresses.flatMap(_._2.allSegments).toSeq.partition(_.id == NewRoadAddress)
