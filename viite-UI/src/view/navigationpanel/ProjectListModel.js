@@ -3,37 +3,49 @@
     var projectStatus = LinkValues.ProjectStatus;
     var projectArray = [];
     var headers = {
-      "sortName": {toStr: "PROJEKTIN NIMI ", width: "255", htmlClass: "fa-sort", order: 0,
+      "sortName": {toStr: "PROJEKTIN NIMI ", width: "255", order: 0,
         sortFunc: function(a,b) {
           return a.name.localeCompare(b.name, 'fi');
         }},
-      "sortELY": {toStr: "ELY ", width: "50", htmlClass: "fa-sort-up", order: 1,
+      "sortELY": {toStr: "ELY ", width: "50", order: 1,
         sortFunc: function(a,b) {
             return a.ely - b.ely;
         }},
-      "sortUser": {toStr: "KÄYTTÄJÄ ", width: "110", htmlClass: "fa-sort", order: 0,
+      "sortUser": {toStr: "KÄYTTÄJÄ ", width: "110", order: 0,
         sortFunc: function(a,b) {
             return a.createdBy.localeCompare(b.createdBy, 'fi');
         }},
-      "sortDate": {toStr: "ALKUPVM ", width: "100", htmlClass: "fa-sort", order: 0,
+      "sortDate": {toStr: "ALKUPVM ", width: "100", order: 0,
         sortFunc: function(a,b) {
             var aDate = a.startDate.split('.').reverse().join('-');
             var bDate = b.startDate.split('.').reverse().join('-');
             return new Date(aDate) - new Date(bDate);
         }},
-      "sortStatus": {toStr: "TILA ", width: "60", htmlClass: "fa-sort", order: 0,
+      "sortStatus": {toStr: "TILA ", width: "60", order: 0,
         sortFunc: function(a,b) {
             return a.statusCode - b.statusCode;
         }}
     };
+
+    var decodeOrder = function(o) {
+      switch(o) {
+          case 1: return 'fa-sort-up';
+          case -1: return 'fa-sort-down';
+          default: return 'fa-sort';
+      }
+    };
+
     var headersToHtml = function() {
       var html = "";
       for (var id in headers) {
-        var header = headers[id];
-        html += `<label class="content-new label" style="width: ${header.width}px">${header.toStr}<i id="${id}" class="sort fas ${header.htmlClass}"></i></label>`
+        if (headers.hasOwnProperty(id)) {
+          var header = headers[id];
+          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="sort fas ' + decodeOrder(header.order) + '"></i></label>';
+        }
       }
       return html;
     };
+
     var projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
@@ -63,11 +75,14 @@
     function toggle() {
       $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.toggle());
-      $('.sort').each( function() { // Initialize sorting -> projects are sorted by ELY
-        var icon = $(this);
-        icon.removeClass('fa-sort fa-sort-up fa-sort-down');
-        icon.addClass(icon[0].id === "sortELY" ? 'fa-sort-up' : 'fa-sort');
-      });
+      for (var id in headers) { // Initialize ordering -> sort by ELY
+        if (headers.hasOwnProperty(id)) {
+          var header = headers[id];
+          header.order = id === "sortELY" ? 1: 0;
+          // Update classes
+          $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(decodeOrder(header.order));
+        }
+      }
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
@@ -107,13 +122,13 @@
                 '<td style="width: 70px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
               switch (proj.statusCode) {
                 case projectStatus.ErrorInViite.value:
-                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>'
+                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>';
                   break;
                 case projectStatus.ErroredInTR.value:
-                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>'
+                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>';
                   break;
                 default:
-                  html += '<td>' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 80px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>'
+                  html += '<td>' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 80px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>';
               }
               html += '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
             });
@@ -137,6 +152,7 @@
       };
 
       var openProjectSteps = function(event) {
+        $('.project-item').remove();
         projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
           setTimeout(function(){}, 0);
           eventbus.trigger('roadAddress:openProject', result);
@@ -151,26 +167,25 @@
        */
       projectList.on('click', '[id^=sort]', function (event) {
         $('#project-list').empty();
-        var id = event.target.id;
-        for (var key in headers) { // Set right HTML classes for every headers' sort arrows based on their order values
-          var header = headers[key]
-          switch(key) {
-              case id :
+        var eventId = event.target.id;
+        for (var id in headers) { // Update order values
+          if (headers.hasOwnProperty(id)) {
+            var header = headers[id];
+            switch(id) {
+              case eventId :
                 header.order = header.order === 0 ? 1 : header.order * -1;
-                header.htmlClass = header.order === 1 ? 'fa-sort-up' : 'fa-sort-down';
                 break;
               default:
                 header.order = 0;
-                header.htmlClass = 'fa-sort';
+            }
+            // Update classes
+            $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(decodeOrder(header.order));
           }
         }
-        // Update classes
-        $('.sort').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
-        $(`#${id}`).toggleClass(`fa-sort ${headers[id].htmlClass}`);
         // Sort and create project list
         createProjectList(projectArray.sort(function (a, b) {
-          var cmp = headers[id].sortFunc(a,b);
-          return (cmp !== 0) ? cmp * headers[id].order : a.name.localeCompare(b.name, 'fi');
+          var cmp = headers[eventId].sortFunc(a,b);
+          return (cmp !== 0) ? cmp * headers[eventId].order : a.name.localeCompare(b.name, 'fi');
         }));
       });
 
