@@ -148,31 +148,28 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     val history = roadAddresses.flatMap(_._2.historySegments).toSeq
     val currentSections = partition(current)
     val historySections = partition(history)
-    val originalAddressSections = groupByCurrentRoadSection(currentSections, roadAddresses.values)
-    val historyAddressSections = groupByHistoryRoadSection(historySections, roadAddresses.values)
-    preTransferCheckBySection(originalAddressSections)
+    val (originalCurrentSections, originalHistorySections) = groupByRoadSections(currentSections, historySections, roadAddresses.values)
+    preTransferCheckBySection(originalCurrentSections)
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
     val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses.mapValues(_.allSegments))
     val mappedChanges = appliedChanges.values.map(
       s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
-    val currentSectionChanges = groupByCurrentRoadSection(currentSections, mappedChanges)
-    val historySectionChanges = groupByHistoryRoadSection(historySections, mappedChanges)
-    val result = postTransferCheckBySection(currentSectionChanges, historySectionChanges, originalAddressSections, historyAddressSections)
+    val (changedCurrentSections, changedHistorySections) = groupByRoadSections(currentSections, historySections, mappedChanges)
+    val result = postTransferCheckBySection(changedCurrentSections, changedHistorySections, originalCurrentSections, originalHistorySections)
     result.values.flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
   }
 
-  private def groupByCurrentRoadSection(sections: Seq[RoadAddressSection],
-                                 roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    sections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).map{
+  private def groupByRoadSections (currentSections: Seq[RoadAddressSection], historySections: Seq[RoadAddressSection], roadAddresses: Iterable[LinkRoadAddressHistory]): (Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) ={
+
+    val mappedCurrent = currentSections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).map{
       l=> LinkRoadAddressHistory((l.currentSegments, Seq()))
     } .toSeq).toMap
-  }
 
-  private def groupByHistoryRoadSection(sections: Seq[RoadAddressSection],
-                                 roadAddresses: Iterable[LinkRoadAddressHistory]): Map[RoadAddressSection, Seq[LinkRoadAddressHistory]] = {
-    sections.map(section => section -> roadAddresses.filter(lh => lh.historySegments.exists(section.includes)).map{
+    val mappedHistory = historySections.map(section => section -> roadAddresses.filter(lh => lh.historySegments.exists(section.includes)).map{
       l=> LinkRoadAddressHistory((Seq(), l.historySegments))
     } .toSeq).toMap
+
+    (mappedCurrent, mappedHistory)
   }
 
   // TODO: Don't try to apply changes to invalid sections
