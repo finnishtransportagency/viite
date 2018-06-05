@@ -250,8 +250,7 @@
 
     this.getUserRoles = function () {
       $.get('api/viite/user/userData', function (response) {
-        eventbus.trigger('roles:fetched', response.roles);
-        eventbus.trigger('user:setSessionUsername', response.userName);
+        eventbus.trigger('userData:fetched', response);
       });
     };
 
@@ -443,7 +442,7 @@
 
     this.withUserRolesData = function (userRolesData) {
       self.getUserRoles = function () {
-        eventbus.trigger('roles:fetched', userRolesData);
+        eventbus.trigger('userData:fetched', userRolesData);
       };
       afterSave = false;
       return self;
