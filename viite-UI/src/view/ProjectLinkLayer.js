@@ -852,7 +852,7 @@
       });
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
-      var suravageProjectRoads = separated[0].filter(function(val){
+      var suravageProjectRoads = separated[0].filter(function (val) {
         return _.find(separated[1], function (link) {
           return link.linkId === val.linkId;
         }) !== 0;
@@ -885,11 +885,13 @@
         }
       });
 
-      var actualCalibrationPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, suravageProjectRoads);
-      _.each(actualCalibrationPoints, function (actualPoint) {
-        var calMarker = new CalibrationPoint(actualPoint);
-        calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
-      });
+      if (map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
+        var actualCalibrationPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, suravageProjectRoads);
+        _.each(actualCalibrationPoints, function (actualPoint) {
+          var calMarker = new CalibrationPoint(actualPoint);
+          calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+        });
+      }
 
       suravageRoadProjectLayer.getSource().addFeatures(suravageFeatures);
 
@@ -929,11 +931,13 @@
         }
       });
 
-      var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
-      _.each(actualPoints, function (actualPoint) {
-        var calMarker = new CalibrationPoint(actualPoint);
-        calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
-      });
+      if (map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
+        var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
+        _.each(actualPoints, function (actualPoint) {
+          var calMarker = new CalibrationPoint(actualPoint);
+          calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+        });
+      }
 
       var partitioned = _.partition(features, function (feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.projectLinkData.linkId));

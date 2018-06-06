@@ -483,13 +483,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(status = LinkStatus.New)
       val list = List(projectLink0, projectLink1, projectLink2)
       val (created, unchanged) = list.partition(_.status == LinkStatus.New)
-      val ordered = ProjectSectionCalculator.assignMValues(created++unchanged )
+      val ordered = ProjectSectionCalculator.assignMValues(created ++ unchanged)
       val road2 = ordered.find(_.linkId == idRoad2).get
-      road2.startAddrMValue should be (19L)
-      road2.endAddrMValue should be (30L)
-      road2.calibrationPoints._1 should be (None)
-      road2.calibrationPoints._2.nonEmpty should be (true)
-      ordered.count(_.calibrationPoints._2.nonEmpty) should be (1)
+      road2.startAddrMValue should be(19L)
+      road2.endAddrMValue should be(30L)
+      road2.calibrationPoints._1 should be(None)
+      road2.calibrationPoints._2.nonEmpty should be(true)
+      ordered.count(_.calibrationPoints._2.nonEmpty) should be(1)
     }
   }
 
