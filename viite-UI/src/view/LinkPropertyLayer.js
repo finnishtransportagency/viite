@@ -640,7 +640,7 @@
         });
 
         calibrationPointLayer.getSource().clear();
-        if(!applicationModel.isActiveButtons()) {
+        if (!applicationModel.isActiveButtons() && map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             var calMarker = new CalibrationPoint(actualPoint);

@@ -39,19 +39,19 @@
     };
 
     var titleWithDeletingTool = function (projectName) {
-      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI  <button id="deleteProject_' + currentProject.id + '" ' +
+      var name = '<span class ="edit-mode-title">' + projectName + '</span>';
+      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA <button id="deleteProject_' + currentProject.id + '" ' +
         'class="btn-delete-project" value="' + currentProject.id + '"></button></span>';
-      var toReturn = '<span class ="edit-mode-title">' + projectName + '</span>';
       if(currentProject.statusCode === ProjectStatus.Incomplete.value)
-        return toReturn + deleteButtons;
+        return name + deleteButtons;
       else
-        return toReturn;
+        return name;
     };
 
     var titleWithEditingTool = function (projectName) {
-      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
+      return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + currentProject.id + '" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
+          '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
     };
 
     var actionButtons = function () {
@@ -420,6 +420,7 @@
         $('#saveEdit:disabled').prop('disabled', formIsInvalid(rootElement));
         currentProject.isDirty = true;
         hasReservedRoadParts = true;
+        emptyFields(['tie', 'aosa', 'losa']);
       });
 
       eventbus.on('layer:selected', function (layer) {
@@ -508,6 +509,12 @@
           $('#saveEdit:disabled').prop('disabled', false);
           currentProject.isDirty = true;
         }
+      };
+
+      var emptyFields = function (fieldIds) {
+        fieldIds.forEach(function (id) {
+          $('#' + id).val('');
+        });
       };
 
       rootElement.on('change', '#nimi', function () {
