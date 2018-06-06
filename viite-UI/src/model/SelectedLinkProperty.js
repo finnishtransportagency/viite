@@ -540,16 +540,20 @@
     };
 
     var addTargets = function(target, adjacents){
-      if(!_.contains(targets,target))
-        targets.push(roadCollection.getRoadLinkByLinkId(parseInt(target)).getData());
-      var targetData = _.filter(adjacents, function(adjacent){
-        return adjacent.linkId == target;
+      backend.getRoadLinkByLinkId(parseInt(target), function (response) {
+          var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
+
+          if (!_.contains(targets, target))
+              targets.push(fetchedFeature.getData());
+          var targetData = _.filter(adjacents, function (adjacent) {
+              return adjacent.linkId === parseInt(target);
+          });
+          if (!_.isEmpty(targetData)) {
+              $('#additionalSource').remove();
+              $('#adjacentsData').remove();
+              getLinkAdjacents(_.first(targetData));
+          }
       });
-      if(!_.isEmpty(targetData)){
-        $('#additionalSource').remove();
-        $('#adjacentsData').remove();
-        getLinkAdjacents(_.first(targetData));
-      }
     };
 
     var getFloatingRoadMarker = function() {
