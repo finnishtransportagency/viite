@@ -135,7 +135,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val municipalityCode = roadLink.municipalityCode
     val roadNames = RoadNameDAO.getLatestRoadName(roadLinkRoadNumber)
 
-    val roadName =  if(roadNames.isEmpty) Some("") else Some(roadNames.get.roadName)
+    val roadName = if (roadNames.isEmpty) Some("") else Some(roadNames.get.roadName)
 
     val anomalyType = {
       if (roadLinkRoadNumber != 0 && roadLinkRoadPartNumber != 0) Anomaly.None else Anomaly.NoAddressGiven
