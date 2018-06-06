@@ -1,9 +1,8 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.viite.LinkRoadAddressHistory
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.slf4j.LoggerFactory
@@ -29,11 +28,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   private def fuseLengthChanges(sources: Seq[ChangeInfo]) = {
     val (lengthened, rest) = sources.partition(ci => ci.changeType == LengthenedCommonPart.value ||
-    ci.changeType == LengthenedNewPart.value)
+      ci.changeType == LengthenedNewPart.value)
     val (shortened, others) = rest.partition(ci => ci.changeType == ShortenedRemovedPart.value ||
       ci.changeType == ShortenedCommonPart.value)
     others ++
-      lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues{ s =>
+      lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues { s =>
         val common = s.find(_.changeType == LengthenedCommonPart.value)
         val added = s.find(st => st.changeType == LengthenedNewPart.value)
         (common, added) match {
@@ -46,7 +45,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           case _ => None
         }
       }.values.flatten.toSeq ++
-      shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues{ s =>
+      shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues { s =>
         val common = s.find(_.changeType == ShortenedCommonPart.value)
         val toRemove = s.filter(_.changeType == ShortenedRemovedPart.value)
         val fusedRemove = if (toRemove.lengthCompare(0) > 0) {
@@ -69,11 +68,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     fuseLengthChanges(sources).map(ci => {
       ChangeType.apply(ci.changeType) match {
         case CombinedModifiedPart | CombinedRemovedPart | DividedModifiedPart | DividedNewPart =>
-          logger.debug("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
+          logger.debug("Change info> oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType)
           Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
             ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
         case LengthenedCommonPart | LengthenedNewPart | ShortenedCommonPart | ShortenedRemovedPart =>
-          logger.debug("Change info, length change > oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType + s" $ci")
+          logger.debug("Change info, length change > oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType + s" $ci")
           Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
             ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
         case _ => None
@@ -90,7 +89,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         applyMappedChanges(maps),
         applyLengthChanges(length)
       )
-      changeOperations.foldLeft(addresses){ case (addrMap, op) => op(addrMap)}
+      changeOperations.foldLeft(addresses) { case (addrMap, op) => op(addrMap) }
     }
   }
 
@@ -155,25 +154,25 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
     val (changedCurrentSections, changedHistorySections) = groupByRoadSections(currentSections, historySections, mappedChanges)
     val (resultCurr, resultHist) = postTransferCheckBySection(changedCurrentSections, changedHistorySections, originalCurrentSections, originalHistorySections)
-    (resultCurr.values++resultHist.values).flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
+    (resultCurr.values ++ resultHist.values).flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
   }
 
-  private def groupByRoadSections (currentSections: Seq[RoadAddressSection], historySections: Seq[RoadAddressSection], roadAddresses: Iterable[LinkRoadAddressHistory]): (Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) ={
+  private def groupByRoadSections(currentSections: Seq[RoadAddressSection], historySections: Seq[RoadAddressSection], roadAddresses: Iterable[LinkRoadAddressHistory]): (Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) = {
 
-    val mappedCurrent = currentSections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).map{
-      l=> LinkRoadAddressHistory((l.currentSegments, Seq()))
-    } .toSeq).toMap
+    val mappedCurrent = currentSections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).map {
+      l => LinkRoadAddressHistory((l.currentSegments, Seq()))
+    }.toSeq).toMap
 
-    val mappedHistory = historySections.map(section => section -> roadAddresses.filter(lh => lh.historySegments.exists(section.includes)).map{
-      l=> LinkRoadAddressHistory((Seq(), l.historySegments))
-    } .toSeq).toMap
+    val mappedHistory = historySections.map(section => section -> roadAddresses.filter(lh => lh.historySegments.exists(section.includes)).map {
+      l => LinkRoadAddressHistory((Seq(), l.historySegments))
+    }.toSeq).toMap
 
     (mappedCurrent, mappedHistory)
   }
 
   // TODO: Don't try to apply changes to invalid sections
   private def preTransferCheckBySection(sections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) = {
-    sections.map(_._2.flatMap(_.currentSegments)).map( seq =>
+    sections.map(_._2.flatMap(_.currentSegments)).map(seq =>
       try {
         preTransferChecks(seq)
         true
