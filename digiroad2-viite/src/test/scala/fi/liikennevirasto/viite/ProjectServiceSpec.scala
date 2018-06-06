@@ -2170,4 +2170,62 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     }
 
+  test("Check correct roadName assignment via ProjectLinkName") {
+    val roadNumber = 5L
+    val roadPartNumber = 207L
+    val testRoadName = "forTestingPurposes"
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val id = project.id
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(
+        ReservedRoadPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+      ProjectLinkNameDAO.create(id, roadNumber, testRoadName)
+
+      projectService.fillRoadNames(projectLinks.head).roadName.get should be(testRoadName)
+    }
+  }
+
+  test("Check correct roadName assignment via RoadNameDao") {
+    val roadNumber = 5L
+    val roadPartNumber = 207L
+    val testRoadName = "forTestingPurposes"
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val id = project.id
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(
+        ReservedRoadPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+
+      projectService.fillRoadNames(projectLinks.head).roadName.get should be(RoadNameDAO.getLatestRoadName(roadNumber).get.roadName)
+    }
+  }
+
+  test("Check correct roadName assignment via the name on the project link") {
+    val roadNumber = 5L
+    val roadPartNumber = 207L
+    val testRoadName = "forTestingPurposes"
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val id = project.id
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(
+        ReservedRoadPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+
+      projectService.fillRoadNames(projectLinks.head.copy(roadNumber = 9999L, roadName = Option(testRoadName))).roadName.get should be(testRoadName)
+    }
+  }
+
 }
