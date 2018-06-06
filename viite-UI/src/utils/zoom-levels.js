@@ -13,7 +13,7 @@
     minZoomForDirectionalMarkers: 11,
     minZoomForRoadLinks: 5,
     minZoomForEditMode: 10,
-    maxZoomLevelsForCalibrationPoints: 8,
+    minZoomLevelForCalibrationPoints: 8,
     maxZoomLevel: 15
   };
 })();
