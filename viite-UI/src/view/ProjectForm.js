@@ -40,8 +40,8 @@
 
     var titleWithDeletingTool = function (projectName) {
       var name = '<span class ="edit-mode-title">' + projectName + '</span>';
-      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA <button id="deleteProject_' + currentProject.id + '" ' +
-        'class="btn-delete-project" value="' + currentProject.id + '"></button></span>';
+      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA <i id="deleteProject_' + currentProject.id + '" ' +
+        'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
       if(currentProject.statusCode === ProjectStatus.Incomplete.value)
         return name + deleteButtons;
       else
@@ -49,8 +49,8 @@
     };
 
     var titleWithEditingTool = function (projectName) {
-      return '<span class ="edit-mode-title">' + projectName + '<button id="editProject_' + currentProject.id + '" ' +
-        'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
+      return '<span class ="edit-mode-title">' + projectName + ' <i id="editProjectSpan" class="editSpan btn-edit-project fas fa-pencil-alt"' +
+        ' style="visibility:hidden" value="' + currentProject.id + '"></i></span>' +
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
     };
 
@@ -439,11 +439,10 @@
         $('#project-errors').html(errorsList());
       });
 
-      rootElement.on('click', '[id^=editProject]', currentProject, function (eventObject) {
-        var projectId = eventObject.currentTarget.value === "undefined" ? currentProject.id : eventObject.currentTarget.value;
+      rootElement.on('click', '#editProjectSpan', currentProject, function () {
         applicationModel.setSelectedTool("Select");
         applicationModel.addSpinner();
-        projectCollection.getProjectsWithLinksById(parseInt(projectId)).then(function (result) {
+        projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {
           rootElement.empty();
           setTimeout(function () {
           }, 0);
