@@ -4,6 +4,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
@@ -23,10 +24,7 @@ object RoadNetworkDAO {
 
   def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
     val timestamp = System.currentTimeMillis()
-    val roadNetwork = getLatestRoadNetworkVersion match {
-      case Some(version) => version
-      case _ => null
-    }
+    val roadNetwork = getLatestRoadNetworkVersion.get
     sqlu"""INSERT INTO road_network_errors (id, road_address_id, error_code, error_timestamp, road_network_version) VALUES (road_network_errors_key_seq.NEXTVAL, $roadAddressId, $errorCode, $timestamp, $roadNetwork)""".execute
   }
 
