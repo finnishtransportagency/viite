@@ -23,7 +23,10 @@ object RoadNetworkDAO {
 
   def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
     val timestamp = System.currentTimeMillis()
-    val roadNetwork = getLatestRoadNetworkVersion.getOrElse(0L)
+    val roadNetwork = getLatestRoadNetworkVersion match {
+      case Some(version) => version
+      case _ => null
+    }
     sqlu"""INSERT INTO road_network_errors (id, road_address_id, error_code, error_timestamp, road_network_version) VALUES (road_network_errors_key_seq.NEXTVAL, $roadAddressId, $errorCode, $timestamp, $roadNetwork)""".execute
   }
 
