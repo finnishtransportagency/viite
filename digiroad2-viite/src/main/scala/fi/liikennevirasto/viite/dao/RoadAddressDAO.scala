@@ -195,23 +195,19 @@ object RoadAddressDAO {
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
       val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
-      val floatingFilter = if (fetchOnlyFloating) {
+      val floatingFilter = if (fetchOnlyFloating)
         " and ra.floating = '1'"
-      } else {
+      else
         ""
-      }
-
-      val normalRoadsFilter = if (onlyNormalRoads) {
+      val normalRoadsFilter = if (onlyNormalRoads)
         " and pos.link_source = 1"
-      } else {
+      else
         ""
-      }
-
-      val roadNumbersFilter = if (roadNumberLimits.nonEmpty) {
+      val roadNumbersFilter = if (roadNumberLimits.nonEmpty)
         withRoadNumbersFilter(roadNumberLimits)
-      } else {
+      else
         ""
-      }
+
 
       val query =
         s"""
@@ -453,7 +449,7 @@ object RoadAddressDAO {
           valid_to is null
       """
       queryList(query)
-    }
+     }
   }
 
   def fetchByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true): List[RoadAddress] = {
@@ -625,7 +621,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id 
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
         $endPart $startPart
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
@@ -941,11 +937,11 @@ object RoadAddressDAO {
     if (linkIds.size > 500) {
       getMissingByLinkIdMassQuery(linkIds)
     } else {
-      val where = if (linkIds.isEmpty) {
+      val where = if (linkIds.isEmpty)
         return List()
-      } else {
+      else
         s""" where link_id in (${linkIds.mkString(",")})"""
-      }
+
       val query =
         s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code,
            (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as X,
