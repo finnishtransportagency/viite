@@ -4,6 +4,7 @@ import java.net.ConnectException
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -98,7 +99,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def buildFloatingRoadAddressLink(rl: RoadLinkLike, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+  def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
     fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
@@ -147,6 +148,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
 
+    // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
+    def toHistoryRoadLink(roadLinkLike: RoadLinkLike): VVHHistoryRoadLink = {
+      val featureClassCode = roadLinkLike.attributes.getOrElse("MTKCLASS", BigInt(0)).asInstanceOf[BigInt].intValue()
+      VVHHistoryRoadLink(roadLinkLike.linkId, roadLinkLike.municipalityCode, roadLinkLike.geometry, roadLinkLike.administrativeClass, roadLinkLike.trafficDirection, featureClassCodeToFeatureClass.getOrElse(featureClassCode, AllOthers),
+        roadLinkLike.vvhTimeStamp, roadLinkLike.vvhTimeStamp, roadLinkLike.attributes, roadLinkLike.constructionType, roadLinkLike.linkSource, roadLinkLike.length)
+    }
+
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val combinedFuture =
       for {
@@ -183,7 +191,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val combinedRoadLinks = (allRoadLinks ++ suravageLinks).filter(crl => floating.map(_.linkId).contains(crl.linkId))
     val changedFloating = combinedRoadLinks.flatMap(fh => {
-      buildFloatingRoadAddressLink(fh, floating.filter(_.linkId == fh.linkId))
+      val actualFloatings = floating.filter(_.linkId == fh.linkId)
+      buildFloatingRoadAddressLink(toHistoryRoadLink(fh), actualFloatings)
     })
     val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, suravageLinks, changedFloating, allRoadAddressesAfterChangeTable.flatMap(_.currentSegments), missedRL)
 
