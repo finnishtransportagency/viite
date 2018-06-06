@@ -885,7 +885,7 @@
         }
       });
 
-      if (map.getView().getZoom() > zoomlevels.maxZoomLevelsForCalibrationPoints) {
+      if (map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
         var actualCalibrationPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, suravageProjectRoads);
         _.each(actualCalibrationPoints, function (actualPoint) {
           var calMarker = new CalibrationPoint(actualPoint);
@@ -931,7 +931,7 @@
         }
       });
 
-      if (map.getView().getZoom() > zoomlevels.maxZoomLevelsForCalibrationPoints) {
+      if (map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
         var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
         _.each(actualPoints, function (actualPoint) {
           var calMarker = new CalibrationPoint(actualPoint);
