@@ -91,10 +91,10 @@
           _.each(unfinishedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
             html += '<tr id="' + uniqueId + '" class="project-item">' +
-                '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
-                '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
+                  '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
+                  '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                 '<td class="innerCreatedBy" style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-                '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
+                  '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
                 '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             if (proj.statusCode === projectStatus.ErrorInViite.value) {
               html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +
@@ -132,6 +132,7 @@
       });
 
       var openProjectSteps = function(event) {
+        applicationModel.addSpinner();
         projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
           setTimeout(function(){}, 0);
           eventbus.trigger('roadAddress:openProject', result);
