@@ -50,7 +50,7 @@ def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
   }
 
   def getLatestRoadNetworkVersion: Option[Long] = {
-    sql"""SELECT MAX(id) FROM published_road_network""".as[Long].firstOption
+    sql"""SELECT MAX(id) FROM published_road_network""".as[Option[Long]].first
   }
 
   def getLatestRoadNetworkVersionRow: Option[(Long, Long, Long)] = {
