@@ -249,7 +249,7 @@
 
 
     this.getUserRoles = function () {
-      $.get('api/viite/user/userData', function (response) {
+      $.get('api/viite/user', function (response) {
         eventbus.trigger('userData:fetched', response);
       });
     };

@@ -110,8 +110,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/user/userData") {
-    time(logger, "GET request for /user/userData") {
+  get("/user") {
+    time(logger, "GET request for /user") {
       Map("userName" -> userProvider.getCurrentUser().username, "roles" -> userProvider.getCurrentUser().configuration.roles)
     }
   }
