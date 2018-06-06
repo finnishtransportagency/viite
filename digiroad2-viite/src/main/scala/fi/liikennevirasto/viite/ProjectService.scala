@@ -512,6 +512,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       userName, recalculate = false)
   }
 
+  /**
+    * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
+    *
+    * @param projectLink
+    * @return
+    */
+  def fillRoadNames(projectLink: ProjectLink): ProjectLink = {
+    val projectLinkName = ProjectLinkNameDAO.get(projectLink.roadNumber, projectLink.projectId).map(_.roadName)
+      .getOrElse(RoadNameDAO.getLatestRoadName(projectLink.roadNumber).map(_.roadName).getOrElse(projectLink.roadName.get))
+    projectLink.copy(roadName = Option(projectLinkName))
+  }
+
   def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Seq[ProjectLink], Option[String], Option[(Point, Vector3d)]) = {
     def previousSplitToSplitOptions(plSeq: Seq[ProjectLink], splitOptions: SplitOptions): SplitOptions = {
       val splitsAB = plSeq.filter(_.linkId == linkId)
@@ -532,9 +544,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           previousSplitToSplitOptions(previousSplit, splitOptions)
         } else
           splitOptions
-      val r = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
+      val (splitResultOption, errorMessage, splitVector) = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
       dynamicSession.rollback()
-      (r._1.map(rs => rs.toSeqWithMergeTerminated), r._1.get.allTerminatedProjectLinks, r._2, r._3)
+      val allTerminatedProjectLinks = if (splitResultOption.isEmpty) {
+        Seq.empty[ProjectLink]
+      } else {
+        splitResultOption.get.allTerminatedProjectLinks.map(fillRoadNames)
+      }
+      val splitWithMergeTerminated = splitResultOption.map(rs => rs.toSeqWithMergeTerminated.map(fillRoadNames))
+      (splitWithMergeTerminated, allTerminatedProjectLinks, errorMessage, splitVector)
     }
   }
 

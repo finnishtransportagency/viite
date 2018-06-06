@@ -96,6 +96,7 @@
       });
 
       var openProjectSteps = function(event) {
+        applicationModel.addSpinner();
         projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
           setTimeout(function(){}, 0);
           eventbus.trigger('roadAddress:openProject', result);
