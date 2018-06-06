@@ -1576,12 +1576,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ).getOrElse(roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startMValue, roadAddress.endMValue)
     }
 
-    split.flatMap(pl =>
+    split.flatMap(pl => {
+      val floatingValue = roadAddress.validTo.isDefined
       pl.status match {
         case UnChanged =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
             createdBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue, endMValue = pl.endMValue,
-            adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry))
+            adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, floating = floatingValue))
         case New =>
           Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
             pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), 0L, pl.linkId,
@@ -1593,12 +1594,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             //TODO we should check situations where we need to create one new commonHistory for new and transfer/unchanged
             // Transferred part, original values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = startAddr, endAddrMValue = endAddr,
-              endDate = Some(project.startDate), createdBy = Some(project.createdBy), startMValue = startM, endMValue = endM),
+              endDate = Some(project.startDate), createdBy = Some(project.createdBy), startMValue = startM, endMValue = endM, floating = floatingValue),
             // Transferred part, new values
             roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
               startDate = Some(project.startDate), createdBy = Some(project.createdBy), linkId = pl.linkId,
               startMValue = pl.startMValue, endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp,
-              geometry = pl.geometry)
+              geometry = pl.geometry, floating = floatingValue)
           )
         case Terminated => // TODO Check common_history_id
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
@@ -1608,7 +1609,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
           throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
       }
-    )
+    })
   }
 
   def updateTerminationForHistory(terminatedLinkIds: Set[Long], splitReplacements: Seq[ProjectLink]): Unit = {
@@ -1665,7 +1666,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
-    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet, rejectInvalids = false).map(ra => ra.id -> ra).toMap
     if (expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
@@ -1739,14 +1740,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } else {
       Seq()
     }
+
+    val floatingValue = source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow
     val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewRoadAddress), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
       pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.commonHistoryId).getOrElse(0))
     pl.status match {
       case UnChanged =>
-        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
+        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingValue)
       case Transfer | Numbering =>
-        roadAddress.copy(startDate = Some(project.startDate))
+        roadAddress.copy(startDate = Some(project.startDate), floating = floatingValue)
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
       case Terminated =>

@@ -852,7 +852,7 @@
       });
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
-      var suravageProjectRoads = separated[0].filter(function(val){
+      var suravageProjectRoads = separated[0].filter(function (val) {
         return _.find(separated[1], function (link) {
           return link.linkId === val.linkId;
         }) !== 0;

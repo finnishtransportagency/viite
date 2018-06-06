@@ -592,7 +592,7 @@ object ProjectDAO {
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
               pl.road_part_number = rp.road_part_number AND pl.status != 5)
               LEFT JOIN
-              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL) OR ra.id = pl.ROAD_ADDRESS_ID)
+              ROAD_ADDRESS ra ON (ra.id = pl.ROAD_ADDRESS_ID OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
               WHERE
                 rp.project_id = $projectId
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
@@ -605,6 +605,7 @@ object ProjectDAO {
       }
     }
   }
+
 
   def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ReservedRoadPart] = {
     time(logger, "Fetch reserved road part") {
