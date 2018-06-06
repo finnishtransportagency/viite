@@ -4,6 +4,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
@@ -21,11 +22,24 @@ object RoadNetworkDAO {
     sqlu"""INSERT INTO published_road_address (network_id, road_address_id) VALUES ($networkVersion, $roadAddressId)""".execute
   }
 
-  def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
-    val timestamp = System.currentTimeMillis()
-    val roadNetwork = getLatestRoadNetworkVersion.getOrElse(0L)
-    sqlu"""INSERT INTO road_network_errors (id, road_address_id, error_code, error_timestamp, road_network_version) VALUES (road_network_errors_key_seq.NEXTVAL, $roadAddressId, $errorCode, $timestamp, $roadNetwork)""".execute
-  }
+def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
+  val timestamp = System.currentTimeMillis()
+  val roadNetwork = getLatestRoadNetworkVersionRow
+      val networkErrorPS = dynamicSession.prepareStatement("INSERT INTO road_network_errors (id, road_address_id, error_code, error_timestamp, road_network_version)" +
+        " values (?, ?, ?, ?, ?)")
+      val nextId =  Sequences.nextRoadNetworkErrorSeqValue
+      networkErrorPS.setLong(1, nextId)
+      networkErrorPS.setLong(2, roadAddressId)
+      networkErrorPS.setLong(3, errorCode)
+      networkErrorPS.setDouble(4, timestamp)
+      roadNetwork match {
+        case Some(network) => networkErrorPS.setLong(5, network._1)
+        case _ => networkErrorPS.setString(5, null)
+      }
+      networkErrorPS.addBatch()
+      networkErrorPS.executeBatch()
+      networkErrorPS.close()
+}
 
   def removeNetworkErrors: Unit = {
     sqlu"""DELETE FROM road_network_errors""".execute
@@ -37,6 +51,10 @@ object RoadNetworkDAO {
 
   def getLatestRoadNetworkVersion: Option[Long] = {
     sql"""SELECT MAX(id) FROM published_road_network""".as[Option[Long]].first
+  }
+
+  def getLatestRoadNetworkVersionRow: Option[(Long, Long, Long)] = {
+    sql"""SELECT * FROM published_road_network order by id desc""".as[(Long, Long, Long)].firstOption
   }
 
   def getLatestPublishedNetworkDate: Option[DateTime] = {
