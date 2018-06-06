@@ -1577,7 +1577,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     split.flatMap(pl => {
-      val floatingValue = roadAddress.validTo.isDefined && roadAddress.validTo.get.isBeforeNow
+      val floatingValue = roadAddress.validTo.isDefined
       pl.status match {
         case UnChanged =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
