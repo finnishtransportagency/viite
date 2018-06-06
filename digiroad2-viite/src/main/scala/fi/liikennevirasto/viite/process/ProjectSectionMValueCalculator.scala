@@ -17,7 +17,7 @@ object ProjectSectionMValueCalculator {
     // Reset the end address measure if have changed
     def resetEndAddrMValue(pl: ProjectLink): ProjectLink = {
       val endAddrMValue = pl.startAddrMValue + pl.addrMLength
-      if(endAddrMValue != pl.endAddrMValue)
+      if (endAddrMValue != pl.endAddrMValue)
         pl.copy(endAddrMValue = endAddrMValue)
       else
         pl
