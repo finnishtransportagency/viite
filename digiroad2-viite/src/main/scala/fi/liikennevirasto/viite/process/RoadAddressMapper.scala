@@ -83,22 +83,28 @@ trait RoadAddressMapper {
 
   def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress], Seq[RoadAddress])): Unit = {
     val (section, current, history) = s
-    if(current.nonEmpty){
-      if (current.groupBy(_.linkId).exists{ case (_, addresses) =>
-        partition(addresses).size > 1})
-      throw new InvalidAddressDataException(s"Address gaps generated for links ${current.groupBy(_.linkId).filter{ case (_, addresses) =>
-        partition(addresses).size > 1}.keySet.mkString(", ")}")
-    commonPostTransferChecks(current, section.startMAddr, section.endMAddr)
+    if (current.nonEmpty) {
+      if (current.groupBy(_.linkId).exists { case (_, addresses) =>
+        partition(addresses).size > 1
+      })
+        throw new InvalidAddressDataException(s"Address gaps generated for links ${
+          current.groupBy(_.linkId).filter { case (_, addresses) =>
+            partition(addresses).size > 1
+          }.keySet.mkString(", ")
+        }")
+      commonPostTransferChecks(current, section.startMAddr, section.endMAddr)
     }
-
-    if(history.nonEmpty){
-      if (history.groupBy(_.linkId).exists{ case (_, addresses) =>
-        partition(addresses).size > 1})
-        throw new InvalidAddressDataException(s"Address gaps generated for links ${history.groupBy(_.linkId).filter{ case (_, addresses) =>
-          partition(addresses).size > 1}.keySet.mkString(", ")}")
+    if (history.nonEmpty) {
+      if (history.groupBy(_.linkId).exists { case (_, addresses) =>
+        partition(addresses).size > 1
+      })
+        throw new InvalidAddressDataException(s"Address gaps generated for links ${
+          history.groupBy(_.linkId).filter { case (_, addresses) =>
+            partition(addresses).size > 1
+          }.keySet.mkString(", ")
+        }")
       commonPostTransferChecks(history, section.startMAddr, section.endMAddr)
     }
-
   }
 
   def postTransferChecksForCurrent(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
