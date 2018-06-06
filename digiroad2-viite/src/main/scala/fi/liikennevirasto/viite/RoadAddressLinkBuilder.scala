@@ -162,7 +162,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
 
-  def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
+  def build(historyRoadLink: RoadLinkLike, roadAddress: RoadAddress): RoadAddressLink = {
     val roadLinkType = FloatingRoadLinkType
     val geom = GeometryUtils.truncateGeometry3D(historyRoadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
