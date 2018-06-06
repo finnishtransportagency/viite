@@ -16,9 +16,9 @@
     };
 
     var addRoadNameField = function (name, isBlocked) {
-        var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
-        var disabled = nameToDisplay !== "" && isBlocked;
-        return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
+      var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
+      var disabled = nameToDisplay !== "" && isBlocked;
+      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
     };
 
     var projectButtons = function() {

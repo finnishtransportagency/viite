@@ -511,7 +511,7 @@
       };
 
       var emptyFields = function (fieldIds) {
-        fieldIds.forEach( function(id) {
+        fieldIds.forEach(function (id) {
           $('#' + id).val('');
         });
       };
