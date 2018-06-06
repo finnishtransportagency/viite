@@ -336,15 +336,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
     time(logger, "Apply changes") {
-    val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
-    val changes = filterRelevantChanges(roadAddresses, allChanges)
-    val changedRoadLinks = changesSanityCheck(changes)
-    if (changedRoadLinks.isEmpty)
-      addresses.values.toSeq
-    else
-      withDynTransaction {
-        val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, changedRoadLinks)
-        val roadLinkMap = roadLinks.map(rl => rl.linkId -> rl).toMap
+      val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
+      val changes = filterRelevantChanges(roadAddresses, allChanges)
+      val changedRoadLinks = changesSanityCheck(changes)
+      if (changedRoadLinks.isEmpty) {
+        addresses.values.toSeq
+      } else {
+        withDynTransaction {
+          val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, changedRoadLinks)
+          val roadLinkMap = roadLinks.map(rl => rl.linkId -> rl).toMap
 
           val (addressesToCreate, unchanged) = newRoadAddresses.flatMap(_._2.allSegments).toSeq.partition(_.id == NewRoadAddress)
           val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
@@ -368,6 +368,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           val changedRoadAddresses = adjustedAddresses ++ RoadAddressDAO.fetchByIdMassQuery(ids -- adjustedAddresses.map(_.id), includeFloating = true)
           changedRoadAddresses.groupBy(cra => (cra.linkId, cra.commonHistoryId)).map(s => LinkRoadAddressHistory(s._2.toSeq.partition(_.endDate.isEmpty))).toSeq
         }
+      }
     }
   }
 
