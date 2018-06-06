@@ -615,7 +615,7 @@
 
     var deleteButton = function(index, roadNumber, roadPartNumber){
       var disabledInput = !_.isUndefined(currentProject) && currentProject.project.statusCode === ProjectStatus.ErroredInTR.value;
-      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
+      return '<i roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete fas fa-trash-alt fa-lg" '+ (disabledInput ? 'disabled' : '') +'></i>';
     };
 
 
