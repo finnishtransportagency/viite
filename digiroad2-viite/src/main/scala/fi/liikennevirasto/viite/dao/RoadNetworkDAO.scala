@@ -24,7 +24,7 @@ object RoadNetworkDAO {
 
 def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
   val timestamp = System.currentTimeMillis()
-  val roadNetwork = getLatestRoadNetworkVersionRow
+  val lastVersion = getLatestRoadNetworkVersionId
       val networkErrorPS = dynamicSession.prepareStatement("INSERT INTO road_network_errors (id, road_address_id, error_code, error_timestamp, road_network_version)" +
         " values (?, ?, ?, ?, ?)")
       val nextId =  Sequences.nextRoadNetworkErrorSeqValue
@@ -32,8 +32,8 @@ def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
       networkErrorPS.setLong(2, roadAddressId)
       networkErrorPS.setLong(3, errorCode)
       networkErrorPS.setDouble(4, timestamp)
-      roadNetwork match {
-        case Some(network) => networkErrorPS.setLong(5, network._1)
+  lastVersion match {
+        case Some(v) => networkErrorPS.setLong(5, v)
         case _ => networkErrorPS.setString(5, null)
       }
       networkErrorPS.addBatch()
@@ -53,8 +53,8 @@ def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
     sql"""SELECT MAX(id) FROM published_road_network""".as[Option[Long]].first
   }
 
-  def getLatestRoadNetworkVersionRow: Option[(Long, Long, Long)] = {
-    sql"""SELECT * FROM published_road_network order by id desc""".as[(Long, Long, Long)].firstOption
+  def getLatestRoadNetworkVersionId: Option[Long] = {
+    sql"""SELECT id FROM published_road_network order by id desc""".as[Long].firstOption
   }
 
   def getLatestPublishedNetworkDate: Option[DateTime] = {
