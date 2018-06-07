@@ -329,7 +329,7 @@
         roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number(roadAddressProjectForm.find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: (!isNaN(Number(roadAddressProjectForm.find('#endDistance')[0].value)) ?  Number(roadAddressProjectForm.find('#endDistance')[0].value) : null),
+        userDefinedEndAddressM: (!isNaN(roadAddressProjectForm.find('#endDistance')[0]) ?  Number(roadAddressProjectForm.find('#endDistance')[0].value) : null),
           coordinates: coordinates,
           roadName: roadAddressProjectForm.find('#roadName')[0].value
       };
