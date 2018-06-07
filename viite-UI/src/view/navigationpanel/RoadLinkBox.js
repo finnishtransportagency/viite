@@ -203,8 +203,8 @@
     };
 
     var bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'viite')) {
+      eventbus.on('userData:fetched', function (userData) {
+        if (_.contains(userData.roles, 'viite')) {
           elements.expanded.append(editModeToggle.element);
           $('#projectListButton').removeAttr('style');
         }

@@ -359,7 +359,7 @@ object ProjectSectionCalculator {
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
       if (((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) ||
         (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) && (rightLink.track != Track.Combined && leftLink.track != Track.Combined)) {
-        val reversed =  rightLink.reversed || leftLink.reversed
+        val reversed = rightLink.reversed || leftLink.reversed
         Some(averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
       } else if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
@@ -375,13 +375,13 @@ object ProjectSectionCalculator {
       ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff)
     }
 
-    def averageOfAddressMValues(rAddrM: Double, lAddrM: Double, reversed: Boolean) : Long = {
+    def averageOfAddressMValues(rAddrM: Double, lAddrM: Double, reversed: Boolean): Long = {
       val average = 0.5 * (rAddrM + lAddrM)
 
-      if(reversed){
-          if (rAddrM > lAddrM) Math.floor(average).round else Math.ceil(average).round
+      if (reversed) {
+        if (rAddrM > lAddrM) Math.floor(average).round else Math.ceil(average).round
       } else {
-          if (rAddrM > lAddrM) Math.ceil(average).round else Math.floor(average).round
+        if (rAddrM > lAddrM) Math.ceil(average).round else Math.floor(average).round
       }
     }
 
