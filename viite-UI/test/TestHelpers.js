@@ -90,7 +90,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude, projectDefinition) {
       var data = getSimulatedData(projectDefinition);
       return new Backend().withRoadLinkData(generatedData, selectTestData('roadAddressAfterSave'))
-        .withUserRolesData(UserRolesTestData.roles())
+        .withUserRolesData(UserRolesTestData.userData())
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" })
         .withFloatingAdjacents(data.floatingAdjacents)
         .withGetTargetAdjacent(data.targetAdjacent)
