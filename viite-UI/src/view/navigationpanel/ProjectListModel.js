@@ -19,7 +19,7 @@
         sortFunc: function(a,b) {
             var aDate = a.startDate.split('.').reverse().join('-');
             var bDate = b.startDate.split('.').reverse().join('-');
-            return new Date(aDate) - new Date(bDate);
+            return new Date(bDate) - new Date(aDate);
         }},
       "sortStatus": {toStr: "TILA", width: "60", order: 0,
         sortFunc: function(a,b) {
