@@ -3,6 +3,11 @@
   var roles = function() { return ['operator', 'viite']; };
 
   root.UserRolesTestData = {
-    roles: roles
+    userData: function(){
+      return {
+          userName: 'ktest',
+          roles: roles()
+      };
+    }
   };
 }(this));
