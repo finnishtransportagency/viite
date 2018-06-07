@@ -139,6 +139,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     setBlackUnderline(suravageAddresses ++ roadAddressLinks)
   }
 
+  def buildFloatingAddresses(allRoadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], floating: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+    // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
+    def toHistoryRoadLink(roadLinkLike: RoadLinkLike): VVHHistoryRoadLink = {
+      val featureClassCode = roadLinkLike.attributes.getOrElse("MTKCLASS", BigInt(0)).asInstanceOf[BigInt].intValue()
+      VVHHistoryRoadLink(roadLinkLike.linkId, roadLinkLike.municipalityCode, roadLinkLike.geometry, roadLinkLike.administrativeClass, roadLinkLike.trafficDirection, featureClassCodeToFeatureClass.getOrElse(featureClassCode, AllOthers),
+        roadLinkLike.vvhTimeStamp, roadLinkLike.vvhTimeStamp, roadLinkLike.attributes, roadLinkLike.constructionType, roadLinkLike.linkSource, roadLinkLike.length)
+    }
+
+    val combinedRoadLinks = (allRoadLinks ++ suravageLinks).filter(crl => floating.map(_.linkId).contains(crl.linkId))
+    combinedRoadLinks.flatMap(fh => {
+      val actualFloatings = floating.filter(_.linkId == fh.linkId)
+      buildFloatingRoadAddressLink(toHistoryRoadLink(fh), actualFloatings)
+    })
+  }
+
   def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult,
                           boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
@@ -189,12 +204,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }.groupBy(_.linkId)
     }
 
-    val combinedRoadLinks = (allRoadLinks ++ suravageLinks).filter(crl => floating.map(_.linkId).contains(crl.linkId))
-    val changedFloating = combinedRoadLinks.flatMap(fh => {
-      val actualFloatings = floating.filter(_.linkId == fh.linkId)
-      buildFloatingRoadAddressLink(toHistoryRoadLink(fh), actualFloatings)
-    })
-    val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, suravageLinks, changedFloating, allRoadAddressesAfterChangeTable.flatMap(_.currentSegments), missedRL)
+    val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, suravageLinks, buildFloatingAddresses(allRoadLinks, suravageLinks, floating),
+      allRoadAddressesAfterChangeTable.flatMap(_.currentSegments), missedRL)
 
     val inUseSuravageLinks = suravageLinks.filter(sl => roadAddressLinkMap.keySet.contains(sl.linkId))
 
