@@ -3,25 +3,25 @@
     var projectStatus = LinkValues.ProjectStatus;
     var projectArray = [];
     var headers = {
-      "sortName": {toStr: "PROJEKTIN NIMI ", width: "255", order: 0,
+      "sortName": {toStr: "PROJEKTIN NIMI", width: "255", order: 0,
         sortFunc: function(a,b) {
           return a.name.localeCompare(b.name, 'fi');
         }},
-      "sortELY": {toStr: "ELY ", width: "50", order: 1,
+      "sortELY": {toStr: "ELY", width: "50", order: 1,
         sortFunc: function(a,b) {
             return a.ely - b.ely;
         }},
-      "sortUser": {toStr: "KÄYTTÄJÄ ", width: "110", order: 0,
+      "sortUser": {toStr: "KÄYTTÄJÄ", width: "115", order: 0,
         sortFunc: function(a,b) {
             return a.createdBy.localeCompare(b.createdBy, 'fi');
         }},
-      "sortDate": {toStr: "ALKUPVM ", width: "100", order: 0,
+      "sortDate": {toStr: "ALKUPVM", width: "100", order: 0,
         sortFunc: function(a,b) {
             var aDate = a.startDate.split('.').reverse().join('-');
             var bDate = b.startDate.split('.').reverse().join('-');
             return new Date(aDate) - new Date(bDate);
         }},
-      "sortStatus": {toStr: "TILA ", width: "60", order: 0,
+      "sortStatus": {toStr: "TILA", width: "60", order: 0,
         sortFunc: function(a,b) {
             return a.statusCode - b.statusCode;
         }}
@@ -40,11 +40,13 @@
       for (var id in headers) {
         if (headers.hasOwnProperty(id)) {
           var header = headers[id];
-          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="sort fas ' + decodeOrder(header.order) + '"></i></label>';
+          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="btn-icon sort fas ' + decodeOrder(header.order) + '"></i>';
           if (id === "sortUser") {
-            html += '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
+            html += '<i id="filterUser" class="btn-icon fas fa-filter"></i></label>' +
+                    '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
                     '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>';
           }
+          html += '</label>';
         }
       }
       return html;
@@ -151,18 +153,18 @@
                     '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                     '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
                     '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
-                    '<td style="width: 70px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
+                    '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             switch (proj.statusCode) {
               case projectStatus.ErrorInViite.value:
-                html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +
+                html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +
                     '</tr>';
                 break;
               case projectStatus.ErroredInTR.value:
-                html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>' +
+                html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>' +
                     '</tr>';
                 break;
               default:
-                html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 55px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>' +
+                html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>' +
                     '</tr>';
             }
             uniqueId = uniqueId + 1;
@@ -184,11 +186,12 @@
           $('#project-list').html(html);
         }
         applicationModel.removeSpinner();
-        $('#userSearch').click(function () {
-          var spanIsInvisible = $('#userFilterSpan').css('display') === 'none';
-          userFilterVisibility(spanIsInvisible);
-        });
       };
+
+      $('#filterUser').click(function () {
+        var spanIsInvisible = $('#userFilterSpan').css('display') === 'none';
+        userFilterVisibility(spanIsInvisible);
+      });
 
       var openProjectSteps = function(event) {
         applicationModel.addSpinner();
