@@ -195,23 +195,19 @@ object RoadAddressDAO {
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
       val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
-      val floatingFilter = if (fetchOnlyFloating) {
+      val floatingFilter = if (fetchOnlyFloating)
         " and ra.floating = '1'"
-      } else {
+      else
         ""
-      }
-
-      val normalRoadsFilter = if (onlyNormalRoads) {
+      val normalRoadsFilter = if (onlyNormalRoads)
         " and pos.link_source = 1"
-      } else {
+      else
         ""
-      }
-
-      val roadNumbersFilter = if (roadNumberLimits.nonEmpty) {
+      val roadNumbersFilter = if (roadNumberLimits.nonEmpty)
         withRoadNumbersFilter(roadNumberLimits)
-      } else {
+      else
         ""
-      }
+
 
       val query =
         s"""
@@ -453,7 +449,7 @@ object RoadAddressDAO {
           valid_to is null
       """
       queryList(query)
-    }
+     }
   }
 
   def fetchByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true): List[RoadAddress] = {
@@ -625,7 +621,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id 
+        where $floating $expiredFilter $historyFilter $suravageFilter road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
         $endPart $startPart
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
@@ -941,11 +937,11 @@ object RoadAddressDAO {
     if (linkIds.size > 500) {
       getMissingByLinkIdMassQuery(linkIds)
     } else {
-      val where = if (linkIds.isEmpty) {
+      val where = if (linkIds.isEmpty)
         return List()
-      } else {
+      else
         s""" where link_id in (${linkIds.mkString(",")})"""
-      }
+
       val query =
         s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code,
            (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as X,
@@ -1197,7 +1193,7 @@ object RoadAddressDAO {
     * @param ids
     * @return
     */
-  def queryById(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
+  def queryById(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false, rejectInvalids: Boolean = true): List[RoadAddress] = {
     time(logger, "Fetch road addresses by ids") {
       if (ids.size > 1000) {
         return queryByIdMassQuery(ids)
@@ -1214,12 +1210,18 @@ object RoadAddressDAO {
         ""
       }
 
-      val historyFilter = if (includeHistory)
-        "AND end_date is null"
-      else
-        ""
-      val query =
-        s"""
+    val historyFilter = if (includeHistory)
+      "AND end_date is null"
+    else
+      ""
+
+    val validToFilter = if (rejectInvalids)
+      " and valid_to is null"
+    else
+      ""
+
+    val query =
+      s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
@@ -1229,8 +1231,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $historyFilter $terminatedFilter and t.id < t2.id and
-          valid_to is null
+        $where $historyFilter $terminatedFilter and t.id < t2.id $validToFilter
       """
       queryList(query)
     }
@@ -1613,7 +1614,8 @@ object RoadAddressDAO {
    * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
    */
   def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
-    val query = s"""SELECT ra.calibration_points
+    val query =
+      s"""SELECT ra.calibration_points
                     FROM road_address ra
                     WHERE ra.id=$roadAddressId"""
     CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)

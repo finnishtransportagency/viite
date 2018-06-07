@@ -27,7 +27,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changes = Seq(
       ChangeInfo(Some(123), Some(124), 123L, 2, Some(0.0), Some(1000.234), Some(399.648), Some(1399.882), 96400L),
       ChangeInfo(Some(124), Some(124), 123L, 1, Some(0.0), Some(399.648), Some(0.0), Some(399.648), 96400L))
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments)
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments)
     results.get(123).isEmpty should be (true)
     results.get(124).isEmpty should be (false)
     results(124).size should be (2)
@@ -56,7 +56,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       ChangeInfo(Some(roadLinkId2), Some(roadLinkId2), 123L, 1, Some(0.0), Some(399.648), Some(0.0), Some(399.648), changesVVHTimestamp),
       ChangeInfo(Some(roadLinkId2), Some(roadLinkId3), 123L, 2, Some(0.0), Some(1399.882), Some(1399.882), Some(0.0), changesVVHTimestamp + 1L)
     )
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments)
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments)
     results.get(roadLinkId1).isEmpty should be (true)
     results.get(roadLinkId2).isEmpty should be (true)
     results.get(roadLinkId3).isEmpty should be (false)
@@ -92,7 +92,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       ChangeInfo(Some(roadLinkId2), Some(roadLinkId2), 123L, 1, Some(0.0), Some(399.648), Some(0.0), Some(399.648), changesVVHTimestamp),
       ChangeInfo(Some(roadLinkId2), Some(roadLinkId3), 123L, 2, Some(0.0), Some(6666), Some(200), Some(590), changesVVHTimestamp)
     )
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments)
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments)
     results.get(roadLinkId1).isEmpty should be (false)
     results.get(roadLinkId2).isEmpty should be (false)
     results.get(roadLinkId3).isEmpty should be (false)
@@ -129,7 +129,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       ChangeInfo(Some(roadLinkId2), Some(roadLinkId1), 123L, 2, Some(0.0), Some(399.648), Some(0.0), Some(399.648), changesVVHTimestamp),
       ChangeInfo(Some(roadLinkId3), Some(roadLinkId1), 123L, 2, Some(0.0), Some(65.259), Some(1465.0), Some(1399.882), changesVVHTimestamp)
     )
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
     results.get(roadLinkId1).isEmpty should be (false)
     results.get(roadLinkId2).isEmpty should be (true)
     results.get(roadLinkId3).isEmpty should be (true)
@@ -173,7 +173,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       ChangeInfo(Some(roadLinkId1), Some(roadLinkId2), 456L, 6, Some(0.0), Some(399.648), Some(0.0), Some(399.648), changesVVHTimestamp),
       ChangeInfo(Some(roadLinkId1), Some(roadLinkId3), 789L, 6, Some(847.331), Some(960.434), Some(113.103), Some(0.0), changesVVHTimestamp)
     )
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
     results.get(roadLinkId1).isEmpty should be (false)
     results.get(roadLinkId2).isEmpty should be (false)
     results.get(roadLinkId3).isEmpty should be (false)
@@ -225,7 +225,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       ChangeInfo(None, Some(roadLinkId2), 456L, 4, None, None, Some(201.333), Some(201.986), changesVVHTimestamp),
       ChangeInfo(None, Some(roadLinkId3), 757L, 4, None, None, Some(10.0), Some(31.001), changesVVHTimestamp)
     )
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
     results.get(roadLinkId1).isEmpty should be (false)
     results.get(roadLinkId2).isEmpty should be (false)
     results.get(roadLinkId3).isEmpty should be (false)
@@ -279,7 +279,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       ChangeInfo(Some(roadLinkId2), None, 456L, 8, Some(201.333), Some(201.986), None, None, changesVVHTimestamp),
       ChangeInfo(Some(roadLinkId3), None, 757L, 8, Some(10.0), Some(31.001), None, None, changesVVHTimestamp)
     )
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
     results.get(roadLinkId1).isEmpty should be (false)
     results.get(roadLinkId2).isEmpty should be (false)
     results.get(roadLinkId3).isEmpty should be (false)
@@ -322,7 +322,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       geometry = Seq(Point(0.0, 0.0), Point(960.434, 0.0)), adjustedTimestamp = roadAdjustedTimestamp, track = Track.Combined)
     val map = Seq(roadAddress1).groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(ChangeInfo(Some(roadLinkId1), Some(roadLinkId1), 123L, 11, Some(0.0), Some(960.434), None, None, changesVVHTimestamp))
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
     results.get(roadLinkId1).isEmpty should be (false)
     val addr1 = results(roadLinkId1).head
     addr1.startMValue should be (0.0)
@@ -356,7 +356,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       //Move and turn around
       ChangeInfo(Some(roadLinkId1), Some(roadLinkId2), 456L, 6, Some(0.0), Some(399.648), Some(399.648), Some(0.0), changesVVHTimestamp2)
     )
-    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
     results.get(roadLinkId1).isEmpty should be (false)
     results.get(roadLinkId2).isEmpty should be (false)
     val addr1 = results(roadLinkId1).head

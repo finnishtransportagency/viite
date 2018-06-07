@@ -19,7 +19,7 @@
     // Text about validation success hard-coded now
     var changeTableHeader = $('<div class="change-table-fixed-header"></div>');
     changeTableHeader.append('<div class="change-table-header font-resize">Validointi ok. Alla näet muutokset projektissa.</div>');
-    changeTableHeader.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
+    changeTableHeader.append('<button class="close wbtn-close">Sulje <i class="fas fa-window-close"></i></button>');
     changeTableHeader.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
     changeTableHeader.append('<div class="change-table-borders">' +
       '<div id ="change-table-borders-changetype"></div>' +
