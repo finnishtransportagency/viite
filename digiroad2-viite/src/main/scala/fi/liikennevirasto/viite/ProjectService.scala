@@ -1674,7 +1674,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
     ProjectDAO.moveProjectLinksToHistory(projectID)
     logger.info(s"Moving project links to project link history.")
-    handleNewRoadNames(projectLinks, project)
+    val validLinksToNames = projectLinks.filter(_.roadNumber <= maxRoadNumberDemandingRoadName)
+    if (validLinksToNames.nonEmpty)
+      handleNewRoadNames(validLinksToNames, project)
     try {
       val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
       val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
