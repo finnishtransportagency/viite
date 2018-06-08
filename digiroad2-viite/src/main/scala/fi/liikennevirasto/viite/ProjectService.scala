@@ -1258,7 +1258,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadAddressId != 0L))
           )
-          ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
+          val (news, existing) = recalculatedProjectLinks.partition(_.id == -1000)
+
+          ProjectDAO.updateProjectLinksToDB(existing, userName)
+          //TODO this needs to be checked because the creation or modification user
+          ProjectDAO.create(news)
       }
     }
   }
