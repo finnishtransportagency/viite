@@ -262,7 +262,7 @@
           selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
           floatingMarkerLayer.setOpacity(1);
         } else {
-          selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === 3);
+          selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
         }
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
@@ -354,9 +354,9 @@
           }
           else {
             if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
-              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures, selection.roadLinkData.roadLinkSource === 3);
+              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures, selection.roadLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
             } else {
-              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === 3);
+              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
             }
           }
         }
