@@ -121,15 +121,18 @@
 
 
     var userFilterVisibility = function (showFilters) {
+      var searchBox = $('#userFilterSpan');
+      var textField = $('#userNameBox');
       if (showFilters) {
-        $('#userFilterSpan').show();
-        if ($('#userNameBox').val() === "") {
-          $('#userNameBox').val(applicationModel.getSessionUser());
+        searchBox.show();
+        if (textField.val() === "") {
+          textField.val(applicationModel.getSessionUser());
         }
-        filterByUser();
       } else {
-        $('#userFilterSpan').hide();
+        textField.val("");
+        searchBox.hide();
       }
+      filterByUser();
     };
 
     function bindEvents() {
