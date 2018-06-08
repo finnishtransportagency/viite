@@ -154,13 +154,6 @@ package object viite {
     }.toSeq
   }
 
-  def featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
-    12316 -> FeatureClass.TractorRoad,
-    12141 -> FeatureClass.DrivePath,
-    12314 -> FeatureClass.CycleOrPedestrianPath,
-    12312 -> FeatureClass.WinterRoads
-  )
-
   object CombineMaps {
     type Mapped = Map[String, String]
 
