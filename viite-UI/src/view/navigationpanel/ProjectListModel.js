@@ -9,7 +9,7 @@
         }},
       "sortELY": {toStr: "ELY", width: "50", order: 1,
         sortFunc: function(a,b) {
-            return a.ely - b.ely;
+            return (a.ely - b.ely);
         }},
       "sortUser": {toStr: "KÄYTTÄJÄ", width: "115", order: 0,
         sortFunc: function(a,b) {
@@ -19,11 +19,11 @@
         sortFunc: function(a,b) {
             var aDate = a.startDate.split('.').reverse().join('-');
             var bDate = b.startDate.split('.').reverse().join('-');
-            return new Date(bDate) - new Date(aDate);
+            return (new Date(bDate) - new Date(aDate));
         }},
       "sortStatus": {toStr: "TILA", width: "60", order: 0,
         sortFunc: function(a,b) {
-            return a.statusCode - b.statusCode;
+            return (a.statusCode - b.statusCode);
         }}
     };
 
@@ -136,28 +136,35 @@
     function bindEvents() {
 
       eventbus.once('roadAddressProjects:fetched', function(projects) {
-        projectArray = projects;
-        createProjectList(projects);
+        projectArray = _.filter(projects, function(proj) {
+          return proj.statusCode !== 7; //filter deleted projects out
+        });
+        createProjectList(projectArray);
       });
 
-      var createProjectList = function(projects) {
-        var showAllTRProjects = $('#TRProjectsVisibleCheckbox')[0].checked;
+      var createProjectList = function(projects, sortFunction = function(a,b) {return a.ely - b.ely}, order = 1) {
         var unfinishedProjects = _.filter(projects, function(proj) {
-          var isTooOld = false;
           if (proj.statusCode === 5) {
             var hoursInDay = 24;
             var millisecondsToHours = 1000*60*60;
-            isTooOld = (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours > hoursInDay * 2;
+            //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
+            return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return (proj.statusCode >= 1 && proj.statusCode <= 4) || (proj.statusCode === 5 && (showAllTRProjects || !isTooOld)) || proj.statusCode === 8;
+          return ((proj.statusCode >= 1 && proj.statusCode <= 4) || proj.statusCode === 8) && (proj.ely === -1 || $('#TRProjectsVisibleCheckbox')[0].checked);
         });
+
+        var sortedProjects = unfinishedProjects.sort( function(a,b) {
+          var cmp = sortFunction(a,b);
+          return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
+        });
+
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
-        if (!_.isEmpty(unfinishedProjects)) {
+        if (!_.isEmpty(sortedProjects)) {
           var uniqueId = 0;
-          _.each(unfinishedProjects, function(proj) {
+          _.each(sortedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
             html += '<tr id="' + uniqueId + '" class="project-item">' +
-                    '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
+                    '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
                     '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                     '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
                     '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
@@ -216,7 +223,6 @@
       User can sort project list by clicking the sort arrows next to column headers. By clicking same arrows again, user can reverse the order.
        */
       projectList.on('click', '[id^=sort]', function (event) {
-        $('#project-list').empty();
         var eventId = event.target.id;
         for (var id in headers) { // Update order values
           if (headers.hasOwnProperty(id)) {
@@ -232,15 +238,16 @@
             $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(decodeOrder(header.order));
           }
         }
-        // Sort and create project list
-        createProjectList(projectArray.sort(function (a, b) {
-          var cmp = headers[eventId].sortFunc(a,b);
-          return (cmp !== 0) ? cmp * headers[eventId].order : a.name.localeCompare(b.name, 'fi');
-        }));
+        // Create project list with right sorting
+        createProjectList(projectArray, headers[eventId].sortFunc, headers[eventId].order);
+        filterByUser();
       });
 
       $('#TRProjectsVisibleCheckbox').change(function() {
-        createProjectList(projectArray);
+        var sortByHeader = Object.values(headers).find( function(header) {
+          return header.order !== 0;
+        });
+        createProjectList(projectArray, sortByHeader.sortFunc, sortByHeader.order);
       });
 
       projectList.on('click', 'button.cancel', function() {
