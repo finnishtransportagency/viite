@@ -1702,7 +1702,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject) = {
     val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id).filterNot(p => {
-      p.roadNumber > 70000 && p.roadName == null
+      p.roadNumber >= maxRoadNumberDemandingRoadName && p.roadName == null
     })
     val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
     val (existingLinkNames, newLinkNames) = projectLinkNames.partition(pln => existingInRoadNames.contains(pln.roadNumber))
