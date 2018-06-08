@@ -723,7 +723,7 @@
         var features = [];
         _.each(selectedLink, function (featureLink){
          _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
-            if(featureLink.linkId !== 0 && feature.roadLinkData.linkId === featureLink.linkId){
+            if(featureLink.linkId !== 0 && _.contains(featureLink.selectedLinks, feature.roadLinkData.linkId)){
               return features.push(feature);
             }
           });
@@ -761,7 +761,7 @@
         indicatorLayer.getSource().clear();
       });
 
-        eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection) {
+        eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection, selectedIds) {
         draw();
         if (!noReselection && applicationModel.getSelectionType() !== 'unknown') {_.defer(function(){
           var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
@@ -780,8 +780,9 @@
             if (filteredFeaturesToReselect.length !== 0){
             addFeaturesToSelection(filteredFeaturesToReselect);
           }
+
           var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function(feature){
-            return _.contains(_.pluck(selectedLinkProperty.get(), 'linkId'), feature.roadLinkData.linkId);
+            return _.contains(_.unique(selectedIds), feature.roadLinkData.linkId);
           }), function(feat){return feat.roadLinkData;});
 
                     var groups = _.flatten(eventData);
