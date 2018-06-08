@@ -373,6 +373,14 @@ Tallennettuun tieosoitteeseen voi jatkaa uusien linkkien lis&auml;&auml;mist&aum
 
 Tieosoitteen voi antaa Viitteess&auml; my&ouml;s ns. Suravage-linkeille (SuRavaGe = Suunniteltu rakentamisvaiheen geometria). Suravage-tiet n&auml;kyv&auml;t Viitteess&auml; vaaleanpunaisella v&auml;rill&auml; ja niiss&auml; n&auml;kyy my&ouml;s tieosoitteen kasvusuuntanuolet. 
 
+__Uuden kiertoliittym&auml;n alkupaikan muuttaminen__
+
+Jos Uusi-toimenpiteell&auml; tieosoitteistetulla kiertoliittym&auml;n; linkeill&auml; on VVH:ssa (esim. suravage-linkit) tienumero, kiertoliittym&auml;n voi ns. "pikaosoitteistaa". Pikaosoitteistaminen tapahtuu kertaamalla kiertoliittym&auml;n alkukohdaksi haluttua linkki&auml;. T&auml;ll&ouml;in koko kiertoliittym&auml;n linkit tulevat valituiksi. Uusi toimenpide asettaa alkukohdaksi klikatun linkin.
+
+Muussa tapauksessa kiertoliittym&auml;n alkukohta asetataan manuaalisesti kahdessa vaiheessa. 1. Valitaan alkupaikka tuplaklikkaamalla kiertoliittym&auml;n linkki&auml; tieosoitteen haluttuun alkupaikkaan. Valitulle linkille annetaan Uusi-toimenpiteell&auml; tieosoite. 2. Kiertoliittym&auml;n loput linkit valitaan Shift + tuplaklikkaamalla ja annetaan nille sama tieosoite.    
+
+Tieosoiteprojektissa Uusi-toimenpiteell&auml; jo tieosoiteistetun kiertoliittym&auml;n alkupaikka muutetaan palauttamalla kiertoliittym&auml; ensin tieosoitteettomaksi ja osoitteistamalla se uudelleen. Valitse tieosoitteistettu kiertoliittym&auml; ja k&auml;yt&auml; toimenpidett&auml; "Palauta aihioksi tai tieosoitteettomaksi". Toimenpiteen j&auml;lkeen kiertoliittym&auml;n voi tieosoitteistaa uudelleen halutusta alkupaikasta aloittaen.
+
 7.1.3 Ennallaan
 --------------------------
 Tieosan linkkien tieosoitteen voi s&auml;ilytt&auml;&auml; ennallaan esimerkiksi silloin, kun osalle tieosaa halutaan tehd&auml; tieosoitemuutoksia ja osan s&auml;ilyv&auml;n ennallaan. T&auml;ll&ouml;in tieosa k&auml;sitell&auml;&auml;n toimenpiteell&auml; Ennallaan. Toimenpide tehd&auml;&auml;n varaamalla ensin projektitietojen formilla projektiin muokattava tieosa tai -osat. Seuraavaksi siirryt&auml;&auml;n toimenpiden&auml;yt&ouml;lle Jatka toimenpiteisiin - painikkeella. Valittu tieosa tai sen tietyt linkit valitaan kartalta, jolloin ne muuttuvat vihreiksi, ja lomakkeelle ilmestyy alasvetovalikko. Valikosta valitaan toimenpide "Ennallaan" ja tallennetaan muutokset.   
