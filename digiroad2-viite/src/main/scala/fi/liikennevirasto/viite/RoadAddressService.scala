@@ -82,13 +82,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         roadLinkService.getRoadLinksHistoryFromVVH(floatingAddresses.map(_.linkId).toSet)
       }
     }
-    val historyFloatingLinkAddresses = time(logger, "Build history link addresses") {
+    val historyLinkAddresses = time(logger, "Build history link addresses") {
       floatingHistoryRoadLinks.flatMap(fh => {
         buildFloatingRoadAddressLink(fh, floatingAddresses.filter(_.linkId == fh.linkId))
       })
     }
 
-    RoadAddressResult(historyFloatingLinkAddresses, nonFloatingAddresses, floatingAddresses)
+    RoadAddressResult(historyLinkAddresses, nonFloatingAddresses, floatingAddresses)
   }
 
   private def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
@@ -215,9 +215,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(link))
 
-
-    val test = missingFloating.map(floating => floating.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
-    returningTopology ++ test
+    returningTopology ++ missingFloating.map(floating => floating.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
 
   }
 
