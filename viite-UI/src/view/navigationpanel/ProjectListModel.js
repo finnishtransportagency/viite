@@ -140,20 +140,20 @@
 
       eventbus.once('roadAddressProjects:fetched', function(projects) {
         projectArray = _.filter(projects, function(proj) {
-          return proj.statusCode !== 7; //filter deleted projects out
+          return proj.statusCode !== ProjectStatus.Deleted.value; //filter deleted projects out
         });
         createProjectList(projectArray);
       });
 
       var createProjectList = function(projects, sortFunction = function(a,b) {return a.ely - b.ely}, order = 1) {
         var unfinishedProjects = _.filter(projects, function(proj) {
-          if (proj.statusCode === 5) {
+          if (proj.statusCode === ProjectStatus.Saved2TR.value) {
             var hoursInDay = 24;
             var millisecondsToHours = 1000*60*60;
             //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return ((proj.statusCode >= 1 && proj.statusCode <= 4) || proj.statusCode === 8);
+          return ((proj.statusCode >= 1 && proj.statusCode <= 4) || proj.statusCode === ProjectStatus.ErrorInViite.value);
         });
 
         var sortedProjects = unfinishedProjects.sort( function(a,b) {
