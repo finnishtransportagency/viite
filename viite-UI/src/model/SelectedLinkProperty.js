@@ -60,9 +60,10 @@
           .join(', ');
       };
 
-      var properties = _.cloneDeep(_.first(selectedData));
       var isMultiSelect = selectedData.length > 1;
-      if (isMultiSelect) {
+        var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
+        var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
+        if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate'];
@@ -77,7 +78,6 @@
         var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
         var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
         var roadLinkSource = {roadLinkSource: extractUniqueValues(selectedData, 'roadLinkSource')};
-
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
