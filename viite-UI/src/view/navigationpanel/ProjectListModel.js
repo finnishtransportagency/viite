@@ -9,7 +9,7 @@
         }},
       "sortELY": {toStr: "ELY", width: "50", order: 1,
         sortFunc: function(a,b) {
-            return (a.ely - b.ely);
+            return a.ely - b.ely;
         }},
       "sortUser": {toStr: "KÄYTTÄJÄ", width: "115", order: 0,
         sortFunc: function(a,b) {
@@ -19,11 +19,11 @@
         sortFunc: function(a,b) {
             var aDate = a.startDate.split('.').reverse().join('-');
             var bDate = b.startDate.split('.').reverse().join('-');
-            return (new Date(bDate) - new Date(aDate));
+            return new Date(bDate) - new Date(aDate);
         }},
       "sortStatus": {toStr: "TILA", width: "60", order: 0,
         sortFunc: function(a,b) {
-            return (a.statusCode - b.statusCode);
+            return a.statusCode - b.statusCode;
         }}
     };
 
@@ -122,15 +122,18 @@
 
 
     var userFilterVisibility = function (showFilters) {
+      var searchBox = $('#userFilterSpan');
+      var textField = $('#userNameBox');
       if (showFilters) {
-        $('#userFilterSpan').show();
-        if ($('#userNameBox').val() === "") {
-          $('#userNameBox').val(applicationModel.getSessionUser());
+        searchBox.show();
+        if (textField.val() === "") {
+          textField.val(applicationModel.getSessionUser());
         }
-        filterByUser();
       } else {
-        $('#userFilterSpan').hide();
+        textField.val("");
+        searchBox.hide();
       }
+      filterByUser();
     };
 
     function bindEvents() {
@@ -150,7 +153,7 @@
             //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return ((proj.statusCode >= 1 && proj.statusCode <= 4) || proj.statusCode === 8) && (proj.ely === -1 || $('#TRProjectsVisibleCheckbox')[0].checked);
+          return ((proj.statusCode >= 1 && proj.statusCode <= 4) || proj.statusCode === 8);
         });
 
         var sortedProjects = unfinishedProjects.sort( function(a,b) {
@@ -248,6 +251,7 @@
           return header.order !== 0;
         });
         createProjectList(projectArray, sortByHeader.sortFunc, sortByHeader.order);
+        filterByUser();
       });
 
       projectList.on('click', 'button.cancel', function() {
@@ -255,6 +259,7 @@
       });
 
       projectList.on('click', 'button.new', function() {
+        userFilterVisibility(false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger('roadAddress:newProject');
         if(applicationModel.isReadOnly()) {
