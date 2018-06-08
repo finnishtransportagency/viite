@@ -2,6 +2,7 @@
     root.RoadNamingToolWindow = function (roadNameCollection) {
 
         var newId = -1000;
+      var yearLimit = 5;
         var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
         nameToolSearchWindow.append('<button class="close btn-close" id="closeRoadNameTool">x</button>');
@@ -97,15 +98,20 @@
             $('.modal-overlay').remove();
         }
 
+      var getDataObjects = function (fieldValue) {
+        var fieldDateString = fieldValue.split('.');
+        var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
+        var futureDate = new Date();
+        futureDate.setFullYear(futureDate.getFullYear() + yearLimit);
+        return {'fieldDate': fieldDate, 'futureDate': futureDate};
+      };
+
         function toggleSaveButton() {
             $('#saveChangedRoads').prop("disabled",
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
                   if ($(element).attr('data-FieldName') === "startDate") {
-                    var fieldDateString = $(element).val().split('.');
-                    var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
-                    var futureDate = new Date();
-                    futureDate.setFullYear(futureDate.getFullYear() + 5);
-                    return $(element).val() !== '' && futureDate > fieldDate;
+                    var datas = getDataObjects($(element).val());
+                    return $(element).val() !== '' && datas.futureDate > datas.fieldDate;
                   } else return $(element).val() !== '';
                 })
             );
@@ -126,11 +132,8 @@
                         $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
-                  var fieldDateString = fieldValue.split('.');
-                  var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
-                  var futureDate = new Date();
-                  futureDate.setFullYear(futureDate.getFullYear() + 5);
-                  if (fieldDate > futureDate)
+                  var datas = getDataObjects(fieldValue);
+                  if (datas.fieldDate > datas.futureDate)
                     target.css('color', 'red');
                   else target.css('color', 'black');
                     roadNameCollection.setStartDate(roadId, fieldValue);
