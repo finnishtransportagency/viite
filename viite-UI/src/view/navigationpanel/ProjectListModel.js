@@ -229,6 +229,7 @@
           var cmp = headers[eventId].sortFunc(a,b);
           return (cmp !== 0) ? cmp * headers[eventId].order : a.name.localeCompare(b.name, 'fi');
         }));
+        filterByUser();
       });
 
       projectList.on('click', 'button.cancel', function() {
