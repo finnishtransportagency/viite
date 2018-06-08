@@ -219,9 +219,7 @@
     var processOl3Features = function (visibleFeatures){
       var selectedOL3Features = _.filter(visibleFeatures, function(vf){
         return (_.some(get().concat(featuresToKeep), function(s){
-            return s.linkId === vf.roadLinkData.linkId;
-          })) && (_.some(get().concat(featuresToKeep), function(s){
-            return s.mmlId === vf.roadLinkData.mmlId;
+            return s.linkId === vf.roadLinkData.linkId &&  s.mmlId === vf.roadLinkData.mmlId;
           }));
       });
       eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);

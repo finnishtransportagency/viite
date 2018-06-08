@@ -248,6 +248,10 @@
         selectSingleClick.getFeatures().clear();
       }
 
+      if(applicationModel.isReadOnly()){
+        selectDoubleClick.getFeatures().clear();
+      }
+
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
