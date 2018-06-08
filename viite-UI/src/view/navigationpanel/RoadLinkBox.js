@@ -71,9 +71,9 @@
       var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1" />';
       for (var i = 1; i <= 6; i++) {
         segments = segments +
-            '<div class="middle symbol linear linear-asset-' + i + '" />';
+            '<div class="middle symbol linear rainbow-asset-' + i + '" />';
       }
-      return segments + '<div class="middle symbol linear linear-asset-2" />' + '<div class="middle symbol linear linear-asset-1 " /> <div class="edge-right symbol linear linear-asset-1" /></div>';
+      return segments + '<div class="middle symbol linear rainbow-asset-2" />' + '<div class="middle symbol linear rainbow-asset-1 " /> <div class="edge-right symbol linear linear-asset-1" /></div>';
     };
 
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
@@ -270,17 +270,6 @@
         roadClassLegend.append(constructionTypeLegendEntries);
         roadClassLegend.append(floatingLegend);
         roadClassLegend.append(calibrationPointPicture);
-        _.defer(function () {
-          $('.middle').each(function () {
-            var backgroundColor = $(this).css('background-color').split(', ').map(function (textElement) {
-              if (textElement.includes(")")) {
-                return "1)";
-              } else
-                return textElement;
-            }).join();
-            $(this).css('background', backgroundColor);
-          });
-        });
       }
     }
 
