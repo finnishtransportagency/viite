@@ -100,7 +100,13 @@
         function toggleSaveButton() {
             $('#saveChangedRoads').prop("disabled",
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
-                    return $(element).val() !== '';
+                  if ($(element).attr('data-FieldName') === "startDate") {
+                    var fieldDateString = $(element).val().split('.');
+                    var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
+                    var futureDate = new Date();
+                    futureDate.setFullYear(futureDate.getFullYear() + 5);
+                    return $(element).val() !== '' && futureDate > fieldDate;
+                  } else return $(element).val() !== '';
                 })
             );
         }
@@ -120,6 +126,13 @@
                         $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
+                  var fieldDateString = fieldValue.split('.');
+                  var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
+                  var futureDate = new Date();
+                  futureDate.setFullYear(futureDate.getFullYear() + 5);
+                  if (fieldDate > futureDate)
+                    target.css('color', 'red');
+                  else target.css('color', 'black');
                     roadNameCollection.setStartDate(roadId, fieldValue);
                     break;
             }
