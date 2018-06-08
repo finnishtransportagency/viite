@@ -17,4 +17,8 @@ object Sequences {
   def nextCommonHistorySeqValue: Long = {
     nextCommonHistoryValue.as[Long].first
   }
+
+  def nextRoadNetworkErrorSeqValue: Long = {
+    nextRoadNetworkErrorValue.as[Long].first
+  }
 }
