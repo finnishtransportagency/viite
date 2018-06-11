@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.vvh
 
+import java.io.IOException
 import java.net.URLEncoder
 import java.util.ArrayList
 
@@ -359,12 +360,28 @@ trait VVHClientOperations {
       val fetchVVHStartTime = System.currentTimeMillis()
       val request = new HttpGet(url)
       val client = HttpClientBuilder.create().build()
-      val response = client.execute(request)
       try {
-        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-      } finally {
-        response.close()
+        val response = client.execute(request)
+        try {
+          mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        } finally {
+          response.close()
+        }
       }
+      catch {
+        case  ioe: IOException  => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
+      }
+    }
+  }
+
+
+  protected def fetchFeaturesAndLog(url: String): Seq[VVHType] = {
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) =>
+        logger.error("VVH error: " + error)
+        throw new VVHClientException(error.toString)
+
     }
   }
 
@@ -375,9 +392,15 @@ trait VVHClientOperations {
       val client = HttpClientBuilder.create().build()
       val response = client.execute(request)
       try {
-        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-      } finally {
-        response.close()
+        val response = client.execute(request)
+        try {
+          mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        } finally {
+          response.close()
+        }
+      }
+      catch {
+        case ioe:IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
       }
     }
   }
@@ -447,13 +470,8 @@ trait VVHClientOperations {
   protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHType] = {
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), filter))
     val url = serviceUrl(definition, queryParameters())
-
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
+    fetchFeaturesAndLog(url)
   }
-
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
@@ -461,11 +479,7 @@ trait VVHClientOperations {
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[VVHType] = {
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))
     val url = serviceUrl(bounds, definition, queryParameters())
-
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
+    fetchFeaturesAndLog(url)
   }
 
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHType] = {
@@ -481,11 +495,7 @@ trait VVHClientOperations {
 
     val definition = layerDefinition(combineFiltersWithAnd("",""))
     val url = serviceUrl(polygon, definition, queryParameters())
-
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
+    fetchFeaturesAndLog(url)
   }
 
 }
@@ -550,11 +560,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
     val url = serviceUrl(definition, queryParameters())
-
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
+    fetchFeaturesAndLog(url)
   }
 
   protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
@@ -576,7 +582,9 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
     fetchVVHFeatures(serviceUrl, nvps) match {
       case Left(features) => features.map(extractLinkIdFromVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
+      case Right(error) =>
+        logger.error("VVH error: " + error)
+        throw new VVHClientException(error.toString)
     }
   }
 
@@ -600,7 +608,9 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
           val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
           resultTransition(attributes, geometry)
         }
-        case Right(error) => throw new VVHClientException(error.toString)
+        case Right(error) =>
+          logger.error("VVH error: " + error)
+          throw new VVHClientException(error.toString)
       }
     }.toList
   }
@@ -766,11 +776,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
     val url = serviceUrl(definition, queryParameters())
-
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
+    fetchFeaturesAndLog(url)
   }
 
   /**
@@ -963,11 +969,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(withFilter("OLD_ID", ids))
       val url = serviceUrl(definition, queryParameters(false))
-
-      fetchVVHFeatures(url) match {
-        case Left(features) => features.map(extractVVHFeature)
-        case Right(error) => throw new VVHClientException(error.toString)
-      }
+      fetchFeaturesAndLog(url)
     }.toList
   }
 }
@@ -1147,7 +1149,9 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
 
         fetchVVHFeatures(url) match {
           case Left(features) => features.map(extractVVHHistoricFeature)
-          case Right(error) => throw new VVHClientException(error.toString)
+          case Right(error) =>
+            logger.error("VVH error: " + error)
+            throw new VVHClientException(error.toString)
         }
       }.toList
     }
