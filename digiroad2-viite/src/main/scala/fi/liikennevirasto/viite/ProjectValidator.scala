@@ -224,7 +224,9 @@ object ProjectValidator {
                                     optionalInformation: Option[String])
 
   def error(id: Long, validationError: ValidationError)(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
-    val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+    val (splitedLinks, nonSplitedLinks) = pl.partition(_.connectedLinkId.nonEmpty)
+    val connectedSplitedLinks = splitedLinks.flatMap(p => ProjectDAO.getProjectLinksByConnectedLinkId(Seq(p.connectedLinkId.get, p.linkId)))
+    val (ids, points) = (nonSplitedLinks++connectedSplitedLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty)
       Some(ValidationErrorDetails(id, validationError, ids,
         points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
@@ -340,7 +342,10 @@ object ProjectValidator {
   def checkRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
 
     def errorWithInfo(validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]) = {
-      val (linkIds, points) = pl.map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+      //splited links should appear together even if only one of them has error
+      val (splitedLinks, nonSplitedLinks) = pl.partition(_.connectedLinkId.nonEmpty)
+      val connectedSplitedLinks = splitedLinks.flatMap(p => ProjectDAO.getProjectLinksByConnectedLinkId(Seq(p.connectedLinkId.get, p.linkId)))
+      val (linkIds, points) = (nonSplitedLinks++connectedSplitedLinks).map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
       if (linkIds.nonEmpty)
         Some(ValidationErrorDetails(project.id, validationError, linkIds,
           points.map(p => ProjectCoordinates(p.x, p.y, 12)), Some(info)))
