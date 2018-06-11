@@ -1,4 +1,4 @@
-package fi.liikennevirasto.viite.process.Strategies
+package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
@@ -7,95 +7,14 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPo
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.slf4j.LoggerFactory
 
-object TrackSectionCalculatorContext {
-
-  private lazy val defaultTrackSectionCalculatorStrategy: DefaultTrackSectionCalculatorStrategy = {
-    new DefaultTrackSectionCalculatorStrategy
-  }
-
-  private val defaultStrategy = defaultTrackSectionCalculatorStrategy
-  private val strategies = Seq[TrackSectionCalculatorStrategy]()
-
-  def getStrategy(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink]): TrackSectionCalculatorStrategy = {
-    strategies.find(_.applicableStrategy(leftProjectLinks, rightProjectLinks)).getOrElse(defaultStrategy)
-  }
-}
-
-case class TrackSectionCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], stratAddrMValue: Long, endAddrMValue: Long)
-
-trait TrackSectionCalculatorStrategy {
-  def applicableStrategy(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink]): Boolean = false
-
-  def assignTrackMValues(startAddress: Option[Long] , leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackSectionCalculatorResult
-}
-
-class DefaultTrackSectionCalculatorStrategy extends TrackSectionCalculatorStrategy {
-
-  protected def averageOfAddressMValues(rAddrM: Double, lAddrM: Double, reversed: Boolean): Long = {
-    val average = 0.5 * (rAddrM + lAddrM)
-
-    if (reversed) {
-      if (rAddrM > lAddrM) Math.floor(average).round else Math.ceil(average).round
-    } else {
-      if (rAddrM > lAddrM) Math.ceil(average).round else Math.floor(average).round
-    }
-  }
-
-  protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
-                      userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
-
-    val reversed = rightLink.reversed || leftLink.reversed
-
-    (leftLink.status, rightLink.status) match {
-      case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>
-        (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
-      case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
-        (rightLink.startAddrMValue, rightLink.endAddrMValue)
-      case (_ , LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
-        (leftLink.startAddrMValue, leftLink.endAddrMValue)
-      case _ =>
-        userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
-          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
-        )
-    }
-  }
-
-  protected def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    def setLastEndAddrMValue(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (projectLinks.last.status != LinkStatus.NotHandled)
-        projectLinks.init :+ projectLinks.last.copy(endAddrMValue = en)
-      else
-        projectLinks
-    }
-
-    val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
-    setLastEndAddrMValue(ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff))
-  }
-
-  protected def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) = {
-    (assignValues(left, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(left), userDefinedCalibrationPoint),
-      assignValues(right, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(right), userDefinedCalibrationPoint))
-  }
-
-  override def assignTrackMValues(startAddress: Option[Long] , leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackSectionCalculatorResult = {
-    val availableCalibrationPoint = userDefinedCalibrationPoint.get(rightProjectLinks.last.id).orElse(userDefinedCalibrationPoint.get(leftProjectLinks.last.id))
-
-    val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
-    val endSectionAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
-
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, userDefinedCalibrationPoint)
-
-    TrackSectionCalculatorResult(adjustedLeft, adjustedRight, startSectionAddress, endSectionAddress)
-  }
-}
-
-class CombineSectionCalculatorStrategy extends RoadSectionCalculatorStrategy {
+class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  override val name: String = "Combine Section"
+  override val name: String = "Normal Section"
 
   override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
@@ -165,7 +84,7 @@ class CombineSectionCalculatorStrategy extends RoadSectionCalculatorStrategy {
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
 
-        val strategy = TrackSectionCalculatorContext.getStrategy(firstLeft, firstRight)
+        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
 
         val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restLeft, restRight, Some(trackCalcResult.endAddrMValue))
@@ -229,25 +148,11 @@ class CombineSectionCalculatorStrategy extends RoadSectionCalculatorStrategy {
     )
   }
 
-  // TODO: use user given start calibration points (US-564, US-666, US-639)
-  // Sort: smallest endAddrMValue is first but zero does not count.
-  def makeStartCP(projectLink: ProjectLink) = {
-    Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
-  }
-
-  def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
-    val segmentValue = if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength
-    val addressValue = (userDefinedCalibrationPoint, (projectLink.startAddrMValue, projectLink.endAddrMValue)) match {
-      case (Some(usercp), addr) => if (usercp.addressMValue < addr._1) addr._2 else usercp.addressMValue
-      case (None, addr) => addr._2
-    }
-    Some(CalibrationPoint(projectLink.linkId, segmentValue, addressValue))
-  }
   //TODO delete this method
   def makeLink(link: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint],
                startCP: Boolean, endCP: Boolean) = {
-    val sCP = if (startCP) makeStartCP(link) else None
-    val eCP = if (endCP) makeEndCP(link, userDefinedCalibrationPoint) else None
+    val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(link) else None
+    val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(link, userDefinedCalibrationPoint) else None
     link.copy(calibrationPoints = (sCP, eCP))
   }
   //TODO delete this method
