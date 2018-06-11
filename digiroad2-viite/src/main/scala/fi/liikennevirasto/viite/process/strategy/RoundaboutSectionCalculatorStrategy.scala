@@ -1,10 +1,10 @@
-package fi.liikennevirasto.viite.process.Strategies
+package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
 
-class RoundaboutSectionCalculatorStrategy extends RoadSectionCalculatorStrategy {
+class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
   override val name: String = "Roundabout"
 

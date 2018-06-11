@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.{RampsMaxBound, RampsMinBound, RoadType}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.Strategies.RoadSectionCalculatorContext
+import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import org.slf4j.LoggerFactory
 
 
@@ -34,7 +34,7 @@ object ProjectSectionCalculator {
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     try {
 
-      val calculator = RoadSectionCalculatorContext.getStrategy(others)
+      val calculator = RoadAddressSectionCalculatorContext.getStrategy(others)
       logger.info(s"${calculator.name} strategy")
       calculator.assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
 

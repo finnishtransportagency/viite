@@ -1,28 +1,27 @@
-package fi.liikennevirasto.viite.process.Strategies
+package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectLink
 
-object RoadSectionCalculatorContext {
+object RoadAddressSectionCalculatorContext {
 
-  private lazy val combineSectionCalculatorStrategy: CombineSectionCalculatorStrategy = {
-    new CombineSectionCalculatorStrategy
+  private lazy val defaultSectionCalculatorStrategy: DefaultSectionCalculatorStrategy = {
+    new DefaultSectionCalculatorStrategy
   }
 
   private lazy val roundaboutSectionCalculatorStrategy: RoundaboutSectionCalculatorStrategy = {
     new RoundaboutSectionCalculatorStrategy
   }
 
-  private val defaultStrategy = combineSectionCalculatorStrategy
   private val strategies = Seq(roundaboutSectionCalculatorStrategy)
 
-  def getStrategy(projectLinks: Seq[ProjectLink]): RoadSectionCalculatorStrategy = {
-    strategies.find(_.applicableStrategy(projectLinks)).getOrElse(defaultStrategy)
+  def getStrategy(projectLinks: Seq[ProjectLink]): RoadAddressSectionCalculatorStrategy = {
+    strategies.find(_.applicableStrategy(projectLinks)).getOrElse(defaultSectionCalculatorStrategy)
   }
 
 }
 
-trait RoadSectionCalculatorStrategy {
+trait RoadAddressSectionCalculatorStrategy {
 
   val name: String
 
