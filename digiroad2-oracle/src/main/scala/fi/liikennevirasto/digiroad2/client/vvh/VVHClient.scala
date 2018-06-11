@@ -362,6 +362,9 @@ trait VVHClientOperations {
       val client = HttpClientBuilder.create().build()
       try {
         val response = client.execute(request)
+        if (response.getStatusLine.getStatusCode>=300){
+          Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+        }
         try {
           mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
         } finally {
@@ -389,9 +392,11 @@ trait VVHClientOperations {
       val request = new HttpPost(url)
       request.setEntity(new UrlEncodedFormEntity(formparams, "utf-8"))
       val client = HttpClientBuilder.create().build()
-      val response = client.execute(request)
       try {
         val response = client.execute(request)
+        if (response.getStatusLine.getStatusCode>=300){
+          Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+        }
         try {
           mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
         } finally {
