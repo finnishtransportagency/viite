@@ -59,7 +59,7 @@
       [9, 'Talvitie (60001 - 61999)'],
       [10,'Polku (62001 - 62999)'],
       [11,'Muu tieverkko'],
-      [98, 'Tietyyppi kunnana katuosuus tai yks.tie'],
+      [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
       [99,'Tuntematon']
     ];
     var constructionTypes = [
