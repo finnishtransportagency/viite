@@ -5,7 +5,8 @@
     var createMarker = function(roadlink) {
       var middlePoint = calculateMiddlePoint(roadlink);
       var bounds = getBounds(middlePoint.x, middlePoint.y);
-      var sourceSuravage=3;
+      var LinkGeomSource = LinkValues.LinkGeomSource;
+      var RoadLinkType = LinkValues.RoadLinkType;
       var box = new ol.Feature({
         geometry: new ol.geom.Point([middlePoint.x, middlePoint.y]),
         linkId : roadlink.linkId,
@@ -45,7 +46,7 @@
       var directionMarkerColor= function(roadLink){
         if(roadLink.status === 2){
           return '#ff55dd';
-        } else if (roadLink.roadLinkSource === sourceSuravage && roadLink.id === 0) {
+        } else if (roadLink.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && roadLink.id === 0) {
           return '#d3aff6';
         }
         else if (roadLink.roadClass in colorMap) {
@@ -76,9 +77,9 @@
 
       if(roadlink.roadLinkType===-1){
         box.setStyle(boxStyleFloat);
-      } else if(roadlink.roadLinkSource===3){
+      } else if(roadlink.roadLinkSource===LinkGeomSource.SuravageLinkInterface.value){
         box.setStyle(boxStyleDirectional(roadlink));
-      } else if(roadlink.id===0 && roadlink.roadLinkType === 0){
+      } else if(roadlink.id===0 && roadlink.roadLinkType === RoadLinkType.UnknownRoadLinkType.value){
         box.setStyle(boxStyleUnknown);
       } else {
         box.setStyle(boxStyleDirectional(roadlink));
