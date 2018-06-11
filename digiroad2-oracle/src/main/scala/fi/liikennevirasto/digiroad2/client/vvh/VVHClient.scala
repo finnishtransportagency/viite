@@ -381,7 +381,6 @@ trait VVHClientOperations {
       case Right(error) =>
         logger.error("VVH error: " + error)
         throw new VVHClientException(error.toString)
-
     }
   }
 
