@@ -223,13 +223,13 @@ object ProjectValidator {
                                     affectedIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
-  def error(id: Long, validationError: ValidationError)(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+  def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
     val (splitedLinks, nonSplitedLinks) = pl.partition(_.connectedLinkId.nonEmpty)
     val connectedSplitedLinks = splitedLinks.flatMap(p => ProjectDAO.getProjectLinksByConnectedLinkId(Seq(p.connectedLinkId.get, p.linkId)))
     val (ids, points) = (nonSplitedLinks++connectedSplitedLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty)
       Some(ValidationErrorDetails(id, validationError, ids,
-        points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+        points.map(p => ProjectCoordinates(p.x, p.y, 12)), Some(info)))
     else
       None
   }
@@ -341,18 +341,6 @@ object ProjectValidator {
     */
   def checkRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
 
-    def errorWithInfo(validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]) = {
-      //splited links should appear together even if only one of them has error
-      val (splitedLinks, nonSplitedLinks) = pl.partition(_.connectedLinkId.nonEmpty)
-      val connectedSplitedLinks = splitedLinks.flatMap(p => ProjectDAO.getProjectLinksByConnectedLinkId(Seq(p.connectedLinkId.get, p.linkId)))
-      val (linkIds, points) = (nonSplitedLinks++connectedSplitedLinks).map(pl => (pl.linkId, GeometryUtils.midPointGeometry(pl.geometry))).unzip
-      if (linkIds.nonEmpty)
-        Some(ValidationErrorDetails(project.id, validationError, linkIds,
-          points.map(p => ProjectCoordinates(p.x, p.y, 12)), Some(info)))
-      else
-        None
-    }
-
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
       // This code means that this road part (of a ramp) should be connected to a roundabout
       val endPoints = pls.map(endPoint).map(p => (p.x, p.y)).unzip
@@ -450,7 +438,7 @@ object ProjectValidator {
           if (isConnectingRoundabout(lastProjectLinks) && isRampValidation) {
             discontinuity match {
               case EndOfRoad | ChangingELYCode | Continuous =>
-                return errorWithInfo(ValidationErrorList.RoadConnectingRoundabout,
+                return error(project.id, ValidationErrorList.RoadConnectingRoundabout,
                   s"Rampin ${lastProjectLinks.head.roadNumber} tieosa ${lastProjectLinks.head.roadPartNumber} päättyy kiertoliittymään. Korjaa lievä epäjatkuvuus")(lastProjectLinks)
               case _ =>
             }
