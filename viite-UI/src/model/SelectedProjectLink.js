@@ -21,9 +21,9 @@
     };
 
     var openWithErrorMessage = function (id, errorMessage) {
-      current = projectLinkCollection.getProjectLink([id]);
-      ids = [id];
-      eventbus.trigger('projectLink:errorClicked', get(id), errorMessage);
+      current = projectLinkCollection.getProjectLink(id);
+      ids = id;
+      eventbus.trigger('projectLink:errorClicked', get(id[0]), errorMessage);
     };
 
     var orderSplitParts = function(links) {
