@@ -2,6 +2,9 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHHistoryRoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
