@@ -1064,30 +1064,37 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
       val request = new HttpPost(url)
       request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
       val client = HttpClientBuilder.create().build()
-      val response = client.execute(request)
       try {
-        val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
-        content.get("updateResults").getOrElse(None) match {
-          case None =>
-            content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
-              case None => Right(VVHError(Map("error" -> "Error Without Details "), url))
-              case value => Right(VVHError(Map("error details" -> value), url))
-            }
-          case _ =>
-            content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
-              case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
-              case true => Left(List(content))
-              case false =>
-                content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
-                  case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
-                  case value => Right(VVHError(Map("error" -> value), url))
-                }
-            }
+        val response = client.execute(request)
+        if (response.getStatusLine.getStatusCode >= 300) {
+          Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+        }
+        try {
+          val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
+          content.get("updateResults").getOrElse(None) match {
+            case None =>
+              content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
+                case None => Right(VVHError(Map("error" -> "Error Without Details "), url))
+                case value => Right(VVHError(Map("error details" -> value), url))
+              }
+            case _ =>
+              content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
+                case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
+                case true => Left(List(content))
+                case false =>
+                  content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
+                    case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
+                    case value => Right(VVHError(Map("error" -> value), url))
+                  }
+              }
+          }
+        } catch {
+          case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
+        } finally {
+          response.close()
         }
       } catch {
-        case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
-      } finally {
-        response.close()
+        case ioe: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
       }
     }
   }
