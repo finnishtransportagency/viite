@@ -5,7 +5,7 @@ import java.net.ConnectException
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
@@ -166,7 +166,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
     def toHistoryRoadLink(roadLinkLike: RoadLinkLike): VVHHistoryRoadLink = {
       val featureClassCode = roadLinkLike.attributes.getOrElse("MTKCLASS", BigInt(0)).asInstanceOf[BigInt].intValue()
-      VVHHistoryRoadLink(roadLinkLike.linkId, roadLinkLike.municipalityCode, roadLinkLike.geometry, roadLinkLike.administrativeClass, roadLinkLike.trafficDirection, featureClassCodeToFeatureClass.getOrElse(featureClassCode, AllOthers),
+      VVHHistoryRoadLink(roadLinkLike.linkId, roadLinkLike.municipalityCode, roadLinkLike.geometry, roadLinkLike.administrativeClass, roadLinkLike.trafficDirection,  VVHClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, AllOthers),
         roadLinkLike.vvhTimeStamp, roadLinkLike.vvhTimeStamp, roadLinkLike.attributes, roadLinkLike.constructionType, roadLinkLike.linkSource, roadLinkLike.length)
     }
 
