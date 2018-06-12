@@ -224,14 +224,15 @@ object ProjectValidator {
                                     optionalInformation: Option[String])
 
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
-    val (splitedLinks, nonSplitedLinks) = pl.partition(_.connectedLinkId.nonEmpty)
-    val connectedSplitedLinks = splitedLinks.flatMap(p => ProjectDAO.getProjectLinksByConnectedLinkId(Seq(p.connectedLinkId.get, p.linkId)))
-    val (ids, points) = (nonSplitedLinks++connectedSplitedLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
-    if (ids.nonEmpty)
+    val (splitLinks, nonSplitLinks) = pl.partition(_.connectedLinkId.nonEmpty)
+    val connectedSplitLinks = splitLinks.flatMap(p => ProjectDAO.getProjectLinksByConnectedLinkId(Seq(p.connectedLinkId.get, p.linkId)))
+    val (ids, points) = (nonSplitLinks ++ connectedSplitLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+    if (ids.nonEmpty) {
       Some(ValidationErrorDetails(id, validationError, ids,
         points.map(p => ProjectCoordinates(p.x, p.y, 12)), Some(info)))
-    else
+    } else {
       None
+    }
   }
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -240,7 +241,7 @@ object ProjectValidator {
       projectLinks.filter(_.status != Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).flatMap {
         case ((road, _), seq) =>
           if (road < RampsMinBound || road > RampsMaxBound) {
-            checkRoadContinuityCodes(project, seq, isRampValidation = false)
+            checkRoadContinuityCodes(project, seq)
           } else {
             checkRoadContinuityCodes(project, seq, isRampValidation = true)
           }
@@ -335,8 +336,8 @@ object ProjectValidator {
     * there must be a new end of road link for that road at the last part
     * 5) If the next road part has differing ely code then there must be a discontinuity code 3 at the end
     *
-    * @param project
-    * @param seq
+    * @param project Road address project
+    * @param seq Project links
     * @return
     */
   def checkRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
