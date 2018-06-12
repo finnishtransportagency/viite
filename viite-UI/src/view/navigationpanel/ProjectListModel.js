@@ -3,25 +3,25 @@
     var projectStatus = LinkValues.ProjectStatus;
     var projectArray = [];
     var headers = {
-      "sortName": {toStr: "PROJEKTIN NIMI ", width: "255", order: 0,
+      "sortName": {toStr: "PROJEKTIN NIMI", width: "255", order: 0,
         sortFunc: function(a,b) {
           return a.name.localeCompare(b.name, 'fi');
         }},
-      "sortELY": {toStr: "ELY ", width: "50", order: 1,
+      "sortELY": {toStr: "ELY", width: "50", order: 1,
         sortFunc: function(a,b) {
             return a.ely - b.ely;
         }},
-      "sortUser": {toStr: "KÄYTTÄJÄ ", width: "110", order: 0,
+      "sortUser": {toStr: "KÄYTTÄJÄ", width: "115", order: 0,
         sortFunc: function(a,b) {
             return a.createdBy.localeCompare(b.createdBy, 'fi');
         }},
-      "sortDate": {toStr: "ALKUPVM ", width: "100", order: 0,
+      "sortDate": {toStr: "ALKUPVM", width: "100", order: 0,
         sortFunc: function(a,b) {
             var aDate = a.startDate.split('.').reverse().join('-');
             var bDate = b.startDate.split('.').reverse().join('-');
-            return new Date(aDate) - new Date(bDate);
+            return new Date(bDate) - new Date(aDate);
         }},
-      "sortStatus": {toStr: "TILA ", width: "60", order: 0,
+      "sortStatus": {toStr: "TILA", width: "60", order: 0,
         sortFunc: function(a,b) {
             return a.statusCode - b.statusCode;
         }}
@@ -40,7 +40,13 @@
       for (var id in headers) {
         if (headers.hasOwnProperty(id)) {
           var header = headers[id];
-          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="sort fas ' + decodeOrder(header.order) + '"></i></label>';
+          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="btn-icon sort fas ' + decodeOrder(header.order) + '"></i>';
+          if (id === "sortUser") {
+            html += '<i id="filterUser" class="btn-icon fas fa-filter"></i></label>' +
+                    '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
+                    '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>';
+          }
+          html += '</label>';
         }
       }
       return html;
@@ -94,10 +100,37 @@
       $('.modal-overlay').remove();
     }
 
-
     function fetchProjects(){
       projectCollection.getProjects();
     }
+
+    var filterByUser = function () {
+      var input = $('#userNameBox').val();
+      var rows = $('#project-list').find('tr');
+      if (input === "") {
+        rows.show();
+        return;
+      }
+      rows.hide();
+      rows.each(function () {
+        var label = $(this).find('.innerCreatedBy').find("label").text();
+        if (label.toLowerCase().indexOf(input.toLowerCase()) !== -1)
+          $(this).show();
+      });
+    };
+
+
+    var userFilterVisibility = function (showFilters) {
+      if (showFilters) {
+        $('#userFilterSpan').show();
+        if ($('#userNameBox').val() === "") {
+          $('#userNameBox').val(applicationModel.getSessionUser());
+        }
+        filterByUser();
+      } else {
+        $('#userFilterSpan').hide();
+      }
+    };
 
     function bindEvents() {
 
@@ -111,45 +144,54 @@
           return (proj.statusCode >= 1 && proj.statusCode <= 5) || proj.statusCode === 8;
         });
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
-          if (!_.isEmpty(unfinishedProjects)) {
-            _.each(unfinishedProjects, function(proj) {
-              var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
-              html += '<tr class="project-item">' +
-                '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
-                '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
-                '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-                '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
-                '<td style="width: 70px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
-              switch (proj.statusCode) {
-                case projectStatus.ErrorInViite.value:
-                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px; visibility: hidden">Avaa uudelleen</button>' + '</td>';
-                  break;
-                case projectStatus.ErroredInTR.value:
-                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 45px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>';
-                  break;
-                default:
-                  html += '<td>' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 80px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>';
-              }
-              html += '</tr>' + '<tr style="border-bottom: 1px solid darkgray;"><td colspan="100%"></td></tr>';
-            });
-            html += '</table>';
-            $('#project-list').html(html);
-            $('[id*="open-project"]').click(function(event) {
-              if (this.className === "project-open btn btn-new-error") {
-                projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-                eventbus.once("roadAddressProject:reOpenedProject", function(successData) {
-                  openProjectSteps(event);
-                });
-              } else {
+        if (!_.isEmpty(unfinishedProjects)) {
+          var uniqueId = 0;
+          _.each(unfinishedProjects, function(proj) {
+            var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
+            html += '<tr id="' + uniqueId + '" class="project-item">' +
+                    '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
+                    '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
+                    '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
+                    '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
+                    '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
+            switch (proj.statusCode) {
+              case projectStatus.ErrorInViite.value:
+                html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden">Avaa uudelleen</button>' + '</td>' +
+                    '</tr>';
+                break;
+              case projectStatus.ErroredInTR.value:
+                html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '">Avaa uudelleen</button>' + '</td>' +
+                    '</tr>';
+                break;
+              default:
+                html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '">Avaa</button>' + '</td>' +
+                    '</tr>';
+            }
+            uniqueId = uniqueId + 1;
+          });
+          html += '</table>';
+          $('#project-list').html(html);
+          $('[id*="open-project"]').click(function(event) {
+            if (this.className === "project-open btn btn-new-error") {
+              projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
+              eventbus.once("roadAddressProject:reOpenedProject", function(successData) {
                 openProjectSteps(event);
-              }
-            });
-          } else {
-            html += '</table>';
-            $('#project-list').html(html);
-          }
-          applicationModel.removeSpinner();
+              });
+            } else {
+              openProjectSteps(event);
+            }
+          });
+        } else {
+          html += '</table>';
+          $('#project-list').html(html);
+        }
+        applicationModel.removeSpinner();
       };
+
+      $('#filterUser').click(function () {
+        var spanIsInvisible = $('#userFilterSpan').css('display') === 'none';
+        userFilterVisibility(spanIsInvisible);
+      });
 
       var openProjectSteps = function(event) {
         applicationModel.addSpinner();
@@ -202,8 +244,14 @@
       });
 
       projectList.on('click', 'button.close', function() {
+        userFilterVisibility(false);
+        $('#project-list').find('table').remove();
         $('.project-item').remove();
         hide();
+      });
+
+      $('#userNameBox').keyup(function () {
+        filterByUser();
       });
     }
 

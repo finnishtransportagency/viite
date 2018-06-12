@@ -60,9 +60,10 @@
           .join(', ');
       };
 
-      var properties = _.cloneDeep(_.first(selectedData));
       var isMultiSelect = selectedData.length > 1;
-      if (isMultiSelect) {
+        var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
+        var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
+        if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate'];
@@ -77,7 +78,6 @@
         var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
         var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
         var roadLinkSource = {roadLinkSource: extractUniqueValues(selectedData, 'roadLinkSource')};
-
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
@@ -219,9 +219,7 @@
     var processOl3Features = function (visibleFeatures){
       var selectedOL3Features = _.filter(visibleFeatures, function(vf){
         return (_.some(get().concat(featuresToKeep), function(s){
-            return s.linkId === vf.roadLinkData.linkId;
-          })) && (_.some(get().concat(featuresToKeep), function(s){
-            return s.mmlId === vf.roadLinkData.mmlId;
+            return s.linkId === vf.roadLinkData.linkId &&  s.mmlId === vf.roadLinkData.mmlId;
           }));
       });
       eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
