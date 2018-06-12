@@ -103,7 +103,7 @@ object DefloatMapper extends RoadAddressMapper {
       findEndLRMLocation(mValue - current.length, links.tail, linkId)
     else {
       if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
-        (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
+        (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
       } else {
         val dist = applySideCode(mValue, current.length, current.sideCode)
         (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
