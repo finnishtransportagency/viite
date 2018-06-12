@@ -198,6 +198,13 @@ object VVHClient {
     val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
     curr - (curr % (24L*oneHourInMs))
   }
+
+  val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+    12316 -> FeatureClass.TractorRoad,
+    12141 -> FeatureClass.DrivePath,
+    12314 -> FeatureClass.CycleOrPedestrianPath,
+    12312 -> FeatureClass.WinterRoads
+  )
 }
 
 class VVHClient(vvhRestApiEndPoint: String) {
@@ -627,7 +634,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
       attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     else
       0
-    val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
+    val featureClass = VVHClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
@@ -747,13 +754,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     else
       withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
   }
-
-  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
-    12316 -> FeatureClass.TractorRoad,
-    12141 -> FeatureClass.DrivePath,
-    12314 -> FeatureClass.CycleOrPedestrianPath,
-    12312 -> FeatureClass.WinterRoads
-  )
 
   protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
@@ -1125,7 +1125,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
       attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     else
       0
-    val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
+    val featureClass = VVHClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHHistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, createdDate, endTime, extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)

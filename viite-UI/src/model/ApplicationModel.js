@@ -18,6 +18,7 @@
     var actionCalculated = 1;
     var currentAction;
     var selectionType = 'all';
+    var sessionUser = '';
 
     var getSelectionType = function (){
       return selectionType;
@@ -120,6 +121,10 @@
       jQuery('.spinner-overlay').remove();
     };
 
+    eventbus.on("userData:fetched", function (userData) {
+      sessionUser = userData.userName;
+    });
+
     return {
       getCurrentAction: getCurrentAction,
       setCurrentAction: setCurrentAction,
@@ -208,7 +213,10 @@
       getSelectionType: getSelectionType,
       toggleSelectionTypeAll: toggleSelectionTypeAll,
       toggleSelectionTypeFloating: toggleSelectionTypeFloating,
-      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown
+      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown,
+      getSessionUser: function () {
+        return sessionUser;
+      }
     };
   };
 })(this);
