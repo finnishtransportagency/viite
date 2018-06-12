@@ -87,7 +87,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
 
-        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restLeft, restRight, Some(trackCalcResult.endAddrMValue))
+        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restLeft ++ trackCalcResult.restLeft, restRight ++ trackCalcResult.restRight, Some(trackCalcResult.endAddrMValue))
 
         (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
       }
