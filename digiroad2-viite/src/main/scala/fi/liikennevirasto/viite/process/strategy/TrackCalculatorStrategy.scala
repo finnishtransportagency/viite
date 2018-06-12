@@ -17,7 +17,7 @@ object TrackCalculatorContext {
   }
 }
 
-case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], stratAddrMValue: Long, endAddrMValue: Long)
+case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], stratAddrMValue: Long, endAddrMValue: Long, restLeft: Seq[ProjectLink] = Seq(), restRight: Seq[ProjectLink] = Seq())
 
 trait TrackCalculatorStrategy {
 
@@ -46,6 +46,25 @@ trait TrackCalculatorStrategy {
   protected def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) = {
     (assignValues(left, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(left), userDefinedCalibrationPoint),
       assignValues(right, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(right), userDefinedCalibrationPoint))
+  }
+
+  protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
+                                userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
+
+    val reversed = rightLink.reversed || leftLink.reversed
+
+    (leftLink.status, rightLink.status) match {
+      case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>
+        (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+      case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
+        (rightLink.startAddrMValue, rightLink.endAddrMValue)
+      case (_ , LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
+        (leftLink.startAddrMValue, leftLink.endAddrMValue)
+      case _ =>
+        userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
+          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+        )
+    }
   }
 
   def applicableStrategy(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink]): Boolean = false
