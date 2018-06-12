@@ -23,7 +23,11 @@
     var openWithErrorMessage = function (id, errorMessage) {
       current = projectLinkCollection.getProjectLink(id);
       ids = id;
-      eventbus.trigger('projectLink:errorClicked', get(id[0]), errorMessage);
+        if(!_.isUndefined(current[0].getData().connectedLinkId) && current.length > 2){
+            openSplit(ids[0], current.length > 1);
+        } else {
+          eventbus.trigger('projectLink:errorClicked', get(id[0]), errorMessage);
+        }
     };
 
     var orderSplitParts = function(links) {
