@@ -2,6 +2,7 @@
   root.SelectedProjectLink = function(projectLinkCollection) {
 
     var current = [];
+    var me = this;
     var ids = [];
     var dirty = false;
     var splitSuravage = {};
@@ -12,21 +13,21 @@
     var open = function (id, multiSelect) {
       if (!multiSelect) {
         current = projectLinkCollection.getProjectLink([id]);
-        ids = [id];
+        me.ids = [id];
       } else {
-        ids = projectLinkCollection.getMultiProjectLinks(id);
-        current = projectLinkCollection.getProjectLink(ids);
+        me.ids = projectLinkCollection.getMultiProjectLinks(id);
+        current = projectLinkCollection.getProjectLink(me.ids);
       }
       eventbus.trigger('projectLink:clicked', get(id));
     };
 
-    var openWithErrorMessage = function (id, errorMessage) {
-      current = projectLinkCollection.getProjectLink(id);
-      ids = id;
+    var openWithErrorMessage = function (ids, errorMessage) {
+      current = projectLinkCollection.getProjectLink(ids);
+      me.ids = ids;
         if (!_.isUndefined(current[0].getData().connectedLinkId) && current.length > 2) {
-            openSplit(ids[0], current.length > 1);
+            openSplit(me.ids[0], true);
         } else {
-          eventbus.trigger('projectLink:errorClicked', get(id[0]), errorMessage);
+          eventbus.trigger('projectLink:errorClicked', get(ids[0]), errorMessage);
         }
     };
 
@@ -61,10 +62,10 @@
     var openSplit = function (linkid, multiSelect) {
       if (!multiSelect) {
         current = projectLinkCollection.getProjectLink([linkid]);
-        ids = [linkid];
+        me.ids = [linkid];
       } else {
-        ids = projectLinkCollection.getMultiProjectLinks(linkid);
-        current = projectLinkCollection.getProjectLink(ids);
+        me.ids = projectLinkCollection.getMultiProjectLinks(linkid);
+        current = projectLinkCollection.getProjectLink(me.ids);
       }
       var orderedSplitParts = orderSplitParts(get());
       var suravageA = getLinkMarker(orderedSplitParts, [LinkStatus.Transfer.value, LinkStatus.Unchanged.value]);
@@ -124,8 +125,8 @@
         cleanIds();
         close();
       } else {
-        var added = _.difference(linkIds, ids);
-        ids = linkIds;
+        var added = _.difference(linkIds, me.ids);
+        me.ids = linkIds;
         current = _.filter(current, function(link) {
           return _.contains(linkIds, link.getData().id || link.getData().linkId);
           }
@@ -171,7 +172,7 @@
     };
 
     var isSelected = function(linkId) {
-      return _.contains(ids, linkId);
+      return _.contains(me.ids, linkId);
     };
 
     var clean = function() {
@@ -179,7 +180,7 @@
     };
 
     var cleanIds = function() {
-      ids = [];
+      me.ids = [];
     };
 
     var close = function() {
@@ -214,8 +215,8 @@
       if (!terminatedC) {
         terminatedC = zeroLengthTerminated(suravageA);
       }
-      ids = projectLinkCollection.getMultiProjectLinks(suravageA.linkId);
-      current = projectLinkCollection.getProjectLink(_.flatten(ids));
+      me.ids = projectLinkCollection.getMultiProjectLinks(suravageA.linkId);
+      current = projectLinkCollection.getProjectLink(_.flatten(me.ids));
       suravageA.marker = "A";
       suravageB.marker = "B";
       terminatedC.marker = "C";

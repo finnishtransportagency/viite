@@ -224,8 +224,9 @@ object ProjectValidator {
                                     optionalInformation: Option[String])
 
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
-    val (splitLinks, nonSplitLinks) = pl.partition(_.connectedLinkId.nonEmpty)
-    val connectedSplitLinks = splitLinks.flatMap(p => ProjectDAO.getProjectLinksByConnectedLinkId(Seq(p.connectedLinkId.get, p.linkId)))
+    val (splitLinks, nonSplitLinks) = pl.partition(_.isSplit)
+    val splitedIds = splitLinks.flatMap(s => Seq(s.connectedLinkId.get, s.linkId))
+    val connectedSplitLinks = ProjectDAO.getProjectLinksByConnectedLinkId(splitedIds)
     val (ids, points) = (nonSplitLinks ++ connectedSplitLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty) {
       Some(ValidationErrorDetails(id, validationError, ids,
