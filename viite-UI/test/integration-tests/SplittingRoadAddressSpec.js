@@ -50,7 +50,10 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
     });
 
     describe('cancel the split', function () {
-      before(function () {
+      before(function (done) {
+        eventbus.on('roadAddressProject:reOpenCurrent', function () {
+          done();
+        });
         testHelpers.clickCancelButton();
       });
 
