@@ -121,7 +121,7 @@
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
               var isUnknownGroup = _.every(model, function (mod) {
                   var modData = mod.getData();
-                  return modData.anomaly === 1 && modData.id === 0;
+                  return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
               });
               return isUnknownGroup;
           });

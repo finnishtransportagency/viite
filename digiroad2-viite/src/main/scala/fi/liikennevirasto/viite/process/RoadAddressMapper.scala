@@ -71,7 +71,7 @@ trait RoadAddressMapper {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
     else {
-      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.targetStartM, mapping.targetEndM)).get
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
       roadAddress.addressBetween(startM, endM)
     }
   }
