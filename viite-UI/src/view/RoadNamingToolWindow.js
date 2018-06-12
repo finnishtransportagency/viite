@@ -98,7 +98,7 @@
             $('.modal-overlay').remove();
         }
 
-      var getDataObjects = function (fieldValue) {
+      var getDateObjects = function (fieldValue) {
         var fieldDateString = fieldValue.split('.');
         var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
         var futureDate = new Date();
@@ -110,8 +110,8 @@
             $('#saveChangedRoads').prop("disabled",
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
                   if ($(element).attr('data-FieldName') === "startDate") {
-                    var datas = getDataObjects($(element).val());
-                    return $(element).val() !== '' && datas.futureDate > datas.fieldDate;
+                    var dates = getDateObjects($(element).val());
+                    return $(element).val() !== '' && dates.futureDate > dates.fieldDate;
                   } else return $(element).val() !== '';
                 })
             );
@@ -132,8 +132,8 @@
                         $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
-                  var datas = getDataObjects(fieldValue);
-                  if (datas.fieldDate > datas.futureDate)
+                  var dates = getDateObjects(fieldValue);
+                  if (dates.fieldDate > dates.futureDate)
                     target.css('color', 'red');
                   else target.css('color', 'black');
                     roadNameCollection.setStartDate(roadId, fieldValue);
