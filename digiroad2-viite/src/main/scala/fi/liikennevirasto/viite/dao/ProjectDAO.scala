@@ -374,9 +374,9 @@ object ProjectDAO {
 
   def getProjectLinksByConnectedLinkId(connectedIds: Seq[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by connected link ids") {
-      if (connectedIds.isEmpty)
+      if (connectedIds.isEmpty) {
         List()
-      else {
+      } else {
         val query =
           s"""$projectLinkQueryBase
                 where project_link.connected_link_id in (${connectedIds.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
