@@ -799,8 +799,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         RoadAddressLinkBuilder.build(rl, ra, floating = true, Some(rl.geometry))
       } else if (roadLinks._2.exists(_.linkId == ra.linkId)) {
         RoadAddressLinkBuilder.build(historyLinks(ra.linkId).head, ra)
-      }
-      else{
+      } else {
         RoadAddressLinkBuilder.build(adjacentAddressLinks(ra.linkId), ra)
       }
     )

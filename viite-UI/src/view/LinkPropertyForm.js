@@ -810,7 +810,7 @@
         _.each(floatingRoads,function(fr) {
           floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker);
         });
-        if(floatingRoads.length === 0){
+        if (floatingRoads.length === 0) {
           applicationModel.setContinueButton(true);
           rootElement.find('.link-properties button.continue').attr('disabled', false);
         }
