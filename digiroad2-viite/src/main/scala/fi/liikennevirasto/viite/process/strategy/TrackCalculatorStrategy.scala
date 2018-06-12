@@ -4,16 +4,49 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPo
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 
+
 object TrackCalculatorContext {
+
+  private lazy val discontinuityTrackCalculatorStrategy: DiscontinuityTrackCalculatorStrategy = {
+    new DiscontinuityTrackCalculatorStrategy
+  }
+
+  private lazy val linkStatusChangeTrackCalculatorStrategy: LinkStatusChangeTrackCalculatorStrategy = {
+    new LinkStatusChangeTrackCalculatorStrategy
+  }
 
   private lazy val defaultTrackCalculatorStrategy: DefaultTrackCalculatorStrategy = {
     new DefaultTrackCalculatorStrategy
   }
 
-  private val strategies = Seq[TrackCalculatorStrategy]()
+  private val strategies = Seq(discontinuityTrackCalculatorStrategy, linkStatusChangeTrackCalculatorStrategy)
+
+  def getNextStrategy(projectLinks: Seq[ProjectLink]) : Option[(Long, TrackCalculatorStrategy)] = {
+    val head = projectLinks.head
+    projectLinks.flatMap{
+      pl =>
+        strategies.find(strategy => strategy.applicableStrategy(head, pl)) match {
+          case Some(strategy) => Some(pl.endAddrMValue, strategy)
+          case _ => None
+        }
+    }.headOption
+  }
 
   def getStrategy(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink]): TrackCalculatorStrategy = {
-    strategies.find(_.applicableStrategy(leftProjectLinks, rightProjectLinks)).getOrElse(defaultTrackCalculatorStrategy)
+
+    val leftStrategy = getNextStrategy(leftProjectLinks)
+    val rightStrategy = getNextStrategy(rightProjectLinks)
+
+    //Here we should choice the nearest strategy from the lower address, because for the same track
+    //we can have for example link status changes and minor discontinuity in that case we should
+    //apply the strategy that comes first on the address
+
+    (leftStrategy, rightStrategy) match {
+      case (Some(ls), Some(rs)) => if(rs._1 <= ls._1) rs._2 else ls._2
+      case (Some(ls), _) => ls._2
+      case (_, Some(rs)) => rs._2
+      case _ => defaultTrackCalculatorStrategy
+    }
   }
 }
 
@@ -67,6 +100,11 @@ trait TrackCalculatorStrategy {
     }
   }
 
-  def applicableStrategy(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink]): Boolean = false
+  protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < address)
+    (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+  }
+
+  def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = false
   def assignTrackMValues(startAddress: Option[Long] , leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult
 }
