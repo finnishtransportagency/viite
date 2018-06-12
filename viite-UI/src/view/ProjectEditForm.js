@@ -554,7 +554,7 @@
         var errorIndex = event.currentTarget.id;
         if(projectCollection.getProjectErrors()[errorIndex].errorMessage !== ""){
           var ids = projectCollection.getProjectErrors()[errorIndex].ids;
-          selectedProjectLinkProperty.openWithErrorMessage(ids[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
+          selectedProjectLinkProperty.openWithErrorMessage(ids, projectCollection.getProjectErrors()[errorIndex].errorMessage);
         }
 
       });
