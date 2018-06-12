@@ -341,7 +341,7 @@
             removeFeaturesFromSelection(nonFloatings);
             addFeaturesToSelection(floatings);
           }else if('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly()) {
-            if (selection.roadLinkData.anomaly === Anomaly.NoAddressGiven.value && selection.roadLinkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value) {
+            if ((selection.roadLinkData.anomaly === Anomaly.NoAddressGiven.value || selection.roadLinkData.anomaly === Anomaly.GeometryChanged.value) && selection.roadLinkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value ) {
               selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
             } else if(event.selected.length !== 0){
               var deselecting = event.deselected;
@@ -840,6 +840,8 @@
       });
 
       eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings){
+        var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true,true);
+        selectedLinkProperty.processOL3Features(visibleFeatures);
         drawIndicators(floatings);
       });
       eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds){
@@ -1336,7 +1338,11 @@
     };
 
     eventbus.on('linkProperties:activateInteractions', function(){
-      activateSelectInteractions();
+      activateSelectInteractions(true);
+    });
+
+    eventbus.on('linkProperties:deactivateInteractions', function(){
+        deactivateSelectInteractions(true);
     });
 
     eventbus.on('linkProperties:addFeaturesToInteractions', function(){
@@ -1396,7 +1402,7 @@
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:deactivateDoubleClick', function(){
-      deactivateSelectInteractions();
+      deactivateSelectInteractions(false);
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections roadAddressProject:deactivateAllSelections', function(){
@@ -1404,7 +1410,7 @@
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function(){
-      activateSelectInteractions();
+      activateSelectInteractions(false);
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections roadAddressProject:startAllInteractions', function(){
