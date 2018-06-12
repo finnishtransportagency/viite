@@ -242,6 +242,10 @@
         selectSingleClick.getFeatures().clear();
       }
 
+      if(applicationModel.isReadOnly()){
+        selectDoubleClick.getFeatures().clear();
+      }
+
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
@@ -256,7 +260,7 @@
           selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
           floatingMarkerLayer.setOpacity(1);
         } else {
-          selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === 3);
+          selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
         }
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
@@ -348,9 +352,9 @@
           }
           else {
             if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
-              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures, selection.roadLinkData.roadLinkSource === 3);
+              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures, selection.roadLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
             } else {
-              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === 3);
+              selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures, selection.roadLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
             }
           }
         }
@@ -634,7 +638,7 @@
         });
 
         calibrationPointLayer.getSource().clear();
-        if(!applicationModel.isActiveButtons()) {
+        if (!applicationModel.isActiveButtons() && map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             var calMarker = new CalibrationPoint(actualPoint);
@@ -717,7 +721,7 @@
         var features = [];
         _.each(selectedLink, function (featureLink){
          _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
-            if(featureLink.linkId !== 0 && feature.roadLinkData.linkId === featureLink.linkId){
+            if(featureLink.linkId !== 0 && _.contains(featureLink.selectedLinks, feature.roadLinkData.linkId)){
               return features.push(feature);
             }
           });
@@ -755,7 +759,7 @@
         indicatorLayer.getSource().clear();
       });
 
-        eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection) {
+        eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection, selectedIds) {
         draw();
         if (!noReselection && applicationModel.getSelectionType() !== 'unknown') {_.defer(function(){
           var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
@@ -774,8 +778,9 @@
             if (filteredFeaturesToReselect.length !== 0){
             addFeaturesToSelection(filteredFeaturesToReselect);
           }
+
           var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function(feature){
-            return _.contains(_.pluck(selectedLinkProperty.get(), 'linkId'), feature.roadLinkData.linkId);
+            return _.contains(_.unique(selectedIds), feature.roadLinkData.linkId);
           }), function(feat){return feat.roadLinkData;});
 
                     var groups = _.flatten(eventData);

@@ -81,55 +81,75 @@ trait RoadAddressMapper {
     commonPostTransferChecks(seq, addrMin, addrMax)
   }
 
-  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress])): Unit = {
-    val (section, seq) = s
-    if (seq.groupBy(_.linkId).exists{ case (_, addresses) =>
-        partition(addresses).size > 1})
-      throw new InvalidAddressDataException(s"Address gaps generated for links ${seq.groupBy(_.linkId).filter{ case (_, addresses) =>
-        partition(addresses).size > 1}.keySet.mkString(", ")}")
-    commonPostTransferChecks(seq, section.startMAddr, section.endMAddr)
+  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress], Seq[RoadAddress])): Unit = {
+    val (section, current, history) = s
+    if (current.nonEmpty) {
+      if (current.groupBy(_.linkId).exists { case (_, addresses) =>
+        partition(addresses).size > 1
+      })
+        throw new InvalidAddressDataException(s"Address gaps generated for links ${
+          current.groupBy(_.linkId).filter { case (_, addresses) =>
+            partition(addresses).size > 1
+          }.keySet.mkString(", ")
+        }")
+      commonPostTransferChecks(current, section.startMAddr, section.endMAddr)
+    }
+    if (history.nonEmpty) {
+      if (history.groupBy(_.linkId).exists { case (_, addresses) =>
+        partition(addresses).size > 1
+      })
+        throw new InvalidAddressDataException(s"Address gaps generated for links ${
+          history.groupBy(_.linkId).filter { case (_, addresses) =>
+            partition(addresses).size > 1
+          }.keySet.mkString(", ")
+        }")
+      commonPostTransferChecks(history, section.startMAddr, section.endMAddr)
+    }
   }
 
-  def postTransferChecksWithHistory(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
-    postTransferChecks((s._1, s._2.flatMap(_.currentSegments)))
+  def postTransferChecksForCurrent(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
+    postTransferChecks((s._1, s._2.flatMap(_.currentSegments), Seq()))
   }
 
-  protected def commonPostTransferChecks(seq: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
-    val nonHistoric = seq.filter(_.endDate.isEmpty)
-    calibrationPointCountCheck(false, nonHistoric)
+  def postTransferChecksForHistory(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
+    postTransferChecks((s._1, Seq(), s._2.flatMap(_.historySegments)))
+  }
+
+  protected def commonPostTransferChecks(addresses: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
+    calibrationPointCountCheck(false, addresses)
+    addresses.find(_.startCalibrationPoint.nonEmpty) match {
+      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
+      case _ =>
+    }
+    addresses.find(_.endCalibrationPoint.nonEmpty) match {
+      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
+      case _ =>
+    }
+    checkSingleSideCodeForLink(false, addresses.groupBy(_.linkId))
+    if (!addresses.exists(_.startAddrMValue == addrMin))
+      throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${addresses.map(_.startAddrMValue).min}")
+    if (!addresses.exists(_.endAddrMValue == addrMax))
+      throw new InvalidAddressDataException(s"Generated address list does not end at $addrMax but ${addresses.map(_.endAddrMValue).max}")
+    if (!addresses.forall(ra => ra.startAddrMValue == addrMin || addresses.exists(_.endAddrMValue == ra.startAddrMValue)))
+      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
+    if (!addresses.forall(ra => ra.endAddrMValue == addrMax || addresses.exists(_.startAddrMValue == ra.endAddrMValue)))
+      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
+
+  }
+
+  def preTransferChecks(addresses: Seq[RoadAddress]): Unit = {
+    val nonHistoric = addresses.filter(_.endDate.isEmpty)
+    calibrationPointCountCheck(true, addresses)
     nonHistoric.find(_.startCalibrationPoint.nonEmpty) match {
-      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, seq)
+      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
       case _ =>
     }
     nonHistoric.find(_.endCalibrationPoint.nonEmpty) match {
-      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, seq)
+      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
       case _ =>
     }
     checkSingleSideCodeForLink(false, nonHistoric.groupBy(_.linkId))
-    if (!nonHistoric.exists(_.startAddrMValue == addrMin))
-      throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${seq.map(_.startAddrMValue).min}")
-    if (!nonHistoric.exists(_.endAddrMValue == addrMax))
-      throw new InvalidAddressDataException(s"Generated address list does not end at $addrMax but ${seq.map(_.endAddrMValue).max}")
-    if (!nonHistoric.forall(ra => ra.startAddrMValue == addrMin || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
-      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-    if (!nonHistoric.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
-      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-
-  }
-
-  def preTransferChecks(seq: Seq[RoadAddress]): Unit = {
-    val nonHistoric = seq.filter(_.endDate.isEmpty)
-    calibrationPointCountCheck(true, seq)
-    nonHistoric.find(_.startCalibrationPoint.nonEmpty) match {
-      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, seq)
-      case _ =>
-    }
-    nonHistoric.find(_.endCalibrationPoint.nonEmpty) match {
-      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, seq)
-      case _ =>
-    }
-    checkSingleSideCodeForLink(false, nonHistoric.groupBy(_.linkId))
-    val tracks = seq.map(_.track).toSet
+    val tracks = addresses.map(_.track).toSet
     if (tracks.size > 1)
       throw new IllegalArgumentException(s"Multiple track codes found ${tracks.mkString(", ")}")
   }

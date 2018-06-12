@@ -3,8 +3,6 @@ package fi.liikennevirasto.viite.dao
 import java.sql.PreparedStatement
 
 import fi.liikennevirasto.viite.RoadType
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.RoadAddressDAO.formatter
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressSection}
 import org.joda.time.DateTime
@@ -258,7 +256,7 @@ object RoadAddressChangesDAO {
     }
 
     val startTime = System.currentTimeMillis()
-    logger.info("Starting delta insertion in ChangeTable ")
+    logger.info("Begin delta insertion in ChangeTable")
     ProjectDAO.getRoadAddressProjectById(projectId) match {
       case Some(project) => {
         project.ely match {
@@ -288,7 +286,7 @@ object RoadAddressChangesDAO {
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()
             val endTime = System.currentTimeMillis()
-            logger.info("Ended delta insertion in ChangeTable in %.3f sec".format((endTime - startTime)*0.001))
+            logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
             true
           }
           case _=>  false
