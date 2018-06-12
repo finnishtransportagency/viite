@@ -112,7 +112,7 @@
       };
       greenStyle();
 
-      if(!addToGreenLayer){
+      if (!addToGreenLayer) {
         greenRoadLayer.getSource().addFeatures(features);
         selectSingleClick.getFeatures().clear();
       }
@@ -824,33 +824,33 @@
         }
         redrawNextSelectedTarget(targets, adjacents);
       });
-      eventListener.listenTo(eventbus, 'adjacents:added', function(sources,targets){
+      eventListener.listenTo(eventbus, 'adjacents:added', function(sources, targets) {
         clearIndicators();
         drawIndicators(targets);
-        _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(link){
+        _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(link) {
           return link.roadNumber === 0;
         }), function (roads) {
           editFeatureDataForGreen(roads);
         });
       });
 
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources,targets){
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources,targets) {
           clearIndicators();
           drawIndicators(targets);
       });
 
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings){
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings) {
         drawIndicators(floatings);
       });
-      eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds){
+      eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds) {
 
-        var floatingsLinkIds = _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function (f){
+        var floatingsLinkIds = _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function (f) {
           return f.linkId;
         });
-        var roadLinks = _.reject(roadCollection.getAll(),function (rl){
+        var roadLinks = _.reject(roadCollection.getAll(),function (rl) {
           return _.contains(floatingsLinkIds, rl.linkId);
         });
-        var afterTransferLinks=  _.filter(roadLinks, function(roadlink){
+        var afterTransferLinks=  _.filter(roadLinks, function(roadlink) {
           return !_.contains(changedIds, roadlink.linkId.toString());
         });
         var simulatedOL3Features = [];
