@@ -130,6 +130,28 @@
       background-color: @gray-light;
       .box-sizing(border-box);
     }
+    .middle {
+      border-radius: 0px;
+      width: 11.3%;
+      margin-bottom: 3px;
+    }
+
+    .edge-left {
+      margin-left: 5px;
+      width: 1px;
+      margin-bottom: 3px;
+    }
+
+    .edge-right {
+      width: 2px;
+      margin-bottom: 3px;
+    }
+
+    .rainbow-container {
+      background-color: black;
+      line-height: 14px;
+    }
+
   }
 }
 
@@ -218,6 +240,11 @@
   };
   &:before { left: -1px; }
   &:after { right: -1px; }
+}
+
+.rainbow-asset-legend-entry(@color, @endpoint-color) {
+  border-color: @color;
+  background-color: @color;
 }
 
 .linear-asset-legend {
@@ -354,6 +381,24 @@
     .linear-asset-11  { .linear-asset-legend-entry(@linear-asset-11, @linear-asset-node-11); }
     .linear-asset-12  { .linear-asset-legend-entry(@linear-asset-12, @linear-asset-node-12); }
     .linear-asset-99  { .linear-asset-legend-entry(@linear-asset-99, @linear-asset-node-99); }
+    .rainbow-asset-1 {
+      .rainbow-asset-legend-entry(@linear-asset-1, @linear-asset-node-1);
+    }
+    .rainbow-asset-2 {
+      .rainbow-asset-legend-entry(@linear-asset-2, @linear-asset-node-2);
+    }
+    .rainbow-asset-3 {
+      .rainbow-asset-legend-entry(@linear-asset-3, @linear-asset-node-3);
+    }
+    .rainbow-asset-4 {
+      .rainbow-asset-legend-entry(@linear-asset-4, @linear-asset-node-4);
+    }
+    .rainbow-asset-5 {
+      .rainbow-asset-legend-entry(@linear-asset-5, @linear-asset-node-5);
+    }
+    .rainbow-asset-6 {
+      .rainbow-asset-legend-entry(@linear-asset-6, @linear-asset-node-6);
+    }
     .construction-type-0  { .linear-asset-legend-entry(@constuction-type-1, @constuction-type-1); }
     .construction-type-1  { .linear-asset-legend-entry(@constuction-type-2, @constuction-type-2); }
     .operation-type-unchanged { .linear-asset-legend-entry(@operation-unchanged, @operation-unchanged);}
@@ -517,11 +562,9 @@
     display: block;
     margin-bottom: 0;
     margin-top: 0;
-    cursor: hand;
     line-height: 16px;
 
     input {
-      cursor: hand;
       margin-top: 1px;
       margin-right: 5px;
     }
