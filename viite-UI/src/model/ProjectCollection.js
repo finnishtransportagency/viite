@@ -316,8 +316,8 @@
 
       var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
-        var roadAddressProjectForm = $('#roadAddressProjectForm');
-        var dataJson = {
+      var roadAddressProjectForm = $('#roadAddressProjectForm');
+      var dataJson = {
         ids: ids,
         linkIds: linkIds,
         linkStatus: statusCode,
@@ -418,7 +418,7 @@
 
     };
 
-      this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
+    this.saveCutProjectLinks = function(changedLinks, statusA, statusB){
       applicationModel.addSpinner();
       if (_.isUndefined(statusB)) {
         statusB = LinkStatus.New.description;
@@ -461,15 +461,16 @@
         return false;
       }
 
-      backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
+      backend.saveProjectLinkSplit(dataJson, linkId, function(successObject) {
         if (!successObject.success) {
           new ModalConfirm(successObject.reason);
           applicationModel.removeSpinner();
-        } else{
+        } else {
+          projectErrors = successObject.projectErrors;
           eventbus.trigger('projectLink:projectLinksSplitSuccess');
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
           applicationModel.removeSpinner();
-      }}, function(failureObject){
+      }}, function(failureObject) {
           new ModalConfirm(failureObject.reason);
           applicationModel.removeSpinner();
       });
