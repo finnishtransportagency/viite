@@ -777,22 +777,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val viiteRoadLinks = zoomLevel match {
       //TODO: When well-performing solution for main parts and road parts is ready
       case DrawMainRoadPartsOnly =>
-        //        roadAddressService.getCoarseRoadParts(boundingRectangle, Seq((1, 99)), municipalities)
+        //        roadAddressService.getCoarseRoadParts(boundingRectangle, Seq((1, 99)))
         Seq()
       case DrawRoadPartsOnly =>
-        //        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
+        //        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)))
         Seq()
       case DrawLinearPublicRoads => time(logger, "DrawLinearPublicRoads") {
-        roadAddressService.getRoadAddressesWithLinearGeometry(boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+        roadAddressService.getRoadAddressesWithLinearGeometry(boundingRectangle, Seq((1, 19999), (40000, 49999)))
       }
       case DrawPublicRoads => time(logger, "DrawPublicRoads") {
-        roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+        roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000, 49999)))
       }
       case DrawAllRoads => time(logger, "DrawAllRoads") {
-        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq(), Set(), everything = true)
+        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq(), everything = true)
       }
       case _ => time(logger, "DrawRoads") {
-        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq((1, 19999)), Set())
+        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq((1, 19999)))
       }
     }
     time(logger, "Partition road links") {
