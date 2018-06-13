@@ -299,20 +299,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     publishChangeSet(changeSet)
 
-    val returningTopology = filledTopology.filterNot(p => p.anomaly == Anomaly.NoAddressGiven)
-
     setBlackUnderline(filledTopology ++ missingFloating)
-
   }
 
-  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] = {
+  def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating = false, onlyNormalRoads = true, roadNumberLimits))
 
     val fetchResult = time(logger, "Fetch road addresses by bounding box") {
       Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     }
-    val (historyLinkAddresses, addresses) = (fetchResult.historyFloatingLinkAddresses, fetchResult.current)
+    val addresses = fetchResult.current
 
     val viiteRoadLinks = time(logger, "Build road addresses") {
       addresses.map { address =>
