@@ -797,8 +797,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       if (anomaly2List.exists(_.linkId == ra.linkId)) {
         val rl = adjacentAddressLinks(ra.linkId)
         RoadAddressLinkBuilder.build(rl, ra, floating = true, Some(rl.geometry))
-      } else {
+      } else if (roadLinks._2.exists(_.linkId == ra.linkId)) {
         RoadAddressLinkBuilder.build(historyLinks(ra.linkId).head, ra)
+      } else {
+        RoadAddressLinkBuilder.build(adjacentAddressLinks(ra.linkId), ra)
       }
     )
     floatingAdjacents
