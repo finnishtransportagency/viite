@@ -83,6 +83,8 @@
         ErroredInTR:                {value: 3, description: "Virhe tierekisterissä"},
         TRProcessing:               {value: 4, description: "Tierekisterissä käsittelyssä"},
         Saved2TR:                   {value: 5, description: "Viety tierekisteriin"},
+        Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
+        Deleted:                    {value: 7, description: "Poistettu projekti"},
         ErrorInViite:               {value: 8, description: "Virhe Viite-sovelluksessa"},
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
@@ -100,7 +102,7 @@
         AnomalousMarkerLayer:       {value: 3},
         CalibrationPointLayer:      {value: 4},
         GeometryChangedLayer:       {value: 5},
-        GreenLayer:                 {value: 6},
+        GreenLayer:                 {value: 10},
         ReservedRoadLayer:          {value: 6},
         HistoricRoadLayer:          {value: 7},
         DirectionMarkerLayer:       {value: 8},

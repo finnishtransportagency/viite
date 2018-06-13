@@ -325,7 +325,7 @@
         switch (statusDropdown_0){
           case LinkStatus.Unchanged.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
               successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
@@ -334,11 +334,11 @@
           }
           case LinkStatus.New.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Unchanged.description){
-              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
+              successSavingChanges = projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
             }
 
             else if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Transfer.description){
-              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
+              successSavingChanges = projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
             }
             else if(_.isUndefined(statusDropdown_1)) {
               successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
@@ -347,7 +347,7 @@
           }
           case LinkStatus.Transfer.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              successSavingChanges = projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              successSavingChanges = projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
               successSavingChanges = projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
@@ -554,7 +554,7 @@
         var errorIndex = event.currentTarget.id;
         if(projectCollection.getProjectErrors()[errorIndex].errorMessage !== ""){
           var ids = projectCollection.getProjectErrors()[errorIndex].ids;
-          selectedProjectLinkProperty.openWithErrorMessage(ids[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
+          selectedProjectLinkProperty.openWithErrorMessage(ids, projectCollection.getProjectErrors()[errorIndex].errorMessage);
         }
 
       });

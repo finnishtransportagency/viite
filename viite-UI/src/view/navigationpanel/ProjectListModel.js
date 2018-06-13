@@ -60,7 +60,8 @@
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:810px; height:400px; overflow:auto;"></div>');
+    projectList.append('<div id="project-list" style="width:810px; height:390px; overflow:auto;"></div>' +
+      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin lähetetyt projektit</label>');
 
     var staticFieldProjectName = function(dataField) {
       var field;
@@ -121,35 +122,59 @@
 
 
     var userFilterVisibility = function (showFilters) {
+      var searchBox = $('#userFilterSpan');
+      var textField = $('#userNameBox');
       if (showFilters) {
-        $('#userFilterSpan').show();
-        if ($('#userNameBox').val() === "") {
-          $('#userNameBox').val(applicationModel.getSessionUser());
+        searchBox.show();
+        if (textField.val() === "") {
+          textField.val(applicationModel.getSessionUser());
         }
-        filterByUser();
       } else {
-        $('#userFilterSpan').hide();
+        textField.val("");
+        searchBox.hide();
       }
+      filterByUser();
     };
 
     function bindEvents() {
 
       eventbus.once('roadAddressProjects:fetched', function(projects) {
-        projectArray = projects;
-        createProjectList(projects);
+        projectArray = _.filter(projects, function(proj) {
+          return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
+        });
+        createProjectList(projectArray);
       });
 
-      var createProjectList = function(projects) {
+      var createProjectList = function(projects, sortFunction, order) {
+
+        if(!sortFunction)
+            sortFunction = function(a,b) {return a.ely - b.ely;};
+
+        if(!order)
+            order = 1;
+
         var unfinishedProjects = _.filter(projects, function(proj) {
-          return (proj.statusCode >= 1 && proj.statusCode <= 5) || proj.statusCode === 8;
+          if (proj.statusCode === projectStatus.Saved2TR.value) {
+            var hoursInDay = 24;
+            var millisecondsToHours = 1000*60*60;
+            //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
+            return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
+          }
+          return ((proj.statusCode >= projectStatus.Incomplete.value && proj.statusCode <= projectStatus.TRProcessing.value) || proj.statusCode === projectStatus.ErrorInViite.value);
         });
+
+        var sortedProjects = unfinishedProjects.sort( function(a,b) {
+          var cmp = sortFunction(a,b);
+          return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
+        });
+
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
-        if (!_.isEmpty(unfinishedProjects)) {
+        if (!_.isEmpty(sortedProjects)) {
           var uniqueId = 0;
-          _.each(unfinishedProjects, function(proj) {
+          _.each(sortedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
             html += '<tr id="' + uniqueId + '" class="project-item">' +
-                    '<td style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
+                    '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
                     '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                     '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
                     '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
@@ -208,7 +233,6 @@
       User can sort project list by clicking the sort arrows next to column headers. By clicking same arrows again, user can reverse the order.
        */
       projectList.on('click', '[id^=sort]', function (event) {
-        $('#project-list').empty();
         var eventId = event.target.id;
         for (var id in headers) { // Update order values
           if (headers.hasOwnProperty(id)) {
@@ -224,11 +248,17 @@
             $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(decodeOrder(header.order));
           }
         }
-        // Sort and create project list
-        createProjectList(projectArray.sort(function (a, b) {
-          var cmp = headers[eventId].sortFunc(a,b);
-          return (cmp !== 0) ? cmp * headers[eventId].order : a.name.localeCompare(b.name, 'fi');
-        }));
+        // Create project list with right sorting
+        createProjectList(projectArray, headers[eventId].sortFunc, headers[eventId].order);
+        filterByUser();
+      });
+
+      $('#TRProjectsVisibleCheckbox').change(function() {
+        var sortByHeader = Object.values(headers).find( function(header) {
+          return header.order !== 0;
+        });
+        createProjectList(projectArray, sortByHeader.sortFunc, sortByHeader.order);
+        filterByUser();
       });
 
       projectList.on('click', 'button.cancel', function() {
@@ -236,6 +266,7 @@
       });
 
       projectList.on('click', 'button.new', function() {
+        userFilterVisibility(false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger('roadAddress:newProject');
         if(applicationModel.isReadOnly()) {
@@ -247,6 +278,7 @@
         userFilterVisibility(false);
         $('#project-list').find('table').remove();
         $('.project-item').remove();
+        $('#TRProjectsVisibleCheckbox').prop('checked', false);
         hide();
       });
 

@@ -2,6 +2,7 @@
     root.RoadNamingToolWindow = function (roadNameCollection) {
 
         var newId = -1000;
+      var yearLimit = 5;
         var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
         nameToolSearchWindow.append('<button class="close btn-close" id="closeRoadNameTool">x</button>');
@@ -97,10 +98,21 @@
             $('.modal-overlay').remove();
         }
 
+      var getDateObjects = function (fieldValue) {
+        var fieldDateString = fieldValue.split('.');
+        var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
+        var futureDate = new Date();
+        futureDate.setFullYear(futureDate.getFullYear() + yearLimit);
+        return {'fieldDate': fieldDate, 'futureDate': futureDate};
+      };
+
         function toggleSaveButton() {
             $('#saveChangedRoads').prop("disabled",
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
-                    return $(element).val() !== '';
+                  if ($(element).attr('data-FieldName') === "startDate") {
+                    var dates = getDateObjects($(element).val());
+                    return $(element).val() !== '' && dates.futureDate > dates.fieldDate;
+                  } else return $(element).val() !== '';
                 })
             );
         }
@@ -120,6 +132,10 @@
                         $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
+                  var dates = getDateObjects(fieldValue);
+                  if (dates.fieldDate > dates.futureDate)
+                    target.css('color', 'red');
+                  else target.css('color', 'black');
                     roadNameCollection.setStartDate(roadId, fieldValue);
                     break;
             }

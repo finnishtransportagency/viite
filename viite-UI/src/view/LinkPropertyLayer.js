@@ -112,15 +112,9 @@
       };
       greenStyle();
 
-      if(!addToGreenLayer){
-        var filteredFeatures = _.reject(features, function (feat) {
-          return _.some(greenRoadLayer.getSource().getFeatures(), function (green) {
-            return green.roadLinkData.id === feat.roadLinkData.id;
-          });
-        });
-        greenRoadLayer.getSource().addFeatures(filteredFeatures);
+      if (!addToGreenLayer) {
+        greenRoadLayer.getSource().addFeatures(features);
         selectSingleClick.getFeatures().clear();
-        addFeaturesToSelection(filteredFeatures);
       }
     };
 
@@ -347,7 +341,7 @@
             removeFeaturesFromSelection(nonFloatings);
             addFeaturesToSelection(floatings);
           }else if('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly()) {
-            if (selection.roadLinkData.anomaly === Anomaly.NoAddressGiven.value && selection.roadLinkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value) {
+            if ((selection.roadLinkData.anomaly === Anomaly.NoAddressGiven.value || selection.roadLinkData.anomaly === Anomaly.GeometryChanged.value) && selection.roadLinkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value ) {
               selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
             } else if(event.selected.length !== 0){
               var deselecting = event.deselected;
@@ -379,7 +373,7 @@
             })
           );
           anomalousFeatures.forEach(function (fmf) {
-            editFeatureDataForGreen(fmf.linkId);
+            editFeatureDataForGreen(fmf);
           });
         }
       }
@@ -694,7 +688,7 @@
           })
         );
         anomalousFeatures.forEach(function (fmf) {
-          editFeatureDataForGreen(targetFeature.roadLinkData.linkId);
+          editFeatureDataForGreen(targetFeature.roadLinkData);
         });
       }
     };
@@ -830,36 +824,35 @@
         }
         redrawNextSelectedTarget(targets, adjacents);
       });
-      eventListener.listenTo(eventbus, 'adjacents:added adjacents:additionalSourceFound', function(sources,targets, additionalLinkId){
+      eventListener.listenTo(eventbus, 'adjacents:added', function(sources, targets) {
         clearIndicators();
         drawIndicators(targets);
-        var selType = applicationModel.getSelectionType();
-        var keepMe = _.filter(selectedLinkProperty.getFeaturesToKeep(), function (feat) {
-          if (selType === 'floating') {
-            return feat.roadLinkType === -1;
-          } else if (selType === 'unknown') {
-            return feat.anomaly === 1 && feat.id === 0;
-          } else if (selType === 'all') {
-            return true;
-          }
-        });
-        _.map(keepMe, function (roads) {
+        _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(link) {
+          return link.roadNumber === 0;
+        }), function (roads) {
           editFeatureDataForGreen(roads);
         });
       });
 
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings){
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources,targets) {
+          clearIndicators();
+          drawIndicators(targets);
+      });
+
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings) {
+        var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true,true);
+        selectedLinkProperty.processOL3Features(visibleFeatures);
         drawIndicators(floatings);
       });
-      eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds){
+      eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds) {
 
-        var floatingsLinkIds = _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function (f){
+        var floatingsLinkIds = _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function (f) {
           return f.linkId;
         });
-        var roadLinks = _.reject(roadCollection.getAll(),function (rl){
+        var roadLinks = _.reject(roadCollection.getAll(),function (rl) {
           return _.contains(floatingsLinkIds, rl.linkId);
         });
-        var afterTransferLinks=  _.filter(roadLinks, function(roadlink){
+        var afterTransferLinks=  _.filter(roadLinks, function(roadlink) {
           return !_.contains(changedIds, roadlink.linkId.toString());
         });
         var simulatedOL3Features = [];
@@ -1073,12 +1066,12 @@
     var editFeatureDataForGreen = function (targets) {
       var features =[];
       if(targets !== 0){
-        var targetFeature = _.find(greenRoadLayer.getSource().getFeatures(), function(greenfeature){
-          return targets !== 0 && greenfeature.roadLinkData.linkId === parseInt(targets);
+        var targetFeature = _.find(greenRoadLayer.getSource().getFeatures(), function(greenFeature){
+          return targets.linkId !== 0 && greenFeature.roadLinkData.linkId === parseInt(targets.linkId);
         });
         if(!targetFeature){
           _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
-              if (feature.roadLinkData.linkId == targets.linkId) {
+              if (feature.roadLinkData.linkId === targets.linkId) {
               var pickAnomalousMarker;
               if(feature.roadLinkData.anomaly === Anomaly.GeometryChanged.value) {
                 var roadLink = feature.roadLinkData;
@@ -1345,7 +1338,11 @@
     };
 
     eventbus.on('linkProperties:activateInteractions', function(){
-      activateSelectInteractions();
+      activateSelectInteractions(true);
+    });
+
+    eventbus.on('linkProperties:deactivateInteractions', function(){
+        deactivateSelectInteractions(true);
     });
 
     eventbus.on('linkProperties:addFeaturesToInteractions', function(){
@@ -1405,7 +1402,7 @@
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:deactivateDoubleClick', function(){
-      deactivateSelectInteractions();
+      deactivateSelectInteractions(false);
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections roadAddressProject:deactivateAllSelections', function(){
@@ -1413,7 +1410,7 @@
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function(){
-      activateSelectInteractions();
+      activateSelectInteractions(false);
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections roadAddressProject:startAllInteractions', function(){
