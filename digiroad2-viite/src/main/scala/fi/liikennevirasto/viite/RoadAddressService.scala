@@ -179,7 +179,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         suravageLinksF <- boundingBoxResult.suravageF
       } yield (changedRoadLinksF, (roadLinkFuture, complementaryFuture), fetchRoadAddressesByBoundingBoxF, suravageLinksF)
 
-    val (changedRoadLinks, ((roadLinks, complementaryLinks)), roadAddressResults, suravageLinks) =
+    val (changedRoadLinks, (roadLinks, complementaryLinks), roadAddressResults, suravageLinks) =
       time(logger, "Fetch VVH road links and address data") {
         Await.result(combinedFuture, Duration.Inf)
       }
@@ -262,7 +262,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (historyLinkAddresses, addresses) = (fetchResult.historyFloatingLinkAddresses, fetchResult.current)
 
     val missingViiteRoadAddress = if (!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
-    logger.info("Fetch addresses completed in %d ms".format((System.currentTimeMillis() - fetchAddrStartTime)))
+    logger.info("Fetch addresses completed in %d ms".format(System.currentTimeMillis() - fetchAddrStartTime))
 
     val addressLinkIds = addresses.map(_.linkId).toSet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
@@ -271,12 +271,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressLinkIds, newTransaction, frozenTimeVVHAPIServiceEnabled)
 
     val fetchVVHEndTime = System.currentTimeMillis()
-    logger.info("Fetch VVH road links completed in %d ms".format((fetchVVHEndTime - fetchVVHStartTime)))
+    logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
 
     val linkIds = roadLinks.map(_.linkId).toSet
 
     val changedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf)
-    logger.info("Fetch change info completed in %d ms".format((System.currentTimeMillis() - fetchVVHEndTime)))
+    logger.info("Fetch change info completed in %d ms".format(System.currentTimeMillis() - fetchVVHEndTime))
 
     val complementedWithChangeAddresses = time(logger, "Complemented with change addresses") {
       applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) changedRoadLinks else Seq(), addresses)
@@ -292,7 +292,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
     }.toMap
     val buildEndTime = System.currentTimeMillis()
-    logger.info("Build road addresses completed in %d ms".format((buildEndTime - buildStartTime)))
+    logger.info("Build road addresses completed in %d ms".format(buildEndTime - buildStartTime))
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
@@ -336,9 +336,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   /**
-    * Sanity checks for changes. We dont want to solely trust VVH messages, thus we do some sanity checks and drop insane ones
+    * Sanity checks for changes. We don't want to solely trust VVH messages, thus we do some sanity checks and drop insane ones
     *
-    * @param changes
+    * @param changes Change infos
     * @return sane changetypes
     */
 
@@ -487,7 +487,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }.groupBy(_.roadNumber)
 
     val retval = groupedLinks.mapValues {
-      case (viiteRoadLinks) =>
+      case viiteRoadLinks =>
         val sorted = viiteRoadLinks.sortWith({
           case (ral1, ral2) =>
             if (ral1.roadNumber != ral2.roadNumber)
@@ -927,7 +927,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val newS =
         s"""old id: ${c.oldId.getOrElse("MISS!")} new id: ${c.newId.getOrElse("MISS!")} old length: ${setPrecision(c.oldStartMeasure.getOrElse(0.0))}-${setPrecision(c.oldEndMeasure.getOrElse(0.0))} new length: ${setPrecision(c.newStartMeasure.getOrElse(0.0))}-${setPrecision(c.newEndMeasure.getOrElse(0.0))} mml id: ${c.mmlId} vvhTimeStamp ${c.vvhTimeStamp}
      """
-      (s + "\n" + newS)
+      s + "\n" + newS
     }
 
     val groupedChanges = SortedMap(changes.groupBy(_.changeType).toSeq: _*)
@@ -968,7 +968,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressByLinkIds(linkIds: Set[Long], withFloating: Boolean): Seq[RoadAddress] = {
     withDynSession {
-      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, false, false)
+      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, includeHistory = false, includeTerminated = false)
     }
   }
 
