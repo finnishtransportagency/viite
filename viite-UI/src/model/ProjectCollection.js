@@ -317,7 +317,7 @@
       var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
         var roadAddressProjectForm = $('#roadAddressProjectForm');
-        var endDistance = roadAddressProjectForm.find('#endDistance')[0];
+        var endDistance = $('#endDistance')[0];
         var dataJson = {
         ids: ids,
         linkIds: linkIds,
