@@ -371,13 +371,13 @@ trait VVHClientOperations {
       val client = HttpClientBuilder.create().build()
       try {
         val response = client.execute(request)
-        if (response.getStatusLine.getStatusCode >= 300) {
-          Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
-        }
         try {
           mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
         } finally {
           response.close()
+          if (response.getStatusLine.getStatusCode >= 300) {
+           return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+          }
         }
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
@@ -401,13 +401,13 @@ trait VVHClientOperations {
       val client = HttpClientBuilder.create().build()
       try {
         val response = client.execute(request)
-        if (response.getStatusLine.getStatusCode >= 300) {
-          Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
-        }
         try {
           mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
         } finally {
           response.close()
+          if (response.getStatusLine.getStatusCode >= 300) {
+          return  Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+          }
         }
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
@@ -1071,9 +1071,6 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
       val client = HttpClientBuilder.create().build()
       try {
         val response = client.execute(request)
-        if (response.getStatusLine.getStatusCode >= 300) {
-          Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
-        }
         try {
           val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
           content.getOrElse("updateResults", None) match {
@@ -1097,6 +1094,9 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
           case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
         } finally {
           response.close()
+          if (response.getStatusLine.getStatusCode >= 300) {
+           return  Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+          }
         }
       } catch {
         case ioe: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
