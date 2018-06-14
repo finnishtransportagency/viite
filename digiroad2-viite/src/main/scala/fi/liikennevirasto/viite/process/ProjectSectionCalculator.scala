@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
-import fi.liikennevirasto.viite.ProjectValidator.{connected, endPoint}
 import fi.liikennevirasto.viite.{RampsMaxBound, RampsMinBound, RoadType}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity

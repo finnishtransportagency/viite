@@ -3,14 +3,20 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.TrackSectionOrder
+import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 
 object ProjectValidator {
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   private def distanceToPoint = 10.0
 
@@ -238,7 +244,7 @@ object ProjectValidator {
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
-    def checkProjectContinuity: Seq[ValidationErrorDetails] = {
+    def checkProjectContinuity(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       projectLinks.filter(_.status != Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).flatMap {
         case ((road, _), seq) =>
           if (road < RampsMinBound || road > RampsMaxBound) {
@@ -250,7 +256,7 @@ object ProjectValidator {
       }.toSeq
     }
 
-    def checkForNotHandledLinks = {
+    def checkForNotHandledLinks(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
       notHandled.groupBy(link => (link.roadNumber, link.roadPartNumber)).foldLeft(Seq.empty[ValidationErrorDetails])((errorDetails, road) =>
         errorDetails :+ ValidationErrorDetails(project.id, ValidationErrorList.HasNotHandledLinks,
@@ -262,7 +268,7 @@ object ProjectValidator {
       )
     }
 
-    def checkForInvalidUnchangedLinks = {
+    def checkForInvalidUnchangedLinks(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       val roadNumberAndParts = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keySet
       val invalidUnchangedLinks = roadNumberAndParts.flatMap(rn => ProjectDAO.getInvalidUnchangedOperationProjectLinks(rn._1, rn._2)).toSeq
       invalidUnchangedLinks.map { projectLink =>
@@ -273,19 +279,34 @@ object ProjectValidator {
       }
     }
 
-    def checkTrackCodePairing = {
+    def checkTrackCodePairing(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       checkTrackCode(project, projectLinks)
     }
 
-    def checkRemovedEndOfRoadPart = {
+    def checkRemovedEndOfRoadPart(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       checkRemovedEndOfRoadParts(project)
     }
 
-    def checkElyCodeChange = {
+    def checkElyCodeChange(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       checkProjectElyCodes(project, projectLinks)
     }
 
-    checkProjectContinuity ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ checkRemovedEndOfRoadPart ++ checkElyCodeChange
+    time(logger, "Validating project") {
+      val projectValidations: Seq[Seq[ValidationErrorDetails] =>  Seq[ValidationErrorDetails]] = Seq(
+        checkProjectContinuity,
+        checkForNotHandledLinks,
+        checkForInvalidUnchangedLinks,
+        checkTrackCodePairing,
+        checkRemovedEndOfRoadPart,
+        checkElyCodeChange
+      )
+
+      val errors :Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
+        validation(errors)
+      }
+      errors
+    }
+
   }
 
   /**
