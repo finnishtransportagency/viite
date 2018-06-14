@@ -1,6 +1,8 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.NewRoadAddress
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
@@ -86,6 +88,16 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
 class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
+  //TODO change this place
+  protected def splitAt(pl: ProjectLink, address: Long) = {
+    val coefficient = (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
+    val splitMeasure = pl.startMValue + ((pl.startAddrMValue - address) * coefficient)
+    (
+      pl.copy(geometry = GeometryUtils.truncateGeometry2D(pl.geometry, 0, splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
+      pl.copy(id = NewRoadAddress, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, splitMeasure, pl.geometryLength), geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
+    )
+  }
+
   protected def getUntilDiscontinuity(seq: Seq[ProjectLink], discontinuity: Discontinuity): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => pl.discontinuity != discontinuity)
     val rest = seq.drop(continuousProjectLinks.size)
@@ -107,8 +119,7 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
     //TODO check here if we have to split the project link and perform it when we have transfer to be splitted we should not look
 
-    //TODO probably we should use the getFixedAddress method here anyway
-    val endSectionAddress = averageOfAddressMValues(lastRightProjectLink.endAddrMValue, lastLeftProjectLink.endAddrMValue, reversed = lastLeftProjectLink.reversed || lastRightProjectLink.reversed)
+    val endSectionAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, calibrationPoints)
 
@@ -131,10 +142,10 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
         //of getting the next first one, from the opposite side
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       case (MinorDiscontinuity, _) => //If left side have a minor discontinuity
-        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last.endAddrMValue)
+        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last.endAddrMValue, tolerence = 3L)
         adjustTwoTracks(startAddress, left, newRight, restLeft, newRestRight, userDefinedCalibrationPoint)
       case _ => //If right side have a minor discontinuity
-        val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last.endAddrMValue)
+        val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last.endAddrMValue, tolerence = 3L)
         adjustTwoTracks(startAddress, newLeft, right, newLeftRest, restRight, userDefinedCalibrationPoint)
     }
   }
