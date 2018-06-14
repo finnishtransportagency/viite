@@ -142,10 +142,10 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
         //of getting the next first one, from the opposite side
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       case (MinorDiscontinuity, _) => //If left side have a minor discontinuity
-        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last.endAddrMValue, tolerence = 3L)
+        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last.endAddrMValue, tolerance = 3L)
         adjustTwoTracks(startAddress, left, newRight, restLeft, newRestRight, userDefinedCalibrationPoint)
       case _ => //If right side have a minor discontinuity
-        val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last.endAddrMValue, tolerence = 3L)
+        val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last.endAddrMValue, tolerance = 3L)
         adjustTwoTracks(startAddress, newLeft, right, newLeftRest, restRight, userDefinedCalibrationPoint)
     }
   }
