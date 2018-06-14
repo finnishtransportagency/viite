@@ -23,7 +23,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) =>
-//      try {
+      try {
         val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(
           findStartingPoints(projectLinks, oldLinks, userCalibrationPoints), projectLinks ++ oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
@@ -48,22 +48,22 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         }
         eliminateExpiredCalibrationPoints(links)
         //Until here
-//      } catch {
-//        case ex: InvalidAddressDataException =>
-//          logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
-//          projectLinks ++ oldLinks
-//        case ex: NoSuchElementException =>
-//          logger.info("Delta calculation failed: " + ex.getMessage, ex)
-//          projectLinks ++ oldLinks
-//        case ex: NullPointerException =>
-//          logger.info("Delta calculation failed (NPE)", ex)
-//          projectLinks ++ oldLinks
-//        case ex: Throwable =>
-//          logger.info("Delta calculation not possible: " + ex.getStackTrace)
-//          throw ex
-//
-//          projectLinks ++ oldLinks
-//      }
+      } catch {
+        case ex: InvalidAddressDataException =>
+          logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
+          projectLinks ++ oldLinks
+        case ex: NoSuchElementException =>
+          logger.info("Delta calculation failed: " + ex.getMessage, ex)
+          projectLinks ++ oldLinks
+        case ex: NullPointerException =>
+          logger.info("Delta calculation failed (NPE)", ex)
+          projectLinks ++ oldLinks
+        case ex: Throwable =>
+          logger.info("Delta calculation not possible: " + ex.getStackTrace)
+          throw ex
+
+          projectLinks ++ oldLinks
+      }
     }.toSeq
   }
 
