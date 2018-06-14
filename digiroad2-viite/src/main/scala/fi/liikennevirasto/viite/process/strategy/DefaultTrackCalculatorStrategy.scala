@@ -25,10 +25,8 @@ class DefaultTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
-  /**
-    * Number of meters that will adjust automatically address measures without need for splitting
-    */
-  val AutoAdjustMeasureMeters = 3
+
+  val AdjustmentToleranceMeters = 3L
 
   protected def getUntilLinkStatusChange(seq: Seq[ProjectLink], status: LinkStatus): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => pl.status == status)
@@ -68,7 +66,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
     if(lastRight.endAddrMValue <= lastLeft.endAddrMValue){
       val distance = lastRight.toMeters(lastLeft.endAddrMValue - lastRight.endAddrMValue)
-      if(distance < AutoAdjustMeasureMeters){
+      if(distance < AdjustmentToleranceMeters){
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       }else{
         val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
@@ -76,7 +74,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       }
     }else{
       val distance = lastLeft.toMeters(lastRight.endAddrMValue - lastLeft.endAddrMValue)
-      if(distance < AutoAdjustMeasureMeters){
+      if(distance < AdjustmentToleranceMeters){
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       }else {
         val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
@@ -88,13 +86,15 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
 class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
-  //TODO change this place
-  protected def splitAt(pl: ProjectLink, address: Long) = {
+  val AdjustmentToleranceMeters = 3L
+
+  //TODO move the split to some place more generic
+  protected def splitAt(pl: ProjectLink, address: Long) : (ProjectLink, ProjectLink) = {
     val coefficient = (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
     val splitMeasure = pl.startMValue + ((pl.startAddrMValue - address) * coefficient)
     (
-      pl.copy(geometry = GeometryUtils.truncateGeometry2D(pl.geometry, 0, splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
-      pl.copy(id = NewRoadAddress, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, splitMeasure, pl.geometryLength), geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
+      pl.copy(geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = 0, endMeasure = splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
+      pl.copy(id = NewRoadAddress, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = splitMeasure, endMeasure = pl.geometryLength), geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
     )
   }
 
@@ -142,10 +142,10 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
         //of getting the next first one, from the opposite side
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       case (MinorDiscontinuity, _) => //If left side have a minor discontinuity
-        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last.endAddrMValue, tolerance = 3L)
+        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last.endAddrMValue, tolerance = AdjustmentToleranceMeters)
         adjustTwoTracks(startAddress, left, newRight, restLeft, newRestRight, userDefinedCalibrationPoint)
       case _ => //If right side have a minor discontinuity
-        val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last.endAddrMValue, tolerance = 3L)
+        val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last.endAddrMValue, tolerance = AdjustmentToleranceMeters)
         adjustTwoTracks(startAddress, newLeft, right, newLeftRest, restRight, userDefinedCalibrationPoint)
     }
   }
