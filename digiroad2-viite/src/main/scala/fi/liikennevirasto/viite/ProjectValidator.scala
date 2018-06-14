@@ -214,6 +214,14 @@ object ProjectValidator {
       def notification = true
     }
 
+    case object DoubleEndOfRoad extends ValidationError {
+      def value = 19
+
+      def message: String = DoubleEndOfRoadMessage
+
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -224,6 +232,15 @@ object ProjectValidator {
                                     optionalInformation: Option[String])
 
   def error(id: Long, validationError: ValidationError)(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+    val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+    if (ids.nonEmpty)
+      Some(ValidationErrorDetails(id, validationError, ids,
+        points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+    else
+      None
+  }
+
+  def outsideOfProjectError(id: Long, validationError: ValidationError)(pl: Seq[RoadAddress]): Option[ValidationErrorDetails] = {
     val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty)
       Some(ValidationErrorDetails(id, validationError, ids,
@@ -280,7 +297,6 @@ object ProjectValidator {
     def checkRemovedEndOfRoadPart = {
       checkRemovedEndOfRoadParts(project)
     }
-
     checkProjectContinuity ++ checkForNotHandledLinks ++ checkForInvalidUnchangedLinks ++ checkTrackCodePairing ++ checkRemovedEndOfRoadPart ++ checkElyCodeChange
   }
 
@@ -466,6 +482,27 @@ object ProjectValidator {
       }
     }
 
+    def checkEndOfRoadOutsideOfProject : Option[ValidationErrorDetails] = {
+      println("check end of road outside")
+      val (road, part): (Long, Long) = (seq.head.roadNumber,seq.head.roadPartNumber)
+      val previousRoadPartNumber: Option[Long] = RoadAddressDAO.fetchPreviousRoadPartNumber(road, part)
+      println("previous part nro: " + previousRoadPartNumber)
+
+      if (previousRoadPartNumber.nonEmpty) {
+        if (seq.exists(pl => pl.roadNumber == road && pl.roadPartNumber == previousRoadPartNumber.get)) {
+
+        }
+        val previousRoadPartEnd: RoadAddress = RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber.get, fetchOnlyEnd = true).head
+
+        println("previous part end: " + previousRoadPartEnd)
+        if (previousRoadPartEnd.discontinuity == EndOfRoad)
+          println("SOS--ERROR--SOS")
+          outsideOfProjectError(project.id, alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((previousRoadPartEnd.roadNumber, previousRoadPartEnd.roadPartNumber)))))(List(previousRoadPartEnd))
+      } else {
+        None
+      }
+    }
+
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]) = {
       if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
         ProjectDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
@@ -478,11 +515,11 @@ object ProjectValidator {
     def getLastValidLinkForParts = {
       seq.filter(r => r.status != LinkStatus.Terminated && r.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)
     }
-
     // Checks inside road part (not including last links' checks)
     checkConnectedAreContinuous.toSeq ++ checkNotConnectedHaveMinorDiscontinuity.toSeq ++ checkDiscontinuityBetweenLinksOnRamps.toSeq ++
       checkEndOfRoadOnLastPart(getLastValidLinkForParts).toSeq ++
-      checkDiscontinuityOnLastPart(getLastValidLinkForParts).toSeq
+      checkDiscontinuityOnLastPart(getLastValidLinkForParts).toSeq ++
+      checkEndOfRoadOutsideOfProject.toSeq
   }
 
   def checkTrackCode(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -673,16 +710,17 @@ object ProjectValidator {
         val changedMsg = validationError.message.format(unzippedRoadAndPart._1.head, unzippedRoadAndPart._2.head, projectDate.get)
         changedMsg
       } else {
-        validationError.message.format(if (elyBorderData.nonEmpty) {
-          elyBorderData.get.toSet.mkString(", ")
-        } else if (roadAndPart.nonEmpty) {
-          roadAndPart.get.toSet.mkString(", ")
-        } else if (discontinuity.nonEmpty) {
-          discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
-        }
-        else {
-          validationError.message
-        })
+        validationError.message.format(
+          if (elyBorderData.nonEmpty) {
+            elyBorderData.get.toSet.mkString(", ")
+          } else if (roadAndPart.nonEmpty) {
+            roadAndPart.get.toSet.mkString(", ")
+          } else if (discontinuity.nonEmpty) {
+            discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
+          }
+          else {
+            validationError.message
+          })
       }
 
     case object formattedMessageObject extends ValidationError {
