@@ -145,7 +145,14 @@
         createProjectList(projectArray);
       });
 
-      var createProjectList = function(projects, sortFunction = function(a,b) {return a.ely - b.ely}, order = 1) {
+      var createProjectList = function(projects, sortFunction, order) {
+
+        if(!sortFunction)
+            sortFunction = function(a,b) {return a.ely - b.ely;};
+
+        if(!order)
+            order = 1;
+
         var unfinishedProjects = _.filter(projects, function(proj) {
           if (proj.statusCode === projectStatus.Saved2TR.value) {
             var hoursInDay = 24;
@@ -153,7 +160,7 @@
             //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return ((proj.statusCode >= 1 && proj.statusCode <= 4) || proj.statusCode === projectStatus.ErrorInViite.value);
+          return ((proj.statusCode >= projectStatus.Incomplete.value && proj.statusCode <= projectStatus.TRProcessing.value) || proj.statusCode === projectStatus.ErrorInViite.value);
         });
 
         var sortedProjects = unfinishedProjects.sort( function(a,b) {

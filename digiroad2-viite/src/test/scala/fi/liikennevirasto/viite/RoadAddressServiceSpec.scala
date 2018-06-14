@@ -1338,6 +1338,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Check correct constuction of floating links") {
+    val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+    val mockRoadLink = RoadLink(123456789, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 14.1, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
+    val floatingAddress = RoadAddress(9988, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, None, None, Some("tr"),
+      70000389, 123456789, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(11.0, 11.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    runWithRollback {
+      val returnedFloatingAddressees = roadAddressService.buildFloatingAddresses(Seq(mockRoadLink), Seq.empty[VVHRoadlink], Seq(floatingAddress))
+      returnedFloatingAddressees.size should be(1)
+      returnedFloatingAddressees.head.id should be(floatingAddress.id)
+      returnedFloatingAddressees.head.linkId should be(mockRoadLink.linkId)
+      returnedFloatingAddressees.head.anomaly should be(Anomaly.None)
+      returnedFloatingAddressees.head.roadLinkType should be(RoadLinkType.FloatingRoadLinkType)
+      returnedFloatingAddressees.head.administrativeClass should be(mockRoadLink.administrativeClass)
+      returnedFloatingAddressees.head.geometry should be(mockRoadLink.geometry)
+    }
+  }
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false, lrmposition: Long = 0, commonHistoryId: Long = 0) = {
