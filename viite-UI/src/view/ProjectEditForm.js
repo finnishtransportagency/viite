@@ -553,8 +553,12 @@
         eventbus.trigger('projectCollection:clickCoordinates', event, map);
         var errorIndex = event.currentTarget.id;
         if(projectCollection.getProjectErrors()[errorIndex].errorMessage !== ""){
-          var ids = projectCollection.getProjectErrors()[errorIndex].ids;
-          selectedProjectLinkProperty.openWithErrorMessage(ids[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
+          if (projectCollection.getProjectLinks().includes(event.currentTarget.linkId)) {
+              var ids = projectCollection.getProjectErrors()[errorIndex].ids;
+              selectedProjectLinkProperty.openWithErrorMessage(ids[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
+          } else {
+              new ModalConfirm("Sinun täytyy varata tieosa projektille, jotta voit korjata sen.");
+          }
         }
 
       });
