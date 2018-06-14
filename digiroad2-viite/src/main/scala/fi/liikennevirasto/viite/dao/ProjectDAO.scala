@@ -131,20 +131,9 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
 
-  //TODO Change this place
   def toMeters(address: Long) : Double = {
     val coefficient = (endMValue - startMValue) / (endAddrMValue - startAddrMValue)
     coefficient * address
-  }
-
-  //TODO change this place
-  def splitAt(address: Long) = {
-    val coefficient = (endMValue - startMValue) / (endAddrMValue - startAddrMValue)
-    val splitMeasure = startMValue + ((startAddrMValue - address) * coefficient)
-    (
-      this.copy(geometry = GeometryUtils.truncateGeometry2D(geometry, 0, splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(linkId)),
-      this.copy(id = -1000, geometry = GeometryUtils.truncateGeometry2D(geometry, splitMeasure, geometryLength), geometryLength = geometryLength - splitMeasure, connectedLinkId = Some(linkId))
-    )
   }
 }
 

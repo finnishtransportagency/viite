@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
@@ -103,6 +104,20 @@ trait TrackCalculatorStrategy {
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < address)
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+  }
+
+  protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long, tolerance: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < address)
+
+    if(continuousProjectLinks.isEmpty)
+      throw new RoadAddressException("Could not find any nearest road address");
+
+    val lastProjectLink = continuousProjectLinks.last
+    if(lastProjectLink.toMeters(Math.abs(address - lastProjectLink.endAddrMValue)) <= tolerance){
+      (continuousProjectLinks.init, seq.drop(continuousProjectLinks.size) :+ lastProjectLink)
+    } else {
+      (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+    }
   }
 
   def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = false
