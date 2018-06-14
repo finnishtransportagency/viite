@@ -801,6 +801,19 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
+  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long) : Option[Long] = {
+    val query =
+      s"""
+          SELECT * FROM (
+            SELECT ra.road_part_number
+            FROM road_address ra
+            WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
+            ORDER BY road_part_number ASC
+          ) WHERE ROWNUM < 2
+      """
+    Q.queryNA[Long](query).firstOption
+  }
+
   def update(roadAddress: RoadAddress) : Unit = {
     update(roadAddress, None)
   }
