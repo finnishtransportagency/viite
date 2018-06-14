@@ -483,24 +483,17 @@ object ProjectValidator {
     }
 
     def checkEndOfRoadOutsideOfProject : Option[ValidationErrorDetails] = {
-      println("check end of road outside")
       val (road, part): (Long, Long) = (seq.head.roadNumber,seq.head.roadPartNumber)
       val previousRoadPartNumber: Option[Long] = RoadAddressDAO.fetchPreviousRoadPartNumber(road, part)
-      println("previous part nro: " + previousRoadPartNumber)
-
       if (previousRoadPartNumber.nonEmpty) {
-        if (seq.exists(pl => pl.roadNumber == road && pl.roadPartNumber == previousRoadPartNumber.get)) {
-
-        }
+        val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
+        if (allProjectLinks.exists(link => link.roadNumber == road && link.roadPartNumber == previousRoadPartNumber.get))
+          return None
         val previousRoadPartEnd: RoadAddress = RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber.get, fetchOnlyEnd = true).head
-
-        println("previous part end: " + previousRoadPartEnd)
         if (previousRoadPartEnd.discontinuity == EndOfRoad)
-          println("SOS--ERROR--SOS")
-          outsideOfProjectError(project.id, alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((previousRoadPartEnd.roadNumber, previousRoadPartEnd.roadPartNumber)))))(List(previousRoadPartEnd))
-      } else {
-        None
+          return outsideOfProjectError(project.id, alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((previousRoadPartEnd.roadNumber, previousRoadPartEnd.roadPartNumber)))))(List(previousRoadPartEnd))
       }
+      None
     }
 
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]) = {
@@ -714,7 +707,7 @@ object ProjectValidator {
           if (elyBorderData.nonEmpty) {
             elyBorderData.get.toSet.mkString(", ")
           } else if (roadAndPart.nonEmpty) {
-            roadAndPart.get.toSet.mkString(", ")
+            roadAndPart.get.flatMap(t => List(t._1, t._2)).mkString(", ")
           } else if (discontinuity.nonEmpty) {
             discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
           }
@@ -722,7 +715,6 @@ object ProjectValidator {
             validationError.message
           })
       }
-
     case object formattedMessageObject extends ValidationError {
       def value: Int = validationError.value
 
