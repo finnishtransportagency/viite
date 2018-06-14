@@ -23,6 +23,11 @@ class DefaultTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
+  /**
+    * Number of meters that will adjust automatically address measures without need for splitting
+    */
+  val AutoAdjustMeasureMeters = 3
+
   protected def getUntilLinkStatusChange(seq: Seq[ProjectLink], status: LinkStatus): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => pl.status == status)
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
@@ -46,7 +51,11 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
   }
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
-    projectLink.status != headProjectLink.status && projectLink.track != Track.Combined
+    //Will be applied if the link status changes FROM or TO a status equal "NEW" or "TERMINATED" and track is Left or Right
+    projectLink.status != headProjectLink.status &&
+      (projectLink.status == LinkStatus.New || headProjectLink.status == LinkStatus.New) &&
+      (projectLink.status == LinkStatus.Terminated || headProjectLink.status == LinkStatus.Terminated) &&
+      (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
@@ -54,15 +63,20 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
     val (right, restRight) = getUntilLinkStatusChange(rightProjectLinks, rightProjectLinks.head.status)
 
     val (lastLeft, lastRight) = (left.last, right.last)
-    val distance = lastRight.toMeters(Math.abs(lastRight.endAddrMValue - lastLeft.endAddrMValue))
 
-    if(distance < 3){
-      adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
-    }else{
-      if(lastRight.endAddrMValue <= lastLeft.endAddrMValue){
+    if(lastRight.endAddrMValue <= lastLeft.endAddrMValue){
+      val distance = lastRight.toMeters(lastLeft.endAddrMValue - lastRight.endAddrMValue)
+      if(distance < AutoAdjustMeasureMeters){
+        adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
+      }else{
         val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
         adjustTwoTracks(startAddress, newLeft, right, newRestLeft, restRight, userDefinedCalibrationPoint)
-      }else{
+      }
+    }else{
+      val distance = lastLeft.toMeters(lastRight.endAddrMValue - lastLeft.endAddrMValue)
+      if(distance < AutoAdjustMeasureMeters){
+        adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
+      }else {
         val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
         adjustTwoTracks(startAddress, left, newRight, restLeft, newRestRight, userDefinedCalibrationPoint)
       }
@@ -90,6 +104,10 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
 
     val (lastLeftProjectLink, lastRightProjectLink) = (leftProjectLinks.last, rightProjectLinks.last)
+
+    //TODO check here if we have to split the project link and perform it when we have transfer to be splitted we should not look
+
+    //TODO probably we should use the getFixedAddress method here anyway
     val endSectionAddress = averageOfAddressMValues(lastRightProjectLink.endAddrMValue, lastLeftProjectLink.endAddrMValue, reversed = lastLeftProjectLink.reversed || lastRightProjectLink.reversed)
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, calibrationPoints)
@@ -98,7 +116,8 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
   }
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
-    projectLink.discontinuity == MinorDiscontinuity && projectLink.track != Track.Combined
+      projectLink.discontinuity == MinorDiscontinuity &&
+        (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
@@ -113,11 +132,9 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       case (MinorDiscontinuity, _) => //If left side have a minor discontinuity
         val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last.endAddrMValue)
-        //Can the done here the project link split if needed
         adjustTwoTracks(startAddress, left, newRight, restLeft, newRestRight, userDefinedCalibrationPoint)
       case _ => //If right side have a minor discontinuity
         val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last.endAddrMValue)
-        //Can the split be performed here
         adjustTwoTracks(startAddress, newLeft, right, newLeftRest, restRight, userDefinedCalibrationPoint)
     }
   }
