@@ -172,8 +172,8 @@ object RoadAddressChangesDAO {
                 rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed
                 From Road_Address_Changes rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
-                ORDER BY COALESCE(rac.old_road_number, rac.new_road_number), COALESCE(rac.old_road_part_number, rac.new_road_part_number),
-                  COALESCE(rac.old_start_addr_m, rac.new_start_addr_m), COALESCE(rac.old_track_code, rac.new_track_code),
+                ORDER BY COALESCE(rac.new_road_number, rac.old_road_number), COALESCE(rac.new_road_part_number, rac.old_road_part_number),
+                  COALESCE(rac.new_start_addr_m, rac.old_start_addr_m), COALESCE(rac.new_track_code, rac.old_track_code),
                   CHANGE_TYPE DESC"""
     queryList(query)
   }

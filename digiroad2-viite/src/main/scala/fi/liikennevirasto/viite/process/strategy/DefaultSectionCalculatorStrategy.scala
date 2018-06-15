@@ -30,13 +30,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         // TODO: userCalibrationPoints to Long -> Seq[UserDefinedCalibrationPoint] in method params
         val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
-        //TODO
-        //Delete all the exisint calibration points on the projecLinks
-        //Add again the existing road address calibration points
-        //Then each section can add calibration points
-//        calculateSectionAddressValues(ordSections, calMap)
 
-        //Delete this code
         val calculatedSections = calculateSectionAddressValues(ordSections, calMap)
         calculatedSections.flatMap{ sec =>
           if (sec.right == sec.left)
@@ -45,16 +39,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             sec.right.links ++ sec.left.links
           }
         }
-//        val links = calculatedSections.flatMap{ sec =>
-//          if (sec.right == sec.left)
-//            assignCalibrationPoints(Seq(), sec.right.links, calMap)
-//          else {
-//            assignCalibrationPoints(Seq(), sec.right.links, calMap) ++
-//              assignCalibrationPoints(Seq(), sec.left.links, calMap)
-//          }
-//        }
-//        eliminateExpiredCalibrationPoints(links)
-        //Until here
       } catch {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
@@ -96,9 +80,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-        val (left, right) = strategy.setCalibrationPoints(trackCalcResult, userDefinedCalibrationPoint)
+        val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, userDefinedCalibrationPoint)
 
-        (left ++ adjustedRestRight, right ++ adjustedRestLeft)
+        (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
       }
     }
 
