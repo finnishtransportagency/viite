@@ -2,8 +2,9 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, LinkStatus, ProjectLink, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 
 object TrackCalculatorContext {
@@ -122,4 +123,40 @@ trait TrackCalculatorStrategy {
 
   def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = false
   def assignTrackMValues(startAddress: Option[Long] , leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult
+
+  def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) : (Seq[ProjectLink], Seq[ProjectLink]) = {
+    //TODO this can be improved if we use the combine track
+    val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
+
+    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadAddressId).filter(_>0).distinct)
+
+    (
+      setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
+      setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint)
+    )
+  }
+
+  def setOnSideCalibrationPoints(projectlinks: Seq[ProjectLink], raCalibrationPoints: Map[Long, CalibrationCode], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+    projectlinks.size match {
+      case 1 =>
+        projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true))
+      case _ =>
+        val pls = projectlinks.map{
+          pl =>
+            val raCalibrationCode = raCalibrationPoints.get(pl.roadAddressId).getOrElse(CalibrationCode.No)
+            val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
+            val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
+            setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP)
+        }
+
+        Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false)) ++ pls.init.tail ++
+          Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true))
+    }
+  }
+
+  def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean) = {
+    val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
+    val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
+    pl.copy(calibrationPoints = (sCP, eCP))
+  }
 }

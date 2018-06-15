@@ -38,15 +38,22 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         //Delete this code
         val calculatedSections = calculateSectionAddressValues(ordSections, calMap)
-        val links = calculatedSections.flatMap{ sec =>
+        calculatedSections.flatMap{ sec =>
           if (sec.right == sec.left)
-            assignCalibrationPoints(Seq(), sec.right.links, calMap)
+            sec.right.links
           else {
-            assignCalibrationPoints(Seq(), sec.right.links, calMap) ++
-              assignCalibrationPoints(Seq(), sec.left.links, calMap)
+            sec.right.links ++ sec.left.links
           }
         }
-        eliminateExpiredCalibrationPoints(links)
+//        val links = calculatedSections.flatMap{ sec =>
+//          if (sec.right == sec.left)
+//            assignCalibrationPoints(Seq(), sec.right.links, calMap)
+//          else {
+//            assignCalibrationPoints(Seq(), sec.right.links, calMap) ++
+//              assignCalibrationPoints(Seq(), sec.left.links, calMap)
+//          }
+//        }
+//        eliminateExpiredCalibrationPoints(links)
         //Until here
       } catch {
         case ex: InvalidAddressDataException =>
@@ -89,7 +96,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-        (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
+        val (left, right) = strategy.setCalibrationPoints(trackCalcResult, userDefinedCalibrationPoint)
+
+        (left ++ adjustedRestRight, right ++ adjustedRestLeft)
       }
     }
 
