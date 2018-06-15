@@ -176,6 +176,17 @@ object ProjectDeltaCalculator {
     result :+ p
   }
 
+  private def partitionByCalibrationPoint[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[Seq[T]] = {
+    val (p, result) = roadAddresses.sortBy(_.startAddrMValue).foldLeft((Seq[T](), Seq[Seq[T]]())) {
+      case ((previous, partitioned), roadAddress) =>
+        roadAddress.calibrationPoints match {
+          case (_, Some(cp)) if cp.addressMValue == roadAddress.endAddrMValue => (Seq(), partitioned :+ (previous :+ roadAddress))
+          case _ => (previous :+ roadAddress, partitioned)
+        }
+    }
+    result :+ p
+  }
+
   /**
     * Check if the matches (opposite side of right or left track) road address measures fit on the target road address sections
     *
@@ -192,7 +203,7 @@ object ProjectDeltaCalculator {
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
-      .mapValues(v => partitionByDiscontinuity(v).flatMap(r => combine(r.sortBy(_.startAddrMValue)))).values.flatten.map(ra =>
+      .mapValues(v => partitionByCalibrationPoint(v).flatMap(r => combine(r.sortBy(_.startAddrMValue)))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
