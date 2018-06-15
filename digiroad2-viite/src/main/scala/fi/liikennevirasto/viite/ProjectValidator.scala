@@ -253,7 +253,7 @@ object ProjectValidator {
             checkRoadContinuityCodes(project, seq, isRampValidation = true)
           }
         case _ => Seq()
-      }.toSeq
+      }.toSeq ++ errors
     }
 
     def checkForNotHandledLinks(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
@@ -265,7 +265,7 @@ object ProjectValidator {
             ProjectCoordinates(point.x, point.y, 12)
           },
           Some(HasNotHandledLinksMessage.format(road._2.size, road._1._1, road._1._2)))
-      )
+      ) ++ errors
     }
 
     def checkForInvalidUnchangedLinks(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
@@ -276,19 +276,19 @@ object ProjectValidator {
         ValidationErrorDetails(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks,
           Seq(projectLink.id), Seq(ProjectCoordinates(point.x, point.y, 12)),
           Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue)))
-      }
+      } ++ errors
     }
 
     def checkTrackCodePairing(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
-      checkTrackCode(project, projectLinks)
+      checkTrackCode(project, projectLinks) ++ errors
     }
 
     def checkRemovedEndOfRoadPart(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
-      checkRemovedEndOfRoadParts(project)
+      checkRemovedEndOfRoadParts(project) ++ errors
     }
 
     def checkElyCodeChange(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
-      checkProjectElyCodes(project, projectLinks)
+      checkProjectElyCodes(project, projectLinks) ++ errors
     }
 
     time(logger, "Validating project") {
@@ -387,9 +387,10 @@ object ProjectValidator {
 
     def checkEndOfRoadOnLastPart(lastProjectLinks: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
       val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
-      if (lastProjectLinks.exists(_.discontinuity != lastProjectLinks.head.discontinuity))
-        error(project.id, ValidationErrorList.IncompatibleDiscontinuityCodes)(lastProjectLinks)
-      else {
+//      val trackGroup = lastProjectLinks.groupBy(_.track)
+//      if (trackGroup.size == 1 && lastProjectLinks.exists(_.discontinuity != lastProjectLinks.head.discontinuity))
+//        error(project.id, ValidationErrorList.IncompatibleDiscontinuityCodes)(lastProjectLinks)
+//      else {
         val (road, part) = (lastProjectLinks.head.roadNumber, lastProjectLinks.head.roadPartNumber)
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
@@ -407,14 +408,14 @@ object ProjectValidator {
           return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
         }
         None
-      }
+//      }
     }
 
     def checkDiscontinuityOnLastPart(lastProjectLinks: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
       val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
-      if (lastProjectLinks.exists(_.discontinuity != lastProjectLinks.head.discontinuity))
-        error(project.id, ValidationErrorList.IncompatibleDiscontinuityCodes)(lastProjectLinks)
-      else {
+//      if (lastProjectLinks.exists(_.discontinuity != lastProjectLinks.head.discontinuity))
+//        error(project.id, ValidationErrorList.IncompatibleDiscontinuityCodes)(lastProjectLinks)
+//      else {
         val (road, part) = (lastProjectLinks.head.roadNumber, lastProjectLinks.head.roadPartNumber)
         val discontinuity = lastProjectLinks.head.discontinuity
         val projectNextRoadParts = project.reservedParts.filter(rp =>
@@ -450,7 +451,7 @@ object ProjectValidator {
           }
         }
         None
-      }
+//      }
     }
 
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]) = {
