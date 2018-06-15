@@ -378,7 +378,6 @@ trait VVHClientOperations {
       val client = HttpClientBuilder.create().build()
       try {
         val response = client.execute(request)
-        println(response)
         try {
           mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
         } finally {
@@ -617,11 +616,11 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
+
       fetchVVHFeatures(url) match {
         case Left(features) => features.map { feature =>
           val attributes = extractFeatureAttributes(feature)
           val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
-
           resultTransition(attributes, geometry)
         }
         case Right(error) =>
