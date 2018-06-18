@@ -120,7 +120,7 @@ object ProjectDeltaCalculator {
     else {
       Seq(tr2, tr1)
     }
-  }
+  }Calculate delta for project with discontinuity
 
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
     if (r1.endAddrMValue == r2.startAddrMValue && !r1.hasCalibrationPointAt(CalibrationCode.AtEnd))
