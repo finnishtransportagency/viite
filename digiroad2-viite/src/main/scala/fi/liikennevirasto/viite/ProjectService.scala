@@ -1360,7 +1360,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it =>
-            setProjectStatusToSend2TR(projectId)
+            setProjectStatus(projectId, Sent2TR, false)
             logger.info(s"Sending to TR successful: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
 
@@ -1479,26 +1479,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def setProjectStatusToSend2TR(projectId: Long): Unit = {
-    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR)
-  }
-
-  def setProjectStatusToIncomplete(projectId: Long, withSeason: Boolean = true): Unit = {
-    if (withSeason) {
-      withDynSession {
-        ProjectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
-      }
-    } else
-      ProjectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
-  }
-
-  def setProjectStatusToSendingToTR(projectId: Long, withSeason: Boolean = true): Unit = {
-    if (withSeason) {
-      withDynSession {
-        ProjectDAO.updateProjectStatus(projectId, ProjectState.SendingToTR)
-      }
-    } else
-      ProjectDAO.updateProjectStatus(projectId, ProjectState.SendingToTR)
+  def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
+    if (withSession) {
+      ProjectDAO.updateProjectStatus(projectId, newStatus)
+    } else {
+      ProjectDAO.updateProjectStatus(projectId, newStatus)
+    }
   }
 
   def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): (ProjectState) = {
