@@ -113,6 +113,20 @@
       });
     };
 
+    this.getNextProjectsWithLinksById = function (projectId) {
+      return backend.getNextProjectsWithLinksById(projectId, function (result) {
+        roadAddressProjects = result.project;
+        currentProject = result;
+        projectInfo = {
+          id: result.project.id,
+          publishable: result.publishable
+        };
+        projectErrors = result.projectErrors;
+        publishableProject = result.publishable;
+        eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
+      });
+    };
+
     this.revertLinkStatus = function () {
       var fetchedLinks = this.getAll();
       dirtyProjectLinkIds.forEach(function (dirtyLink) {
@@ -698,7 +712,7 @@
           }
         });
       });
-      return errors;
+      return (!_.isUndefined(errors) && errors.size > 0) ? errors : [];
     };
 
     this.pushCoordinates = function(button) {
