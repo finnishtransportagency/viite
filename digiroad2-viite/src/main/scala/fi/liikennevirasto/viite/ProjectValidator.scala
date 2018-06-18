@@ -359,18 +359,24 @@ object ProjectValidator {
 
     def checkNotConnectedHaveMinorDiscontinuity = {
       val possibleDiscontinuous = seq.sortBy(_.startAddrMValue).filterNot { pl =>
+        if(pl.linkId == 5992278){
+          1
+        } else {
+          0
+        }
         // Check that pl has discontinuity or after it the project links are connected (except last, where forall is true for empty list)
-        pl.discontinuity == MinorDiscontinuity ||
-          seq.filter(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track)).forall(pl2 => connected(pl, pl2))
+        val discontinuityCheck = pl.discontinuity == MinorDiscontinuity
+        val matchingLink = seq.filter(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track) && pl2.id != pl.id)
+         discontinuityCheck || matchingLink.exists(pl2 => connected(pl, pl2))
       }
-      val adjacentRoadAddresses = possibleDiscontinuous.filterNot(pd => {
-        val roadsDiscontinuity = RoadAddressDAO.fetchByRoadPart(pd.roadNumber, pd.roadPartNumber)
-        val sameDiscontinuity = roadsDiscontinuity.map(_.discontinuity).distinct.contains(pd.discontinuity)
-        val overlapping = roadsDiscontinuity.exists(p => p.id == pd.roadAddressId &&
-          (GeometryUtils.overlapAmount((p.startMValue, p.endMValue), (pd.startMValue, pd.endMValue)) < MaxDistanceForConnectedLinks))
-        sameDiscontinuity && overlapping
-      })
-      error(project.id, ValidationErrorList.MinorDiscontinuityFound)(adjacentRoadAddresses)
+//      val adjacentRoadAddresses = possibleDiscontinuous.filterNot(pd => {
+//        val roadsDiscontinuity = RoadAddressDAO.fetchByRoadPart(pd.roadNumber, pd.roadPartNumber)
+//        val sameDiscontinuity = roadsDiscontinuity.map(_.discontinuity).distinct.contains(pd.discontinuity)
+//        val overlapping = roadsDiscontinuity.exists(p => p.id == pd.roadAddressId &&
+//          (GeometryUtils.overlapAmount((p.startMValue, p.endMValue), (pd.startMValue, pd.endMValue)) < MaxDistanceForConnectedLinks))
+//        sameDiscontinuity && overlapping
+//      })
+      error(project.id, ValidationErrorList.MinorDiscontinuityFound)(possibleDiscontinuous)
     }
 
     def checkDiscontinuityBetweenLinksOnRamps = {

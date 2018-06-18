@@ -425,8 +425,31 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           case Some(project) =>
             val projectMap = roadAddressProjectToApi(project)
             val parts = project.reservedParts.map(reservedRoadPartToApi)
-            val errorParts = projectService.validateProjectById(project.id)
-            val publishable = errorParts.isEmpty
+            val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
+            Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
+              "projectLinks" -> parts, "publishable" -> false,
+              "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
+          case _ => halt(NotFound("Project not found"))
+        }
+      } catch {
+        case e: Exception => {
+          logger.error(e.toString, e)
+          InternalServerError(e.toString)
+        }
+      }
+    }
+  }
+
+  get("/roadlinks/roadaddress/project/all/next/projectId/:id") {
+    val projectId = params("id").toLong
+    time(logger, s"GET request for /roadlinks/roadaddress/project/all/next/projectId/$projectId") {
+      try {
+        projectService.getRoadAddressSingleProject(projectId) match {
+          case Some(project) =>
+            val projectMap = roadAddressProjectToApi(project)
+            val parts = project.reservedParts.map(reservedRoadPartToApi)
+                        val errorParts = projectService.validateProjectById(project.id)
+                        val publishable = errorParts.isEmpty
             val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
               "projectLinks" -> parts, "publishable" -> publishable, "projectErrors" -> errorParts.map(errorPartsToApi),
@@ -600,7 +623,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/getchangetable/$projectId") {
-      val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
+//      val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
+      //TODO change UI to not override proj validator errors on change table call
       val changeTableData = projectService.getChangeProject(projectId).map(project =>
         Map(
           "id" -> project.id,
@@ -613,7 +637,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
-      Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors)
+      Map("changeTable" -> changeTableData/*, "validationErrors" -> validationErrors*/)
     }
   }
 
