@@ -349,12 +349,12 @@ object ProjectValidator {
         RoadAddressDAO.fetchByRoadPart(rp._1, rp._2, includeFloating = true)))
     }
 
-    def checkConnectedAreContinuous = {
-      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(seq.sortBy(_.startAddrMValue).filterNot(pl =>
+    def checkContinuityBetweenParts = {
+      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(seq.sortBy(_.startAddrMValue).filterNot { pl =>
         // Check that pl is continuous or after it there is no connected project link
-        pl.discontinuity == Continuous ||
-          !seq.exists(pl2 => pl2.startAddrMValue == pl.endAddrMValue && trackMatch(pl2.track, pl.track) && connected(pl, pl2))
-      ))
+        val disconnectedLinks = seq.exists(pl2 => (pl2.startAddrMValue != pl.endAddrMValue || !connected(pl, pl2)) && trackMatch(pl2.track, pl.track))
+        disconnectedLinks || pl.discontinuity == Continuous
+      })
     }
 
     def checkMinorDiscontinuityBetweenParts = {
@@ -367,8 +367,8 @@ object ProjectValidator {
       }
       val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
         val sortedGroup = g._2.sortBy(_.startAddrMValue)
-        val checked: Seq[ProjectLink] = sortedGroup.zip(sortedGroup.tail).flatMap(z => checkConnected(z._1, z._2))
-        checked.filterNot(c => c.discontinuity == MinorDiscontinuity || sortedGroup.exists(s => connected(c, s)))
+        val connectedLinks: Seq[ProjectLink] = sortedGroup.zip(sortedGroup.tail).flatMap(z => checkConnected(z._1, z._2))
+        connectedLinks.filterNot(c => c.discontinuity == MinorDiscontinuity || sortedGroup.exists(s => connected(c, s)))
       }.toSeq
 
       error(project.id, ValidationErrorList.MinorDiscontinuityFound)(discontinuous)
@@ -469,7 +469,7 @@ object ProjectValidator {
     }
 
     // Checks inside road part (not including last links' checks)
-    checkConnectedAreContinuous.toSeq ++ checkMinorDiscontinuityBetweenParts.toSeq ++ checkDiscontinuityBetweenLinksOnRamps.toSeq ++
+    checkContinuityBetweenParts.toSeq ++ checkMinorDiscontinuityBetweenParts.toSeq ++ checkDiscontinuityBetweenLinksOnRamps.toSeq ++
       checkEndOfRoadOnLastPart(getLastValidLinkForParts).toSeq ++
       checkDiscontinuityOnLastPart(getLastValidLinkForParts).toSeq
   }
