@@ -260,7 +260,7 @@
     var createOrUpdate = function(dataJson){
       if((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0){
         var ids = dataJson.ids;
-        if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 0){
+        if(dataJson.linkStatus === LinkStatus.New.value && ids.length === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
               new ModalConfirm(successObject.errorMessage);
@@ -712,7 +712,7 @@
           }
         });
       });
-      return (!_.isUndefined(errors) && errors.size > 0) ? errors : [];
+      return (!_.isUndefined(errors) && errors.length > 0) ? errors : [];
     };
 
     this.pushCoordinates = function(button) {
