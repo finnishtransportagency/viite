@@ -68,7 +68,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       if(distance < AdjustmentToleranceMeters){
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       }else{
-        val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
+        val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue, tolerance = AdjustmentToleranceMeters)
         adjustTwoTracks(startAddress, newLeft, right, newRestLeft, restRight, userDefinedCalibrationPoint)
       }
     }else{
@@ -76,7 +76,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       if(distance < AdjustmentToleranceMeters){
         adjustTwoTracks(startAddress, left, right, restLeft, restRight, userDefinedCalibrationPoint)
       }else {
-        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
+        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue, tolerance = AdjustmentToleranceMeters)
         adjustTwoTracks(startAddress, left, newRight, restLeft, newRestRight, userDefinedCalibrationPoint)
       }
     }
@@ -117,7 +117,6 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
     val (lastLeftProjectLink, lastRightProjectLink) = (leftProjectLinks.last, rightProjectLinks.last)
 
     //TODO check here if we have to split the project link and perform it when we have transfer to be splitted we should not look
-
     val endSectionAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, calibrationPoints)

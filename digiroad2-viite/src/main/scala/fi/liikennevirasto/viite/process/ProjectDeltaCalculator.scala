@@ -164,18 +164,6 @@ object ProjectDeltaCalculator {
     fusedValues.toLong
   }
 
-  //TODO instead of splitting by discontinuity we can split by calibration points.
-  private def partitionByDiscontinuity[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[Seq[T]] = {
-    val (p, result) = roadAddresses.sortBy(_.startAddrMValue).foldLeft((Seq[T](), Seq[Seq[T]]())) {
-      case ((previous, partitioned), roadAddress) =>
-        roadAddress.discontinuity match {
-          case MinorDiscontinuity => (Seq(), partitioned :+ (previous :+ roadAddress))
-          case _ => (previous :+ roadAddress, partitioned)
-        }
-    }
-    result :+ p
-  }
-
   private def partitionByCalibrationPoint[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[Seq[T]] = {
     val (p, result) = roadAddresses.sortBy(_.startAddrMValue).foldLeft((Seq[T](), Seq[Seq[T]]())) {
       case ((previous, partitioned), roadAddress) =>
