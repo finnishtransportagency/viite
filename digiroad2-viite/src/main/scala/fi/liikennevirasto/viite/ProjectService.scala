@@ -1370,6 +1370,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
       } catch {
+        //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
         case ioe@(_: IOException | _: ClientProtocolException) => {
           ProjectDAO.updateProjectStatus(projectId, SendingToTR)
           PublishResult(validationSuccess = false, sendSuccess = false, None)
@@ -1489,6 +1490,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     } else
       ProjectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
+  }
+
+  def setProjectStatusToSendingToTR(projectId: Long, withSeason: Boolean = true): Unit = {
+    if (withSeason) {
+      withDynSession {
+        ProjectDAO.updateProjectStatus(projectId, ProjectState.SendingToTR)
+      }
+    } else
+      ProjectDAO.updateProjectStatus(projectId, ProjectState.SendingToTR)
   }
 
   def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): (ProjectState) = {

@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite
 import java.util.Properties
 
 import fi.liikennevirasto.viite.dao.AddressChangeType._
+import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -219,8 +220,8 @@ object ViiteTierekisteriClient {
     request.setEntity(createJsonMessage(trProject))
     val response = client.execute(request)
     try {
-      val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 500) {
+      val statusCode = 404
+      if (statusCode >= 500 || statusCode == 404) {
         logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
         throw new RuntimeException("Unable to submit: Tierekisteri error 500")
       } else {
@@ -230,7 +231,7 @@ object ViiteTierekisteriClient {
     } catch {
       case NonFatal(e) =>
         logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
-        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
+        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, failedToSendToTRMessage) // sending project to tierekisteri failed
     } finally {
       response.close()
     }
