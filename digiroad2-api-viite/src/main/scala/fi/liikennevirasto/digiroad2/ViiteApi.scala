@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressExcept
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.SplitOptions
@@ -423,6 +424,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       try {
         projectService.getRoadAddressSingleProject(projectId) match {
           case Some(project) =>
+            if (project.status == SendingToTR) {
+              projectService.setProjectStatusToIncomplete(project.id)
+            }
             val projectMap = roadAddressProjectToApi(project)
             val parts = project.reservedParts.map(reservedRoadPartToApi)
             val errorParts = projectService.validateProjectById(project.id)

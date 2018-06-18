@@ -81,6 +81,15 @@ object Digiroad2Context {
     }
   }
 
+  system.scheduler.schedule(FiniteDuration(5, TimeUnit.MINUTES), FiniteDuration(5, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per 5 minute
+    try {
+      projectService.sendProjectsInWaiting()
+    } catch {
+      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
+    }
+  }
+
+
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
