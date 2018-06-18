@@ -81,7 +81,7 @@ object Digiroad2Context {
     }
   }
 
-  system.scheduler.schedule(FiniteDuration(5, TimeUnit.MINUTES), FiniteDuration(5, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per 5 minute
+  system.scheduler.schedule(FiniteDuration(5, TimeUnit.MINUTES), FiniteDuration(5, TimeUnit.MINUTES)) { // first query after 5 minutes, then once per 5 minute
     try {
       projectService.sendProjectsInWaiting()
     } catch {
