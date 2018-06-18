@@ -1,6 +1,7 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
     var projectStatus = LinkValues.ProjectStatus;
+    var statusToDisplay = LinkValues.ProjectStatusToDisplay;
     var projectArray = [];
     var headers = {
       "sortName": {toStr: "PROJEKTIN NIMI", width: "255", order: 0,
@@ -160,7 +161,7 @@
             //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return ((proj.statusCode >= projectStatus.Incomplete.value && proj.statusCode <= projectStatus.TRProcessing.value) || proj.statusCode === projectStatus.ErrorInViite.value);
+          return _.contains(statusToDisplay, proj.statusCode);
         });
 
         var sortedProjects = unfinishedProjects.sort( function(a,b) {
