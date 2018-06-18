@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressExcept
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
+import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, SendingToTR}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.SplitOptions
@@ -384,7 +384,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       if (sendStatus.validationSuccess && sendStatus.sendSuccess)
         Map("sendSuccess" -> true)
       else if (sendStatus.errorMessage.getOrElse("").toLowerCase == failedToSendToTRMessage.toLowerCase) {
-        projectService.setProjectStatusToSendingToTR(projectID)
+        projectService.setProjectStatus(projectID, SendingToTR)
         Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
       } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
     }
@@ -427,7 +427,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         projectService.getRoadAddressSingleProject(projectId) match {
           case Some(project) =>
             if (project.status == SendingToTR) {
-              projectService.setProjectStatusToIncomplete(project.id)
+              projectService.setProjectStatus(project.id, Incomplete)
             }
             val projectMap = roadAddressProjectToApi(project)
             val parts = project.reservedParts.map(reservedRoadPartToApi)
