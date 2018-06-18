@@ -49,9 +49,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         case ex: NullPointerException =>
           logger.info("Delta calculation failed (NPE)", ex)
           projectLinks ++ oldLinks
-//        case ex: Throwable =>
-//          logger.info("Delta calculation not possible: " + ex.getMessage)
-//          projectLinks ++ oldLinks
+        case ex: Throwable =>
+          logger.info("Delta calculation not possible: " + ex.getMessage)
+          projectLinks ++ oldLinks
       }
     }.toSeq
   }
