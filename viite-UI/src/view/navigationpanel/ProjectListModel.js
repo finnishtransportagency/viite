@@ -197,6 +197,7 @@
           html += '</table>';
           $('#project-list').html(html);
           $('[id*="open-project"]').click(function(event) {
+            eventbus.trigger('linkProperties:clearCurrentSelected');
             if (this.className === "project-open btn btn-new-error") {
               projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
               eventbus.once("roadAddressProject:reOpenedProject", function(successData) {
@@ -266,6 +267,7 @@
       });
 
       projectList.on('click', 'button.new', function() {
+        eventbus.trigger('linkProperties:clearCurrentSelected');
         userFilterVisibility(false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger('roadAddress:newProject');
