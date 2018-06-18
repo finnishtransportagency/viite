@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import java.io.IOException
-import java.sql.{SQLException, SQLRecoverableException}
+import java.sql.SQLException
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2._
