@@ -359,17 +359,16 @@ object ProjectValidator {
 
     def checkMinorDiscontinuityBetweenParts = {
       def checkConnected(curr: ProjectLink, next: ProjectLink): Option[ProjectLink] = {
-        val isNotDiscontinuous = curr.discontinuity != MinorDiscontinuity
-        val notMatchingLink = curr.endAddrMValue != next.startAddrMValue || !trackMatch(curr.track, next.track) || !connected(curr, next)
-        if(isNotDiscontinuous && notMatchingLink)
-          Some(curr)
-        else
+        val matchingLink = curr.endAddrMValue == next.startAddrMValue && trackMatch(curr.track, next.track)
+        if(matchingLink)
           None
+        else
+          Some(curr)
       }
       val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
         val sortedGroup = g._2.sortBy(_.startAddrMValue)
         val checked: Seq[ProjectLink] = sortedGroup.zip(sortedGroup.tail).flatMap(z => checkConnected(z._1, z._2))
-          checked
+        checked.filterNot(c => c.discontinuity == MinorDiscontinuity || sortedGroup.exists(s => connected(c, s)))
       }.toSeq
 
       error(project.id, ValidationErrorList.MinorDiscontinuityFound)(discontinuous)
