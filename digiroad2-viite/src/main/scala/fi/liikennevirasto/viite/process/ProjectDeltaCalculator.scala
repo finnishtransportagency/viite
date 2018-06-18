@@ -103,8 +103,8 @@ object ProjectDeltaCalculator {
       (pl1.reversed && pl1.startAddrMValue == pl2.endAddrMValue)
     val matchContinuity = (pl1.reversed && pl2.discontinuity == Discontinuity.Continuous) ||
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
-    if (matchAddr && matchContinuity &&
-      ra1.endAddrMValue == ra2.startAddrMValue && ra1.discontinuity == Discontinuity.Continuous &&
+    if (matchAddr && matchContinuity && !pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) &&
+      ra1.endAddrMValue == ra2.startAddrMValue &&
       ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
@@ -113,9 +113,9 @@ object ProjectDeltaCalculator {
           case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
       },
         pl1 match {
-          case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue).asInstanceOf[P]
-          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity).asInstanceOf[P]
-          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
+          case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = pl2.calibrationPoints).asInstanceOf[P]
+          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity, calibrationPoints = pl1.calibrationPoints).asInstanceOf[P]
+          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity, calibrationPoints = pl2.calibrationPoints).asInstanceOf[P]
       }))
     else {
       Seq(tr2, tr1)
@@ -123,10 +123,10 @@ object ProjectDeltaCalculator {
   }
 
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
-    if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
+    if (r1.endAddrMValue == r2.startAddrMValue && !r1.hasCalibrationPointAt(CalibrationCode.AtEnd))
       r1 match {
-        case x: RoadAddress => Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue).asInstanceOf[T])
-        case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+        case x: RoadAddress => Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+        case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
       }
     else
       Seq(r2, r1)
@@ -164,17 +164,6 @@ object ProjectDeltaCalculator {
     fusedValues.toLong
   }
 
-  private def partitionByCalibrationPoint[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[Seq[T]] = {
-    val (p, result) = roadAddresses.sortBy(_.startAddrMValue).foldLeft((Seq[T](), Seq[Seq[T]]())) {
-      case ((previous, partitioned), roadAddress) =>
-        roadAddress.calibrationPoints match {
-          case (_, Some(cp)) if cp.addressMValue == roadAddress.endAddrMValue => (Seq(), partitioned :+ (previous :+ roadAddress))
-          case _ => (previous :+ roadAddress, partitioned)
-        }
-    }
-    result :+ p
-  }
-
   /**
     * Check if the matches (opposite side of right or left track) road address measures fit on the target road address sections
     *
@@ -191,8 +180,8 @@ object ProjectDeltaCalculator {
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
-      .mapValues(v => partitionByCalibrationPoint(v).flatMap(r => combine(r.sortBy(_.startAddrMValue)))).values.flatten.map(ra =>
-      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+    .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+    RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
 

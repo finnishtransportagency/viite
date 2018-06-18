@@ -129,6 +129,22 @@ trait BaseRoadAddress {
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
+  def getCalibrationCode: CalibrationCode = {
+    calibrationPoints match {
+      case (Some(_), Some(_)) => CalibrationCode.AtBoth
+      case (Some(_), _) => CalibrationCode.AtBeginning
+      case (_, Some(_)) => CalibrationCode.AtEnd
+      case _ => CalibrationCode.No
+    }
+  }
+
+  def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
+    val raCalibrationCode = getCalibrationCode
+    if(calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
+      raCalibrationCode == calibrationCode
+    else
+      raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
+  }
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
