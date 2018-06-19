@@ -442,7 +442,7 @@
       clearFeaturesToKeep();
     });
 
-    eventbus.on('linkProperties:clearCurrentSelected', function(){
+    eventbus.on('roadAddress:openProject', function(){
         close();
     });
 
