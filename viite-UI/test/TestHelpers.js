@@ -251,7 +251,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var getFeaturesRoadLinkData = function(map, layerName){
       var features =  getFeatures(map, layerName);
       return _.chain(features).map(function(feature){
-        return feature.roadLinkData;
+        return feature.linkData;
       }).filter(function(rlData) {
         return !_.isUndefined(rlData);
       }).value();
@@ -260,7 +260,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var getFeatureByLinkId = function(map, layerName, linkId){
       var features = getFeatures(map, layerName);
       return _.find(features, function(feature){
-        return (layerName == "roadAddressProject" ? feature.projectLinkData.linkId === linkId : feature.roadLinkData.linkId === linkId);
+        return (feature.linkData.linkId === linkId);
       });
     };
 
