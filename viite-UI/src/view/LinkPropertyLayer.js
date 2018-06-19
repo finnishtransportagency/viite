@@ -612,28 +612,28 @@
 
         _.each(geometryChangedRoadMarkers, function(geometryChangedLink) {
 
-          var newRoadLinkData = Object.assign({}, geometryChangedLink);
-          newRoadLinkData.roadClass = 99;
-          newRoadLinkData.roadLinkSource = 99;
-          newRoadLinkData.sideCode = 99;
-          newRoadLinkData.linkType = 99;
-          newRoadLinkData.constructionType = 0;
-          newRoadLinkData.roadLinkType = 0;
-          newRoadLinkData.id = 0;
-          newRoadLinkData.startAddressM = "";
-          newRoadLinkData.endAddressM = "";
-          newRoadLinkData.anomaly = Anomaly.NoAddressGiven.value;
-          newRoadLinkData.points = newRoadLinkData.newGeometry;
+          var newLinkData = Object.assign({}, geometryChangedLink);
+            newLinkData.roadClass = 99;
+            newLinkData.roadLinkSource = 99;
+            newLinkData.sideCode = 99;
+            newLinkData.linkType = 99;
+            newLinkData.constructionType = 0;
+            newLinkData.roadLinkType = 0;
+            newLinkData.id = 0;
+            newLinkData.startAddressM = "";
+            newLinkData.endAddressM = "";
+            newLinkData.anomaly = Anomaly.NoAddressGiven.value;
+            newLinkData.points = newLinkData.newGeometry;
 
-          var marker = cachedMarker.createMarker(newRoadLinkData);
+          var marker = cachedMarker.createMarker(newLinkData);
           geometryChangedLayer.getSource().addFeature(marker);
 
-          var points = _.map(newRoadLinkData.newGeometry, function(point) {
+          var points = _.map(newLinkData.newGeometry, function(point) {
             return [point.x, point.y];
           });
           var feature = new ol.Feature({ geometry: new ol.geom.LineString(points)});
-          feature.linkData = newRoadLinkData;
-          roadCollection.addTmpRoadLinkGroups(newRoadLinkData);
+          feature.linkData = newLinkData;
+          roadCollection.addTmpRoadLinkGroups(newLinkData);
           geometryChangedLayer.getSource().addFeature(feature);
         });
 
