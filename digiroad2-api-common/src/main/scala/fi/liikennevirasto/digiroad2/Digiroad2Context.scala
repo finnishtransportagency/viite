@@ -85,7 +85,7 @@ object Digiroad2Context {
     try {
       projectService.sendProjectsInWaiting()
     } catch {
-      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
+      case ex: Exception => System.err.println("Exception when sending projects to TR: " + ex.getMessage)
     }
   }
 
