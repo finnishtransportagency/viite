@@ -1,14 +1,11 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
-import fi.liikennevirasto.viite.ProjectValidator.{connected, endPoint}
+import fi.liikennevirasto.digiroad2.asset.{SideCode}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing}
+import fi.liikennevirasto.digiroad2.util.{ Track}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.{RampsMaxBound, RampsMinBound, RoadType}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
 import org.slf4j.LoggerFactory
@@ -42,13 +39,6 @@ object ProjectSectionCalculator {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")
     }
   }
-
-  //TODO THIS IS NO USED in any place get another utils for it
-  def switchSideCode(sideCode: SideCode): SideCode = {
-    // Switch between against and towards 2 -> 3, 3 -> 2
-    SideCode.apply(5 - sideCode.value)
-  }
-
 }
 
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
