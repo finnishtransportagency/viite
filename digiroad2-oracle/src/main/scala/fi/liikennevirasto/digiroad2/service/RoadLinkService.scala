@@ -141,7 +141,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       if (frozenTimeVVHAPIServiceEnabled) {
         vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)
       } else {
-        vvhClient.roadLinkData.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchByLinkIds(linkIds)
+        fetchVVHRoadLinksAndComplementaryFromVVH(linkIds)
       }
     }
     else Seq.empty[VVHRoadlink]
