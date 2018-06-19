@@ -73,14 +73,19 @@ object CommonHistoryFiller {
     * @param newRoadAddresses The new road address
     * @return
     */
-  private def applyTranferToNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+  private def applyTransferToNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val transferredLinks = projectLinks.filter(pl => pl.status == LinkStatus.Transfer && (pl.track == Track.RightSide || pl.track == Track.LeftSide))
     val (newerRoadAddresses, rest) = newRoadAddresses.partition(ra => ra.id == NewRoadAddress && (ra.track == Track.RightSide || ra.track == Track.LeftSide))
     newerRoadAddresses.map{
       ra =>
         val transferredOption = transferredLinks.find(pl => pl.track == Track.switch(ra.track) && ((pl.startAddrMValue >= ra.startAddrMValue && pl.startAddrMValue <= ra.endAddrMValue) || (pl.endAddrMValue <= ra.endAddrMValue && pl.endAddrMValue >= ra.startAddrMValue)))
         transferredOption match {
-          case Some(transferred) => ra.copy(commonHistoryId = transferred.commonHistoryId)
+          case Some(transferred) =>
+            newRoadAddresses.find(cra => cra.id == transferred.roadAddressId) match {
+              case Some(roadAddress) => ra.copy(commonHistoryId = roadAddress.commonHistoryId)
+              case _ => ra
+            }
+
           case _ => ra
         }
     } ++ rest
@@ -129,7 +134,7 @@ object CommonHistoryFiller {
       applyUnchanged(currentRoadAddresses),
       applyNew,
       applyTransfer(currentRoadAddresses),
-      applyTranferToNew, //This method should always be after transfer and new operations
+      applyTransferToNew, //This method should always be after transfer and new operations
       applyNumbering(currentRoadAddresses)
     )
 
