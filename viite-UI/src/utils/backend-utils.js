@@ -420,7 +420,7 @@
       return self;
     };
 
-    this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
+    this.withLinkData = function (linkData, afterSaveLinkData) {
 
       var fetchedRoadLinkModels = function (fetchedRoadLinks) {
        return _.map(fetchedRoadLinks, function (roadLinkGroup) {
@@ -431,11 +431,11 @@
       };
       self.getRoadLinks = function (boundingBox, callback) {
         if (afterSave) {
-          callback(afterSaveRoadLinkData);
+          callback(afterSaveLinkData);
         } else {
-          callback(roadLinkData);
+          callback(linkData);
         }
-        eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveRoadLinkData) : fetchedRoadLinkModels(roadLinkData));
+        eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
       };
       return self;
     };
@@ -454,10 +454,10 @@
     };
 
     this.withFloatingAdjacents = function (selectedFloatingData, selectedUnknownData) {
-      self.getFloatingAdjacent= function (roadLinkData, callback) {
-        if (roadLinkData.linkId === 1718151 || roadLinkData.linkId === 1718152) {
+      self.getFloatingAdjacent= function (linkData, callback) {
+        if (linkData.linkId === 1718151 || linkData.linkId === 1718152) {
           callback(selectedFloatingData);
-        } else if (roadLinkData.linkId === 500130202) {
+        } else if (linkData.linkId === 500130202) {
           callback(selectedUnknownData);
         } else {
           callback([]);

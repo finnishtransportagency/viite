@@ -649,7 +649,7 @@
           return [point.x, point.y];
         });
         var terminatedFeature = new ol.Feature({
-          projectLinkData: terminatedLink,
+          linkData: terminatedLink,
           geometry: new ol.geom.LineString(points),
           type: 'pre-split'
         });
