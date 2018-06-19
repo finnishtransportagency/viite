@@ -220,7 +220,7 @@ object ViiteTierekisteriClient {
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 500 || statusCode == 404) {
+      if (statusCode >= 500) {
         logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
         throw new RuntimeException("Unable to submit: Tierekisteri error 500")
       } else {
