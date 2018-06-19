@@ -99,7 +99,7 @@
       $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>');
     };
 
-    var fireDeselectionConfirmation = function (shiftPressed, selection, clickType) {
+    var fireDeselectionConfirmation = function (ctrlPressed, selection, clickType) {
       new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
           eventbus.trigger('roadAddressProject:discardChanges');
@@ -107,9 +107,9 @@
           clearHighlights();
           if (!_.isUndefined(selection)) {
             if (clickType === 'single')
-              showSingleClickChanges(shiftPressed, selection);
+              showSingleClickChanges(ctrlPressed, selection);
             else
-              showDoubleClickChanges(shiftPressed, selection);
+              showDoubleClickChanges(ctrlPressed, selection);
           } else {
             showChangesAndSendButton();
           }
@@ -156,10 +156,10 @@
       }
     });
 
-    var showSingleClickChanges = function (shiftPressed, selection) {
+    var showSingleClickChanges = function (ctrlPressed, selection) {
       if(applicationModel.getSelectedTool() === 'Cut')
         return;
-      if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
+      if (ctrlPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (!_.isUndefined(selection) && canItBeAddToSelection(selection.linkData)) {
           var clickedIds = projectCollection.getMultiProjectLinks(getSelectedId(selection.linkData));
           var previouslySelectedIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
@@ -419,7 +419,7 @@
 
     var zoomDoubleClickListener = function (event) {
       _.defer(function () {
-        if (applicationModel.getSelectedTool() !== 'Cut' && !event.shiftKey && selectedProjectLinkProperty.get().length === 0 &&
+        if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey && selectedProjectLinkProperty.get().length === 0 &&
           applicationModel.getSelectedLayer() === 'roadAddressProject' && map.getView().getZoom() <= 13) {
           map.getView().setZoom(map.getView().getZoom() + 1);
         }
