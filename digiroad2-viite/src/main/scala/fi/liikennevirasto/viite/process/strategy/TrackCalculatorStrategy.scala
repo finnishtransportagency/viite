@@ -114,7 +114,7 @@ trait TrackCalculatorStrategy {
       throw new RoadAddressException("Could not find any nearest road address")
 
     val lastProjectLink = continuousProjectLinks.last
-    if(lastProjectLink.toMeters(Math.abs(address - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(address - lastProjectLink.endAddrMValue))) {
+    if(continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(address - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(address - lastProjectLink.endAddrMValue))) {
       (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
     } else {
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
