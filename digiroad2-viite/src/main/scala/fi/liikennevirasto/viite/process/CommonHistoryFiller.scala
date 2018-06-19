@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.NewRoadAddress
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus, ProjectLink, RoadAddress}
@@ -66,6 +67,25 @@ object CommonHistoryFiller {
       newRoadAddresses.filterNot(ra => transferredLinks.map(_.roadAddressId).contains(ra.id))
   }
 
+  /**
+    * Copy the common history id from opposite track code of a transferred part to the new part
+    * @param projectLinks The project links
+    * @param newRoadAddresses The new road address
+    * @return
+    */
+  private def applyTranferToNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+    val transferredLinks = projectLinks.filter(pl => pl.status == LinkStatus.Transfer && (pl.track == Track.RightSide || pl.track == Track.LeftSide))
+    val (newerRoadAddresses, rest) = newRoadAddresses.partition(ra => ra.id == NewRoadAddress && (ra.track == Track.RightSide || ra.track == Track.LeftSide))
+    newerRoadAddresses.map{
+      ra =>
+        val transferredOption = transferredLinks.find(pl => pl.track == Track.switch(ra.track) && ((pl.startAddrMValue >= ra.startAddrMValue && pl.startAddrMValue <= ra.endAddrMValue) || (pl.endAddrMValue <= ra.endAddrMValue && pl.endAddrMValue >= ra.startAddrMValue)))
+        transferredOption match {
+          case Some(transferred) => ra.copy(commonHistoryId = transferred.commonHistoryId)
+          case _ => ra
+        }
+    } ++ rest
+  }
+
   private def generateValuesForTransfer(currentRoadAddresses: Seq[RoadAddress], transferredLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) = {
     transferredLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
       case ((_, _, _, _), groupedLinks) =>
@@ -109,6 +129,7 @@ object CommonHistoryFiller {
       applyUnchanged(currentRoadAddresses),
       applyNew,
       applyTransfer(currentRoadAddresses),
+      applyTranferToNew, //This method should always be after transfer and new operations
       applyNumbering(currentRoadAddresses)
     )
 

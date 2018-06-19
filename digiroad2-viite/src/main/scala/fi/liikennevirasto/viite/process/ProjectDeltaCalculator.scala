@@ -214,22 +214,14 @@ object ProjectDeltaCalculator {
     }
   }
 
-  private def reverse(track: Track): Track = {
-    track match {
-      case Track.RightSide => Track.LeftSide
-      case Track.LeftSide => Track.RightSide
-      case _ => track
-    }
-  }
-
   private def matchingTracks(map: Map[(Long,Long,Track,Long,Long,Track), (Seq[RoadAddressSection],Seq[RoadAddressSection])],
                              key: (Long,Long,Track,Long,Long,Track)): Option[(Seq[RoadAddressSection],Seq[RoadAddressSection])] = {
-    map.get((key._1, key._2, reverse(key._3), key._4, key._5, reverse(key._6)))
+    map.get((key._1, key._2, Track.switch(key._3), key._4, key._5, Track.switch(key._6)))
   }
 
   private def matchingTracks(map: Map[(Long,Long,Track,Long), Seq[RoadAddressSection]],
                              key: (Long,Long,Track,Long)): Option[Seq[RoadAddressSection]] = {
-    map.get((key._1, key._2, reverse(key._3), key._4))
+    map.get((key._1, key._2, Track.switch(key._3), key._4))
   }
 
   private def adjustTrack(group: (Seq[RoadAddressSection], Seq[RoadAddressSection])): Seq[RoadAddressSection] = {
