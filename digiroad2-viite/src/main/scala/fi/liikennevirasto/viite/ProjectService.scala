@@ -1838,8 +1838,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def sendProjectsInWaiting(): Unit = {
+    logger.info(s"Finding projects whose status is SendingToTRStatus/ ${SendingToTR.description}")
     val listOfProjects = getProjectsWaitingForTR
+    logger.info(s"Found ${listOfProjects.size} projects")
     for (projectId <- listOfProjects) {
+      logger.info(s"Trying to publish project: ${projectId}")
       publishProject(projectId)
     }
 
