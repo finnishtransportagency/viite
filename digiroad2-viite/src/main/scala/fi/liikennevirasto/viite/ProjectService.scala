@@ -1481,7 +1481,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
     if (withSession) {
-      ProjectDAO.updateProjectStatus(projectId, newStatus)
+      withDynSession {
+        ProjectDAO.updateProjectStatus(projectId, newStatus)
+      }
     } else {
       ProjectDAO.updateProjectStatus(projectId, newStatus)
     }
