@@ -83,7 +83,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         expect(unknownFeatureFromPickLayer).to.be.undefined;
         var unknownFeatureFromGreenLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getGreenRoadLayerName(),unknownRoadLinkId);
         expect(unknownFeatureFromGreenLayer).to.not.be.undefined;
-        expect(unknownFeatureFromGreenLayer.roadLinkData.linkId).to.be.equal(unknownRoadLinkId);
+        expect(unknownFeatureFromGreenLayer.linkData.linkId).to.be.equal(unknownRoadLinkId);
       });
     });
 
