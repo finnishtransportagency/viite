@@ -74,14 +74,14 @@
       })
     });
 
-    var ctrlDragZoom = new ol.interaction.DragZoom({
+    var shiftDragZoom = new ol.interaction.DragZoom({
       duration: 1500,
       condition: function(mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
         return (
-        originalEvent.ctrlKey &&
+            originalEvent.shiftKey &&
         !(originalEvent.metaKey || originalEvent.altKey) &&
-        !originalEvent.shiftKey);
+            !originalEvent.ctrlKey);
       }
     });
     map.getInteractions().forEach(function(interaction) {
@@ -90,8 +90,8 @@
       }
     }, this);
 
-    ctrlDragZoom.setActive(true);
-    map.addInteraction(ctrlDragZoom);
+    shiftDragZoom.setActive(true);
+    map.addInteraction(shiftDragZoom);
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
     return map;
   };
