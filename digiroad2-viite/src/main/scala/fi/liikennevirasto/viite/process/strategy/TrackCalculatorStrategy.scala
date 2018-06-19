@@ -84,22 +84,43 @@ trait TrackCalculatorStrategy {
   }
 
   protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
-                                userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
+                                userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None, withLeftCalibration: Boolean = false, withRightCalibration: Boolean = false): (Long, Long) = {
 
     val reversed = rightLink.reversed || leftLink.reversed
 
     (leftLink.status, rightLink.status) match {
       case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>
+        if(withLeftCalibration && !withRightCalibration)
+          (leftLink.startAddrMValue, leftLink.endAddrMValue)
+        else if(withRightCalibration && !withLeftCalibration)
+          (rightLink.startAddrMValue, rightLink.endAddrMValue)
+        else
         (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
       case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
-        (rightLink.startAddrMValue, rightLink.endAddrMValue)
-      case (_ , LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
         (leftLink.startAddrMValue, leftLink.endAddrMValue)
+      case (_ , LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
+        (rightLink.startAddrMValue, rightLink.endAddrMValue)
       case _ =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
           (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
         )
     }
+  }
+
+  protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], restLeftProjectLinks: Seq[ProjectLink],
+                              restRightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
+
+    //TODO change the way the user calibration points are manage
+    val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
+    val withLeftCalibrationPoints = calibrationPoints.exists(_._2.addressMValue == leftProjectLinks.head.startAddrMValue)
+    val withRightCalibrationPoints = calibrationPoints.exists(_._2.addressMValue == rightProjectLinks.head.startAddrMValue)
+
+    val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
+    val endSectionAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
+
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, calibrationPoints)
+
+    TrackCalculatorResult(adjustedLeft, adjustedRight, startSectionAddress, endSectionAddress, restLeftProjectLinks, restRightProjectLinks)
   }
 
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
