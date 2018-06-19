@@ -136,8 +136,8 @@
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-      var shiftPressed = event.mapBrowserEvent !== undefined ?
-        event.mapBrowserEvent.originalEvent.shiftKey : false;
+      var ctrlPressed = event.mapBrowserEvent !== undefined ?
+          event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
       var selection = _.find(event.selected.concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
@@ -147,12 +147,12 @@
         );
       });
       if (isNotEditingData) {
-        showSingleClickChanges(shiftPressed, selection);
+        showSingleClickChanges(ctrlPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection, 'single');
+        fireDeselectionConfirmation(ctrlPressed, selection, 'single');
       }
     });
 
@@ -204,7 +204,7 @@
     selectDoubleClick.set('name', 'selectDoubleClickInteractionPLL');
 
     selectDoubleClick.on('select', function (event) {
-      var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
+      var ctrlPressed = event.mapBrowserEvent.originalEvent.ctrlKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
           projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
@@ -213,12 +213,12 @@
         );
       });
       if (isNotEditingData) {
-        showDoubleClickChanges(shiftPressed, selection);
+        showDoubleClickChanges(ctrlPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection, 'double');
+        fireDeselectionConfirmation(ctrlPressed, selection, 'double');
       }
     });
 
@@ -292,6 +292,9 @@
     };
 
     var canItBeAddToSelection = function(selectionData) {
+      if (selectedProjectLinkProperty.get().length === 0) {
+        return true;
+      }
       var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&

@@ -3,7 +3,7 @@
   root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
     var centerMarkerLayer = new ol.source.Vector({});
-    var enableShiftModifier = false;
+    var enableCtrlModifier = false;
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -92,7 +92,7 @@
       if (layerToBeHidden) layerToBeHidden.hide(map);
       layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
-      enableShiftModifier = (layer === "roadAddressProject");
+      enableCtrlModifier = (layer === "roadAddressProject");
     }, this);
 
     eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
@@ -139,12 +139,12 @@
     });
 
     $('body').on('keydown', function(evt){
-      if(evt.shiftKey && enableShiftModifier)
+      if (evt.ctrlKey && enableCtrlModifier)
         map.getViewport().style.cursor = "copy";
     });
 
     $('body').on('keyup', function(evt){
-      if(evt.which === 16) // shift key up
+      if (evt.which === 17) // ctrl key up
         map.getViewport().style.cursor = "initial";
     });
 
