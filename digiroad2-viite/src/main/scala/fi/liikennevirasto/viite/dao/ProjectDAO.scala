@@ -565,7 +565,7 @@ object ProjectDAO {
   }
 
   def fetchReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
-    time(logger, "Fetch reserved road parts") {
+    time(logger, s"Fetch reserved road parts for project: $projectId") {
       val sql =
         s"""
         SELECT id, road_number, road_part_number, length, length_new,
@@ -599,9 +599,9 @@ object ProjectDAO {
             ) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).list.map {
-        case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
+        case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, startingLinkId) =>
           ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
-            newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
+            newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
       }
     }
   }

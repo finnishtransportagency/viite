@@ -627,4 +627,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("There should be a validation error when there is a road end on previous road part outside of project") {
+    runWithRollback {
+
+    }
+  }
+
 }

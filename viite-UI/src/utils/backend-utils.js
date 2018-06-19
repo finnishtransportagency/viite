@@ -35,6 +35,12 @@
       };
     });
 
+    this.getProjectLinksById = _.throttle(function (projectId, callback) {
+        return $.getJSON('api/viite/project/links/' + projectId, function (data) {
+            return _.isFunction(callback) && callback(data);
+        });
+    }, 1000);
+
     this.revertChangesRoadlink = _.throttle(function (data, success, errorCallback) {
         $.ajax({
             contentType: "application/json",
@@ -237,7 +243,7 @@
       if (loadingProject) {
         loadingProject.abort();
       }
-      loadingProject= $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
+      loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
         return _.isFunction(callback) && callback(data);
       });
       return loadingProject;

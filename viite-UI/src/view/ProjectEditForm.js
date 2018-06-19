@@ -551,18 +551,20 @@
 
       rootElement.on('click', '.projectErrorButton', function (event) {
         eventbus.trigger('projectCollection:clickCoordinates', event, map);
-        var errorIndex = event.currentTarget.id;
-        if(projectCollection.getProjectErrors()[errorIndex].errorMessage !== ""){
-          if (projectCollection.getProjectLinks().includes(event.currentTarget.linkId)) {
-              var ids = projectCollection.getProjectErrors()[errorIndex].ids;
-              selectedProjectLinkProperty.openWithErrorMessage(ids[0], projectCollection.getProjectErrors()[errorIndex].errorMessage);
-          } else {
-              new ModalConfirm("Sinun täytyy varata tieosa projektille, jotta voit korjata sen.");
-          }
+        var error = projectCollection.getProjectErrors()[event.currentTarget.id];
+        if (error.errorMessage !== "") {
+          projectCollection.getProjectLinks().then( function(projectLinks) {
+            var projectLinkIds = projectLinks.map( function(link) {
+              return link.linkId;
+            });
+            if (error.linkIds.every(link => projectLinkIds.indexOf(link) > -1)) {
+                selectedProjectLinkProperty.openWithErrorMessage(error.ids[0], error.errorMessage);
+            } else {
+                new ModalConfirm("Sinun täytyy varata tieosa projektille, jotta voit korjata sen.");
+            }
+          });
         }
-
       });
-
     };
     bindEvents();
   };
