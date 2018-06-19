@@ -41,9 +41,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
     val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
 
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
-
-    val (lastLeftProjectLink, lastRightProjectLink) = (leftProjectLinks.last, rightProjectLinks.last)
-    val endSectionAddress = if(lastRightProjectLink.endAddrMValue >= lastLeftProjectLink.endAddrMValue) lastRightProjectLink.endAddrMValue else lastLeftProjectLink.endAddrMValue
+    val endSectionAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, calibrationPoints)
 
