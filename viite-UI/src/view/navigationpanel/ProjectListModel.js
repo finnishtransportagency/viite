@@ -61,7 +61,7 @@
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
     projectList.append('<div id="project-list" style="width:810px; height:390px; overflow:auto;"></div>' +
-      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin lähetetyt projektit</label>');
+      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>');
 
     var staticFieldProjectName = function(dataField) {
       var field;
