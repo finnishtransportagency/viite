@@ -17,8 +17,8 @@
         }},
       "sortDate": {toStr: "ALKUPVM", width: "100", order: 0,
         sortFunc: function(a,b) {
-            var aDate = a.startDate.split('.').reverse().join('-');
-            var bDate = b.startDate.split('.').reverse().join('-');
+            var aDate = a.createdDate.split('.').reverse().join('-');
+            var bDate = b.createdDate.split('.').reverse().join('-');
             return new Date(bDate) - new Date(aDate);
         }},
       "sortStatus": {toStr: "TILA", width: "60", order: 0,
@@ -177,7 +177,7 @@
                     '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
                     '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                     '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-                    '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
+                    '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.createdDate) + '</td>' +
                     '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             switch (proj.statusCode) {
               case projectStatus.ErrorInViite.value:
