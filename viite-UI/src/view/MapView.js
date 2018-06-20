@@ -4,6 +4,7 @@
     var isInitialized = false;
     var centerMarkerLayer = new ol.source.Vector({});
     var enableCtrlModifier = false;
+    var metaKeyCodes = LinkValues.MetaKeyCodes;
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -139,12 +140,12 @@
     });
 
     $('body').on('keydown', function(evt){
-      if (evt.ctrlKey && enableCtrlModifier)
+      if ((evt.ctrlKey || evt.metaKey) && enableCtrlModifier)
         map.getViewport().style.cursor = "copy";
     });
 
     $('body').on('keyup', function(evt){
-      if (evt.which === 17) // ctrl key up
+      if (_.contains(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
         map.getViewport().style.cursor = "initial";
     });
 
