@@ -985,7 +985,7 @@
       _.defer(function () {
         highlightFeatures();
         if (selectedProjectLinkProperty.get().length > 2 && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId)) {
-          drawIndicators(selectedProjectLinkProperty.get())
+          drawIndicators(selectedProjectLinkProperty.get());
         }
       });
     });
