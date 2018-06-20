@@ -727,7 +727,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               val writableProject = projectWritable(options.projectId)
               val splitError = writableProject.splitSuravageLink(link, user.username, options)
               writableProject.saveProjectCoordinates(options.projectId, options.coordinates)
-              Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+              val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
+              Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
             } else {
               Map("success" -> false, "errorMessage" -> "Invalid track code")
             }
