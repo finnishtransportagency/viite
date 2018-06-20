@@ -89,6 +89,7 @@ case class RoadAddressProject(id: Long, status: ProjectState, name: String, crea
 
 case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
+// TODO POISTA LRM_POSITION
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
@@ -207,6 +208,7 @@ object ProjectDAO {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
+  // TODO
   def create(links: Seq[ProjectLink]): Seq[Long] = {
     time(logger, "Create project links") {
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, " +
@@ -276,9 +278,8 @@ object ProjectDAO {
       }
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
         "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ?, " +
-        "CALIBRATION_POINTS= ? , STATUS=?,  ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ? WHERE id = ?")
-      val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, " +
-        "MODIFIED_DATE=? WHERE ID = ?")
+        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
+        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=? WHERE id = ?")
 
       for (projectLink <- links) {
         projectLinkPS.setLong(1, projectLink.roadNumber)
@@ -289,26 +290,20 @@ object ProjectDAO {
         projectLinkPS.setLong(6, projectLink.endAddrMValue)
         projectLinkPS.setDate(7, new java.sql.Date(new Date().getTime))
         projectLinkPS.setString(8, modifier)
-        projectLinkPS.setLong(9, projectLink.lrmPositionId)
-        projectLinkPS.setLong(10, projectLink.projectId)
-        projectLinkPS.setInt(11, CalibrationCode.getFromAddress(projectLink).value)
-        projectLinkPS.setInt(12, projectLink.status.value)
-        projectLinkPS.setInt(13, projectLink.roadType.value)
-        projectLinkPS.setInt(14, if (projectLink.reversed) 1 else 0)
-        projectLinkPS.setString(15, toGeomString(projectLink.geometry))
-        projectLinkPS.setLong(16, projectLink.id)
+        projectLinkPS.setLong(9, projectLink.projectId)
+        projectLinkPS.setInt(10, CalibrationCode.getFromAddress(projectLink).value)
+        projectLinkPS.setInt(11, projectLink.status.value)
+        projectLinkPS.setInt(12, projectLink.roadType.value)
+        projectLinkPS.setInt(13, if (projectLink.reversed) 1 else 0)
+        projectLinkPS.setString(14, toGeomString(projectLink.geometry))
+        projectLinkPS.setInt(15, projectLink.sideCode.value)
+        projectLinkPS.setDouble(16, projectLink.startMValue)
+        projectLinkPS.setDouble(17, projectLink.endMValue)
+        projectLinkPS.setInt(18, projectLink.track.value)
+        projectLinkPS.setLong(19, projectLink.id)
         projectLinkPS.addBatch()
-        lrmPS.setInt(1, projectLink.sideCode.value)
-        lrmPS.setDouble(2, projectLink.startMValue)
-        lrmPS.setDouble(3, projectLink.endMValue)
-        lrmPS.setInt(4, projectLink.track.value)
-        lrmPS.setDate(5, new java.sql.Date(new Date().getTime))
-        lrmPS.setLong(6, projectLink.lrmPositionId)
-        lrmPS.addBatch()
       }
       projectLinkPS.executeBatch()
-      lrmPS.executeBatch()
-      lrmPS.close()
       projectLinkPS.close()
     }
   }
@@ -316,21 +311,16 @@ object ProjectDAO {
 
   def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
     time(logger, "Update project links geometry") {
-      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ?, MODIFIED_BY= ? WHERE id = ?")
-      val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET ADJUSTED_TIMESTAMP = ? WHERE ID = ?")
+      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ?, MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
 
       for (projectLink <- projectLinks) {
         projectLinkPS.setString(1, toGeomString(projectLink.geometry))
         projectLinkPS.setString(2, modifier)
-        projectLinkPS.setLong(3, projectLink.id)
+        projectLinkPS.setLong(3, projectLink.linkGeometryTimeStamp)
+        projectLinkPS.setLong(4, projectLink.id)
         projectLinkPS.addBatch()
-        lrmPS.setLong(1, projectLink.linkGeometryTimeStamp)
-        lrmPS.setLong(2, projectLink.lrmPositionId)
-        lrmPS.addBatch()
       }
       projectLinkPS.executeBatch()
-      lrmPS.executeBatch()
-      lrmPS.close()
       projectLinkPS.close()
     }
   }

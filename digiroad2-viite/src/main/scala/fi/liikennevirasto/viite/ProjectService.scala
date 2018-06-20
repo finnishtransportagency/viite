@@ -1648,7 +1648,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadsToCreate = expiringRoadAddresses.filter(ex => {
       idsToHistory.contains(ex._1)
     }).mapValues(r => {
-      r.copy(id = NewRoadAddress, lrmPositionId = NewRoadAddress, endDate = Some(DateTime.now()))
+      r.copy(id = NewRoadAddress, endDate = Some(DateTime.now()))
     }).values
     RoadAddressDAO.create(roadsToCreate)
   }

@@ -32,7 +32,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
   private def createRoadAddress(start: Long, distance: Long) = {
     RoadAddress(id = start, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
-      discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, lrmPositionId = start, linkId = start,
+      discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, linkId = start,
       startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
       geometry = Seq(Point(0.0, start), Point(0.0, start+distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, commonHistoryId = 0L)
   }

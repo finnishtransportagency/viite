@@ -84,7 +84,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val roadAddress2 = roadAddr.copy(startAddrMValue = 1000, endAddrMValue = 1400, linkId = roadLinkId2, endMValue = 399.648,
       adjustedTimestamp = roadAdjustedTimestamp, geometry = Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)))
     val roadAddress3 = roadAddr.copy(roadNumber = 75, roadPartNumber = 2, track = Track.Combined, startAddrMValue = 3532, endAddrMValue = 3598,
-      createdBy = Some("tr"), lrmPositionId = 70000389, linkId = roadLinkId3, endMValue = 65.259, adjustedTimestamp = roadAdjustedTimestamp,
+      createdBy = Some("tr"), linkId = roadLinkId3, endMValue = 65.259, adjustedTimestamp = roadAdjustedTimestamp,
       floating = true, geometry = List(Point(538889.668, 6999800.979, 0.0), Point(538912.266, 6999862.199, 0.0)))
     val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
@@ -118,7 +118,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
 
     val roadAddress1 = roadAddr.copy(id = 2, startAddrMValue = 400, endAddrMValue = 1400, linkId = roadLinkId1, endMValue = 1000.234, geometry = Seq(Point(0.0, 0.0), Point(1000.234, 0.0)))
     val roadAddress2 = roadAddr.copy(id = 1, startAddrMValue = 0, endAddrMValue = 400, linkId = roadLinkId2, endMValue = 399.648, geometry = Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)))
-    val roadAddress3 = roadAddr.copy(id = 367, startAddrMValue = 1400, endAddrMValue = 1465, createdBy = Some("tr"), lrmPositionId = 70000389,
+    val roadAddress3 = roadAddr.copy(id = 367, startAddrMValue = 1400, endAddrMValue = 1465, createdBy = Some("tr"),
       linkId = roadLinkId3, endMValue = 65.259, sideCode = SideCode.TowardsDigitizing, geometry = List(Point(538889.668, 6999800.979, 0.0), Point(538912.266, 6999862.199, 0.0)))
 
     val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq()))

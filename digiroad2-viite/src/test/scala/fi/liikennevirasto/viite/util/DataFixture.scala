@@ -301,7 +301,7 @@ object DataFixture {
         val updated = roadAddressSeq
           .filterNot(ra => vvhLinks.getOrElse(ra.linkId, ra.linkGeomSource) == ra.linkGeomSource)
           .count(ra =>
-            RoadAddressDAO.updateLRM(ra.lrmPositionId, vvhLinks(ra.linkId))
+            RoadAddressDAO.updateLRM(ra.id, vvhLinks(ra.linkId))
           )
         println("%d: %d addresses updated".format(road, updated))
       }
