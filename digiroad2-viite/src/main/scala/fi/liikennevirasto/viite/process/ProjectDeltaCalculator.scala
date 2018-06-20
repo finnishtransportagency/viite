@@ -96,14 +96,18 @@ object ProjectDeltaCalculator {
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
    }
 
-  private def combineTwo[R <: BaseRoadAddress, P <: BaseRoadAddress](tr1: (R,P), tr2: (R,P)): Seq[(R,P)] = {
+  private def combineTwo[R <: BaseRoadAddress, P <: BaseRoadAddress](tr1: (R,P), tr2: (R,P), oppositeSections: Seq[RoadAddressSection]): Seq[(R,P)] = {
     val (ra1,pl1) = tr1
     val (ra2,pl2) = tr2
     val matchAddr = (!pl1.reversed && pl1.endAddrMValue == pl2.startAddrMValue) ||
       (pl1.reversed && pl1.startAddrMValue == pl2.endAddrMValue)
     val matchContinuity = (pl1.reversed && pl2.discontinuity == Discontinuity.Continuous) ||
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
-    if (matchAddr && matchContinuity && !pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) &&
+
+    val existing = oppositeSections.find(_.startMAddr == pl1.startAddrMValue)
+    val matchOppositeSections = existing.isEmpty || existing.get.endMAddr != pl2.startAddrMValue
+
+    if (matchAddr && matchContinuity && (!pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) || matchOppositeSections) &&
       ra1.endAddrMValue == ra2.startAddrMValue &&
       ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
@@ -142,13 +146,13 @@ object ProjectDeltaCalculator {
   }
 
 
-  private def combinePair[T <: BaseRoadAddress, R <: ProjectLink](combinedSeq: Seq[(T,R)], result: Seq[(T,R)] = Seq()): Seq[(T,R)] = {
+  private def combinePair[T <: BaseRoadAddress, R <: ProjectLink](combinedSeq: Seq[(T,R)], oppositeSections: Seq[RoadAddressSection],  result: Seq[(T,R)] = Seq()): Seq[(T,R)] = {
     if (combinedSeq.isEmpty)
       result.reverse
     else if (result.isEmpty)
-      combinePair(combinedSeq.tail, Seq(combinedSeq.head))
+      combinePair(combinedSeq.tail, oppositeSections, Seq(combinedSeq.head))
     else
-      combinePair(combinedSeq.tail, combineTwo(result.head, combinedSeq.head) ++ result.tail)
+      combinePair(combinedSeq.tail, oppositeSections, combineTwo(result.head, combinedSeq.head, oppositeSections) ++ result.tail)
   }
 
   def adjustAddrValues(addrMValues: Long, mValue: Long, track: Track): Long = {
@@ -239,7 +243,7 @@ object ProjectDeltaCalculator {
     }
   }
 
-  def partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection] = {
+  def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadAddressSection] = Seq()): Map[RoadAddressSection, RoadAddressSection] = {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
@@ -247,7 +251,7 @@ object ProjectDeltaCalculator {
     }
 
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
-      .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))
+      .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue), oppositeSections))
       .mapValues(v => {
         val (from, to) = v.unzip
         toRoadAddressSection(from) -> toRoadAddressSection(to)
