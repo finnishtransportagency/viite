@@ -442,6 +442,10 @@
       clearFeaturesToKeep();
     });
 
+    eventbus.on('roadAddress:openProject', function(){
+        close();
+    });
+
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
       current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
