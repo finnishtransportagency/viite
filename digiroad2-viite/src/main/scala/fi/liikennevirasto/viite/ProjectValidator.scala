@@ -391,17 +391,15 @@ object ProjectValidator {
       else None
     }
 
-    def checkEndOfRoadOnLastPart: Option[ValidationErrorDetails] = {
+    def checkEndOfRoadOnLastPart: Seq[ValidationErrorDetails] = {
       val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
-      seq.groupBy(_.roadNumber).flatMap { g =>
+      val errors: Seq[Option[ValidationErrorDetails]] = seq.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = RoadAddressDAO.getValidRoadParts(g._1.toInt, project.startDate)
         val trackIntervals = Seq(g._2.filterNot(_.track != RightSide), g._2.filterNot(_.track != LeftSide))
-        trackIntervals.flatMap {
+        trackIntervals.map {
           interval =>
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
-            if(nonTerminated.isEmpty){
-              None
-            } else {
+            if(nonTerminated.nonEmpty){
               val last = nonTerminated.maxBy(_.endAddrMValue)
               val (road, part) = (last.roadNumber, last.roadPartNumber)
               val discontinuity = last.discontinuity
@@ -415,27 +413,27 @@ object ProjectValidator {
                 .find(p => RoadAddressDAO.fetchByRoadPart(road, p, includeFloating = true)
                   .forall(ra => !allProjectLinks.exists(al => al.roadAddressId == ra.id && al.roadPartNumber != ra.roadPartNumber)))
               if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
-                return error(project.id, ValidationErrorList.MissingEndOfRoad)(Seq(last))
+                error(project.id, ValidationErrorList.MissingEndOfRoad)(Seq(last))
               } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
-                return error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(lastProjectLinks)
-              }
+                error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last))
+              } else None
+          } else {
               None
-          }
+            }
         }
-      }
+      }.toSeq
+      errors.filter(_.nonEmpty).map(_.get)
     }
 
     def checkDiscontinuityOnLastPart: Seq[ValidationErrorDetails] = {
       val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
-      val errors: Seq[ValidationErrorDetails] = seq.groupBy(_.roadNumber).flatMap { g =>
+     val errors: Seq[Option[ValidationErrorDetails]] = seq.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = RoadAddressDAO.getValidRoadParts(g._1.toInt, project.startDate)
         val trackIntervals = Seq(g._2.filterNot(_.track != RightSide), g._2.filterNot(_.track != LeftSide))
         trackIntervals.map {
           interval =>
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
-            if(nonTerminated.isEmpty){
-              None
-            } else {
+            if(nonTerminated.nonEmpty){
               val last = nonTerminated.maxBy(_.endAddrMValue)
               val (road, part) = (last.roadNumber, last.roadPartNumber)
               val discontinuity = last.discontinuity
@@ -468,13 +466,13 @@ object ProjectValidator {
                     if (isConnected) error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(Seq(last))
                   case _ =>  // no error, continue
                 }
-              } else {
-                None
               }
-          }
-        }.asInstanceOf[Seq[ValidationErrorDetails]]
+          } else {
+              None
+            }
+        }.asInstanceOf[Seq[Option[ValidationErrorDetails]]]
       }.toSeq
-      errors
+      errors.filter(_.nonEmpty).map(_.get)
     }
 
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]) = {
@@ -488,7 +486,7 @@ object ProjectValidator {
 
     // Checks inside road part (not including last links' checks)
     checkContinuityBetweenParts.toSeq ++ checkMinorDiscontinuityBetweenLinksOnPart.toSeq ++ checkDiscontinuityBetweenLinksOnRamps.toSeq ++
-      checkEndOfRoadOnLastPart.toSeq ++
+      checkEndOfRoadOnLastPart ++
       checkDiscontinuityOnLastPart
   }
 
