@@ -145,7 +145,14 @@
         createProjectList(projectArray);
       });
 
-      var createProjectList = function(projects, sortFunction = function(a,b) {return a.ely - b.ely;}, order = 1) {
+      var createProjectList = function(projects, sortFunction, order) {
+
+        if(!sortFunction)
+            sortFunction = function(a,b) {return a.ely - b.ely;};
+
+        if(!order)
+            order = 1;
+
         var unfinishedProjects = _.filter(projects, function(proj) {
           if (proj.statusCode === projectStatus.Saved2TR.value) {
             var hoursInDay = 24;

@@ -102,7 +102,7 @@
         AnomalousMarkerLayer:       {value: 3},
         CalibrationPointLayer:      {value: 4},
         GeometryChangedLayer:       {value: 5},
-        GreenLayer:                 {value: 6},
+        GreenLayer:                 {value: 10},
         ReservedRoadLayer:          {value: 6},
         HistoricRoadLayer:          {value: 7},
         DirectionMarkerLayer:       {value: 8},

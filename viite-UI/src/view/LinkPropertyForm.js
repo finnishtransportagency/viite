@@ -432,9 +432,13 @@
       var floatingRoadsLinkId = _.map(floatingRoads, function (fr) {
         return fr.linkId;
       });
-      if (!_.contains(floatingRoadsLinkId, value)) {
+      if (_.contains(floatingRoadsLinkId, parseInt(value))) {
+        var floatingToAdd = _.filter(floatingRoads, function(floating){
+          return floating.linkId === parseInt(value);
+        });
+
         applicationModel.addSpinner();
-        eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
+        eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, value);
         $('#feature-attributes').find('.link-properties button.continue').attr('disabled', false);
         $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
@@ -615,29 +619,19 @@
         applicationModel.removeSpinner();
       });
 
-      eventbus.on('adjacents:additionalSourceFound', function(sources, targets, additionalSourceLinkId) {
-        $('#additionalSource').remove();
-        $('#adjacentsData').remove();
-        processAdjacents(sources, targets, additionalSourceLinkId);
+      eventbus.on('adjacents:floatingAdded', function(sources, targets, additionalSourceLinkId) {
+        $('[id^=additionalSource]').remove();
+        $('#control-label-floating').remove();
+        $('#adjacentsData').empty();
+        $('[id^=VALITUTLINKIT]').remove();
+        processFloatingAdjacents(sources, targets, additionalSourceLinkId);
         applicationModel.removeSpinner();
       });
 
-      var processAdjacents = function (sources, targets, additionalSourceLinkId) {
+      var processFloatingAdjacents = function (sources, targets, additionalSourceLinkId) {
         var adjacents = _.reject(targets, function(t) {
-          return t.roadLinkType == floatingRoadLinkType;
+          return t.roadLinkType === floatingRoadLinkType;
         });
-
-        //singleLinkSelection case
-        var floatingAdjacents = [];
-          if (selectedLinkProperty.count() >= 1) {
-          floatingAdjacents = _.filter(targets, function(t) {
-            return t.roadLinkType == floatingRoadLinkType;
-          });
-        }
-
-        var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa) {
-          return additionalSource(fa.linkId, fa.marker);
-        })[0] + adjacentsTemplate : adjacentsTemplate;
 
         if (!_.isUndefined(additionalSourceLinkId)) {
           return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
@@ -648,7 +642,7 @@
 
         $('[id^=VALITUTLINKIT]').remove();
 
-          var nonFloatingFeatures = selectedLinkProperty.getFeaturesToKeep();
+        var nonFloatingFeatures = selectedLinkProperty.getFeaturesToKeep();
 
         var fields = formFields(_.map(nonFloatingFeatures, function(sId){
           return {'linkId' : sId.linkId};
@@ -657,12 +651,11 @@
         $('.form-group:last').after(fields);
 
         if ($(".form-group[id^='VALITUTLINKIT']:last").length !== 0 && $(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <= 2) {
-          $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
           $('#floatingEditModeForm').show();
           $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
             eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
           });
-          rootElement.find('.link-properties button.calculate').attr('disabled', false);
+          rootElement.find('.link-properties button.calculate').attr('disabled', true);
           rootElement.find('.link-properties button.cancel').attr('disabled', false);
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.setActiveButtons(true);
@@ -670,20 +663,39 @@
             processAdditionalFloatings(sources, event.currentTarget.value);
           });
         }
-        if (!_.isEmpty(sources) && _.isEmpty(targets)) {
-          var startingIndex = parseInt($(".form-group[id^='VALITUTLINKIT']:last")[0].id.slice(-1)) + 1;
-          var newDivs = "";
-          _.each(sources, function (road, index) {
-            var divId = "VALITUTLINKIT" + (startingIndex + index);
-            newDivs = newDivs +
-                '<div class="form-group" id=' + divId + '>' +
-                '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
-                '<p class="form-control-static-floating">' + road.linkId + '</p>' +
-                '</div>';
-          });
-          $(".form-group[id^='VALITUTLINKIT']:last").append(newDivs);
-        }
+      };
 
+      var processAdjacents = function (sources, targets) {
+          var adjacents = _.reject(targets, function(t) {
+              return t.roadLinkType === floatingRoadLinkType;
+          });
+
+          $('[id^=VALITUTLINKIT]').remove();
+
+          var nonFloatingFeatures = selectedLinkProperty.getFeaturesToKeep();
+
+          var fields = formFields(_.map(nonFloatingFeatures, function(sId){
+              return {'linkId' : sId.linkId};
+          }));
+
+          var fullTemplate = adjacentsTemplate;
+
+          $('.form-group:last').after(fields);
+
+          if ($(".form-group[id^='VALITUTLINKIT']:last").length !== 0 && $(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <= 2) {
+              $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
+              $('#floatingEditModeForm').show();
+              $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
+                  eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
+              });
+              rootElement.find('.link-properties button.calculate').attr('disabled', false);
+              rootElement.find('.link-properties button.cancel').attr('disabled', false);
+              rootElement.find('.link-properties button.continue').attr('disabled', true);
+              applicationModel.setActiveButtons(true);
+              $('[id*="additionalSourceButton"]').click(sources,function(event) {
+                  processAdditionalFloatings(sources, event.currentTarget.value);
+              });
+          }
       };
 
       eventbus.on('linkProperties:changed', function() {
@@ -764,7 +776,8 @@
 
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
         $('#additionalSource').remove();
-        $('#adjacentsData').remove();
+        $('#control-label-floating').remove();
+        $('#adjacentsData').empty();
         rootElement.find('.link-properties button.save').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         rootElement.find('.link-properties button.calculate').attr('disabled', true);
@@ -793,27 +806,33 @@
       });
 
       eventbus.on('adjacents:floatingAdded', function(floatingRoads) {
-        var floatingPart = '<br><label class="control-label-floating">VIERESSÄ KELLUVIA TIEOSOITTEITA:</label>';
+        var floatingPart = '<br><label id="control-label-floating" class="control-label-floating">VIERESSÄ KELLUVIA TIEOSOITTEITA:</label>';
         _.each(floatingRoads,function(fr) {
           floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker);
         });
-        $(".form-group:last").after(floatingPart);
-        $('[id*="additionalSourceButton"]').click(floatingRoads,function(event) {
-          processAdditionalFloatings(floatingRoads,event.currentTarget.value);
-        });
+        if (floatingRoads.length === 0) {
+          applicationModel.setContinueButton(true);
+          rootElement.find('.link-properties button.continue').attr('disabled', false);
+        }
+        else{
+          $(".form-group:last").after(floatingPart);
+          $('[id*="additionalSourceButton"]').click(floatingRoads,function(event) {
+              processAdditionalFloatings(floatingRoads,event.currentTarget.value);
+          });
+        }
       });
       eventbus.on('linkProperties:additionalFloatingSelected',function(data) {
         processAdditionalFloatings(data.selectedFloatings, data.selectedLinkId);
       });
 
       eventbus.on('linkProperties:transferFailed',function(errorCode) {
-        if (errorCode == 400) {
+        if (errorCode === 400) {
           return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
-        } else if (errorCode == 401) {
+        } else if (errorCode === 401) {
           return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
-        } else if (errorCode == 412) {
+        } else if (errorCode === 412) {
           return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
-        } else if (errorCode == 500) {
+        } else if (errorCode === 500) {
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
         } else {
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
