@@ -394,11 +394,7 @@ object DataFixture {
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
-      "kauniainen_functional_classes.sql",
-      "kauniainen_traffic_directions.sql",
-      "kauniainen_link_types.sql",
       "test_fixture_sequences.sql",
-      "kauniainen_lrm_positions.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
       "insert_project_link_data.sql",
