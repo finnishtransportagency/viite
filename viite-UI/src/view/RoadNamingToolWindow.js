@@ -111,7 +111,10 @@
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
                   if ($(element).attr('data-FieldName') === "startDate") {
                     var dates = getDateObjects($(element).val());
-                    return $(element).val() !== '' && dates.futureDate > dates.fieldDate;
+                    var splitDataString = $(element).val().split(".");
+                    var dateValidation = dates.futureDate > dates.fieldDate;
+                    var sizeValidation = splitDataString.length === 3 && _.last(splitDataString).length === 4;
+                    return $(element).val() !== '' && dateValidation && sizeValidation;
                   } else return $(element).val() !== '';
                 })
             );
