@@ -100,7 +100,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
-      ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown, ral.id)
+      ral.anomaly, LinkStatus.Unknown, ral.id)
   }
 
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
@@ -627,7 +627,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId))
       RoadAddressDAO.create(ra)
       val roadBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
@@ -759,7 +759,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, commonHistoryId))
       RoadAddressDAO.create(ra)
       val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
@@ -851,10 +851,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id1 = RoadAddressDAO.getNextRoadAddressId
       val id2 = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
       val rb = Seq(RoadAddress(id2, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       val shouldNotExist = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
@@ -881,14 +881,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val id1 = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val reservation = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
       reservation.right.get.size should be(0)
       RoadAddressDAO.create(ra)
       val id2 = RoadAddressDAO.getNextRoadAddressId
       val rb = Seq(RoadAddress(id2, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       RoadAddressDAO.create(rb)
       val reservationAfterB = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
@@ -911,20 +911,20 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val id1 = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        startDate, None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        startDate, None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), NormalLinkInterface, 8, NoTermination, 0))
       val reservation = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
       reservation.right.get.size should be(0)
       RoadAddressDAO.create(ra)
       val id2 = RoadAddressDAO.getNextRoadAddressId
       val ra2 = Seq(RoadAddress(id2, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        startDate, None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        startDate, None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), NormalLinkInterface, 8, NoTermination, 0))
       RoadAddressDAO.create(ra2)
       //inserting a historic road for part 2
       val id3 = RoadAddressDAO.getNextRoadAddressId
       val ra3 = Seq(RoadAddress(id3, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 25L,
-        startDate, Some(DateTime.parse("1901-02-03")), Option("tester"), 0, linkId, 0.0, 15.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+        startDate, Some(DateTime.parse("1901-02-03")), Option("tester"), linkId, 0.0, 15.0, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 9.8), Point(0.0, 25)), NormalLinkInterface, 8, NoTermination, 0))
       RoadAddressDAO.create(ra3)
       val reservationAfterB = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
@@ -997,7 +997,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val rl = RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
@@ -1038,7 +1038,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val rl = RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
@@ -1065,18 +1065,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
       val projectLink = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 5, 203, RoadType.Unknown, Track.Combined, Discontinuous,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
         SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       ProjectDAO.createRoadAddressProject(rap)
 
       val rap2 = RoadAddressProject(id + 1, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-04"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
       val projectLink2 = toProjectLink(rap2, LinkStatus.New)(RoadAddress(idr, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
         SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       ProjectDAO.createRoadAddressProject(rap2)
 
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
         SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
@@ -1085,7 +1085,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
         projectLink.sideCode,
         projectLink.calibrationPoints._1,
-        projectLink.calibrationPoints._2, Anomaly.None, projectLink.lrmPositionId, projectLink.status, 0)
+        projectLink.calibrationPoints._2, Anomaly.None, projectLink.status, 0)
 
       mockForProject(id, Seq(p))
 
@@ -1163,7 +1163,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     // Original road address: 1024 -> 1547
     val roadAddress = RoadAddress(1L, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
-      None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
       LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
 
     val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, Some(DateTime.now()), None, user,
@@ -1172,17 +1172,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val transferAndNew = Seq(
 
       // Transferred road address: 1028 -> 1128
-      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, lrmPositionId = 2, linkId = suravageLinkId,
+      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, linkId = suravageLinkId,
         startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = LinkStatus.Transfer,
         linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
 
       // New road address: 1128 -> 1205
-      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, lrmPositionId = 3, linkId = suravageLinkId,
+      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, linkId = suravageLinkId,
         startMValue = 99.384, endMValue = 176.495, geometry = Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)), status = LinkStatus.New,
         linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 77.111, connectedLinkId = Some(linkId)),
 
       // Terminated road address: 1124 -> 1547
-      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, lrmPositionId = 4, linkId = linkId,
+      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, linkId = linkId,
         startMValue = 99.384, endMValue = endM, geometry = Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)), status = LinkStatus.Terminated,
         linkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength = endM - 99.384, connectedLinkId = Some(suravageLinkId))
 
@@ -1208,7 +1208,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
       DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
     val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
-      None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
       LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
     val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM + 100L, Some(DateTime.now()), None, user,
       2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
@@ -2243,7 +2243,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     // Original road address: 1024 -> 1547
     val roadAddress = RoadAddress(1L, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
-      None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
       LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
 
     val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, Some(DateTime.now()), None, user,
@@ -2252,17 +2252,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val transferAndNew = Seq(
 
       // Transferred road address: 1028 -> 1128
-      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, lrmPositionId = 2, linkId = suravageLinkId,
+      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, linkId = suravageLinkId,
         startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = LinkStatus.Transfer,
         linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
 
       // New road address: 1128 -> 1205
-      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, lrmPositionId = 3, linkId = suravageLinkId,
+      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, linkId = suravageLinkId,
         startMValue = 99.384, endMValue = 176.495, geometry = Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)), status = LinkStatus.New,
         linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 77.111, connectedLinkId = Some(linkId)),
 
       // Terminated road address: 1124 -> 1547
-      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, lrmPositionId = 4, linkId = linkId,
+      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, linkId = linkId,
         startMValue = 99.384, endMValue = endM, geometry = Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)), status = LinkStatus.Terminated,
         linkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength = endM - 99.384, connectedLinkId = Some(suravageLinkId))
 
