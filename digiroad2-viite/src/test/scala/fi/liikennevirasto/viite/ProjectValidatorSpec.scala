@@ -365,7 +365,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject)
       errors should have size 1
       errors.head.validationError.value should be(TerminationContinuity.value)
-      errors.head.validationError.message should be("Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle: (19999,1).")
       val projectLinks = ProjectDAO.getProjectLinks(id, Some(LinkStatus.Terminated)).map(_.copy(discontinuity = EndOfRoad, status = LinkStatus.UnChanged))
       ProjectDAO.updateProjectLinksToDB(projectLinks, "U")
       val updProject2 = ProjectDAO.getRoadAddressProjectById(project.id).get
