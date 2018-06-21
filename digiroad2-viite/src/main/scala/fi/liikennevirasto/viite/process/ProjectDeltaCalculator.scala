@@ -105,7 +105,10 @@ object ProjectDeltaCalculator {
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
 
     val existing = oppositeSections.find(s => s.startMAddr == pl1.startAddrMValue && s.track == Track.switch(pl1.track))
-    val hasCalibrationPoint = if(existing.isDefined) existing.get.endMAddr == pl2.startAddrMValue else pl1.hasCalibrationPointAt(CalibrationCode.AtEnd)
+    val hasCalibrationPoint = if(existing.isDefined)
+      (!pl1.reversed && existing.get.endMAddr == pl2.startAddrMValue) || (pl1.reversed && existing.get.endMAddr == pl2.endAddrMValue)
+    else
+      (!pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
 
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
       ra1.endAddrMValue == ra2.startAddrMValue &&
@@ -127,7 +130,8 @@ object ProjectDeltaCalculator {
   }
 
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
-    if (r1.endAddrMValue == r2.startAddrMValue && !r1.hasCalibrationPointAt(CalibrationCode.AtEnd))
+    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
+    if (r1.endAddrMValue == r2.startAddrMValue && !hasCalibrationPoint)
       r1 match {
         case x: RoadAddress => Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
         case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
