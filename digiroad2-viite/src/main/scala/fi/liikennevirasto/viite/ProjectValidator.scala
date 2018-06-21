@@ -305,7 +305,7 @@ object ProjectValidator {
         checkForNotHandledLinks,
         checkForInvalidUnchangedLinks,
         checkTrackCodePairing,
-//        checkRemovedEndOfRoadPart,
+        checkRemovedEndOfRoadPart,
         checkElyCodeChange
       )
 
@@ -331,9 +331,7 @@ object ProjectValidator {
     * @return
     */
   def checkRoadContinuityCodes(project: RoadAddressProject, seq: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
-    def trackMatch(track1: Track, track2: Track) = {
-      track1 == track2 || track1 == Track.Combined || track2 == Track.Combined
-    }
+
 
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
       // This code means that this road part (of a ramp) should be connected to a roundabout
@@ -352,7 +350,7 @@ object ProjectValidator {
     def checkContinuityBetweenParts = {
       error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(seq.sortBy(_.startAddrMValue).filterNot { pl =>
         // Check that pl is continuous or after it there is no connected project link
-        val disconnectedLinks = seq.exists(pl2 => (pl2.startAddrMValue != pl.endAddrMValue || !connected(pl, pl2)) && trackMatch(pl2.track, pl.track))
+        val disconnectedLinks = seq.exists(pl2 => (pl2.startAddrMValue != pl.endAddrMValue || !connected(pl, pl2)) && Track.isTrackContinuous(pl2.track, pl.track))
         disconnectedLinks || pl.discontinuity == Continuous
       })
     }
@@ -459,7 +457,7 @@ object ProjectValidator {
                   }
                 } else None
 
-                val isConnected = Seq(last).forall(lpl => nextLinks.exists(nl => trackMatch(nl.track, lpl.track) &&
+                val isConnected = Seq(last).forall(lpl => nextLinks.exists(nl => Track.isTrackContinuous(nl.track, lpl.track) &&
                   connected(lpl, nl)))
                val normalDiscontinuity = discontinuity match {
                   case Continuous =>
