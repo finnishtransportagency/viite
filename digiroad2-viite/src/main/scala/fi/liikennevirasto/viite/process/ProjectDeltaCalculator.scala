@@ -149,7 +149,6 @@ object ProjectDeltaCalculator {
       combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
   }
 
-
   private def combinePair[T <: BaseRoadAddress, R <: ProjectLink](combinedSeq: Seq[(T,R)], oppositeSections: Seq[RoadAddressSection],  result: Seq[(T,R)] = Seq()): Seq[(T,R)] = {
     if (combinedSeq.isEmpty)
       result.reverse
