@@ -49,13 +49,13 @@ object ProjectState {
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
 
   case object ErrorInViite extends ProjectState {
-    def value = 8;
+    def value = 8
 
     def description = "Virhe Viite-sovelluksessa"
   }
 
   case object SendingToTR extends ProjectState {
-    def value = 9;
+    def value = 9
 
     def description = "Lähettää Tierekisteriin"
   }
