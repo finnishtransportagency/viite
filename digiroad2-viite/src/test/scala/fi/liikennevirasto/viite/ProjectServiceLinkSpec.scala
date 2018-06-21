@@ -1415,6 +1415,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   //We need to validate the point of this test, since it is not possible to re-split in real application
+  // TODO Remove LRM_POSITION
   ignore("Calculate delta after Unchanged + double split (Unchanged + New) and (Transfer + New) + Transfer") {
     def toGeom(json: Option[Any]): List[Point] = {
       json.get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))

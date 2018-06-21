@@ -15,10 +15,10 @@ object RoadAddressFiller {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  case class LRMValueAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
+  case class LinearLocationAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class AddressChangeSet(
                                toFloatingAddressIds: Set[Long],
-                               adjustedMValues: Seq[LRMValueAdjustment],
+                               adjustedMValues: Seq[LinearLocationAdjustment],
                                missingRoadAddresses: Seq[MissingRoadAddress])
 
   private def capToGeometry(roadLink: RoadLinkLike, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
@@ -26,7 +26,7 @@ object RoadAddressFiller {
     val (overflowingSegments, passThroughSegments) = segments.partition(x => (x.endMValue - MaxAllowedMValueError > linkLength) && (x.endMValue - linkLength <= MaxDistanceDiffAllowed))
     val cappedSegments = overflowingSegments.map { s =>
       (s.copy(endMValue = linkLength),
-        LRMValueAdjustment(s.id, roadLink.linkId, None, Option(linkLength)))
+        LinearLocationAdjustment(s.id, roadLink.linkId, None, Option(linkLength)))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
@@ -49,7 +49,7 @@ object RoadAddressFiller {
     val restSegments = sorted.tail
     val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
     val (adjustments) = (lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff match {
-      case true => (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength)), Seq(LRMValueAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength))))
+      case true => (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength)), Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength))))
       case _ => (segments, Seq())
     }
     (adjustments._1, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ adjustments._2))

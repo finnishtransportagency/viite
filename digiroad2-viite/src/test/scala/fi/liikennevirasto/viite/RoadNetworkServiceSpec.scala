@@ -23,6 +23,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("validate network with valid road"){
     runWithRollback {
       RoadNetworkDAO.createPublishedRoadNetwork
@@ -46,6 +47,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("validate network with overlaping road") {
     runWithRollback {
       RoadNetworkDAO.createPublishedRoadNetwork
@@ -69,6 +71,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("validate network with wrong discontinuity") {
     runWithRollback {
       RoadNetworkDAO.createPublishedRoadNetwork

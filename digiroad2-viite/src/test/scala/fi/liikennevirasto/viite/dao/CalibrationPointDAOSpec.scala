@@ -37,6 +37,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (2,0,'testproject2',1,'automatedtest', sysdate)""".execute
   }
 
+  // TODO
   def addProjectRoads(): Unit = {
     ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser")
     ProjectDAO.reserveRoadPart(2, 2, 1, "TestUser")

@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
+import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LinearLocationAdjustment}
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -52,8 +52,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
                              */
   val MaxDistanceDiffAllowed = 1.0
   /*Temporary restriction from PO: Filler limit on modifications
-                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
-                                            cut more than that then nothing is done to the road address LRM data.
+                                            (linear location adjustments) is limited to 1 meter. If there is a need to fill /
+                                            cut more than that then nothing is done to the road address linear location data.
                                             */
   val MinAllowedRoadAddressLength = 0.1
   val newTransaction = true
@@ -756,9 +756,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     filledTopology
   }
 
-  def saveAdjustments(addresses: Seq[LRMValueAdjustment]): Unit = {
+  def saveAdjustments(addresses: Seq[LinearLocationAdjustment]): Unit = {
     withDynTransaction {
-      addresses.foreach(RoadAddressDAO.updateLRM)
+      addresses.foreach(RoadAddressDAO.updateLinearLocation)
     }
   }
 

@@ -15,6 +15,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 
+// TODO
 case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
                                  startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,

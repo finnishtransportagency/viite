@@ -95,7 +95,7 @@ object ProjectValidator {
     }
 
     // Viite-453
-    // There are no link ids shared between the project and the current road address + lrm_position tables at the project date (start_date, end_date)
+    // There are no link ids shared between the project and the current road address tables at the project date (start_date, end_date)
     case object SharedLinkIdsExist extends ValidationError {
       def value = 5
 
