@@ -243,10 +243,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     runWithRollback {
       //Road Objects
       val ra = Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), false,
         geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId),
         RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 10L, 20L,
-          Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), false,
+          Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), false,
           geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId))
       val vvhRoadLinks = List(
         VVHRoadlink(linkId, 91, vvhGeom, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)

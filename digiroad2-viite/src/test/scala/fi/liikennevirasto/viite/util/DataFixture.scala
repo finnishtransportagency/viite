@@ -309,6 +309,7 @@ object DataFixture {
 
   }
 
+  // TODO
   def checkLrmPosition(): Unit = {
 
     OracleDatabase.withDynTransaction {
