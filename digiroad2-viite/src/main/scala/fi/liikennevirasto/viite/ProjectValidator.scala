@@ -366,7 +366,7 @@ object ProjectValidator {
           Some(curr)
       }
       val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
-        val trackIntervals = Seq(g._2.filterNot(_.track !=RightSide), g._2.filterNot(_.track !=LeftSide))
+        val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         val connectedLinks: Seq[ProjectLink] = trackIntervals.flatMap{
           interval =>
             interval.sortBy(_.startAddrMValue).sliding(2).flatMap{
@@ -430,7 +430,7 @@ object ProjectValidator {
       val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
      seq.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = RoadAddressDAO.getValidRoadParts(g._1.toInt, project.startDate)
-        val trackIntervals = Seq(g._2.filterNot(_.track != RightSide), g._2.filterNot(_.track != LeftSide))
+       val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         trackIntervals.flatMap {
           interval =>
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
