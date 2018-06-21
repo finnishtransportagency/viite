@@ -101,7 +101,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
-      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, 0)
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly)
   }
 
 
@@ -159,7 +159,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
-      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
+      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType)
   }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {

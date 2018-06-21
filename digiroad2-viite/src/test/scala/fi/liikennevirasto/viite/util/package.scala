@@ -120,6 +120,7 @@ package object util {
 
     val projectId = Sequences.nextViitePrimaryKeySeqValue
 
+    // TODO
     def createRoadAddresses(roadNumber: Long, roadPartNumber: Long, track: Long, start: Long, end: Long): (Long, Long) = {
       val nextLinkId = sql"""SELECT MAX(LINK_ID) FROM LRM_POSITION""".as[Long].first + 1
       val roadAddressId = Sequences.nextViitePrimaryKeySeqValue
@@ -221,7 +222,7 @@ package object util {
       ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
-      ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown, ral.id)
+      ral.anomaly, LinkStatus.Unknown, ral.id)
   }
 
   def backToProjectLink(project: RoadAddressProject)(rl: ProjectAddressLink): ProjectLink = {

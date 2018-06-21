@@ -36,7 +36,6 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def startCalibrationPoint: Option[CalibrationPoint]
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
-  def lrmPositionId: Long
   def status: LinkStatus
   def roadAddressId: Long
   def connectedLinkId: Option[Long]
