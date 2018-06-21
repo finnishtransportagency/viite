@@ -359,7 +359,8 @@ object ProjectSectionCalculator {
                         maybeDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): Option[(Long, Long)] = {
       if (((rightLink.status == LinkStatus.Transfer && leftLink.status == LinkStatus.Transfer) ||
         (rightLink.status == LinkStatus.UnChanged && leftLink.status == LinkStatus.UnChanged)) && (rightLink.track != Track.Combined && leftLink.track != Track.Combined)) {
-        Some(averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue))
+        val reversed = rightLink.reversed || leftLink.reversed
+        Some(averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
       } else if (rightLink.status == LinkStatus.UnChanged || rightLink.status == LinkStatus.Transfer) {
         Some((rightLink.startAddrMValue, rightLink.endAddrMValue))
       } else if (leftLink.status == LinkStatus.UnChanged || leftLink.status == LinkStatus.Transfer) {
@@ -374,8 +375,14 @@ object ProjectSectionCalculator {
       ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff)
     }
 
-    def averageOfAddressMValues(rAddrM: Double, lAddrM: Double) : Long = {
-        if (rAddrM > lAddrM) Math.ceil(0.5 * (rAddrM + lAddrM)).round else Math.floor(0.5 * (rAddrM + lAddrM)).round
+    def averageOfAddressMValues(rAddrM: Double, lAddrM: Double, reversed: Boolean): Long = {
+      val average = 0.5 * (rAddrM + lAddrM)
+
+      if (reversed) {
+        if (rAddrM > lAddrM) Math.floor(average).round else Math.ceil(average).round
+      } else {
+        if (rAddrM > lAddrM) Math.ceil(average).round else Math.floor(average).round
+      }
     }
 
     def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long) = {
@@ -396,7 +403,7 @@ object ProjectSectionCalculator {
       } else if (rProjectLink.status == LinkStatus.New && lProjectLink.status != LinkStatus.New) {
         lProjectLink.endAddrMValue
       } else {
-        averageOfAddressMValues(rProjectLink.endAddrMValue, lProjectLink.endAddrMValue)
+        averageOfAddressMValues(rProjectLink.endAddrMValue, lProjectLink.endAddrMValue, reversed = rProjectLink.reversed || lProjectLink.reversed)
       }
     }
 
@@ -408,8 +415,8 @@ object ProjectSectionCalculator {
         val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
         if (firstRight.nonEmpty && firstLeft.nonEmpty) {
           val availableCalibrationPoint = userDefinedCalibrationPoint.get(firstRight.last.id).orElse(userDefinedCalibrationPoint.get(firstLeft.last.id))
-          val start = previousStart.getOrElse(getFixedAddress(firstRight.head, firstLeft.head).map(_._1).getOrElse(averageOfAddressMValues(firstRight.head.startAddrMValue, firstLeft.head.startAddrMValue)))
-          val estimatedEnd = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue))
+          val start = previousStart.getOrElse(getFixedAddress(firstRight.head, firstLeft.head).map(_._1).getOrElse(averageOfAddressMValues(firstRight.head.startAddrMValue, firstLeft.head.startAddrMValue, reversed = firstRight.head.reversed || firstLeft.head.reversed)))
+          val estimatedEnd = getFixedAddress(firstRight.last, firstLeft.last, availableCalibrationPoint).map(_._2).getOrElse(averageOfAddressMValues(firstRight.last.endAddrMValue, firstLeft.last.endAddrMValue, reversed = firstRight.last.reversed || firstLeft.last.reversed))
           val (adjustedFirstRight, adjustedFirstLeft) = adjustTwoTracks(firstRight, firstLeft, start, estimatedEnd)
           val endMValue = getEndRoadAddrMValue(adjustedFirstRight.last, adjustedFirstLeft.last)
           val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restRight, restLeft, Some(endMValue))

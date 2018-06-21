@@ -306,16 +306,6 @@
   	}	
 }
 
-.btn-delete {
-    border: none;
-    background: transparent;
-    color: @gray-darker;
-    .form-dark & {
-      color: @gray-lighter;
-    }
-    outline: none;
-}
-
 .btn-close {
 	border: none;
 	position: absolute;
@@ -332,17 +322,14 @@
 }
 
 .btn-delete {
+	cursor: pointer;
 	position: absolute;
-	right: 30px;
-	margin-top: 5px;
+	right: 40px;
+	margin-top: 2px;
 	background: transparent;
-	text-shadow: -1px 0 @blue-lighter, 0 1px @blue-lighter, 1px 0 @blue-lighter, 0 -1px @blue-lighter;
-	color: @gray-lightest;
-	.form-dark & {
-		color: #ff0000;
-	}
-	font-weight:bold;
-	font-size: 17px;
+	color: @warning;
+    border: none;
+    outline: none;
 }
 
 .wbtn-close {
@@ -444,25 +431,15 @@
 }
 
 .btn-edit-project {
-	background-image: url(../images/buttons/16pencil-edit-button.png); /* 16px x 16px */
-	background-color: transparent; /* make the button transparent */
-	background-repeat: no-repeat;  /* make the background image appear only once */
-	background-position: 0px 0px;  /* equivalent to 'top left' */
-	border: none;           /* assuming we don't want any borders */
+	color: @blue-dark;
 	cursor: pointer;        /* make the cursor like hovering over an <a> element */
-	height: 16px;           /* make this the size of your image */
-	padding-left: 16px;     /* make text start to the right of the image */
-	vertical-align: middle; /* align the text vertically centered */
 }
 
 .btn-delete-project {
-	background-image: url(../images/buttons/project_delete_button.png); /* 16px x 16px */
-	background-color: transparent; /* make the button transparent */
-	background-repeat: no-repeat;  /* make the background image appear only once */
-	background-position: 0px 0px;  /* equivalent to 'top left' */
-	border: none;           /* assuming we don't want any borders */
 	cursor: pointer;        /* make the cursor like hovering over an <a> element */
-	height: 16px;           /* make this the size of your image */
-	padding-left: 16px;     /* make text start to the right of the image */
-	vertical-align: middle; /* align the text vertically centered */
+}
+
+.btn-icon {
+	padding-left: 5px;
+    cursor: pointer;
 }

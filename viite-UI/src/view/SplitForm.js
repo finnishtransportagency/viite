@@ -291,7 +291,7 @@
           }
           default:
           {
-            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty().concat(selectedProjectLink), statusDropdown_0, statusDropdown_1);
+            projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty().concat(selectedProjectLink), statusDropdown_0, statusDropdown_1);
           }
         }
         selectedProjectLinkProperty.setDirty(false);

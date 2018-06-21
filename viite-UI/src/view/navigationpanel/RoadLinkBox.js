@@ -59,12 +59,23 @@
       [9, 'Talvitie (60001 - 61999)'],
       [10,'Polku (62001 - 62999)'],
       [11,'Muu tieverkko'],
+      [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
       [99,'Tuntematon']
     ];
     var constructionTypes = [
       [0, 'Muu tieverkko, rakenteilla'],
       [1, 'Tuntematon, rakenteilla']
     ];
+
+    var buildMultiColoredSegments = function () {
+      var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1" />';
+      for (var i = 1; i <= 6; i++) {
+        segments = segments +
+            '<div class="middle symbol linear rainbow-asset-' + i + '" />';
+      }
+      return segments + '<div class="middle symbol linear rainbow-asset-2" />' + '<div class="middle symbol linear rainbow-asset-1 " /> <div class="edge-right symbol linear linear-asset-1" /></div>';
+    };
+
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
       return '<div class="legend-entry">' +
           '<div class="label">' + constructionType[1] + '</div>' +
@@ -72,10 +83,15 @@
           '</div>';
     }).join('');
     var roadClassLegendEntries = _.map(roadClasses, function(roadClass) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + roadClass[1] + '</div>' +
-        '<div class="symbol linear linear-asset-' + roadClass[0] + '" />' +
-        '</div>';
+      var defaultLegendEntry = roadClass[0] !== 98 ? '<div class="legend-entry">' +
+          '<div class="label">' + roadClass[1] + '</div>' +
+          '<div class="symbol linear linear-asset-' + roadClass[0] + '" />' +
+          '</div>' :
+          '<div class="legend-entry">' +
+          '<div class="label">' + roadClass[1] + '</div>' +
+          buildMultiColoredSegments() +
+          '</div>';
+      return defaultLegendEntry;
     }).join('');
 
     var roadProjectOperations = function () {
@@ -203,8 +219,8 @@
     };
 
     var bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'viite')) {
+      eventbus.on('userData:fetched', function (userData) {
+        if (_.contains(userData.roles, 'viite')) {
           elements.expanded.append(editModeToggle.element);
           $('#projectListButton').removeAttr('style');
         }

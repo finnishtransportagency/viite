@@ -182,9 +182,6 @@
       if (roadLinkType !== -1 && anomaly === 1 && constructionType !== 1) {
         width = 7;
       }
-      if (roadLinkSource === 2 && !notSelection) {
-        width = width + 4;
-      }
 
       return width;
     };
