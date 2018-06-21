@@ -116,7 +116,7 @@ trait TrackCalculatorStrategy {
   }
 
   protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
-                                userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None, withLeftCalibration: Boolean = false, withRightCalibration: Boolean = false): (Long, Long) = {
+                                userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
 
     val reversed = rightLink.reversed || leftLink.reversed
 
@@ -141,21 +141,19 @@ trait TrackCalculatorStrategy {
       projectLinks
   }
 
-  protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], restLeftProjectLinks: Seq[ProjectLink],
-                              restRightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
+  protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
+                                restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
 
-    //TODO change the way the user calibration points are manage
     val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
 
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
-    val withLeftCalibrationPoints = calibrationPoints.exists(_._2.addressMValue == leftProjectLinks.head.startAddrMValue) || leftProjectLinks.head.startAddrMValue == startSectionAddress
-    val withRightCalibrationPoints = calibrationPoints.exists(_._2.addressMValue == rightProjectLinks.head.startAddrMValue) || rightProjectLinks.head.startAddrMValue == startSectionAddress
-
-    val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
+    val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
-    val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
+    //The getFixedAddress method have to be call twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
+    // NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
+    val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
 
     TrackCalculatorResult(setLastEndAddrMValue(adjustedLeft, endSectionAddress), setLastEndAddrMValue(adjustedRight, endSectionAddress), startSectionAddress, endSectionAddress, restLeftProjectLinks, restRightProjectLinks)
   }
@@ -213,5 +211,5 @@ trait TrackCalculatorStrategy {
 
   def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = false
   def assignTrackMValues(startAddress: Option[Long] , leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult
-  
+
 }

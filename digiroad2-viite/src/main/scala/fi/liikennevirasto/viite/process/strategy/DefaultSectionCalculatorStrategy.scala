@@ -1,13 +1,10 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.slf4j.LoggerFactory
 
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
