@@ -104,10 +104,10 @@ object ProjectDeltaCalculator {
     val matchContinuity = (pl1.reversed && pl2.discontinuity == Discontinuity.Continuous) ||
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
 
-    val existing = oppositeSections.find(_.startMAddr == pl1.startAddrMValue)
-    val matchOppositeSections = existing.isEmpty || existing.get.endMAddr != pl2.startAddrMValue
+    val existing = oppositeSections.find(s => s.startMAddr == pl1.startAddrMValue && s.track == Track.switch(pl1.track))
+    val hasCalibrationPoint = if(existing.isDefined) existing.get.endMAddr == pl2.startAddrMValue else pl1.hasCalibrationPointAt(CalibrationCode.AtEnd)
 
-    if (matchAddr && matchContinuity && (!pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) || matchOppositeSections) &&
+    if (matchAddr && matchContinuity && !hasCalibrationPoint &&
       ra1.endAddrMValue == ra2.startAddrMValue &&
       ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
