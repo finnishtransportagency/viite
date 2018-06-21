@@ -19,11 +19,13 @@ class DefaultTrackCalculatorStrategy extends TrackCalculatorStrategy {
     val withLeftCalibrationPoints = userDefinedCalibrationPoint.exists(_._2.addressMValue == leftProjectLinks.head.startAddrMValue) || leftProjectLinks.head.startAddrMValue == startSectionAddress
     val withRightCalibrationPoints = userDefinedCalibrationPoint.exists(_._2.addressMValue == rightProjectLinks.head.startAddrMValue) || rightProjectLinks.head.startAddrMValue == startSectionAddress
 
-    val endSectionAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
+    val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, userDefinedCalibrationPoint)
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, userDefinedCalibrationPoint)
 
-    TrackCalculatorResult(adjustedLeft, adjustedRight, startSectionAddress, endSectionAddress)
+    val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
+
+    TrackCalculatorResult(setLastEndAddrMValue(adjustedLeft, endSectionAddress), setLastEndAddrMValue(adjustedRight, endSectionAddress), startSectionAddress, endSectionAddress)
   }
 }
 

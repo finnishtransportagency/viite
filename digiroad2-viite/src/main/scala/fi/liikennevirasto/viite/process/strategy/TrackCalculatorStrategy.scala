@@ -78,15 +78,8 @@ trait TrackCalculatorStrategy {
   }
 
   protected def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    def setLastEndAddrMValue(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (projectLinks.last.status != LinkStatus.NotHandled)
-        projectLinks.init :+ projectLinks.last.copy(endAddrMValue = en)
-      else
-        projectLinks
-    }
-
     val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
-    setLastEndAddrMValue(ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff))
+    ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff)
   }
 
   protected def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) = {
@@ -101,11 +94,11 @@ trait TrackCalculatorStrategy {
 
     (leftLink.status, rightLink.status) match {
       case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>
-        if(withLeftCalibration && !withRightCalibration)
-          (leftLink.startAddrMValue, leftLink.endAddrMValue)
-        else if(withRightCalibration && !withLeftCalibration)
-          (rightLink.startAddrMValue, rightLink.endAddrMValue)
-        else
+//        if(withLeftCalibration && !withRightCalibration)
+//          (leftLink.startAddrMValue, leftLink.endAddrMValue)
+//        else if(withRightCalibration && !withLeftCalibration)
+//          (rightLink.startAddrMValue, rightLink.endAddrMValue)
+//        else
         (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
       case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
         (leftLink.startAddrMValue, leftLink.endAddrMValue)
@@ -118,6 +111,13 @@ trait TrackCalculatorStrategy {
     }
   }
 
+  protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
+    if (projectLinks.last.status != LinkStatus.NotHandled)
+      projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
+    else
+      projectLinks
+  }
+
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], restLeftProjectLinks: Seq[ProjectLink],
                               restRightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
 
@@ -128,11 +128,13 @@ trait TrackCalculatorStrategy {
     val withLeftCalibrationPoints = calibrationPoints.exists(_._2.addressMValue == leftProjectLinks.head.startAddrMValue) || leftProjectLinks.head.startAddrMValue == startSectionAddress
     val withRightCalibrationPoints = calibrationPoints.exists(_._2.addressMValue == rightProjectLinks.head.startAddrMValue) || rightProjectLinks.head.startAddrMValue == startSectionAddress
 
-    val endSectionAddress = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
+    val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, endSectionAddress, calibrationPoints)
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
-    TrackCalculatorResult(adjustedLeft, adjustedRight, startSectionAddress, endSectionAddress, restLeftProjectLinks, restRightProjectLinks)
+    val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint, withLeftCalibrationPoints, withRightCalibrationPoints)._2
+
+    TrackCalculatorResult(setLastEndAddrMValue(adjustedLeft, endSectionAddress), setLastEndAddrMValue(adjustedRight, endSectionAddress), startSectionAddress, endSectionAddress, restLeftProjectLinks, restRightProjectLinks)
   }
 
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
