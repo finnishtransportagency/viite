@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite._
 
 import scala.concurrent.duration.FiniteDuration
@@ -38,7 +38,7 @@ class RoadAddressMerger(roadAddressService: RoadAddressService) extends Actor {
 
 class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Seq[any] => roadAddressService.saveAdjustments(w.asInstanceOf[Seq[LRMValueAdjustment]])
+    case w: Seq[any] => roadAddressService.saveAdjustments(w.asInstanceOf[Seq[LinearLocationAdjustment]])
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
 }

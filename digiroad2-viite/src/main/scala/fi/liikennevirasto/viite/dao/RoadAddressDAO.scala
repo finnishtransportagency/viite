@@ -15,7 +15,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -714,7 +714,7 @@ object RoadAddressDAO {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
       val query =
         s"""
-        select ra.id, lrm.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join road_network_errors re on re.road_address_id = ra.id $history
+        select ra.id, ra.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join road_network_errors re on re.road_address_id = ra.id $history
         order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
       """
       Q.queryNA[(Long, Long, Long, Long, Int, Long)](query).list.map {
@@ -1043,42 +1043,42 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
-  def updateLRM(lRMValueAdjustment: LRMValueAdjustment) = {
-    val (startM, endM) = (lRMValueAdjustment.startMeasure, lRMValueAdjustment.endMeasure)
+  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment) = {
+    val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
     (startM, endM) match {
       case (Some(s), Some(e)) =>
         sqlu"""
            UPDATE ROAD_ADDRESS
            SET start_measure = $s,
              end_measure = $e,
-             link_id = ${lRMValueAdjustment.linkId},
+             link_id = ${linearLocationAdjustment.linkId},
              modified_date = sysdate
-           WHERE id = ${lRMValueAdjustment.addressId}
+           WHERE id = ${linearLocationAdjustment.addressId}
       """.execute
       case (_, Some(e)) =>
         sqlu"""
            UPDATE ROAD_ADDRESS
            SET
-             end_measure = ${lRMValueAdjustment.endMeasure.get},
-             link_id = ${lRMValueAdjustment.linkId},
+             end_measure = ${linearLocationAdjustment.endMeasure.get},
+             link_id = ${linearLocationAdjustment.linkId},
              modified_date = sysdate
-           WHERE id = ${lRMValueAdjustment.addressId}
+           WHERE id = ${linearLocationAdjustment.addressId}
       """.execute
       case (Some(s), _) =>
         sqlu"""
            UPDATE ROAD_ADDRESS
-           SET start_measure = ${lRMValueAdjustment.startMeasure.get},
-             link_id = ${lRMValueAdjustment.linkId},
+           SET start_measure = ${linearLocationAdjustment.startMeasure.get},
+             link_id = ${linearLocationAdjustment.linkId},
              modified_date = sysdate
-           WHERE id = ${lRMValueAdjustment.addressId}
+           WHERE id = ${linearLocationAdjustment.addressId}
       """.execute
       case _ =>
     }
   }
 
-  def updateLRM(id: Long, geometrySource: LinkGeomSource): Boolean = {
+  def updateLinkSource(id: Long, linkSource: LinkGeomSource): Boolean = {
     sqlu"""
-           UPDATE ROAD_ADDRESS SET link_source = ${geometrySource.value} WHERE id = $id
+           UPDATE ROAD_ADDRESS SET link_source = ${linkSource.value} WHERE id = $id
       """.execute
     true
   }
@@ -1316,19 +1316,6 @@ object RoadAddressDAO {
     addressPS.executeBatch()
     addressPS.close()
     createAddresses.map(_.id).toSeq
-  }
-
-  // TODO
-  def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
-                        startM: Double, endM: Double, adjustedTimestamp : Long, geomSource: Int): Unit = {
-    lrmPositionPS.setLong(1, id)
-    lrmPositionPS.setLong(2, linkId)
-    lrmPositionPS.setLong(3, sideCode)
-    lrmPositionPS.setDouble(4, startM)
-    lrmPositionPS.setDouble(5, endM)
-    lrmPositionPS.setDouble(6, adjustedTimestamp)
-    lrmPositionPS.setInt(7, geomSource)
-    lrmPositionPS.addBatch()
   }
 
   def roadPartExists(roadNumber:Long, roadPart:Long) :Boolean = {

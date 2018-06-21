@@ -125,7 +125,7 @@ package object util {
       val roadAddressId = Sequences.nextViitePrimaryKeySeqValue
       val endMeasure = end - start
       sqlu"""INSERT INTO ROAD_ADDRESS VALUES ($roadAddressId, $roadNumber, $roadPartNumber, $track, ${discontinuity.value}, $start, $end,
-            lrm_position_primary_key_seq.currval, sysdate, NULL, 'test user', sysdate, 0, 0,
+            sysdate, NULL, 'test user', sysdate, 0, 0,
             MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY($start, 0, 0, 0, $end, 0, 0, $endMeasure)),
             NULL, $ely, 1, 0, NULL, NULL , 1, 0, $endMeasure, NULL, $nextLinkId, 0, sysdate, 1)""".execute
       (roadAddressId, nextLinkId)

@@ -13,8 +13,8 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
   /* Temporary restriction from PO: Filler limit on modifications
-   * (LRM adjustments) is limited to 1 meter. If there is a need to fill /
-   * cut more than that then nothing is done to the road address LRM data.
+   * (linear location adjustments) is limited to 1 meter. If there is a need to fill /
+   * cut more than that then nothing is done to the road address linear location data.
    */
   def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false, newGeometry: Option[Seq[Point]] = None): RoadAddressLink = {
     val roadLinkType = (floating, roadLink.linkSource) match {

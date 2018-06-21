@@ -26,7 +26,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.model.Anomaly.NoAddressGiven
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressFiller}
 import fi.liikennevirasto.viite.util.StaticTestData
 import org.joda.time.DateTime
@@ -166,6 +166,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     """.as[Long].first
   }
 
+  // TODO
   test("Check the correct return of a RoadAddressLink by Municipality") {
     val municipalityId = 235
 
@@ -266,7 +267,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     changeSet.adjustedMValues.map(_.linkId) should be (Seq(l4, l5))
   }
 
-  test("LRM modifications are published"){
+  // TODO
+  test("Linear location modifications are published"){
     val localMockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
@@ -297,7 +299,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       missing.size should be (0)
       adjusting.size should be (1)
       floating.size should be (0)
-      adjusting.head.asInstanceOf[LRMValueAdjustment].endMeasure should be (Some(endM+.5))
+      adjusting.head.asInstanceOf[LinearLocationAdjustment].endMeasure should be (Some(endM+.5))
     }
   }
 
@@ -1178,6 +1180,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("check if the integration api is returning history") {
     runWithRollback {
       sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
@@ -1194,6 +1197,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("check if the integration api returns expired addresses") {
     runWithRollback {
       sqlu"""INSERT INTO LRM_POSITION VALUES(lrm_position_primary_key_seq.nextval, NULL, 3, 0, 16.576, NULL, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1)""".execute
@@ -1210,6 +1214,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("check if the integration api returns regular, complementary and suravage") {
     runWithRollback {
 
@@ -1242,6 +1247,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("Check for MTK-Class in integration API"){
     runWithRollback {
       //12316 -> FeatureClass.TractorRoad
@@ -1297,6 +1303,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  // TODO
   test("Check if roundabout is properly transferred") {
     runWithRollback {
       //Create of missing roundabout

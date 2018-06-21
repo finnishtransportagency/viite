@@ -301,7 +301,7 @@ object DataFixture {
         val updated = roadAddressSeq
           .filterNot(ra => vvhLinks.getOrElse(ra.linkId, ra.linkGeomSource) == ra.linkGeomSource)
           .count(ra =>
-            RoadAddressDAO.updateLRM(ra.id, vvhLinks(ra.linkId))
+            RoadAddressDAO.updateLinkSource(ra.id, vvhLinks(ra.linkId))
           )
         println("%d: %d addresses updated".format(road, updated))
       }
@@ -309,13 +309,12 @@ object DataFixture {
 
   }
 
-  // TODO
-  def checkLrmPosition(): Unit = {
+  def checkLinearLocation(): Unit = {
 
     OracleDatabase.withDynTransaction {
       val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
       elyCodes.foreach(ely => {
-        //We must get current and history separately => Nothing guarantees that the history ones havent changed their ELY meanwhile
+        // We must get current and history separately => Nothing guarantees that the history ones haven't changed their ELY meanwhile
         val roads = RoadAddressDAO.getRoadAddressByEly(ely, onlyCurrent = true)
 
         roads.grouped(25000).foreach { group =>
@@ -331,7 +330,7 @@ object DataFixture {
 
             val errors: Seq[RoadAddress] = curr.sortBy(_.startAddrMValue).zip(hist.sortBy(_.startAddrMValue)).flatMap { case (c, h) =>
               if (c.startMValue != h.startMValue || c.endMValue != h.endMValue || c.sideCode != h.sideCode) {
-                println(s"Error in lrm check for road address with id ${c.id} ")
+                println(s"Error in linear location check for road address with id ${c.id} ")
                 Seq(c, h)
               }
               else Seq.empty[RoadAddress]
@@ -477,7 +476,7 @@ object DataFixture {
       case Some("correct_null_ely_code_projects") =>
         correctNullElyCodeProjects()
       case Some("check_lrm_position") =>
-        checkLrmPosition()
+        checkLinearLocation()
       case Some("fuse_road_address_with_history") =>
         fuseRoadAddressWithHistory()
       case Some("test") =>
