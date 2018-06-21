@@ -89,7 +89,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   private def toProjectLink(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, createdBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, status, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), if (status == LinkStatus.New) 0 else roadAddress.id, roadAddress.ely, false,
       None, roadAddress.adjustedTimestamp)
@@ -274,7 +274,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, createdBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely, false,
       None, roadAddress.adjustedTimestamp)
@@ -536,11 +536,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val linkIds = projectLinks.map(pl => pl.track.value -> pl.linkId).groupBy(_._1).mapValues(_.map(_._2).toSet)
       val newLinkTemplates = Seq(ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 1234L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
+        None, 1234L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
         Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
         None, 86400L),
         ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
-          None, 0L, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), false,
+          None, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), false,
           Seq(Point(510.0, 0.0), Point(581.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 71.1, 0L, 0, false,
           None, 86400L))
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", 5, 205, 0, None)
@@ -805,6 +805,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  // TODO
   test("road name exists on TR success response") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
@@ -825,6 +826,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  // TODO
   test("road name is saved on TR success response") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
@@ -1167,7 +1169,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
 
     val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, Some(DateTime.now()), None, user,
-      0, 0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
+      0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
       -1L, null, PublicRoad, null, 0.0, 1L, 8L, false, None, 748800L)
     val transferAndNew = Seq(
 
@@ -1211,13 +1213,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
       LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
     val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM + 100L, Some(DateTime.now()), None, user,
-      2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
+      suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
       -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId), 85088L),
       ProjectLink(3L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origStartM + 177L, Some(DateTime.now()), None, user,
-        3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
+        suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
         -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, false, Some(linkId), 85088L),
       ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origEndM, Some(DateTime.now()), None, user,
-        4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
+        linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
         -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 85088L))
     val result = projectService.createSplitRoadAddress(roadAddress, unchangedAndNew, project)
     result should have size (3)
@@ -1273,15 +1275,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
       val unchangedAndNew = Seq(ProjectLink(2L, road, roadPart, Track.Combined, Continuous, origStartM, origStartM + 52L, Some(DateTime.now()), None, user,
-        2L, suravageLinkId, 0.0, 51.984, SideCode.TowardsDigitizing, (Some(CalibrationPoint(linkId, 0.0, origStartM)), None),
+        suravageLinkId, 0.0, 51.984, SideCode.TowardsDigitizing, (Some(CalibrationPoint(linkId, 0.0, origStartM)), None),
         false, Seq(Point(1024.0, 0.0), Point(1024.0, 51.984)),
         -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 51.984, id, 8L, false, Some(linkId), 85088L),
         ProjectLink(3L, road, roadPart, Track.Combined, EndOfRoad, origStartM + 52L, origStartM + 177L, Some(DateTime.now()), None, user,
-          3L, suravageLinkId, 51.984, 176.695, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(suravageLinkId, 176.695, origStartM + 177L))),
+          suravageLinkId, 51.984, 176.695, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(suravageLinkId, 176.695, origStartM + 177L))),
           false, Seq(Point(1024.0, 99.384), Point(1148.711, 99.4)),
           -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 124.711, id, 8L, false, Some(linkId), 85088L),
         ProjectLink(4L, 5, 205, Track.Combined, EndOfRoad, origStartM + 52L, origEndM, Some(DateTime.now()), None, user,
-          4L, linkId, 50.056, endM, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(linkId, endM, origEndM))), false,
+          linkId, 50.056, endM, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(linkId, endM, origEndM))), false,
           Seq(Point(1024.0, 51.984), Point(1024.0, 102.04)),
           -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 50.056, id, 8L, false, Some(suravageLinkId), 85088L))
       projectService.updateTerminationForHistory(Set(), unchangedAndNew)
@@ -1328,7 +1330,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), None)
       val newLink = Seq(ProjectLink(-1000L, 5L, 203L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
+        None, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
         Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
         None, 86400L))
       val project = projectService.createRoadLinkProject(rap)
@@ -1400,7 +1402,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), None)
       val newLink = Seq(ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
+        None, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
         Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
         None, 86400L))
       val project = projectService.createRoadLinkProject(rap)
@@ -1519,7 +1521,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectDAO.create(projectLinksFromRoadAddresses)
 
       val numberingLink = Seq(ProjectLink(-1000L, newRoadNumber, newRoadPart, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        Option(user), 0L, projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0, SideCode.Unknown, (None, None), false,
+        Option(user), projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0, SideCode.Unknown, (None, None), false,
         smallerRoadGeom, 0L, LinkStatus.Numbering, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 10.0, roadAddresses.head.id, 0, false,
         None, 86400L))
       ProjectDAO.reserveRoadPart(projectId, newRoadNumber, newRoadPart, "Test")
@@ -1576,23 +1578,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), None)
 
       val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, false,
         None, 86400L)
       val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, false,
         None, 86400L)
 
@@ -1747,23 +1749,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), None)
 
       val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, false,
         None, 86400L)
       val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, false,
         None, 86400L)
 
@@ -1812,23 +1814,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), None)
 
       val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, false,
         None, 86400L)
       val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 0L, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, false,
         None, 86400L)
       val pl5 = ProjectLink(-1000L, 9998L, 1L, Track.apply(0), Discontinuity.EndOfRoad, 0L, 0L, None, None,
-        None, 0L, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), false,
         Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, false,
         None, 86400L)
 
@@ -1853,6 +1855,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  // TODO
   test("Transfer last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part and transfer the rest of the part 2") {
 
     runWithRollback {
@@ -1960,6 +1963,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  // TODO
   test("Transfer the rest of the part 2 and then the last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part") {
 
     runWithRollback {
@@ -2105,6 +2109,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  // TODO
   test("Road names should not have valid road name for any roadnumber after TR response") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
@@ -2247,7 +2252,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
 
     val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, Some(DateTime.now()), None, user,
-      0, 0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
+      0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
       -1L, null, PublicRoad, null, 0.0, 1L, 8L, false, None, 748800L)
     val transferAndNew = Seq(
 
@@ -2278,6 +2283,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   }
 
+  // TODO
   test("road name should not be saved saved on TR success response if road number > 70.000 and it has no name") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
