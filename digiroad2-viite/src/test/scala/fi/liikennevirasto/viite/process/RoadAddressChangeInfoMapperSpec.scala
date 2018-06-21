@@ -16,7 +16,7 @@ import org.scalatest.{FunSuite, Matchers}
 class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
 
   val roadAddr = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
-    None, 0L, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
+    None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
     LinkGeomSource.NormalLinkInterface, 8, NoTermination, 123456)
 
   test("resolve simple case") {
