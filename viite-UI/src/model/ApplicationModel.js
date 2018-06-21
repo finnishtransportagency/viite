@@ -18,6 +18,7 @@
     var actionCalculated = 1;
     var currentAction;
     var selectionType = 'all';
+    var sessionUser = '';
 
     var getSelectionType = function (){
       return selectionType;
@@ -61,7 +62,6 @@
     var setProjectButton = function(newState){
       if(projectButton !== newState){
         projectButton = newState;
-        eventbus.trigger('application:projectButton', newState);
       }
     };
     var setOpenProject = function(newState){
@@ -119,6 +119,10 @@
     var removeSpinner = function(){
       jQuery('.spinner-overlay').remove();
     };
+
+    eventbus.on("userData:fetched", function (userData) {
+      sessionUser = userData.userName;
+    });
 
     return {
       getCurrentAction: getCurrentAction,
@@ -208,7 +212,10 @@
       getSelectionType: getSelectionType,
       toggleSelectionTypeAll: toggleSelectionTypeAll,
       toggleSelectionTypeFloating: toggleSelectionTypeFloating,
-      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown
+      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown,
+      getSessionUser: function () {
+        return sessionUser;
+      }
     };
   };
 })(this);

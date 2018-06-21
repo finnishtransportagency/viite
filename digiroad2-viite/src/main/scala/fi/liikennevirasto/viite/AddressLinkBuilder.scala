@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
@@ -172,30 +173,32 @@ trait AddressLinkBuilder {
         (previousSegment.startAddrMValue >= nextSegment.startAddrMValue &&
           previousSegment.startAddrMValue <= nextSegment.endAddrMValue)
     }
+
     val cpNext = nextSegment.calibrationPoints
     val cpPrevious = previousSegment.calibrationPoints
+
     def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
-                      getValue: (Option[CalibrationPoint], Option[CalibrationPoint]) => Option[T])={
+                      getValue: (Option[CalibrationPoint], Option[CalibrationPoint]) => Option[T]) = {
       /*  Take the value from Calibration Point if available or then use the given operation
           Starting calibration point from previous segment if available or then it's the starting calibration point for
           the next segment. If neither, use the min or max operation given as an argument.
           Similarily for ending calibration points. Cases where the calibration point truly is between segments is
           left unprocessed.
        */
-      getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue,rightMValue))
+      getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue, rightMValue))
     }
 
     val tempId = fi.liikennevirasto.viite.NewRoadAddress
 
-    if(nextSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${nextSegment.linkId}, id = ${nextSegment.linkId}" )
-    if(previousSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${previousSegment.linkId}, id = ${previousSegment.id}")
+    if (nextSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${nextSegment.linkId}, id = ${nextSegment.linkId}")
+    if (previousSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${previousSegment.linkId}, id = ${previousSegment.id}")
 
-    if(nextSegment.roadNumber     == previousSegment.roadNumber &&
-      nextSegment.roadPartNumber  == previousSegment.roadPartNumber &&
-      nextSegment.track.value     == previousSegment.track.value &&
-      nextSegment.startDate       == previousSegment.startDate &&
-      nextSegment.endDate         == previousSegment.endDate &&
-      nextSegment.linkId          == previousSegment.linkId &&
+    if (nextSegment.roadNumber == previousSegment.roadNumber &&
+      nextSegment.roadPartNumber == previousSegment.roadPartNumber &&
+      nextSegment.track.value == previousSegment.track.value &&
+      nextSegment.startDate == previousSegment.startDate &&
+      nextSegment.endDate == previousSegment.endDate &&
+      nextSegment.linkId == previousSegment.linkId &&
       nextSegment.geometry.nonEmpty && previousSegment.geometry.nonEmpty && // Check if geometries are not empty
       addressConnected(nextSegment, previousSegment) &&
       !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
@@ -213,11 +216,11 @@ trait AddressLinkBuilder {
           right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else endMValue)))
       }
 
-      if(nextSegment.sideCode.value != previousSegment.sideCode.value)
+      if (nextSegment.sideCode.value != previousSegment.sideCode.value && GeometryUtils.geometryLength(previousSegment.geometry) != 0 && GeometryUtils.geometryLength(nextSegment.geometry) != 0)
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
       val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geometry.head, nextSegment.geometry.last), startMValue, endMValue)
       val discontinuity = {
-        if(nextSegment.endMValue > previousSegment.endMValue) {
+        if (nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
         } else
           previousSegment.discontinuity
@@ -226,7 +229,7 @@ trait AddressLinkBuilder {
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
         discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.createdBy,
         nextSegment.lrmPositionId, nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
-        calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
+        calibrationPoints, floating = false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
         nextSegment.commonHistoryId))
 
     } else Seq(nextSegment, previousSegment)

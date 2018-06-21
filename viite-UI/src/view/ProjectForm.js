@@ -39,19 +39,19 @@
     };
 
     var titleWithDeletingTool = function (projectName) {
-      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI  <button id="deleteProject_' + currentProject.id + '" ' +
-        'class="btn-delete-project" value="' + currentProject.id + '"></button></span>';
-      var toReturn = '<span class ="edit-mode-title">' + projectName + '</span>';
+      var name = '<span class ="edit-mode-title">' + projectName + '</span>';
+      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA <i id="deleteProject_' + currentProject.id + '" ' +
+        'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
       if(currentProject.statusCode === ProjectStatus.Incomplete.value)
-        return toReturn + deleteButtons;
+        return name + deleteButtons;
       else
-        return toReturn;
+        return name;
     };
 
     var titleWithEditingTool = function (projectName) {
-      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
-        'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
+      return '<span class ="edit-mode-title">' + projectName + ' <i id="editProjectSpan" class="editSpan btn-edit-project fas fa-pencil-alt"' +
+        ' style="visibility:hidden" value="' + currentProject.id + '"></i></span>' +
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
     };
 
     var actionButtons = function () {
@@ -386,11 +386,8 @@
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
         projectCollection.setReservedParts(result.projectLinks);
-        var currentReserved = '';
-        var newReserved = '';
-        var index = 0;
-          currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
-          newReserved = writeHtmlList(projectCollection.getNewReservedParts());
+        var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
+        var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('.modal-overlay').remove();
         setTimeout(function () {
@@ -439,11 +436,10 @@
         $('#project-errors').html(errorsList());
       });
 
-      rootElement.on('click', '[id^=editProject]', currentProject, function (eventObject) {
-        var projectId = eventObject.currentTarget.value === "undefined" ? currentProject.id : eventObject.currentTarget.value;
+      rootElement.on('click', '#editProjectSpan', currentProject, function () {
         applicationModel.setSelectedTool("Select");
         applicationModel.addSpinner();
-        projectCollection.getProjectsWithLinksById(parseInt(projectId)).then(function (result) {
+        projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {
           rootElement.empty();
           setTimeout(function () {
           }, 0);
@@ -512,7 +508,7 @@
       };
 
       var emptyFields = function (fieldIds) {
-        fieldIds.forEach( function(id) {
+        fieldIds.forEach(function (id) {
           $('#' + id).val('');
         });
       };

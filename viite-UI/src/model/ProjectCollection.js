@@ -317,6 +317,7 @@
       var projectId = projectInfo.id;
       var coordinates = applicationModel.getUserGeoLocation();
         var roadAddressProjectForm = $('#roadAddressProjectForm');
+        var endDistance = $('#endDistance')[0];
         var dataJson = {
         ids: ids,
         linkIds: linkIds,
@@ -329,9 +330,9 @@
         roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number(roadAddressProjectForm.find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: (!isNaN(Number(roadAddressProjectForm.find('#endDistance')[0].value)) ?  Number(roadAddressProjectForm.find('#endDistance')[0].value) : null),
-          coordinates: coordinates,
-          roadName: roadAddressProjectForm.find('#roadName')[0].value
+        userDefinedEndAddressM: endDistance !== undefined ? (!isNaN(Number(endDistance.value)) ? Number(endDistance.value): null): null,
+        coordinates: coordinates,
+        roadName: roadAddressProjectForm.find('#roadName')[0].value
       };
 
       if(dataJson.trackCode === Track.Unknown.value){
@@ -418,7 +419,7 @@
 
     };
 
-      this.saveCuttedProjectLinks = function(changedLinks, statusA, statusB){
+    this.saveCutProjectLinks = function(changedLinks, statusA, statusB){
       applicationModel.addSpinner();
       if (_.isUndefined(statusB)) {
         statusB = LinkStatus.New.description;
@@ -461,15 +462,16 @@
         return false;
       }
 
-      backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
+      backend.saveProjectLinkSplit(dataJson, linkId, function(successObject) {
         if (!successObject.success) {
           new ModalConfirm(successObject.reason);
           applicationModel.removeSpinner();
-        } else{
+        } else {
+          projectErrors = successObject.projectErrors;
           eventbus.trigger('projectLink:projectLinksSplitSuccess');
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
           applicationModel.removeSpinner();
-      }}, function(failureObject){
+      }}, function(failureObject) {
           new ModalConfirm(failureObject.reason);
           applicationModel.removeSpinner();
       });
@@ -615,7 +617,7 @@
 
     var deleteButton = function(index, roadNumber, roadPartNumber){
       var disabledInput = !_.isUndefined(currentProject) && currentProject.project.statusCode === ProjectStatus.ErroredInTR.value;
-      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
+      return '<i roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete fas fa-trash-alt fa-lg" '+ (disabledInput ? 'disabled' : '') +'></i>';
     };
 
 

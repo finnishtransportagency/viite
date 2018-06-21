@@ -101,8 +101,8 @@
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindExternalEventHandlers = function() {
-      eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+      eventbus.on('userData:fetched', function (userData) {
+        if (_.contains(userData.roles, 'operator') || _.contains(userData.roles, 'premium')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
@@ -255,8 +255,8 @@
         massTransitStopsCollection.selectValidityPeriod(asset.validityPeriod, true);
       }, this);
 
-      eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles)) {
+      eventbus.on('userData:fetched', function (userData) {
+        if (_.contains(userData.roles, 'operator') || _.contains(userData.roles, 'premium') || _.isEmpty(userData) || _.isEmpty(userData.roles)) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);

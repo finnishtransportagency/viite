@@ -90,7 +90,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude, projectDefinition) {
       var data = getSimulatedData(projectDefinition);
       return new Backend().withRoadLinkData(generatedData, selectTestData('roadAddressAfterSave'))
-        .withUserRolesData(UserRolesTestData.roles())
+        .withUserRolesData(UserRolesTestData.userData())
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" })
         .withFloatingAdjacents(data.floatingAdjacents)
         .withGetTargetAdjacent(data.targetAdjacent)
@@ -276,11 +276,11 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
         return interaction.get('name') === interactionName;
       });
 
-      if(interaction){
-          if(interaction.getFeatures()){
+      if (interaction) {
+          if (interaction.getFeatures()) {
               interaction.getFeatures().clear();
-          }else{
-              log('getFeatures not found!');
+          } else {
+              console.log('getFeatures not found!');
           }
           interaction.getFeatures().push(feature);
           interaction.dispatchEvent({
@@ -288,8 +288,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
               selected: [feature],
               deselected: []
           });
-      }else {
-          log('Interaction not found');
+      } else {
+          console.log('Interaction not found');
       }
     };
 
