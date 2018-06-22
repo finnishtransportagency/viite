@@ -31,15 +31,15 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       val distance = lastRight.toMeters(lastLeft.endAddrMValue - lastRight.endAddrMValue)
       if(distance < AdjustmentToleranceMeters){
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
-      }else{
+      } else {
         val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
       }
-    }else{
+    } else {
       val distance = lastLeft.toMeters(lastRight.endAddrMValue - lastLeft.endAddrMValue)
       if(distance < AdjustmentToleranceMeters){
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
-      }else {
+      } else {
         val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
         adjustTwoTracks(startAddress, left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
       }

@@ -145,6 +145,10 @@ trait BaseRoadAddress {
     else
       raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
   }
+
+  def liesInBetween(ra: BaseRoadAddress): Boolean = {
+    (startAddrMValue >= ra.startAddrMValue && startAddrMValue <= ra.endAddrMValue) || (endAddrMValue <= ra.endAddrMValue && endAddrMValue >= ra.startAddrMValue)
+  }
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
