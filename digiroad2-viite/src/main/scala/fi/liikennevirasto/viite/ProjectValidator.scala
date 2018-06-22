@@ -494,8 +494,8 @@ object ProjectValidator {
       }.toSeq
     }
 
-    def checkEndOfRoadOutsideOfProject : Option[ValidationErrorDetails] = {
-      val (road, part): (Long, Long) = (seq.head.roadNumber,seq.head.roadPartNumber)
+    def checkEndOfRoadOutsideOfProject: Option[ValidationErrorDetails] = {
+      val (road, part): (Long, Long) = (seq.head.roadNumber, seq.head.roadPartNumber)
       val previousRoadPartNumber: Option[Long] = RoadAddressDAO.fetchPreviousRoadPartNumber(road, part)
       if (previousRoadPartNumber.nonEmpty) {
         val allProjectLinks = ProjectDAO.getProjectLinks(project.id)

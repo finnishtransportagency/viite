@@ -620,7 +620,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for /project/links/$id)") {
       if (id == 0)
         BadRequest("Missing mandatory 'projectId' parameter")
-      else{
+      else {
         projectService.getProjectLinks(id)
       }
     }

@@ -28,7 +28,7 @@
     };
 
     this.getProjectLinks = function() {
-      return backend.getProjectLinksById(currentProject.project.id);
+        return backend.getProjectLinksById(currentProject.project.id);
     };
 
     this.getAll = function () {
@@ -56,7 +56,7 @@
     };
 
     this.getProjectLink = function (ids) {
-      return _.filter(projectLinks(), function (projectLink){
+        return _.filter(projectLinks(), function (projectLink) {
         if (projectLink.getData().id > 0) {
           return _.contains(ids, projectLink.getData().id);
         } else {
@@ -66,7 +66,7 @@
     };
 
 
-    this.fetch = function(boundingBox, zoom, projectId, isPublishable) {
+      this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
