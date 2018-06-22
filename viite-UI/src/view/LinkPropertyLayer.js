@@ -165,19 +165,27 @@
     map.addLayer(reservedRoadLayer);
     map.addLayer(historicRoadsLayer);
 
-    floatingMarkerLayer.setVisible(true);
-    anomalousMarkerLayer.setVisible(true);
-    suravageMarkerLayer.setVisible(true);
-    directionMarkerLayer.setVisible(true);
-    geometryChangedLayer.setVisible(false);
-    calibrationPointLayer.setVisible(true);
-    indicatorLayer.setVisible(true);
-    greenRoadLayer.setVisible(true);
-    pickRoadsLayer.setVisible(true);
-    simulatedRoadsLayer.setVisible(true);
-    suravageRoadLayer.setVisible(true);
-    reservedRoadLayer.setVisible(true);
-    historicRoadsLayer.setVisible(true);
+    var toggleLayerVisibility = function (visibleToggle, withVectorLayer) {
+      floatingMarkerLayer.setVisible(visibleToggle);
+      anomalousMarkerLayer.setVisible(visibleToggle);
+      suravageMarkerLayer.setVisible(visibleToggle);
+      directionMarkerLayer.setVisible(visibleToggle);
+      geometryChangedLayer.setVisible(visibleToggle);
+      calibrationPointLayer.setVisible(visibleToggle);
+      indicatorLayer.setVisible(visibleToggle);
+      greenRoadLayer.setVisible(visibleToggle);
+      pickRoadsLayer.setVisible(visibleToggle);
+      simulatedRoadsLayer.setVisible(visibleToggle);
+      suravageRoadLayer.setVisible(visibleToggle);
+      reservedRoadLayer.setVisible(visibleToggle);
+      historicRoadsLayer.setVisible(visibleToggle);
+      if (withVectorLayer) {
+        roadLayer.layer.setVisible(visibleToggle);
+      }
+    };
+
+    toggleLayerVisibility(true);
+
 
     var isAnomalousById = function(featureId){
       var anomalousMarkers = anomalousMarkerLayer.getSource().getFeatures();
@@ -813,6 +821,9 @@
       eventListener.listenTo(eventbus, 'suravageRoads:toggleVisibility', function(visibility){
         suravageRoadLayer.setVisible(visibility);
         suravageMarkerLayer.setVisible(visibility);
+      });
+      eventListener.listenTo(eventbus, 'allRoads:toggleVisibility', function (visibility) {
+        toggleLayerVisibility(visibility, true);
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
