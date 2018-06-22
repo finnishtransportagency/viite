@@ -312,7 +312,7 @@ object ProjectValidator {
       val errors :Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
         validation(errors)
       }
-      errors
+      errors.distinct
     }
 
   }
