@@ -99,7 +99,7 @@
       $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>');
     };
 
-    var fireDeselectionConfirmation = function (shiftPressed, selection, clickType) {
+    var fireDeselectionConfirmation = function (ctrlPressed, selection, clickType) {
       new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
           eventbus.trigger('roadAddressProject:discardChanges');
@@ -107,9 +107,9 @@
           clearHighlights();
           if (!_.isUndefined(selection)) {
             if (clickType === 'single')
-              showSingleClickChanges(shiftPressed, selection);
+              showSingleClickChanges(ctrlPressed, selection);
             else
-              showDoubleClickChanges(shiftPressed, selection);
+              showDoubleClickChanges(ctrlPressed, selection);
           } else {
             showChangesAndSendButton();
           }
@@ -136,8 +136,8 @@
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-      var shiftPressed = event.mapBrowserEvent !== undefined ?
-        event.mapBrowserEvent.originalEvent.shiftKey : false;
+      var ctrlPressed = event.mapBrowserEvent !== undefined ?
+          event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
       var selection = _.find(event.selected.concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
@@ -147,19 +147,19 @@
         );
       });
       if (isNotEditingData) {
-        showSingleClickChanges(shiftPressed, selection);
+        showSingleClickChanges(ctrlPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection, 'single');
+        fireDeselectionConfirmation(ctrlPressed, selection, 'single');
       }
     });
 
-    var showSingleClickChanges = function (shiftPressed, selection) {
+    var showSingleClickChanges = function (ctrlPressed, selection) {
       if(applicationModel.getSelectedTool() === 'Cut')
         return;
-      if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
+      if (ctrlPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (!_.isUndefined(selection) && canItBeAddToSelection(selection.linkData)) {
           var clickedIds = projectCollection.getMultiProjectLinks(getSelectedId(selection.linkData));
           var previouslySelectedIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
@@ -204,7 +204,7 @@
     selectDoubleClick.set('name', 'selectDoubleClickInteractionPLL');
 
     selectDoubleClick.on('select', function (event) {
-      var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
+      var ctrlPressed = event.mapBrowserEvent.originalEvent.ctrlKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
           projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
@@ -213,12 +213,12 @@
         );
       });
       if (isNotEditingData) {
-        showDoubleClickChanges(shiftPressed, selection);
+        showDoubleClickChanges(ctrlPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection, 'double');
+        fireDeselectionConfirmation(ctrlPressed, selection, 'double');
       }
     });
 
@@ -292,6 +292,9 @@
     };
 
     var canItBeAddToSelection = function(selectionData) {
+      if (selectedProjectLinkProperty.get().length === 0) {
+        return true;
+      }
       var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
@@ -416,7 +419,7 @@
 
     var zoomDoubleClickListener = function (event) {
       _.defer(function () {
-        if (applicationModel.getSelectedTool() !== 'Cut' && !event.shiftKey && selectedProjectLinkProperty.get().length === 0 &&
+        if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey && selectedProjectLinkProperty.get().length === 0 &&
           applicationModel.getSelectedLayer() === 'roadAddressProject' && map.getView().getZoom() <= 13) {
           map.getView().setZoom(map.getView().getZoom() + 1);
         }
