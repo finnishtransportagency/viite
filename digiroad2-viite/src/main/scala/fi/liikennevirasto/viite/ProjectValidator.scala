@@ -366,10 +366,13 @@ object ProjectValidator {
       val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         val connectedLinks: Seq[ProjectLink] = trackIntervals.flatMap{
-          interval =>
-            interval.sortBy(_.startAddrMValue).sliding(2).flatMap{
-              case Seq(first, second) => checkConnected(first, second, interval)
-            }
+          interval => {
+            if (interval.size > 1) {
+              interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
+                case Seq(first, second) => checkConnected(first, second, interval)
+              }
+            } else None
+          }
         }
         connectedLinks.filterNot(c => c.discontinuity == MinorDiscontinuity)
       }.toSeq
@@ -527,12 +530,13 @@ object ProjectValidator {
       if (validTrackInterval.nonEmpty) {
         checkMinMaxTrack(validTrackInterval) match {
           case Some(link) => Seq(link)
-          case None =>
+          case None => if (validTrackInterval.size > 1) {
             validTrackInterval.sliding(2).map{case Seq(first, second) => {
               if (first.endAddrMValue != second.startAddrMValue && first.id != second.id) {
                 Some(first)
               } else None
             }}.toSeq.flatten
+          } else Seq.empty[ProjectLink]
         }
       } else Seq.empty[ProjectLink]
     }
