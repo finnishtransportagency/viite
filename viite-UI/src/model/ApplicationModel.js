@@ -62,7 +62,6 @@
     var setProjectButton = function(newState){
       if(projectButton !== newState){
         projectButton = newState;
-        eventbus.trigger('application:projectButton', newState);
       }
     };
     var setOpenProject = function(newState){

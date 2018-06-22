@@ -365,7 +365,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject).distinct
       errors should have size 1
       errors.head.validationError.value should be(TerminationContinuity.value)
-      errors.head.validationError.message should be("Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle: (19999,1).")
       val projectLinks = ProjectDAO.getProjectLinks(id, Some(LinkStatus.Terminated)).map(_.copy(discontinuity = EndOfRoad, status = LinkStatus.UnChanged))
       ProjectDAO.updateProjectLinksToDB(projectLinks, "U")
       val updProject2 = ProjectDAO.getRoadAddressProjectById(project.id).get
@@ -624,6 +623,18 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linksAfterTransfer = ProjectDAO.getProjectLinks(project.id)
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkRoadContinuityCodes(project, g._2).distinct)
       errorsAfterTransfer.size should be (0)
+    }
+  }
+
+  test("There should be a validation error when there is a road end on previous road part outside of project") {
+    runWithRollback {
+      RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+        floating = false, Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)))
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L),  roads = Seq((1999L, 2L, "Test road")), discontinuity = Discontinuity.EndOfRoad)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
+      errors should have size 1
+      errors.head.validationError.value should be(DoubleEndOfRoad.value)
     }
   }
 

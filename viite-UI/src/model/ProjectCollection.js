@@ -28,7 +28,7 @@
     };
 
     this.getProjectLinks = function() {
-      return _.flatten(fetchedProjectLinks);
+      return backend.getProjectLinksById(currentProject.project.id);
     };
 
     this.getAll = function () {
@@ -56,15 +56,15 @@
     };
 
     this.getProjectLink = function (ids) {
-      var links = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
+      return _.filter(projectLinks(), function (projectLink){
         if (projectLink.getData().id > 0) {
           return _.contains(ids, projectLink.getData().id);
         } else {
           return _.contains(ids, projectLink.getData().linkId);
         }
       });
-      return links;
     };
+
 
     this.fetch = function(boundingBox, zoom, projectId, isPublishable) {
       var id = projectId;

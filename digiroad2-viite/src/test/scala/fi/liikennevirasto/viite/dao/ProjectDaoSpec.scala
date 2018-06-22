@@ -368,4 +368,16 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       p1.z should be (p2.z +- 0.0005)
     }
   }
+
+  test("Get Projects whose status is SendintToTR") {
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+    runWithRollback {
+      val waitingCountp = ProjectDAO.getProjectsWithSendingToTRStatus().length
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(9), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val waitingCountNow = ProjectDAO.getProjectsWithSendingToTRStatus().length
+      waitingCountNow - waitingCountp should be(1)
+    }
+  }
 }

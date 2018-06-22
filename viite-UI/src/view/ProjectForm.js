@@ -386,11 +386,8 @@
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
         projectCollection.setReservedParts(result.projectLinks);
-        var currentReserved = '';
-        var newReserved = '';
-        var index = 0;
-          currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
-          newReserved = writeHtmlList(projectCollection.getNewReservedParts());
+        var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
+        var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('.modal-overlay').remove();
         setTimeout(function () {
