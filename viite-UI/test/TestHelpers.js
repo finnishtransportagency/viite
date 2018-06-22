@@ -89,7 +89,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
 
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude, projectDefinition) {
       var data = getSimulatedData(projectDefinition);
-      return new Backend().withLinkData(generatedData, selectTestData('roadAddressAfterSave'))
+        return new Backend().withLinkData(generatedData, selectTestData('roadAddressAfterSave'))
         .withUserRolesData(UserRolesTestData.userData())
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" })
         .withFloatingAdjacents(data.floatingAdjacents)
@@ -248,10 +248,10 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       return layer.getSource().getFeatures();
     };
 
-    var getFeaturesLinkData = function(map, layerName){
+      var getFeaturesLinkData = function (map, layerName) {
       var features =  getFeatures(map, layerName);
       return _.chain(features).map(function(feature){
-        return feature.linkData;
+          return feature.linkData;
       }).filter(function(rlData) {
         return !_.isUndefined(rlData);
       }).value();
@@ -260,14 +260,14 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     var getFeatureByLinkId = function(map, layerName, linkId){
       var features = getFeatures(map, layerName);
       return _.find(features, function(feature){
-        return (feature.linkData.linkId === linkId);
+          return (feature.linkData.linkId === linkId);
       });
     };
 
-    var getLinkDataByLinkId = function (map, layerName, linkId){
-      var linkDatas = getFeaturesLinkData(map, layerName);
-      return _.find(linkDatas, function (linkData){
-        return linkData.linkId === linkId;
+      var getLinkDataByLinkId = function (map, layerName, linkId) {
+          var linkDatas = getFeaturesLinkData(map, layerName);
+          return _.find(linkDatas, function (linkData) {
+              return linkData.linkId === linkId;
       });
     };
 
@@ -331,9 +331,9 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       getLayerByName: getLayerByName,
       selectTestData: selectTestData,
       getFeatures: getFeatures,
-      getFeaturesLinkData: getFeaturesLinkData,
+        getFeaturesLinkData: getFeaturesLinkData,
       getFeatureByLinkId: getFeatureByLinkId,
-      getLinkDataByLinkId: getLinkDataByLinkId,
+        getLinkDataByLinkId: getLinkDataByLinkId,
       selectSingleFeatureByInteraction: selectSingleFeatureByInteraction,
       selectTool: selectTool,
       clickCancelButton: clickCancelButton

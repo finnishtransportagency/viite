@@ -25,12 +25,12 @@
 
       if(roadlink.roadLinkType===-1){
         box.setStyle(boxStyleFloat);
-      } else if(roadlink.id===0 && roadlink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value){
+      } else if (roadlink.id === 0 && roadlink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value) {
         box.setStyle(boxStyleUnknown);
       }
 
       box.id = roadlink.linkId;
-      box.linkData = roadlink;
+        box.linkData = roadlink;
       return box;
     };
 
@@ -39,7 +39,7 @@
         return [point.x, point.y];
       });
       var lineString = new ol.geom.LineString(points);
-      return GeometryUtils.calculateMidpointOfLineString(lineString);
+        return GeometryUtils.calculateMidpointOfLineString(lineString);
     };
 
     return {

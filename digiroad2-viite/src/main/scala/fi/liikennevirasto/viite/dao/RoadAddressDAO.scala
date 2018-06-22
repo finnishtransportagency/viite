@@ -140,7 +140,7 @@ trait BaseRoadAddress {
 
   def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
     val raCalibrationCode = getCalibrationCode
-    if(calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
+    if (calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
       raCalibrationCode == calibrationCode
     else
       raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
@@ -821,7 +821,7 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
-  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long) : Option[Long] = {
+  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
     val query =
       s"""
           SELECT * FROM (
@@ -1664,14 +1664,14 @@ object RoadAddressDAO {
    * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
    */
   def getRoadAddressCalibrationCode(roadAddressIds: Seq[Long]): Map[Long, CalibrationCode] = {
-    if(roadAddressIds.isEmpty){
+    if (roadAddressIds.isEmpty) {
       Map()
     } else {
       val query =
         s"""SELECT ra.id, ra.calibration_points
                     FROM road_address ra
                     WHERE ra.id in (${roadAddressIds.mkString(",")})"""
-      Q.queryNA[(Long, Int)](query).list.map{
+      Q.queryNA[(Long, Int)](query).list.map {
         case (id, code) => id -> CalibrationCode(code)
       }.toMap
     }

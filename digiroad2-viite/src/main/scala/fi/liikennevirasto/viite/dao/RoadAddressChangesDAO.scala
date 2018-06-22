@@ -277,7 +277,7 @@ object RoadAddressChangesDAO {
               addToBatchWithOldValues(roadAddressSection1, roadAddressSection2, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
 
-            ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated++news).foreach{ case (roadAddressSection1, roadAddressSection2) =>
+            ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated ++ news).foreach { case (roadAddressSection1, roadAddressSection2) =>
               addToBatchWithOldValues(roadAddressSection1, roadAddressSection2 , ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
 
