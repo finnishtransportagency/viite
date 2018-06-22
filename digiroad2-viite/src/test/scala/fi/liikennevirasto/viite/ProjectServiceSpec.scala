@@ -2127,7 +2127,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
     // Based on the "Terminate then transfer" test, this one checks for
-    test("Provoke a NonFatal exception when publishing a project and then check if the project state is changed to 8") {
+  test("Provoke a IOException or ClientProtocolException exception when publishing a project and then check if the project state is changed to 9") {
 
       var count = 0
       val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
@@ -2165,7 +2165,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectService.publishProject(savedProject.id)
         val currentProjectStatus = ProjectDAO.getProjectStatus(savedProject.id)
         currentProjectStatus.isDefined should be(true)
-        currentProjectStatus.get.value should be(ProjectState.ErrorInViite.value)
+        currentProjectStatus.get.value should be(ProjectState.SendingToTR.value)
       }
 
     }
