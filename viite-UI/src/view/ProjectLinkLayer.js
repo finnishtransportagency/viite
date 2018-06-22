@@ -813,9 +813,9 @@
       directionMarkerLayer.getSource().clear();
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
       eventbus.once('roadAddressProject:fetched', function () {
-        if (selectedProjectLinkProperty.get().length > 1 && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId)) {
+        if (selectedProjectLinkProperty.isSplited()) {
           selectedProjectLinkProperty.openSplit(selectedProjectLinkProperty.get()[0].linkId, true);
-        } else if (selectedProjectLinkProperty.get().length > 1 && _.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId))
+        } else if (selectedProjectLinkProperty.isMultiLink())
           selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), true);
         else
           selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), false);
@@ -994,6 +994,9 @@
       me.redraw();
       _.defer(function () {
         highlightFeatures();
+        if (selectedProjectLinkProperty.isSplit()) {
+          drawIndicators(selectedProjectLinkProperty.get());
+        }
       });
     });
 

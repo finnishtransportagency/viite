@@ -231,7 +231,16 @@
             eventbus.trigger('split:cutPointFeature', data.split, terminatedC);
         });
 
-        return {
+      var isSplit = function () {
+        return get().length > 1 && !_.isUndefined(get()[0].connectedLinkId)
+      };
+
+      var isMultiLink = function () {
+        return get().length > 1 && _.isUndefined(get()[0].connectedLinkId)
+      };
+
+
+      return {
             open: open,
             openWithErrorMessage: openWithErrorMessage,
             openShift: openShift,
@@ -243,6 +252,8 @@
             isSelected: isSelected,
             setCurrent: setCurrent,
             getCurrent: getCurrent,
+        isSplit: isSplit,
+        isMultiLink: isMultiLink,
             isDirty: isDirty,
             setDirty: setDirty,
             preSplitSuravageLink: preSplitSuravageLink,
