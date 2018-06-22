@@ -742,6 +742,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getProjectLinks(projectId: Long): Seq[ProjectLink] = {
+    withDynTransaction {
+      ProjectDAO.getProjectLinks(projectId)
+    }
+  }
+
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
