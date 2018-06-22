@@ -29,7 +29,8 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR, Failed2GenerateTRIdInViite, Deleted, ErrorInViite, Unknown)
+  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR,
+    Failed2GenerateTRIdInViite, Deleted, ErrorInViite, SendingToTR, Unknown)
 
   // These states are final
   val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
@@ -51,6 +52,12 @@ object ProjectState {
     def value = 8
 
     def description = "Virhe Viite-sovelluksessa"
+  }
+
+  case object SendingToTR extends ProjectState {
+    def value = 9
+
+    def description = "Lähettää Tierekisteriin"
   }
 
   case object Unknown extends ProjectState {
@@ -908,6 +915,16 @@ object ProjectDAO {
          SELECT id
          FROM project
          WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
+       """
+    Q.queryNA[Long](query).list
+  }
+
+  def getProjectsWithSendingToTRStatus(): List[Long] = {
+    val query =
+      s"""
+         SELECT id
+         FROM project
+         WHERE state=${ProjectState.SendingToTR.value}
        """
     Q.queryNA[Long](query).list
   }

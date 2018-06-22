@@ -86,8 +86,12 @@
         Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
         Deleted:                    {value: 7, description: "Poistettu projekti"},
         ErrorInViite:               {value: 8, description: "Virhe Viite-sovelluksessa"},
+        SendingToTR:                {value: 9, description: "Lähettää Tierekisteriin"},
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
+
+  root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value, root.ProjectStatus.Sent2TR.value, root.ProjectStatus.ErroredInTR.value,
+    root.ProjectStatus.TRProcessing.value, root.ProjectStatus.ErrorInViite.value, root.ProjectStatus.SendingToTR.value];
 
     root.Track = {
         Combined:                   {value: 0, description: "Combined"},

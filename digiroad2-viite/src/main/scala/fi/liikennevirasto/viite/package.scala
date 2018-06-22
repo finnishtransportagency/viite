@@ -100,6 +100,8 @@ package object viite {
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle: %s."
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
+  val failedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui"
+
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
