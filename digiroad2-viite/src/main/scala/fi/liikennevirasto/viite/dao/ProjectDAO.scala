@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -128,6 +128,19 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       endAddrMValue - startAddrMValue
     else
       roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
+  }
+
+  def getFirstPoint(): Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
+  }
+
+  def getLastPoint(): Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
+  }
+
+  def toMeters(address: Long) : Double = {
+    val coefficient = (endMValue - startMValue) / (endAddrMValue - startAddrMValue)
+    coefficient * address
   }
 }
 

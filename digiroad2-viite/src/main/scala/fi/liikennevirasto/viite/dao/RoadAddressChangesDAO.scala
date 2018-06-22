@@ -172,8 +172,8 @@ object RoadAddressChangesDAO {
                 rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed
                 From Road_Address_Changes rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
-                ORDER BY COALESCE(rac.old_road_number, rac.new_road_number), COALESCE(rac.old_road_part_number, rac.new_road_part_number),
-                  COALESCE(rac.old_start_addr_m, rac.new_start_addr_m), COALESCE(rac.old_track_code, rac.new_track_code),
+                ORDER BY COALESCE(rac.new_road_number, rac.old_road_number), COALESCE(rac.new_road_part_number, rac.old_road_part_number),
+                  COALESCE(rac.new_start_addr_m, rac.old_start_addr_m), COALESCE(rac.new_track_code, rac.old_track_code),
                   CHANGE_TYPE DESC"""
     queryList(query)
   }
@@ -265,17 +265,19 @@ object RoadAddressChangesDAO {
               "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
               "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-            ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
+            val terminated = ProjectDeltaCalculator.partition(delta.terminations)
+            terminated.foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS)
             }
-            ProjectDeltaCalculator.partition(delta.newRoads).foreach { case (roadAddressSection) =>
+            val news = ProjectDeltaCalculator.partition(delta.newRoads)
+            news.foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.New, roadAddressChangePS)
             }
             ProjectDeltaCalculator.partition(delta.unChanged.mapping).foreach { case (roadAddressSection1, roadAddressSection2) =>
               addToBatchWithOldValues(roadAddressSection1, roadAddressSection2, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
 
-            ProjectDeltaCalculator.partition(delta.transferred.mapping).foreach{ case (roadAddressSection1, roadAddressSection2) =>
+            ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated++news).foreach{ case (roadAddressSection1, roadAddressSection2) =>
               addToBatchWithOldValues(roadAddressSection1, roadAddressSection2 , ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
 
