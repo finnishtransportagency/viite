@@ -13,6 +13,11 @@
           '<label><input type="checkbox" name="suravageVisible" value="suravageVisible" checked="true" id="suravageVisibleCheckbox">Näytä Suravage-Linkit</label>' +
         '</div>' +
       '</div>' +
+      '<div class="roads-visible-wrapper">' +
+        '<div class="checkbox">' +
+          '<label><input type="checkbox" name="roadsVisible" value="roadsVisible" checked="true" id="roadsVisibleCheckbox">Näytä tieverkko</label>' +
+        '</div>' +
+      '</div>' +
     '</div>';
     container.append(element);
     container.find('li').click(function(event) {
@@ -26,5 +31,10 @@
       eventbus.trigger('suravageRoads:toggleVisibility', this.checked);
       eventbus.trigger("suravageProjectRoads:toggleVisibility", this.checked);
     });
+    $('#roadsVisibleCheckbox').change(function () {
+      eventbus.trigger('allRoads:toggleVisibility', this.checked);
+      eventbus.trigger("allProjectRoads:toggleVisibility", this.checked);
+    });
+
   };
 })(this);

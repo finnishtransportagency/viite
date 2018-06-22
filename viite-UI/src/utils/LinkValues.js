@@ -86,8 +86,12 @@
         Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
         Deleted:                    {value: 7, description: "Poistettu projekti"},
         ErrorInViite:               {value: 8, description: "Virhe Viite-sovelluksessa"},
+        SendingToTR:                {value: 9, description: "Lähettää Tierekisteriin"},
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
+
+  root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value, root.ProjectStatus.Sent2TR.value, root.ProjectStatus.ErroredInTR.value,
+    root.ProjectStatus.TRProcessing.value, root.ProjectStatus.ErrorInViite.value, root.ProjectStatus.SendingToTR.value];
 
     root.Track = {
         Combined:                   {value: 0, description: "Combined"},
@@ -108,6 +112,18 @@
         DirectionMarkerLayer:       {value: 8},
         IndicatorLayer:             {value: 99}
     };
+
+  /*
+  The meta key codes are browser dependant, in proper:
+      Firefox: 224
+      Opera: 17
+      WebKit (Safari/Chrome): 91 (Left Apple) or 93 (Right Apple)
+
+   A blessing in disguise, CTRL key code is always fixed to 17.
+   */
+  root.MetaKeyCodes = [91, 93, 224, 17];
+
+  root.SelectKeyName = "ContextMenu";
 
 })(window.LinkValues = window.LinkValues || {});
 

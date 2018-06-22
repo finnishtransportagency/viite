@@ -710,43 +710,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
-  test("Calculate delta for project with discontinuity") {
-    var count = 0
-    val roadlink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-      InUse, NormalLinkInterface)
-    runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects
-      val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5L, 205L, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
-      val saved = projectService.createRoadLinkProject(roadAddressProject)
-      mockForProject(saved.id, RoadAddressDAO.fetchByRoadPart(5, 205).map(toProjectLink(saved)))
-      val changed = saved.copy(reservedParts = addresses)
-      projectService.saveProject(changed)
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
-      val projectLinks = ProjectDAO.fetchByProjectRoadPart(5, 205, saved.id)
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be(count)
-      sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value} where project_id = ${saved.id}""".execute
-      val terminations = ProjectDeltaCalculator.delta(saved).terminations
-      terminations should have size (projectLinks.size)
-      val modTerminations = terminations.map(t =>
-        if (t.endAddrMValue == 4529)
-          t.copy(discontinuity = Discontinuity.MinorDiscontinuity)
-        else
-          t
-      )
-      val sections = ProjectDeltaCalculator.partition(modTerminations)
-      sections should have size (4)
-      sections.exists(_.track == Track.LeftSide) should be(true)
-      sections.exists(_.track == Track.RightSide) should be(true)
-      sections.groupBy(_.track).keySet should have size (2)
-    }
-    runWithRollback {
-      projectService.getRoadAddressAllProjects
-    } should have size (count - 1)
-  }
-
   test("process roadChange data and expire the roadLink") {
     //First Create Mock Project, RoadLinks and
 
@@ -2127,7 +2090,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
     // Based on the "Terminate then transfer" test, this one checks for
-    test("Provoke a NonFatal exception when publishing a project and then check if the project state is changed to 8") {
+  test("Provoke a IOException or ClientProtocolException exception when publishing a project and then check if the project state is changed to 9") {
 
       var count = 0
       val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
@@ -2165,7 +2128,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectService.publishProject(savedProject.id)
         val currentProjectStatus = ProjectDAO.getProjectStatus(savedProject.id)
         currentProjectStatus.isDefined should be(true)
-        currentProjectStatus.get.value should be(ProjectState.ErrorInViite.value)
+        currentProjectStatus.get.value should be(ProjectState.SendingToTR.value)
       }
 
     }

@@ -117,6 +117,7 @@ class AssetDataImporter {
 
     withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
+      sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
