@@ -129,6 +129,26 @@ trait BaseRoadAddress {
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
+  def getCalibrationCode: CalibrationCode = {
+    calibrationPoints match {
+      case (Some(_), Some(_)) => CalibrationCode.AtBoth
+      case (Some(_), _) => CalibrationCode.AtBeginning
+      case (_, Some(_)) => CalibrationCode.AtEnd
+      case _ => CalibrationCode.No
+    }
+  }
+
+  def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
+    val raCalibrationCode = getCalibrationCode
+    if(calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
+      raCalibrationCode == calibrationCode
+    else
+      raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
+  }
+
+  def liesInBetween(ra: BaseRoadAddress): Boolean = {
+    (startAddrMValue >= ra.startAddrMValue && startAddrMValue <= ra.endAddrMValue) || (endAddrMValue <= ra.endAddrMValue && endAddrMValue >= ra.startAddrMValue)
+  }
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
@@ -799,6 +819,19 @@ object RoadAddressDAO {
           ) WHERE ROWNUM < 2
       """
     Q.queryNA[Int](query).firstOption
+  }
+
+  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long) : Option[Long] = {
+    val query =
+      s"""
+          SELECT * FROM (
+            SELECT ra.road_part_number
+            FROM road_address ra
+            WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
+            ORDER BY road_part_number ASC
+          ) WHERE ROWNUM < 2
+      """
+    Q.queryNA[Long](query).firstOption
   }
 
   def update(roadAddress: RoadAddress) : Unit = {
@@ -1619,5 +1652,30 @@ object RoadAddressDAO {
                     FROM road_address ra
                     WHERE ra.id=$roadAddressId"""
     CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
+  }
+
+
+  /*
+   * Get the calibration code of the given road addresses.
+   *
+   * @param roadAddressId id of the road link in ROAD_ADDRESS table
+   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
+   *
+   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
+   */
+  def getRoadAddressCalibrationCode(roadAddressIds: Seq[Long]): Map[Long, CalibrationCode] = {
+    if(roadAddressIds.isEmpty){
+      Map()
+    } else {
+      val query =
+        s"""SELECT ra.id, ra.calibration_points
+                    FROM road_address ra
+                    WHERE ra.id in (${roadAddressIds.mkString(",")})"""
+      Q.queryNA[(Long, Int)](query).list.map{
+        case (id, code) => id -> CalibrationCode(code)
+      }.toMap
+    }
+
+
   }
 }

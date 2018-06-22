@@ -228,6 +228,14 @@ object ProjectValidator {
       def notification = true
     }
 
+    case object DoubleEndOfRoad extends ValidationError {
+      def value = 19
+
+      def message: String = DoubleEndOfRoadMessage
+
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -248,6 +256,15 @@ object ProjectValidator {
     } else {
       None
     }
+  }
+
+  def outsideOfProjectError(id: Long, validationError: ValidationError)(pl: Seq[RoadAddress]): Option[ValidationErrorDetails] = {
+    val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+    if (ids.nonEmpty)
+      Some(ValidationErrorDetails(id, validationError, ids,
+        points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+    else
+      None
   }
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -477,6 +494,22 @@ object ProjectValidator {
       }.toSeq
     }
 
+    def checkEndOfRoadOutsideOfProject : Option[ValidationErrorDetails] = {
+      val (road, part): (Long, Long) = (seq.head.roadNumber,seq.head.roadPartNumber)
+      val previousRoadPartNumber: Option[Long] = RoadAddressDAO.fetchPreviousRoadPartNumber(road, part)
+      if (previousRoadPartNumber.nonEmpty) {
+        val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
+        if (allProjectLinks.exists(link => link.roadNumber == road && link.roadPartNumber == previousRoadPartNumber.get))
+          return None
+        val previousRoadPartEnd: Option[RoadAddress] = RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber.get, fetchOnlyEnd = true).headOption
+        if (previousRoadPartEnd.nonEmpty) {
+          if (previousRoadPartEnd.get.discontinuity == EndOfRoad)
+            return outsideOfProjectError(project.id, alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((previousRoadPartEnd.get.roadNumber, previousRoadPartEnd.get.roadPartNumber)))))(List(previousRoadPartEnd.get))
+        }
+      }
+      None
+    }
+
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]) = {
       if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
         ProjectDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
@@ -486,10 +519,14 @@ object ProjectValidator {
       }
     }
 
+    def getLastValidLinkForParts = {
+      seq.filter(r => r.status != LinkStatus.Terminated && r.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)
+    }
     // Checks inside road part (not including last links' checks)
     checkContinuityBetweenParts.toSeq ++ checkMinorDiscontinuityBetweenLinksOnPart.toSeq ++ checkDiscontinuityBetweenLinksOnRamps.toSeq ++
       checkEndOfRoadOnLastPart ++
-      checkDiscontinuityOnLastPart
+      checkDiscontinuityOnLastPart ++
+      checkEndOfRoadOutsideOfProject.toSeq
   }
 
   def checkTrackCode(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {

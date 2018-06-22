@@ -1,6 +1,7 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
     var projectStatus = LinkValues.ProjectStatus;
+    var statusToDisplay = LinkValues.ProjectStatusToDisplay;
     var projectArray = [];
     var headers = {
       "sortName": {toStr: "PROJEKTIN NIMI", width: "255", order: 0,
@@ -15,10 +16,11 @@
         sortFunc: function(a,b) {
             return a.createdBy.localeCompare(b.createdBy, 'fi');
         }},
-      "sortDate": {toStr: "ALKUPVM", width: "100", order: 0,
+      "sortDate": {
+        toStr: "LUONTIPVM", width: "110", order: 0,
         sortFunc: function(a,b) {
-            var aDate = a.startDate.split('.').reverse().join('-');
-            var bDate = b.startDate.split('.').reverse().join('-');
+            var aDate = a.createdDate.split('.').reverse().join('-');
+            var bDate = b.createdDate.split('.').reverse().join('-');
             return new Date(bDate) - new Date(aDate);
         }},
       "sortStatus": {toStr: "TILA", width: "60", order: 0,
@@ -60,8 +62,8 @@
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:810px; height:390px; overflow:auto;"></div>' +
-      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin lähetetyt projektit</label>');
+    projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>' +
+      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>');
 
     var staticFieldProjectName = function(dataField) {
       var field;
@@ -160,7 +162,7 @@
             //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return ((proj.statusCode >= projectStatus.Incomplete.value && proj.statusCode <= projectStatus.TRProcessing.value) || proj.statusCode === projectStatus.ErrorInViite.value);
+          return _.contains(statusToDisplay, proj.statusCode);
         });
 
         var sortedProjects = unfinishedProjects.sort( function(a,b) {
@@ -177,7 +179,7 @@
                     '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
                     '<td style="width: 60px;" title="' + info + '">' + staticFieldProjectList(proj.ely) + '</td>' +
                     '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-                    '<td style="width: 110px;" title="' + info + '">' + staticFieldProjectList(proj.startDate) + '</td>' +
+                '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdDate) + '</td>' +
                     '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             switch (proj.statusCode) {
               case projectStatus.ErrorInViite.value:

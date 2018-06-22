@@ -1,6 +1,6 @@
 (function(testData) {
   testData.generate = function() {
-    var roadLinkData =
+    var linkData =
     [{
       "linkId": 1,
       "administrativeClass": "Private",
@@ -534,6 +534,6 @@
       }]
     }];
 
-    return _.map(roadLinkData, function(roadLink) { return [roadLink]; });
+    return _.map(linkData, function(roadLink) { return [roadLink]; });
   };
 }(window.RoadLinkTestData = window.RoadLinkTestData || {}));
