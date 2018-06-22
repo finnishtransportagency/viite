@@ -78,7 +78,7 @@ object CommonHistoryFiller {
     val (newerRoadAddresses, rest) = newRoadAddresses.partition(ra => ra.id == NewRoadAddress && (ra.track == Track.RightSide || ra.track == Track.LeftSide))
     newerRoadAddresses.map{
       ra =>
-        val transferredOption = transferredLinks.find(pl => pl.track == Track.switch(ra.track) && ((pl.startAddrMValue >= ra.startAddrMValue && pl.startAddrMValue <= ra.endAddrMValue) || (pl.endAddrMValue <= ra.endAddrMValue && pl.endAddrMValue >= ra.startAddrMValue)))
+        val transferredOption = transferredLinks.find(pl => pl.track == Track.switch(ra.track) && pl.liesInBetween(ra))
         transferredOption match {
           case Some(transferred) =>
             newRoadAddresses.find(cra => cra.id == transferred.roadAddressId) match {
