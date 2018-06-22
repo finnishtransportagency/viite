@@ -106,13 +106,35 @@
         return {'fieldDate': fieldDate, 'futureDate': futureDate};
       };
 
+      var isValidDate = function(dateString) {
+        var dates = getDateObjects(dateString);
+        var splitDateString = dateString.split(".");
+
+        var day = parseInt(splitDateString[0], 10);
+        var month = parseInt(splitDateString[1], 10);
+        var year = parseInt(splitDateString[2], 10);
+
+        var monthLength = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+        //Check for leap year
+        if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0))
+          monthLength[1] = 29;
+
+        var dateValidation = dates.futureDate > dates.fieldDate;
+        var sizeValidation = splitDateString.length === 3 && _.last(splitDateString).length === 4;
+        var dayValidation = day > 0 && day <= monthLength[month - 1];
+        var monthValidation = month > 0 && month <= 12;
+
+        return dateString !== '' && dateValidation && sizeValidation && dayValidation && monthValidation;
+      };
+
         function toggleSaveButton() {
             $('#saveChangedRoads').prop("disabled",
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
-                  if ($(element).attr('data-FieldName') === "startDate") {
-                    var dates = getDateObjects($(element).val());
-                    return $(element).val() !== '' && dates.futureDate > dates.fieldDate;
-                  } else return $(element).val() !== '';
+                  var dateString = $(element).val();
+                  if ($(element).attr('data-FieldName') === "startDate")
+                    return isValidDate(dateString);
+                  else
+                    return dateString !== '';
                 })
             );
         }
@@ -132,10 +154,11 @@
                         $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
-                  var dates = getDateObjects(fieldValue);
-                  if (dates.fieldDate > dates.futureDate)
-                    target.css('color', 'red');
-                  else target.css('color', 'black');
+
+                    if (isValidDate(fieldValue))
+                      target.css('color', 'black');
+                    else
+                      target.css('color', 'red');
                     roadNameCollection.setStartDate(roadId, fieldValue);
                     break;
             }

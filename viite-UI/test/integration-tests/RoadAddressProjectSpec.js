@@ -84,14 +84,14 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         var featureFromProjectLayerTerminated = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717361);
         var featureFromProjectLayerNotReserved = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499896971);
         expect(featureFromProjectLayerNotHandled).to.not.be.undefined;
-        expect(featureFromProjectLayerNotHandled.projectLinkData.linkId).to.be.equal(1717275);
-        expect(featureFromProjectLayerNotHandled.projectLinkData.status).to.be.equal(0);
+        expect(featureFromProjectLayerNotHandled.linkData.linkId).to.be.equal(1717275);
+        expect(featureFromProjectLayerNotHandled.linkData.status).to.be.equal(0);
         expect(featureFromProjectLayerTerminated).to.not.be.undefined;
-        expect(featureFromProjectLayerTerminated.projectLinkData.linkId).to.be.equal(1717361);
-        expect(featureFromProjectLayerTerminated.projectLinkData.status).to.be.equal(1);
+        expect(featureFromProjectLayerTerminated.linkData.linkId).to.be.equal(1717361);
+        expect(featureFromProjectLayerTerminated.linkData.status).to.be.equal(1);
         expect(featureFromProjectLayerNotReserved).to.not.be.undefined;
-        expect(featureFromProjectLayerNotReserved.projectLinkData.linkId).to.be.equal(499896971);
-        expect(featureFromProjectLayerNotReserved.projectLinkData.status).to.be.equal(99);
+        expect(featureFromProjectLayerNotReserved.linkData.linkId).to.be.equal(499896971);
+        expect(featureFromProjectLayerNotReserved.linkData.status).to.be.equal(99);
       });
 
     });
@@ -108,7 +108,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       it('Check if there form inputs are empty', function(){
           var feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499897070);
           expect(feature).to.not.be.undefined;
-          expect(feature.projectLinkData.linkId).to.be.equal(499897070);
+          expect(feature.linkData.linkId).to.be.equal(499897070);
           expect($('#dropdown_0').val('New').is(':disabled')).to.be.false;
           $('#dropDown_0').val('New').change();
           expect($('#tie')).to.not.be.undefined;
