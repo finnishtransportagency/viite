@@ -557,7 +557,7 @@
             var projectLinkIds = projectLinks.map( function(link) {
               return link.linkId;
             });
-            if (error.linkIds.every(link => projectLinkIds.indexOf(link) > -1)) {
+            if (_.every(error.linkIds, function(link){ return projectLinkIds.indexOf(link) > -1; })) {
                 selectedProjectLinkProperty.openWithErrorMessage(error.ids[0], error.errorMessage);
             } else {
                 new ModalConfirm("Sinun täytyy varata tieosa projektille, jotta voit korjata sen.");
