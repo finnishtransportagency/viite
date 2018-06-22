@@ -109,5 +109,17 @@
         IndicatorLayer:             {value: 99}
     };
 
+  /*
+  The meta key codes are browser dependant, in proper:
+      Firefox: 224
+      Opera: 17
+      WebKit (Safari/Chrome): 91 (Left Apple) or 93 (Right Apple)
+
+   A blessing in disguise, CTRL key code is always fixed to 17.
+   */
+  root.MetaKeyCodes = [91, 93, 224, 17];
+
+  root.SelectKeyName = "ContextMenu";
+
 })(window.LinkValues = window.LinkValues || {});
 
