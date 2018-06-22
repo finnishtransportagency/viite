@@ -14,7 +14,7 @@
             });
             var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
             });
-            feature.roadLinkData = roadLink;
+            feature.linkData = roadLink;
             return feature;
           });
           loadFeatures(features);
@@ -24,7 +24,7 @@
     });
 
     function vectorLayerStyle(feature) {
-      return styler.generateStyleByFeature(feature.roadLinkData, currentZoom);
+      return styler.generateStyleByFeature(feature.linkData, currentZoom);
     }
 
     var loadFeatures = function (features) {

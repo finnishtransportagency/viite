@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import java.io.IOException
 import java.sql.SQLException
 import java.util.Date
 
@@ -23,6 +24,7 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.{ProjectLinkSplitter, SplitOptions, SplitResult}
+import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -1358,7 +1360,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it =>
-            setProjectStatusToSend2TR(projectId)
+            setProjectStatus(projectId, Sent2TR, false)
             logger.info(s"Sending to TR successful: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
 
@@ -1368,6 +1370,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
       } catch {
+        //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
+        case ioe@(_: IOException | _: ClientProtocolException) => {
+          ProjectDAO.updateProjectStatus(projectId, SendingToTR)
+          PublishResult(validationSuccess = false, sendSuccess = false, None)
+        }
         case NonFatal(_) => {
           ProjectDAO.updateProjectStatus(projectId, ErrorInViite)
           PublishResult(validationSuccess = false, sendSuccess = false, None)
@@ -1472,8 +1479,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def setProjectStatusToSend2TR(projectId: Long): Unit = {
-    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR)
+  def setProjectStatus(projectId: Long, newStatus: ProjectState, withSession: Boolean = true): Unit = {
+    if (withSession) {
+      withDynSession {
+        ProjectDAO.updateProjectStatus(projectId, newStatus)
+      }
+    } else {
+      ProjectDAO.updateProjectStatus(projectId, newStatus)
+    }
   }
 
   def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): (ProjectState) = {
@@ -1822,6 +1835,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def validateLinkTrack(track: Int): Boolean = {
     Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
+  }
+
+  def sendProjectsInWaiting(): Unit = {
+    logger.info(s"Finding projects whose status is SendingToTRStatus/ ${SendingToTR.description}")
+    val listOfProjects = getProjectsWaitingForTR
+    logger.info(s"Found ${listOfProjects.size} projects")
+    for (projectId <- listOfProjects) {
+      logger.info(s"Trying to publish project: ${projectId}")
+      publishProject(projectId)
+    }
+
+  }
+
+  private def getProjectsWaitingForTR(): Seq[Long] = {
+    withDynSession {
+      ProjectDAO.getProjectsWithSendingToTRStatus()
+    }
   }
 
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
