@@ -152,6 +152,21 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Project Links should be continuous if geometry is continuous for Left and Right Tracks") {
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), true)
+      val (left, right) = projectLinks.partition(_.track == LeftSide)
+      val endOfRoadLeft = left.init :+ left.last.copy(discontinuity = EndOfRoad)
+      val endOfRoadRight = right.init :+ right.last.copy(discontinuity = EndOfRoad)
+      val endOfRoadSet = endOfRoadLeft++endOfRoadRight
+      ProjectValidator.checkRoadContinuityCodes(project, endOfRoadSet).distinct should have size 0
+      val brokenContinuity = endOfRoadSet.tail :+ endOfRoadSet.head.copy(geometry = projectLinks.head.geometry.map(_ + Vector3d(1.0, 1.0, 0.0)), endMValue = 11L)
+      val errors = ProjectValidator.checkRoadContinuityCodes(project, brokenContinuity).distinct
+      errors should have size 1
+      errors.head.validationError should be(MinorDiscontinuityFound)
+    }
+  }
+
   test("Project Links should be discontinuous if geometry is discontinuous") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
