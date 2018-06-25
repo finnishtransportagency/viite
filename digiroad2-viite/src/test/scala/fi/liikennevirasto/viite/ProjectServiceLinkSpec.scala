@@ -282,23 +282,23 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   private def createProjectDataForSplit(): RoadAddressProject = {
     val projectId = Sequences.nextViitePrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextViitePrimaryKeySeqValue
-    val lrmPositionId2 = Sequences.nextViitePrimaryKeySeqValue
     val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
     ProjectDAO.createRoadAddressProject(rap)
     val raId = Sequences.nextViitePrimaryKeySeqValue
-    sqlu""" insert into LRM_Position(id,start_Measure,end_Measure,Link_id, side_code) Values ($lrmPositionId,0,87,1,2) """.execute
-    sqlu"""insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number,
-         track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by,
-         VALID_FROM, geometry, floating, calibration_points) VALUES ($raId, $lrmPositionId, 1, 1, 0, 5, 0, 87, date'2011-01-01', null, 'foo', date'2011-01-01', MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,87.0,0,87)), 0, 0)""".execute
+    sqlu"""insert into ROAD_ADDRESS (id, road_number, road_part_number, track_code, discontinuity, START_ADDR_M, END_ADDR_M,
+           start_date, end_date, created_by, VALID_FROM, geometry, floating, calibration_points,
+           start_Measure,end_Measure,Link_id, side_code)
+           VALUES ($raId, 1, 1, 0, 5, 0, 87, date'2011-01-01', null, 'foo', date'2011-01-01',
+           MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,87.0,0,87)), 0, 0,
+           0,87,1,2)""".execute
     ProjectDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
-    sqlu"""insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source)
-          values ($lrmPositionId2, 1, 2, 0.0, 87.0, 0, 1)""".execute
     sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, LRM_POSITION_ID, CREATED_BY, CREATED_DATE, STATUS, ROAD_ADDRESS_ID, GEOMETRY) VALUES
-          (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,$lrmPositionId2,'testuser',
+          START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROAD_ADDRESS_ID, GEOMETRY,
+          link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES
+          (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',
           TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0, $raId,
-          ${fi.liikennevirasto.viite.toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))})""".execute
+          ${fi.liikennevirasto.viite.toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))},
+          1, 2, 0.0, 87.0, 0, 1)""".execute
     ProjectDAO.getRoadAddressProjectById(projectId).get
   }
 
@@ -1415,52 +1415,46 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   //We need to validate the point of this test, since it is not possible to re-split in real application
-  // TODO Remove LRM_POSITION
   ignore("Calculate delta after Unchanged + double split (Unchanged + New) and (Transfer + New) + Transfer") {
     def toGeom(json: Option[Any]): List[Point] = {
       json.get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
     }
     runWithRollback {
       val reservationId = Sequences.nextViitePrimaryKeySeqValue
-      val lrms = Queries.fetchLrmPositionIds(4)
       val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
 
       //Roads for template links
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0',635.000,null,'1820767','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(0)},'16081','1','0','5','0','635',${lrms(0)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(0)},'16081','1','0','5','0','635',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'2','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(480695.572,7058971.185,0,0,481049.95703856583,7058685.435957936,0,635)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(480695.572,7058971.185,0,0,481049.95703856583,7058685.435957936,0,635)),null, 8,
+            null,'3','0',635.000,'1820767','1476392565000', sysdate,'1')""".execute
 
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(1)},null,'3','0',118.000,null,'1820764','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(1)},'16081','1','0','5','635','753',${lrms(1)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(1)},'16081','1','0','5','635','753',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481234.045,7058485.271,0,0,481158.027,7058573.51,0,753)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481234.045,7058485.271,0,0,481158.027,7058573.51,0,753)),null, 8,
+            null,'3','0',118.000,'1820764','1476392565000',sysdate,'1')""".execute
 
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(2)},null,'3','0',88.000,null,'1820753','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(2)},'16081','1','0','5','753','841',${lrms(2)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(2)},'16081','1','0','5','753','841',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481250.504,7058400.315,0,0,481234.04508322186,7058485.270820141,0,841)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481250.504,7058400.315,0,0,481234.04508322186,7058485.270820141,0,841)),null, 8,
+            null,'3','0',88.000,'1820753','1476392565000',sysdate,'1')""".execute
 
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(3)},null,'3','0',1274.000,null,'6700868','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(3)},'16081','1','0','5','841','2115',${lrms(3)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(3)},'16081','1','0','5','841','2115',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'1','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null, 8,
+            null,'3','0',1274.000,'6700868','1476392565000',sysdate,'1')""".execute
 
       val points1820767 = "[ {\"x\": 480695.572, \"y\": 7058971.185, \"z\": 95.14500000000407},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569},{\"x\": 481122.722, \"y\": 7058607.764, \"z\": 101.07300000000396},{\"x\": 481091.689, \"y\": 7058641.794, \"z\": 100.70500000000175},{\"x\": 481066.306, \"y\": 7058667.604, \"z\": 100.58599999999569},{\"x\": 481049.95703856583, \"y\": 7058685.435957936, \"z\": 100.48000025004062}, {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407}]"
       val points1820764 = "[ {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407},{\"x\": 481222.496, \"y\": 7058507.705, \"z\": 101.28100000000268},{\"x\": 481212.636, \"y\": 7058520.221, \"z\": 101.33400000000256},{\"x\": 481200.552, \"y\": 7058533.592, \"z\": 101.3920000000071},{\"x\": 481177.416, \"y\": 7058555.96, \"z\": 101.4149999999936},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569}]"
