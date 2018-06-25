@@ -178,14 +178,6 @@
       return '<label class="control-label-small">' + label + '</label>';
     };
 
-    var addLabel = function (label) {
-      return '<label>' + label+ ": " + '</label>';
-    };
-
-    var addLabelInfo = function (label) {
-      return '<label>' + label + '</label>';
-    };
-
     var addSmallLabelWithIds = function (label, id) {
       return '<label class="control-label-small" id=' + id + '>' + label + '</label>';
     };

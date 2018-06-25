@@ -249,16 +249,6 @@
       return loadingProject;
     }, 1000);
 
-      this.getNextProjectsWithLinksById = _.throttle(function (id, callback) {
-          if (loadingProject) {
-              loadingProject.abort();
-          }
-          loadingProject= $.getJSON('api/viite/roadlinks/roadaddress/project/all/next/projectId/' + id, function (data) {
-              return _.isFunction(callback) && callback(data);
-          });
-          return loadingProject;
-      }, 1000);
-
     this.getChangeTable = _.throttle(function (id,callback) {
       $.getJSON('api/viite/project/getchangetable/' + id, callback);
     }, 500);
