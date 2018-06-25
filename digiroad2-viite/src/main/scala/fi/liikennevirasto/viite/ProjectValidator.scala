@@ -412,7 +412,7 @@ object ProjectValidator {
 
     def checkEndOfRoadOnLastPart(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
-      seq.groupBy(_.roadNumber).flatMap { g =>
+      val afterCheckErrors = seq.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = RoadAddressDAO.getValidRoadParts(g._1.toInt, project.startDate)
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         trackIntervals.flatMap {
@@ -442,12 +442,19 @@ object ProjectValidator {
             None
           }
         }
-      }.toSeq ++ errors
+      }.toSeq
+      val groupedErrors: Seq[ValidationErrorDetails] = afterCheckErrors.groupBy(_.validationError).map {
+        g =>
+          val ids: Seq[Long] = g._2.flatMap(_.affectedIds)
+          val coords: Seq[ProjectCoordinates] = g._2.flatMap(_.coordinates)
+          ValidationErrorDetails(g._2.head.projectId, g._1, ids, coords, None)
+      }.toSeq
+      groupedErrors ++ errors
     }
 
     def checkDiscontinuityOnLastPart(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
       val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
-     seq.groupBy(_.roadNumber).flatMap { g =>
+     val discontinuityErrors = seq.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = RoadAddressDAO.getValidRoadParts(g._1.toInt, project.startDate)
        val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         trackIntervals.flatMap {
@@ -492,7 +499,14 @@ object ProjectValidator {
 
           } else None
         }
-      }.toSeq ++ errors
+      }.toSeq
+      val groupedDiscontinuity: Seq[ValidationErrorDetails] = discontinuityErrors.groupBy(_.validationError).map {
+        g =>
+          val ids: Seq[Long] = g._2.flatMap(_.affectedIds)
+          val coords: Seq[ProjectCoordinates] = g._2.flatMap(_.coordinates)
+          ValidationErrorDetails(g._2.head.projectId, g._1, ids, coords, None)
+      }.toSeq
+      groupedDiscontinuity ++ errors
     }
 
     def checkEndOfRoadOutsideOfProject(errors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
