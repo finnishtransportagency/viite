@@ -127,18 +127,15 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO
   test("Saved Suravage Link gets roadaddress from DB if exists") {
     runWithRollback {
       sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
-      sqlu"""Insert into lrm_position (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
-          values ('62019094','0','2','0','67,768',null,'7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('62019097',null,'2','0','67,768',null,'7096025','1516719259000',to_timestamp('23.04.2018 16:26:44,137893000','DD.MM.RRRR HH24:MI:SSXFF'),'3')
-             """.execute
-      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,
-          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID) values ('9124288','62555','2','0','1','0','68','62019097',
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,
+          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID,
+          LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('9124288','62555','2','0','1','0','68',
           to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022')""".execute
+          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022',
+          null,'2','0','67,768','7096025','1516719259000',to_timestamp('23.04.2018 16:26:44,137893000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
       val suravageAddress =
         RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(7096025, 167,
           List(Point(642581.506, 6947078.918, 0.0),
@@ -192,16 +189,15 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   }
 
 
-  // TODO
   test("Suravage link builder when link is in DB roadaddress table") {
     runWithRollback {
       sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
-      sqlu"""Insert into lrm_position (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
-          values ('62019094','0','2','0','67,768',null,'7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
-      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,
-          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID) values ('9124288','62555','2','0','1','0','68','62019094',
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,
+          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID,
+          LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('9124288','62555','2','0','1','0','68',
           to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022')""".execute
+          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022',
+          '0','2','0','67,768','7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
       val suravageLinkId1 = 7096025
       val municipalityCode = 564
       val administrativeClass = Municipality
@@ -236,12 +232,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   }
 
 
-  // TODO
   test("Suravage link builder when link is in DB project-link table") {
     runWithRollback {
       sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
-      sqlu"""Insert into lrm_position (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
-          values ('62019094','0','2','0','67,768',null,'7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), None)
