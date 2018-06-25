@@ -15,7 +15,6 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 
-// TODO
 case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
                                  startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
@@ -32,71 +31,51 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   val dateFormatter = ISODateTimeFormat.basicDate()
 
-  /**
-    * Generate the specified amount of keys using the "lrm_position_primary_key_seq" sequence
-    * @param amount The amount of keys needed
-    * @return
-    */
-  private def generateLrmPositionIds(amount: Long): Seq[Long] = {
-    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= $amount""".as[Long].list
-    assert(ids.size == amount || amount == 0)
-    ids
-  }
-
   def printConversionRoadAddress(r: ConversionRoadAddress): String = {
     s"""linkid: %d, alku: %.2f, loppu: %.2f, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s, ajorataId: %s, kalibrointpiste: %s""".
       format(r.linkId, r.startM, r.endM, r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.commonHistoryId, r.calibrationCode)
   }
 
-  private def lrmPositionStatement() =
-    dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, link_source) values (?, ?, ?, ?, ?, ?)")
-
-  private def insertLrmPosition(lrmPositionStatement: PreparedStatement, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit = {
-    lrmPositionStatement.setLong(1, lrmId)
-    lrmPositionStatement.setLong(2, lrmPosition.linkId)
-    lrmPositionStatement.setLong(3, lrmPosition.sideCode.value)
-    lrmPositionStatement.setDouble(4, lrmPosition.startM)
-    lrmPositionStatement.setDouble(5, lrmPosition.endM)
-    lrmPositionStatement.setLong(6, lrmPosition.linkSource.value)
-    lrmPositionStatement.addBatch()
-  }
-
   private def roadAddressStatement() =
-    dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
+    dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, road_number, road_part_number, " +
       "track_code, discontinuity, start_addr_m, end_addr_m, start_date, end_date, created_by, " +
-      "valid_from, geometry, floating, road_type, ely, common_history_id, calibration_points) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "valid_from, geometry, floating, road_type, ely, common_history_id, calibration_points, link_id, SIDE_CODE, start_measure, end_measure, link_source) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?, ?)")
+      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
-  private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosition, lrmId: Long): Unit = {
+  private def insertRoadAddress(roadAddressStatement: PreparedStatement, roadAddress: ConversionRoadAddress, lrmPosition: IncomingLrmPosition): Unit = {
     def datePrinter(date: Option[DateTime]): String = {
       date match {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       }
     }
-    roadAddressStatement.setLong(1, lrmId)
-    roadAddressStatement.setLong(2, roadAddress.roadNumber)
-    roadAddressStatement.setLong(3, roadAddress.roadPartNumber)
-    roadAddressStatement.setLong(4, roadAddress.trackCode)
-    roadAddressStatement.setLong(5, roadAddress.discontinuity)
-    roadAddressStatement.setLong(6, roadAddress.startAddrM)
-    roadAddressStatement.setLong(7, roadAddress.endAddrM)
-    roadAddressStatement.setString(8, dateFormatter.print(roadAddress.startDate.get))
-    roadAddressStatement.setString(9, datePrinter(roadAddress.endDate))
-    roadAddressStatement.setString(10, roadAddress.userId)
-    roadAddressStatement.setString(11, datePrinter(roadAddress.validFrom))
-    roadAddressStatement.setDouble(12, roadAddress.x1.get)
-    roadAddressStatement.setDouble(13, roadAddress.y1.get)
-    roadAddressStatement.setDouble(14, roadAddress.x2.get)
-    roadAddressStatement.setDouble(15, roadAddress.y2.get)
-    roadAddressStatement.setDouble(16, roadAddress.endAddrM - roadAddress.startAddrM)
-    roadAddressStatement.setInt(17, if (lrmPosition.linkSource == LinkGeomSource.HistoryLinkInterface) 1 else 0)
-    roadAddressStatement.setInt(17, 0)
-    roadAddressStatement.setLong(18, roadAddress.roadType)
-    roadAddressStatement.setLong(19, roadAddress.ely)
-    roadAddressStatement.setLong(20, roadAddress.commonHistoryId)
-    roadAddressStatement.setLong(21, roadAddress.calibrationCode.value)
+    roadAddressStatement.setLong(1, roadAddress.roadNumber)
+    roadAddressStatement.setLong(2, roadAddress.roadPartNumber)
+    roadAddressStatement.setLong(3, roadAddress.trackCode)
+    roadAddressStatement.setLong(4, roadAddress.discontinuity)
+    roadAddressStatement.setLong(5, roadAddress.startAddrM)
+    roadAddressStatement.setLong(6, roadAddress.endAddrM)
+    roadAddressStatement.setString(7, dateFormatter.print(roadAddress.startDate.get))
+    roadAddressStatement.setString(8, datePrinter(roadAddress.endDate))
+    roadAddressStatement.setString(9, roadAddress.userId)
+    roadAddressStatement.setString(10, datePrinter(roadAddress.validFrom))
+    roadAddressStatement.setDouble(11, roadAddress.x1.get)
+    roadAddressStatement.setDouble(12, roadAddress.y1.get)
+    roadAddressStatement.setDouble(13, roadAddress.x2.get)
+    roadAddressStatement.setDouble(14, roadAddress.y2.get)
+    roadAddressStatement.setDouble(15, roadAddress.endAddrM - roadAddress.startAddrM)
+    roadAddressStatement.setInt(16, if (lrmPosition.linkSource == LinkGeomSource.HistoryLinkInterface) 1 else 0)
+    roadAddressStatement.setInt(16, 0)
+    roadAddressStatement.setLong(17, roadAddress.roadType)
+    roadAddressStatement.setLong(18, roadAddress.ely)
+    roadAddressStatement.setLong(19, roadAddress.commonHistoryId)
+    roadAddressStatement.setLong(20, roadAddress.calibrationCode.value)
+    roadAddressStatement.setLong(21, lrmPosition.linkId)
+    roadAddressStatement.setLong(22, lrmPosition.sideCode.value)
+    roadAddressStatement.setDouble(23, lrmPosition.startM)
+    roadAddressStatement.setDouble(24, lrmPosition.endM)
+    roadAddressStatement.setLong(25, lrmPosition.linkSource.value)
 
     roadAddressStatement.addBatch()
   }
@@ -223,33 +202,24 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         adjustLrmPosition(incomingLrmPositions.filter(lrm => lrm.linkId == linkId).toSeq, geomLength)
     }.groupBy(lrm => (lrm.linkId, lrm.commonHistoryId))
 
-    val lrmIds = generateLrmPositionIds(conversionRoadAddress.size)
-
-    val lrmPositionPs = lrmPositionStatement()
     val roadAddressPs = roadAddressStatement()
 
-    conversionRoadAddress.zip(lrmIds).foreach {
-      case ((roadAddress), (lrmId)) =>
+    conversionRoadAddress.foreach {
+      case (roadAddress) =>
         lrmPositions.getOrElse((roadAddress.linkId, roadAddress.commonHistoryId), Seq()).headOption.foreach {
           case lrmPosition =>
-            if(roadAddress.directionFlag == 1){
+            if (roadAddress.directionFlag == 1) {
               val reversedLRM = lrmPosition.copy(sideCode = SideCode.switch(lrmPosition.sideCode))
-              insertLrmPosition(lrmPositionPs, reversedLRM, lrmId)
-              insertRoadAddress(roadAddressPs, roadAddress, reversedLRM, lrmId)
-            }
-            else{
-              insertLrmPosition(lrmPositionPs, lrmPosition, lrmId)
-              insertRoadAddress(roadAddressPs, roadAddress, lrmPosition, lrmId)
+              insertRoadAddress(roadAddressPs, roadAddress, reversedLRM)
+            } else {
+              insertRoadAddress(roadAddressPs, roadAddress, lrmPosition)
             }
 
         }
     }
 
-    lrmPositionPs.executeBatch()
-    println(s"${DateTime.now()} - LRM Positions saved")
     roadAddressPs.executeBatch()
     println(s"${DateTime.now()} - Road addresses saved")
-    lrmPositionPs.close()
     roadAddressPs.close()
   }
 
