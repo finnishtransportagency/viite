@@ -426,32 +426,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       try {
         projectService.getRoadAddressSingleProject(projectId) match {
           case Some(project) =>
-            if (project.status == SendingToTR) {
-              projectService.setProjectStatus(project.id, Incomplete)
-            }
-            val projectMap = roadAddressProjectToApi(project)
-            val parts = project.reservedParts.map(reservedRoadPartToApi)
-            val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
-            Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-              "projectLinks" -> parts, "publishable" -> false,
-              "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
-          case _ => halt(NotFound("Project not found"))
-        }
-      } catch {
-        case e: Exception => {
-          logger.error(e.toString, e)
-          InternalServerError(e.toString)
-        }
-      }
-    }
-  }
-
-  get("/roadlinks/roadaddress/project/all/next/projectId/:id") {
-    val projectId = params("id").toLong
-    time(logger, s"GET request for /roadlinks/roadaddress/project/all/next/projectId/$projectId") {
-      try {
-        projectService.getRoadAddressSingleProject(projectId) match {
-          case Some(project) =>
             val projectMap = roadAddressProjectToApi(project)
             val parts = project.reservedParts.map(reservedRoadPartToApi)
             val errorParts = projectService.validateProjectById(project.id)

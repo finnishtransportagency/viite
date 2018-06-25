@@ -986,7 +986,7 @@
       eventbus.once('roadAddressProject:projectFetched', function (projectInfo) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom(), projectInfo.id, projectInfo.publishable);
       });
-      projectCollection.getNextProjectsWithLinksById(projId);
+        projectCollection.getProjectsWithLinksById(projId);
     });
 
       eventbus.on('roadAddressProject:fetched', function () {
