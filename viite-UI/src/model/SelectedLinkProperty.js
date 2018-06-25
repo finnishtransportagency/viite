@@ -583,7 +583,7 @@
 
     var getSources = function() {
       return _.union(_.map(sources, function (roadLink) {
-        return roadLink.getData();
+        return roadLink;
       }));
     };
 
