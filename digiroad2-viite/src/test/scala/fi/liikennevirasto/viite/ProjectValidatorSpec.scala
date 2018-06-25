@@ -653,4 +653,47 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Validator should return MissingEndOfRoad validation error if any of the track codes on the end of a part are not End Of Road") {
+    runWithRollback {
+      val roadAddresses = Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
+        floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
+      val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((1999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
+      ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(roadAddresses.head)))
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val validationErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
+      //Should have error in both tracks
+      validationErrors.size should be(1)
+      validationErrors.head.projectId should be(project.id)
+      validationErrors.head.validationError.value should be(MissingEndOfRoad.value)
+      validationErrors.head.affectedIds.sorted should be(projectLinks.filterNot(_.track == Track.Combined).map(_.id).sorted)
+      //Should only have error in LEFT TRACK
+      val leftErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
+        if (pl.track == Track.RightSide)
+          pl.copy(discontinuity = Discontinuity.EndOfRoad)
+        else pl
+      }))
+      leftErrors.size should be(1)
+      leftErrors.head.projectId should be(project.id)
+      leftErrors.head.validationError.value should be(MissingEndOfRoad.value)
+      leftErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.LeftSide).map(_.id).sorted)
+      //Should only have error in RIGHT TRACK
+      val rightErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
+        if (pl.track == Track.LeftSide)
+          pl.copy(discontinuity = Discontinuity.EndOfRoad)
+        else pl
+      }))
+      rightErrors.size should be(1)
+      rightErrors.head.projectId should be(project.id)
+      rightErrors.head.validationError.value should be(MissingEndOfRoad.value)
+      rightErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.RightSide).map(_.id).sorted)
+      //Should have no error
+      val noErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
+        if (pl.track != Track.Combined)
+          pl.copy(discontinuity = Discontinuity.EndOfRoad)
+        else pl
+      }))
+      noErrors.size should be(0)
+    }
+  }
 }
