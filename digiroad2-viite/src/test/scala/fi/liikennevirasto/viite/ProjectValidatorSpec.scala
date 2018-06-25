@@ -698,27 +698,36 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
 
-  test("Validator should return MajorDiscontinuity validation error if any of the track codes on the end of a part are not End Of Road") {
-    runWithRollback {
+  runWithRollback {
+    test("Validator should return MajorDiscontinuity validation error if any of the track codes on the end of a part are not End Of Road") {
+
       val roadAddresses = Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
         floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L, 30L), roads = Seq((1999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
       ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(roadAddresses.head)))
-      ProjectDAO.reserveRoadPart(project.id, 1999L, 2L, "Test User")
-      //      sqlu"""UPDATE Project_Link Set Discontinuity_type = 1 Where project_id = ${project.id} and end_addr_m = 20""".execute
+      ProjectDAO.reserveRoadPart(project.id, 1999L, 2L, "u")
       sqlu"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""".execute
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val reservedParts = ProjectDAO.fetchReservedRoadParts(project.id)
-      val noErrors = ProjectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), projectLinks)
+      val projectWithReservations = project.copy(reservedParts = reservedParts)
       //Should NOT have error in both tracks
+      val noErrors = ProjectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks)
       noErrors.size should be(0)
-      val errorsAtEnd = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
+
+      //Should return MAJOR DISCONTINUITY to both Project Links, part number = 1
+      val originalGeom = projectLinks.filter(_.roadPartNumber == 2L).head.geometry
+      val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
+      val discontinuousGeomString = "'" + toGeomString(Seq(Point(40.0, 50.0), Point(60.0, 70.0))) + "'"
+      sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = ${discontinuousGeomString} Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
+      val errorsAtEnd = ProjectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
         if (pl.roadPartNumber == 2L)
-          pl.copyWithGeometry(Seq(Point(0.4, 20.4), Point(0.4, 30.4)))
+          pl.copyWithGeometry(discontinuousGeom)
         else pl
       }))
-      println(errorsAtEnd)
+      errorsAtEnd.size should be(1)
+      errorsAtEnd.head.validationError.value should be(MajorDiscontinuityFound.value)
+      errorsAtEnd.head.affectedIds.sorted should be(projectLinks.filter(pl => pl.roadPartNumber == 1L && pl.track != Track.Combined).map(_.id).sorted)
     }
   }
 
