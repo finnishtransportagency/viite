@@ -538,10 +538,6 @@ object ProjectValidator {
       }
     }
 
-    def getLastValidLinkForParts = {
-      seq.filter(r => r.status != LinkStatus.Terminated && r.endAddrMValue == seq.maxBy(_.endAddrMValue).endAddrMValue)
-    }
-
     val continuityValidations: Seq[Seq[ValidationErrorDetails] =>  Seq[ValidationErrorDetails]] = Seq(
       checkContinuityBetweenParts,
       checkMinorDiscontinuityBetweenLinksOnPart,
