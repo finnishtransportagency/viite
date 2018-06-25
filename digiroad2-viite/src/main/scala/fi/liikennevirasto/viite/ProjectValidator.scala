@@ -667,9 +667,9 @@ object ProjectValidator {
         * @return An optional value with eventual Validation error details
         */
       def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
-        val (linkIds, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
-        if (linkIds.nonEmpty)
-          Some(ValidationErrorDetails(project.id, validationError, linkIds.distinct,
+        val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
+        if (ids.nonEmpty)
+          Some(ValidationErrorDetails(project.id, validationError, ids.distinct,
             points.map(p => ProjectCoordinates(p.x, p.y, 12)).distinct, None))
         else
           None
