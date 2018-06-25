@@ -709,7 +709,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       //      sqlu"""UPDATE Project_Link Set Discontinuity_type = 1 Where project_id = ${project.id} and end_addr_m = 20""".execute
       sqlu"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""".execute
       val projectLinks = ProjectDAO.getProjectLinks(project.id)
-      val noErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
+      val reservedParts = ProjectDAO.fetchReservedRoadParts(project.id)
+      val noErrors = ProjectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), projectLinks)
       //Should NOT have error in both tracks
       noErrors.size should be(0)
       val errorsAtEnd = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
