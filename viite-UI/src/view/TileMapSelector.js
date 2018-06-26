@@ -15,7 +15,7 @@
       '</div>' +
       '<div class="roads-visible-wrapper">' +
         '<div class="checkbox">' +
-          '<label><input type="checkbox" name="roadsVisible" value="roadsVisible" checked="true" id="roadsVisibleCheckbox">Näytä tieverkko</label>' +
+        '<label><input type="checkbox" name="roadsVisible" value="roadsVisible" checked="true" id="roadsVisibleCheckbox">Näytä tieosoiteverkko</label>' +
         '</div>' +
       '</div>' +
     '</div>';
