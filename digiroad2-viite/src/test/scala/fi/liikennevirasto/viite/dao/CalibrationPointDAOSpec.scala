@@ -41,11 +41,11 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser")
     ProjectDAO.reserveRoadPart(2, 2, 1, "TestUser")
     sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,created_by,
-          SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,20000286,'automatedtest',
-          1, 0, 208.951, 388554142, 1610995, 0, 1)""".execute
+          LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,'automatedtest',
+          NULL, 1, 0, 208.951, 1610995, 0, 1)""".execute
     sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,created_by,
-          LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,20000286,'automatedtest',
-          1, 0, 208.951, 388554142, 1610995, 0, 1)""".execute
+          LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,'automatedtest',
+          NULL, 1, 0, 208.951, 1610995, 0, 1)""".execute
   }
 
   test("Creating calibrationPoints") {
