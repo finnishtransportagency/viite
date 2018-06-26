@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.dao
 import java.sql.{PreparedStatement, Timestamp}
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -148,6 +149,14 @@ trait BaseRoadAddress {
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
     (startAddrMValue >= ra.startAddrMValue && startAddrMValue <= ra.endAddrMValue) || (endAddrMValue <= ra.endAddrMValue && endAddrMValue >= ra.startAddrMValue)
+  }
+
+  def connected(ra2: BaseRoadAddress): Boolean = {
+    val connectingPoint = sideCode match {
+      case AgainstDigitizing => geometry.head
+      case _ => geometry.last
+    }
+    GeometryUtils.areAdjacent(ra2.geometry, connectingPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 }
 
