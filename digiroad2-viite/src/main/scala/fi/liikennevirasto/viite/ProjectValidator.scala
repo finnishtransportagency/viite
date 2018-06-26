@@ -266,7 +266,7 @@ object ProjectValidator {
         checkProjectContinuity,
         checkForNotHandledLinks,
         checkForInvalidUnchangedLinks,
-        checkTrackCode,
+        checkTrackCodePairing,
         checkRemovedEndOfRoadParts,
         checkProjectElyCodes
       )
@@ -313,7 +313,7 @@ object ProjectValidator {
     }
   }
 
-  def checkTrackCode(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+  def checkTrackCodePairing(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
 

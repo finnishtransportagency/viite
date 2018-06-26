@@ -350,7 +350,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated)).zip(roadAddress).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
         roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject).distinct
+      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject, Seq()).distinct
       errors should have size 0
     }
   }
@@ -377,13 +377,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated)).zip(Seq(roadAddress)).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
         roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject).distinct
+      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject, Seq()).distinct
       errors should have size 1
       errors.head.validationError.value should be(TerminationContinuity.value)
       val projectLinks = ProjectDAO.getProjectLinks(id, Some(LinkStatus.Terminated)).map(_.copy(discontinuity = EndOfRoad, status = LinkStatus.UnChanged))
       ProjectDAO.updateProjectLinksToDB(projectLinks, "U")
       val updProject2 = ProjectDAO.getRoadAddressProjectById(project.id).get
-      ProjectValidator.checkRemovedEndOfRoadParts(updProject2).distinct should have size 0
+      ProjectValidator.checkRemovedEndOfRoadParts(updProject2, Seq()).distinct should have size 0
     }
   }
 
@@ -523,7 +523,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   test("project track codes should be consistent") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
-      val validationErrors = ProjectValidator.checkTrackCode(project, projectLinks)
+      val validationErrors = ProjectValidator.checkTrackCodePairing(project, projectLinks)
       validationErrors.size should be(0)
     }
   }
@@ -536,7 +536,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           l.copy(track = Track.LeftSide)
         else l
       }
-      val validationErrors = ProjectValidator.checkTrackCode(project, inconsistentLinks).distinct
+      val validationErrors = ProjectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
       validationErrors.size should be(1)
     }
   }
@@ -549,7 +549,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           l.copy(startAddrMValue = 5)
         else l
       }
-      val validationErrors = ProjectValidator.checkTrackCode(project, inconsistentLinks).distinct
+      val validationErrors = ProjectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
       validationErrors.size should be(1)
     }
   }
@@ -557,7 +557,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   test("project track codes should be consistent when adding one simple link with track Combined") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
-      val validationErrors = ProjectValidator.checkTrackCode(project, projectLinks).distinct
+      val validationErrors = ProjectValidator.checkTrackCodePairing(project, projectLinks).distinct
       validationErrors.size should be(0)
     }
   }
