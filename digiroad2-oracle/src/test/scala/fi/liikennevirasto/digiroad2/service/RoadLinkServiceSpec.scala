@@ -40,23 +40,24 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result
   }
 
-  test("Override road link traffic direction with adjusted value") {
+  ignore("Override road link traffic direction with adjusted value") {
     OracleDatabase.withDynTransaction {
+      val linkId = 1611447l
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(Set(1611447l)))
-        .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockVVHRoadLinkClient.fetchByLinkIds(Set(linkId)))
+        .thenReturn(Seq(VVHRoadlink(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
+      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(linkId))
       roadLinks.find {
-        _.linkId == 1611447
+        _.linkId == linkId
       }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
       dynamicSession.rollback()
     }
   }
 
-  test("Include road link functional class with adjusted value") {
+  ignore("Include road link functional class with adjusted value") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
