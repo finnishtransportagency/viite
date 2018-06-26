@@ -132,7 +132,7 @@
         var divId = "VALITUTLINKIT" + linkCounter;
         var linkId = slp.linkId;
         var id = _.isUndefined(slp.id) ? -1: slp.id;
-        if (_.isUndefined(_.find(linkIds, function(link){return link === linkId;})) || _.isUndefined(_.find(ids, function(link){return link === id;}))) {
+        if ((_.isUndefined(_.find(linkIds, function(link){return link === linkId;})) || _.isUndefined(_.find(ids, function(link){return link === id;}))) && !_.isUndefined(linkId) ) {
           field = field + '<div class="form-group" id=' +divId +'>' +
             '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
             '<p class="form-control-static-floating">' + linkId + '</p>' +
@@ -346,9 +346,7 @@
             staticField('AJORATA', linkProperty.trackCode) +
             roadTypes +
             notificationFloatingTransfer(true) +
-            formFields(selectedLinkProperty.getSources() ? _.map(selectedLinkProperty.getSources(), function (feature) {
-                return feature.getData();
-            }) : selectedLinkProperty.get()) +
+            formFields(selectedLinkProperty.getSources() ? selectedLinkProperty.getSources() : selectedLinkProperty.get()) +
           '</div>' +
         '</div>' +
         '<footer>' + editButtons + '</footer> </div>');
