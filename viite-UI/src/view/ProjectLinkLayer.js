@@ -303,21 +303,8 @@
     };
     
     var clearHighlights = function () {
-      if (applicationModel.getSelectedTool() == 'Cut') {
-        if (selectDoubleClick.getFeatures().getLength() !== 0) {
-          selectDoubleClick.getFeatures().clear();
-        }
-        if (selectSingleClick.getFeatures().getLength() !== 0) {
-          selectSingleClick.getFeatures().clear();
-        }
-      } else {
-        if (selectDoubleClick.getFeatures().getLength() !== 0) {
-          selectDoubleClick.getFeatures().clear();
-        }
-        if (selectSingleClick.getFeatures().getLength() !== 0) {
-          selectSingleClick.getFeatures().clear();
-        }
-      }
+      selectDoubleClick.getFeatures().clear();
+      selectSingleClick.getFeatures().clear();
     };
 
     var clearLayers = function () {
@@ -834,7 +821,7 @@
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
     });
 
-    me.redraw = function () {
+    var redraw = function () {
       var ids = {};
       _.each(selectedProjectLinkProperty.get(), function (sel) {
         ids[sel.linkId] = true;
@@ -991,7 +978,7 @@
 
     eventbus.on('roadAddressProject:fetched', function () {
       applicationModel.removeSpinner();
-      me.redraw();
+      redraw();
       _.defer(function () {
         highlightFeatures();
         if (selectedProjectLinkProperty.isSplit()) {
@@ -1001,7 +988,7 @@
     });
 
     eventbus.on('roadAddress:projectLinksEdited', function () {
-      me.redraw();
+      redraw();
     });
 
     eventbus.on('roadAddressProject:projectLinkSaved', function (projectId, isPublishable) {
