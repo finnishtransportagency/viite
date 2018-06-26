@@ -222,7 +222,9 @@ object RoadAddressDAO {
         (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
         from ROAD_ADDRESS ra
         where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
-          ra.terminated = 0 and ra.end_date is null
+          ra.terminated = 0 and
+          ra.valid_to is null and
+          ra.end_date is null
       """
       queryList(query)
     }
@@ -355,7 +357,8 @@ object RoadAddressDAO {
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        $where $floating $history $current $valid $idFilter and t.id < t2.id
+        $where $floating $history $current $valid $idFilter and t.id < t2.id and
+           valid_to is null
       """
       queryList(query)
     }
@@ -397,7 +400,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         $networkWhere
-        $where $historyFilter and t.id < t2.id
+        $where $historyFilter and t.id < t2.id and
+          ra.valid_to is null
       """
       queryList(query)
     }
@@ -436,7 +440,8 @@ object RoadAddressDAO {
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        $where AND $geomFilter $coarseWhere AND ra.floating='0' and t.id < t2.id
+        $where AND $geomFilter $coarseWhere AND ra.floating='0' and t.id < t2.id and
+          valid_to is null
       """
       queryList(query)
      }
@@ -465,7 +470,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join $idTableName i on i.id = ra.link_id
-        where t.id < t2.id $floating $history
+        where t.id < t2.id $floating $history and
+          valid_to is null
       """
           queryList(query)
       }
@@ -499,7 +505,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join $idTableName i on i.id = ra.link_id
         $networkWhere
-        where t.id < t2.id $historyFilter
+        where t.id < t2.id and
+          ra.valid_to is null $historyFilter
       """
           queryList(query)
       }
@@ -529,7 +536,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join $idTableName i on i.id = ra.id
-        where t.id < t2.id $floating $history
+        where t.id < t2.id $floating $history and
+          valid_to is null
       """
           queryList(query)
       }
@@ -550,7 +558,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         where t.id < t2.id AND ra.road_number = $roadNumber AND ra.road_part_number = $roadPartNumber AND
-         ra.track_code = ${track.value} $startFilter $endFilter
+         ra.track_code = ${track.value} and
+          valid_to is null $startFilter $endFilter
       """
     queryList(query).headOption
   }
@@ -682,7 +691,8 @@ object RoadAddressDAO {
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        where $floating ra.road_number = $roadNumber AND t.id < t2.id
+        where $floating ra.road_number = $roadNumber AND t.id < t2.id and
+        valid_to is null
         ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m
       """
       queryList(query)
@@ -702,7 +712,8 @@ object RoadAddressDAO {
           from ROAD_ADDRESS ra cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-          where t.id < t2.id and ra.floating = 1 $history
+          where t.id < t2.id and ra.floating = 1 $history and
+          valid_to is null
           order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
       """
       queryList(query)
@@ -739,10 +750,12 @@ object RoadAddressDAO {
         where ra.link_id in (
           select link_id
           from ROAD_ADDRESS
-          where road_number = $roadNumber
+          where road_number = $roadNumber and
+          valid_to is null
           GROUP BY link_id
           HAVING COUNT(*) > 1) AND
-        ra.road_number = $roadNumber
+        ra.road_number = $roadNumber and
+          valid_to is null
       """
       queryList(query)
     }
@@ -1120,7 +1133,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join $idTableName i on i.id = ra.link_id
-        where ra.floating='1' and t.id < t2.id
+        where ra.floating='1' and t.id < t2.id and
+          valid_to is null
       """
           queryList(query)
       }
@@ -1148,7 +1162,8 @@ object RoadAddressDAO {
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        $where AND ra.floating='1' and t.id < t2.id
+        $where AND ra.floating='1' and t.id < t2.id and
+          valid_to is null
       """
       queryList(query)
     }
@@ -1229,7 +1244,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join $idTableName i on i.id = ra.id
-        where t.id < t2.id $historyFilter $terminatedFilter
+        where t.id < t2.id $historyFilter $terminatedFilter and
+          valid_to is null
       """
           queryList(query)
       }
@@ -1367,7 +1383,8 @@ object RoadAddressDAO {
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        where t.id < t2.id and ra.terminated = 0 and ra.end_date is null and ra.floating = '0' $road"""
+        where t.id < t2.id and
+          valid_to is null and ra.terminated = 0 and ra.end_date is null and ra.floating = '0' $road"""
       queryList(query)
     }
   }
@@ -1527,7 +1544,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         where t.id < t2.id and
-          ra.floating = 0 and ra.ely = $ely $current"""
+          ra.floating = 0 and valid_to is null and ra.ely = $ely $current"""
       queryList(query)
     }
   }
