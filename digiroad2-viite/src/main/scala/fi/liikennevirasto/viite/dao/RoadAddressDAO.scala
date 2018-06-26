@@ -272,7 +272,6 @@ object RoadAddressDAO {
     }
   }
 
-  // TODO REMOVE?
   implicit val getRoadAddress= new GetResult[RoadAddress]{
     def apply(r: PositionedResult) = {
 
