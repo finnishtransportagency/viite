@@ -178,9 +178,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         filterNot(_._2.isEmpty).foreach {
         case ((roadNumber, roadPartNumber), value) =>
           val (startDate, endDate) = value.map(v => (v._6, v._7)).get
-          if (startDate.nonEmpty && startDate.get.isEqual(date) && endDate.isEmpty)
-            return Option(s"TIE $roadNumber OSA $roadPartNumber ei ole vapaana projektin alkupäivämääränä. " +
-              s"Tieosoitteen alkupäivämäärä on sama kuin projektin alkupäivämäärä.")
           if (startDate.nonEmpty && startDate.get.isAfter(date))
             return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
               s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +

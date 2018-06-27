@@ -667,7 +667,7 @@ object RoadAddressDAO {
          road_address ra
          join lrm_position pos on ra.lrm_position_id = pos.id
          where  pro.id = $projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
-         (ra.START_DATE >= pro.START_DATE or ra.END_DATE > pro.START_DATE) AND
+         (ra.START_DATE > pro.START_DATE or ra.END_DATE > pro.START_DATE) AND
          ra.VALID_TO is null) OR EXISTS (
          SELECT 1 FROM project_reserved_road_part pro, road_address ra JOIN lrm_position pos ON ra.lrm_position_id = pos.id
           WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number

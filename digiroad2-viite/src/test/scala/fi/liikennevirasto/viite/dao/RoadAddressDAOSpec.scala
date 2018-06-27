@@ -316,7 +316,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Roadnumber and roadpart not available because start date equals project date (2b)") {
+  test("Roadnumber and roadpart available because start date equals project date (2b)") {
+    // Update: after VIITE-1411 we can have start date equal to project date
     runWithRollback {
       val id3 = Sequences.nextViitePrimaryKeySeqValue
       val rap3 = RoadAddressProject(id3, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1962-11-01"),
@@ -325,7 +326,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       // Check that the DB contains the start date
       RoadAddressDAO.fetchByRoadPart(5, 207).flatMap(_.startDate.map(_.toDate)).min should be (DateTime.parse("1962-11-01").toDate)
       val reserved3 = RoadAddressDAO.isNotAvailableForProject(5,207,id3)
-      reserved3 should be (true)
+      reserved3 should be (false)
     }
   }
 
