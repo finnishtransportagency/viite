@@ -853,7 +853,6 @@ object RoadAddressDAO {
         WHERE id = ${roadAddress.id}""".execute
   }
 
-  // TODO
   def createMissingRoadAddress (mra: MissingRoadAddress) = {
     val (p1, p2) = (mra.geom.head, mra.geom.last)
 
