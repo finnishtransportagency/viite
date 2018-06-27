@@ -1677,9 +1677,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def roadAddressHistoryCorrections(projectLinks: Seq[ProjectLink]): Map[Long, RoadAddress] = {
     val roadAddresses = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet, rejectInvalids = false)
-    val startDates = projectLinks.filter(_.startDate.isDefined).map(_.startDate.get.getMillis)
+    val startDates = projectLinks.filter(_.startDate.isDefined).map(_.startDate.get)
     roadAddresses.filter(ra => {
-      ra.startDate.isDefined && startDates.contains(ra.startDate.get.getMillis)
+      ra.startDate.isDefined && startDates.exists(startDate => {
+        startDate.getDayOfMonth() == ra.startDate.get.getDayOfMonth && startDate.getMonthOfYear() == ra.startDate.get.getMonthOfYear() && startDate.getYear() == ra.startDate.get.getYear()
+      })
     }).map(ra => ra.id -> ra).toMap
   }
 
