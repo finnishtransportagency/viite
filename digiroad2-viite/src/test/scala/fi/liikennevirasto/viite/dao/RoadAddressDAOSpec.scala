@@ -387,7 +387,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("New roadnumber and roadpart number not reservable if it's going to exist in the future (5b)") {
+  test("New roadnumber and roadpart number reservable if it's going to exist in the future (5b)") {
     runWithRollback {
       createRoadAddress8888(Option.apply(DateTime.parse("1975-01-01")))
       val id9 = Sequences.nextViitePrimaryKeySeqValue
@@ -395,7 +395,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
         "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap9)
       val reserved9 = RoadAddressDAO.isNotAvailableForProject(8888, 1, id9)
-      reserved9 should be(true)
+      reserved9 should be(false)
     }
   }
 
