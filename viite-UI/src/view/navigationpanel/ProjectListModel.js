@@ -194,15 +194,15 @@
                     '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             switch (proj.statusCode) {
               case projectStatus.ErrorInViite.value:
-                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden" data-projectStatus=' + proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
+                  html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden" data-projectStatus="' + proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
                     '</tr>';
                 break;
               case projectStatus.ErroredInTR.value:
-                  html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus=' + proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
+                  html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
                     '</tr>';
                 break;
               default:
-                  html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus=' + proj.statusCode + '">Avaa</button>' + '</td>' +
+                  html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button>' + '</td>' +
                     '</tr>';
             }
             uniqueId = uniqueId + 1;
@@ -211,7 +211,7 @@
           $('#project-list').html(html);
           $('[id*="open-project"]').click(function(event) {
               if (parseInt($(this).attr("data-projectStatus")) === projectStatus.SendingToTR.value) {
-                  new GenericConfirmPopup("Avamaamalla tämän projektin sen tila muuttuu Keskeneräiseksi. Haluatko varmasti avata sen?", {
+                  new GenericConfirmPopup("Avaamalla tämän projektin sen tila muuttuu Keskeneräiseksi. Haluatko varmasti avata sen?", {
                       successCallback: function () {
                           triggerOpening(event);
                       },
