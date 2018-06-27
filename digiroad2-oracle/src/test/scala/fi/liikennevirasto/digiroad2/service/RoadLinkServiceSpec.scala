@@ -40,30 +40,35 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result
   }
 
-  ignore("Override road link traffic direction with adjusted value") {
+  test("Override road link traffic direction with adjusted value") {
     OracleDatabase.withDynTransaction {
-      val linkId = 1611447l
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(Set(linkId)))
-        .thenReturn(Seq(VVHRoadlink(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(Set(1611447l)))
+        .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
       val service = new TestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(linkId))
+      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
       roadLinks.find {
-        _.linkId == linkId
+        _.linkId == 1611447
       }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
       dynamicSession.rollback()
     }
   }
 
-  ignore("Include road link functional class with adjusted value") {
+  test("Include road link functional class with adjusted value") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(Set(1611447l)))
         .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
       val service = new TestService(mockVVHClient)
       val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
       roadLinks.find {_.linkId == 1611447}.map(_.functionalClass) should be(Some(4))
