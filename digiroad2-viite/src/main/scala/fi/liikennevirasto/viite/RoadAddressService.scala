@@ -214,7 +214,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(link))
 
-    returningTopology ++ missingFloating.map(floating => floating.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
+    returningTopology ++ missingFloating.filterNot(link => returningTopology.map(_.linkId).contains(link.linkId)).map(floating => floating.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
 
   }
 

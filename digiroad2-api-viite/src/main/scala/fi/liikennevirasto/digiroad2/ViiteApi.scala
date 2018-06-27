@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressExcept
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, SendingToTR}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.SplitOptions
@@ -382,8 +383,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val sendStatus = writableProjectService.publishProject(projectID)
       if (sendStatus.validationSuccess && sendStatus.sendSuccess)
         Map("sendSuccess" -> true)
-      else
+      else if (sendStatus.errorMessage.getOrElse("").toLowerCase == failedToSendToTRMessage.toLowerCase) {
+        projectService.setProjectStatus(projectID, SendingToTR)
         Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
+      } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
     }
   }
 
@@ -583,6 +586,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/project/links/:projectId") {
+    val id: Long = params.get("projectId") match {
+      case Some(s) if s != "" && s.toLong != 0 => s.toLong
+      case _ => 0L
+    }
+    time(logger, s"GET request for /project/links/$id)") {
+      if (id == 0)
+        BadRequest("Missing mandatory 'projectId' parameter")
+      else {
+        projectService.getProjectLinks(id)
+      }
+    }
+  }
+
   delete("/project/trid/:projectId") {
     val projectId = params("projectId").toLong
     time(logger, s"DELETE request for /project/trid/$projectId") {
@@ -601,6 +618,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/getchangetable/$projectId") {
       val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
+      //TODO change UI to not override proj validator errors on change table call
       val changeTableData = projectService.getChangeProject(projectId).map(project =>
         Map(
           "id" -> project.id,
@@ -1021,7 +1039,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "newEly" -> reservedRoadPart.newEly,
       "newLength" -> reservedRoadPart.newLength,
       "newDiscontinuity" -> reservedRoadPart.newDiscontinuity.map(_.description),
-      "linkId" -> reservedRoadPart.startingLinkId,
+      "startingLinkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
     )
   }
