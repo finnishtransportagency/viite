@@ -644,7 +644,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   test("There should be a validation error when there is a road end on previous road part outside of project") {
     runWithRollback {
       RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
         floating = false, Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)))
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((1999L, 2L, "Test road")), discontinuity = Discontinuity.EndOfRoad)
       val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
@@ -656,7 +656,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   test("Validator should return MissingEndOfRoad validation error if any of the track codes on the end of a part are not End Of Road") {
     runWithRollback {
       val roadAddresses = Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
+        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
         floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((1999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
       ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(roadAddresses.head)))
@@ -701,7 +701,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     test("Validator should return MajorDiscontinuity validation error if any of the track codes on the end of a part are not End Of Road") {
       runWithRollback {
       val roadAddresses = Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
+        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
         floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L, 30L), roads = Seq((1999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
       ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(roadAddresses.head)))
