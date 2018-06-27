@@ -35,11 +35,11 @@
       };
     });
 
-    this.getProjectLinksById = _.throttle(function (projectId, callback) {
-        return $.getJSON('api/viite/project/links/' + projectId, function (data) {
-            return _.isFunction(callback) && callback(data);
-        });
-    }, 1000);
+      this.getProjectLinksById = _.throttle(function (projectId, callback) {
+          return $.getJSON('api/viite/project/links/' + projectId, function (data) {
+              return _.isFunction(callback) && callback(data);
+          });
+      }, 1000);
 
     this.revertChangesRoadlink = _.throttle(function (data, success, errorCallback) {
         $.ajax({
@@ -243,7 +243,7 @@
       if (loadingProject) {
         loadingProject.abort();
       }
-      loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
+        loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
         return _.isFunction(callback) && callback(data);
       });
       return loadingProject;
@@ -426,7 +426,7 @@
       return self;
     };
 
-    this.withLinkData = function (linkData, afterSaveLinkData) {
+      this.withLinkData = function (linkData, afterSaveLinkData) {
 
       var fetchedRoadLinkModels = function (fetchedRoadLinks) {
        return _.map(fetchedRoadLinks, function (roadLinkGroup) {
@@ -437,11 +437,11 @@
       };
       self.getRoadLinks = function (boundingBox, callback) {
         if (afterSave) {
-          callback(afterSaveLinkData);
+            callback(afterSaveLinkData);
         } else {
-          callback(linkData);
+            callback(linkData);
         }
-        eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
+          eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
       };
       return self;
     };
@@ -460,10 +460,10 @@
     };
 
     this.withFloatingAdjacents = function (selectedFloatingData, selectedUnknownData) {
-      self.getFloatingAdjacent= function (linkData, callback) {
-        if (linkData.linkId === 1718151 || linkData.linkId === 1718152) {
+        self.getFloatingAdjacent = function (linkData, callback) {
+            if (linkData.linkId === 1718151 || linkData.linkId === 1718152) {
           callback(selectedFloatingData);
-        } else if (linkData.linkId === 500130202) {
+            } else if (linkData.linkId === 500130202) {
           callback(selectedUnknownData);
         } else {
           callback([]);
