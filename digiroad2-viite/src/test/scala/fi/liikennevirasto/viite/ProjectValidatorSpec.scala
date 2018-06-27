@@ -698,9 +698,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
 
-  runWithRollback {
     test("Validator should return MajorDiscontinuity validation error if any of the track codes on the end of a part are not End Of Road") {
-
+      runWithRollback {
       val roadAddresses = Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
         0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
         floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
