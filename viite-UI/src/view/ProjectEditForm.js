@@ -46,7 +46,7 @@
       var selection = formCommon.selectedData(selected);
       return _.template('' +
         '<header>' +
-        formCommon.titleWithProjectName(project.name, projectCollection.getCurrentProject()) +
+        formCommon.title(project.name) +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
@@ -99,7 +99,7 @@
     var emptyTemplate = function(project) {
       return _.template('' +
         '<header>' +
-        formCommon.titleWithProjectName(project.name, projectCollection.getCurrentProject()) +
+        formCommon.titleWithEditingTool(project) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -304,7 +304,7 @@
         new ModalConfirm(result.toString());
       });
 
-      eventbus.on('roadAddressProject:discardChanges',function(){
+      eventbus.on('roadAddressProject:discardChanges', function () {
         cancelChanges();
       });
 
@@ -543,11 +543,6 @@
         rootElement.on('keyup', '#roadName', function () {
             checkInputs('.project-');
         });
-
-      eventbus.on('projectLink:mapClicked', function () {
-        rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
-         eventbus.trigger('roadAddressProject:writeProjectErrors') ;
-      });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
         eventbus.trigger('projectCollection:clickCoordinates', event, map);

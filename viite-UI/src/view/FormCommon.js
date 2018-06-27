@@ -5,14 +5,16 @@
     var Track = LinkValues.Track;
       var disabledInput = false;
 
-    var title = function() {
-      return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
+    var title = function(titleName) {
+      if (!titleName)
+        titleName = "Uusi tieosoiteprojekti";
+      return '<span class ="edit-mode-title">' + titleName +'</span>';
     };
 
-    var titleWithProjectName = function(projectName, project) {
-      return '<span class ="edit-mode-title">' + projectName + ' <i id="editProjectSpan" class="editSpan btn-edit-project fas fa-pencil-alt"' +
-        ' style="visibility:hidden" value="' + project.id + '"></i></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
+    var titleWithEditingTool = function(project) {
+      return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class="btn-edit-project fas fa-pencil-alt"' +
+        'value="' + project.id + '"></i></span>' +
+        '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></span>';
     };
 
     var addRoadNameField = function (name, isBlocked) {
@@ -204,12 +206,12 @@
     };
 
     var toggleAdditionalControls = function(){
-      $('[id^=editProject]').css('visibility', 'visible');
+      $('#editProjectSpan').css('visibility', 'visible');
       $('#closeProjectSpan').css('visibility', 'visible');
     };
 
     var hideEditAndCloseControls = function(){
-      $('[id^=editProject]').css('visibility', 'hidden');
+      $('#editProjectSpan').css('visibility', 'hidden');
       $('#closeProjectSpan').css('visibility', 'hidden');
     };
 
@@ -276,7 +278,7 @@
     };
 
     var coordButton = function(index, coordinates){
-      var html = '<button id='+index+' class="btn btn-primary projectErrorButton">Korjaa</button>';
+      var html = '<button id=' + index + ' class="btn btn-primary projectErrorButton">Korjaa</button>';
       return {index:index, html:html, coordinates:coordinates};
     };
 
@@ -334,7 +336,7 @@
       sendRoadAddressChangeButton: sendRoadAddressChangeButton,
       distanceValue: distanceValue,
       title: title,
-      titleWithProjectName: titleWithProjectName,
+      titleWithEditingTool: titleWithEditingTool,
       projectButtons: projectButtons,
       staticField: staticField,
       getProjectErrors:getProjectErrors
