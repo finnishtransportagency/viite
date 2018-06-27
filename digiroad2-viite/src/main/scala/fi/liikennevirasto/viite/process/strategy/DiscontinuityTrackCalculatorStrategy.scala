@@ -11,7 +11,7 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
   protected def getUntilDiscontinuity(seq: Seq[ProjectLink], discontinuity: Discontinuity): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => pl.discontinuity != discontinuity)
     val rest = seq.drop(continuousProjectLinks.size)
-    if(rest.nonEmpty && rest.head.discontinuity == discontinuity)
+    if (rest.nonEmpty && rest.head.discontinuity == discontinuity)
       (continuousProjectLinks :+ rest.head, rest.tail)
     else
       (continuousProjectLinks, rest)

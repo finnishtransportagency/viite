@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.{SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing}
-import fi.liikennevirasto.digiroad2.util.{ Track}
+import fi.liikennevirasto.digiroad2.util.{Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.{RampsMaxBound, RampsMinBound, RoadType}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint

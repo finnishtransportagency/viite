@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.dao
 import java.sql.{PreparedStatement, Timestamp}
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -140,7 +141,7 @@ trait BaseRoadAddress {
 
   def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
     val raCalibrationCode = getCalibrationCode
-    if(calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
+    if (calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
       raCalibrationCode == calibrationCode
     else
       raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
@@ -148,6 +149,14 @@ trait BaseRoadAddress {
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
     (startAddrMValue >= ra.startAddrMValue && startAddrMValue <= ra.endAddrMValue) || (endAddrMValue <= ra.endAddrMValue && endAddrMValue >= ra.startAddrMValue)
+  }
+
+  def connected(ra2: BaseRoadAddress): Boolean = {
+    val connectingPoint = sideCode match {
+      case AgainstDigitizing => geometry.head
+      case _ => geometry.last
+    }
+    GeometryUtils.areAdjacent(ra2.geometry, connectingPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 }
 
@@ -821,7 +830,7 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
-  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long) : Option[Long] = {
+  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
     val query =
       s"""
           SELECT * FROM (
@@ -1664,14 +1673,14 @@ object RoadAddressDAO {
    * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
    */
   def getRoadAddressCalibrationCode(roadAddressIds: Seq[Long]): Map[Long, CalibrationCode] = {
-    if(roadAddressIds.isEmpty){
+    if (roadAddressIds.isEmpty) {
       Map()
     } else {
       val query =
         s"""SELECT ra.id, ra.calibration_points
                     FROM road_address ra
                     WHERE ra.id in (${roadAddressIds.mkString(",")})"""
-      Q.queryNA[(Long, Int)](query).list.map{
+      Q.queryNA[(Long, Int)](query).list.map {
         case (id, code) => id -> CalibrationCode(code)
       }.toMap
     }
