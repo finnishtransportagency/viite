@@ -1941,7 +1941,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  // TODO
   test("Transfer the rest of the part 2 and then the last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part") {
 
     runWithRollback {
