@@ -33,6 +33,7 @@ trait RoadAddressSectionCalculatorStrategy {
 
   /**
     * Check if the current strategy can be applied for the specified project links
+    *
     * @param projectLinks The project links on the same road part
     * @return Returns true if the strategy should be applied
     */
@@ -40,8 +41,9 @@ trait RoadAddressSectionCalculatorStrategy {
 
   /**
     * Recalculate and assign all the address measures for all the given project links
-    * @param newProjectLinks Project links that DOESN'T exists on the road address network
-    * @param oldProjectLinks Project links that already exists on the road address network
+    *
+    * @param newProjectLinks       Project links that DOESN'T exists on the road address network
+    * @param oldProjectLinks       Project links that already exists on the road address network
     * @param userCalibrationPoints User defined calibration points
     * @return Returns all the project links with recalculated measures
     */
