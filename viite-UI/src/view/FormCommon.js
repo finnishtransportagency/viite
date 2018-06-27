@@ -14,7 +14,7 @@
     var titleWithEditingTool = function(project) {
       return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class="btn-edit-project fas fa-pencil-alt"' +
         'value="' + project.id + '"></i></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></span>';
+        '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
     var addRoadNameField = function (name, isBlocked) {
