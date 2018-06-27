@@ -449,7 +449,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(saved.id, Set(), linkIds206.toSeq, LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       projectService.isProjectPublishable(saved.id) should be(true)
 
-      val changeProjectOpt = projectService.getChangeProject(saved.id)
+      val changeProjectOpt = projectService.getChangeProjectInTX(saved.id)
       changeProjectOpt.map(_.changeInfoSeq).getOrElse(Seq()) should have size (5)
 
       val change = changeProjectOpt.get
@@ -477,6 +477,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       change.changeInfoSeq.foreach(_.changeType should be(Termination))
       change.changeInfoSeq.foreach(_.discontinuity should be(Discontinuity.Continuous))
+
       // TODO: When road types are properly generated
       //      change.changeInfoSeq.foreach(_.roadType should be(RoadType.UnknownOwnerRoad))
     }
@@ -484,6 +485,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
+
   test("add nonexisting roadlink to project") {
     runWithRollback {
       val idr = RoadAddressDAO.getNextRoadAddressId
