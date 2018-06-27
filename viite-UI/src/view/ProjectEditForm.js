@@ -328,18 +328,13 @@
           return obj.description === statusDropdown_1;
         });
 
-        console.log(projectCollection.getProjectErrors());
         if (object_0.value === LinkStatus.Revert.value) {
-          console.log("revert");
           projectCollection.revertChangesRoadlink(selectedProjectLink);
         } else if (!_.isUndefined(object_1)) {
-          console.log("save cut");
           projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), object_0.value, object_1.value);
         } else {
-          console.log("save");
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), object_0.value);
         }
-        console.log(projectCollection.getProjectErrors());
       };
 
       var cancelChanges = function() {
