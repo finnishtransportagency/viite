@@ -293,7 +293,7 @@ object ProjectDAO {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
         "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
         "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=? WHERE id = ?")
+        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=? WHERE id = ?")
 
       for (projectLink <- links) {
         projectLinkPS.setLong(1, projectLink.roadNumber)
@@ -313,8 +313,7 @@ object ProjectDAO {
         projectLinkPS.setInt(15, projectLink.sideCode.value)
         projectLinkPS.setDouble(16, projectLink.startMValue)
         projectLinkPS.setDouble(17, projectLink.endMValue)
-        projectLinkPS.setInt(18, projectLink.track.value)
-        projectLinkPS.setLong(19, projectLink.id)
+        projectLinkPS.setLong(18, projectLink.id)
         projectLinkPS.addBatch()
       }
       projectLinkPS.executeBatch()
@@ -987,7 +986,7 @@ object ProjectDAO {
     sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT ID,
        PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M,
        END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE,
-       STATUS, CALIBRATION_POINTS, ROAD_TYPE, LANE_CODE, SIDE_CODE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE
+       STATUS, CALIBRATION_POINTS, ROAD_TYPE, SIDE_CODE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE
        FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
     sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""".execute
