@@ -25,9 +25,9 @@ object TrackCalculatorContext {
 
   private val strategies = Seq(discontinuityTrackCalculatorStrategy, linkStatusChangeTrackCalculatorStrategy)
 
-  def getNextStrategy(projectLinks: Seq[ProjectLink]) : Option[(Long, TrackCalculatorStrategy)] = {
+  def getNextStrategy(projectLinks: Seq[ProjectLink]): Option[(Long, TrackCalculatorStrategy)] = {
     val head = projectLinks.head
-    projectLinks.flatMap{
+    projectLinks.flatMap {
       pl =>
         strategies.find(strategy => strategy.applicableStrategy(head, pl)) match {
           case Some(strategy) => Some(pl.endAddrMValue, strategy)
@@ -46,7 +46,7 @@ object TrackCalculatorContext {
     //apply the strategy that comes first on the address
 
     (leftStrategy, rightStrategy) match {
-      case (Some(ls), Some(rs)) => if(rs._1 <= ls._1) rs._2 else ls._2
+      case (Some(ls), Some(rs)) => if (rs._1 <= ls._1) rs._2 else ls._2
       case (Some(ls), _) => ls._2
       case (_, Some(rs)) => rs._2
       case _ => defaultTrackCalculatorStrategy
@@ -63,11 +63,12 @@ trait TrackCalculatorStrategy {
 
   /**
     * Split the project link at the specified address
-    * @param pl Project link
+    *
+    * @param pl      Project link
     * @param address Address measure
     * @return Returns two project links, the existing one with changed measures and a new one
     */
-  protected def splitAt(pl: ProjectLink, address: Long) : (ProjectLink, ProjectLink) = {
+  protected def splitAt(pl: ProjectLink, address: Long): (ProjectLink, ProjectLink) = {
     val coefficient = (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
     val splitMeasure = pl.startMValue + ((pl.startAddrMValue - address) * coefficient)
     (
@@ -81,8 +82,9 @@ trait TrackCalculatorStrategy {
     * If the right side is greater then left side returns the largest (closest to positive infinity) value
     * If the left side is less then the right side returns the smallest (closest to negative infinity) value
     * NOTE: If we have the reversed set to true the previous conditions are inverted
-    * @param rAddrM Left address measure
-    * @param lAddrM Right address measure
+    *
+    * @param rAddrM   Left address measure
+    * @param lAddrM   Right address measure
     * @param reversed True if the road was reverted
     * @return Returns te average between two measures
     */
@@ -98,10 +100,11 @@ trait TrackCalculatorStrategy {
 
   /**
     * Recalculate all project links and assign new measures, depending on the start and end measures given as parameters
-    * @param seq Project links to be recalculated
-    * @param st Start address measure
-    * @param en End address measure
-    * @param factor All the factors, that will be used to get the coefficient for project link measures with status NEW
+    *
+    * @param seq                         Project links to be recalculated
+    * @param st                          Start address measure
+    * @param en                          End address measure
+    * @param factor                      All the factors, that will be used to get the coefficient for project link measures with status NEW
     * @param userDefinedCalibrationPoint Defined calibration point, that will be used to set project link measure with status NEW
     * @return Returns all the given project links with recalculated measures
     */
@@ -125,7 +128,7 @@ trait TrackCalculatorStrategy {
         (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
       case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
         (leftLink.startAddrMValue, leftLink.endAddrMValue)
-      case (_ , LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
+      case (_, LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
         (rightLink.startAddrMValue, rightLink.endAddrMValue)
       case _ =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
@@ -164,7 +167,7 @@ trait TrackCalculatorStrategy {
       case 1 =>
         projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true))
       case _ =>
-        val pls = projectlinks.map{
+        val pls = projectlinks.map {
           pl =>
             val raCalibrationCode = raCalibrationPoints.get(pl.roadAddressId).getOrElse(CalibrationCode.No)
             val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
@@ -186,22 +189,22 @@ trait TrackCalculatorStrategy {
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < address)
 
-    if(continuousProjectLinks.isEmpty)
+    if (continuousProjectLinks.isEmpty)
       throw new RoadAddressException("Could not find any nearest road address")
 
     val lastProjectLink = continuousProjectLinks.last
-    if(continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(address - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(address - lastProjectLink.endAddrMValue))) {
+    if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(address - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(address - lastProjectLink.endAddrMValue))) {
       (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
     } else {
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
   }
 
-  def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) : (Seq[ProjectLink], Seq[ProjectLink]) = {
+  def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     //TODO this can be improved if we use the combine track
     val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
 
-    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadAddressId).filter(_>0).distinct)
+    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadAddressId).filter(_ > 0).distinct)
 
     (
       setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
@@ -210,6 +213,7 @@ trait TrackCalculatorStrategy {
   }
 
   def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = false
-  def assignTrackMValues(startAddress: Option[Long] , leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult
+
+  def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult
 
 }

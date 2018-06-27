@@ -74,7 +74,7 @@
       })
     });
 
-    var shiftDragZoom = new ol.interaction.DragZoom({
+      var shiftDragZoom = new ol.interaction.DragZoom({
       duration: 1500,
       condition: function(mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
@@ -90,8 +90,8 @@
       }
     }, this);
 
-    shiftDragZoom.setActive(true);
-    map.addInteraction(shiftDragZoom);
+      shiftDragZoom.setActive(true);
+      map.addInteraction(shiftDragZoom);
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
     return map;
   };
