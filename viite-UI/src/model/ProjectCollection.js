@@ -200,6 +200,8 @@
           if (response.success) {
             dirtyProjectLinkIds = [];
             publishableProject = response.publishable;
+            console.log("async");
+            console.log(response.projectErrors);
             projectErrors = response.projectErrors;
             eventbus.trigger('projectLink:revertedChanges');
           } else {
