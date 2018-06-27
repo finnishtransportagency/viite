@@ -762,21 +762,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getChangeProject(projectId: Long): Option[ChangeProject] = {
-    val changeProjectData = withDynTransaction {
-      try {
-        if (recalculateChangeTable(projectId)) {
-          val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
-        } else {
-          None
-        }
-      } catch {
-        case NonFatal(e) =>
-          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
-          None
-      }
+    withDynTransaction {
+      getChangeProjectInTX(projectId)
     }
-    changeProjectData
+  }
+
+  def getChangeProjectInTX(projectId: Long): Option[ChangeProject] = {
+    try {
+      if (recalculateChangeTable(projectId)) {
+        val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
+        Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
+      } else {
+        None
+      }
+    } catch {
+      case NonFatal(e) =>
+        logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+        None
+    }
   }
 
   def prettyPrintLog(roadAddressChanges: List[ProjectRoadAddressChange]) = {
