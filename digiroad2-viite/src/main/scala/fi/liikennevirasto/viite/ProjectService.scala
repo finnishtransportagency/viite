@@ -1669,6 +1669,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.create(roadsToCreate)
   }
 
+  /**
+    * Will check the road addresses for any whose startDate is the same as the startDates on the projectLinks, if any are found, then their ID's are returned to be expired
+    *
+    * @param projectLinks
+    * @return
+    */
+  def roadAddressHistoryCorrections(projectLinks: Seq[ProjectLink]): Map[Long, RoadAddress] = {
+    val roadAddresses = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet, rejectInvalids = false)
+    val startDates = projectLinks.filter(_.startDate.isDefined).map(_.startDate.get.getMillis)
+    roadAddresses.filter(ra => {
+      ra.startDate.isDefined && startDates.contains(ra.startDate.get.getMillis)
+    }).map(ra => ra.id -> ra).toMap
+  }
+
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
@@ -1682,7 +1696,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
-    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet, rejectInvalids = false).map(ra => ra.id -> ra).toMap
+    val expiringRoadAddressesFromReplacements = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet, rejectInvalids = false).map(ra => ra.id -> ra).toMap
+    val expiringRoadAddresses = roadAddressHistoryCorrections(projectLinks) ++ expiringRoadAddressesFromReplacements
     if (expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
