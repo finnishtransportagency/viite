@@ -28,7 +28,7 @@
     };
 
     this.getProjectLinks = function() {
-      return backend.getProjectLinksById(currentProject.project.id);
+        return backend.getProjectLinksById(currentProject.project.id);
     };
 
     this.getAll = function () {
@@ -56,7 +56,7 @@
     };
 
     this.getProjectLink = function (ids) {
-      return _.filter(projectLinks(), function (projectLink){
+        return _.filter(projectLinks(), function (projectLink) {
         if (projectLink.getData().id > 0) {
           return _.contains(ids, projectLink.getData().id);
         } else {
@@ -66,7 +66,7 @@
     };
 
 
-    this.fetch = function(boundingBox, zoom, projectId, isPublishable) {
+      this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
@@ -246,7 +246,7 @@
     var createOrUpdate = function(dataJson){
       if((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0){
         var ids = dataJson.ids;
-        if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 0){
+        if(dataJson.linkStatus === LinkStatus.New.value && ids.length === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
               new ModalConfirm(successObject.errorMessage);
@@ -698,7 +698,7 @@
           }
         });
       });
-      return errors;
+      return (!_.isUndefined(errors) && errors.length > 0) ? errors : [];
     };
 
     this.pushCoordinates = function(button) {

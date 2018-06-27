@@ -3,8 +3,8 @@
   root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
     var centerMarkerLayer = new ol.source.Vector({});
-    var enableCtrlModifier = false;
-    var metaKeyCodes = LinkValues.MetaKeyCodes;
+      var enableCtrlModifier = false;
+      var metaKeyCodes = LinkValues.MetaKeyCodes;
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -93,7 +93,7 @@
       if (layerToBeHidden) layerToBeHidden.hide(map);
       layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
-      enableCtrlModifier = (layer === "roadAddressProject");
+        enableCtrlModifier = (layer === "roadAddressProject");
     }, this);
 
     eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
@@ -140,12 +140,12 @@
     });
 
     $('body').on('keydown', function(evt){
-      if ((evt.ctrlKey || evt.metaKey) && enableCtrlModifier)
+        if ((evt.ctrlKey || evt.metaKey) && enableCtrlModifier)
         map.getViewport().style.cursor = "copy";
     });
 
     $('body').on('keyup', function(evt){
-      if (_.contains(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
+        if (_.contains(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
         map.getViewport().style.cursor = "initial";
     });
 

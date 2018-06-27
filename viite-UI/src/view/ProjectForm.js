@@ -168,14 +168,6 @@
       return '<label class="control-label-small">' + label + '</label>';
     };
 
-    var addLabel = function (label) {
-      return '<label>' + label+ ": " + '</label>';
-    };
-
-    var addLabelInfo = function (label) {
-      return '<label>' + label + '</label>';
-    };
-
     var addSmallLabelWithIds = function (label, id) {
       return '<label class="control-label-small" id=' + id + '>' + label + '</label>';
     };
@@ -374,8 +366,8 @@
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
         projectCollection.setReservedParts(result.projectLinks);
-        var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
-        var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
+          var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
+          var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('.modal-overlay').remove();
         setTimeout(function () {

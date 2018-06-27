@@ -394,7 +394,7 @@
           var feature = new ol.Feature({
             geometry: new ol.geom.LineString(points)
           });
-          feature.linkData = road;
+            feature.linkData = road;
           feature.projectId = projectId;
           return feature;
         });
