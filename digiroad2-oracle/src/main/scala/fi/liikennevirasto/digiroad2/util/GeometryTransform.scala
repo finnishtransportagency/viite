@@ -19,13 +19,17 @@ object Track {
     * @param track Track value to switch
     * @return
     */
-  def switch(track: Track) = {
+  def switch(track: Track): Track = {
     track match {
       case RightSide => LeftSide
       case LeftSide => RightSide
       case _ => track
     }
   }
+
+  def isTrackContinuous(prev: Track, next: Track): Boolean = {
+      prev == next || prev == Track.Combined || next == Track.Combined
+    }
 
   case object Combined extends Track { def value = 0 }
   case object RightSide extends Track { def value = 1 }
