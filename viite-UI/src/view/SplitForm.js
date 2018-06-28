@@ -240,7 +240,7 @@
       });
 
       eventbus.on('roadAddress:projectSentFailed', function (error) {
-          new ModalConfirm(error);
+        new ModalConfirm(error);
       });
 
       eventbus.on('projectLink:projectLinksSplitSuccess', function () {
