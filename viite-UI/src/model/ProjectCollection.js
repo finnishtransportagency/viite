@@ -21,7 +21,7 @@
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
-    var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.05;
+    var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
 
     var projectLinks = function() {
       return _.flatten(fetchedProjectLinks);
@@ -339,8 +339,8 @@
       }).last().value();
       var isNewRoad = changedLink.status == LinkStatus.New.value;
 
-      if (isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM)) {
-        new GenericConfirmPopup("Antamasi pituus eroaa yli 5% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
+      if(isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM)){
+        new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
             createOrUpdate(dataJson);
           },
