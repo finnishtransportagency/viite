@@ -84,14 +84,14 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         var featureFromProjectLayerTerminated = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717361);
         var featureFromProjectLayerNotReserved = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499896971);
         expect(featureFromProjectLayerNotHandled).to.not.be.undefined;
-        expect(featureFromProjectLayerNotHandled.linkData.linkId).to.be.equal(1717275);
-        expect(featureFromProjectLayerNotHandled.linkData.status).to.be.equal(0);
+          expect(featureFromProjectLayerNotHandled.linkData.linkId).to.be.equal(1717275);
+          expect(featureFromProjectLayerNotHandled.linkData.status).to.be.equal(0);
         expect(featureFromProjectLayerTerminated).to.not.be.undefined;
-        expect(featureFromProjectLayerTerminated.linkData.linkId).to.be.equal(1717361);
-        expect(featureFromProjectLayerTerminated.linkData.status).to.be.equal(1);
+          expect(featureFromProjectLayerTerminated.linkData.linkId).to.be.equal(1717361);
+          expect(featureFromProjectLayerTerminated.linkData.status).to.be.equal(1);
         expect(featureFromProjectLayerNotReserved).to.not.be.undefined;
-        expect(featureFromProjectLayerNotReserved.linkData.linkId).to.be.equal(499896971);
-        expect(featureFromProjectLayerNotReserved.linkData.status).to.be.equal(99);
+          expect(featureFromProjectLayerNotReserved.linkData.linkId).to.be.equal(499896971);
+          expect(featureFromProjectLayerNotReserved.linkData.status).to.be.equal(99);
       });
 
     });

@@ -138,7 +138,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
 
-  def toMeters(address: Long) : Double = {
+  def toMeters(address: Long): Double = {
     val coefficient = (endMValue - startMValue) / (endAddrMValue - startAddrMValue)
     coefficient * address
   }

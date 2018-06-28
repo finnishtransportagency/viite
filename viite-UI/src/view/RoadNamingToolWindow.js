@@ -106,35 +106,35 @@
         return {'fieldDate': fieldDate, 'futureDate': futureDate};
       };
 
-      var isValidDate = function(dateString) {
-        var dates = getDateObjects(dateString);
-        var splitDateString = dateString.split(".");
+        var isValidDate = function (dateString) {
+            var dates = getDateObjects(dateString);
+            var splitDateString = dateString.split(".");
 
-        var day = parseInt(splitDateString[0], 10);
-        var month = parseInt(splitDateString[1], 10);
-        var year = parseInt(splitDateString[2], 10);
+            var day = parseInt(splitDateString[0], 10);
+            var month = parseInt(splitDateString[1], 10);
+            var year = parseInt(splitDateString[2], 10);
 
-        var monthLength = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
-        //Check for leap year
-        if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0))
-          monthLength[1] = 29;
+            var monthLength = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            //Check for leap year
+            if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0))
+                monthLength[1] = 29;
 
-        var dateValidation = dates.futureDate > dates.fieldDate;
-        var sizeValidation = splitDateString.length === 3 && _.last(splitDateString).length === 4;
-        var dayValidation = day > 0 && day <= monthLength[month - 1];
-        var monthValidation = month > 0 && month <= 12;
+            var dateValidation = dates.futureDate > dates.fieldDate;
+            var sizeValidation = splitDateString.length === 3 && _.last(splitDateString).length === 4;
+            var dayValidation = day > 0 && day <= monthLength[month - 1];
+            var monthValidation = month > 0 && month <= 12;
 
-        return dateString !== '' && dateValidation && sizeValidation && dayValidation && monthValidation;
-      };
+            return dateString !== '' && dateValidation && sizeValidation && dayValidation && monthValidation;
+        };
 
         function toggleSaveButton() {
             $('#saveChangedRoads').prop("disabled",
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
-                  var dateString = $(element).val();
-                  if ($(element).attr('data-FieldName') === "startDate")
-                    return isValidDate(dateString);
-                  else
-                    return dateString !== '';
+                    var dateString = $(element).val();
+                    if ($(element).attr('data-FieldName') === "startDate")
+                        return isValidDate(dateString);
+                    else
+                        return dateString !== '';
                 })
             );
         }
@@ -156,9 +156,9 @@
                     }
 
                     if (isValidDate(fieldValue))
-                      target.css('color', 'black');
+                        target.css('color', 'black');
                     else
-                      target.css('color', 'red');
+                        target.css('color', 'red');
                     roadNameCollection.setStartDate(roadId, fieldValue);
                     break;
             }
