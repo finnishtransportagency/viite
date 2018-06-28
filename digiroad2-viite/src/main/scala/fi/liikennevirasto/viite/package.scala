@@ -102,6 +102,9 @@ package object viite {
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
   val failedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui"
+  val trMessageRefusal = s"<TO BE REPLACED> Message arrived at TR's endpoint but it was rejected by it. Please contact the administrator."
+  val trUnreachableMessage = s"<TO BE REPLACED> Could not deliver a message to TR's endpoint but it was rejected by it. Please contact the administrator."
+  val genericViiteErrorMessage = s"<TO BE REPLACED> Viite encountered a error when trying to send to TR. Please contact the administrator."
 
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
