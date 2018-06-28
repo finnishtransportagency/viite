@@ -277,8 +277,7 @@
       });
 
       eventbus.on('roadAddress:projectSentFailed', function(error) {
-          if (error !== "")
-              new ModalConfirm(error);
+          new ModalConfirm(error);
       });
 
       eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
