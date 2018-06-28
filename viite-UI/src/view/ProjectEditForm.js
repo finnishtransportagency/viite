@@ -321,19 +321,19 @@
         var statusDropdown_0 =$('#dropdown_0').val();
         var statusDropdown_1 = $('#dropdown_1').val();
 
-        var object_0 = _.find(LinkStatus, function(obj){
+        var objectDropdown_0 = _.find(LinkStatus, function(obj){
           return obj.description === statusDropdown_0;
         });
-        var object_1 = _.find(LinkStatus, function(obj){
+        var objectDropdown_1 = _.find(LinkStatus, function(obj){
           return obj.description === statusDropdown_1;
         });
 
-        if (object_0.value === LinkStatus.Revert.value) {
+        if (objectDropdown_0.value === LinkStatus.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
-        } else if (!_.isUndefined(object_1)) {
-          projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), object_0.value, object_1.value);
+        } else if (!_.isUndefined(objectDropdown_1)) {
+          projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, objectDropdown_1.value);
         } else {
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), object_0.value);
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value);
         }
       };
 
