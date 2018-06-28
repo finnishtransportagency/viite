@@ -69,14 +69,15 @@ object CommonHistoryFiller {
 
   /**
     * Copy the common history id from opposite track code of a transferred part to the new part
-    * @param projectLinks The project links
+    *
+    * @param projectLinks     The project links
     * @param newRoadAddresses The new road address
     * @return
     */
   private def applyTransferToNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val transferredLinks = projectLinks.filter(pl => pl.status == LinkStatus.Transfer && (pl.track == Track.RightSide || pl.track == Track.LeftSide))
     val (newerRoadAddresses, rest) = newRoadAddresses.partition(ra => ra.id == NewRoadAddress && (ra.track == Track.RightSide || ra.track == Track.LeftSide))
-    newerRoadAddresses.map{
+    newerRoadAddresses.map {
       ra =>
         val transferredOption = transferredLinks.find(pl => pl.track == Track.switch(ra.track) && pl.liesInBetween(ra))
         transferredOption match {

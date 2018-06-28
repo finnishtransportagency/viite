@@ -1,7 +1,7 @@
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
     var projectStatus = LinkValues.ProjectStatus;
-    var statusToDisplay = LinkValues.ProjectStatusToDisplay;
+      var statusToDisplay = LinkValues.ProjectStatusToDisplay;
     var projectArray = [];
     var headers = {
       "sortName": {toStr: "PROJEKTIN NIMI", width: "255", order: 0,
@@ -16,8 +16,8 @@
         sortFunc: function(a,b) {
             return a.createdBy.localeCompare(b.createdBy, 'fi');
         }},
-      "sortDate": {
-        toStr: "LUONTIPVM", width: "110", order: 0,
+        "sortDate": {
+            toStr: "LUONTIPVM", width: "110", order: 0,
         sortFunc: function(a,b) {
             var aDate = a.createdDate.split('.').reverse().join('-');
             var bDate = b.createdDate.split('.').reverse().join('-');
@@ -62,8 +62,8 @@
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>' +
-      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>');
+      projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>' +
+          '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>');
 
     var staticFieldProjectName = function(dataField) {
       var field;
@@ -162,7 +162,7 @@
             //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return _.contains(statusToDisplay, proj.statusCode);
+            return _.contains(statusToDisplay, proj.statusCode);
         });
 
         var sortedProjects = unfinishedProjects.sort( function(a,b) {

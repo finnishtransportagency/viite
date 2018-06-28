@@ -426,9 +426,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       try {
         projectService.getRoadAddressSingleProject(projectId) match {
           case Some(project) =>
-            if (project.status == SendingToTR) {
-              projectService.setProjectStatus(project.id, Incomplete)
-            }
             val projectMap = roadAddressProjectToApi(project)
             val parts = project.reservedParts.map(reservedRoadPartToApi)
             val errorParts = projectService.validateProjectById(project.id)
@@ -597,7 +594,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for /project/links/$id)") {
       if (id == 0)
         BadRequest("Missing mandatory 'projectId' parameter")
-      else{
+      else {
         projectService.getProjectLinks(id)
       }
     }
@@ -621,6 +618,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/getchangetable/$projectId") {
       val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
+      //TODO change UI to not override proj validator errors on change table call
       val changeTableData = projectService.getChangeProject(projectId).map(project =>
         Map(
           "id" -> project.id,
