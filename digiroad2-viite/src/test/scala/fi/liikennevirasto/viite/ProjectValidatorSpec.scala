@@ -496,6 +496,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  //TODO create other test for ErrorInValidationOfUnchangedLinks
+
   test("validator should return errors if discontinuity is 3 and next road part ely is equal") {
     runWithRollback {
       testDataForElyTest01()
