@@ -94,7 +94,7 @@ object ProjectDeltaCalculator {
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
-   }
+  }
 
   private def combineTwo[R <: BaseRoadAddress, P <: BaseRoadAddress](tr1: (R, P), tr2: (R, P), oppositeSections: Seq[RoadAddressSection]): Seq[(R, P)] = {
     val (ra1,pl1) = tr1
@@ -104,11 +104,11 @@ object ProjectDeltaCalculator {
     val matchContinuity = (pl1.reversed && pl2.discontinuity == Discontinuity.Continuous) ||
       (!pl1.reversed && pl1.discontinuity == Discontinuity.Continuous)
 
-    val existing = oppositeSections.find(s => s.startMAddr == pl1.startAddrMValue && s.track != Track.Combined && s.track != pl1.track)
+    val existing = oppositeSections.find(s => s.startMAddr == pl1.startAddrMValue && s.track == Track.switch(pl1.track))
     val hasCalibrationPoint = if (existing.isDefined)
       (!pl1.reversed && existing.get.endMAddr == pl2.startAddrMValue) || (pl1.reversed && existing.get.endMAddr == pl2.endAddrMValue)
     else
-      (!pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.commonHistoryId != ra2.commonHistoryId) || (pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtBeginning ) && ra1.commonHistoryId != ra2.commonHistoryId)
+      (!pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
 
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
       ra1.endAddrMValue == ra2.startAddrMValue &&
@@ -118,19 +118,19 @@ object ProjectDeltaCalculator {
           case x: RoadAddress => x.copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
           case x: ProjectLink if x.reversed => x.copy(startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
           case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
-      },
+        },
         pl1 match {
           case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = pl2.calibrationPoints).asInstanceOf[P]
           case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity, calibrationPoints = pl1.calibrationPoints).asInstanceOf[P]
           case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity, calibrationPoints = pl2.calibrationPoints).asInstanceOf[P]
-      }))
+        }))
     else {
       Seq(tr2, tr1)
     }
   }
 
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
-    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd) && r1.commonHistoryId != r2.commonHistoryId) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning) && r1.commonHistoryId != r2.commonHistoryId)
+    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
     if (r1.endAddrMValue == r2.startAddrMValue && !hasCalibrationPoint)
       r1 match {
         case x: RoadAddress => Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
