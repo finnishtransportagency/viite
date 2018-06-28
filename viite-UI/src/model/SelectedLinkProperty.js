@@ -436,7 +436,7 @@
       });
     });
 
-    eventbus.on('linkProperties:saved', function(){
+    eventbus.on('linkProperties:closed', function(){
       eventbus.trigger('layer:enableButtons', true);
       applicationModel.toggleSelectionTypeAll();
       clearFeaturesToKeep();

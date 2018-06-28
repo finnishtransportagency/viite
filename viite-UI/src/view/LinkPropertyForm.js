@@ -634,8 +634,9 @@
         if ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) {
           selectedLinkProperty.clearAndReset(false);
           applicationModel.toggleSelectionTypeAll();
+          applicationModel.addSpinner();
+          eventbus.trigger('linkProperties:closed');
           selectedLinkProperty.close();
-          $('#feature-attributes').empty();
         } else {
           applicationModel.toggleSelectionTypeFloating();
           selectedLinkProperty.cancelAndReselect(action);
