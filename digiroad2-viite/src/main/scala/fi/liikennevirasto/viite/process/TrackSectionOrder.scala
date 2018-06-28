@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
@@ -184,35 +184,58 @@ object TrackSectionOrder {
       pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), ForwardVector, candidates)
     }
 
+    def getSideCode(startPoint: Point, endPoint: Point) : SideCode = {
+      if(startPoint.y > endPoint.y)
+        SideCode.TowardsDigitizing
+      else if(startPoint.y < endPoint.y)
+        SideCode.AgainstDigitizing
+      else if(startPoint.x < endPoint.x)
+        SideCode.AgainstDigitizing
+      else
+        SideCode.TowardsDigitizing
+    }
+
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
       else {
         val connected = unprocessed.filter(pl => GeometryUtils.minimumDistance(currentPoint,
           GeometryUtils.geometryEndpoints(pl.geometry)) < MaxDistanceForConnectedLinks)
-        val (nextPoint, nextLink) = connected.size match {
+        val (nextPoint, nextLink, nextSideCode) : (Point, ProjectLink, Option[SideCode]) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
-            (getOppositeEnd(link.geometry, closestPoint), link)
+            (getOppositeEnd(link.geometry, closestPoint), link, None)
           case 1 =>
-            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head)
+            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head, None)
           case 2 =>
             if (findOnceConnectedLinks(unprocessed).exists(b =>
               (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
-              findOnceConnectedLinks(unprocessed).filter(b =>
+              val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
                 (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
                 .minBy(b => (currentPoint - b._1).length())
+
+              val sCode = if (link.geometry.last == nPoint) {
+                getSideCode(nPoint, link.geometry.head)
+              } else {
+                getSideCode(link.geometry.head, nPoint)
+              }
+
+              (nPoint, link, Some(sCode))
             } else {
               val l = pickRightMost(ready.last, connected)
-              (getOppositeEnd(l.geometry, currentPoint), l)
+              (getOppositeEnd(l.geometry, currentPoint), l, None)
             }
             case _ =>
               val l = pickForwardMost(ready.last, connected)
-              (getOppositeEnd(l.geometry, currentPoint), l)
+              (getOppositeEnd(l.geometry, currentPoint), l, None)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+        val sideCode = if(nextSideCode.isEmpty) {
+          if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+        } else {
+          nextSideCode.get
+        }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
       }
     }
