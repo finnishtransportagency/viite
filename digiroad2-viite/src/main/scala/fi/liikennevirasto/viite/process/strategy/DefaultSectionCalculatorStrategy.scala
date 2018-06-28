@@ -29,7 +29,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val calMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
 
         val calculatedSections = calculateSectionAddressValues(ordSections, calMap)
-        calculatedSections.flatMap{ sec =>
+        calculatedSections.flatMap { sec =>
           if (sec.right == sec.left)
             sec.right.links
           else {
@@ -54,7 +54,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   private def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val track= seq.headOption.map(_.track).getOrElse(Track.Unknown)
+    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val continuousProjectLinks = seq.takeWhile(pl => pl.track == track)
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
   }

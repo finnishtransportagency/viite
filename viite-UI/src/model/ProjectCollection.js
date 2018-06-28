@@ -21,14 +21,14 @@
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
-    var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.05;
+    var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
 
     var projectLinks = function() {
       return _.flatten(fetchedProjectLinks);
     };
 
     this.getProjectLinks = function() {
-      return backend.getProjectLinksById(currentProject.project.id);
+        return backend.getProjectLinksById(currentProject.project.id);
     };
 
     this.getAll = function () {
@@ -56,7 +56,7 @@
     };
 
     this.getProjectLink = function (ids) {
-      return _.filter(projectLinks(), function (projectLink){
+        return _.filter(projectLinks(), function (projectLink) {
         if (projectLink.getData().id > 0) {
           return _.contains(ids, projectLink.getData().id);
         } else {
@@ -66,7 +66,7 @@
     };
 
 
-    this.fetch = function(boundingBox, zoom, projectId, isPublishable) {
+      this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
@@ -246,7 +246,7 @@
     var createOrUpdate = function(dataJson){
       if((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0){
         var ids = dataJson.ids;
-        if(dataJson.linkStatus == LinkStatus.New.value && ids.length === 0){
+        if(dataJson.linkStatus === LinkStatus.New.value && ids.length === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
               new ModalConfirm(successObject.errorMessage);
@@ -347,7 +347,7 @@
       var isNewRoad = changedLink.status == LinkStatus.New.value;
 
       if(isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM)){
-        new GenericConfirmPopup("Antamasi pituus eroaa yli 5% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
+        new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
             createOrUpdate(dataJson);
           },
@@ -698,7 +698,7 @@
           }
         });
       });
-      return errors;
+      return (!_.isUndefined(errors) && errors.length > 0) ? errors : [];
     };
 
     this.pushCoordinates = function(button) {
