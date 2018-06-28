@@ -48,22 +48,6 @@
       }
     ];
 
-    var dynamicField = function(labelText) {
-      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field = '';
-      //If other fields get the same treatment they can be added here
-      if (labelText === 'TIETYYPPI') {
-
-      } else if (labelText === 'VALITUT LINKIT') {
-
-      } else if (labelText === 'ALKUETÄISYYS') {
-
-      } else if (labelText === 'LOPPUETÄISYYS') {
-
-      }
-      return field;
-    };
-
     var roadTypeDynamicField = function(){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field = '';
