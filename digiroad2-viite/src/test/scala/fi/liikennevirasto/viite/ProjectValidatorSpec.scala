@@ -497,7 +497,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
   test("validator should return invalid unchanged links error if is connected after any other action") {
-
     runWithRollback {
       val ra = Seq(
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -526,12 +525,31 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
 
       val projectLinks = ProjectDAO.getProjectLinks(id, Some(LinkStatus.NotHandled))
-      val updatedProjectLinks = Seq(projectLinks.head.copy(status = LinkStatus.Transfer, startAddrMValue = 10, endAddrMValue = 20)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged, startAddrMValue = 0, endAddrMValue = 10))
-      ProjectDAO.updateProjectLinksToDB(updatedProjectLinks, "U")
-      val validationErrors = ProjectValidator.checkForInvalidUnchangedLinks(project, ProjectDAO.getProjectLinks(project.id))
 
-      validationErrors.size shouldNot be(0)
-      validationErrors.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be(1)
+      /*
+      |---Transfer--->|---Unchanged--->|
+       */
+      val updatedProjectLinkToTransfer = Seq(projectLinks.head.copy(status = LinkStatus.Transfer, startAddrMValue = 10, endAddrMValue = 20)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged, startAddrMValue = 0, endAddrMValue = 10))
+      ProjectDAO.updateProjectLinksToDB(updatedProjectLinkToTransfer, "U")
+      val validationErrors1 = ProjectValidator.checkForInvalidUnchangedLinks(project, ProjectDAO.getProjectLinks(project.id))
+      validationErrors1.size shouldNot be(0)
+      validationErrors1.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be(1)
+      /*
+       |---Numbering--->|---Unchanged--->|
+        */
+      val updatedProjectLinkToNumbering = Seq(projectLinks.head.copy(status = LinkStatus.Numbering, startAddrMValue = 10, endAddrMValue = 20))
+      ProjectDAO.updateProjectLinksToDB(updatedProjectLinkToNumbering, "U")
+      val validationErrors2 = ProjectValidator.checkForInvalidUnchangedLinks(project, ProjectDAO.getProjectLinks(project.id))
+      validationErrors2.size shouldNot be(0)
+      validationErrors2.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be(1)
+      /*
+       |---Terminated--->|---Unchanged--->|
+        */
+      val updatedProjectLinkToTerminated = Seq(projectLinks.head.copy(status = LinkStatus.Terminated, startAddrMValue = 10, endAddrMValue = 20))
+      ProjectDAO.updateProjectLinksToDB(updatedProjectLinkToTerminated, "U")
+      val validationErrors3 = ProjectValidator.checkForInvalidUnchangedLinks(project, ProjectDAO.getProjectLinks(project.id))
+      validationErrors3.size shouldNot be(0)
+      validationErrors3.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be(1)
     }
   }
 
