@@ -1373,17 +1373,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             //rollback
             logger.info(s"Sending to TR failed: ${trProjectStateMessage.reason}")
-            PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
+            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else trMessageRefusal
+            PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
         }
       } catch {
         //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
         case ioe@(_: IOException | _: ClientProtocolException) => {
           ProjectDAO.updateProjectStatus(projectId, SendingToTR)
-          PublishResult(validationSuccess = false, sendSuccess = false, None)
+          PublishResult(validationSuccess = false, sendSuccess = false, Some(trUnreachableMessage))
         }
         case NonFatal(_) => {
           ProjectDAO.updateProjectStatus(projectId, ErrorInViite)
-          PublishResult(validationSuccess = false, sendSuccess = false, None)
+          PublishResult(validationSuccess = false, sendSuccess = false, Some(genericViiteErrorMessage))
         }
       }
     }
