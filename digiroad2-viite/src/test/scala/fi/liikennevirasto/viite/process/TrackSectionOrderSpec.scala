@@ -192,7 +192,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     ordered.map(_.linkId) should be (List(0L, 1L, 2L))
   }
 
-  test("Pick the forward in right project link on orderProjectLinksTopologyByGeometry") {
+  test("Pick the forward when there is more than 2 connected links on orderProjectLinksTopologyByGeometry") {
     //                                            3L
     //                                   /|------------------|
     //                              2L /  |
