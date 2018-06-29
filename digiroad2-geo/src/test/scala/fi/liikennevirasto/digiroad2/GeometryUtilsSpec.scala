@@ -209,7 +209,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     withinTolerance(Seq(), Seq(), .0001) should be (true)
   }
 
-  test("truncation calculates 3 dimensional LRM distances as lengths on map") {
+  test("truncation calculates 3 dimensional linear location distances as lengths on map") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0, 0.0), Point(5.0, 0.0, 5.0), Point(10.0, 0.0, 2.0)), 6, 10)
     truncatedGeometry.map(_.copy(z = 0.0)) should be (Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
   }
