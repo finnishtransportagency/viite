@@ -116,7 +116,7 @@
         data: JSON.stringify(data),
         dataType: "json",
         success: function (link) {
-          eventbus.trigger('linkProperties:saved');
+          eventbus.trigger('linkProperties:closed');
         },
         error: errorCallback
       });
@@ -482,7 +482,7 @@
     this.withRoadAddressCreation = function () {
       self.createRoadAddress = function (data) {
         afterSave = true;
-        eventbus.trigger('linkProperties:saved');
+        eventbus.trigger('linkProperties:closed');
       };
       return self;
     };

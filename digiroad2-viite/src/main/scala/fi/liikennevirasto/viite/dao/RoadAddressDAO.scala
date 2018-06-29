@@ -821,7 +821,7 @@ object RoadAddressDAO {
             SELECT ra.road_part_number
             FROM road_address ra
             WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
-            ORDER BY road_part_number ASC
+            ORDER BY road_part_number DESC
           ) WHERE ROWNUM < 2
       """
     Q.queryNA[Long](query).firstOption
