@@ -130,11 +130,19 @@ object ProjectDeltaCalculator {
   }
 
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
-    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd) && r1.commonHistoryId != r2.commonHistoryId) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning) && r1.commonHistoryId != r2.commonHistoryId)
-    if (r1.endAddrMValue == r2.startAddrMValue && !hasCalibrationPoint)
+    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
+    if (r1.endAddrMValue == r2.startAddrMValue)
       r1 match {
-        case x: RoadAddress => Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
-        case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+        case x: RoadAddress =>
+          if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
+            Seq(r2, r1)
+          else
+            Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+        case x: ProjectLink =>
+          if(!hasCalibrationPoint)
+            Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+          else
+            Seq(r2, r1)
       }
     else
       Seq(r2, r1)
