@@ -6,6 +6,8 @@
 -- To: values (viite_general_seq.nextval
 -- Also replaced ';' with '; insert into PUBLISHED_ROAD_ADDRESS values ((select max(id) from PUBLISHED_ROAD_NETWORK), viite_general_seq.currval);'
 --------------------------------------------------------
+alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', ';
+
 insert into PUBLISHED_ROAD_NETWORK values (published_road_network_key_seq.nextval, sysdate,sysdate);
 
 Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID,SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,'5','205','2','5','700','738',to_date('16.12.1991','DD.MM.RRRR'),null,'TR',to_date('29.04.2016','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(533341.472, 6988382.846, 0, 0, 533333.28, 6988419.385, 0, 38)),null,'8','1','0',null,'2','0','37,446','5172128','0',to_timestamp('21.11.2016 10:16:35,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'1'); insert into PUBLISHED_ROAD_ADDRESS values ((select max(id) from PUBLISHED_ROAD_NETWORK), viite_general_seq.currval);
