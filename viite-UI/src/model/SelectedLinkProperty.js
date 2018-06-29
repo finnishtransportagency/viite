@@ -436,7 +436,7 @@
       });
     });
 
-    eventbus.on('linkProperties:saved', function(){
+    eventbus.on('linkProperties:closed', function(){
       eventbus.trigger('layer:enableButtons', true);
       applicationModel.toggleSelectionTypeAll();
       clearFeaturesToKeep();
@@ -583,7 +583,7 @@
 
     var getSources = function() {
       return _.union(_.map(sources, function (roadLink) {
-        return roadLink.getData();
+        return roadLink;
       }));
     };
 

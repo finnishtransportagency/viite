@@ -103,15 +103,11 @@
       new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
           eventbus.trigger('roadAddressProject:discardChanges');
-          isNotEditingData = true;
-          clearHighlights();
           if (!_.isUndefined(selection)) {
             if (clickType === 'single')
                 showSingleClickChanges(ctrlPressed, selection);
             else
-                showDoubleClickChanges(ctrlPressed, selection);
-          } else {
-            showChangesAndSendButton();
+              showDoubleClickChanges(ctrlPressed, selection);
           }
         },
         closeCallback: function () {
@@ -136,8 +132,7 @@
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-        var ctrlPressed = event.mapBrowserEvent !== undefined ?
-            event.mapBrowserEvent.originalEvent.ctrlKey : false;
+      var ctrlPressed = event.mapBrowserEvent !== undefined ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
       var selection = _.find(event.selected.concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
@@ -173,21 +168,17 @@
           selectedProjectLinkProperty.openShift(previouslySelectedIds);
         }
         highlightFeatures();
-      } else {
+      } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        eventbus.trigger('projectLink:mapClicked');
-        $('[id^=editProject]').css('visibility', 'visible');
-        $('#closeProjectSpan').css('visibility', 'visible');
-        if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
-            if (!_.isUndefined(selection.linkData.connectedLinkId)) {
-                selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
-          } else {
-                selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
-          }
+        if(!_.isUndefined(selection.linkData.connectedLinkId)){
+          selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
+        } else {
+          selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
         }
-        else selectedProjectLinkProperty.cleanIds();
+      } else {
+        eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
       }
     };
 
