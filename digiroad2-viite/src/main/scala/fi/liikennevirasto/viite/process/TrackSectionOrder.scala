@@ -201,6 +201,7 @@ object TrackSectionOrder {
       else {
         val connected = unprocessed.filter(pl => GeometryUtils.minimumDistance(currentPoint,
           GeometryUtils.geometryEndpoints(pl.geometry)) < MaxDistanceForConnectedLinks)
+
         val (nextPoint, nextLink, nextSideCode) : (Point, ProjectLink, Option[SideCode]) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
@@ -214,14 +215,7 @@ object TrackSectionOrder {
               val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
                 (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
                 .minBy(b => (currentPoint - b._1).length())
-
-              val sCode = if (link.geometry.last == nPoint) {
-                getSideCode(nPoint, link.geometry.head)
-              } else {
-                getSideCode(link.geometry.head, nPoint)
-              }
-
-              (nPoint, link, Some(sCode))
+              (getOppositeEnd(link.geometry, nPoint), link, None)
             } else {
               val l = pickRightMost(ready.last, connected)
               (getOppositeEnd(l.geometry, currentPoint), l, None)
@@ -231,11 +225,7 @@ object TrackSectionOrder {
               (getOppositeEnd(l.geometry, currentPoint), l, None)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = if(nextSideCode.isEmpty) {
-          if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
-        } else {
-          nextSideCode.get
-        }
+        val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
       }
     }
