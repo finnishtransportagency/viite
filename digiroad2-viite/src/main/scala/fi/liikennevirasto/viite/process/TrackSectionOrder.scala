@@ -184,17 +184,6 @@ object TrackSectionOrder {
       pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), ForwardVector, candidates)
     }
 
-    def getSideCode(startPoint: Point, endPoint: Point) : SideCode = {
-      if(startPoint.y > endPoint.y)
-        SideCode.TowardsDigitizing
-      else if(startPoint.y < endPoint.y)
-        SideCode.AgainstDigitizing
-      else if(startPoint.x < endPoint.x)
-        SideCode.AgainstDigitizing
-      else
-        SideCode.TowardsDigitizing
-    }
-
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
