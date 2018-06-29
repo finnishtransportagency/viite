@@ -159,7 +159,7 @@ trait RoadAddressMapper {
       throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
     if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
       addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - (addr.endMValue - addr.startMValue)) > MaxAllowedMValueError)
-      throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
+      throw new IllegalArgumentException(s"Start calibration point linear location mismatch in $cp")
   }
 
   protected def endCalibrationPointCheck(addr: RoadAddress, cp: CalibrationPoint, seq: Seq[RoadAddress]): Unit = {
@@ -172,7 +172,7 @@ trait RoadAddressMapper {
         case _ => Double.NegativeInfinity
       })
     ) > MinAllowedRoadAddressLength)
-      throw new IllegalArgumentException(s"End calibration point LRM mismatch in $cp")
+      throw new IllegalArgumentException(s"End calibration point linear location mismatch in $cp")
   }
 
   protected def calibrationPointCountCheck(before: Boolean, seq: Seq[RoadAddress]): Unit = {
