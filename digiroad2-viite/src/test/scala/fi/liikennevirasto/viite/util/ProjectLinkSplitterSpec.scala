@@ -184,10 +184,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
 
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
-    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val roadLink = RoadLink(12345l, rGeom, GeometryUtils.geometryLength(rGeom), State, 99, TrafficDirection.TowardsDigitizing,
@@ -212,13 +212,13 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
 
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
-    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
-    val template2 = ProjectLink(3L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template2 = ProjectLink(3L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, t2Geom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val roadLink = RoadLink(12345l, rGeom, GeometryUtils.geometryLength(rGeom), State, 99, TrafficDirection.TowardsDigitizing,
@@ -242,10 +242,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val rGeom = sGeom
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
-    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val templateList = Seq(template)
@@ -277,10 +277,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
     val rLen = GeometryUtils.geometryLength(rGeom)
-    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.EndOfRoad, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.EndOfRoad, 1024L, 1040L, None, None, None, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 5, false, None, 85088L)
     val roadLink = RoadLink(12345l, rGeom, rLen, State, 99, TrafficDirection.TowardsDigitizing,
@@ -313,10 +313,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
     val rLen = GeometryUtils.geometryLength(rGeom)
-    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 5, false, None, 85088L)
-    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 10L, 5, false, None, 85088L)
     val roadLink = RoadLink(12345l, rGeom, rLen, State, 99, TrafficDirection.TowardsDigitizing,
@@ -356,10 +356,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
     val rLen = GeometryUtils.geometryLength(rGeom)
-    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 9L, false, None, 85088L)
-    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 9L, false, None, 85088L)
     val roadLink = RoadLink(12345l, rGeom, rLen, State, 99, TrafficDirection.TowardsDigitizing,
@@ -391,10 +391,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val sLen = GeometryUtils.geometryLength(sGeom)
     val tLen = GeometryUtils.geometryLength(tGeom)
     val rLen = GeometryUtils.geometryLength(rGeom)
-    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 9L, false, None, 85088L)
-    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 0L, 124L, 0.0, tLen,
+    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 9L, false, None, 85088L)
     val roadLink = RoadLink(12345l, rGeom, rLen, State, 99, TrafficDirection.TowardsDigitizing,
@@ -419,13 +419,13 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   }
 
   test("Geometries that are only touching should not have matching geometry segment") {
-    val template = ProjectLink(452389, 77, 14, Combined, Continuous, 4286, 4612, None, None, None, 70452560, 6138625, 0.0, 327.138,
+    val template = ProjectLink(452389, 77, 14, Combined, Continuous, 4286, 4612, None, None, None, 6138625, 0.0, 327.138,
       TowardsDigitizing, (None, Some(CalibrationPoint(6138625, 327.138, 4612))), false, List(Point(445417.266, 7004142.049, 0.0),
         Point(445420.674, 7004144.679, 0.0), Point(445436.147, 7004155.708, 0.0), Point(445448.743, 7004164.052, 0.0),
         Point(445461.586, 7004172.012, 0.0), Point(445551.316, 7004225.769, 0.0), Point(445622.099, 7004268.174, 0.0),
         Point(445692.288, 7004310.224, 0.0), Point(445696.301, 7004312.628, 0.0)), 452278, NotHandled, PublicRoad,
       NormalLinkInterface, 327.13776793597697, 295486, 9L, false, None, 85088L)
-    val suravage = ProjectLink(-1000, 0, 0, Unknown, Continuous, 0, 0, None, None, Some("silari"), -1, 499972931, 0.0, 313.38119201522017,
+    val suravage = ProjectLink(-1000, 0, 0, Unknown, Continuous, 0, 0, None, None, Some("silari"), 499972931, 0.0, 313.38119201522017,
       TowardsDigitizing, (None, None), false, List(Point(445186.594, 7003930.051, 0.0), Point(445278.988, 7004016.523, 0.0),
         Point(445295.313, 7004031.801, 0.0), Point(445376.923, 7004108.181, 0.0), Point(445391.041, 7004120.899, 0.0),
         Point(445405.631, 7004133.071, 0.0), Point(445417.266, 7004142.049, 0.0)), 452278, New, UnknownOwnerRoad,
@@ -436,13 +436,12 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   test("Preview the split") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
-      val lrmPositionId = Sequences.nextViitePrimaryKeySeqValue
       val geom = Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
       val roadLink = RoadLink(1, geom , GeometryUtils.geometryLength(geom), State, 99, TrafficDirection.AgainstDigitizing,
         UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
       val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
         AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.UnknownRoadLinkType, ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, Some("testRoad"), None,
-        8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.Unknown, None, None, Anomaly.None, 1)
+        8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.Unknown, None, None, Anomaly.None)
 
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
       when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
@@ -450,9 +449,11 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       val templateGeom = toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
-      sqlu""" insert into LRM_Position(id,start_Measure,end_Measure,Link_id,side_code) Values($lrmPositionId,0,87,1,2) """.execute
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
-      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, LRM_POSITION_ID, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,$lrmPositionId,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, $templateGeom)""".execute
+      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
+            start_Measure,end_Measure,Link_id,side_code)
+            VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, $templateGeom,
+            0,87,1,2)""".execute
 
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(toRoadLink(suravageAddressLink)))

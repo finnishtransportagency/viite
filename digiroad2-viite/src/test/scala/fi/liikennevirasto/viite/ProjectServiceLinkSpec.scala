@@ -77,7 +77,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
                           roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadAddressId: Long = 0L) = {
     ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
-      Some("User"), 0L, startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
+      Some("User"), startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
       floating = false, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
       LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadAddressId, ely, reversed = false, None, 0L)
   }
@@ -282,23 +282,23 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   private def createProjectDataForSplit(): RoadAddressProject = {
     val projectId = Sequences.nextViitePrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextViitePrimaryKeySeqValue
-    val lrmPositionId2 = Sequences.nextViitePrimaryKeySeqValue
     val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
     ProjectDAO.createRoadAddressProject(rap)
     val raId = Sequences.nextViitePrimaryKeySeqValue
-    sqlu""" insert into LRM_Position(id,start_Measure,end_Measure,Link_id, side_code) Values ($lrmPositionId,0,87,1,2) """.execute
-    sqlu"""insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number,
-         track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by,
-         VALID_FROM, geometry, floating, calibration_points) VALUES ($raId, $lrmPositionId, 1, 1, 0, 5, 0, 87, date'2011-01-01', null, 'foo', date'2011-01-01', MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,87.0,0,87)), 0, 0)""".execute
+    sqlu"""insert into ROAD_ADDRESS (id, road_number, road_part_number, track_code, discontinuity, START_ADDR_M, END_ADDR_M,
+           start_date, end_date, created_by, VALID_FROM, geometry, floating, calibration_points,
+           start_Measure,end_Measure,Link_id, side_code)
+           VALUES ($raId, 1, 1, 0, 5, 0, 87, date'2011-01-01', null, 'foo', date'2011-01-01',
+           MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,87.0,0,87)), 0, 0,
+           0,87,1,2)""".execute
     ProjectDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
-    sqlu"""insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source)
-          values ($lrmPositionId2, 1, 2, 0.0, 87.0, 0, 1)""".execute
     sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, LRM_POSITION_ID, CREATED_BY, CREATED_DATE, STATUS, ROAD_ADDRESS_ID, GEOMETRY) VALUES
-          (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,$lrmPositionId2,'testuser',
+          START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROAD_ADDRESS_ID, GEOMETRY,
+          link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES
+          (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',
           TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0, $raId,
-          ${fi.liikennevirasto.viite.toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))})""".execute
+          ${fi.liikennevirasto.viite.toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))},
+          1, 2, 0.0, 87.0, 0, 1)""".execute
     ProjectDAO.getRoadAddressProjectById(projectId).get
   }
 
@@ -449,7 +449,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(saved.id, Set(), linkIds206.toSeq, LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       projectService.isProjectPublishable(saved.id) should be(true)
 
-      val changeProjectOpt = projectService.getChangeProject(saved.id)
+      val changeProjectOpt = projectService.getChangeProjectInTX(saved.id)
       changeProjectOpt.map(_.changeInfoSeq).getOrElse(Seq()) should have size (5)
 
       val change = changeProjectOpt.get
@@ -477,6 +477,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       change.changeInfoSeq.foreach(_.changeType should be(Termination))
       change.changeInfoSeq.foreach(_.discontinuity should be(Discontinuity.Continuous))
+
       // TODO: When road types are properly generated
       //      change.changeInfoSeq.foreach(_.roadType should be(RoadType.UnknownOwnerRoad))
     }
@@ -484,12 +485,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.getRoadAddressAllProjects
     } should have size (count - 1)
   }
+
   test("add nonexisting roadlink to project") {
     runWithRollback {
       val idr = RoadAddressDAO.getNextRoadAddressId
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-      val projectLink = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      val projectLink = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
       ProjectDAO.createRoadAddressProject(rap)
       mockForProject(id, Seq(projectLink))
@@ -514,10 +516,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
 
-      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 5175306L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 5175306L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
 
-      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr2, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 1610976L, 0.0, 5.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr2, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 1610976L, 0.0, 5.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(535605.272, 6982204.22, 85.90899999999965), Point(535608.555, 6982204.33, 86.90)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
 
 
@@ -527,7 +529,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         projectLink1.startAddrMValue, projectLink1.endAddrMValue, projectLink1.startMValue, projectLink1.endMValue,
         projectLink1.sideCode,
         projectLink1.calibrationPoints._1,
-        projectLink1.calibrationPoints._2, Anomaly.None, projectLink1.lrmPositionId, projectLink1.status, 0)
+        projectLink1.calibrationPoints._2, Anomaly.None, projectLink1.status, 0)
 
       val p2 = ProjectAddressLink(idr2, projectLink2.linkId, projectLink2.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink2.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, Some(""), Some("vvh_modified"),
@@ -535,7 +537,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         projectLink2.startAddrMValue, projectLink2.endAddrMValue, projectLink2.startMValue, projectLink2.endMValue,
         projectLink2.sideCode,
         projectLink2.calibrationPoints._1,
-        projectLink2.calibrationPoints._2, Anomaly.None, projectLink2.lrmPositionId, projectLink2.status, 0)
+        projectLink2.calibrationPoints._2, Anomaly.None, projectLink2.status, 0)
 
       mockForProject(id, Seq(p1, p2))
       projectService.addNewLinksToProject(Seq(projectLink1), id, "U", p1.linkId)
@@ -660,11 +662,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink512 = ProjectAddressLink(NewRoadAddress, 5176512, geom512, GeometryUtils.geometryLength(geom512),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom512),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 5176552, geom552, GeometryUtils.geometryLength(geom552),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom552),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
       mockForProject(id, addresses)
       val newLinks = addresses.map(backToProjectLink(rap)).map(_.copy(status = LinkStatus.New))
@@ -681,7 +683,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink584 = ProjectAddressLink(NewRoadAddress, 5176584, geom584, GeometryUtils.geometryLength(geom584),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom584),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false, false)).thenReturn(addresses.map(toRoadLink))
       mockForProject(id, addresses ++ Seq(addProjectAddressLink584))
@@ -723,11 +725,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink512 = ProjectAddressLink(NewRoadAddress, 5176512, geom512, GeometryUtils.geometryLength(geom512),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom512),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, RoadAddressDAO.getNextRoadAddressId)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, RoadAddressDAO.getNextRoadAddressId)
       val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 5176552, geom552, GeometryUtils.geometryLength(geom552),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom552),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, RoadAddressDAO.getNextRoadAddressId)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, RoadAddressDAO.getNextRoadAddressId)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
       mockForProject(id, addresses)
       projectService.addNewLinksToProject(addresses.map(addressToProjectLink(rap)), id, "U", addresses.minBy(_.endMValue).linkId, false) should be(None)
@@ -756,11 +758,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink512 = ProjectAddressLink(NewRoadAddress, 5176512, geom512, GeometryUtils.geometryLength(geom512),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom512),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 5176552, geom552, GeometryUtils.geometryLength(geom552),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom552),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
       mockForProject(id, addresses)
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
@@ -937,12 +939,12 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val newLink = ProjectAddressLink(NewRoadAddress, 5167571, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 77, 35, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.Unknown, None, None, Anomaly.None, LinkStatus.New, 0)
 
       val newLink2 = ProjectAddressLink(NewRoadAddress, 5167559, reverserGeom, GeometryUtils.geometryLength(reverserGeom),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 77, 35, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(reverserGeom),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.Unknown, None, None, Anomaly.None, LinkStatus.New, 0)
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(
         (Seq(newLink, newLink2).map(toRoadLink) ++ geomToLinks.map(toRoadLink)))
@@ -993,15 +995,15 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink512 = ProjectAddressLink(NewRoadAddress, 5176512, geometries(5176512), GeometryUtils.geometryLength(geometries(5176512)),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geometries(5176512)),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 5176552, geometries(5176552), GeometryUtils.geometryLength(geometries(5176552)),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geometries(5176552)),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       val addProjectAddressLink584 = ProjectAddressLink(NewRoadAddress, 5176584, geometries(5176584), GeometryUtils.geometryLength(geometries(5176584)),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geometries(5176584)),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
 
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552, addProjectAddressLink584)
       mockForProject(id, addresses)
@@ -1058,7 +1060,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val newLink = ProjectAddressLink(NewRoadAddress, 5167571, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 77, 35, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
-        SideCode.AgainstDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.AgainstDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
       projectService.addNewLinksToProject(Seq(backToProjectLink(rap.copy(id = project.id))(newLink)).map(_.copy(status = LinkStatus.New)), project.id, "U", newLink.linkId) should be(None)
@@ -1106,7 +1108,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val newLink = ProjectAddressLink(NewRoadAddress, 3730091L, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 847, 6, 0L, 12L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.Unknown, None, None, Anomaly.None, LinkStatus.New, 0)
 
       val linkToTerminate = geomToLinks.sortBy(_.startAddrMValue).head
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
@@ -1221,7 +1223,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       ProjectAddressLink(NewRoadAddress, linkId, geometry, GeometryUtils.geometryLength(geometry),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, road, part, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geometry),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.Unknown, None, None, Anomaly.None, LinkStatus.New, 0)
     }
 
     runWithRollback {
@@ -1323,19 +1325,19 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         Some(roadPart.last.endAddrMValue), Some(roadPart.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
 
       val link1 = ProjectAddressLink(-1000, 5502405, Seq(), 299.1713293226726, AdministrativeClass.apply(3), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, Some("TEST"), None, 790,
-        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 299.1713293226726, SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.Unknown, 0)
+        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 299.1713293226726, SideCode.Unknown, None, None, Anomaly.None, LinkStatus.Unknown, 0)
       val link2 = ProjectAddressLink(-1000, 5502487, Seq(), 106.72735157765564, AdministrativeClass.apply(3), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, Some("TEST"), None, 790,
-        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 106.72735157765564, SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.Unknown, 0)
+        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 106.72735157765564, SideCode.Unknown, None, None, Anomaly.None, LinkStatus.Unknown, 0)
       val link3 = ProjectAddressLink(-1000, 5502450, Seq(), 13.920170042652735, AdministrativeClass.apply(3), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, Some("TEST"), None, 790,
-        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 13.920170042652735, SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.Unknown, 0)
+        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 13.920170042652735, SideCode.Unknown, None, None, Anomaly.None, LinkStatus.Unknown, 0)
       val link4 = ProjectAddressLink(-1000, 5502488, Seq(), 14.71305736017408, AdministrativeClass.apply(3), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, Some("TEST"), None, 790,
-        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 14.71305736017408, SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.Unknown, 0)
+        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 14.71305736017408, SideCode.Unknown, None, None, Anomaly.None, LinkStatus.Unknown, 0)
       val link5 = ProjectAddressLink(-1000, 5502446, Seq(), 21.098137837276074, AdministrativeClass.apply(3), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, Some("TEST"), None, 790,
-        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 21.098137837276074, SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.Unknown, 0)
+        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 21.098137837276074, SideCode.Unknown, None, None, Anomaly.None, LinkStatus.Unknown, 0)
       val link6 = ProjectAddressLink(-1000, 5502444, Seq(), 42.51504393698132, AdministrativeClass.apply(3), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, Some("TEST"), None, 790,
-        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 42.51504393698132, SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.Unknown, 0)
+        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 42.51504393698132, SideCode.Unknown, None, None, Anomaly.None, LinkStatus.Unknown, 0)
       val link7 = ProjectAddressLink(-1000, 5502441, Seq(), 75.00455028294714, AdministrativeClass.apply(3), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, Some("TEST"), None, 790,
-        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 75.00455028294714, SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.Unknown, 0)
+        None, None, Map.empty, 259, 1, 0, 4, 0, 0, 0, 0.0, 75.00455028294714, SideCode.Unknown, None, None, Anomaly.None, LinkStatus.Unknown, 0)
       val mappedGeoms2 = StaticTestData.mappedGeoms(List(5502405, 5502487, 5502450, 5502488, 5502446, 5502444, 5502441))
 
       val newLinksWithGeom = List(link1, link2, link3, link4, link5, link6, link7).map { l =>
@@ -1376,7 +1378,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       reset(mockRoadLinkService)
       setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val createdRoadAddresses = Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-        0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
         floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination, 0))
       RoadAddressDAO.create(createdRoadAddresses).head
 
@@ -1421,45 +1423,40 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
     runWithRollback {
       val reservationId = Sequences.nextViitePrimaryKeySeqValue
-      val lrms = Queries.fetchLrmPositionIds(4)
       val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
 
       //Roads for template links
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0',635.000,null,'1820767','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(0)},'16081','1','0','5','0','635',${lrms(0)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(0)},'16081','1','0','5','0','635',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'2','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(480695.572,7058971.185,0,0,481049.95703856583,7058685.435957936,0,635)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(480695.572,7058971.185,0,0,481049.95703856583,7058685.435957936,0,635)),null, 8,
+            '3','0',635.000,'1820767','1476392565000', sysdate,'1')""".execute
 
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(1)},null,'3','0',118.000,null,'1820764','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(1)},'16081','1','0','5','635','753',${lrms(1)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(1)},'16081','1','0','5','635','753',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481234.045,7058485.271,0,0,481158.027,7058573.51,0,753)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481234.045,7058485.271,0,0,481158.027,7058573.51,0,753)),null, 8,
+            '3','0',118.000,'1820764','1476392565000',sysdate,'1')""".execute
 
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(2)},null,'3','0',88.000,null,'1820753','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(2)},'16081','1','0','5','753','841',${lrms(2)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(2)},'16081','1','0','5','753','841',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481250.504,7058400.315,0,0,481234.04508322186,7058485.270820141,0,841)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481250.504,7058400.315,0,0,481234.04508322186,7058485.270820141,0,841)),null, 8,
+            '3','0',88.000,'1820753','1476392565000',sysdate,'1')""".execute
 
-      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(3)},null,'3','0',1274.000,null,'6700868','1476392565000',
-            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
-            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY) values
-            (${ids(3)},'16081','1','0','5','841','2115',${lrms(3)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
+            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+            (${ids(3)},'16081','1','0','5','841','2115',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'1','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-            MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null, 8)""".execute
+            MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null, 8,
+            '3','0',1274.000,'6700868','1476392565000',sysdate,'1')""".execute
 
       val points1820767 = "[ {\"x\": 480695.572, \"y\": 7058971.185, \"z\": 95.14500000000407},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569},{\"x\": 481122.722, \"y\": 7058607.764, \"z\": 101.07300000000396},{\"x\": 481091.689, \"y\": 7058641.794, \"z\": 100.70500000000175},{\"x\": 481066.306, \"y\": 7058667.604, \"z\": 100.58599999999569},{\"x\": 481049.95703856583, \"y\": 7058685.435957936, \"z\": 100.48000025004062}, {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407}]"
       val points1820764 = "[ {\"x\": 481234.045, \"y\": 7058485.271, \"z\": 101.14500000000407},{\"x\": 481222.496, \"y\": 7058507.705, \"z\": 101.28100000000268},{\"x\": 481212.636, \"y\": 7058520.221, \"z\": 101.33400000000256},{\"x\": 481200.552, \"y\": 7058533.592, \"z\": 101.3920000000071},{\"x\": 481177.416, \"y\": 7058555.96, \"z\": 101.4149999999936},{\"x\": 481158.027, \"y\": 7058573.51, \"z\": 101.33599999999569}]"
@@ -1643,7 +1640,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink552 = ProjectAddressLink(NewRoadAddress, 6552, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 19999, 1, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
       val addresses = Seq(addProjectAddressLink552)
       mockForProject(id, addresses)
       projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId) should be(None)
