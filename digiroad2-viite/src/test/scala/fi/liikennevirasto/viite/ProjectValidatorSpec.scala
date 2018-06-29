@@ -477,6 +477,37 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Check end of road in different road numbers with both parts EndOfRod and both not terminated in project with multiple parts (checkRemovedEndOfRoadParts method)") {
+
+    runWithRollback {
+      val ra = Seq(
+        RoadAddress(NewRoadAddress, 19998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          floating = false, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
+        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+          floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
+      val raIds = RoadAddressDAO.create(ra, Some("U"))
+      val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      ProjectDAO.createRoadAddressProject(project)
+      ProjectDAO.reserveRoadPart(id, 19998L, 1L, "u")
+      ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
+
+      val projectLinks = Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, roadNumber = 19998L, roadPartNumber = 1L),
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, roadNumber = 19999L, roadPartNumber = 2L)).zip(roadAddress).map(x => x._1.copy(roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity))
+      ProjectDAO.create(projectLinks)
+      val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
+      val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
+      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      errors should have size 0
+    }
+  }
+
   test("Ramps must have continuity validation") {
     runWithRollback {
       val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
