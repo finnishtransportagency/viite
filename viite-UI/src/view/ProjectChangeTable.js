@@ -34,7 +34,7 @@
     changeTableHeader.append('<div class="change-header">' +
       '<label class="project-change-table-dimension-header">TIE</label>' +
       '<label class="project-change-table-dimension-header">AJR</label>' +
-      '<label class="project-change-table-dimension-header">AOSA</label>' +
+      '<label class="project-change-table-dimension-header">OSA</label>' +
       '<label class="project-change-table-dimension-header">AET</label>' +
       '<label class="project-change-table-dimension-header">LET</label>' +
       '<label class="project-change-table-dimension-header">PIT</label>' +

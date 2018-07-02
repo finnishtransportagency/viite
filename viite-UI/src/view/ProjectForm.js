@@ -34,31 +34,21 @@
         '</div>';
     };
 
-    var title = function () {
-      return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
-    };
-
-    var titleWithDeletingTool = function (projectName) {
-      var name = '<span class ="edit-mode-title">' + projectName + '</span>';
-      var deleteButtons = '<span id="deleteProjectSpan" class="deleteSpan">POISTA <i id="deleteProject_' + currentProject.id + '" ' +
-        'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
-      if(currentProject.statusCode === ProjectStatus.Incomplete.value)
-        return name + deleteButtons;
-      else
-        return name;
-    };
-
-    var titleWithEditingTool = function (projectName) {
-      return '<span class ="edit-mode-title">' + projectName + ' <i id="editProjectSpan" class="editSpan btn-edit-project fas fa-pencil-alt"' +
-        ' style="visibility:hidden" value="' + currentProject.id + '"></i></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu </span>';
+    var title = function (projectName) {
+      if (!projectName)
+        projectName = "Uusi tieosoiteprojekti";
+      return '<span class ="edit-mode-title">' + projectName + '</span>';
     };
 
     var actionButtons = function () {
-      var html = '<div class="project-form form-controls" id="actionButtons">' +
-        '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka Toimenpiteisiin</button>' +
-        '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
-        '</div>';
+      var html = '<div class="project-form form-controls" id="actionButtons">';
+        if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
+          html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
+                  'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
+        }
+        html += '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>' +
+                '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
+                '</div>';
       return html;
     };
 
@@ -100,7 +90,7 @@
     var openProjectTemplate = function (project, publishedNetworkDate, reservedRoads, newReservedRoads) {
       return _.template('' +
         '<header>' +
-        titleWithDeletingTool(project.name) +
+        title(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -146,7 +136,7 @@
     var selectedProjectLinkTemplate = function (project) {
       return _.template('' +
         '<header>' +
-        titleWithDeletingTool(project.name) +
+        title(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -246,10 +236,8 @@
 
       var toggleAdditionalControls = function () {
         rootElement.find('header').replaceWith('<header>' +
-        titleWithEditingTool(currentProject.name) +
+        formCommon.titleWithEditingTool(currentProject) +
         '</header>');
-        $('[id^=editProject]').css('visibility', 'visible');
-        $('#closeProjectSpan').css('visibility', 'visible');
       };
 
       var createOrSaveProject = function () {
@@ -447,8 +435,14 @@
 
       var loadEditbuttons = function () {
         $('#activeButtons').empty();
-        $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
-          '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>');
+        var html = "";
+        if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
+          html +=  '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
+                  'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
+        }
+        html += '<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
+                '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
+        $('#actionButtons').html(html);
         eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
       };
 

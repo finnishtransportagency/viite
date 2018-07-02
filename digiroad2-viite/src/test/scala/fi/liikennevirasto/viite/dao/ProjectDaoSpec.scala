@@ -275,15 +275,13 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
-      val (lrmid, linkid) = sql"select LRM_POSITION_ID,ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[(Long, Long)].first
-      val projectid = sql"select LRM_POSITION_ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[Long].first
-      val psidecode = sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
+      val (psidecode, linkid) = sql"select side_code, ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[(Long, Long)].first
       psidecode should be(2)
       ProjectDAO.reverseRoadPartDirection(id, 5, 203)
-      val nsidecode = sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
+      val nsidecode = sql"select side_code from PROJECT_LINK WHERE id=$linkid".as[Int].first
       nsidecode should be(3)
       ProjectDAO.reverseRoadPartDirection(id, 5, 203)
-      val bsidecode = sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
+      val bsidecode = sql"select side_code from PROJECT_LINK WHERE id=$linkid".as[Int].first
       bsidecode should be(2)
     }
   }
