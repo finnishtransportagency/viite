@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.util
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.util.Track
@@ -166,7 +167,8 @@ object ProjectLinkSplitter {
       val splitT = templateLink.copy(
         endMValue = templateM,
         geometryLength = templateM,
-        endAddrMValue = Math.max(splitAddressM, adjustedTemplate.addrAt(adjustedTemplate.startMValue)),
+        startAddrMValue = splitAddressM,
+        endAddrMValue = adjustedTemplate.endAddrMValue,
         status = LinkStatus.Terminated,
         connectedLinkId = Some(suravage.linkId))
       (splitA, splitB, splitT)

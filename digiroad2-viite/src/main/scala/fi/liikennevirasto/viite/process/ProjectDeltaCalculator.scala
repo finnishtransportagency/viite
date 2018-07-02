@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
@@ -43,9 +42,11 @@ object ProjectDeltaCalculator {
           case Transfer =>
             val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
             termAddress.map { case (start, end) =>
-              address.copy(startAddrMValue = end,
-                endAddrMValue = if (end == address.endAddrMValue) start else address.endAddrMValue, startMValue = pl.startMValue,
-                endMValue = pl.endMValue, geometry = geom)
+              address.copy(startAddrMValue = if(start == address.startAddrMValue) end else address.startAddrMValue,
+                endAddrMValue = if (end == address.endAddrMValue) start else address.endAddrMValue,
+                startMValue = pl.startMValue,
+                endMValue = pl.endMValue,
+                geometry = geom)
             }.getOrElse(address)
           case Terminated =>
             address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
