@@ -179,7 +179,7 @@ object ProjectValidator {
     }
 
     // Viite-473
-    // Unchanged project links cannot have any other operation (transfer, termination) previously on the same number and part
+    // Unchanged project links cannot have any other operation (Transfer, Termination, Renumbering) previously on the same number and part
     case object ErrorInValidationOfUnchangedLinks extends ValidationError {
       def value = 14
 
@@ -303,8 +303,12 @@ object ProjectValidator {
   }
 
   def checkForInvalidUnchangedLinks(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    val roadNumberAndParts = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keySet
-    val invalidUnchangedLinks = roadNumberAndParts.flatMap(rn => ProjectDAO.getInvalidUnchangedOperationProjectLinks(rn._1, rn._2)).toSeq
+    val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
+      val (unchanged, others) = g._2.partition(_.status == UnChanged)
+      //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry to the UnChanged link starting point
+      unchanged.filter(u => others.exists(o => o.connected(u)))
+    }.toSeq
+
     invalidUnchangedLinks.map { projectLink =>
       val point = GeometryUtils.midPointGeometry(projectLink.geometry)
       ValidationErrorDetails(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks,

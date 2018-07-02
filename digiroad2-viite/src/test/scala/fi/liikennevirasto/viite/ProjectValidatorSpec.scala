@@ -496,6 +496,63 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("validator should return invalid unchanged links error if is connected after any other action") {
+    runWithRollback {
+      val ra = Seq(
+        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 0L, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+          floating = false, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
+        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          10L, 20L, Some(DateTime.now()), None, None, 0L, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+          floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
+      val siirto = RoadAddressDAO.create(Set(ra.head), Some("U"))
+      val unchanged = RoadAddressDAO.create(ra.tail, Some("U"))
+      val roadAddress1 = RoadAddressDAO.fetchByIdMassQuery(siirto.toSet).sortBy(_.roadPartNumber)
+      val roadAddress2 = RoadAddressDAO.fetchByIdMassQuery(unchanged.toSet).sortBy(_.roadPartNumber)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      ProjectDAO.createRoadAddressProject(project)
+      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
+
+      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.NotHandled),
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Transfer)).zip(roadAddress1).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
+        roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
+      ProjectDAO.create(Seq(util.projectLink(10L, 20L, Combined, id, LinkStatus.NotHandled),
+        util.projectLink(10L, 20L, Combined, id, LinkStatus.UnChanged)).zip(roadAddress2).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
+        roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
+
+      val projectLinks = ProjectDAO.getProjectLinks(id, Some(LinkStatus.NotHandled))
+
+      /*
+      |---Transfer--->|---Unchanged--->|
+       */
+      val updatedProjectLinkToTransfer = Seq(projectLinks.head.copy(status = LinkStatus.Transfer, startAddrMValue = 10, endAddrMValue = 20)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged, startAddrMValue = 0, endAddrMValue = 10))
+      ProjectDAO.updateProjectLinksToDB(updatedProjectLinkToTransfer, "U")
+      val validationErrors1 = ProjectValidator.checkForInvalidUnchangedLinks(project, ProjectDAO.getProjectLinks(project.id))
+      validationErrors1.size shouldNot be(0)
+      validationErrors1.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be(1)
+      /*
+       |---Numbering--->|---Unchanged--->|
+        */
+      val updatedProjectLinkToNumbering = Seq(projectLinks.head.copy(status = LinkStatus.Numbering, startAddrMValue = 10, endAddrMValue = 20))
+      ProjectDAO.updateProjectLinksToDB(updatedProjectLinkToNumbering, "U")
+      val validationErrors2 = ProjectValidator.checkForInvalidUnchangedLinks(project, ProjectDAO.getProjectLinks(project.id))
+      validationErrors2.size shouldNot be(0)
+      validationErrors2.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be(1)
+      /*
+       |---Terminated--->|---Unchanged--->|
+        */
+      val updatedProjectLinkToTerminated = Seq(projectLinks.head.copy(status = LinkStatus.Terminated, startAddrMValue = 10, endAddrMValue = 20))
+      ProjectDAO.updateProjectLinksToDB(updatedProjectLinkToTerminated, "U")
+      val validationErrors3 = ProjectValidator.checkForInvalidUnchangedLinks(project, ProjectDAO.getProjectLinks(project.id))
+      validationErrors3.size shouldNot be(0)
+      validationErrors3.count(_.validationError.value == ErrorInValidationOfUnchangedLinks.value) should be(1)
+    }
+  }
+
   test("validator should return errors if discontinuity is 3 and next road part ely is equal") {
     runWithRollback {
       testDataForElyTest01()
