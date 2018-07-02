@@ -237,6 +237,42 @@ object ProjectValidator {
                                     affectedIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
+  def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]) :Seq[ValidationErrorDetails] = {
+    time(logger, "Validating project") {
+          ActionsOrderingValidation(project, projectLinks) match {
+            case e if e.nonEmpty => e
+            case _ => ProjectLinksValidation(project, projectLinks)
+          }
+    }
+  }
+
+  def ActionsOrderingValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+      val actionsOrdering: Seq[(RoadAddressProject, Seq[ProjectLink]) =>  Seq[ValidationErrorDetails]] = Seq(
+        checkForInvalidUnchangedLinks
+      )
+
+      val errors :Seq[ValidationErrorDetails] = actionsOrdering.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
+        validation(project, projectLinks) ++ errors
+      }
+      errors.distinct
+  }
+
+  def ProjectLinksValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] =  {
+
+      val projectValidations: Seq[(RoadAddressProject, Seq[ProjectLink]) =>  Seq[ValidationErrorDetails]] = Seq(
+        checkProjectContinuity,
+        checkForNotHandledLinks,
+        checkTrackCodePairing,
+        checkRemovedEndOfRoadParts,
+        checkProjectElyCodes
+      )
+
+      val errors :Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
+        validation(project, projectLinks) ++ errors
+      }
+      errors.distinct
+  }
+
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
     val (splitLinks, nonSplitLinks) = pl.partition(_.isSplit)
     val splitedIds = splitLinks.flatMap(s => Seq(s.connectedLinkId.get, s.linkId))
@@ -257,25 +293,6 @@ object ProjectValidator {
         points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
     else
       None
-  }
-
-  def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-
-    time(logger, "Validating project") {
-      val projectValidations: Seq[(RoadAddressProject, Seq[ProjectLink]) =>  Seq[ValidationErrorDetails]] = Seq(
-        checkProjectContinuity,
-        checkForNotHandledLinks,
-        checkForInvalidUnchangedLinks,
-        checkTrackCodePairing,
-        checkRemovedEndOfRoadParts,
-        checkProjectElyCodes
-      )
-
-      val errors :Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
-        validation(project, projectLinks) ++ errors
-      }
-      errors.distinct
-    }
   }
 
   def checkProjectContinuity(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
