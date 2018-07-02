@@ -18,8 +18,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ReservedRoadPart], None)
 
-  private def dummyProjectLink(id: Long, geometry: Seq[Point]) = {
-    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+  private def dummyProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
+    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, track, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
@@ -190,5 +190,37 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10, 10), Point(10, 10)), projectLinks)
 
     ordered.map(_.linkId) should be (List(0L, 1L, 2L))
+  }
+
+  test("Pick the forward when there is more than 2 connected links on orderProjectLinksTopologyByGeometry") {
+    //                                            3L
+    //                                   /|------------------|
+    //                              2L /  |
+    //                               /    |
+    //                              |     | 4L
+    //                              |\    |
+    //                              |  \  |
+    //                              | 7L \|-------------------|
+    //                          1L  |     -         5L
+    //                              |     |
+    //                              |     | 6L
+    //                              |     |
+    //                              -     -
+    //
+
+    val projectLinks = List(
+      dummyProjectLink(1L, Seq(Point(2, 1), Point(2, 3), Point(2, 6)), Track.LeftSide),
+      dummyProjectLink(2L, Seq(Point(2, 6), Point(3, 7), Point(4, 8)), Track.LeftSide),
+      dummyProjectLink(3L, Seq(Point(4, 8), Point(6, 8), Point(8, 8)), Track.LeftSide),
+      dummyProjectLink(4L, Seq(Point(4, 4), Point(4, 6), Point(4, 8)), Track.RightSide),
+      dummyProjectLink(5L, Seq(Point(4, 4), Point(6, 4), Point(8, 4)), Track.RightSide),
+      dummyProjectLink(6L, Seq(Point(4, 1), Point(4, 2), Point(4, 4)), Track.RightSide),
+      dummyProjectLink(7L, Seq(Point(2, 6), Point(3, 5), Point(4, 4)), Track.RightSide)
+    )
+
+    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(4, 1), Point(2, 1)), projectLinks)
+
+    rightOrdered.map(_.linkId) should be (List(6L, 4L, 7L, 5L))
+    leftOrdered.map(_.linkId) should be (List(1L, 2L, 3L))
   }
 }
