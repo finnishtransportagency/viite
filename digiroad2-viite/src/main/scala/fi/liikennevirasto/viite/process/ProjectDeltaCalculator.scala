@@ -200,7 +200,7 @@ object ProjectDeltaCalculator {
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
 
-    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track, section.commonHistoryId))
+    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track))
 
     val result = paired.flatMap { case (key, target) =>
       val matches = matchingTracks(paired, key)
@@ -234,9 +234,9 @@ object ProjectDeltaCalculator {
     map.get((key._1, key._2, Track.switch(key._3), key._4, key._5, Track.switch(key._6)))
   }
 
-  private def matchingTracks(map: Map[(Long,Long,Track,Long), Seq[RoadAddressSection]],
-                             key: (Long,Long,Track,Long)): Option[Seq[RoadAddressSection]] = {
-    map.get((key._1, key._2, Track.switch(key._3), key._4))
+  private def matchingTracks(map: Map[(Long, Long, Track), Seq[RoadAddressSection]],
+                             key: (Long, Long, Track)): Option[Seq[RoadAddressSection]] = {
+    map.get((key._1, key._2, Track.switch(key._3)))
   }
 
   private def adjustTrack(group: (Seq[RoadAddressSection], Seq[RoadAddressSection])): Seq[RoadAddressSection] = {
