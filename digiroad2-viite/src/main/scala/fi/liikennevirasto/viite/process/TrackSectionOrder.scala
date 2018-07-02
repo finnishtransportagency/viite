@@ -184,6 +184,11 @@ object TrackSectionOrder {
       pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), ForwardVector, candidates)
     }
 
+    def pickSameTrack(lastLinkOption: Option[ProjectLink], candidates: Seq[ProjectLink]) : Option[ProjectLink] = {
+      val lastTrack = lastLinkOption.map(_.track)
+      candidates.find(link => lastTrack.contains(link.track))
+    }
+
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
@@ -199,15 +204,20 @@ object TrackSectionOrder {
           case 1 =>
             (getOppositeEnd(connected.head.geometry, currentPoint), connected.head, None)
           case 2 =>
-            if (findOnceConnectedLinks(unprocessed).exists(b =>
-              (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
-              val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
-                (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
-                .minBy(b => (currentPoint - b._1).length())
-              (getOppositeEnd(link.geometry, nPoint), link, None)
+            val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
+            if(nextLinkSameTrack.nonEmpty){
+              (getOppositeEnd(nextLinkSameTrack.get.geometry, currentPoint), nextLinkSameTrack.get, None)
             } else {
-              val l = pickRightMost(ready.last, connected)
-              (getOppositeEnd(l.geometry, currentPoint), l, None)
+              if (findOnceConnectedLinks(unprocessed).exists(b =>
+                (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
+                val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
+                  (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
+                  .minBy(b => (currentPoint - b._1).length())
+                (getOppositeEnd(link.geometry, nPoint), link, None)
+              } else {
+                val l = pickRightMost(ready.last, connected)
+                (getOppositeEnd(l.geometry, currentPoint), l, None)
+              }
             }
             case _ =>
               val l = pickForwardMost(ready.last, connected)
