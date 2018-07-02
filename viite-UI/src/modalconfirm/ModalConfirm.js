@@ -32,5 +32,7 @@ window.ModalConfirm = function(insertedText) {
         jQuery('.confirm-modal').remove();
         applicationModel.removeSpinner();
     };
-    show();
+    if (insertedText !== "") {
+        show();
+    }
 };
