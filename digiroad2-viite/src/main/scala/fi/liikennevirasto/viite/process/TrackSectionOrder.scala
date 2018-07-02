@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
@@ -149,11 +149,34 @@ object TrackSectionOrder {
       candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
     }
 
+    def getConnectionPoint(lastLink: ProjectLink, projectLinks: Seq[ProjectLink]) : Point =
+      GeometryUtils.connectionPoint(projectLinks.map(_.geometry) :+ lastLink.geometry, MaxDistanceForConnectedLinks).getOrElse(throw new Exception("Candidates should have at least one connection point"))
+
+    def getGeometryFirstSegmentVector(connectionPoint: Point, projectLink: ProjectLink) : (ProjectLink, Vector3d) =
+      (projectLink, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(projectLink.geometry.head, connectionPoint)) projectLink.geometry else projectLink.geometry.reverse))
+
+    def getGeometryFirstSegmentVectors(connectionPoint: Point, projectLinks: Seq[ProjectLink]) : Seq[(ProjectLink, Vector3d)] =
+      projectLinks.map(pl => getGeometryFirstSegmentVector(connectionPoint, pl))
+
+    def getGeometryLastSegmentVector(connectionPoint: Point, projectLink: ProjectLink) : (ProjectLink, Vector3d) =
+      (projectLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(projectLink.geometry.last, connectionPoint)) projectLink.geometry else projectLink.geometry.reverse))
+
+    def getGeometryLastSegmentVectors(connectionPoint: Point, projectLinks: Seq[ProjectLink]) : Seq[(ProjectLink, Vector3d)] =
+      projectLinks.map(pl => getGeometryLastSegmentVector(connectionPoint, pl))
+
     def pickRightMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
       val cPoint = GeometryUtils.connectionPoint(candidates.map(_.geometry) :+ lastLink.geometry, MaxDistanceForConnectedLinks).getOrElse(throw new Exception("Candidates should have at least one connection point"))
       val vectors = candidates.map(pl => (pl, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(pl.geometry.head, cPoint)) pl.geometry else pl.geometry.reverse)))
       val (_, hVector) = vectors.head
       val (candidate, _) = vectors.maxBy { case (_, vector) => hVector.angleXYWithNegativeValues(vector) }
+      candidate
+    }
+
+    def pickForwardMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
+      val cPoint = getConnectionPoint(lastLink, candidates)
+      val candidateVectors = getGeometryFirstSegmentVectors(cPoint, candidates)
+      val (_, lastLinkVector) = getGeometryLastSegmentVector(cPoint, lastLink)
+      val (candidate, _) = candidateVectors.minBy{ case (_, vector) => Math.abs(lastLinkVector.angleXYWithNegativeValues(vector)) }
       candidate
     }
 
@@ -167,26 +190,28 @@ object TrackSectionOrder {
       else {
         val connected = unprocessed.filter(pl => GeometryUtils.minimumDistance(currentPoint,
           GeometryUtils.geometryEndpoints(pl.geometry)) < MaxDistanceForConnectedLinks)
-        val (nextPoint, nextLink) = connected.size match {
+
+        val (nextPoint, nextLink, nextSideCode) : (Point, ProjectLink, Option[SideCode]) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
-            (getOppositeEnd(link.geometry, closestPoint), link)
+            (getOppositeEnd(link.geometry, closestPoint), link, None)
           case 1 =>
-            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head)
+            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head, None)
           case 2 =>
             if (findOnceConnectedLinks(unprocessed).exists(b =>
               (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
-              findOnceConnectedLinks(unprocessed).filter(b =>
+              val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
                 (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
                 .minBy(b => (currentPoint - b._1).length())
+              (getOppositeEnd(link.geometry, nPoint), link, None)
             } else {
               val l = pickRightMost(ready.last, connected)
-              (getOppositeEnd(l.geometry, currentPoint), l)
+              (getOppositeEnd(l.geometry, currentPoint), l, None)
             }
             case _ =>
-            val l = pickForwardPointing(ready.last, connected)
-            (getOppositeEnd(l.geometry, currentPoint), l)
+              val l = pickForwardMost(ready.last, connected)
+              (getOppositeEnd(l.geometry, currentPoint), l, None)
         }
         // Check if link direction needs to be turned and choose next point
         val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
