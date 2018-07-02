@@ -38,7 +38,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, None, Some("vvh_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
       pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, pl.calibrationPoints._1,
-      pl.calibrationPoints._2, Anomaly.None, pl.lrmPositionId, pl.status, pl.roadAddressId,
+      pl.calibrationPoints._2, Anomaly.None, pl.status, pl.roadAddressId,
       pl.reversed, pl.connectedLinkId, originalGeometry)
   }
 
@@ -88,7 +88,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       linkType, roadLinkType, projectLink.roadType,  projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
       projectLink.calibrationPoints._1, projectLink.calibrationPoints._2,
-      Anomaly.None, projectLink.lrmPositionId, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
+      Anomaly.None, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
       originalGeometry
     )
   }
@@ -108,7 +108,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     build(roadLink, 0L, geom, length, roadLinkRoadNumber, roadLinkRoadPartNumber, roadLinkTrackCode, Some(roadName), municipalityCode,
       linkType, UnknownRoadLinkType, getRoadType(roadLink.administrativeClass, linkType), Discontinuity.Continuous, missingAddress.startAddrMValue.getOrElse(0), missingAddress.endAddrMValue.getOrElse(0),
       missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(0.0),SideCode.Unknown,
-      None, None, Anomaly.None, 0, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), reversed= false, None, None)
+      None, None, Anomaly.None, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), reversed= false, None, None)
   }
 
   def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
@@ -116,7 +116,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
-      ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown, ral.id)
+      ral.anomaly, LinkStatus.Unknown, ral.id)
   }
 
 
@@ -126,7 +126,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
                     roadType: RoadType, discontinuity: Discontinuity,
                     startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
                     sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                    anomaly: Anomaly, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, ely:Long, reversed:Boolean, connectedLinkId: Option[Long],
+                    anomaly: Anomaly, status: LinkStatus, roadAddressId: Long, ely:Long, reversed:Boolean, connectedLinkId: Option[Long],
                     originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
 
     val linkId =
@@ -138,7 +138,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource,
       roadType, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
-      startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, lrmPositionId, status, roadAddressId,
+      startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadAddressId,
       reversed, connectedLinkId, originalGeometry)
   }
 
