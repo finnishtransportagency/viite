@@ -184,6 +184,15 @@ object TrackSectionOrder {
       pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), ForwardVector, candidates)
     }
 
+    def pickSameTrack(lastLinkOption: Option[ProjectLink], candidates: Seq[ProjectLink]) : Option[ProjectLink] = {
+      val lastTrack = lastLinkOption.map(_.track)
+      val connectedLinks = candidates.filter(link => lastTrack.contains(link.track))
+      connectedLinks.size match {
+        case 1 => connectedLinks.headOption
+        case _ => None
+      }
+    }
+
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
@@ -191,7 +200,7 @@ object TrackSectionOrder {
         val connected = unprocessed.filter(pl => GeometryUtils.minimumDistance(currentPoint,
           GeometryUtils.geometryEndpoints(pl.geometry)) < MaxDistanceForConnectedLinks)
 
-        val (nextPoint, nextLink, nextSideCode) : (Point, ProjectLink, Option[SideCode]) = connected.size match {
+        val (nextPoint, nextLink, nextSideCode): (Point, ProjectLink, Option[SideCode]) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
@@ -199,19 +208,24 @@ object TrackSectionOrder {
           case 1 =>
             (getOppositeEnd(connected.head.geometry, currentPoint), connected.head, None)
           case 2 =>
-            if (findOnceConnectedLinks(unprocessed).exists(b =>
-              (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
-              val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
-                (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
-                .minBy(b => (currentPoint - b._1).length())
-              (getOppositeEnd(link.geometry, nPoint), link, None)
+            val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
+            if (nextLinkSameTrack.nonEmpty) {
+              (getOppositeEnd(nextLinkSameTrack.get.geometry, currentPoint), nextLinkSameTrack.get, None)
             } else {
-              val l = pickRightMost(ready.last, connected)
-              (getOppositeEnd(l.geometry, currentPoint), l, None)
+              if (findOnceConnectedLinks(unprocessed).exists(b =>
+                (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
+                val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
+                  (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
+                  .minBy(b => (currentPoint - b._1).length())
+                (getOppositeEnd(link.geometry, nPoint), link, None)
+              } else {
+                val l = pickRightMost(ready.last, connected)
+                (getOppositeEnd(l.geometry, currentPoint), l, None)
+              }
             }
-            case _ =>
-              val l = pickForwardMost(ready.last, connected)
-              (getOppositeEnd(l.geometry, currentPoint), l, None)
+          case _ =>
+            val l = pickForwardMost(ready.last, connected)
+            (getOppositeEnd(l.geometry, currentPoint), l, None)
         }
         // Check if link direction needs to be turned and choose next point
         val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
