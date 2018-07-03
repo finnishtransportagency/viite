@@ -55,12 +55,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
   test("MValues && AddressMValues && CalibrationPoints calculation for new road addresses") {
     runWithRollback {
-      val idRoad0 = 0L
-      val idRoad1 = 1L
-      val idRoad2 = 2L
-      val idRoad3 = 3L
 
-      //TODO Just notice that the start M and end M on the test are no matching the geometry
+      //TODO Just notice that the start M and end M on the test are no matching the geometry that means the is not used
       val projectLinks = Seq(
         dummyProjectLink(id = 0L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 9.8, Seq(Point(0.0, 0.0), Point(0.0, 9.8))),
         dummyProjectLink(id = 1L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 9.8, Seq(Point(0.0, 30.0), Point(0.0, 39.8))),
@@ -68,48 +64,38 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         dummyProjectLink(id = 3L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 10.4, Seq(Point(0.0, 9.8), Point(0.0, 20.2)))
       )
 
-      val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
-        0, (None, None), floating = false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12346L, 0.0, 9.8, SideCode.TowardsDigitizing,
-        0, (None, None), floating = false, Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12347L, 0.0, 9.8, SideCode.TowardsDigitizing,
-        0, (None, None), floating = false, Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12348L, 0.0, 10.4, SideCode.TowardsDigitizing,
-        0, (None, None), floating = false, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-
-      val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
-      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+      val output = ProjectSectionCalculator.assignMValues(projectLinks)
       output.length should be(4)
-      output.foreach(o =>
-        o.sideCode == SideCode.TowardsDigitizing || o.id == idRoad1 && o.sideCode == SideCode.AgainstDigitizing should be(true)
-      )
-      output(3).id should be(idRoad1)
+
+      output.map(_.id) should be (Seq(4L, 3L, 1L, 0L))
+
+      output(3).id should be(0L)
       output(3).startMValue should be(0.0)
       output(3).endMValue should be(output(3).geometryLength +- 0.001)
       output(3).startAddrMValue should be(30L)
       output(3).endAddrMValue should be(40L)
+      output(3).sideCode should be(SideCode.TowardsDigitizing)
 
-      output(2).id should be(idRoad2)
+      output(2).id should be(1L)
       output(2).startMValue should be(0.0)
       output(2).endMValue should be(output(2).geometryLength +- 0.001)
       output(2).startAddrMValue should be(20L)
       output(2).endAddrMValue should be(30L)
+      output(2).sideCode should be(SideCode.AgainstDigitizing)
 
-      output(1).id should be(idRoad3)
+      output(1).id should be(3L)
       output(1).startMValue should be(0.0)
       output(1).endMValue should be(output(1).geometryLength +- 0.001)
       output(1).startAddrMValue should be(10L)
       output(1).endAddrMValue should be(20L)
+      output(1).sideCode should be(SideCode.TowardsDigitizing)
 
-      output.head.id should be(idRoad0)
+      output.head.id should be(4L)
       output.head.startMValue should be(0.0)
       output.head.endMValue should be(output.head.geometryLength +- 0.001)
       output.head.startAddrMValue should be(0L)
       output.head.endAddrMValue should be(10L)
+      output.head.sideCode should be(SideCode.TowardsDigitizing)
 
       output(3).calibrationPoints should be(None, Some(CalibrationPoint(12346, 9.799999999999997, 40)))
 
