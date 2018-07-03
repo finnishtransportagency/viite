@@ -196,7 +196,7 @@ object TrackSectionOrder {
         val connected = unprocessed.filter(pl => GeometryUtils.minimumDistance(currentPoint,
           GeometryUtils.geometryEndpoints(pl.geometry)) < MaxDistanceForConnectedLinks)
 
-        val (nextPoint, nextLink, nextSideCode) : (Point, ProjectLink, Option[SideCode]) = connected.size match {
+        val (nextPoint, nextLink, nextSideCode): (Point, ProjectLink, Option[SideCode]) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
@@ -205,7 +205,7 @@ object TrackSectionOrder {
             (getOppositeEnd(connected.head.geometry, currentPoint), connected.head, None)
           case 2 =>
             val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
-            if(nextLinkSameTrack.nonEmpty){
+            if (nextLinkSameTrack.nonEmpty) {
               (getOppositeEnd(nextLinkSameTrack.get.geometry, currentPoint), nextLinkSameTrack.get, None)
             } else {
               if (findOnceConnectedLinks(unprocessed).exists(b =>
@@ -219,9 +219,9 @@ object TrackSectionOrder {
                 (getOppositeEnd(l.geometry, currentPoint), l, None)
               }
             }
-            case _ =>
-              val l = pickForwardMost(ready.last, connected)
-              (getOppositeEnd(l.geometry, currentPoint), l, None)
+          case _ =>
+            val l = pickForwardMost(ready.last, connected)
+            (getOppositeEnd(l.geometry, currentPoint), l, None)
         }
         // Check if link direction needs to be turned and choose next point
         val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
