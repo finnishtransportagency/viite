@@ -186,7 +186,11 @@ object TrackSectionOrder {
 
     def pickSameTrack(lastLinkOption: Option[ProjectLink], candidates: Seq[ProjectLink]) : Option[ProjectLink] = {
       val lastTrack = lastLinkOption.map(_.track)
-      candidates.find(link => lastTrack.contains(link.track))
+      val connectedLinks = candidates.filter(link => lastTrack.contains(link.track))
+      connectedLinks.size match {
+        case 1 => connectedLinks.headOption
+        case _ => None
+      }
     }
 
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
