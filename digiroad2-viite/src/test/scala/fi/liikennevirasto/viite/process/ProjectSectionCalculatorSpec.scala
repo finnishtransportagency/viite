@@ -46,12 +46,28 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ReservedRoadPart], None)
 
+  private def dummyProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, linkStatus: LinkStatus, track: Track, discontinuaty: Discontinuity,
+                               sideCode: SideCode, startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, geometry: Seq[Point]): ProjectLink ={
+    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, track, discontinuaty,
+      startAddrM, endAddrM, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, sideCode,
+      0, (None, None), floating = false, geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+  }
+
   test("MValues && AddressMValues && CalibrationPoints calculation for new road addresses") {
     runWithRollback {
       val idRoad0 = 0L
       val idRoad1 = 1L
       val idRoad2 = 2L
       val idRoad3 = 3L
+
+      //TODO Just notice that the start M and end M on the test are no matching the geometry
+      val projectLinks = Seq(
+        dummyProjectLink(id = 0L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 9.8, Seq(Point(0.0, 0.0), Point(0.0, 9.8))),
+        dummyProjectLink(id = 1L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 9.8, Seq(Point(0.0, 30.0), Point(0.0, 39.8))),
+        dummyProjectLink(id = 2L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 9.8, Seq(Point(0.0, 20.2), Point(0.0, 30.0))),
+        dummyProjectLink(id = 3L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 10.4, Seq(Point(0.0, 9.8), Point(0.0, 20.2)))
+      )
+
       val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
         0, (None, None), floating = false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
@@ -272,7 +288,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       end.endAddrMValue should be(32L)
     }
   }
-
 
   test("determineMValues Tracks 0+1+2") {
     runWithRollback {
