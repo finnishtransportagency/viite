@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorList._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
@@ -927,4 +928,17 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Validator should return validation error if there is End Of Road in the middle of road part") {
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.EndOfRoad)
+      val errorLinks = projectLinks.map { l =>
+        if (l.startAddrMValue == 10 )
+          l.copy(discontinuity = Discontinuity.EndOfRoad)
+        else l
+      }
+      val validationErrors = ProjectValidator.checkProjectContinuity(project, errorLinks.distinct)
+      validationErrors.size should be(1)
+      validationErrors.head.validationError.value should be (EndOfRoadMiddleOfPart.value)
+    }
+  }
 }
