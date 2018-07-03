@@ -2,11 +2,10 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
 
-
-class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
+class DiscontinuityTrackCalculatorStrategy(discontinuity: Discontinuity) extends TrackCalculatorStrategy {
 
   protected def getUntilDiscontinuity(seq: Seq[ProjectLink], discontinuity: Discontinuity): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => pl.discontinuity != discontinuity)
@@ -18,13 +17,12 @@ class DiscontinuityTrackCalculatorStrategy extends TrackCalculatorStrategy {
   }
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
-    projectLink.discontinuity == MinorDiscontinuity &&
-      (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
+    projectLink.discontinuity == discontinuity
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
-    val (left, restLeft) = getUntilDiscontinuity(leftProjectLinks, MinorDiscontinuity)
-    val (right, restRight) = getUntilDiscontinuity(rightProjectLinks, MinorDiscontinuity)
+    val (left, restLeft) = getUntilDiscontinuity(leftProjectLinks, discontinuity)
+    val (right, restRight) = getUntilDiscontinuity(rightProjectLinks, discontinuity)
 
     (left.last.discontinuity, right.last.discontinuity) match {
       case (MinorDiscontinuity, MinorDiscontinuity) => //If both sides have a minor discontinuity
