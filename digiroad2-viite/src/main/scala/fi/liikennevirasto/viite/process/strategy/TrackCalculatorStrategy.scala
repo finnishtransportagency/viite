@@ -16,7 +16,7 @@ object TrackCalculatorContext {
     new DiscontinuityTrackCalculatorStrategy(MinorDiscontinuity)
   }
 
-  private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy  = {
+  private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy = {
     new DiscontinuityTrackCalculatorStrategy(Discontinuous)
   }
 
