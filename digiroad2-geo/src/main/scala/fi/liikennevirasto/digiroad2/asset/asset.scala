@@ -88,10 +88,6 @@ case object Municipality extends AdministrativeClass { def value = 2 }
 case object Private extends AdministrativeClass { def value = 3 }
 case object Unknown extends AdministrativeClass { def value = 99 }
 
-object FunctionalClass {
-  val Unknown: Int = 99
-}
-
 sealed trait TrafficDirection {
   def value: Int
   def isOneWay =
@@ -153,14 +149,7 @@ object Asset {
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 }
 
-abstract class AbstractProperty {
-  def publicId: String
-  def values: Seq[PropertyValue]
-}
-
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
-case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 
 case class BoundingRectangle(leftBottom: Point, rightTop: Point) {
   def diagonal: Vector3d = leftBottom - rightTop

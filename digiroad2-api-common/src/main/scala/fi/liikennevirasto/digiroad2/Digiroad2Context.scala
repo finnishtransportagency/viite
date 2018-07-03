@@ -15,13 +15,6 @@ import fi.liikennevirasto.viite._
 
 import scala.concurrent.duration.FiniteDuration
 
-class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
-  def receive = {
-    case w: RoadLinkChangeSet => roadLinkService.updateRoadLinkChanges(w)
-    case _                    => println("linkPropertyUpdater: Received unknown message")
-  }
-}
-
 class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
     case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[MissingRoadAddress]])
@@ -89,9 +82,6 @@ object Digiroad2Context {
     }
   }
 
-
-  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
-  eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
   val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
   eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")

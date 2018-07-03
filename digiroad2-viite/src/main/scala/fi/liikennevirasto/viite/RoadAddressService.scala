@@ -475,36 +475,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }.toSeq
   }
 
-  // Boolean  (frozenTimeVVHAPIServiceEnabled)  should be added if we start using this method  for disabling changeAPI and switch to frozentime VVH API)
-  def getCoarseRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
-    val addresses = withDynTransaction {
-      RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits, coarse = true).groupBy(_.linkId)
-    }
-    val roadLinks = roadLinkService.getRoadPartsFromVVH(addresses.keySet, Set())
-    val groupedLinks = roadLinks.flatMap { rl =>
-      val ra = addresses.getOrElse(rl.linkId, List())
-      buildRoadAddressLink(rl, ra, Seq())
-    }.groupBy(_.roadNumber)
-
-    val retval = groupedLinks.mapValues {
-      case viiteRoadLinks =>
-        val sorted = viiteRoadLinks.sortWith({
-          case (ral1, ral2) =>
-            if (ral1.roadNumber != ral2.roadNumber)
-              ral1.roadNumber < ral2.roadNumber
-            else if (ral1.roadPartNumber != ral2.roadPartNumber)
-              ral1.roadPartNumber < ral2.roadPartNumber
-            else
-              ral1.startAddressM < ral2.startAddressM
-        })
-        sorted.zip(sorted.tail).map {
-          case (st1, st2) =>
-            st1.copy(geometry = Seq(st1.geometry.head, st2.geometry.head))
-        }
-    }
-    retval.flatMap(x => x._2).toSeq
-  }
-
   /**
     * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
     *
