@@ -1134,7 +1134,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       resultNew.head.calibrationPoints._1 should not be (None)
       resultTransfer.head.calibrationPoints._1 should be(None)
-      resultTerm.head.calibrationPoints._1 should be(None)
+      resultTerm.head.calibrationPoints._1 should be(linkToTerminate.calibrationPoints._1)
+      resultTerm.head.calibrationPoints._2 should be(linkToTerminate.calibrationPoints._2)
       allLinks.size should be(resultNew.size + resultTransfer.size + resultTerm.size)
     }
   }
