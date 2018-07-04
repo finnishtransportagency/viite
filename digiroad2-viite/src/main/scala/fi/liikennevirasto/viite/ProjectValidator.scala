@@ -646,9 +646,9 @@ object ProjectValidator {
                    */
 
                   //optional opposite second track validation where the first node could be disconnected but connected to the next track joint
-                  val oppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
+                  val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
 
-                  if(checkConnected(curr, Option(next)) || checkConnected(curr, oppositeTrack))
+                  if(checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack))
                     None
                   else
                     Some(curr)
