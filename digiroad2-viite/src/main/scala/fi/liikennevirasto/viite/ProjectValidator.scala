@@ -611,23 +611,23 @@ object ProjectValidator {
     def checkMinorDiscontinuityBetweenLinksOnPart(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
       def checkConnected(curr: ProjectLink, next: ProjectLink, optional: Option[ProjectLink], sortedGroup: Seq[ProjectLink]): Option[ProjectLink] = {
         val connectingLink = curr.endAddrMValue == next.startAddrMValue && curr.connected(next)
-        if(connectingLink)
+        if (connectingLink)
           None
         else {
-          if(optional.nonEmpty){
+          if (optional.nonEmpty) {
             val connectingLinkInOppositeTrack = curr.endAddrMValue == optional.get.startAddrMValue && curr.connected(optional.get)
-            if(connectingLinkInOppositeTrack)
+            if (connectingLinkInOppositeTrack)
               None
             else
               Some(curr)
           } else
-          Some(curr)
+            Some(curr)
         }
       }
 
-      val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
+      val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
-        val connectedLinks: Seq[ProjectLink] = trackIntervals.flatMap{
+        val connectedLinks: Seq[ProjectLink] = trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
               interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
