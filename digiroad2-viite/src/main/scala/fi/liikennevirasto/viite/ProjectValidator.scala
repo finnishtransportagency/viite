@@ -239,14 +239,14 @@ object ProjectValidator {
 
   def validateProject(project: RoadAddressProject, projectLinks: Seq[ProjectLink]) :Seq[ValidationErrorDetails] = {
     time(logger, "Validating project") {
-          ActionsOrderingValidation(project, projectLinks) match {
+          actionsOrderingValidation(project, projectLinks) match {
             case e if e.nonEmpty => e
-            case _ => ProjectLinksValidation(project, projectLinks)
+            case _ => projectLinksValidation(project, projectLinks)
           }
     }
   }
 
-  def ActionsOrderingValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+  def actionsOrderingValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
       val actionsOrdering: Seq[(RoadAddressProject, Seq[ProjectLink]) =>  Seq[ValidationErrorDetails]] = Seq(
         checkForInvalidUnchangedLinks
       )
@@ -257,7 +257,7 @@ object ProjectValidator {
       errors.distinct
   }
 
-  def ProjectLinksValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] =  {
+  def projectLinksValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] =  {
 
       val projectValidations: Seq[(RoadAddressProject, Seq[ProjectLink]) =>  Seq[ValidationErrorDetails]] = Seq(
         checkProjectContinuity,
