@@ -156,9 +156,9 @@ trait BaseRoadAddress {
       case _ => geometry.last
     }
 
-    val nextStartPoint = sideCode match {
-      case AgainstDigitizing => geometry.last
-      case _ => geometry.head
+    val nextStartPoint = ra2.sideCode match {
+      case AgainstDigitizing => ra2.geometry.last
+      case _ => ra2.geometry.head
     }
 
     GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
