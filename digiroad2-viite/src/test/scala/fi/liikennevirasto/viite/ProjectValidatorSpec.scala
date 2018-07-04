@@ -904,9 +904,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkRoadContinuityCodes(project, g._2).distinct)
       errors.size should be (0)
       sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
-      val linksAfterTransfer = ProjectDAO.getProjectLinks(project.id)
+      val linksAfterTransfer = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => ProjectValidator.checkRoadContinuityCodes(project, g._2).distinct)
-      errorsAfterTransfer.size should be (0)
+      linksAfterTransfer.head.connected(linksAfterTransfer.last) should be (false)
+      errorsAfterTransfer.size should be (1)
+      errorsAfterTransfer.head.validationError.value should be(MinorDiscontinuityFound.value)
     }
   }
 
