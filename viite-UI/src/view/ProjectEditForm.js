@@ -518,7 +518,7 @@
           }
       });
 
-        rootElement.on('keyup', '.form-control.small-input', function (event) {
+        rootElement.on('change input', '.form-control.small-input', function (event) {
         checkInputs('.project-');
         setFormDirty();
             if (event.target.id === "tie" && ($('#dropdown_0').val() === 'New' || $('#dropdown_0').val() === 'Transfer' || $('#dropdown_0').val() === 'Numbering')) {
