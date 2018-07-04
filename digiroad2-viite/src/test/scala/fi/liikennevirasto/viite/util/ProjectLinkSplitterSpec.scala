@@ -261,7 +261,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     splitB.endAddrMValue should be (splitA.startAddrMValue)
     splitA.geometry.head should be (template.geometry.last)
     Seq(splitA, splitB).foreach { l =>
-      l.startAddrMValue == terminatedLink.endAddrMValue || l.status == LinkStatus.UnChanged should be (true)
+      l.startAddrMValue == terminatedLink.startAddrMValue || l.status == LinkStatus.UnChanged should be (true)
       l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
       l.status == LinkStatus.New || l.status == LinkStatus.UnChanged || l.status == LinkStatus.Transfer should be (true)
       l.roadNumber should be (template.roadNumber)
@@ -330,8 +330,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     val (splitA, splitB) = if(splitResult.splitA.status == New) (splitResult.splitB, splitResult.splitA) else (splitResult.splitA, splitResult.splitB)
     val terminatedLink = splitResult.terminatedProjectLink
     terminatedLink.status should be (LinkStatus.Terminated)
-    terminatedLink.startAddrMValue should be (template.startAddrMValue)
-    terminatedLink.endAddrMValue should be (splitA.startAddrMValue)
+    terminatedLink.startAddrMValue should be (splitA.startAddrMValue)
+    terminatedLink.endAddrMValue should be (template.endAddrMValue)
     splitA.endAddrMValue should be (template.endAddrMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry, splitB.geometry) should be (true)
     GeometryUtils.areAdjacent(terminatedLink.geometry, splitA.geometry) should be (true)
