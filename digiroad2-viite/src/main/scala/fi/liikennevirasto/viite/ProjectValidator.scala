@@ -609,6 +609,7 @@ object ProjectValidator {
     }
 
     def checkMinorDiscontinuityBetweenLinksOnPart(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+
       def checkConnected(curr: ProjectLink, next: Option[ProjectLink]): Boolean = {
         if(next.isEmpty)
           false
