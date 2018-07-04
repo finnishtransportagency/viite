@@ -155,7 +155,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("Project Links should be continuous if geometry is continuous for Left and Right Tracks") {
     runWithRollback {
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), true)
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val (left, right) = projectLinks.partition(_.track == LeftSide)
       val endOfRoadLeft = left.init :+ left.last.copy(discontinuity = EndOfRoad)
       val endOfRoadRight = right.init :+ right.last.copy(discontinuity = EndOfRoad)
@@ -447,7 +447,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Check end of road with both parts EndOfRod and both not terminated in project with multiple parts (checkRemovedEndOfRoadParts method)") {
+  test("Check end of road with both parts EndOfRoad and both not terminated in project with multiple parts (checkRemovedEndOfRoadParts method)") {
     runWithRollback {
       val ra = Seq(
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
@@ -472,7 +472,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
       errors should have size 1
       errors.head.affectedIds.head should be (roadAddress.head.id)
     }
@@ -844,7 +844,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           floating = false, Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0
         )
       ))
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), true, roads = Seq((1999L, 2L, "Test road")), discontinuity = Discontinuity.EndOfRoad)
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), changeTrack = true, roads = Seq((1999L, 2L, "Test road")), discontinuity = Discontinuity.EndOfRoad)
       val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 1
       errors.head.validationError.value should be(DoubleEndOfRoad.value)
@@ -853,7 +853,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("Validator should return MissingEndOfRoad validation error if any of the track codes on the end of a part are not End Of Road") {
     runWithRollback {
-      val roadAddresses = Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+      val roadAddresses = Seq(RoadAddress(NewRoadAddress, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
         0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
         floating = false, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
       val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((1999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)

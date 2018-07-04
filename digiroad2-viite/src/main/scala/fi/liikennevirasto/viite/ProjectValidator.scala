@@ -763,7 +763,10 @@ object ProjectValidator {
     }
 
     def checkEndOfRoadBetweenLinksOnPart: Seq[ValidationErrorDetails] = {
-      error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(roadProjectLinks.sortBy(_.startAddrMValue).init.filter(_.discontinuity == EndOfRoad)).toSeq
+        val endOfRoadErrors = roadProjectLinks.groupBy(_.track).flatMap { track =>
+          error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(track._2.sortBy(pl => (pl.roadPartNumber, pl.startAddrMValue)).init.filter(_.discontinuity == EndOfRoad))
+        }.toSeq
+      endOfRoadErrors.distinct
     }
 
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]) = {
