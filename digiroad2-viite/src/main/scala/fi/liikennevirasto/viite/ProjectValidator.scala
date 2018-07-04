@@ -408,7 +408,7 @@ object ProjectValidator {
     //we should only check non Terminated parts that have roadPart lower than the bigger nonTerminated part
     project.reservedParts.groupBy(_.roadNumber).flatMap { rn =>
       val nonTerminatedParts = rn._2.filterNot(rrp => rrp.addressLength.nonEmpty && rrp.newLength.getOrElse(0L) == 0L)
-      val endOfRoadParts = nonTerminatedParts.filter(_.discontinuity.contains(EndOfRoad))
+      val endOfRoadParts = nonTerminatedParts.filter(part => part.newDiscontinuity.getOrElse(part.discontinuity) == EndOfRoad)
       val invalidEndOfRoadParts = if (nonTerminatedParts.nonEmpty) {
         val biggerNonTerminatedPart = nonTerminatedParts.maxBy(_.roadPartNumber).roadPartNumber
         endOfRoadParts.filter(_.roadPartNumber < biggerNonTerminatedPart)
@@ -774,8 +774,9 @@ object ProjectValidator {
         if (allProjectLinks.exists(link => link.roadNumber == road && link.roadPartNumber == previousRoadPartNumber.get))
           return None
         val previousRoadPartEnd: Option[RoadAddress] = RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber.get, fetchOnlyEnd = true).headOption
-        if (previousRoadPartEnd.nonEmpty) {
-          if (previousRoadPartEnd.get.discontinuity == EndOfRoad)
+        if (previousRoadPartEnd.nonEmpty ) {
+          val actualProjectLinkForPreviousEnd = allProjectLinks.find(link => link.roadAddressId == previousRoadPartEnd.get.id)
+          if (previousRoadPartEnd.get.discontinuity == EndOfRoad && (actualProjectLinkForPreviousEnd.nonEmpty && actualProjectLinkForPreviousEnd.get.discontinuity == EndOfRoad) || actualProjectLinkForPreviousEnd.isEmpty)
             return outsideOfProjectError(project.id, alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((previousRoadPartEnd.get.roadNumber, previousRoadPartEnd.get.roadPartNumber)))))(List(previousRoadPartEnd.get))
         }
       }
