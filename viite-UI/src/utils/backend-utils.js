@@ -74,10 +74,14 @@
 
       this.getRoadName =
           _.debounce(function (roadNumber, projectID, callback) {
-              if (projectID !== 0) {
+              if (projectID !== 0 && roadNumber !== '') {
                   return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
                       return _.isFunction(callback) && callback(data);
                   });
+              }
+              else{
+                $('#roadName').val('').change();
+                $('#roadName').prop('disabled', false);
               }
           }, 500);
 
