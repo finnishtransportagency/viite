@@ -399,7 +399,7 @@ object ProjectValidator {
     //we should only check non Terminated parts that have roadPart lower than the bigger nonTerminated part
     project.reservedParts.groupBy(_.roadNumber).flatMap { rn =>
       val nonTerminatedParts = rn._2.filterNot(rrp => rrp.addressLength.nonEmpty && rrp.newLength.getOrElse(0L) == 0L)
-      val endOfRoadParts = nonTerminatedParts.filter(_.discontinuity.contains(EndOfRoad))
+      val endOfRoadParts = nonTerminatedParts.filter(part => part.newDiscontinuity.getOrElse(part.discontinuity) == EndOfRoad)
       val invalidEndOfRoadParts = if (nonTerminatedParts.nonEmpty) {
         val biggerNonTerminatedPart = nonTerminatedParts.maxBy(_.roadPartNumber).roadPartNumber
         endOfRoadParts.filter(_.roadPartNumber < biggerNonTerminatedPart)
