@@ -626,20 +626,49 @@ object ProjectValidator {
     }
 
     def checkMinorDiscontinuityBetweenLinksOnPart(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-      def checkConnected(curr: ProjectLink, next: ProjectLink, sortedGroup: Seq[ProjectLink]): Option[ProjectLink] = {
-        val matchingLink = curr.endAddrMValue == next.startAddrMValue && curr.connected(next)
-        if(matchingLink)
-          None
+
+      def checkConnected(curr: ProjectLink, next: Option[ProjectLink]): Boolean = {
+        if(next.isEmpty)
+          false
         else
-          Some(curr)
+          curr.endAddrMValue == next.get.startAddrMValue && curr.connected(next.get)
       }
+
       val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         val connectedLinks: Seq[ProjectLink] = trackIntervals.flatMap{
           interval => {
             if (interval.size > 1) {
               interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
-                case Seq(first, second) => checkConnected(first, second, interval)
+                case Seq(curr, next) =>
+                  /*
+                        catches discontinuity between Combined -> RightSide ? true => checks discontinuity between Combined -> LeftSide ? false => No error
+                        catches discontinuity between Combined -> RightSide ? true => checks discontinuity between Combined -> LeftSide ? true => Error
+                            Track 2
+                         ^---------->
+                         |
+                Track 0  |
+                         |  Track 1
+                         |---------->
+
+
+                        catches discontinuity between Combined -> LeftSide ? true => checks discontinuity between Combined -> RightSide ? false => No error
+                        catches discontinuity between Combined -> LeftSide ? true => checks discontinuity between Combined -> RightSide ? true => Error
+                            Track 1
+                         <----------^
+                                    |
+                                    | Track 0
+                           Track 2  |
+                         <----------|
+                   */
+
+                  //optional opposite second track validation where the first node could be disconnected but connected to the next track joint
+                  val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
+
+                  if(checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack))
+                    None
+                  else
+                    Some(curr)
               }
             } else None
           }
