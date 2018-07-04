@@ -2221,4 +2221,24 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Service should indentify the correct writable states (Incomplete, ErrorInViite and ErroredInTR)") {
+    runWithRollback {
+      val incomplete = RoadAddressProject(0L, ProjectState.apply(1), "I am Incomplete", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val incompleteProject = projectService.createRoadLinkProject(incomplete)
+      val errorInViite = RoadAddressProject(0L, ProjectState.apply(1), "I am ErrorInViite", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val errorInViiteProject = projectService.createRoadLinkProject(errorInViite)
+      val erroredInTR = RoadAddressProject(0L, ProjectState.apply(1), "I am ErroredInTR", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val erroredInTRProject = projectService.createRoadLinkProject(erroredInTR)
+      projectService.isWritableState(incompleteProject.id) should be(true)
+      projectService.isWritableState(errorInViiteProject.id) should be(true)
+      projectService.isWritableState(erroredInTRProject.id) should be(true)
+    }
+  }
+
 }
