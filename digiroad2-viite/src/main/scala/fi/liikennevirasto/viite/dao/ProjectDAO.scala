@@ -774,7 +774,7 @@ object ProjectDAO {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
     projectLinkIds.grouped(500).foreach {
       grp =>
-        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${LinkStatus.Terminated.value}, CALIBRATION_POINTS = 0, MODIFIED_BY='$user' " +
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${LinkStatus.Terminated.value}, MODIFIED_BY='$user' " +
           s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
         Q.updateNA(sql).execute
     }

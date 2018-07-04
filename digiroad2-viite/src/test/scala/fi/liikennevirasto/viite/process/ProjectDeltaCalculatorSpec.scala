@@ -30,14 +30,16 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     }
   }
 
-  private def createRoadAddress(start: Long, distance: Long) = {
+  private def createRoadAddress(start: Long, distance: Long, commonHistoryId: Long = 0L) = {
     RoadAddress(id = start, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
       discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, linkId = start,
       startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
-      geometry = Seq(Point(0.0, start), Point(0.0, start+distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, commonHistoryId = 0L)
+      geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, commonHistoryId = commonHistoryId)
   }
+
   private val project: RoadAddressProject = RoadAddressProject(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
     DateTime.now(), "", Seq(), None, None)
+
   private def createTransferProjectLink(start: Long, distance: Long) = {
     toProjectLinkWithMove(project, LinkStatus.Transfer)(createRoadAddress(start, distance))
   }
@@ -129,9 +131,9 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     })
   }
 
-  test("unchanged + 2 track termination") {
-    val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L)).map(_.copy(track = Track.RightSide))
-    val addresses2 = (0 to 11).map(i => createRoadAddress(i*10, 10L)).map(l => l.copy(track = Track.LeftSide, id=l.id+1))
+  test("unchanged + 2 track termination + different commonHistoryIds, commonHistoryIds should not be considered on partition") {
+    val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide))
+    val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
     val terminations = Seq(addresses.last, addresses2.last)
     val unchanged = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
@@ -313,7 +315,6 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       cre.id should be (ids(2))
     }
   }
-
 
   test ("road with ely change") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L))
