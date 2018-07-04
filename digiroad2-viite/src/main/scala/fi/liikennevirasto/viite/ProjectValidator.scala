@@ -609,20 +609,11 @@ object ProjectValidator {
     }
 
     def checkMinorDiscontinuityBetweenLinksOnPart(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-      def checkConnected(curr: ProjectLink, next: ProjectLink, optional: Option[ProjectLink], sortedGroup: Seq[ProjectLink]): Option[ProjectLink] = {
-        val connectingLink = curr.endAddrMValue == next.startAddrMValue && curr.connected(next)
-        if(connectingLink)
-          None
-        else {
-          if(optional.nonEmpty){
-            val connectingLinkInOppositeTrack = curr.endAddrMValue == optional.get.startAddrMValue && curr.connected(optional.get)
-            if(connectingLinkInOppositeTrack)
-              None
-            else
-              Some(curr)
-          } else
-          Some(curr)
-        }
+      def checkConnected(curr: ProjectLink, next: Option[ProjectLink]): Boolean = {
+        if(next.isEmpty)
+          false
+        else
+          curr.endAddrMValue == next.get.startAddrMValue && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = seq.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
@@ -631,10 +622,8 @@ object ProjectValidator {
           interval => {
             if (interval.size > 1) {
               interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
-                case Seq(first, second) =>
+                case Seq(curr, next) =>
                   /*
-                        optional opposite second track validation where the first node could be disconnected but connected to the next track joint
-
                         catches discontinuity between Combined -> RightSide ? true => checks discontinuity between Combined -> LeftSide ? false => No error
                         catches discontinuity between Combined -> RightSide ? true => checks discontinuity between Combined -> LeftSide ? true => Error
                             Track 2
@@ -655,8 +644,13 @@ object ProjectValidator {
                          <----------|
                    */
 
-                  val optional = g._2.find(t => t.track != second.track && t.startAddrMValue == second.startAddrMValue)
-                  checkConnected(first, second, optional, interval)
+                  //optional opposite second track validation where the first node could be disconnected but connected to the next track joint
+                  val oppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
+
+                  if(checkConnected(curr, Option(next)) || checkConnected(curr, oppositeTrack))
+                    None
+                  else
+                    Some(curr)
               }
             } else None
           }
