@@ -33,12 +33,16 @@
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
-          eventbus.once('roadLinks:afterDraw', function () {
-            models.selectedLinkProperty.open(response.linkId, response.id, true);
-            eventbus.trigger('linkProperties:reselect');
-          });
-          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-          map.getView().setZoom(12);
+          if (response.success) {
+            eventbus.once('roadLinks:afterDraw', function () {
+              models.selectedLinkProperty.open(response.linkId, response.id, true);
+              eventbus.trigger('linkProperties:reselect');
+            });
+            map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+            map.getView().setZoom(12);
+          } else {
+            console.log(response.reason);
+          }
         });
       },
 
