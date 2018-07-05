@@ -751,18 +751,14 @@ object ProjectValidator {
     def checkEndOfRoadOutsideOfProject: Seq[ValidationErrorDetails] = {
       val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
       RoadAddressDAO.fetchPreviousRoadPartNumber(road, part) match {
-        case Some(previousRoadPartNumber) => if (!allProjectLinks.exists(link => link.roadNumber == road && link.roadPartNumber == previousRoadPartNumber)) {
-          val previousRoadPartEnd: Option[RoadAddress] = RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber, fetchOnlyEnd = true).headOption
-          if (previousRoadPartEnd.nonEmpty ) {
-            val actualProjectLinkForPreviousEnd = allProjectLinks.find(link => link.roadAddressId == previousRoadPartEnd.get.id)
-            if (previousRoadPartEnd.get.discontinuity == EndOfRoad && (actualProjectLinkForPreviousEnd.nonEmpty && actualProjectLinkForPreviousEnd.get.discontinuity == EndOfRoad) || actualProjectLinkForPreviousEnd.isEmpty){
-              return outsideOfProjectError(
-                project.id,
-                alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((road, previousRoadPartNumber))))
-              )(RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber, fetchOnlyEnd = true).filter(_.discontinuity == EndOfRoad)).toSeq
-            }
-          }
-        }
+        case Some(previousRoadPartNumber) =>
+          val actualProjectLinkForPreviousEnd = RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber, fetchOnlyEnd = true)
+            .filter(ra => ra.discontinuity == EndOfRoad && !allProjectLinks.exists(link => link.roadAddressId == ra.id))
+          if (actualProjectLinkForPreviousEnd.nonEmpty)
+            return outsideOfProjectError(
+              project.id,
+              alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((road, previousRoadPartNumber))))
+            )(actualProjectLinkForPreviousEnd).toSeq
         case None => Seq()
       }
       Seq()
