@@ -2281,7 +2281,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linkId = 123456789L
       val nextRoadAddressId = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(nextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L,
-        Some(DateTime.parse("2018-07-04")), None, Option("TR"), 0, linkId, 0.0, 10.0, SideCode.TowardsDigitizing, 1476392565000L, (None, None), floating = false,
+        Some(DateTime.parse("2018-07-04")), None, Option("TR"), linkId, 0.0, 10.0, SideCode.TowardsDigitizing, 1476392565000L, (None, None), floating = false,
         Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
       RoadAddressDAO.create(ra)
       val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L), roadNumber = roadNumber, roadPartNumber = roadPartNumber, roadAddressId = nextRoadAddressId)
