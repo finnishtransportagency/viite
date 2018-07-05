@@ -2,7 +2,6 @@
   root.URLRouter = function (map, backend, models) {
     var Router = Backbone.Router.extend({
       initialize: function () {
-        // Support legacy format for opening mass transit stop via ...#300289
 
         this.route(/^(\d+)$/, function (layer) {
           applicationModel.selectLayer(layer);
