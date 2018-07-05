@@ -18,9 +18,9 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ReservedRoadPart], None)
 
-  private def dummyProjectLink(id: Long, geometry: Seq[Point]) = {
-    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+  private def dummyProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
+    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, track, Continuous,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
 
@@ -30,16 +30,16 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     val idRoad2 = 2L //   >
     val idRoad3 = 3L //     <
     val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
     val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad1, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
       Seq(Point(42, 14),Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
     val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(42, 14), Point(75, 19.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
     val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad3, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
       Seq(Point(103.0, 15.0),Point(75, 19.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(20.0, 10.0), Point(20.0, 10.0)), list)
@@ -61,7 +61,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     )
     val list = geom.zip(0 to 3).map{ case (g, id) =>
       toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100,110), Point(100,110)), list)
@@ -84,7 +84,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     )
     val list = geom.zip(0 to 7).map{ case (g, id) =>
       toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
@@ -113,7 +113,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     )
     val list = geom.zip(0 to 7).map{ case (g, id) =>
       toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
@@ -139,7 +139,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     )
     val list = geom.zip(0 to 7).map{ case (g, id) =>
       toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
@@ -165,7 +165,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     )
     val list = geom.zip(0 to 7).map{ case (g, id) =>
       toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
     list.permutations.forall(l => !TrackSectionOrder.isRoundabout(l)) should be (true)
@@ -191,4 +191,81 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
 
     ordered.map(_.linkId) should be (List(0L, 1L, 2L))
   }
+
+  test("Pick the forward when there is more than 2 connected links on orderProjectLinksTopologyByGeometry") {
+    //                                            3L
+    //                                   /|------------------|
+    //                              2L /  |
+    //                               /    |
+    //                              |     | 4L
+    //                              |\    |
+    //                              |  \  |
+    //                              | 7L \|-------------------|
+    //                          1L  |     -         5L
+    //                              |     |
+    //                              |     | 6L
+    //                              |     |
+    //                              -     -
+    //
+
+    val projectLinks = List(
+      dummyProjectLink(1L, Seq(Point(2, 1), Point(2, 3), Point(2, 6)), Track.LeftSide),
+      dummyProjectLink(2L, Seq(Point(2, 6), Point(3, 7), Point(4, 8)), Track.LeftSide),
+      dummyProjectLink(3L, Seq(Point(4, 8), Point(6, 8), Point(8, 8)), Track.LeftSide),
+      dummyProjectLink(4L, Seq(Point(4, 4), Point(4, 6), Point(4, 8)), Track.RightSide),
+      dummyProjectLink(5L, Seq(Point(4, 4), Point(6, 4), Point(8, 4)), Track.RightSide),
+      dummyProjectLink(6L, Seq(Point(4, 1), Point(4, 2), Point(4, 4)), Track.RightSide),
+      dummyProjectLink(7L, Seq(Point(2, 6), Point(3, 5), Point(4, 4)), Track.RightSide)
+    )
+
+    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(4, 1), Point(2, 1)), projectLinks)
+
+    rightOrdered.map(_.linkId) should be (List(6L, 4L, 7L, 5L))
+    leftOrdered.map(_.linkId) should be (List(1L, 2L, 3L))
+  }
+
+  test("Pick the once connected when there is any with the same track code on orderProjectLinksTopologyByGeometry") {
+    //                                 3l         4L
+    //                             |--------|-----------|
+    //                             |        |
+    //                          1L |        | 2l
+    //                             |        |
+    //                             |        |
+    //                             -        -
+
+    val projectLinks = List(
+      dummyProjectLink(1L, Seq(Point(1, 1), Point(1, 2), Point(1, 4)), Track.LeftSide),
+      dummyProjectLink(2L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.RightSide),
+      dummyProjectLink(3L, Seq(Point(1, 4), Point(2, 4), Point(3, 4)), Track.Combined),
+      dummyProjectLink(4L, Seq(Point(3, 4), Point(4, 4), Point(50, 4)), Track.Combined)
+    )
+
+    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(3, 1), Point(1, 1)), projectLinks)
+
+    rightOrdered.map(_.linkId) should be (List(2L, 3L, 4L))
+    leftOrdered.map(_.linkId) should be (List(1L, 3L, 4L))
+  }
+
+  test("Pick the same track when there is 2 connected links with only one with same track code on orderProjectLinksTopologyByGeometry") {
+    //                             -        -
+    //                             |        |
+    //                          3L |        | 4l
+    //                             |        |
+    //                             |        |
+    //                   |---------|--------|
+    //                        1L        2L
+
+    val projectLinks = List(
+      dummyProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.Combined),
+      dummyProjectLink(2L, Seq(Point(3, 1), Point(4, 1), Point(5, 1)), Track.Combined),
+      dummyProjectLink(3L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.LeftSide),
+      dummyProjectLink(4L, Seq(Point(5, 1), Point(5, 3), Point(5, 4)), Track.RightSide)
+    )
+
+    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(1, 1), Point(1, 1)), projectLinks)
+
+    rightOrdered.map(_.linkId) should be (List(1L, 2L, 4L))
+    leftOrdered.map(_.linkId) should be (List(1L, 2L, 3L))
+  }
+
 }

@@ -55,7 +55,7 @@
       var selection = selectedSplitData(selected, currentSplitData);
       return _.template('' +
         '<header>' +
-        formCommon.titleWithProjectName(project.name, currentProject) +
+        formCommon.title(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -126,7 +126,7 @@
     var emptyTemplate = function (project) {
       return _.template('' +
         '<header style ="display:-webkit-inline-box;">' +
-        formCommon.titleWithProjectName(project.name, currentProject) +
+        formCommon.titleWithEditingTool(project) +
         '</header>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
@@ -260,12 +260,6 @@
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
         if (applicationModel.getSelectedTool() == "Cut") {
           new ModalConfirm(result.toString());
-        }
-      });
-
-      eventbus.on('roadAddressProject:discardChanges', function () {
-        if (applicationModel.getSelectedTool() == "Cut") {
-          cancelChanges();
         }
       });
 

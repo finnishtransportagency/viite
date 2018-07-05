@@ -83,7 +83,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         expect(unknownFeatureFromPickLayer).to.be.undefined;
         var unknownFeatureFromGreenLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getGreenRoadLayerName(),unknownRoadLinkId);
         expect(unknownFeatureFromGreenLayer).to.not.be.undefined;
-        expect(unknownFeatureFromGreenLayer.linkData.linkId).to.be.equal(unknownRoadLinkId);
+          expect(unknownFeatureFromGreenLayer.linkData.linkId).to.be.equal(unknownRoadLinkId);
       });
     });
 
@@ -105,7 +105,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       });
 
       it('Verify that the simulated road addresses are simulated',function(){
-        var simulatedFeatures = testHelpers.getFeaturesLinkData(openLayersMap, testHelpers.getSimulatedRoadsLayerName());
+          var simulatedFeatures = testHelpers.getFeaturesLinkData(openLayersMap, testHelpers.getSimulatedRoadsLayerName());
         expect(simulatedFeatures.length).to.be.above(0);
         var featuresIds = _.chain(simulatedFeatures).map(function(sf){
           return sf.id;
@@ -117,21 +117,21 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Click the Tallenna button to save the simulated data', function(){
       before(function(done){
-        eventbus.once('linkProperties:saved', function(){
+        eventbus.once('linkProperties:closed', function(){
           done();
         });
         testHelpers.clickEnabledSaveButton();
       });
 
       it('Verify that the previous unknown link is now no longer unknown and there is only one feature', function(){
-        var features= testHelpers.getFeaturesLinkData(openLayersMap, testHelpers.getRoadLayerName());
-        var linkData = _.filter(features, function(rld){
+          var features = testHelpers.getFeaturesLinkData(openLayersMap, testHelpers.getRoadLayerName());
+          var linkData = _.filter(features, function (rld) {
           return rld.linkId === unknownRoadLinkId;
         });
-        expect(linkData.length).to.equals(1);
-        expect(_.first(linkData).anomaly).to.equals(0);
-        expect(_.first(linkData).id).to.not.equals(-1000);
-        expect(_.first(linkData).roadLinkType).to.not.equals(-1);
+          expect(linkData.length).to.equals(1);
+          expect(_.first(linkData).anomaly).to.equals(0);
+          expect(_.first(linkData).id).to.not.equals(-1000);
+          expect(_.first(linkData).roadLinkType).to.not.equals(-1);
       });
     });
   });

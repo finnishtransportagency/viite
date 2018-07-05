@@ -1,28 +1,28 @@
-(function(root) {
-  root.ProjectLinkMarker = function() {
+(function (root) {
+    root.ProjectLinkMarker = function () {
 
-    var createProjectMarker = function(roadLink) {
-      var middlePoint = calculateMiddlePoint(roadLink);
-      var box = new ol.Feature({
-        geometry: new ol.geom.Point([middlePoint.x, middlePoint.y]),
-        linkId : roadLink.linkId,
-        type : "marker"
-      });
+        var createProjectMarker = function (roadLink) {
+            var middlePoint = calculateMiddlePoint(roadLink);
+            var box = new ol.Feature({
+                geometry: new ol.geom.Point([middlePoint.x, middlePoint.y]),
+                linkId: roadLink.linkId,
+                type: "marker"
+            });
 
-      var colorMap =
-        {           //comment includes legend name
-          1:'#db0e0e',         //Valtatie
-          2:'#ff6600',         //Kantatie
-          3:'#ff9955',         //Seututie
-          4:'#1414db',         //Yhdystie (dark blue)
-          5:'#10bfc4',         //Yhdystie (light blue)
-          6:'#800080',         //Numeroitu katu
-          7:'#10bfc4',         //Ramppi tai kiertoliittymä
-          8:'#fc6da0',         //Jalka tai pyörätie
-          9:'#fc6da0',         //Talvitie
-          10:'#fc6da0',        //Polku
-          11:'#888888'         //Muu tieverkko
-        };
+            var colorMap =
+                {           //comment includes legend name
+                    1: '#db0e0e',         //Valtatie
+                    2: '#ff6600',         //Kantatie
+                    3: '#ff9955',         //Seututie
+                    4: '#1414db',         //Yhdystie (dark blue)
+                    5: '#10bfc4',         //Yhdystie (light blue)
+                    6: '#800080',         //Numeroitu katu
+                    7: '#10bfc4',         //Ramppi tai kiertoliittymä
+                    8: '#fc6da0',         //Jalka tai pyörätie
+                    9: '#fc6da0',         //Talvitie
+                    10: '#fc6da0',        //Polku
+                    11: '#888888'         //Muu tieverkko
+                };
 
       var directionMarkerColor= function(roadLink){
         if(roadLink.status === LinkValues.LinkStatus.New.value){
@@ -36,13 +36,13 @@
           return '#888888';
       };
 
-      function hex2Rgba(hex){
-        hex = hex.replace('#','');
-        var colorR = parseInt(hex.substring(0, hex.length/3), 16);
-        var colorG = parseInt(hex.substring(hex.length/3, 2*hex.length/3), 16);
-        var colorB = parseInt(hex.substring(2*hex.length/3, 3*hex.length/3), 16);
-        return 'rgba('+colorR+','+colorG+','+colorB+',1)';
-      }
+            function hex2Rgba(hex) {
+                hex = hex.replace('#', '');
+                var colorR = parseInt(hex.substring(0, hex.length / 3), 16);
+                var colorG = parseInt(hex.substring(hex.length / 3, 2 * hex.length / 3), 16);
+                var colorB = parseInt(hex.substring(2 * hex.length / 3, 3 * hex.length / 3), 16);
+                return 'rgba(' + colorR + ',' + colorG + ',' + colorB + ',1)';
+            }
 
       var boxStyleDirectional = function(rl) {
        var markerColor=hex2Rgba(directionMarkerColor(rl));
@@ -56,22 +56,22 @@
         });
       };
 
-      box.setStyle(boxStyleDirectional(roadLink));
-      box.id = roadLink.linkId;
-      box.linkData = roadLink;
-      return box;
-    };
+            box.setStyle(boxStyleDirectional(roadLink));
+            box.id = roadLink.linkId;
+            box.linkData = roadLink;
+            return box;
+        };
 
-    var calculateMiddlePoint = function(link){
-      var points = _.map(link.points, function(point) {
-        return [point.x, point.y];
-      });
-      var lineString = new ol.geom.LineString(points);
-      return GeometryUtils.calculateMidpointOfLineString(lineString);
-    };
+        var calculateMiddlePoint = function (link) {
+            var points = _.map(link.points, function (point) {
+                return [point.x, point.y];
+            });
+            var lineString = new ol.geom.LineString(points);
+            return GeometryUtils.calculateMidpointOfLineString(lineString);
+        };
 
-    return {
-      createProjectMarker: createProjectMarker
+        return {
+            createProjectMarker: createProjectMarker
+        };
     };
-  };
 }(this));

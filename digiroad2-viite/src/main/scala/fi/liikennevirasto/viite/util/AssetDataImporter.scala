@@ -112,6 +112,7 @@ class AssetDataImporter {
 
   }
 
+  // TODO
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                             importOptions: ImportOptions): Unit = {
 
@@ -126,15 +127,14 @@ class AssetDataImporter {
       sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
-      sqlu"""DELETE FROM LRM_POSITION""".execute
       println(s"${DateTime.now()} - Old address data removed")
 
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE LRM_POSITION
-        SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp} WHERE ID IN (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS)""".execute
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
