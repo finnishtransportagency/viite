@@ -791,7 +791,7 @@
       directionMarkerLayer.getSource().clear();
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
       eventbus.once('roadAddressProject:fetched', function () {
-          if (selectedProjectLinkProperty.isSplited()) {
+          if (selectedProjectLinkProperty.isSplit()) {
           selectedProjectLinkProperty.openSplit(selectedProjectLinkProperty.get()[0].linkId, true);
           } else if (selectedProjectLinkProperty.isMultiLink())
           selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), true);
