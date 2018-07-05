@@ -521,9 +521,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      val errors = ProjectValidator.validateProject(updProject,currentProjectLinks).distinct
       errors should have size 1
-      errors.head.validationError.value should be (TerminationContinuity.value)
+      errors.head.validationError.value should be (MissingEndOfRoad.value)
     }
   }
 
