@@ -180,12 +180,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
-                                    roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadAddressId: Long = 0L) = {
+                                    roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadAddressId: Long = 0L, startDate: Option[DateTime] = None) = {
     val id = Sequences.nextViitePrimaryKeySeqValue
 
     def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
-                    roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadAddressId: Long = 0L) = {
-      ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
+                    roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadAddressId: Long = 0L, startDate: Option[DateTime] = None) = {
+      ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startDate, None,
         Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
         floating = false, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
         LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadAddressId, ely, reversed = false, None, 0L)
@@ -193,11 +193,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     def withTrack(t: Track): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map { case (st, en) =>
-        projectLink(st, en, t, id, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, roadAddressId)
+        projectLink(st, en, t, id, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, roadAddressId = roadAddressId, startDate = startDate)
       }
     }
 
-    val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+    val projectStartDate = if (startDate.isEmpty) DateTime.now() else startDate.get
+    val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", projectStartDate, "", projectStartDate, projectStartDate,
       "", Seq(), None, Some(8), None)
     ProjectDAO.createRoadAddressProject(project)
     val links =
@@ -2280,11 +2281,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadPartNumber = 9999L
       val linkId = 123456789L
       val nextRoadAddressId = RoadAddressDAO.getNextRoadAddressId
+      val startDate = Some(DateTime.parse("2018-07-04"))
       val ra = Seq(RoadAddress(nextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L,
-        Some(DateTime.parse("2018-07-04")), None, Option("TR"), linkId, 0.0, 10.0, SideCode.TowardsDigitizing, 1476392565000L, (None, None), floating = false,
+        startDate, None, Option("TR"), linkId, 0.0, 10.0, SideCode.TowardsDigitizing, 1476392565000L, (None, None), floating = false,
         Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
       RoadAddressDAO.create(ra)
-      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L), roadNumber = roadNumber, roadPartNumber = roadPartNumber, roadAddressId = nextRoadAddressId)
+      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L), roadNumber = roadNumber, roadPartNumber = roadPartNumber, roadAddressId = nextRoadAddressId, startDate = startDate)
       val links = projectService.getProjectLinks(project.id)
       val mappedLinks = projectService.roadAddressHistoryCorrections(links)
       mappedLinks.size should be(links.size)
