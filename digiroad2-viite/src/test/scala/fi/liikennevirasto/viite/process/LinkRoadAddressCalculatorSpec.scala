@@ -36,7 +36,7 @@ class LinkRoadAddressCalculatorSpec extends FunSuite with Matchers{
       RoadAddress(2, 1, 1, RoadType.Unknown, Track.LeftSide, Discontinuity.Continuous, 110, 135, Some(DateTime.now), None, Option("tester"),
         124L, 0.0, 25.2, SideCode.Unknown, 0, (None, None), false, Seq(), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(3, 1, 1, RoadType.Unknown, Track.LeftSide, Discontinuity.Continuous, 135, 180, Some(DateTime.now), None, Option("tester"),
-        125L, 0.0, 58.1, SideCode.Unknown, 0, (None, Some(CalibrationPoint(125L, 48.1, 180))),false, Seq(), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        125L, 0.0, 58.1, SideCode.Unknown, 0, (None, Some(CalibrationPoint(125L, 48.1, 180))), false, Seq(), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(4, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 100, Some(DateTime.now), None, Option("tester"),
         223L, 0.0, 98.3, SideCode.Unknown, 0, (Some(CalibrationPoint(223L, 0.0, 0)), None), false, Seq(), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(5, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 100, 130, Some(DateTime.now), None, Option("tester"),

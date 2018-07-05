@@ -722,7 +722,7 @@
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
-      eventListener.listenTo(eventbus, 'linkProperties:closed', refreshViewAfterClosingFloating);
+        eventListener.listenTo(eventbus, 'linkProperties:closed', refreshViewAfterClosingFloating);
 
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
         var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
@@ -1015,7 +1015,7 @@
       }
     };
 
-    var refreshViewAfterClosingFloating = function() {
+      var refreshViewAfterClosingFloating = function () {
       selectedLinkProperty.setDirty(false);
       selectedLinkProperty.resetTargets();
       selectedLinkProperty.clearFeaturesToKeep();
