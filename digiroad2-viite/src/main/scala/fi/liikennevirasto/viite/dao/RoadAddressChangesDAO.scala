@@ -148,17 +148,53 @@ object RoadAddressChangesDAO {
   }
 
   private def queryList(query: String) = {
-    val resultList = Q.queryNA[ChangeRow](query).list
-    resultList.map { row => {
-      val changeInfo = toRoadAddressChangeInfo(row)
-      val (user, date) = getUserAndModDate(row)
-      ProjectRoadAddressChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get,
-        row.rotatingTRId)
+    mapper(Q.queryNA[ChangeRow](query).list)
+  }
+
+  private def queryResumeList(query: String) = {
+    mapper(mergeChangeRows(Q.queryNA[ChangeRow](query).list))
+  }
+
+  /**
+    * Merge all the change rows by source and target road number, road part number, road type, ely, change type and reversed.
+    * Then if the end address of the previous row is equal to the start of the next one and the dicontinuity is equal the merge is performed.
+    * @param resultList
+    * @return
+    */
+  private def mergeChangeRows(resultList: List[ChangeRow]) : List[ChangeRow] = {
+    def combine(previousRow: ChangeRow, nextRow: ChangeRow) : Seq[ChangeRow] = {
+      if(previousRow.sourceEndAddressM == nextRow.sourceStartAddressM && previousRow.targetEndAddressM == nextRow.targetStartAddressM &&
+        (previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty || previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)) &&
+        (previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty || previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)))
+        Seq(previousRow.copy(sourceEndAddressM = nextRow.sourceEndAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
+      else
+        Seq(previousRow, nextRow)
     }
+
+    resultList.groupBy(r =>
+      (
+        r.changeType, r.reversed,
+        r.sourceRoadNumber, r.sourceTrackCode, r.sourceStartRoadPartNumber, r.sourceEndRoadPartNumber, r.sourceRoadType, r.sourceEly,
+        r.targetRoadNumber, r.targetTrackCode, r.targetStartRoadPartNumber, r.targetEndRoadPartNumber, r.targetRoadType, r.targetEly
+      )
+    ).flatMap { case (_, changeRows) =>
+      changeRows.sortBy(_.targetStartAddressM).foldLeft(Seq[ChangeRow]()) {
+        case (result, nextChangeRow) => if(result.isEmpty) Seq(nextChangeRow) else combine(result.last, nextChangeRow)
+      }
+    }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode))
+  }
+
+  private def mapper(resultList: List[ChangeRow]) : List[ProjectRoadAddressChange] = {
+    resultList.map { row => {
+        val changeInfo = toRoadAddressChangeInfo(row)
+        val (user, date) = getUserAndModDate(row)
+        ProjectRoadAddressChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get,
+          row.rotatingTRId)
+      }
     }
   }
 
-  def fetchRoadAddressChanges(projectIds: Set[Long]):List[ProjectRoadAddressChange] = {
+  private def fetchRoadAddressChanges(projectIds: Set[Long], queryList: String => List[ProjectRoadAddressChange]):List[ProjectRoadAddressChange] = {
     if (projectIds.isEmpty)
       return List()
     val projectIdsString = projectIds.mkString(",")
@@ -176,6 +212,14 @@ object RoadAddressChangesDAO {
                   COALESCE(rac.new_start_addr_m, rac.old_start_addr_m), COALESCE(rac.new_track_code, rac.old_track_code),
                   CHANGE_TYPE DESC"""
     queryList(query)
+  }
+
+  def fetchRoadAddressChanges(projectIds: Set[Long]):List[ProjectRoadAddressChange] = {
+    fetchRoadAddressChanges(projectIds, queryList)
+  }
+
+  def fetchRoadAddressChangesResume(projectIds: Set[Long]):List[ProjectRoadAddressChange] = {
+    fetchRoadAddressChanges(projectIds, queryResumeList)
   }
 
   def clearRoadChangeTable(projectId: Long): Unit = {
