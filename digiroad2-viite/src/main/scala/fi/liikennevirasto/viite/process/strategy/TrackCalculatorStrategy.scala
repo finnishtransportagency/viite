@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.NewRoadAddress
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.{CalibrationCode, LinkStatus, ProjectLink, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -11,8 +12,12 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 object TrackCalculatorContext {
 
-  private lazy val discontinuityTrackCalculatorStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy
+  private lazy val minorDiscontinuityStrategy: DiscontinuityTrackCalculatorStrategy = {
+    new DiscontinuityTrackCalculatorStrategy(MinorDiscontinuity)
+  }
+
+  private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy = {
+    new DiscontinuityTrackCalculatorStrategy(Discontinuous)
   }
 
   private lazy val linkStatusChangeTrackCalculatorStrategy: LinkStatusChangeTrackCalculatorStrategy = {
@@ -23,7 +28,8 @@ object TrackCalculatorContext {
     new DefaultTrackCalculatorStrategy
   }
 
-  private val strategies = Seq(discontinuityTrackCalculatorStrategy, linkStatusChangeTrackCalculatorStrategy)
+
+  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, linkStatusChangeTrackCalculatorStrategy)
 
   def getNextStrategy(projectLinks: Seq[ProjectLink]): Option[(Long, TrackCalculatorStrategy)] = {
     val head = projectLinks.head

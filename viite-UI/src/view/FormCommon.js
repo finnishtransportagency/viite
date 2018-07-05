@@ -3,7 +3,7 @@
     var ProjectStatus = LinkValues.ProjectStatus;
     var LinkStatus = LinkValues.LinkStatus;
     var Track = LinkValues.Track;
-      var disabledInput = false;
+    var disabledInput = false;
 
     var title = function(titleName) {
       if (!titleName)
@@ -52,21 +52,21 @@
           roadTypeDropdown() + '<br>' +
           addSmallLabel('NIMI') +
           addRoadNameField(roadName, selected[0].roadNameBlocked) +
-        ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
+        ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
 
     var replaceAddressInfo = function(backend, selectedProjectLink) {
-      if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 )
-      {
+      var roadNameField = $('#roadName');
+      if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 ) {
         backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             if(response.roadName !== ''){
-                $('#roadName').val(response.roadName);
-                $('#roadName').prop('disabled', true);
-                $('.project-form button.update').prop("disabled", false);
+              roadNameField.val(response.roadName);
+              roadNameField.prop('disabled', true);
+              $('.project-form button.update').prop("disabled", false);
             }
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
               $('#trackCodeDropdown').val("0");
@@ -115,12 +115,11 @@
     };
 
     var addDiscontinuityDropdown = function(link){
-      if(link.endAddressM === 0){
+      if (link.endAddressM === 0) {
         return '<select class="form-select-control" id="discontinuityDropdown" size="1" style="visibility: hidden">'+
           '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
           '</select>';
-      }
-      else {
+      } else {
         return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
           '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
           '<option value="1" >1 Tien loppu</option>' +
@@ -134,11 +133,10 @@
 
     var addTrackCodeDropdown = function (trackDefaultValue, properties){
       var trackDefaultValueToShow = '';
-      if(trackDefaultValue === ''){
+      if (trackDefaultValue === '') {
         trackDefaultValue = Track.Unknown.value;
         trackDefaultValueToShow = '--';
-      }
-      else{
+      } else {
         trackDefaultValueToShow = trackDefaultValue;
       }
 
@@ -163,9 +161,9 @@
 
     var changeDirection = function (selected) {
       var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
-      var isPartialReversed = ((reversedInGroup.length > 1) ? true : false);
-      return '<div hidden class="'+prefix+'form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="'+prefix+'form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
+      var isPartialReversed = reversedInGroup.length > 1;
+      return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
+        '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
         directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
