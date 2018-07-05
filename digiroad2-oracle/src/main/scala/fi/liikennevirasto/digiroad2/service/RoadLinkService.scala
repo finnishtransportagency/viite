@@ -210,31 +210,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       Nil
   }
 
-  /**
-    * This method performs formatting operations to given vvh road links:
-    * - auto-generation of functional class and link type by feature class
-    * - information transfer from old link to new link from change data
-    * It also passes updated links and incomplete links to be saved to db by actor.
-    *
-    * @param vvhRoadLinks
-    * @return Road links
-    */
-  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
-    val groupedLinks = vvhRoadLinks.groupBy(_.linkId).mapValues(_.head)
-
-    def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
-      val vvhRoadLink = groupedLinks.get(roadLink.linkId)
-      vvhRoadLink.get.featureClass match {
-        case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad)
-        case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway)
-        case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath)
-        case _ => roadLink //similar logic used in RoadAddressBuilder
-      }
-    }
-
-   getRoadLinkDataByLinkIds(vvhRoadLinks).map(autoGenerateProperties)
-  }
-
   def getCurrentAndHistoryRoadLinksFromVVH(linkIds: Set[Long],
                                            useFrozenVVHLinks: Boolean = false): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
     val fut = for {
@@ -293,6 +268,31 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getChangeInfoFromVVHF(linkIds: Set[Long]): Future[Seq[ChangeInfo]] = {
     vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds)
+  }
+
+  /**
+    * This method performs formatting operations to given vvh road links:
+    * - auto-generation of functional class and link type by feature class
+    * - information transfer from old link to new link from change data
+    * It also passes updated links and incomplete links to be saved to db by actor.
+    *
+    * @param vvhRoadLinks
+    * @return Road links
+    */
+  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
+    val groupedLinks = vvhRoadLinks.groupBy(_.linkId).mapValues(_.head)
+
+    def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
+      val vvhRoadLink = groupedLinks.get(roadLink.linkId)
+      vvhRoadLink.get.featureClass match {
+        case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad)
+        case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway)
+        case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath)
+        case _ => roadLink //similar logic used in RoadAddressBuilder
+      }
+    }
+
+    getRoadLinkDataByLinkIds(vvhRoadLinks).map(autoGenerateProperties)
   }
 
   /**
