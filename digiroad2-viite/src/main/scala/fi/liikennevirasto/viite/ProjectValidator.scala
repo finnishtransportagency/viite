@@ -411,26 +411,26 @@ object ProjectValidator {
     }).headOption.getOrElse(Seq())
   }
 
+  /*
+    Pick only parts that are terminated and had end of road given before
+    Find previous road part for all terminated road parts with end of road and link it to an error message
+    If previous road address is part of the project and not terminated, don't throw error
+  */
   def checkRemovedEndOfRoadParts(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-
-    //we should only check non Terminated parts that have roadPart lower than the bigger nonTerminated part
-    project.reservedParts.groupBy(_.roadNumber).flatMap { rn =>
-      val nonTerminatedParts = rn._2.filterNot(rrp => rrp.addressLength.nonEmpty && rrp.newLength.getOrElse(0L) == 0L)
-      val endOfRoadParts = nonTerminatedParts.filter(part => part.newDiscontinuity.getOrElse(part.discontinuity) == EndOfRoad)
-      val invalidEndOfRoadParts = if (nonTerminatedParts.nonEmpty) {
-        val biggerNonTerminatedPart = nonTerminatedParts.maxBy(_.roadPartNumber).roadPartNumber
-        endOfRoadParts.filter(_.roadPartNumber < biggerNonTerminatedPart)
-      } else {
-        Seq.empty[ReservedRoadPart]
+    projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == EndOfRoad).flatMap { rrp =>
+      RoadAddressDAO.fetchPreviousRoadPartNumber(rrp.roadNumber, rrp.roadPartNumber) match {
+        case Some(previousRoadPartNumber) =>
+          RoadAddressDAO.fetchByRoadPart(rrp.roadNumber, previousRoadPartNumber).reverse
+            .find(ra => !projectLinks.exists(link => link.roadAddressId == ra.id || link.status != Terminated)) match {
+              case Some(actualProjectLinkForPreviousEnd) =>
+                return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
+                  Seq(actualProjectLinkForPreviousEnd.id),
+                  Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, 12)), Some("")))
+              case None => Seq()
+          }
+        case None => Seq()
       }
-
-      invalidEndOfRoadParts.lastOption.map { part =>
-        val validLinks = RoadAddressDAO.fetchByRoadPart(part.roadNumber, part.roadPartNumber, fetchOnlyEnd = true)
-        ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((part.roadNumber, part.roadPartNumber)))),
-          Seq(validLinks.head.id),
-          Seq(ProjectCoordinates(validLinks.head.geometry.head.x, validLinks.head.geometry.head.y, 12)), Some(""))
-      }
-    }.toSeq
+    }
   }
 
   def checkProjectElyCodes(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
