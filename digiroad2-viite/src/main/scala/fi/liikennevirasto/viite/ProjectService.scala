@@ -165,7 +165,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def projectWritableCheck(projectId: Long): Option[String] = {
     ProjectDAO.getProjectStatus(projectId) match {
       case Some(projectState) =>
-        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite)
+        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErroredInTR)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
@@ -767,21 +767,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getChangeProject(projectId: Long): Option[ChangeProject] = {
-    val changeProjectData = withDynTransaction {
-      try {
-        if (recalculateChangeTable(projectId)) {
-          val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
-        } else {
-          None
-        }
-      } catch {
-        case NonFatal(e) =>
-          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
-          None
-      }
+    withDynTransaction {
+      getChangeProjectInTX(projectId)
     }
-    changeProjectData
+  }
+
+  def getChangeProjectInTX(projectId: Long): Option[ChangeProject] = {
+    try {
+      if (recalculateChangeTable(projectId)) {
+        val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
+        Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
+      } else {
+        None
+      }
+    } catch {
+      case NonFatal(e) =>
+        logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+        None
+    }
   }
 
   def prettyPrintLog(roadAddressChanges: List[ProjectRoadAddressChange]) = {
@@ -1370,17 +1373,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             //rollback
             logger.info(s"Sending to TR failed: ${trProjectStateMessage.reason}")
-            PublishResult(validationSuccess = true, sendSuccess = false, Some(trProjectStateMessage.reason))
+            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else trMessageRefusal
+            PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
         }
       } catch {
         //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
         case ioe@(_: IOException | _: ClientProtocolException) => {
           ProjectDAO.updateProjectStatus(projectId, SendingToTR)
-          PublishResult(validationSuccess = false, sendSuccess = false, None)
+          PublishResult(validationSuccess = false, sendSuccess = false, Some(trUnreachableMessage))
         }
         case NonFatal(_) => {
           ProjectDAO.updateProjectStatus(projectId, ErrorInViite)
-          PublishResult(validationSuccess = false, sendSuccess = false, None)
+          PublishResult(validationSuccess = false, sendSuccess = false, Some(genericViiteErrorMessage))
         }
       }
     }
@@ -1394,7 +1398,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: RoadAddressProject): ProjectLink = {
     val geometry = GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue)
     ProjectLink(NewRoadAddress, ra.roadNumber, ra.roadPartNumber, ra.track, ra.discontinuity, ra.startAddrMValue,
-      ra.endAddrMValue, ra.startDate, ra.endDate, Some(project.modifiedBy), 0L, ra.linkId, ra.startMValue, ra.endMValue,
+      ra.endAddrMValue, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue,
       ra.sideCode, ra.calibrationPoints, ra.floating, geometry,
       project.id, LinkStatus.NotHandled, ra.roadType, ra.linkGeomSource, GeometryUtils.geometryLength(geometry),
       ra.id, ra.ely, reversed = false, None, ra.adjustedTimestamp, roadAddressLength = Some(ra.endAddrMValue - ra.startAddrMValue))
@@ -1404,7 +1408,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                              roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, roadType: RoadType,
                              ely: Long, roadName: String = ""): ProjectLink = {
     ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, trackCode, discontinuity,
-      0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), 0L, rl.linkId, 0.0, rl.length,
+      0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
       SideCode.Unknown, (None, None), floating = false, rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
       0L, ely, reversed = false, None, rl.vvhTimeStamp, roadName = Some(roadName))
@@ -1601,7 +1605,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, floating = floatingValue))
         case New =>
           Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
-            pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), 0L, pl.linkId,
+            pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), pl.linkId,
             pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false,
             pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewCommonHistoryId))
         case Transfer => // TODO if the whole common history -segment is transferred, keep the original common_history_id, otherwise generate new ids for the different segments
@@ -1664,7 +1668,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadsToCreate = expiringRoadAddresses.filter(ex => {
       idsToHistory.contains(ex._1)
     }).mapValues(r => {
-      r.copy(id = NewRoadAddress, lrmPositionId = NewRoadAddress, endDate = Some(DateTime.now()))
+      r.copy(id = NewRoadAddress, endDate = Some(DateTime.now()))
     }).values
     RoadAddressDAO.create(roadsToCreate)
   }
@@ -1778,7 +1782,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val floatingValue = source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow
     val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewRoadAddress), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
-      pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, 0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
+      pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
       pl.linkGeometryTimeStamp, pl.calibrationPoints, floating = false, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.commonHistoryId).getOrElse(0))
     pl.status match {
       case UnChanged =>

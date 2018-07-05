@@ -24,13 +24,15 @@
     display: block;
     float: right;
     width: max-content;
-    color: @blue-dark;
+    color: @gray-lightest;
     cursor: pointer;
   }
 
   .deleteSpan {
     display: block;
-    float: right;
+    float: left;
+    margin-top: 5px;
+    font-size: 14px;
     width: max-content;
     color: @warning;
     cursor: pointer;
@@ -296,6 +298,11 @@
 
   .control-label-floating {
     width: @control-label-width;
+    margin-right: @control-label-margin;
+    font-size: @font-size-xxs;
+  }
+
+  .control-label-floating-list {
     margin-right: @control-label-margin;
     font-size: @font-size-xxs;
   }

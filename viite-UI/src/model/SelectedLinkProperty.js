@@ -219,7 +219,7 @@
     var processOl3Features = function (visibleFeatures){
       var selectedOL3Features = _.filter(visibleFeatures, function(vf){
         return (_.some(get().concat(featuresToKeep), function(s){
-            return s.linkId === vf.linkData.linkId &&  s.mmlId === vf.linkData.mmlId;
+            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId;
           }));
       });
       eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
@@ -436,15 +436,15 @@
       });
     });
 
-    eventbus.on('linkProperties:saved', function(){
+    eventbus.on('linkProperties:closed', function(){
       eventbus.trigger('layer:enableButtons', true);
       applicationModel.toggleSelectionTypeAll();
       clearFeaturesToKeep();
     });
 
-    eventbus.on('roadAddress:openProject', function(){
-        close();
-    });
+      eventbus.on('roadAddress:openProject', function () {
+          close();
+      });
 
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
@@ -583,7 +583,7 @@
 
     var getSources = function() {
       return _.union(_.map(sources, function (roadLink) {
-        return roadLink.getData();
+        return roadLink;
       }));
     };
 
@@ -779,7 +779,7 @@
         //Filter the features without said linkIds
         if(linkIdsToRemove.length !== 0){
           return _.reject(features, function(feature){
-            return _.contains(linkIdsToRemove, feature.linkData.linkId);
+              return _.contains(linkIdsToRemove, feature.linkData.linkId);
           });
         } else {
           return features;
