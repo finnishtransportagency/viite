@@ -223,4 +223,49 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     rightOrdered.map(_.linkId) should be (List(6L, 4L, 7L, 5L))
     leftOrdered.map(_.linkId) should be (List(1L, 2L, 3L))
   }
+
+  test("Pick the once connected when there is any with the same track code on orderProjectLinksTopologyByGeometry") {
+    //                                 3l         4L
+    //                             |--------|-----------|
+    //                             |        |
+    //                          1L |        | 2l
+    //                             |        |
+    //                             |        |
+    //                             -        -
+
+    val projectLinks = List(
+      dummyProjectLink(1L, Seq(Point(1, 1), Point(1, 2), Point(1, 4)), Track.LeftSide),
+      dummyProjectLink(2L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.RightSide),
+      dummyProjectLink(3L, Seq(Point(1, 4), Point(2, 4), Point(3, 4)), Track.Combined),
+      dummyProjectLink(4L, Seq(Point(3, 4), Point(4, 4), Point(50, 4)), Track.Combined)
+    )
+
+    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(3, 1), Point(1, 1)), projectLinks)
+
+    rightOrdered.map(_.linkId) should be (List(2L, 3L, 4L))
+    leftOrdered.map(_.linkId) should be (List(1L, 3L, 4L))
+  }
+
+  test("Pick the same track when there is 2 connected links with only one with same track code on orderProjectLinksTopologyByGeometry") {
+    //                             -        -
+    //                             |        |
+    //                          3L |        | 4l
+    //                             |        |
+    //                             |        |
+    //                   |---------|--------|
+    //                        1L        2L
+
+    val projectLinks = List(
+      dummyProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.Combined),
+      dummyProjectLink(2L, Seq(Point(3, 1), Point(4, 1), Point(5, 1)), Track.Combined),
+      dummyProjectLink(3L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.LeftSide),
+      dummyProjectLink(4L, Seq(Point(5, 1), Point(5, 3), Point(5, 4)), Track.RightSide)
+    )
+
+    val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(1, 1), Point(1, 1)), projectLinks)
+
+    rightOrdered.map(_.linkId) should be (List(1L, 2L, 4L))
+    leftOrdered.map(_.linkId) should be (List(1L, 2L, 3L))
+  }
+
 }
