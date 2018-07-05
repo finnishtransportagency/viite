@@ -203,9 +203,6 @@
           eventbus.trigger('road-type:selected', roadTypeShown);
         }
       },
-      isRoadTypeShown: function() {
-        return selectedLayer === 'massTransitStop' && roadTypeShown;
-      },
       getCurrentLocation: function() {
         return centerLonLat;
       },
