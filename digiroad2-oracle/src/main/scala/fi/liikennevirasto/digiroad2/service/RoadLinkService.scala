@@ -303,11 +303,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       RoadLink(link.linkId, link.geometry,
         GeometryUtils.geometryLength(link.geometry),
         link.administrativeClass,
-        99, // TODO REMOVE
+        99,
         link.trafficDirection,
         UnknownLinkType,
         link.modifiedAt.map(DateTimePropertyFormat.print),
-        None /* TODO */, link.attributes, link.constructionType, link.linkSource)
+        None, link.attributes, link.constructionType, link.linkSource)
     }
   }
 
