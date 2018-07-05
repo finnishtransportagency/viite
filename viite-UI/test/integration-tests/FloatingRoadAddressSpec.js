@@ -117,7 +117,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     describe('Click the Tallenna button to save the simulated data', function(){
       before(function(done){
-        eventbus.once('linkProperties:closed', function(){
+          eventbus.once('linkProperties:closed', function () {
           done();
         });
         testHelpers.clickEnabledSaveButton();

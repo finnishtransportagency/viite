@@ -1396,7 +1396,8 @@ object RoadAddressDAO {
 
   def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
   {
-    val query = s"""SELECT r.id, r.link_id, r.end_addr_M, r.discontinuity, r.ely,
+    val query =
+      s"""SELECT r.id, r.link_id, r.end_addr_M, r.discontinuity, r.ely,
                 (Select Max(ra.start_date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
                 (Select Max(ra.end_Date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
                 FROM road_address r

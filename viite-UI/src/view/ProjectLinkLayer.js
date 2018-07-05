@@ -132,7 +132,7 @@
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-      var ctrlPressed = event.mapBrowserEvent !== undefined ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
+        var ctrlPressed = event.mapBrowserEvent !== undefined ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
       var selection = _.find(event.selected.concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
@@ -168,17 +168,17 @@
           selectedProjectLinkProperty.openShift(previouslySelectedIds);
         }
         highlightFeatures();
-      } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
+          } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        if(!_.isUndefined(selection.linkData.connectedLinkId)){
-          selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
-        } else {
-          selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
-        }
-      } else {
-        eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
+              if (!_.isUndefined(selection.linkData.connectedLinkId)) {
+                  selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
+              } else {
+                  selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
+              }
+          } else {
+              eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
       }
     };
 
@@ -294,8 +294,8 @@
     };
 
     var clearHighlights = function () {
-      selectDoubleClick.getFeatures().clear();
-      selectSingleClick.getFeatures().clear();
+        selectDoubleClick.getFeatures().clear();
+        selectSingleClick.getFeatures().clear();
     };
 
     var clearLayers = function () {

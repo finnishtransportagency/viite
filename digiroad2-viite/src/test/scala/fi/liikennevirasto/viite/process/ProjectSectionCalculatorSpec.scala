@@ -591,7 +591,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with 2 tracks (Left and Right)") {
-    runWithRollback{
+    runWithRollback {
       // Left track = 85.308 meters
       val idRoad0 = 0L //   L>
       val idRoad1 = 1L //   L>
@@ -611,7 +611,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(42, 19), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), floating = false,
-        Seq(Point(103.0, 15.0),Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+        Seq(Point(103.0, 15.0), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink4 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad4, 5, 1, RoadType.Unknown, Track.RightSide, Discontinuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad4, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), floating = false,
         Seq(Point(20.0, 10.0), Point(42, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
@@ -627,7 +627,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("validate if there is a calibration point when has MinorDiscontinuity at end of address and start of next one with track Combined") {
-    runWithRollback{
+    runWithRollback {
       // Combined track = 85.308 meters with MinorDiscontinuity
       val idRoad0 = 0L //   C>
       val idRoad1 = 1L //   C>
@@ -644,7 +644,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(42, 19), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 5, 1, RoadType.PublicRoad, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), floating = false,
-        Seq(Point(103.0, 15.0),Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+        Seq(Point(103.0, 15.0), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
       val ordered = ProjectSectionCalculator.assignMValues(list)
       // check combined track - should have 4 calibration points: start, end, minor discontinuity and next one after discontinuity
@@ -653,7 +653,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with track Combined") {
-    runWithRollback{
+    runWithRollback {
       // Combined track = 85.308 meters with Discontinuous
       val idRoad0 = 0L //   C>
       val idRoad1 = 1L //   C>
@@ -670,7 +670,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(42, 19), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 5, 1, RoadType.PublicRoad, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), floating = false,
-        Seq(Point(103.0, 15.0),Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+        Seq(Point(103.0, 15.0), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
       val ordered = ProjectSectionCalculator.assignMValues(list)
       // check combined track - should have 4 calibration points: start, end, discontinuity and next one after discontinuity

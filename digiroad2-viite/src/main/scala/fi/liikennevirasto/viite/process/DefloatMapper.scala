@@ -67,8 +67,8 @@ object DefloatMapper extends RoadAddressMapper {
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
       val startSource = findStartLinearLocation(st, joinedSource)
       val endSource = findEndLinearLocation(end, joinedSource, startSource._1.linkId)
-      val startTarget = findStartLinearLocation(st/targetCoeff, orderedTarget)
-      val endTarget = findEndLinearLocation(end/targetCoeff, orderedTarget, startTarget._1.linkId)
+      val startTarget = findStartLinearLocation(st / targetCoeff, orderedTarget)
+      val endTarget = findEndLinearLocation(end / targetCoeff, orderedTarget, startTarget._1.linkId)
       (startSource, endSource, startTarget, endTarget)}
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }

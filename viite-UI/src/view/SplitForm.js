@@ -55,7 +55,7 @@
       var selection = selectedSplitData(selected, currentSplitData);
       return _.template('' +
         '<header>' +
-        formCommon.title(project.name) +
+          formCommon.title(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -126,7 +126,7 @@
     var emptyTemplate = function (project) {
       return _.template('' +
         '<header style ="display:-webkit-inline-box;">' +
-        formCommon.titleWithEditingTool(project) +
+          formCommon.titleWithEditingTool(project) +
         '</header>' +
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
