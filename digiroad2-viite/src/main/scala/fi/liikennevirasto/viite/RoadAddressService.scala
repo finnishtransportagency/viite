@@ -268,7 +268,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = if (!frozenTimeVVHAPIServiceEnabled) roadLinkService.getChangeInfoFromVVHF(addressLinkIds) else Future(Seq())
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressLinkIds, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressLinkIds, frozenTimeVVHAPIServiceEnabled)
 
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
@@ -466,7 +466,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits).groupBy(_.linkId)
     }
 
-    val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet, frozenTimeVVHAPIServiceEnabled)
     val combined = addresses.mapValues(combineGeom)
     val roadLinks = vvhRoadLinks.map(rl => rl -> combined(rl.linkId)).toMap
 
@@ -773,7 +773,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long): Seq[RoadAddressLink] = {
-    val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks, frozenTimeVVHAPIServiceEnabled)
     val pointCloud = chainRoadLinks.map(_.geometry).map(GeometryUtils.geometryEndpoints).flatMap(x => Seq(x._1, x._2))
     val boundingPoints = GeometryUtils.boundingRectangleCorners(pointCloud)
     val boundingRectangle = BoundingRectangle(boundingPoints._1 + Vector3d(-.1, .1, 0.0), boundingPoints._2 + Vector3d(.1, -.1, 0.0))
@@ -791,7 +791,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
     val transferredRoadAddresses = getRoadAddressesAfterCalculation(sources, targets, user)
-    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet, frozenTimeVVHAPIServiceEnabled)
     transferredRoadAddresses.filter(_.endDate.isEmpty).map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
   }
 
