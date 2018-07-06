@@ -196,15 +196,11 @@
         return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
       },
       assetDragDelay: 100,
-      assetGroupingDistance: 36,
       setRoadTypeShown: function(bool) {
         if (roadTypeShown !== bool) {
           roadTypeShown = bool;
           eventbus.trigger('road-type:selected', roadTypeShown);
         }
-      },
-      isRoadTypeShown: function() {
-        return selectedLayer === 'massTransitStop' && roadTypeShown;
       },
       getCurrentLocation: function() {
         return centerLonLat;
