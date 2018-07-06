@@ -555,7 +555,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("reserve part 2 (which has EndOfRoad) and Terminate it. Reserve and Transfer part 1 to part 2 (Without and with EndOfRoad.") {
+  test("reserve part 2 (which has EndOfRoad) and Terminate it. Reserve and Transfer part 1 to part 2 (with and without EndOfRoad)") {
     runWithRollback {
       val ra = Seq(
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -596,8 +596,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO test("reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 2 (with EndOfRoad). Should not give any error")
-  test("reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 2 (with EndOfRoad). Should not give any error"){
+  test("reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 2 (with and without EndOfRoad)"){
+
     runWithRollback {
       val ra = Seq(
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -609,14 +609,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
           floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
 
-      val newRa = RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0L, 10L, Some(DateTime.now()), None, None, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
-        (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-        floating = false, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)
+      val newRa = RoadAddress(0, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0L, 10L, Some(DateTime.now()), None, None, 39400L, 0.0, 10.0, TowardsDigitizing, 0L,
+        (Some(CalibrationPoint(39400L, 0.0, 0L)), Some(CalibrationPoint(39400L, 10.0, 10L))),
+        floating = false, Seq(Point(10.0, 40.0), Point(20.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)
 
       val raIds = RoadAddressDAO.create(ra, Some("U"))
 
-      val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), None, Some(8), None)
@@ -625,31 +624,73 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadAddressId = raIds.last, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber)))
       //add new link with same terminated road part (which had EndOfRoad)
-      ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(newRa)))
+      ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(newRa).copy(roadNumber = newRa.roadNumber, roadPartNumber = newRa.roadPartNumber)))
 
       val currentProjectLinks = ProjectDAO.getProjectLinks(project.id)
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
 
       val error1 = ProjectValidator.validateProject(updProject,currentProjectLinks).distinct
       error1 should have size 1
-      error1.head.validationError.value should be (TerminationContinuity.value)
+      error1.head.validationError.value should be (MissingEndOfRoad.value)
 
-      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
-      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.UnChanged).copy(roadAddressId = raIds.head, roadNumber = ra.head.roadNumber, roadPartNumber = ra.head.roadPartNumber)))
-      val currentProjectLinks2 = ProjectDAO.getProjectLinks(project.id)
-      val error2 = ProjectValidator.validateProject(updProject,currentProjectLinks2).distinct
-      error2 should have size 1
-      error2.head.validationError.value should be (MissingEndOfRoad.value)
-
-      val updatedProjectLinks = Seq(currentProjectLinks2.filter(_.status == LinkStatus.UnChanged).head.copy(status = LinkStatus.Transfer, roadPartNumber = 2L, discontinuity = EndOfRoad))
+      val updatedProjectLinks = Seq(currentProjectLinks.filter(_.status == LinkStatus.New).head.copy(roadPartNumber = 2L, discontinuity = EndOfRoad))
 
       ProjectDAO.updateProjectLinksToDB(updatedProjectLinks, "U")
-      val afterProjectLinks = ProjectDAO.getProjectLinks(project.id)
-      val errors3 = ProjectValidator.validateProject(updProject,afterProjectLinks).distinct
-      errors3 should have size 0
+      val currentProjectLinks2 = ProjectDAO.getProjectLinks(project.id)
+      val error2 = ProjectValidator.validateProject(updProject,currentProjectLinks2).distinct
+      error2 should have size 0
     }
   }
-  //TODO test("reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 3 (without EndOfRoad). Should give MissingEndOfROad error")
+
+  /*
+    test("reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 3 (with and without EndOfRoad)"){
+      runWithRollback {
+        val ra = Seq(
+          RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+            0L, 10L, Some(DateTime.now()), None, None, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
+            (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
+            floating = false, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
+          RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+            0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
+            (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
+            floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
+
+        val newRa = RoadAddress(0, 19999L, 3L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, Some(DateTime.now()), None, None, 39400L, 0.0, 10.0, TowardsDigitizing, 0L,
+          (Some(CalibrationPoint(39400L, 0.0, 0L)), Some(CalibrationPoint(39400L, 10.0, 10L))),
+          floating = false, Seq(Point(10.0, 40.0), Point(20.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)
+
+        val raIds = RoadAddressDAO.create(ra, Some("U"))
+
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+          "", Seq(), None, Some(8), None)
+        ProjectDAO.createRoadAddressProject(project)
+        ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
+
+        ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadAddressId = raIds.last, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber)))
+        //add new link with same terminated road part (which had EndOfRoad)
+        val newpl = Seq(util.toProjectLink(project, LinkStatus.New)(newRa).copy(roadNumber = newRa.roadNumber, roadPartNumber = newRa.roadPartNumber))
+        ProjectDAO.create(newpl)
+
+        val currentProjectLinks = ProjectDAO.getProjectLinks(project.id)
+        val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
+
+        val error1 = ProjectValidator.validateProject(updProject,currentProjectLinks).distinct
+        error1 should have size 1
+        error1.head.validationError.value should be (MissingEndOfRoad.value)
+
+        val updatedProjectLinks = Seq(currentProjectLinks.filter(_.status == LinkStatus.New).head.copy(roadPartNumber = 2L, discontinuity = EndOfRoad))
+
+        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks, "U")
+        val currentProjectLinks2 = ProjectDAO.getProjectLinks(project.id)
+        val error2 = ProjectValidator.validateProject(updProject,currentProjectLinks2).distinct
+        error2 should have size 0
+      }
+  }
+        */
+
+
   test("Terminate all links for all parts in a roadNumber") {
     runWithRollback {
       val ra = Seq(
