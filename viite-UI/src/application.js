@@ -61,6 +61,11 @@
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
+  $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
+    applicationModel.removeSpinner();
+    console.log("Request '" + settings.url + "' failed: " + thrownError);
+  });
+
   var createOpenLayersMap = function(startupParameters, layers) {
     var map = new ol.Map({
       keyboardEventTarget: document,

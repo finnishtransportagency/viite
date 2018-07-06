@@ -151,11 +151,17 @@ trait BaseRoadAddress {
   }
 
   def connected(ra2: BaseRoadAddress): Boolean = {
-    val connectingPoint = sideCode match {
+    val currEndPoint = sideCode match {
       case AgainstDigitizing => geometry.head
       case _ => geometry.last
     }
-    GeometryUtils.areAdjacent(ra2.geometry, connectingPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+
+    val nextStartPoint = ra2.sideCode match {
+      case AgainstDigitizing => ra2.geometry.last
+      case _ => ra2.geometry.head
+    }
+
+    GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 }
 
