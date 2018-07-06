@@ -293,22 +293,9 @@
           selectionData.roadType === currentlySelectedSample.roadType;
     };
 
-      var clearHighlights = function () {
-          if (applicationModel.getSelectedTool() == 'Cut') {
-              if (selectDoubleClick.getFeatures().getLength() !== 0) {
-          selectDoubleClick.getFeatures().clear();
-        }
-              if (selectSingleClick.getFeatures().getLength() !== 0) {
-          selectSingleClick.getFeatures().clear();
-        }
-      } else {
-              if (selectDoubleClick.getFeatures().getLength() !== 0) {
-          selectDoubleClick.getFeatures().clear();
-        }
-              if (selectSingleClick.getFeatures().getLength() !== 0) {
-          selectSingleClick.getFeatures().clear();
-        }
-      }
+    var clearHighlights = function () {
+      selectDoubleClick.getFeatures().clear();
+      selectSingleClick.getFeatures().clear();
     };
 
     var clearLayers = function () {
