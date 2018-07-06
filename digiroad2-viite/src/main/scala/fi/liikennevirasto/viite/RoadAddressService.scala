@@ -39,10 +39,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   object RoadClass {
     val values = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass
-    , RampsAndRoundAboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass, PrivateRoadClass, Unknown)
+    , RampsAndRoundAboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass, PrivateRoadClass, NoClass)
 
     def get(roadNumber: Int): Int = {
-      values.find(_.roads contains roadNumber).getOrElse(Unknown).value
+      values.find(_.roads contains roadNumber).getOrElse(NoClass).value
     }
 
     case object HighwayClass extends RoadClass { def value = 1; def roads = 1 to 39;}
@@ -58,7 +58,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     case object PathsClass extends RoadClass { def value = 10; def roads = 62001 to 62999;}
     case object ConstructionSiteTemporaryClass extends RoadClass { def value = 11; def roads = 9900 to 9999;}
     case object PrivateRoadClass extends RoadClass { def value = 12; def roads = 50001 to 59999;}
-    case object Unknown extends RoadClass { def value = 99; def roads = 0 to 0;}
+    case object NoClass extends RoadClass { def value = 99; def roads = 0 to 0;}
   }
 
   val Epsilon = 1
