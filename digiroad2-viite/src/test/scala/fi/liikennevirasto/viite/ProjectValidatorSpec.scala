@@ -609,8 +609,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
           floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
 
-      val newRa = RoadAddress(0, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0L, 10L, Some(DateTime.now()), None, None, 39400L, 0.0, 10.0, TowardsDigitizing, 0L,
+      val newRa = RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0L, 10L, Some(DateTime.now()), None, None, 39400L, 0.0, 10.0, SideCode.Unknown, 0L,
         (Some(CalibrationPoint(39400L, 0.0, 0L)), Some(CalibrationPoint(39400L, 10.0, 10L))),
         floating = false, Seq(Point(10.0, 40.0), Point(20.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)
 
@@ -642,22 +642,21 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  /*
     test("reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 3 (with and without EndOfRoad)"){
       runWithRollback {
         val ra = Seq(
-          RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          RoadAddress(NewRoadAddress, 20000L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
             0L, 10L, Some(DateTime.now()), None, None, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
             (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
             floating = false, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
-          RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          RoadAddress(NewRoadAddress, 20000L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
             0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
             (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
             floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
 
-        val newRa = RoadAddress(0, 19999L, 3L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-          0L, 10L, Some(DateTime.now()), None, None, 39400L, 0.0, 10.0, TowardsDigitizing, 0L,
-          (Some(CalibrationPoint(39400L, 0.0, 0L)), Some(CalibrationPoint(39400L, 10.0, 10L))),
+        val newRa = RoadAddress(NewRoadAddress, 20000L, 3L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 0L, Some(DateTime.now()), None, None, 39400L, 0.0, 10.0, SideCode.Unknown, 0L,
+          (None, None),
           floating = false, Seq(Point(10.0, 40.0), Point(20.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)
 
         val raIds = RoadAddressDAO.create(ra, Some("U"))
@@ -666,11 +665,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
           "", Seq(), None, Some(8), None)
         ProjectDAO.createRoadAddressProject(project)
-        ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
-
+        ProjectDAO.reserveRoadPart(id, 20000L, 2L, "u")
         ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadAddressId = raIds.last, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber)))
+
         //add new link with same terminated road part (which had EndOfRoad)
-        val newpl = Seq(util.toProjectLink(project, LinkStatus.New)(newRa).copy(roadNumber = newRa.roadNumber, roadPartNumber = newRa.roadPartNumber))
+        ProjectDAO.reserveRoadPart(id, 20000L, 3L, "u")
+        val newpl = Seq(util.toProjectLink(project, LinkStatus.New)(newRa).copy(projectId = project.id, roadNumber = newRa.roadNumber, roadPartNumber = newRa.roadPartNumber))
         ProjectDAO.create(newpl)
 
         val currentProjectLinks = ProjectDAO.getProjectLinks(project.id)
@@ -688,8 +688,6 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         error2 should have size 0
       }
   }
-        */
-
 
   test("Terminate all links for all parts in a roadNumber") {
     runWithRollback {
