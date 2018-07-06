@@ -413,13 +413,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber)
           val (suravageSource, regular) = addressesOnPart.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
           val suravageMapping = if (suravageSource.nonEmpty) {
-            roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet, false)
+            roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet)
               .map(rl => rl.linkId -> rl).toMap
           } else {
             Map.empty[Long, RoadLink]
           }
           val mapping = if (regular.nonEmpty) {
-            roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, newTransaction = false, frozenTimeVVHAPIServiceEnabled = useFrozenVVHLinks)
+            roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled = useFrozenVVHLinks)
               .map(rl => rl.linkId -> rl).toMap
           } else {
             Map.empty[Long, RoadLink]
@@ -568,7 +568,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def preSplitSuravageLinkInTX(linkId: Long, username: String,
                                splitOptions: SplitOptions): (Option[SplitResult], Option[String], Option[(Point, Vector3d)]) = {
     val projectId = splitOptions.projectId
-    val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId)), newTransaction = false).headOption
+    val sOption = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(linkId))).headOption
     val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
     val project = ProjectDAO.getRoadAddressProjectById(projectId).get
     if (sOption.isEmpty) {
@@ -584,7 +584,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
       if (projectLinks.isEmpty)
         return (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
-      val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(projectLinks.head.linkId, newTransaction = false)
+      val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(projectLinks.head.linkId)
       if (roadLink.isEmpty) {
         (None, Some(ErrorSuravageLinkNotFound), None)
       }
@@ -623,7 +623,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getProjectLinksInBoundingBox(bbox: BoundingRectangle, projectId: Long): (Seq[ProjectLink]) = {
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(bbox, Set(), newTransaction = false).map(rl => rl.linkId -> rl).toMap
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(bbox, Set()).map(rl => rl.linkId -> rl).toMap
     ProjectDAO.getProjectLinksByProjectAndLinkId(Set(), roadLinks.keys.toSeq, projectId).filter(_.status == LinkStatus.NotHandled)
   }
 
@@ -811,13 +811,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     sentObj
   }
 
+  // TODO REMOVE newTransaction
   def getProjectRoadLinksByLinkIds(linkIdsToGet: Set[Long], newTransaction: Boolean = true): Seq[ProjectAddressLink] = {
 
     if (linkIdsToGet.isEmpty)
       return Seq()
 
     val complementedRoadLinks = time(logger, "Fetch VVH road links") {
-      roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction, useFrozenVVHLinks)
+      roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, useFrozenVVHLinks)
     }
 
     val projectRoadLinks = complementedRoadLinks
@@ -1005,7 +1006,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet, newTransaction = false)
+    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet)
     val roadAddresses = RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
