@@ -232,7 +232,7 @@ class AssetDataImporter {
             case Left(roadType) =>
               sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType.value}, ELY= $ely where ID = ${address.id}""".execute
             case Right((addrM, roadTypeBefore, roadTypeAfter)) =>
-              val roadLinkFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(Set(address.linkId), false)
+              val roadLinkFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(Set(address.linkId))
               if (roadLinkFromVVH.isEmpty)
                 println(s"WARNING! LinkId ${address.linkId} not found in current, complementary or suravage links list, using address geometry")
               val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.headOption.map(_.geometry).getOrElse(address.geometry)), addrM, roadTypeBefore, roadTypeAfter, ely)
@@ -309,7 +309,7 @@ class AssetDataImporter {
         counter += 1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds, false)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
         val unGroupedAddresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true)
         val addresses = unGroupedAddresses.groupBy(_.linkId)
         val isLoopOrEmptyGeom = if (unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry).equals(Nil)) {
