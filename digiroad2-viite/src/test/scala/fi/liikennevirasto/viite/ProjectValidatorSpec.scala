@@ -546,10 +546,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       ProjectDAO.createRoadAddressProject(project)
       ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
-      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadAddressId = raIds.head, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber)))
+      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadAddressId = raIds.last, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber, discontinuity = ra.last.discontinuity)))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-      val errors = ProjectValidator.validateProject(updProject,currentProjectLinks).distinct
+      val errors = ProjectValidator.validateProject(updProject, currentProjectLinks).distinct
       errors should have size 1
       errors.head.validationError.value should be (TerminationContinuity.value)
     }
@@ -645,7 +645,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Check end of road with both parts EndOfRoad and both not terminated in project with multiple parts (checkRemovedEndOfRoadParts method)") {
+  test("Check end of road with both parts EndOfRoad and both not terminated in project with multiple parts") {
     runWithRollback {
       val ra = Seq(
         RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
@@ -670,9 +670,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         roadAddressId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
       val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
+      val errors = ProjectValidator.validateProject(updProject, currentProjectLinks).distinct
       errors should have size 1
-      errors.head.affectedIds.head should be (roadAddress.head.id)
+      errors.head.affectedIds.head should be (currentProjectLinks.head.id)
+      errors.head.validationError.value should be (EndOfRoadNotOnLastPart.value)
     }
   }
 
