@@ -43,6 +43,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val WinterRoadsClass = 9
   val PathsClass = 10
   val ConstructionSiteTemporaryClass = 11
+  val PrivateRoadClass = 12
   val NoClass = 99
 
   val MaxAllowedMValueError = 0.001
@@ -576,6 +577,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val C9 = new Contains(60001 to 61999)
     val C10 = new Contains(62001 to 62999)
     val C11 = new Contains(9900 to 9999)
+    val C12 = new Contains(50001 to 59999)
     try {
       val roadNum: Int = roadNumber.toInt
       roadNum match {
@@ -591,6 +593,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         case C9() => WinterRoadsClass
         case C10() => PathsClass
         case C11() => ConstructionSiteTemporaryClass
+        case C12() => PrivateRoadClass
         case _ => NoClass
       }
     } catch {
