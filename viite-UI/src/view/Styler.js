@@ -5,7 +5,7 @@
 
     var roadNormalType = 0;
     var borderWidth = 3;
-    var dashedLinesRoadClasses = [7, 8, 9, 10];
+    var dashedLinesRoadClasses = [7, 8, 9, 10, 12];
 
     var LINKSOURCE_NORMAL = 1;
     var LINKSOURCE_COMPLEM = 2;
@@ -68,6 +68,8 @@
               return 'rgba(255, 85, 221,' + 0.65 * opacityMultiplier + ')';
             case 11 :
               return 'rgba(68, 68, 68,' + 0.75 * opacityMultiplier + ')';
+            case 12 :
+              return 'rgba(255, 85, 221,' + 0.65 * opacityMultiplier + ')';
             case 97 :
               return 'rgba(30, 30, 30,' + opacityMultiplier + ')';
             case 98 :
@@ -98,10 +100,9 @@
      * @param roadLinkType The roadLink roadLinkType.
      * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
      * @param roadLinkSource The link source for this road link
-     * @param projectLinkStatus Optional project link status (only in project mode, undef otherwise)
      * @returns {number} The zIndex for the feature.
      */
-    var determineZIndex = function (roadLinkType, anomaly, roadLinkSource, projectLinkStatus) {
+    var determineZIndex = function (roadLinkType, anomaly, roadLinkSource) {
       var zIndex = 0;
       if (roadLinkSource === LINKSOURCE_SURAVAGE) {
         zIndex = 9;
@@ -231,7 +232,7 @@
       var middleLineCap;
         var lineColor = generateStrokeColor(linkData.roadClass, linkData.anomaly, linkData.constructionType,
             linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
-        if (linkData.roadClass >= 7 && linkData.roadClass <= 10) {
+        if (linkData.roadClass >= 7 && linkData.roadClass <= 10 || linkData.roadClass === 12) {
         borderColor = lineColor;
             middleLineColor = generateStrokeColor(98, linkData.anomaly, linkData.constructionType, linkData.roadLinkType,
                 linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
@@ -282,11 +283,11 @@
       });
 
       //Dash lines
-        if (_.contains(dashedLinesRoadClasses, linkData.roadClass)) {
+      if (_.contains(dashedLinesRoadClasses, linkData.roadClass)) {
         line.setLineDash([10, 10]);
       }
 
-        if (linkData.roadClass == 99 && linkData.constructionType == 1) {
+      if (linkData.roadClass == 99 && linkData.constructionType == 1) {
         line.setLineDash([10, 10]);
       }
 
