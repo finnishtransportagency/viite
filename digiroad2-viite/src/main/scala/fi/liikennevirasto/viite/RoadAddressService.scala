@@ -268,7 +268,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = if (!frozenTimeVVHAPIServiceEnabled) roadLinkService.getChangeInfoFromVVHF(addressLinkIds) else Future(Seq())
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressLinkIds, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressLinkIds, frozenTimeVVHAPIServiceEnabled)
 
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
@@ -466,43 +466,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits).groupBy(_.linkId)
     }
 
-    val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet, frozenTimeVVHAPIServiceEnabled)
     val combined = addresses.mapValues(combineGeom)
     val roadLinks = vvhRoadLinks.map(rl => rl -> combined(rl.linkId)).toMap
 
     roadLinks.flatMap { case (rl, ra) =>
       buildRoadAddressLink(rl, Seq(ra), Seq())
     }.toSeq
-  }
-
-  // Boolean  (frozenTimeVVHAPIServiceEnabled)  should be added if we start using this method  for disabling changeAPI and switch to frozentime VVH API)
-  def getCoarseRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
-    val addresses = withDynTransaction {
-      RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits, coarse = true).groupBy(_.linkId)
-    }
-    val roadLinks = roadLinkService.getRoadPartsFromVVH(addresses.keySet, Set())
-    val groupedLinks = roadLinks.flatMap { rl =>
-      val ra = addresses.getOrElse(rl.linkId, List())
-      buildRoadAddressLink(rl, ra, Seq())
-    }.groupBy(_.roadNumber)
-
-    val retval = groupedLinks.mapValues {
-      case viiteRoadLinks =>
-        val sorted = viiteRoadLinks.sortWith({
-          case (ral1, ral2) =>
-            if (ral1.roadNumber != ral2.roadNumber)
-              ral1.roadNumber < ral2.roadNumber
-            else if (ral1.roadPartNumber != ral2.roadPartNumber)
-              ral1.roadPartNumber < ral2.roadPartNumber
-            else
-              ral1.startAddressM < ral2.startAddressM
-        })
-        sorted.zip(sorted.tail).map {
-          case (st1, st2) =>
-            st1.copy(geometry = Seq(st1.geometry.head, st2.geometry.head))
-        }
-    }
-    retval.flatMap(x => x._2).toSeq
   }
 
   /**
@@ -803,7 +773,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long): Seq[RoadAddressLink] = {
-    val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks, frozenTimeVVHAPIServiceEnabled)
     val pointCloud = chainRoadLinks.map(_.geometry).map(GeometryUtils.geometryEndpoints).flatMap(x => Seq(x._1, x._2))
     val boundingPoints = GeometryUtils.boundingRectangleCorners(pointCloud)
     val boundingRectangle = BoundingRectangle(boundingPoints._1 + Vector3d(-.1, .1, 0.0), boundingPoints._2 + Vector3d(.1, -.1, 0.0))
@@ -821,7 +791,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
     val transferredRoadAddresses = getRoadAddressesAfterCalculation(sources, targets, user)
-    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet, newTransaction, frozenTimeVVHAPIServiceEnabled)
+    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet, frozenTimeVVHAPIServiceEnabled)
     transferredRoadAddresses.filter(_.endDate.isEmpty).map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
   }
 
