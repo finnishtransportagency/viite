@@ -1,5 +1,5 @@
-(function(root) {
-  root.SelectedLinkProperty = function(backend, roadCollection) {
+(function (root) {
+  root.SelectedLinkProperty = function (backend, roadCollection) {
     var current = [];
     var dirty = false;
     var targets = [];
@@ -12,19 +12,21 @@
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
-    var floatingRoadLinkType=-1;
-    var noAnomaly=0;
-    var noAddressAnomaly=1;
-    var geometryChangedAnomaly=2;
+    var floatingRoadLinkType = -1;
+    var noAnomaly = 0;
+    var noAddressAnomaly = 1;
+    var geometryChangedAnomaly = 2;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
       "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
       "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
 
-    var close = function() {
+    var close = function () {
       if (!_.isEmpty(current) && !isDirty()) {
-        _.forEach(current, function(selected) { selected.unselect(); });
+        _.forEach(current, function (selected) {
+          selected.unselect();
+        });
         applicationModel.setActiveButtons(false);
         eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
@@ -38,21 +40,21 @@
       }
     };
 
-    var isSingleLinkSelection = function() {
+    var isSingleLinkSelection = function () {
       return current.length === 1;
     };
 
-    var isDifferingSelection = function(singleLinkSelect) {
+    var isDifferingSelection = function (singleLinkSelect) {
       return (!_.isUndefined(singleLinkSelect) &&
-      (singleLinkSelect !== isSingleLinkSelection()));
+        (singleLinkSelect !== isSingleLinkSelection()));
     };
 
-    var setCurrent = function(data){
+    var setCurrent = function (data) {
       current = data;
     };
 
-    var extractDataForDisplay = function(selectedData) {
-      var extractUniqueValues = function(selectedData, property) {
+    var extractDataForDisplay = function (selectedData) {
+      var extractUniqueValues = function (selectedData, property) {
         return _.chain(selectedData)
           .pluck(property)
           .uniq()
@@ -61,9 +63,9 @@
       };
 
       var isMultiSelect = selectedData.length > 1;
-        var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
-        var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
-        if (isMultiSelect) {
+      var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
+      var properties = _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
+      if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate'];
@@ -88,17 +90,17 @@
       return properties;
     };
 
-    var open = function(linkId, id, singleLinkSelect, visibleFeatures, isSuravage) {
+    var open = function (linkId, id, singleLinkSelect, visibleFeatures, isSuravage) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
-        if(isSuravage){
-          if(!_.isUndefined(linkId)){
+        if (isSuravage) {
+          if (!_.isUndefined(linkId)) {
             current = singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId);
           } else {
             current = singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id);
           }
         } else {
-          if(!_.isUndefined(linkId)){
+          if (!_.isUndefined(linkId)) {
             current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
           } else {
             current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
@@ -106,7 +108,7 @@
         }
 
         var currentFloatings = getCurrentFloatings();
-        if(!_.isEmpty(currentFloatings)){
+        if (!_.isEmpty(currentFloatings)) {
           setSources(currentFloatings);
         }
 
@@ -119,56 +121,58 @@
     };
 
     var openFloating = function (linkId, id, singleLinkSelect, visibleFeatures) {
-        var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) : !isSelectedById(id);
-        if (canIOpen) {
-            applicationModel.toggleSelectionTypeFloating();
-            if (!_.isUndefined(linkId)) {
-                current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
-            } else {
-                current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
-            }
-            var currentFloatings = getCurrentFloatings();
-            if (!_.isEmpty(currentFloatings)) {
-                setSources(currentFloatings);
-            }
-            //Segment to construct adjacency
-            getGroupAdjacents(linkId);
-
-            var data4Display = _.map(get(), function (feature) {
-                return extractDataForDisplay([feature]);
-            });
-
-            if (!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === floatingRoadLinkType) {
-                addToFeaturesToKeep(data4Display);
-            }
-            if (!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)) {
-                addToFeaturesToKeep(data4Display);
-            }
-            processOl3Features(visibleFeatures);
-            eventbus.trigger('adjacents:startedFloatingTransfer');
-            if (!_.isEmpty(data4Display))
-            eventbus.trigger('linkProperties:selected', data4Display);
-            eventbus.trigger('linkProperties:deactivateInteractions');
+      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) : !isSelectedById(id);
+      if (canIOpen) {
+        applicationModel.toggleSelectionTypeFloating();
+        if (!_.isUndefined(linkId)) {
+          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+        } else {
+          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
+        var currentFloatings = getCurrentFloatings();
+        if (!_.isEmpty(currentFloatings)) {
+          setSources(currentFloatings);
+        }
+        //Segment to construct adjacency
+        getGroupAdjacents(linkId);
+
+        var data4Display = _.map(get(), function (feature) {
+          return extractDataForDisplay([feature]);
+        });
+
+        if (!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === floatingRoadLinkType) {
+          addToFeaturesToKeep(data4Display);
+        }
+        if (!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)) {
+          addToFeaturesToKeep(data4Display);
+        }
+        processOl3Features(visibleFeatures);
+        eventbus.trigger('adjacents:startedFloatingTransfer');
+        if (!_.isEmpty(data4Display))
+          eventbus.trigger('linkProperties:selected', data4Display);
+        eventbus.trigger('linkProperties:deactivateInteractions');
+      }
     };
 
-    var openUnknown = function(linkId, id, visibleFeatures) {
+    var openUnknown = function (linkId, id, visibleFeatures) {
       var canIOpen = !_.isUndefined(linkId) ? true : !isSelectedById(id);
       if (canIOpen) {
-        if(featuresToKeep.length === 0){
+        if (featuresToKeep.length === 0) {
           close();
         } else {
           if (!_.isEmpty(current) && !isDirty()) {
-            _.forEach(current, function(selected) { selected.unselect(); });
+            _.forEach(current, function (selected) {
+              selected.unselect();
+            });
           }
         }
-        if(!_.isUndefined(linkId)){
+        if (!_.isUndefined(linkId)) {
           current = _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual);
         } else {
           current = _.uniq(roadCollection.getById([id]), _.isEqual);
         }
-        if(current[0].getData().anomaly === geometryChangedAnomaly) {
-          current = _.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
+        if (current[0].getData().anomaly === geometryChangedAnomaly) {
+          current = _.filter(roadCollection.getTmpRoadLinkGroups(), function (linkGroup) {
             return linkGroup.getData().linkId === linkId;
           });
         }
@@ -179,29 +183,29 @@
           selected.select();
         });
 
-        var currentFloatings = _.filter(current, function(curr){
+        var currentFloatings = _.filter(current, function (curr) {
           return curr.getData().roadLinkType === floatingRoadLinkType;
         });
-        if(!_.isEmpty(currentFloatings)){
+        if (!_.isEmpty(currentFloatings)) {
           setSources(currentFloatings);
         }
 
-        var data4Display = _.map(get(), function(feature){
+        var data4Display = _.map(get(), function (feature) {
           return extractDataForDisplay([feature]);
         });
 
-        if(!applicationModel.isReadOnly() && get()[0].anomaly === noAddressAnomaly){
+        if (!applicationModel.isReadOnly() && get()[0].anomaly === noAddressAnomaly) {
           addToFeaturesToKeep(data4Display);
         }
-        if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
+        if (!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)) {
           addToFeaturesToKeep(data4Display);
         }
-        var contains = _.find(featuresToKeep, function(fk){
+        var contains = _.find(featuresToKeep, function (fk) {
           return fk.linkId === linkId;
         });
 
-        if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
-          if(_.isArray(extractDataForDisplay(get()))){
+        if (!_.isEmpty(featuresToKeep) && _.isUndefined(contains)) {
+          if (_.isArray(extractDataForDisplay(get()))) {
             featuresToKeep = featuresToKeep.concat(data4Display);
           } else {
             addToFeaturesToKeep(data4Display);
@@ -210,65 +214,65 @@
         processOl3Features(visibleFeatures);
         eventbus.trigger('adjacents:startedFloatingTransfer');
         eventbus.trigger('linkProperties:selected', data4Display);
-        _.defer(function(){
+        _.defer(function () {
           eventbus.trigger('linkProperties:deactivateAllSelections');
         });
       }
     };
 
-    var processOl3Features = function (visibleFeatures){
-      var selectedOL3Features = _.filter(visibleFeatures, function(vf){
-        return (_.some(get().concat(featuresToKeep), function(s){
-            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId;
-          }));
+    var processOl3Features = function (visibleFeatures) {
+      var selectedOL3Features = _.filter(visibleFeatures, function (vf) {
+        return (_.some(get().concat(featuresToKeep), function (s) {
+          return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId;
+        }));
       });
       eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
     };
 
-      var getGroupAdjacents = function (linkId) {
-          if (!_.isUndefined(current)) {
-              if (current.length === 1)
-                  return current;
-              var orderedCurrent = _.sortBy(current, function (curr) {
-                  return curr.getData().endAddressM;
-              });
-              var selectedFeature = _.find(orderedCurrent, function (oc) {
-                  return oc.getData().linkId === linkId;
-              });
-              var adjacentsArray = [selectedFeature];
+    var getGroupAdjacents = function (linkId) {
+      if (!_.isUndefined(current)) {
+        if (current.length === 1)
+          return current;
+        var orderedCurrent = _.sortBy(current, function (curr) {
+          return curr.getData().endAddressM;
+        });
+        var selectedFeature = _.find(orderedCurrent, function (oc) {
+          return oc.getData().linkId === linkId;
+        });
+        var adjacentsArray = [selectedFeature];
 
-              var findAdjacents = function (list, elem) {
-                  if (list.length > 0) {
-                      var filteredList = _.filter(list, function (l) {
-                          return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
-                      });
-                      var existingAdjacents = _.filter(filteredList, function (le) {
-                          return !_.isUndefined(GeometryUtils.connectingEndPoint(le.getData().points, elem.getData().points));
-                      });
-                      //if in case we found more than one adjacent, we should process each possible adjacent
-                      _.each(existingAdjacents, function (adj) {
-                          adjacentsArray.push(adj);
-                      });
-                      _.each(existingAdjacents, function (adj) {
-                          findAdjacents(_.filter(list, function (l) {
-                              return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
-                          }), adj);
-                      });
-                  }
-              };
-
-              findAdjacents(current, selectedFeature);
-              current = _.sortBy(adjacentsArray, function (curr) {
-                  return curr.getData().endAddressM;
-              });
+        var findAdjacents = function (list, elem) {
+          if (list.length > 0) {
+            var filteredList = _.filter(list, function (l) {
+              return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
+            });
+            var existingAdjacents = _.filter(filteredList, function (le) {
+              return !_.isUndefined(GeometryUtils.connectingEndPoint(le.getData().points, elem.getData().points));
+            });
+            //if in case we found more than one adjacent, we should process each possible adjacent
+            _.each(existingAdjacents, function (adj) {
+              adjacentsArray.push(adj);
+            });
+            _.each(existingAdjacents, function (adj) {
+              findAdjacents(_.filter(list, function (l) {
+                return l.getData().id !== elem.getData().id && !_.contains(adjacentsArray, l);
+              }), adj);
+            });
           }
-          applicationModel.setContinueButton(true);
-      };
+        };
 
-    var getLinkAdjacents = function(link) {
+        findAdjacents(current, selectedFeature);
+        current = _.sortBy(adjacentsArray, function (curr) {
+          return curr.getData().endAddressM;
+        });
+      }
+      applicationModel.setContinueButton(true);
+    };
+
+    var getLinkAdjacents = function (link) {
       var linkIds = {};
       var chainLinks = [];
-      var startLinkId= link.linkId;
+      var startLinkId = link.linkId;
       _.each(current, function (link) {
         if (!_.isUndefined(link))
           chainLinks.push(link.getData().linkId);
@@ -281,47 +285,47 @@
         "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
       };
 
-      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
+      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all') {
         applicationModel.addSpinner();
         backend.getTargetAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
-          if (!_.isEmpty(adjacents)){
+          if (!_.isEmpty(adjacents)) {
             linkIds = _.map(adjacents, function (roads) {
-                return roads.linkId;
+              return roads.linkId;
             });
           }
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
-            var rejectedRoads = _.reject(get().concat(featuresToKeep), function(feature){
+            var rejectedRoads = _.reject(get().concat(featuresToKeep), function (feature) {
               return (feature.segmentId === "" || (_.contains(linkIds, feature.linkId) && (feature.anomaly === LinkValues.Anomaly.GeometryChanged.value || feature.anomaly === LinkValues.Anomaly.None.value)));
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
             });
-            var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
+            var filteredPreviousAdjacents = _.filter(adjacents, function (adj) {
               return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
             }).concat(previousAdjacents);
-            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
+            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function (prvAdj) {
               return !_.contains(selectedLinkIds, prvAdj.linkId);
             });
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
-              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function (t) {
                 return t.roadLinkType !== floatingRoadLinkType;
-              }) :filteredAdjacents, function (a, index) {
+              }) : filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
-            if(applicationModel.getSelectionType() === 'floating') {
+            if (applicationModel.getSelectionType() === 'floating') {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
-              if(_.isEmpty(markedRoads.adjacents)){
+              if (_.isEmpty(markedRoads.adjacents)) {
                 applicationModel.setContinueButton(true);
               }
             }
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
             }
-            if(applicationModel.getSelectionType() !== 'unknown'){
+            if (applicationModel.getSelectionType() !== 'unknown') {
               eventbus.trigger('adjacents:startedFloatingTransfer');
             }
           }
@@ -330,7 +334,7 @@
       return linkIds;
     };
 
-    var getLinkFloatingAdjacents = function(link) {
+    var getLinkFloatingAdjacents = function (link) {
       var linkIds = {};
       var chainLinks = [];
       _.each(current, function (link) {
@@ -345,45 +349,45 @@
         "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
       };
 
-      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
+      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all') {
         applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
-          if (!_.isEmpty(adjacents)){
+          if (!_.isEmpty(adjacents)) {
             linkIds = adjacents;
           }
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
-            var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
+            var rejectedRoads = _.reject(get().concat(featuresToKeep), function (link) {
               return link.segmentId === "" || link.anomaly === geometryChangedAnomaly;
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
             });
-            var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
+            var filteredPreviousAdjacents = _.filter(adjacents, function (adj) {
               return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
             }).concat(previousAdjacents);
-            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
+            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function (prvAdj) {
               return !_.contains(selectedLinkIds, prvAdj.linkId);
             });
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
-              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function (t) {
                 return t.roadLinkType !== floatingRoadLinkType;
-              }) :filteredAdjacents, function (a, index) {
+              }) : filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
-            if(applicationModel.getSelectionType() === 'floating') {
+            if (applicationModel.getSelectionType() === 'floating') {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
-              if(_.isEmpty(markedRoads.adjacents)){
+              if (_.isEmpty(markedRoads.adjacents)) {
                 applicationModel.setContinueButton(true);
               }
             }
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
             }
-            if(applicationModel.getSelectionType() !== 'unknown'){
+            if (applicationModel.getSelectionType() !== 'unknown') {
               eventbus.trigger('adjacents:startedFloatingTransfer');
             }
           }
@@ -392,7 +396,7 @@
       return linkIds;
     };
 
-    eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
+    eventbus.on("adjacents:additionalSourceSelected", function (existingSources, additionalSourceLinkId) {
       sources = current;
       backend.getRoadLinkByLinkId(parseInt(additionalSourceLinkId), function (response) {
         var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
@@ -402,29 +406,33 @@
           featuresToKeep.push(fetchedFeature.getData());
         }
         var chainLinks = [];
-        _.each(sources, function(link) {
+        _.each(sources, function (link) {
           if (!_.isUndefined(link))
             chainLinks.push(link.getData().linkId);
         });
-        _.each(targets, function(link) {
+        _.each(targets, function (link) {
           chainLinks.push(link.getData().linkId);
         });
         var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
         if (!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
           newSources.push(fetchedFeature.getData());
         var data = _.map(newSources, function (ns) {
-          return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
-            "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
+          return {
+            "selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
+            "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)
+          };
         });
-        backend.getAdjacentsFromMultipleSources(data, function(adjacents) {
+        backend.getAdjacentsFromMultipleSources(data, function (adjacents) {
           var calculatedRoads;
           if (!_.isEmpty(adjacents) && !applicationModel.isReadOnly()) {
-             calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index) {
-              return _.merge({}, a, {"marker": markers[index]});
-            }), "links": newSources};
-              eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
+            calculatedRoads = {
+              "adjacents": _.map(adjacents, function (a, index) {
+                return _.merge({}, a, {"marker": markers[index]});
+              }), "links": newSources
+            };
+            eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
           } else {
-             calculatedRoads = {
+            calculatedRoads = {
               "adjacents": _.map(adjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": newSources
@@ -436,17 +444,17 @@
       });
     });
 
-      eventbus.on('linkProperties:closed', function () {
+    eventbus.on('linkProperties:closed', function () {
       eventbus.trigger('layer:enableButtons', true);
       applicationModel.toggleSelectionTypeAll();
       clearFeaturesToKeep();
     });
 
-      eventbus.on('roadAddress:openProject', function () {
-          close();
-      });
+    eventbus.on('roadAddress:openProject', function () {
+      close();
+    });
 
-    var openMultiple = function(links) {
+    var openMultiple = function (links) {
       var uniqueLinks = _.unique(links, 'linkId');
       current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
       _.forEach(current, function (selected) {
@@ -455,47 +463,49 @@
       eventbus.trigger('linkProperties:multiSelected', extractDataForDisplay(get()));
     };
 
-    var isDirty = function() {
+    var isDirty = function () {
       return dirty;
     };
 
-    var isSelectedById = function(id) {
-      return _.some(current, function(selected) {
-        return selected.getData().id === id; });
+    var isSelectedById = function (id) {
+      return _.some(current, function (selected) {
+        return selected.getData().id === id;
+      });
     };
 
-    var isSelectedByLinkId = function(linkId) {
-      return _.some(current, function(selected) {
-        return selected.getData().linkId === linkId; });
+    var isSelectedByLinkId = function (linkId) {
+      return _.some(current, function (selected) {
+        return selected.getData().linkId === linkId;
+      });
     };
 
-    var transferringCalculation = function(){
-      var targetsData = _.map(targets,function (t){
+    var transferringCalculation = function () {
+      var targetsData = _.map(targets, function (t) {
         if (_.isUndefined(t.linkId)) {
           return t.getData();
         } else return t;
       });
 
-      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType !== floatingRoadLinkType && feature.anomaly === noAddressAnomaly){
+      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function (feature) {
+        if (feature.roadLinkType !== floatingRoadLinkType && feature.anomaly === noAddressAnomaly) {
           return feature.linkId.toString();
         }
-      }), function (target){
+      }), function (target) {
         return !_.isUndefined(target);
       }));
 
       var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
-        if(feature.roadLinkType === floatingRoadLinkType){
+        if (feature.roadLinkType === floatingRoadLinkType) {
           return feature.linkId.toString();
         }
-      }), function (source){
+      }), function (source) {
         return !_.isUndefined(source);
       });
-      var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
+      var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds": _.uniq(targetDataIds)};
 
-      if(!_.isEmpty(data.sourceLinkIds) && !_.isEmpty(data.targetLinkIds)){
-        backend.getTransferResult(data, function(result) {
-          if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
+      if (!_.isEmpty(data.sourceLinkIds) && !_.isEmpty(data.targetLinkIds)) {
+        backend.getTransferResult(data, function (result) {
+          if (!_.isEmpty(result) && !applicationModel.isReadOnly()) {
             eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
             roadCollection.setNewTmpRoadAddresses(result);
             eventbus.trigger('linkProperties:cleanFloatingsAfterDefloat');
@@ -506,33 +516,33 @@
       }
     };
 
-    var saveTransfer = function() {
+    var saveTransfer = function () {
       eventbus.trigger('linkProperties:saving');
-      var targetsData = _.map(targets,function (t){
-        if(_.isUndefined(t.linkId)){
+      var targetsData = _.map(targets, function (t) {
+        if (_.isUndefined(t.linkId)) {
           return t.getData();
-        }else return t;
+        } else return t;
       });
 
-      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType !== floatingRoadLinkType && feature.anomaly === noAddressAnomaly){
+      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function (feature) {
+        if (feature.roadLinkType !== floatingRoadLinkType && feature.anomaly === noAddressAnomaly) {
           return feature.linkId;
         }
-      }), function (target){
+      }), function (target) {
         return !_.isUndefined(target);
       }));
       var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
-        if(feature.roadLinkType === floatingRoadLinkType){
+        if (feature.roadLinkType === floatingRoadLinkType) {
           return feature.linkId;
         }
-      }), function (source){
+      }), function (source) {
         return !_.isUndefined(source);
       });
 
       var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds};
 
-      if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds)){
-        backend.createRoadAddress(data, function(errorObject) {
+      if (!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds)) {
+        backend.createRoadAddress(data, function (errorObject) {
           if (errorObject.status === INTERNAL_SERVER_ERROR_500 || errorObject.status === BAD_REQUEST) {
             eventbus.trigger('linkProperties:transferFailed', errorObject.status);
           }
@@ -542,81 +552,83 @@
       }
     };
 
-    var addTargets = function(target, adjacents){
+    var addTargets = function (target, adjacents) {
       backend.getRoadLinkByLinkId(parseInt(target), function (response) {
-          var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
+        var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
 
-          if (!_.contains(targets, target))
-              targets.push(fetchedFeature.getData());
-          var targetData = _.filter(adjacents, function (adjacent) {
-              return adjacent.linkId === parseInt(target);
-          });
-          if (!_.isEmpty(targetData)) {
-              $('#additionalSource').remove();
-              $('#adjacentsData').remove();
-              getLinkAdjacents(_.first(targetData));
-          }
+        if (!_.contains(targets, target))
+          targets.push(fetchedFeature.getData());
+        var targetData = _.filter(adjacents, function (adjacent) {
+          return adjacent.linkId === parseInt(target);
+        });
+        if (!_.isEmpty(targetData)) {
+          $('#additionalSource').remove();
+          $('#adjacentsData').remove();
+          getLinkAdjacents(_.first(targetData));
+        }
       });
     };
 
-    var getFloatingRoadMarker = function() {
+    var getFloatingRoadMarker = function () {
       return floatingRoadMarker;
     };
 
-    var setFloatingRoadMarker  = function(ft) {
+    var setFloatingRoadMarker = function (ft) {
       floatingRoadMarker = ft;
     };
 
-    var getAnomalousMarkers = function(){
+    var getAnomalousMarkers = function () {
       return anomalousMarkers;
     };
 
-    var setAnomalousMarkers = function(markers){
+    var setAnomalousMarkers = function (markers) {
       anomalousMarkers = markers;
     };
 
-    var getTargets = function(){
+    var getTargets = function () {
       return _.union(_.map(targets, function (roadLink) {
         return roadLink.getData();
       }));
     };
 
-    var getSources = function() {
+    var getSources = function () {
       return _.union(_.map(sources, function (roadLink) {
-          return roadLink;
+        return roadLink;
       }));
     };
 
-    var setSources = function(scs) {
+    var setSources = function (scs) {
       sources = scs;
     };
 
-    var resetSources = function() {
+    var resetSources = function () {
       sources = [];
       return sources;
     };
 
-    var resetTargets = function() {
+    var resetTargets = function () {
       targets = [];
       return targets;
     };
 
-    var setDirty = function(state){
+    var setDirty = function (state) {
       dirty = state;
     };
 
-    var cancel = function() {
+    var cancel = function () {
       dirty = false;
-      _.each(current, function(selected) { selected.cancel(); });
-      if(!_.isUndefined(_.first(current))){
+      _.each(current, function (selected) {
+        selected.cancel();
+      });
+      if (!_.isUndefined(_.first(current))) {
         var originalData = _.first(current).getData();
         eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
         eventbus.trigger('roadLinks:clearIndicators');
       }
     };
 
-    var cancelAndReselect = function(action){
-      if(action===applicationModel.actionCalculating){
+    var cancelAndReselect = function (action) {
+      if (action === applicationModel.actionCalculating) {
         var floatingMarkers = getFloatingRoadMarker();
         eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
       }
@@ -625,7 +637,7 @@
       eventbus.trigger('linkProperties:clearHighlights');
     };
 
-    var clearAndReset = function(afterDefloat){
+    var clearAndReset = function (afterDefloat) {
       roadCollection.resetTmp();
       roadCollection.resetChangedIds();
       applicationModel.resetCurrentAction();
@@ -634,38 +646,38 @@
       roadCollection.resetPreMovedRoadAddresses();
       clearFeaturesToKeep();
       eventbus.trigger('roadLinks:clearIndicators');
-      if(!afterDefloat) {
+      if (!afterDefloat) {
         roadCollection.resetNewTmpRoadAddresses();
         resetSources();
         resetTargets();
         previousAdjacents = [];
         _.defer(function () {
-            if (!_.isEmpty(featuresToKeep)) {
-                current = roadCollection.toRoadLinkModel(featuresToKeep);
-                eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
-            }
+          if (!_.isEmpty(featuresToKeep)) {
+            current = roadCollection.toRoadLinkModel(featuresToKeep);
+            eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
+          }
         });
       }
     };
 
-    var cancelAfterDefloat = function(action, changedTargetIds) {
+    var cancelAfterDefloat = function (action, changedTargetIds) {
       dirty = false;
-      var originalData = _.filter(featuresToKeep, function(feature){
+      var originalData = _.filter(featuresToKeep, function (feature) {
         return feature.roadLinkType === floatingRoadLinkType;
       });
-      if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
+      if (action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
-      if(_.isEmpty(changedTargetIds)) {
+      if (_.isEmpty(changedTargetIds)) {
         clearAndReset(true);
         eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
       $('#adjacentsData').remove();
-      if(applicationModel.isActiveButtons() || action === -1){
-        if(action !== applicationModel.actionCalculated){
+      if (applicationModel.isActiveButtons() || action === -1) {
+        if (action !== applicationModel.actionCalculated) {
           applicationModel.setActiveButtons(false);
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
-        if (action){
+        if (action) {
           applicationModel.setContinueButton(false);
           eventbus.trigger('roadLinks:deleteSelection');
         }
@@ -674,72 +686,74 @@
       }
     };
 
-    var setLinkProperty = function(key, value) {
+    var setLinkProperty = function (key, value) {
       dirty = true;
-      _.each(current, function(selected) { selected.setLinkProperty(key, value); });
+      _.each(current, function (selected) {
+        selected.setLinkProperty(key, value);
+      });
       eventbus.trigger('linkProperties:changed');
     };
     var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
     var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
     var setLinkType = _.partial(setLinkProperty, 'linkType');
 
-    var get = function() {
-      return _.map(current, function(roadLink) {
+    var get = function () {
+      return _.map(current, function (roadLink) {
         return roadLink.getData();
       });
     };
 
-    var getCurrentFloatings = function(){
-      return _.filter(current, function(curr){
+    var getCurrentFloatings = function () {
+      return _.filter(current, function (curr) {
         return curr.getData().roadLinkType === floatingRoadLinkType;
       });
     };
 
-    var getFeaturesToKeepFloatings = function() {
+    var getFeaturesToKeepFloatings = function () {
       return _.filter(featuresToKeep, function (fk) {
         return fk.roadLinkType === floatingRoadLinkType;
       });
     };
 
-    var getFeaturesToKeepUnknown = function() {
+    var getFeaturesToKeepUnknown = function () {
       return _.filter(featuresToKeep, function (fk) {
         return fk.anomaly === noAddressAnomaly;
       });
     };
 
-    var isLinkIdInCurrent = function(linkId){
-      var currentLinkIds = _.map(current, function(curr){
+    var isLinkIdInCurrent = function (linkId) {
+      var currentLinkIds = _.map(current, function (curr) {
         return curr.getData().linkId;
       });
       return _.contains(currentLinkIds, linkId);
     };
 
-    var isLinkIdInFeaturesToKeep = function(linkId){
-      var featuresToKeepLinkIds = _.map(featuresToKeep, function(fk){
+    var isLinkIdInFeaturesToKeep = function (linkId) {
+      var featuresToKeepLinkIds = _.map(featuresToKeep, function (fk) {
         return fk.linkId;
       });
       return _.contains(featuresToKeepLinkIds, linkId);
     };
 
-    var count = function() {
+    var count = function () {
       return current.length;
     };
 
-    var getFeaturesToKeep = function(){
+    var getFeaturesToKeep = function () {
       return featuresToKeep;
     };
 
-    var addToFeaturesToKeep = function(data4Display){
-      if(_.isArray(data4Display)){
+    var addToFeaturesToKeep = function (data4Display) {
+      if (_.isArray(data4Display)) {
         featuresToKeep = featuresToKeep.concat(data4Display);
       } else {
         featuresToKeep.push(data4Display);
       }
     };
 
-    var clearFeaturesToKeep = function() {
-      if('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()){
-        featuresToKeep = _.filter(featuresToKeep, function(feature){
+    var clearFeaturesToKeep = function () {
+      if ('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()) {
+        featuresToKeep = _.filter(featuresToKeep, function (feature) {
           return feature.roadLinkType === floatingRoadLinkType;
         });
       } else {
@@ -747,39 +761,39 @@
       }
     };
 
-    var continueSelectUnknown = function() {
-      if(!applicationModel.getContinueButtons()){
+    var continueSelectUnknown = function () {
+      if (!applicationModel.getContinueButtons()) {
         new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
         return false;
-      }else {
+      } else {
         return true;
       }
     };
 
-    var featureExistsInSelection = function(checkMe){
-      var linkIds = _.map(get(), function(feature){
+    var featureExistsInSelection = function (checkMe) {
+      var linkIds = _.map(get(), function (feature) {
         return feature.linkId;
       });
-      var didIfindIt = _.find(linkIds,function (link) {
+      var didIfindIt = _.find(linkIds, function (link) {
         return checkMe.data.linkId === link;
       });
       return !_.isUndefined(didIfindIt);
     };
 
-    var isFloatingHomogeneous = function(floatingFeature) {
+    var isFloatingHomogeneous = function (floatingFeature) {
       var firstFloating = _.first(featuresToKeep);
       return floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) &&
-          floatingFeature.data.trackCode === firstFloating.trackCode &&
-          floatingFeature.data.roadNumber === firstFloating.roadNumber;
+        floatingFeature.data.trackCode === firstFloating.trackCode &&
+        floatingFeature.data.roadNumber === firstFloating.roadNumber;
     };
 
-    var filterFeaturesAfterSimulation = function(features){
+    var filterFeaturesAfterSimulation = function (features) {
       var linkIdsToRemove = linkIdsToExclude();
-      if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
+      if (applicationModel.getCurrentAction() === applicationModel.actionCalculated) {
         //Filter the features without said linkIds
-        if(linkIdsToRemove.length !== 0){
-          return _.reject(features, function(feature){
-              return _.contains(linkIdsToRemove, feature.linkData.linkId);
+        if (linkIdsToRemove.length !== 0) {
+          return _.reject(features, function (feature) {
+            return _.contains(linkIdsToRemove, feature.linkData.linkId);
           });
         } else {
           return features;
@@ -787,8 +801,8 @@
       } else return features;
     };
 
-    var linkIdsToExclude = function(){
-      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep())).map(function(feature){
+    var linkIdsToExclude = function () {
+      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep())).map(function (feature) {
         return feature.linkId;
       }).uniq().value();
     };
