@@ -100,7 +100,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
     val dbLinks = ProjectDAO.getProjectLinks(id)
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
         roadLink, palinks.asInstanceOf[Seq[ProjectAddressLink]].map(toRoadLink)
       ))
@@ -155,7 +155,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       val (first, last) = (sortedLinks.head, sortedLinks.last)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
       val linkIds207 = partitioned._1.map(_.linkId).toSet
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207)).thenReturn(
         partitioned._1.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
 
       val addressIds207 = partitioned._1.map(_.roadAddressId).toSet
@@ -284,7 +284,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
         roadLinkTemplate.copy(linkId = linkId3, geometry = geom3, length = 549.5011938749938),
         roadLinkTemplate.copy(linkId = linkId4, geometry = geom4, length = 359.2242564221318)
       )
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinksNew)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinksNew)
       projectService.createProjectLinks(Seq(linkId1, linkId2, linkId3, linkId4), saved.id, roadNumber, roadPartNumber, Track.apply(0), Discontinuity.apply(5), RoadType.apply(1), LinkGeomSource.apply(1), 8, "me", "road name")
 
       sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
@@ -317,7 +317,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       val (first, last) = (sortedLinks.head, sortedLinks.last)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
       val linkIds207 = partitioned._1.map(_.linkId).toSet
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207)).thenReturn(
         partitioned._1.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
 
       val addressIds207 = partitioned._1.map(_.roadAddressId).toSet
