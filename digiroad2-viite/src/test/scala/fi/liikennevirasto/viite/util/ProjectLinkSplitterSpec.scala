@@ -444,8 +444,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
         8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.Unknown, None, None, Anomaly.None)
 
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
-      when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink))
-      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
       val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       val templateGeom = toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
@@ -456,8 +456,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
             0,87,1,2)""".execute
 
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
       val splitOptions = SplitOptions(Point(0, 45.3), LinkStatus.Transfer, LinkStatus.New, 0, 0, Track.Combined, Discontinuity.Continuous, 0, LinkGeomSource.Unknown, RoadType.Unknown, projectId, ProjectCoordinates(0, 45.3, 10))
       val (splitResult, errorMessage, vector) = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId, "TestUser", splitOptions)
       errorMessage.isEmpty should be (true)
