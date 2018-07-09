@@ -56,10 +56,10 @@
     };
 
     root.TrafficDirection = {
-        BothDirections: {value: 2, description: "Molempiin suuntiin"},
-        AgainstDigitizing: {value: 3, description: "Digitointisuuntaa vastaan"},
-        TowardsDigitizing: {value: 4, description: "Digitointisuuntaan"},
-        UnknownDirection: {value: 99, description: "Unknown Direction"}
+        BothDirections:             {value: 2, description: "Molempiin suuntiin"},
+        AgainstDigitizing:          {value: 3, description: "Digitointisuuntaa vastaan"},
+        TowardsDigitizing:          {value: 4, description: "Digitointisuuntaan"},
+        UnknownDirection:           {value: 99, description: "Tuntemattomaan suuntaan"}
     };
 
     root.SideCode = {
@@ -86,7 +86,7 @@
         Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
         Deleted:                    {value: 7, description: "Poistettu projekti"},
         ErrorInViite:               {value: 8, description: "Virhe Viite-sovelluksessa"},
-        SendingToTR: {value: 9, description: "Lähettää Tierekisteriin"},
+        SendingToTR:                {value: 9, description: "Lähettää Tierekisteriin"},
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
 
