@@ -121,15 +121,15 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad7 = 7L //    \
       val idRoad8 = 8L //   |
 
-      val projectLink0 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), linkId = idRoad0)
-      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(-2.0, 20.2)), linkId = idRoad1)
-      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(2.0, 19.2)), linkId = idRoad2)
-      val projectLink3 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(-2.0, 20.2), Point(1.0, 30.0)), linkId = idRoad3)
-      val projectLink4 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(2.0, 19.2), Point(1.0, 30.0)), linkId = idRoad4)
-      val projectLink5 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(1.0, 30.0), Point(0.0, 48.0)), linkId = idRoad5)
-      val projectLink6 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad6)
-      val projectLink7 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(-2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad7)
-      val projectLink8 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 96.0), Point(0.0, 148.0)), linkId = idRoad0)
+      val projectLink0 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), linkId = idRoad0, id = idRoad0)
+      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(-2.0, 20.2)), linkId = idRoad1, id = idRoad1)
+      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(2.0, 19.2)), linkId = idRoad2, id = idRoad2)
+      val projectLink3 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(-2.0, 20.2), Point(1.0, 30.0)), linkId = idRoad3, id = idRoad3)
+      val projectLink4 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(2.0, 19.2), Point(1.0, 30.0)), linkId = idRoad4, id = idRoad4)
+      val projectLink5 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(1.0, 30.0), Point(0.0, 48.0)), linkId = idRoad5, id = idRoad5)
+      val projectLink6 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad6, id = idRoad6)
+      val projectLink7 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(-2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad7, id = idRoad7)
+      val projectLink8 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 96.0), Point(0.0, 148.0)), linkId = idRoad8, id = idRoad8)
 
       val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8).map(pl =>
         pl.copy(endMValue = pl.geometryLength))
@@ -172,15 +172,15 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad7 = 7L //    \
       val idRoad8 = 8L //   |
 
-      val projectLink0 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), linkId = idRoad0)
-      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(-2.0, 20.2)), linkId = idRoad1)
-      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(2.0, 19.2)), linkId = idRoad2)
-      val projectLink3 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(-2.0, 20.2), Point(1.0, 30.0)), linkId = idRoad3)
-      val projectLink4 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(2.0, 19.2), Point(1.0, 30.0)), linkId = idRoad4)
-      val projectLink5 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(1.0, 30.0), Point(0.0, 48.0)), linkId = idRoad5)
-      val projectLink6 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad6)
-      val projectLink7 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(-2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad7)
-      val projectLink8 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 96.0), Point(0.0, 148.0)), linkId = idRoad8)
+      val projectLink0 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), linkId = idRoad0, id = idRoad0)
+      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(-2.0, 20.2)), linkId = idRoad1, id = idRoad1)
+      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 9.8), Point(2.0, 19.2)), linkId = idRoad2, id = idRoad2)
+      val projectLink3 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(-2.0, 20.2), Point(1.0, 30.0)), linkId = idRoad3, id = idRoad3)
+      val projectLink4 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(2.0, 19.2), Point(1.0, 30.0)), linkId = idRoad4, id = idRoad4)
+      val projectLink5 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(1.0, 30.0), Point(0.0, 48.0)), linkId = idRoad5, id = idRoad5)
+      val projectLink6 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.RightSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad6, id = idRoad6)
+      val projectLink7 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.LeftSide, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 48.0), Point(-2.0, 68.0), Point(0.0, 96.0)), linkId = idRoad7, id = idRoad7)
+      val projectLink8 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 96.0), Point(0.0, 148.0)), linkId = idRoad8, id = idRoad8)
 
 
       val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8).map(
@@ -220,10 +220,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad2 = 2L //   >
       val idRoad3 = 3L //     <
 
-      val projectLink0 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), linkId = idRoad0)
-      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.AgainstDigitizing, Seq(Point(4.0, 7.5), Point(0.0, 9.8)), linkId = idRoad1)
-      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(4.0, 7.5), Point(6.0, 19.2)), linkId = idRoad2)
-      val projectLink3 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.AgainstDigitizing, Seq(Point(10.0, 15.0), Point(6.0, 19.2)), linkId = idRoad3)
+      val projectLink0 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), linkId = idRoad0, id = idRoad0)
+      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.AgainstDigitizing, Seq(Point(4.0, 7.5), Point(0.0, 9.8)), linkId = idRoad1, id = idRoad1)
+      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, Seq(Point(4.0, 7.5), Point(6.0, 19.2)), linkId = idRoad2, id = idRoad2)
+      val projectLink3 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.AgainstDigitizing, Seq(Point(10.0, 15.0), Point(6.0, 19.2)), linkId = idRoad3, id = idRoad3)
 
       val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
       val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.linkId)
@@ -452,8 +452,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad3 = 3L // T
 
       val projectLink0 = dummyProjectLink(id = idRoad0, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.Transfer, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12345L, startAddrM = 0 , endAddrM = 12 , startM = 0.0, endM = 12.0, geometry = Seq(Point(0.0, 0.0), Point(0.0, 9.8)))
-      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, geometry = Seq(Point(0.0, -10.0), Point(0.0, 0.0)), linkId = 12346L)
-      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, geometry = Seq(Point(0.0, -20.2), Point(0.0, -10.0)), linkId = 12347L)
+      val projectLink1 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, geometry = Seq(Point(0.0, -10.0), Point(0.0, 0.0)), linkId = 12346L, id = idRoad1)
+      val projectLink2 = dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, geometry = Seq(Point(0.0, -20.2), Point(0.0, -10.0)), linkId = 12347L, id = idRoad2)
       val projectLink3 = dummyProjectLink(id = idRoad3, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.Transfer, Track.Combined, Discontinuous, SideCode.TowardsDigitizing, linkId = 12348L, startAddrM = 12 , endAddrM = 24 , startM = 0.0, endM = 12.0, geometry = Seq(Point(0.0, 9.8), Point(0.0, 20.2)))
       val projectLinkSeqT = Seq(projectLink0, projectLink3)
       val projectLinkSeqN = Seq(projectLink1, projectLink2)
