@@ -20,7 +20,7 @@
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
         '<label class="control-label">LISÄTIEDOT</label>' +
-        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" ' + (disabledInput ? 'disabled' : '') + '>' + (dataField === undefined || dataField === null ? "" : dataField ) + '</textarea>' +
+        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" ' + (disabledInput ? 'disabled' : '') + '>' + (dataField === undefined || dataField === null ? "" : dataField) + '</textarea>' +
         '</div>';
     };
 
@@ -34,21 +34,21 @@
         '</div>';
     };
 
-      var title = function (projectName) {
-          if (!projectName)
-              projectName = "Uusi tieosoiteprojekti";
-          return '<span class ="edit-mode-title">' + projectName + '</span>';
+    var title = function (projectName) {
+      if (!projectName)
+        projectName = "Uusi tieosoiteprojekti";
+      return '<span class ="edit-mode-title">' + projectName + '</span>';
     };
 
     var actionButtons = function () {
-        var html = '<div class="project-form form-controls" id="actionButtons">';
-        if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
-            html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-                'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
-        }
-        html += '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>' +
-            '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
-            '</div>';
+      var html = '<div class="project-form form-controls" id="actionButtons">';
+      if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
+        html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
+          'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
+      }
+      html += '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>' +
+        '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
+        '</div>';
       return html;
     };
 
@@ -90,7 +90,7 @@
     var openProjectTemplate = function (project, publishedNetworkDate, reservedRoads, newReservedRoads) {
       return _.template('' +
         '<header>' +
-          title(project.name) +
+        title(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -136,7 +136,7 @@
     var selectedProjectLinkTemplate = function (project) {
       return _.template('' +
         '<header>' +
-          title(project.name) +
+        title(project.name) +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -146,12 +146,12 @@
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
 
-    var errorsList = function(){
-      if (projectCollection.getProjectErrors().length > 0){
+    var errorsList = function () {
+      if (projectCollection.getProjectErrors().length > 0) {
         return '<label>TARKASTUSILMOITUKSET:</label>' +
           '<div id ="projectErrors">' +
-          formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
-          '</div>' ;
+          formCommon.getProjectErrors(projectCollection.getProjectErrors(), projectCollection.getAll(), projectCollection) +
+          '</div>';
       }
       else
         return '';
@@ -175,7 +175,7 @@
     var addSmallInputNumber = function (id, value) {
       //Validate only number characters on "onkeypress" including TAB and backspace
       var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value ) + '" onclick="" ' + (disabledInput ? 'disabled' : '') + '/>';
+        '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '" onclick="" ' + (disabledInput ? 'disabled' : '') + '/>';
       return smallNumberImput;
     };
 
@@ -212,11 +212,11 @@
       };
 
       var updateReservedParts = function (currParts, newParts) {
-          var reservedParts = $("#reservedRoads");
-          var newReservedParts = $("#newReservedRoads");
+        var reservedParts = $("#reservedRoads");
+        var newReservedParts = $("#newReservedRoads");
 
-          reservedParts.append(reservedParts.html(currParts));
-          newReservedParts.append(newReservedParts.html(newParts));
+        reservedParts.append(reservedParts.html(currParts));
+        newReservedParts.append(newReservedParts.html(newParts));
       };
 
       var writeHtmlList = function (list) {
@@ -236,8 +236,8 @@
 
       var toggleAdditionalControls = function () {
         rootElement.find('header').replaceWith('<header>' +
-            formCommon.titleWithEditingTool(currentProject) +
-        '</header>');
+          formCommon.titleWithEditingTool(currentProject) +
+          '</header>');
       };
 
       var createOrSaveProject = function () {
@@ -250,8 +250,8 @@
         }
       };
 
-      var deleteProject = function() {
-        if(!_.isUndefined(currentProject) && currentProject.id !== 0){
+      var deleteProject = function () {
+        if (!_.isUndefined(currentProject) && currentProject.id !== 0) {
           projectCollection.deleteProject(currentProject.id);
         }
       };
@@ -366,8 +366,8 @@
         disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
         projectCollection.setReservedParts(result.projectLinks);
-          var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
-          var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
+        var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
+        var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('.modal-overlay').remove();
         setTimeout(function () {
@@ -435,14 +435,14 @@
 
       var loadEditbuttons = function () {
         $('#activeButtons').empty();
-          var html = "";
-          if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
-              html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-                  'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
-          }
-          html += '<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
-              '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
-          $('#actionButtons').html(html);
+        var html = "";
+        if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
+          html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
+            'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
+        }
+        html += '<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
+          '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
+        $('#actionButtons').html(html);
         eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
       };
 
@@ -571,9 +571,9 @@
             if (isDirty && !disabledInput) {
               createOrSaveProject();
               eventbus.once('roadAddress:projectSaved', function () {
-                  _.defer(function () {
-                      closeProjectMode(changeLayerMode);
-                  });
+                _.defer(function () {
+                  closeProjectMode(changeLayerMode);
+                });
               });
               applicationModel.removeSpinner();
             } else {
@@ -589,8 +589,8 @@
       var displayDeleteConfirmMessage = function (popupMessage) {
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
-              deleteProject();
-              closeProjectMode(true);
+            deleteProject();
+            closeProjectMode(true);
           },
           closeCallback: function () {
             closeProjectMode(true);
@@ -598,15 +598,15 @@
         });
       };
 
-      var cancelChanges = function() {
-          projectCollection.revertLinkStatus();
-          projectCollection.setDirty([]);
-          projectCollection.setTmpDirty([]);
-          projectLinkLayer.clearHighlights();
-          $('.wrapper').remove();
-          eventbus.trigger('roadAddress:projectLinksEdited');
-          eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
-          eventbus.trigger('roadAddressProject:reOpenCurrent');
+      var cancelChanges = function () {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        projectCollection.setTmpDirty([]);
+        projectLinkLayer.clearHighlights();
+        $('.wrapper').remove();
+        eventbus.trigger('roadAddress:projectLinksEdited');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+        eventbus.trigger('roadAddressProject:reOpenCurrent');
       };
 
       var reOpenCurrent = function () {
@@ -673,7 +673,7 @@
         closeProjectMode(true);
       });
 
-      rootElement.on('click', '#deleteProjectSpan', function(){
+      rootElement.on('click', '#deleteProjectSpan', function () {
         //Insert the correct message for delete confirmation here!
         displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?", true);
       });
