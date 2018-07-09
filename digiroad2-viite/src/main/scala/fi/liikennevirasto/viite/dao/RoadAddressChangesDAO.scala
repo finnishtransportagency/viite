@@ -158,12 +158,13 @@ object RoadAddressChangesDAO {
   /**
     * Merge all the change rows by source and target road number, road part number, road type, ely, change type and reversed.
     * Then if the end address of the previous row is equal to the start of the next one and the dicontinuity is equal the merge is performed.
+    *
     * @param resultList
     * @return
     */
-  private def mergeChangeRows(resultList: List[ChangeRow]) : List[ChangeRow] = {
-    def combine(previousRow: ChangeRow, nextRow: ChangeRow) : Seq[ChangeRow] = {
-      if(previousRow.sourceEndAddressM == nextRow.sourceStartAddressM && previousRow.targetEndAddressM == nextRow.targetStartAddressM &&
+  private def mergeChangeRows(resultList: List[ChangeRow]): List[ChangeRow] = {
+    def combine(previousRow: ChangeRow, nextRow: ChangeRow): Seq[ChangeRow] = {
+      if (previousRow.sourceEndAddressM == nextRow.sourceStartAddressM && previousRow.targetEndAddressM == nextRow.targetStartAddressM &&
         (previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty || previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)) &&
         (previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty || previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)))
         Seq(previousRow.copy(sourceEndAddressM = nextRow.sourceEndAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
@@ -179,18 +180,18 @@ object RoadAddressChangesDAO {
       )
     ).flatMap { case (_, changeRows) =>
       changeRows.sortBy(_.targetStartAddressM).foldLeft(Seq[ChangeRow]()) {
-        case (result, nextChangeRow) => if(result.isEmpty) Seq(nextChangeRow) else combine(result.last, nextChangeRow)
+        case (result, nextChangeRow) => if (result.isEmpty) Seq(nextChangeRow) else combine(result.last, nextChangeRow)
       }
     }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode))
   }
 
-  private def mapper(resultList: List[ChangeRow]) : List[ProjectRoadAddressChange] = {
+  private def mapper(resultList: List[ChangeRow]): List[ProjectRoadAddressChange] = {
     resultList.map { row => {
-        val changeInfo = toRoadAddressChangeInfo(row)
-        val (user, date) = getUserAndModDate(row)
-        ProjectRoadAddressChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get,
-          row.rotatingTRId)
-      }
+      val changeInfo = toRoadAddressChangeInfo(row)
+      val (user, date) = getUserAndModDate(row)
+      ProjectRoadAddressChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get,
+        row.rotatingTRId)
+    }
     }
   }
 
@@ -214,11 +215,11 @@ object RoadAddressChangesDAO {
     queryList(query)
   }
 
-  def fetchRoadAddressChanges(projectIds: Set[Long]):List[ProjectRoadAddressChange] = {
+  def fetchRoadAddressChanges(projectIds: Set[Long]): List[ProjectRoadAddressChange] = {
     fetchRoadAddressChanges(projectIds, queryList)
   }
 
-  def fetchRoadAddressChangesResume(projectIds: Set[Long]):List[ProjectRoadAddressChange] = {
+  def fetchRoadAddressChangesResume(projectIds: Set[Long]): List[ProjectRoadAddressChange] = {
     fetchRoadAddressChanges(projectIds, queryResumeList)
   }
 
