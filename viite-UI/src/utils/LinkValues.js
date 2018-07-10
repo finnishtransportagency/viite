@@ -80,7 +80,7 @@
         Closed:                     {value: 0, description: "Suljettu"},
         Incomplete:                 {value: 1, description: "Keskeneräinen"},
         Sent2TR:                    {value: 2, description: "Lähetetty tierekisteriin"},
-        ErroredInTR:                {value: 3, description: "Virhe tierekisterissä"},
+        ErrorInTR:                {value: 3, description: "Virhe tierekisterissä"},
         TRProcessing:               {value: 4, description: "Tierekisterissä käsittelyssä"},
         Saved2TR:                   {value: 5, description: "Viety tierekisteriin"},
         Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
@@ -90,7 +90,7 @@
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
 
-    root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value, root.ProjectStatus.Sent2TR.value, root.ProjectStatus.ErroredInTR.value,
+    root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value, root.ProjectStatus.Sent2TR.value, root.ProjectStatus.ErrorInTR.value,
         root.ProjectStatus.TRProcessing.value, root.ProjectStatus.ErrorInViite.value, root.ProjectStatus.SendingToTR.value];
 
     root.Track = {
