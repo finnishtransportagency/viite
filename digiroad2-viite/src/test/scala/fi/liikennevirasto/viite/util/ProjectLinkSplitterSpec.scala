@@ -420,7 +420,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
 
   test("Geometries that are only touching should not have matching geometry segment") {
     val template = ProjectLink(452389, 77, 14, Combined, Continuous, 4286, 4612, None, None, None, 6138625, 0.0, 327.138,
-      TowardsDigitizing, (None, Some(CalibrationPoint(6138625, 327.138, 4612))), false, List(Point(445417.266, 7004142.049, 0.0),
+      TowardsDigitizing, (None, Some(ProjectLinkCalibrationPoint(6138625, 327.138, 4612, true))), false, List(Point(445417.266, 7004142.049, 0.0),
         Point(445420.674, 7004144.679, 0.0), Point(445436.147, 7004155.708, 0.0), Point(445448.743, 7004164.052, 0.0),
         Point(445461.586, 7004172.012, 0.0), Point(445551.316, 7004225.769, 0.0), Point(445622.099, 7004268.174, 0.0),
         Point(445692.288, 7004310.224, 0.0), Point(445696.301, 7004312.628, 0.0)), 452278, NotHandled, PublicRoad,

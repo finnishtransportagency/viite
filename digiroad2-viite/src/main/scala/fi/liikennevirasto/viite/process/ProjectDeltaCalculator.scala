@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -122,9 +123,9 @@ object ProjectDeltaCalculator {
           case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
         },
         pl1 match {
-          case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = pl2.calibrationPoints).asInstanceOf[P]
-          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity, calibrationPoints = pl1.calibrationPoints).asInstanceOf[P]
-          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity, calibrationPoints = pl2.calibrationPoints).asInstanceOf[P]
+          case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
+          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl1.calibrationPoints, x.roadAddressId)).asInstanceOf[P]
+          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl2.calibrationPoints, x.roadAddressId)).asInstanceOf[P]
         }))
     else {
       Seq(tr2, tr1)
@@ -139,10 +140,10 @@ object ProjectDeltaCalculator {
           if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
             Seq(r2, r1)
           else
-            Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+            Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(r2.calibrationPoints)).asInstanceOf[T])
         case x: ProjectLink =>
           if(!hasCalibrationPoint)
-            Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+            Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, r2.id)).asInstanceOf[T])
           else
             Seq(r2, r1)
       }
@@ -168,20 +169,28 @@ object ProjectDeltaCalculator {
       testCombine(raSeqToCombine.tail, combineTwoT(result.head, raSeqToCombine.head, oppositeTracks) ++ result.tail, oppositeTracks)
   }
 
+  def getClosestOposite[T <: BaseRoadAddress](startAddrMValue: Long, oppositeTracks: Seq[T]): Option[T] = {
+    oppositeTracks match {
+      case Nil => None
+      case seq => Option(seq.minBy(v => math.abs(v.startAddrMValue - startAddrMValue)))
+    }
+  }
+
   private def combineTwoT[T <: BaseRoadAddress](r1: T, r2: T, oppositeTracks: Seq[T]): Seq[T] = {
     val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
-//    val hasOpositCalibrationPoint =
+    val opositeTrack = getClosestOposite(r1.startAddrMValue, oppositeTracks)
     if (r1.endAddrMValue == r2.startAddrMValue)
       r1 match {
         case x: RoadAddress =>
           if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
             Seq(r2, r1)
-//          else if(hasCalibrationPoint)
+          else if(hasCalibrationPoint && (opositeTrack.isDefined && opositeTrack.get.commonHistoryId == x.commonHistoryId && opositeTrack.get.getCalibrationCode == x.getCalibrationCode))
+            Seq(r2, r1)
           else
-            Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+            Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(r2.calibrationPoints)).asInstanceOf[T])
         case x: ProjectLink =>
           if(!hasCalibrationPoint)
-            Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints).asInstanceOf[T])
+            Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, x.roadAddressId)).asInstanceOf[T])
           else
             Seq(r2, r1)
       }
