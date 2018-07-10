@@ -171,7 +171,7 @@ trait TrackCalculatorStrategy {
   protected def setOnSideCalibrationPoints(projectlinks: Seq[ProjectLink], raCalibrationPoints: Map[Long, CalibrationCode], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     projectlinks.size match {
       case 1 =>
-        projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true))
+        projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true, true))
       case _ =>
         val pls = projectlinks.map {
           pl =>
@@ -181,15 +181,15 @@ trait TrackCalculatorStrategy {
             setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP)
         }
 
-        Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false)) ++ pls.init.tail ++
-          Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true))
+        Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false, true)) ++ pls.init.tail ++
+          Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true, true))
     }
   }
 
-  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean) = {
+  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, splitValue: Boolean = false) = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
-    pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints((sCP, eCP), pl.roadAddressId))
+    pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSplitInfo((sCP, eCP), splitValue))
   }
 
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
