@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
 import fi.liikennevirasto.viite.dao._
 
 object CalibrationPointsUtils {
@@ -36,13 +37,13 @@ object CalibrationPointsUtils {
 
   def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadAddressId: Long = 0L): ProjectLinkCalibrationPoint = {
     roadAddressId match {
-      case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, true)
-      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, false)
+      case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)
+      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressSource)
     }
   }
 
-  def toProjectLinkCalibrationPointWithSplitInfo(originalCalibrationPoint: BaseCalibrationPoint, splitValue: Boolean = false): ProjectLinkCalibrationPoint = {
-    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, splitValue)
+  def toProjectLinkCalibrationPointWithSourceInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource = UnknownSource): ProjectLinkCalibrationPoint = {
+    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
   }
 
   def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadAddressId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
@@ -54,12 +55,12 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPointsWithSplitInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), splitValue: Boolean = false): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+  def toProjectLinkCalibrationPointsWithSourceInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), source: CalibrationPointSource = UnknownSource): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
     originalCalibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPointWithSplitInfo(cp1, splitValue)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithSplitInfo(cp1, splitValue)))
-      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPointWithSplitInfo(cp1, splitValue)), Option(toProjectLinkCalibrationPointWithSplitInfo(cp2, splitValue)))
+      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPointWithSourceInfo(cp1, source)), Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithSourceInfo(cp1, source)))
+      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPointWithSourceInfo(cp1, source)), Option(toProjectLinkCalibrationPointWithSourceInfo(cp2, source)))
     }
   }
 
