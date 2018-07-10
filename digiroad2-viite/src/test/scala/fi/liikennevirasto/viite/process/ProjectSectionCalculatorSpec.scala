@@ -589,4 +589,67 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Both tracks with new + transfer + new") {
+    //
+    //      |-N-|-T-|-N-|
+    //      |-N-|-T-|-N-|
+    //
+
+    runWithRollback {
+
+    }
+  }
+
+  test("Unchanged + transfer (2 tracks) + new (2 tracks)") {
+    //
+    //      |-U-|-T-|-N-|
+    //          \-T-|-N-|
+    //
+
+    runWithRollback {
+
+    }
+  }
+
+  test("Unchanged + transfer/new (2 tracks) + discontinuity") {
+    //           /-N-|   |-N-\     /-N-|-N-|-N-\
+    //      |-U-|             |-T-|             |-T-|
+    //           \-T-|   |-T-/     \-T-|-T-|-T-/
+
+    runWithRollback {
+
+    }
+  }
+
+  test("Unchanged + transfer/new (2 tracks) + discontinuity(1 track)") {
+    //           /-N-|-N-|-N-\
+    //      |-U-|             |-T-|
+    //           \-T-|   |-T-/
+
+    runWithRollback {
+
+    }
+  }
+
+  test("Both tracks with new + transfer(with calibration point in the middle)") {
+    //
+    //      |-N-|-T-|CP|-T-|
+    //      |-N-|-T-|CP|-T-|
+    //
+
+    runWithRollback {
+
+    }
+  }
+
+  test("Both tracks with new + transfer + new") {
+    //
+    //           /-N-|-N-\     /-T-\
+    //      |-T-|         |-T-|     |-T-|
+    //           \-T-|-T-/     \-N-/
+
+    runWithRollback {
+
+    }
+  }
 }
