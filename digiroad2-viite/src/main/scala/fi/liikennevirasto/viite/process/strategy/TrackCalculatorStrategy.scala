@@ -189,7 +189,7 @@ trait TrackCalculatorStrategy {
   protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean) = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
-    pl.copy(calibrationPoints = (sCP, eCP))
+    pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints((sCP, eCP), pl.roadAddressId))
   }
 
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
