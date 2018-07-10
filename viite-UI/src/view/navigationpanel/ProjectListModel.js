@@ -170,16 +170,17 @@
           return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
         });
 
-          var triggerOpening = function (event) {
-              if (this.className === "project-open btn btn-new-error") {
-                  projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-                  eventbus.once("roadAddressProject:reOpenedProject", function (successData) {
-                      openProjectSteps(event);
-                  });
-              } else {
-                  openProjectSteps(event);
-              }
-          };
+        var triggerOpening = function (event) {
+          userFilterVisibility(false);
+          if (this.className === "project-open btn btn-new-error") {
+            projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
+            eventbus.once("roadAddressProject:reOpenedProject", function (successData) {
+              openProjectSteps(event);
+            });
+          } else {
+            openProjectSteps(event);
+          }
+        };
 
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
         if (!_.isEmpty(sortedProjects)) {
