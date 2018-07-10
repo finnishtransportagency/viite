@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
@@ -26,6 +27,20 @@ sealed trait ProjectState {
   def value: Int
 
   def description: String
+}
+
+sealed trait CalibrationPointSource {
+  def value: Int
+}
+
+object CalibrationPointSource {
+  val values = Set(RoadAddressSource, ProjectLinkSource, UnknownSource)
+
+  def apply(intValue: Int): CalibrationPointSource = values.find(_.value == intValue).getOrElse(UnknownSource)
+
+  case object RoadAddressSource extends CalibrationPointSource {def value = 1;}
+  case object ProjectLinkSource extends CalibrationPointSource {def value = 2;}
+  case object UnknownSource extends CalibrationPointSource{def value = 99;}
 }
 
 object ProjectState {
@@ -97,7 +112,7 @@ case class RoadAddressProject(id: Long, status: ProjectState, name: String, crea
 
 case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
-case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue: Double, override val  addressMValue: Long, isSplitCP: Boolean = false)
+case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue: Double, override val  addressMValue: Long, source: CalibrationPointSource = UnknownSource)
   extends BaseCalibrationPoint{
 
   def toCalibrationPoint(): CalibrationPoint = {
