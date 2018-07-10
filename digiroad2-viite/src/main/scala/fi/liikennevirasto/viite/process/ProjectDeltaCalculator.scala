@@ -138,10 +138,12 @@ object ProjectDeltaCalculator {
           if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
             Seq(r2, r1)
           else
-            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(r2.calibrationPoints)))
+          //TODO check roadAddressId calibrations points for projectLinks
+            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, r2.id)))
         case LinkStatus.New =>
           if(!hasCalibrationPoint)
-            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, r2.id)))
+          //TODO check roadAddressId calibrations points for projectLinks
+            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints)))
           else
             Seq(r2, r1)
         case _ =>
