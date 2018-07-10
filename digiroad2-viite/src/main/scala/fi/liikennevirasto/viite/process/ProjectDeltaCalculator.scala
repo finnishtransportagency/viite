@@ -63,10 +63,8 @@ object ProjectDeltaCalculator {
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
-    val terminations = projectLinks.mapValues(pll =>
-      pll.filter(_.status == LinkStatus.Terminated).flatMap(pl =>
-        adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId))
-      )
+    val terminations = projectLinks.mapValues ( pll =>
+      pll.filter(_.status == LinkStatus.Terminated)
     )
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
     terminations.values.flatten.toSeq
@@ -94,7 +92,7 @@ object ProjectDeltaCalculator {
     projectLinks.values.flatten.filter(_.status == LinkStatus.New).toSeq
   }
 
-  private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
+  private def validateTerminations(roadAddresses: Seq[BaseRoadAddress]) = {
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
   }
@@ -132,32 +130,34 @@ object ProjectDeltaCalculator {
     }
   }
 
-  private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
+  private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
     val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
     if (r1.endAddrMValue == r2.startAddrMValue)
-      r1 match {
-        case x: RoadAddress =>
+      r1.status match {
+        case LinkStatus.Terminated =>
           if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
             Seq(r2, r1)
           else
-            Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(r2.calibrationPoints)).asInstanceOf[T])
-        case x: ProjectLink =>
+            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(r2.calibrationPoints)))
+        case LinkStatus.New =>
           if(!hasCalibrationPoint)
-            Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, r2.id)).asInstanceOf[T])
+            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, r2.id)))
           else
             Seq(r2, r1)
+        case _ =>
+          Seq(r2, r1)
       }
     else
       Seq(r2, r1)
   }
 
-  private def combine[T <: BaseRoadAddress](roadAddressSeq: Seq[T], result: Seq[T] = Seq()): Seq[T] = {
-    if (roadAddressSeq.isEmpty)
+  private def combine(projectLinkSeq: Seq[ProjectLink], result: Seq[ProjectLink] = Seq()): Seq[ProjectLink] = {
+    if (projectLinkSeq.isEmpty)
       result.reverse
     else if (result.isEmpty)
-      combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
+      combine(projectLinkSeq.tail, Seq(projectLinkSeq.head))
     else
-      combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
+      combine(projectLinkSeq.tail, combineTwo(result.head, projectLinkSeq.head) ++ result.tail)
   }
 
   private def testCombine[T <: BaseRoadAddress](raSeqToCombine: Seq[T], result: Seq[T] = Seq(), oppositeTracks: Seq[T]): Seq[T] = {
@@ -234,7 +234,7 @@ object ProjectDeltaCalculator {
       (matcherStartMAddr <= targetStartMAddr && matcherEndMAddr >= targetStartMAddr) || (matcherStartMAddr <= targetEndMAddr && matcherEndMAddr >= targetEndMAddr)
   }
 
-  def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
+  def partition[T <: BaseRoadAddress](roadAddresses: Seq[ProjectLink]): Seq[RoadAddressSection] = {
     val nogroup = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
     val (rightSide, others) = nogroup.partition(_._1._3 == Track.RightSide)
     val (leftSide, combined) = others.partition(_._1._3 == Track.LeftSide)
@@ -329,7 +329,7 @@ object ProjectDeltaCalculator {
   }
 }
 
-case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
+case class Delta(startDate: DateTime, terminations: Seq[ProjectLink], newRoads: Seq[ProjectLink],
                  unChanged: Unchanged, transferred: Transferred, numbering : ReNumeration)
 
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
