@@ -61,44 +61,38 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
   test("MValues && AddressMValues && CalibrationPoints calculation for new road addresses") {
     runWithRollback {
+      val idRoad0 = 0L
+      val idRoad1 = 1L
+      val idRoad2 = 2L
+      val idRoad3 = 3L
 
       //TODO Just notice that the start M and end M on the test are no matching the geometry that means the is not used
       val projectLinks = Seq(
-        dummyProjectLink(id = 0L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12345L, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 0, Seq(Point(0.0, 0.0), Point(0.0, 9.8))),
-        dummyProjectLink(id = 1L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12346L, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 0, Seq(Point(0.0, 30.0), Point(0.0, 39.8))),
-        dummyProjectLink(id = 2L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12347L, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 0, Seq(Point(0.0, 20.2), Point(0.0, 30.0))),
-        dummyProjectLink(id = 3L, roadNumber = 5L, roadPartNumber = 1L, LinkStatus.New, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12348L, startAddrM = 0L, endAddrM = 0L, startM = 0.0, endM = 0, Seq(Point(0.0, 9.8), Point(0.0, 20.2)))
+        dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12345L, geometry = Seq(Point(0.0, 0.0), Point(0.0, 9.8))),
+        dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12346L, geometry = Seq(Point(0.0, 30.0), Point(0.0, 39.8))),
+        dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12347L, geometry = Seq(Point(0.0, 20.2), Point(0.0, 30.0))),
+        dummyNewProjectLink(roadNumber = 5L, roadPartNumber = 1L, Track.Combined, Continuous, SideCode.TowardsDigitizing, linkId = 12348L, geometry = Seq(Point(0.0, 9.8), Point(0.0, 20.2)))
       )
 
       val output = ProjectSectionCalculator.assignMValues(projectLinks)
       output.length should be(4)
 
-      output.map(_.id) should be (Seq(0L, 3L, 2L, 1L))
-
-      output(3).id should be(0L)
-      output(3).startMValue should be(0.0)
-      output(3).endMValue should be(output(3).geometryLength +- 0.001)
+      output(3).linkId should be(12346L)
       output(3).startAddrMValue should be(30L)
       output(3).endAddrMValue should be(40L)
       output(3).sideCode should be(SideCode.TowardsDigitizing)
 
-      output(2).id should be(1L)
-      output(2).startMValue should be(0.0)
-      output(2).endMValue should be(output(2).geometryLength +- 0.001)
+      output(2).linkId should be(12347L)
       output(2).startAddrMValue should be(20L)
       output(2).endAddrMValue should be(30L)
-      output(2).sideCode should be(SideCode.AgainstDigitizing)
+      output(2).sideCode should be(SideCode.TowardsDigitizing)
 
-      output(1).id should be(3L)
-      output(1).startMValue should be(0.0)
-      output(1).endMValue should be(output(1).geometryLength +- 0.001)
+      output(1).linkId should be(12348L)
       output(1).startAddrMValue should be(10L)
       output(1).endAddrMValue should be(20L)
       output(1).sideCode should be(SideCode.TowardsDigitizing)
 
-      output.head.id should be(4L)
-      output.head.startMValue should be(0.0)
-      output.head.endMValue should be(output.head.geometryLength +- 0.001)
+      output.head.linkId should be(12345L)
       output.head.startAddrMValue should be(0L)
       output.head.endAddrMValue should be(10L)
       output.head.sideCode should be(SideCode.TowardsDigitizing)
