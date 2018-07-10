@@ -41,12 +41,25 @@ object CalibrationPointsUtils {
     }
   }
 
+  def toProjectLinkCalibrationPointWithSplitInfo(originalCalibrationPoint: BaseCalibrationPoint, splitValue: Boolean = false): ProjectLinkCalibrationPoint = {
+    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, splitValue)
+  }
+
   def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadAddressId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
     originalCalibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
       case (Some(cp1), None) => (Option(toProjectLinkCalibrationPoint(cp1, roadAddressId)), Option.empty[ProjectLinkCalibrationPoint])
       case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPoint(cp1, roadAddressId)))
       case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPoint(cp1, roadAddressId)), Option(toProjectLinkCalibrationPoint(cp2, roadAddressId)))
+    }
+  }
+
+  def toProjectLinkCalibrationPointsWithSplitInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), splitValue: Boolean = false): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+    originalCalibrationPoints match {
+      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
+      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPointWithSplitInfo(cp1, splitValue)), Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithSplitInfo(cp1, splitValue)))
+      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPointWithSplitInfo(cp1, splitValue)), Option(toProjectLinkCalibrationPointWithSplitInfo(cp2, splitValue)))
     }
   }
 
