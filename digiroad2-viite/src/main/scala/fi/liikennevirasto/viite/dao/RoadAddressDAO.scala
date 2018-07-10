@@ -1524,6 +1524,11 @@ object RoadAddressDAO {
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
+  def withDateFilter(startDate: DateTime, endDate: DateTime)(query: String): String = {
+    val now = DateTime.now()
+    query + s" WHERE $startDate <= $now AND $now < $endDate"
+  }
+
   /**
     * Used by OTH SearchAPI
     *
