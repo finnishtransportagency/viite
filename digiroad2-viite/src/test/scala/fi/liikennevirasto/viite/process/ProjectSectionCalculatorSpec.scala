@@ -95,9 +95,9 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       output.head.startAddrMValue should be(0L)
       output.head.endAddrMValue should be(10L)
 
-      output(3).calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12346, 9.799999999999997, 40)))
+      output(3).calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12346, 9.799999999999997, 40, true)))
 
-      output.head.calibrationPoints should be(Some(ProjectLinkCalibrationPoint(12345, 0.0, 0)), None)
+      output.head.calibrationPoints should be(Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, true)), None)
     }
   }
 
@@ -314,10 +314,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val against = ProjectSectionCalculator.assignMValues(Seq(projectLink0A)).head
       towards.sideCode should be(SideCode.TowardsDigitizing)
       against.sideCode should be(SideCode.AgainstDigitizing)
-      towards.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 0)))
-      towards.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0T.geometryLength, 9)))
-      against.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 9)))
-      against.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0A.geometryLength, 0)))
+      towards.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 0, true)))
+      towards.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0T.geometryLength, 9, true)))
+      against.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 9, true)))
+      against.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0A.geometryLength, 0, true)))
     }
   }
 
@@ -545,12 +545,12 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         r.endAddrMValue should be(projectLink0.endAddrMValue + maxAddr - projectLink3.endAddrMValue)
       }
       output.filter(_.id == idRoad3).foreach { r =>
-        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, 10.399999999999999, 44)))
+        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, 10.399999999999999, 44, true)))
         r.startAddrMValue should be(maxAddr + projectLink3.startAddrMValue - projectLink3.endAddrMValue)
         r.endAddrMValue should be(maxAddr)
       }
 
-      output.head.calibrationPoints should be(Some(CalibrationPoint(12347, 0.0, 0)), None)
+      output.head.calibrationPoints should be(Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, true)), None)
     }
   }
 
