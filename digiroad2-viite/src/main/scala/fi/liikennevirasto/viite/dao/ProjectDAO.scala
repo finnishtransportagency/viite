@@ -285,7 +285,7 @@ object ProjectDAO {
         "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
         "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry, " +
         "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewRoadAddress)
       val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
