@@ -208,26 +208,26 @@
       };
 
       var updateReservedParts = function (currParts, newParts) {
-          var reservedParts = $("#reservedRoads");
-          var newReservedParts = $("#newReservedRoads");
+        var reservedParts = $("#reservedRoads");
+        var newReservedParts = $("#newReservedRoads");
 
-          reservedParts.append(reservedParts.html(currParts));
-          newReservedParts.append(newReservedParts.html(newParts));
+        reservedParts.append(reservedParts.html(currParts));
+        newReservedParts.append(newReservedParts.html(newParts));
       };
 
       var writeHtmlList = function (list) {
         var text = '';
         var index = 0;
         _.each(list, function (line) {
-            if(!_.isUndefined(line.newLength)) {
-                text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
-                    addSmallLabel(line.roadNumber) +
-                    addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-                    addSmallLabelWithIds((line.newLength ? line.newLength : line.currentLength), 'reservedRoadLength') +
-                    addSmallLabelWithIds((line.newDiscontinuity ? line.newDiscontinuity : line.currentDiscontinuity), 'reservedDiscontinuity') +
-                    addSmallLabelWithIds((line.newEly ? line.newEly : line.currentEly), 'reservedEly') +
-                    '</div>';
-            }
+          if (!_.isUndefined(line.newLength)) {
+            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
+              addSmallLabel(line.roadNumber) +
+              addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
+              addSmallLabelWithIds((line.newLength ? line.newLength : line.currentLength), 'reservedRoadLength') +
+              addSmallLabelWithIds((line.newDiscontinuity ? line.newDiscontinuity : line.currentDiscontinuity), 'reservedDiscontinuity') +
+              addSmallLabelWithIds((line.newEly ? line.newEly : line.currentEly), 'reservedEly') +
+              '</div>';
+          }
         });
         return text;
       };

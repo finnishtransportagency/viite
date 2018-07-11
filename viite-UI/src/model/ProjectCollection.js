@@ -147,18 +147,18 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: _.map(_.filter(self.getAllReservedParts(), function(part){
-            return !_.isUndefined(part.newLength, part.currentLength, part.newEly, part.currentEly);
-        }), function(part){
-                return {
-                    discontinuity: (part.newDiscontinuity ? part.newDiscontinuity : part.currentDiscontinuity),
-                    ely: (part.newEly ? part.newEly : part.currentEly),
-                    roadLength: (part.newLength ? part.newLength : part.currentLength),
-                    roadNumber: part.roadNumber,
-                    roadPartId: 0,
-                    roadPartNumber: part.roadPartNumber,
-                    startingLinkId: part.startingLinkId
-                };
+        roadPartList: _.map(_.filter(self.getAllReservedParts(), function (part) {
+          return !_.isUndefined(part.newLength, part.currentLength, part.newEly, part.currentEly);
+        }), function (part) {
+          return {
+            discontinuity: (part.newDiscontinuity ? part.newDiscontinuity : part.currentDiscontinuity),
+            ely: (part.newEly ? part.newEly : part.currentEly),
+            roadLength: (part.newLength ? part.newLength : part.currentLength),
+            roadNumber: part.roadNumber,
+            roadPartId: 0,
+            roadPartNumber: part.roadPartNumber,
+            startingLinkId: part.startingLinkId
+          };
         }),
         resolution: resolution
       };
@@ -605,8 +605,8 @@
       return deleteButton(index, roadNumber, roadPartNumber);
     };
 
-    var deleteButton = function(index, roadNumber, roadPartNumber){
-      return '<i roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete fas fa-trash-alt fa-lg"></i>';
+    var deleteButton = function (index, roadNumber, roadPartNumber) {
+      return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete btn-delete fas fa-trash-alt fa-lg"></i>';
     };
 
 

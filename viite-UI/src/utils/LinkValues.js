@@ -80,13 +80,13 @@
         Closed:                     {value: 0, description: "Suljettu"},
         Incomplete:                 {value: 1, description: "Keskeneräinen"},
         Sent2TR:                    {value: 2, description: "Lähetetty tierekisteriin"},
-        ErrorInTR:                {value: 3, description: "Virhe tierekisterissä"},
+        ErrorInTR:                  {value: 3, description: "Virhe tierekisterissä"},
         TRProcessing:               {value: 4, description: "Tierekisterissä käsittelyssä"},
         Saved2TR:                   {value: 5, description: "Viety tierekisteriin"},
         Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
         Deleted:                    {value: 7, description: "Poistettu projekti"},
         ErrorInViite:               {value: 8, description: "Virhe Viite-sovelluksessa"},
-        SendingToTR: {value: 9, description: "Lähettää Tierekisteriin"},
+        SendingToTR:                {value: 9, description: "Lähettää Tierekisteriin"},
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
 
