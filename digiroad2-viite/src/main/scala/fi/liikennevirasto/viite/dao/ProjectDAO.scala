@@ -348,7 +348,7 @@ object ProjectDAO {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
         "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
         "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINT_SOURCE=? WHERE id = ?")
+        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
 
       for (projectLink <- links) {
         projectLinkPS.setLong(1, projectLink.roadNumber)
