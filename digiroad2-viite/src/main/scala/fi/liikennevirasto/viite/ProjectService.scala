@@ -237,7 +237,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }).map(l => l.linkId -> l).toMap
         if (roadLinks.keySet != linkIds.toSet)
           return Map("success" -> false,
-            "errorMessage" -> (linkIds.toSet - roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
+            "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
         val project = withDynSession {
           ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
         }
