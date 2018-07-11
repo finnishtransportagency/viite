@@ -238,10 +238,10 @@
         '</div>');
     };
 
-    var sendRoadAddressChangeButton = function(localPrefix) {
-      return '<div class="'+localPrefix+'form form-controls">' +
+    var sendRoadAddressChangeButton = function (localPrefix) {
+      return '<div class="' + localPrefix + 'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send"' +'>Lähetä muutosilmoitus Tierekisteriin</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send"' + '>Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
