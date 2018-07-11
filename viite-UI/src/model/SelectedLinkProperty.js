@@ -12,11 +12,8 @@
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
-    var floatingRoadLinkType=-1;
     var RoadLinkType = LinkValues.RoadLinkType;
-    var noAnomaly=0;
-    var noAddressAnomaly=1;
-    var geometryChangedAnomaly=2;
+    var Anomaly = LinkValues.Anomaly;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -139,7 +136,7 @@
                 return extractDataForDisplay([feature]);
             });
 
-            if (!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === floatingRoadLinkType) {
+            if (!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === RoadLinkType.FloatingRoadLinkType.value) {
                 addToFeaturesToKeep(data4Display);
             }
             if (!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)) {
@@ -168,7 +165,7 @@
         } else {
           current = _.uniq(roadCollection.getById([id]), _.isEqual);
         }
-        if(current[0].getData().anomaly === geometryChangedAnomaly) {
+        if(current[0].getData().anomaly === Anomaly.GeometryChanged.value) {
           current = _.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
             return linkGroup.getData().linkId === linkId;
           });
@@ -181,7 +178,7 @@
         });
 
         var currentFloatings = _.filter(current, function(curr){
-          return curr.getData().roadLinkType === floatingRoadLinkType;
+          return curr.getData().roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
         });
         if(!_.isEmpty(currentFloatings)){
           setSources(currentFloatings);
@@ -191,7 +188,7 @@
           return extractDataForDisplay([feature]);
         });
 
-        if(!applicationModel.isReadOnly() && get()[0].anomaly === noAddressAnomaly){
+        if(!applicationModel.isReadOnly() && get()[0].anomaly === Anomaly.NoAddressGiven.value){
           addToFeaturesToKeep(data4Display);
         }
         if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
@@ -294,7 +291,7 @@
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
             var rejectedRoads = _.reject(get().concat(featuresToKeep), function(feature){
-              return (feature.segmentId === "" || (_.contains(linkIds, feature.linkId) && (feature.anomaly === LinkValues.Anomaly.GeometryChanged.value || feature.anomaly === LinkValues.Anomaly.None.value)));
+              return (feature.segmentId === "" || (_.contains(linkIds, feature.linkId) && (feature.anomaly === Anomaly.GeometryChanged.value || feature.anomaly === Anomaly.None.value)));
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
@@ -310,10 +307,11 @@
               return !_.contains(selectedLinkIds, prvAdj.linkId);
             });
             previousAdjacents = filteredAdjacents;
+            var unknownAdjacents = _.reject(filteredAdjacents, function(t){
+                return t.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+            });
             var markedRoads = {
-              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
-                return t.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
-              }) :filteredAdjacents, function (a, index) {
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? unknownAdjacents : unknownAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
@@ -360,7 +358,7 @@
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
             var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
-              return link.segmentId === "" || link.anomaly === geometryChangedAnomaly;
+              return link.segmentId === "" || link.anomaly === Anomaly.GeometryChanged.value;
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
@@ -374,7 +372,7 @@
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
               "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
-                return t.roadLinkType !== floatingRoadLinkType;
+                return t.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
               }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
@@ -482,7 +480,7 @@
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType !== floatingRoadLinkType && feature.anomaly === noAddressAnomaly){
+        if(feature.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && feature.anomaly === Anomaly.NoAddressGiven.value){
           return feature.linkId.toString();
         }
       }), function (target){
@@ -490,7 +488,7 @@
       }));
 
       var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
-        if(feature.roadLinkType === floatingRoadLinkType){
+        if(feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value){
           return feature.linkId.toString();
         }
       }), function (source){
@@ -520,14 +518,14 @@
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType !== floatingRoadLinkType && feature.anomaly === noAddressAnomaly){
+        if(feature.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && feature.anomaly === Anomaly.NoAddressGiven.value){
           return feature.linkId;
         }
       }), function (target){
         return !_.isUndefined(target);
       }));
       var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
-        if(feature.roadLinkType === floatingRoadLinkType){
+        if(feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value){
           return feature.linkId;
         }
       }), function (source){
@@ -656,7 +654,7 @@
     var cancelAfterDefloat = function(action, changedTargetIds) {
       dirty = false;
       var originalData = _.filter(featuresToKeep, function(feature){
-        return feature.roadLinkType === floatingRoadLinkType;
+        return feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
       });
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
@@ -696,19 +694,19 @@
 
     var getCurrentFloatings = function(){
       return _.filter(current, function(curr){
-        return curr.getData().roadLinkType === floatingRoadLinkType;
+        return curr.getData().roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
       });
     };
 
     var getFeaturesToKeepFloatings = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.roadLinkType === floatingRoadLinkType;
+        return fk.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
       });
     };
 
     var getFeaturesToKeepUnknown = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.anomaly === noAddressAnomaly;
+        return fk.anomaly === Anomaly.NoAddressGiven.value;
       });
     };
 
@@ -745,7 +743,7 @@
     var clearFeaturesToKeep = function() {
       if('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()){
         featuresToKeep = _.filter(featuresToKeep, function(feature){
-          return feature.roadLinkType === floatingRoadLinkType;
+          return feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
         });
       } else {
         featuresToKeep = [];

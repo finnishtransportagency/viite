@@ -1113,6 +1113,7 @@
               _.each(pickAnomalousMarker, function(pickRoads){
                 pickRoadsLayer.getSource().removeFeature(pickRoads);
               });
+              if(applicationModel.getSelectionType() !== 'unknown')
               geometryChangedLayer.setVisible(false);
             }
           });
