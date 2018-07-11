@@ -62,7 +62,9 @@
             var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
             $('#road-list').append(saveButton);
             $('#saveChangedRoads').on('click', function (clickEvent) {
-                new GenericConfirmPopup("Tiellä on jo nimi. Haluatko varmasti muuttaa sen nimeä?", {
+                var saveMessage = ($('#newRoadName').length > 0 ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?" : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?");
+
+                new GenericConfirmPopup(saveMessage, {
                     successCallback: function () {
                         roadNameCollection.saveChanges();
                     },
