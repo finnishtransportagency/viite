@@ -13,6 +13,7 @@
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
     var floatingRoadLinkType=-1;
+    var RoadLinkType = LinkValues.RoadLinkType;
     var noAnomaly=0;
     var noAddressAnomaly=1;
     var geometryChangedAnomaly=2;
@@ -298,16 +299,20 @@
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
             });
-            var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
-              return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
-            }).concat(previousAdjacents);
+              var filteredDuplicatedAdjacents = _.reject(adjacents, function(adj){
+                var foundDuplicatedLink = _.find(previousAdjacents, function(prev){
+                  return prev.linkId === adj.linkId && prev.roadLinkType === adj.roadLinkType;
+                });
+              return _.some(foundDuplicatedLink);
+            });
+                var filteredPreviousAdjacents = filteredDuplicatedAdjacents.concat(previousAdjacents);
             var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
               return !_.contains(selectedLinkIds, prvAdj.linkId);
             });
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
               "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
-                return t.roadLinkType !== floatingRoadLinkType;
+                return t.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
               }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
