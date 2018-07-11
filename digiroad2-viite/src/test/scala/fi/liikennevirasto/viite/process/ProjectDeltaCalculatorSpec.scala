@@ -106,7 +106,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("2 track termination + transfer") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i*10, 10L)).map(l => l.copy(track = Track.LeftSide, id=l.id+1))
-    val terminations = Seq(addresses.head, addresses2.head)
+    val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.head), toProjectLink(project, LinkStatus.Terminated)(addresses2.head))
     val transfers = (addresses.tail ++ addresses2.tail).map(t => {
       val d = if (t.track == Track.RightSide) 12 else 10
       (t, toProjectLink(project, LinkStatus.Transfer)(t.copy(startAddrMValue = t.startAddrMValue - d,
@@ -134,7 +134,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("unchanged + 2 track termination + different commonHistoryIds, commonHistoryIds should not be considered on partition") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
-    val terminations = Seq(addresses.last, addresses2.last)
+    val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
     val unchanged = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
     val termPart = ProjectDeltaCalculator.partition(terminations)
@@ -155,7 +155,9 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("unchanged + 2 track termination + transfer") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i*10, 10L)).map(l => l.copy(track = Track.LeftSide, id=l.id+1))
-    val terminations = Seq(addresses(4), addresses(5), addresses2(5), addresses2(6))
+    val terminations = Seq(addresses(4), addresses(5), addresses2(5), addresses2(6)).map(t => {
+      toProjectLink(project, LinkStatus.Terminated)(t)
+    })
     val unchanged = (addresses.take(3) ++ addresses2.take(4)).map(toTransition(project, LinkStatus.UnChanged))
     val transfers = (addresses.drop(5) ++ addresses2.drop(6)).map(toTransition(project, LinkStatus.Transfer)).map {
       case (a, pl) =>
