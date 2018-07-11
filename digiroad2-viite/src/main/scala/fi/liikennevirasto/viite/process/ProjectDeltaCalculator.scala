@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, UnknownSource}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -132,18 +133,22 @@ object ProjectDeltaCalculator {
 
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
     val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
+    val shouldSplit = hasCalibrationPoint && {
+      val (sourceL, sourceR) = r1.getCalibrationSources()
+      sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource
+    }
     if (r1.endAddrMValue == r2.startAddrMValue)
       r1.status match {
         case LinkStatus.Terminated =>
           if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
             Seq(r2, r1)
-          else
-          //TODO check roadAddressId calibrations points for projectLinks
-            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, r2.id)))
+          else if(shouldSplit)
+            Seq(r2,r1)
+            else
+            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints))
         case LinkStatus.New =>
           if(!hasCalibrationPoint)
-          //TODO check roadAddressId calibrations points for projectLinks
-            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints)))
+            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints))
           else
             Seq(r2, r1)
         case _ =>
