@@ -167,42 +167,11 @@ object ProjectDeltaCalculator {
       combine(projectLinkSeq.tail, combineTwo(result.head, projectLinkSeq.head) ++ result.tail)
   }
 
-  private def testCombine[T <: BaseRoadAddress](raSeqToCombine: Seq[T], result: Seq[T] = Seq(), oppositeTracks: Seq[T]): Seq[T] = {
-    if (raSeqToCombine.isEmpty)
-      result.reverse
-    else if(result.isEmpty)
-      testCombine(raSeqToCombine.tail, Seq(raSeqToCombine.head), oppositeTracks)
-    else
-      testCombine(raSeqToCombine.tail, combineTwoT(result.head, raSeqToCombine.head, oppositeTracks) ++ result.tail, oppositeTracks)
-  }
-
   def getClosestOposite[T <: BaseRoadAddress](startAddrMValue: Long, oppositeTracks: Seq[T]): Option[T] = {
     oppositeTracks match {
       case Nil => None
       case seq => Option(seq.minBy(v => math.abs(v.startAddrMValue - startAddrMValue)))
     }
-  }
-
-  private def combineTwoT[T <: BaseRoadAddress](r1: T, r2: T, oppositeTracks: Seq[T]): Seq[T] = {
-    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
-    val opositeTrack = getClosestOposite(r1.startAddrMValue, oppositeTracks)
-    if (r1.endAddrMValue == r2.startAddrMValue)
-      r1 match {
-        case x: RoadAddress =>
-          if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
-            Seq(r2, r1)
-          else if(hasCalibrationPoint && (opositeTrack.isDefined && opositeTrack.get.commonHistoryId == x.commonHistoryId && opositeTrack.get.getCalibrationCode == x.getCalibrationCode))
-            Seq(r2, r1)
-          else
-            Seq(x.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(r2.calibrationPoints)).asInstanceOf[T])
-        case x: ProjectLink =>
-          if(!hasCalibrationPoint)
-            Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(r2.calibrationPoints, x.roadAddressId)).asInstanceOf[T])
-          else
-            Seq(r2, r1)
-      }
-    else
-      Seq(r2, r1)
   }
 
   private def combinePair[T <: BaseRoadAddress, R <: ProjectLink](combinedSeq: Seq[(T, R)], oppositeSections: Seq[RoadAddressSection], result: Seq[(T, R)] = Seq()): Seq[(T, R)] = {
@@ -242,18 +211,8 @@ object ProjectDeltaCalculator {
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[ProjectLink]): Seq[RoadAddressSection] = {
-    val nogroup = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
-    val (rightSide, others) = nogroup.partition(_._1._3 == Track.RightSide)
-    val (leftSide, combined) = others.partition(_._1._3 == Track.LeftSide)
-    val combinedTrackCombined = combined.mapValues(c => combine(c.sortBy(_.startAddrMValue)))
-    val combinedLeft = leftSide.map(ls => {
-      val key = (ls._1._1, ls._1._2, Track.switch(ls._1._3), ls._1._4)
-      val values = ls._2.sortBy(_.startAddrMValue)
-      val otherSide = rightSide.get(key).get.sortBy(_.startAddrMValue)
-      val testMe = testCombine(values, Seq(), otherSide)
-      testMe
-    })
-      val grouped= nogroup.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+    val grouped  = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
+      .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
     ).toSeq
