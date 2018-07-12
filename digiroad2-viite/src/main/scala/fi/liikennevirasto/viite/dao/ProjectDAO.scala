@@ -368,8 +368,8 @@ object ProjectDAO {
         projectLinkPS.setInt(15, projectLink.sideCode.value)
         projectLinkPS.setDouble(16, projectLink.startMValue)
         projectLinkPS.setDouble(17, projectLink.endMValue)
-        projectLinkPS.setLong(18, projectLink.id)
-        projectLinkPS.setLong(19, projectLink.calibrationPointsSourcesToDB().value)
+        projectLinkPS.setLong(18, projectLink.calibrationPointsSourcesToDB().value)
+        projectLinkPS.setLong(19, projectLink.id)
         projectLinkPS.addBatch()
       }
       projectLinkPS.executeBatch()
