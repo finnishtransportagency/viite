@@ -1481,6 +1481,20 @@ object RoadAddressDAO {
     query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidityCheck
   }
 
+  def withRoadNumberParts(road: Long, roadParts: Seq[Long], trackCodes: Seq[Int])(query: String): String = {
+    val trackFilter = if(trackCodes.nonEmpty) {
+      s" AND ra.TRACK_CODE in (${trackCodes.mkString(",")})"
+    } else {
+      ""
+    }
+    val roadPartFilter = if(roadParts.nonEmpty) {
+      s" AND ra.road_part_number in (${roadParts.mkString(",")})"
+    } else {
+      ""
+    }
+    query + s" WHERE ra.road_number = $road $roadPartFilter $trackFilter AND ra.floating = 0 " + withValidityCheck
+  }
+
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
     val floating = optFloating match {
       case Some(floatingValue) => s"AND ra.floating = $floatingValue"
