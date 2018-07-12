@@ -597,13 +597,11 @@
 
         var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
         _.each(orderFloatGroup, function(floatGroup) {
-          floatGroup.sort(function(firstFloat, secondFloat){
-            return firstFloat.startAddressM - secondFloat.startAddressM;
+          _.each(floatGroup, function(floating){
+              marker = cachedLinkPropertyMarker.createMarker(floating);
+              if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
+                  floatingMarkerLayer.getSource().addFeature(marker);
           });
-          middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
-          marker = cachedLinkPropertyMarker.createMarker(middlefloating);
-            if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-            floatingMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(directionRoadMarker, function(directionlink) {

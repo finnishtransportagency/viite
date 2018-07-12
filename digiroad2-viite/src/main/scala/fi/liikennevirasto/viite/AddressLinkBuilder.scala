@@ -132,7 +132,7 @@ trait AddressLinkBuilder {
         (record.commonHistoryId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
 
       groupedRoadAddresses.flatMap { case (_, record) =>
-        fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+        fuseRoadAddressInGroup(record.sortBy(_.startAddrMValue))
       }.toSeq
     }
   }
@@ -201,8 +201,7 @@ trait AddressLinkBuilder {
       nextSegment.linkId == previousSegment.linkId &&
       nextSegment.geometry.nonEmpty && previousSegment.geometry.nonEmpty && // Check if geometries are not empty
       addressConnected(nextSegment, previousSegment) &&
-      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
-
+      !((cpNext._1.isDefined || cpPrevious._2.isDefined && cpPrevious._2.get.addressMValue == nextSegment.startAddrMValue) && (cpPrevious._2.isDefined  || cpNext._1.isDefined && cpNext._1.get.addressMValue == previousSegment.endAddrMValue))){ // Check that the calibration point isn't between these segments
 
       val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previousSegment.startAddrMValue, Math.min, (cpp, _) => cpp.map(_.addressMValue))
       val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previousSegment.endAddrMValue, Math.max, (_, cpn) => cpn.map(_.addressMValue))
