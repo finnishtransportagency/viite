@@ -290,11 +290,8 @@
           }
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
-            var rejectedRoads = _.reject(get().concat(featuresToKeep), function(feature){
+            var selectedLinks = _.reject(get().concat(featuresToKeep), function(feature){
               return (feature.segmentId === "" || (_.contains(linkIds, feature.linkId) && (feature.anomaly === Anomaly.GeometryChanged.value || feature.anomaly === Anomaly.None.value)));
-            });
-            var selectedLinkIds = _.map(rejectedRoads, function (roads) {
-              return roads.linkId;
             });
               var filteredDuplicatedAdjacents = _.reject(adjacents, function(adj){
                 var foundDuplicatedLink = _.find(previousAdjacents, function(prev){
@@ -303,8 +300,12 @@
               return _.some(foundDuplicatedLink);
             });
                 var filteredPreviousAdjacents = filteredDuplicatedAdjacents.concat(previousAdjacents);
-            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
-              return !_.contains(selectedLinkIds, prvAdj.linkId);
+
+            var filteredAdjacents = _.reject(filteredPreviousAdjacents, function(adj){
+                var foundDuplicatedLink = _.find(selectedLinks, function(prev){
+                    return prev.linkId === adj.linkId && prev.roadLinkType === adj.roadLinkType;
+                });
+                return _.some(foundDuplicatedLink);
             });
             previousAdjacents = filteredAdjacents;
             var unknownAdjacents = _.reject(filteredAdjacents, function(t){
