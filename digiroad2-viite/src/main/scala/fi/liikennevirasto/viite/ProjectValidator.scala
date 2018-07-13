@@ -693,7 +693,7 @@ object ProjectValidator {
                   //optional opposite second track validation where the first node could be disconnected but connected to the next track joint
                   val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
 
-                  if((checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity)
+                  if ((checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity)
                     None
                   else
                     Some(curr)
@@ -701,7 +701,6 @@ object ProjectValidator {
             } else None
           }
         }
-
       }.toSeq
 
       error(project.id, ValidationErrorList.MinorDiscontinuityFound)(discontinuous).toSeq
