@@ -743,8 +743,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val endValues = ra.map(_.endAddrMValue)
       val orphanStarts = startValues.filterNot(st => endValues.contains(st))
       val orphanEnds = endValues.filterNot(st => startValues.contains(st))
-      (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
-        ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
+      (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st).filterNot(_.endCalibrationPoint.isDefined))
+        ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end).filterNot(_.startCalibrationPoint.isDefined)))
         .distinct
     }
   }
