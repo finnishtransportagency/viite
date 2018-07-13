@@ -399,7 +399,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now().toString("yyyy-mm-dd")): List[RoadAddress] = {
+  def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now.toString): List[RoadAddress] = {
     time(logger, "Fetch road addresses by link id to API") {
       if (linkIds.size > 1000) {
         return fetchByLinkIdMassQueryToApi(linkIds, useLatestNetwork, searchDate = searchDate)
@@ -512,7 +512,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now().toString("yyyy-mm-dd")): List[RoadAddress] = {
+  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now.toString): List[RoadAddress] = {
     time(logger, "Fetch road addresses by link id - mass query to API") {
       def dateFilter(table: String): String = {
         s"($table.START_DATE <= to_date('$searchDate', 'yyyy-mm-dd') AND (to_date('$searchDate', 'yyyy-mm-dd') < $table.END_DATE OR $table.END_DATE IS NULL))"
