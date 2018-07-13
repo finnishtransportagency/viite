@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.RoadAddressDAO.logger
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LinearLocationAdjustment}
@@ -138,13 +139,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     setBlackUnderline(suravageAddresses ++ roadAddressLinks)
   }
 
+  // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
+  def toHistoryRoadLink(roadLinkLike: RoadLinkLike): VVHHistoryRoadLink = {
+    val featureClassCode = roadLinkLike.attributes.getOrElse("MTKCLASS", BigInt(0)).asInstanceOf[BigInt].intValue()
+    VVHHistoryRoadLink(roadLinkLike.linkId, roadLinkLike.municipalityCode, roadLinkLike.geometry, roadLinkLike.administrativeClass, roadLinkLike.trafficDirection,  VVHClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, AllOthers),
+      roadLinkLike.vvhTimeStamp, roadLinkLike.vvhTimeStamp, roadLinkLike.attributes, roadLinkLike.constructionType, roadLinkLike.linkSource, roadLinkLike.length)
+  }
+
   def buildFloatingAddresses(allRoadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], floating: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
-    def toHistoryRoadLink(roadLinkLike: RoadLinkLike): VVHHistoryRoadLink = {
-      val featureClassCode = roadLinkLike.attributes.getOrElse("MTKCLASS", BigInt(0)).asInstanceOf[BigInt].intValue()
-      VVHHistoryRoadLink(roadLinkLike.linkId, roadLinkLike.municipalityCode, roadLinkLike.geometry, roadLinkLike.administrativeClass, roadLinkLike.trafficDirection, AllOthers,
-        roadLinkLike.vvhTimeStamp, roadLinkLike.vvhTimeStamp, roadLinkLike.attributes, roadLinkLike.constructionType, roadLinkLike.linkSource, roadLinkLike.length)
-    }
 
     val combinedRoadLinks = (allRoadLinks ++ suravageLinks).filter(crl => floating.map(_.linkId).contains(crl.linkId))
     combinedRoadLinks.flatMap(fh => {
@@ -152,6 +154,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       buildFloatingRoadAddressLink(toHistoryRoadLink(fh), actualFloatings)
     })
   }
+
 
   def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult,
                           boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
@@ -162,12 +165,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
 
-    // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
-    def toHistoryRoadLink(roadLinkLike: RoadLinkLike): VVHHistoryRoadLink = {
-      val featureClassCode = roadLinkLike.attributes.getOrElse("MTKCLASS", BigInt(0)).asInstanceOf[BigInt].intValue()
-      VVHHistoryRoadLink(roadLinkLike.linkId, roadLinkLike.municipalityCode, roadLinkLike.geometry, roadLinkLike.administrativeClass, roadLinkLike.trafficDirection,  VVHClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, AllOthers),
-        roadLinkLike.vvhTimeStamp, roadLinkLike.vvhTimeStamp, roadLinkLike.attributes, roadLinkLike.constructionType, roadLinkLike.linkSource, roadLinkLike.length)
-    }
 
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val combinedFuture =
@@ -704,7 +701,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         (roadlinks.filterNot(r => r.linkSource == LinkGeomSource.ComplimentaryLinkInterface) ++ roadLinkService.getComplementaryRoadLinksFromVVH(municipality), changes)
       }
     val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
-    val allRoadLinks = roadLinksWithComplementary ++ suravageLinks
+    val allRoadLinks: Seq[RoadLink] = roadLinksWithComplementary ++ suravageLinks
 
     val addresses =
       withDynTransaction {
