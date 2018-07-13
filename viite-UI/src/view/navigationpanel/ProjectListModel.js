@@ -172,6 +172,7 @@
 
         var triggerOpening = function (event) {
           userFilterVisibility(false);
+          $('#TRProjectsVisibleCheckbox').prop('checked', false);
           if (this.className === "project-open btn btn-new-error") {
             projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
             eventbus.once("roadAddressProject:reOpenedProject", function (successData) {
@@ -282,6 +283,7 @@
 
       projectList.on('click', 'button.new', function() {
         userFilterVisibility(false);
+        $('#TRProjectsVisibleCheckbox').prop('checked', false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger('roadAddress:newProject');
         if(applicationModel.isReadOnly()) {
