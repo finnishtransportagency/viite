@@ -86,7 +86,7 @@ object ProjectSectionCalculator {
     def isConnectedAtStart(pl1: ProjectLink, pl2: ProjectLink): Boolean = isConnectedAtPoint(getEndPoints(pl1).head, pl2)
 
     val continuousProjectLinks = projectLinks.zip(projectLinks.tail).takeWhile{case (current, next) =>
-      isConnectedAtEnd(current, next) && !recalculatedProjectLinks.exists(pl => isConnectedAtEnd(current, pl))
+      isConnectedAtEnd(current, next) //&& !recalculatedProjectLinks.exists(pl => isConnectedAtEnd(current, pl))
     }.map(_._1)
     val pRest = projectLinks.drop(continuousProjectLinks.size)
 
@@ -95,12 +95,13 @@ object ProjectSectionCalculator {
     val connectedAtStart = recalculatedProjectLinks.find(pl => isConnectedAtStart(section.head, pl))
     val startAddress = connectedAtStart.map(pl => getAddressMeasureAtPoint(getEndPoints(section.head).head, pl)).getOrElse(section.head.startAddrMValue)
 
-    val recalculated = ProjectSectionMValueCalculator.assignLinkValues(section, startAddress)
+    val result = ProjectSectionMValueCalculator.assignLinkValues(section, startAddress)
 
-    val result = recalculatedProjectLinks.find(pl => isConnectedAtEnd(section.last, pl)) match {
-      case Some(connectedAtEnd) => recalculated.init :+ recalculated.last.copy(endAddrMValue = getAddressMeasureAtPoint(getEndPoints(section.last).last, connectedAtEnd))
-      case _ => recalculated
-    }
+    //TODO Do not make sense to se the values at the end
+//    val result = recalculatedProjectLinks.find(pl => isConnectedAtEnd(section.last, pl)) match {
+//      case Some(connectedAtEnd) => recalculated.init :+ recalculated.last.copy(endAddrMValue = getAddressMeasureAtPoint(getEndPoints(section.last).last, connectedAtEnd))
+//      case _ => recalculated
+//    }
 
     (TerminatedGroup(result, recalculatedProjectLinks.filter(pl => pl.startAddrMValue >= startAddress && pl.endAddrMValue <= result.last.endAddrMValue), startAddress, result.last.endAddrMValue), rest)
   }
@@ -114,6 +115,7 @@ object ProjectSectionCalculator {
     }
   }
 
+  //TODO instead of having all of those ifs to return a empty sequence, we can have a try catch we have for the base recalculation
   def calculateSectionAddressValues(terminated: Seq[ProjectLink], recalculateProjectLinks: Seq[ProjectLink]) = {
 
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
@@ -121,13 +123,6 @@ object ProjectSectionCalculator {
       val continuousProjectLinks = seq.takeWhile(pl => pl.track == track)
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
-
-    val leftSideProjectLinks = terminated.filter(_.track != Track.RightSide).sortBy(_.startAddrMValue)
-    val rightSideProjectLinks = terminated.filter(_.track != Track.LeftSide).sortBy(_.startAddrMValue)
-
-    val leftGroups = groupTerminatedLinksRecursive(leftSideProjectLinks, recalculateProjectLinks)
-    val rightGroups = groupTerminatedLinksRecursive(rightSideProjectLinks, recalculateProjectLinks)
-
 
     def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
@@ -150,13 +145,27 @@ object ProjectSectionCalculator {
       }
     }
 
-    val (left, right) = adjustTracksToMatch(leftGroups.flatMap(_.terminated).sortBy(_.startAddrMValue), rightGroups.flatMap(_.terminated).sortBy(_.startAddrMValue), None)
-    val calculatedSections = TrackSectionOrder.createCombinedSections(right, left)
-    calculatedSections.flatMap { sec =>
-      if (sec.right == sec.left)
-        sec.right.links
-      else {
-        sec.right.links ++ sec.left.links
+    if(terminated.isEmpty){
+      Seq()
+    } else {
+      val leftSideProjectLinks = terminated.filter(_.track != Track.RightSide).sortBy(_.startAddrMValue)
+      val rightSideProjectLinks = terminated.filter(_.track != Track.LeftSide).sortBy(_.startAddrMValue)
+
+      val leftGroups = groupTerminatedLinksRecursive(leftSideProjectLinks, recalculateProjectLinks)
+      val rightGroups = groupTerminatedLinksRecursive(rightSideProjectLinks, recalculateProjectLinks)
+
+      if(leftGroups.flatMap(_.terminated).isEmpty || rightGroups.flatMap(_.terminated).isEmpty){
+        Seq()
+      } else {
+        val (left, right) = adjustTracksToMatch(leftGroups.flatMap(_.terminated).sortBy(_.startAddrMValue), rightGroups.flatMap(_.terminated).sortBy(_.startAddrMValue), None)
+        val calculatedSections = TrackSectionOrder.createCombinedSections(right, left)
+        calculatedSections.flatMap { sec =>
+          if (sec.right == sec.left)
+            sec.right.links
+          else {
+            sec.right.links ++ sec.left.links
+          }
+        }
       }
     }
   }
