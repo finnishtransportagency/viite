@@ -264,6 +264,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
       val project = RoadAddressProject(Sequences.nextViitePrimaryKeySeqValue, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(), None , None)
       ProjectDAO.createRoadAddressProject(project)
+
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
             values ($reservationId, 6591, 1, ${project.id}, '-')
           """.execute
