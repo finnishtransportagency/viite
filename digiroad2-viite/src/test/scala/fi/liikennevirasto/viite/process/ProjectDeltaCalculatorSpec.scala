@@ -261,13 +261,14 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("Calculate delta for split suravage link") {
     runWithRollback {
       val reservationId = Sequences.nextViitePrimaryKeySeqValue
-      val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
+      val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue).sorted
       val project = RoadAddressProject(Sequences.nextViitePrimaryKeySeqValue, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(), None , None)
       ProjectDAO.createRoadAddressProject(project)
 
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
             values ($reservationId, 6591, 1, ${project.id}, '-')
           """.execute
+
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
             START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
@@ -281,7 +282,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(1)},${project.id},'0','5','6591','1','0','62','silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'1','0','1',${ids(0)},'6550673','',
+            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.UnChanged.value},'0','1',${ids(0)},'6550673','',
             '3','0',63.926,'499972936','0','3')""".execute
 
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -289,7 +290,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(2)},${project.id},'0','5','6591','1','62','85','silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'2','0','1',${ids(0)},'6550673','',
+            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.New.value},'0','1',${ids(0)},'6550673','',
             '3',63.926,307.99,'499972936','0','3')""".execute
 
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -297,7 +298,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(3)},${project.id},'0','5','6591','1','62','85','silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936','',
+            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.Terminated.value},'2','9',${ids(0)},'499972936','',
             '3',63.752,86.818,'6550673','0','1')""".execute
 
       val delta = ProjectDeltaCalculator.delta(project)
@@ -307,11 +308,14 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       val term = delta.terminations.head
       term.startAddrMValue should be (62)
       term.endAddrMValue should be (85)
-      term.id should be (ids(0))
+      term.id should be (ids(3))
       val (uncSource, uncTarget) = delta.unChanged.mapping.head
       uncSource.startAddrMValue should be (0)
       uncSource.endAddrMValue should be (62)
       uncSource.id should be (ids(0))
+      uncTarget.startAddrMValue should be (0)
+      uncTarget.endAddrMValue should be (62)
+      uncTarget.id should be (ids(1))
       val cre = delta.newRoads.head
       cre.startAddrMValue should be (62)
       cre.endAddrMValue should be (85)
