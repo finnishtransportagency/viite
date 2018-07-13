@@ -24,12 +24,15 @@ object TrackCalculatorContext {
     new LinkStatusChangeTrackCalculatorStrategy
   }
 
+  private lazy val terminatedLinkStatusChangeStrategy: TerminatedLinkStatusChangeStrategy = {
+    new TerminatedLinkStatusChangeStrategy
+  }
+
   private lazy val defaultTrackCalculatorStrategy: DefaultTrackCalculatorStrategy = {
     new DefaultTrackCalculatorStrategy
   }
 
-
-  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, linkStatusChangeTrackCalculatorStrategy)
+  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, linkStatusChangeTrackCalculatorStrategy, terminatedLinkStatusChangeStrategy)
 
   def getNextStrategy(projectLinks: Seq[ProjectLink]): Option[(Long, TrackCalculatorStrategy)] = {
     val head = projectLinks.head

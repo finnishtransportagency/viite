@@ -40,7 +40,8 @@ object ProjectSectionCalculator {
       //recalculated ++ assignTerminatedAddressMeasures(terminated, recalculated)
 //      val groups = groupTerminatedLinksRecursive(terminated, recalculated.filter(_.status != LinkStatus.New))
 //      recalculated ++ groups.flatMap(_.terminated)
-      recalculated ++ calculateSectionAddressValues(terminated, recalculated.filter(_.status != LinkStatus.New))
+      //recalculated ++ calculateSectionAddressValues(terminated, recalculated.filter(_.status != LinkStatus.New))
+      recalculated ++ recalculate(terminated, recalculated)
 
 
     } finally {
@@ -168,6 +169,103 @@ object ProjectSectionCalculator {
         }
       }
     }
+  }
+
+  def recalculate(terminated: Seq[ProjectLink], recalculateProjectLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
+
+    def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
+      val pl = s.head
+      TrackSection(pl.roadNumber, pl.roadPartNumber, pl.roadAddressTrack.get, s.map(_.geometryLength).sum, s)
+    }
+
+    def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
+      if (seq.isEmpty)
+        throw new InvalidAddressDataException("Missing track")
+      val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.roadAddressTrack.get != pl2.roadAddressTrack.get}
+      seq.foldLeft(Seq(Seq[ProjectLink]())) { case (tracks, pl) =>
+        if (changePoints.exists(_._2 == pl)) {
+          Seq(Seq(pl)) ++ tracks
+        } else {
+          Seq(tracks.head ++ Seq(pl)) ++ tracks.tail
+        }
+      }.reverse.map(fromProjectLinks)
+    }
+
+    def process(part: (Long, Long), projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+      try {
+        if (terminated.isEmpty) {
+          Seq[ProjectLink]()
+        } else {
+
+          val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
+          val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
+
+          if (left.isEmpty || right.isEmpty) {
+            Seq[ProjectLink]()
+          } else {
+            val leftLinks = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
+            val rightLinks = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
+
+            val (lefta, righta) = adjustTracksToMatch(leftLinks, rightLinks, None)
+            val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(righta), groupIntoSections(lefta))
+            calculatedSections.flatMap { sec =>
+              if (sec.right == sec.left)
+                sec.right.links
+              else {
+                sec.right.links ++ sec.left.links
+              }
+            }.filter(_.status == LinkStatus.Terminated)
+          }
+        }
+      } catch {
+        case ex: InvalidAddressDataException =>
+          logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
+          terminated
+        case ex: NoSuchElementException =>
+          logger.info("Delta calculation failed: " + ex.getMessage, ex)
+          terminated
+        case ex: NullPointerException =>
+          logger.info("Delta calculation failed (NPE)", ex)
+          terminated
+        case ex: Throwable =>
+          logger.info("Delta calculation not possible: " + ex.getMessage)
+          terminated
+      }
+    }
+
+    def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+      val track = seq.headOption.map(_.roadAddressTrack.get).getOrElse(Track.Unknown)
+      val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.get == track)
+      (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+    }
+
+    def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+      if (rightLinks.isEmpty && leftLinks.isEmpty) {
+        (Seq(), Seq())
+      } else {
+        val (firstRight, restRight) = getContinuousTrack(rightLinks)
+        val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
+
+        if (firstRight.isEmpty || firstLeft.isEmpty)
+          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+
+        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
+        val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
+
+        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
+
+        val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, Map())
+
+        (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
+      }
+    }
+
+    val allProjectLinks = recalculateProjectLinks.filter(_.status != LinkStatus.New) ++ terminated
+    val group = allProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+
+    group.flatMap { case (part, projectLinks) =>
+      process(part, projectLinks)
+    }.toSeq
   }
 }
 
