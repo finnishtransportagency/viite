@@ -123,7 +123,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       val stateaftercheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "failed", saved.id)
-      stateaftercheck.description should be(ProjectState.ErroredInTR.description)
+      stateaftercheck.description should be(ProjectState.ErrorInTR.description)
     }
 
   }
