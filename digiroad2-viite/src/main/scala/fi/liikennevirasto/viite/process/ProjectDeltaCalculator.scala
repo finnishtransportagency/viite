@@ -109,8 +109,18 @@ object ProjectDeltaCalculator {
     val existing = oppositeSections.find(s => s.startMAddr == pl1.startAddrMValue && s.track != Track.Combined && s.track != pl1.track)
     val hasCalibrationPoint = if (existing.isDefined)
       (!pl1.reversed && existing.get.endMAddr == pl2.startAddrMValue) || (pl1.reversed && existing.get.endMAddr == pl2.endAddrMValue)
-    else
-      (!pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.commonHistoryId != ra2.commonHistoryId) || (pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtBeginning ) && ra1.commonHistoryId != ra2.commonHistoryId)
+    else {
+      pl1 match {
+        case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.commonHistoryId != ra2.commonHistoryId) || (x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning) && ra1.commonHistoryId != ra2.commonHistoryId)
+        case x: ProjectLink => {
+          val (sourceL, sourceR) = x.getCalibrationSources()
+          (!pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) || pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtBeginning)) &&
+            (sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource)
+          }
+      }
+
+    }
+
 
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
       ra1.endAddrMValue == ra2.startAddrMValue &&
@@ -133,7 +143,7 @@ object ProjectDeltaCalculator {
 
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
     val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
-    val shouldSplit = hasCalibrationPoint && {
+    val openBasedOnSource = hasCalibrationPoint && {
       val (sourceL, sourceR) = r1.getCalibrationSources()
       sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource
     }
@@ -142,7 +152,7 @@ object ProjectDeltaCalculator {
         case LinkStatus.Terminated =>
           if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
             Seq(r2, r1)
-          else if(shouldSplit)
+          else if(openBasedOnSource)
             Seq(r2,r1)
             else
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints))
