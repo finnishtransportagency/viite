@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
@@ -51,6 +52,10 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating=false, roadAddress.geometry, project.id, status,
       roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely, false,
       None, 748800L)
+  }
+
+  private def createCalibrationPoints(a: RoadAddress): (Option[ProjectLinkCalibrationPoint] ,Option[ProjectLinkCalibrationPoint] ) = {
+    (Option.empty[ProjectLinkCalibrationPoint], Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectLinkSource)))
   }
 
   test("Multiple transfers on single road part") {
@@ -373,5 +378,27 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       else
         to.discontinuity should be (MinorDiscontinuity)
     }
+  }
+
+  test("Partitioner should separate links containing calibration points whose origin is ProjectLink") {
+    val addresses = ( 0 to 9 ).map(i => {
+      createRoadAddress(i*2, 2L)
+    })
+   val projectLinksWithCp =  addresses.map(a => {
+      val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
+      if(a.id == 10L)
+        (a, projectLink.copy(calibrationPoints = createCalibrationPoints(a)))
+     else
+      (a, projectLink)
+    })
+    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp)
+    partitionCp.size should be(2)
+    val firstSection = partitionCp.head
+    val secondSection = partitionCp.last
+    val cutPoint = projectLinksWithCp.find(_._2.roadAddressId == 10L).get._2
+    firstSection._1.startMAddr should be (projectLinksWithCp.head._2.startAddrMValue)
+    firstSection._1.endMAddr should be (cutPoint.endAddrMValue)
+    secondSection._1.startMAddr should be (cutPoint.endAddrMValue)
+    secondSection._1.endMAddr should be (projectLinksWithCp.last._2.endAddrMValue)
   }
 }
