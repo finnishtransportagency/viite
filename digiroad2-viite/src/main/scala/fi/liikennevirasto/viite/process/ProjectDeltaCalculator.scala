@@ -114,7 +114,7 @@ object ProjectDeltaCalculator {
         case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.commonHistoryId != ra2.commonHistoryId) || (x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning) && ra1.commonHistoryId != ra2.commonHistoryId)
         case x: ProjectLink => {
           val (sourceL, sourceR) = x.getCalibrationSources()
-          (!pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtEnd) || pl1.reversed && pl1.hasCalibrationPointAt(CalibrationCode.AtBeginning)) &&
+          (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) || x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning)) &&
             (sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource)
           }
       }
