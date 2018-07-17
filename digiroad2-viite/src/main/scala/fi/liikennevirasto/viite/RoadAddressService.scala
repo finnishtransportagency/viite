@@ -32,30 +32,40 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  val HighwayClass = 1
-  val MainRoadClass = 2
-  val RegionalClass = 3
-  val ConnectingClass = 4
-  val MinorConnectingClass = 5
-  val StreetClass = 6
-  val RampsAndRoundAboutsClass = 7
-  val PedestrianAndBicyclesClass = 8
-  val WinterRoadsClass = 9
-  val PathsClass = 10
-  val ConstructionSiteTemporaryClass = 11
-  val NoClass = 99
+  sealed trait RoadClass {
+    def value: Int
+    def roads: Seq[Int]
+  }
 
-  val MaxAllowedMValueError = 0.001
+  object RoadClass {
+    val values = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass
+    , RampsAndRoundAboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass, PrivateRoadClass, NoClass)
+
+    def get(roadNumber: Int): Int = {
+      values.find(_.roads contains roadNumber).getOrElse(NoClass).value
+    }
+
+    case object HighwayClass extends RoadClass { def value = 1; def roads = 1 to 39;}
+    case object MainRoadClass extends RoadClass { def value = 2; def roads = 40 to 99;}
+    case object RegionalClass extends RoadClass { def value = 3; def roads = 100 to 999;}
+    case object ConnectingClass extends RoadClass { def value = 4; def roads = 1000 to 9999;}
+    case object MinorConnectingClass extends RoadClass { def value = 5; def roads = 10000 to 19999;}
+    case object StreetClass extends RoadClass { def value = 6; def roads = 40000 to 49999;}
+    case object RampsAndRoundAboutsClass extends RoadClass { def value = 7; def roads = 20001 to 39999;}
+    case object PedestrianAndBicyclesClassA extends RoadClass { def value = 8; def roads = 70001 to 89999;}
+    case object PedestrianAndBicyclesClassB extends RoadClass { def value = 8; def roads = 90001 to 99999;}
+    case object WinterRoadsClass extends RoadClass { def value = 9; def roads = 60001 to 61999;}
+    case object PathsClass extends RoadClass { def value = 10; def roads = 62001 to 62999;}
+    case object ConstructionSiteTemporaryClass extends RoadClass { def value = 11; def roads = 9900 to 9999;}
+    case object PrivateRoadClass extends RoadClass { def value = 12; def roads = 50001 to 59999;}
+    case object NoClass extends RoadClass { def value = 99; def roads = 0 to 0;}
+  }
+
   val Epsilon = 1
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
                              */
-  val MaxDistanceDiffAllowed = 1.0
-  /*Temporary restriction from PO: Filler limit on modifications
-                                            (linear location adjustments) is limited to 1 meter. If there is a need to fill /
-                                            cut more than that then nothing is done to the road address linear location data.
-                                            */
-  val MinAllowedRoadAddressLength = 0.1
+
   val newTransaction = true
 
   class Contains(r: Range) {
@@ -532,41 +542,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getUniqueRoadAddressLink(id: Long): List[RoadAddressLink] = getRoadAddressLink(id)
-
-  def roadClass(roadNumber: Long): Int = {
-    val C1 = new Contains(1 to 39)
-    val C2 = new Contains(40 to 99)
-    val C3 = new Contains(100 to 999)
-    val C4 = new Contains(1000 to 9999)
-    val C5 = new Contains(10000 to 19999)
-    val C6 = new Contains(40000 to 49999)
-    val C7 = new Contains(20001 to 39999)
-    val C8a = new Contains(70001 to 89999)
-    val C8b = new Contains(90001 to 99999)
-    val C9 = new Contains(60001 to 61999)
-    val C10 = new Contains(62001 to 62999)
-    val C11 = new Contains(9900 to 9999)
-    try {
-      val roadNum: Int = roadNumber.toInt
-      roadNum match {
-        case C1() => HighwayClass
-        case C2() => MainRoadClass
-        case C3() => RegionalClass
-        case C4() => ConnectingClass
-        case C5() => MinorConnectingClass
-        case C6() => StreetClass
-        case C7() => RampsAndRoundAboutsClass
-        case C8a() => PedestrianAndBicyclesClass
-        case C8b() => PedestrianAndBicyclesClass
-        case C9() => WinterRoadsClass
-        case C10() => PathsClass
-        case C11() => ConstructionSiteTemporaryClass
-        case _ => NoClass
-      }
-    } catch {
-      case ex: NumberFormatException => NoClass
-    }
-  }
 
   def createMissingRoadAddress(missingRoadLinks: Seq[MissingRoadAddress]): Unit = {
     withDynTransaction {
