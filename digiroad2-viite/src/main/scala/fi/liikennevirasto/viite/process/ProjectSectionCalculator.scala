@@ -34,18 +34,29 @@ object ProjectSectionCalculator {
 
       val calculator = RoadAddressSectionCalculatorContext.getStrategy(others)
       logger.info(s"${calculator.name} strategy")
-      val recalculated = calculator.assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints)
+      calculator.assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints)
+      //val recalculated = calculator.assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints)
 
       //recalculated ++ terminated
       //recalculated ++ assignTerminatedAddressMeasures(terminated, recalculated)
 //      val groups = groupTerminatedLinksRecursive(terminated, recalculated.filter(_.status != LinkStatus.New))
 //      recalculated ++ groups.flatMap(_.terminated)
       //recalculated ++ calculateSectionAddressValues(terminated, recalculated.filter(_.status != LinkStatus.New))
-      recalculated ++ recalculate(terminated, recalculated)
+      //recalculated ++ recalculate(terminated, recalculated)
 
 
     } finally {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")
+    }
+  }
+
+
+  def assignTerminatedMValues(terminated: Seq[ProjectLink], nonTerminatedLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
+    logger.info(s"Starting MValue assignment for ${terminated.size} links")
+    try{
+      recalculate(terminated, nonTerminatedLinks)
+    } finally {
+      logger.info(s"Finished MValue assignment for ${terminated.size} links")
     }
   }
 
@@ -261,7 +272,8 @@ object ProjectSectionCalculator {
     }
 
     val allProjectLinks = recalculateProjectLinks.filter(_.status != LinkStatus.New) ++ terminated
-    val group = allProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    //TODO should return a excetion here and on the assing m values
+    val group = allProjectLinks.groupBy(record => (record.roadAddressRoadNumber.getOrElse(record.roadNumber), record.roadAddressRoadPart.getOrElse(record.roadPartNumber)))
 
     group.flatMap { case (part, projectLinks) =>
       process(part, projectLinks)
