@@ -52,6 +52,7 @@
         PedestrianAndBicyclesClass: {value: 8, description: "PedestrianAndBicyclesClass"},
         WinterRoadsClass:           {value: 9, description: "WinterRoadsClass"},
         PathsClass:                 {value: 10, description: "PathsClass"},
+        PrivateRoadClass:           {value: 12, description: "PrivateRoadClass"},
         NoClass:                    {value: 99, description: "NoClass"}
     };
 
