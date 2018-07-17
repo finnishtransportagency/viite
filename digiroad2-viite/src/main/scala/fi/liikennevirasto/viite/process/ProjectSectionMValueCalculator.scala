@@ -76,8 +76,10 @@ object ProjectSectionMValueCalculator {
   def assignLinkValues(seq: Seq[ProjectLink], addrSt: Long): Seq[ProjectLink] = {
     val newAddressValues = seq.scanLeft(addrSt) { case (m, pl) =>
       pl.status match {
-        case LinkStatus.Terminated => m + pl.addrMLength
-        case LinkStatus.UnChanged | LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering => pl.roadAddressEndAddrM.getOrElse(pl.endAddrMValue)
+        case LinkStatus.Terminated =>
+          if(pl.isSplit) m + pl.endAddrMValue - pl.startAddrMValue else m + pl.addrMLength
+        case LinkStatus.UnChanged | LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering =>
+          if(pl.isSplit) pl.endAddrMValue else pl.roadAddressEndAddrM.getOrElse(pl.endAddrMValue)
         case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
       }
     }
