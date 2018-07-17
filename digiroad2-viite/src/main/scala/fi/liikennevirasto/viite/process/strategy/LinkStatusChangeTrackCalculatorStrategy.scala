@@ -17,7 +17,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes FROM or TO a status equal "NEW" or "TERMINATED" and track is Left or Right
     projectLink.status != headProjectLink.status &&
-      (projectLink.status == LinkStatus.New || headProjectLink.status == LinkStatus.New) &&
+      (projectLink.status == LinkStatus.New || headProjectLink.status == LinkStatus.New || projectLink.status == LinkStatus.Terminated || headProjectLink.status == LinkStatus.Terminated) &&
       (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
 
@@ -71,7 +71,7 @@ class TerminatedLinkStatusChangeStrategy extends  LinkStatusChangeTrackCalculato
     //Will be applied if the link status changes FROM or TO a status equal "TERMINATED" and track is Left or Right
     projectLink.status != headProjectLink.status &&
       (projectLink.status == LinkStatus.Terminated || headProjectLink.status == LinkStatus.Terminated) &&
-      (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide || (projectLink.track == Track.Combined && headProjectLink.track != Track.Combined))
+      (projectLink.track == Track.Combined && headProjectLink.track != Track.Combined)
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
