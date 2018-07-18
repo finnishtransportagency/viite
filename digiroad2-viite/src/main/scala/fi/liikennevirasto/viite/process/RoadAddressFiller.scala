@@ -41,7 +41,7 @@ object RoadAddressFiller {
   }
 
   private def extendToGeometry(roadLink: RoadLinkLike, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
-    if (segments.isEmpty)
+    if (segments.isEmpty || segments.exists(_.floating))
       return (segments, changeSet)
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val sorted = segments.sortBy(_.endMValue)(Ordering[Double].reverse)

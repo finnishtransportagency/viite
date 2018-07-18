@@ -389,7 +389,8 @@
         var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature) {
           return feature.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
         }));
-        var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
+        //checks if previousSelected road was not unknown and current select road IS unknown
+        var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].anomaly !== LinkValues.Anomaly.NoAddressGiven.value;
         if (canStartTransfer)
           _.defer(function() {
             selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);

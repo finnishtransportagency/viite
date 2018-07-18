@@ -37,7 +37,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId, floating = roadAddress.floating)
 
   }
 
@@ -60,7 +60,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId, floating = roadAddress.floating)
   }
 
   def buildSimpleLink(roadAddress: RoadAddress): RoadAddressLink = {
@@ -75,7 +75,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId, floating = roadAddress.floating)
   }
 
   def build(roadLink: RoadLinkLike, missingAddress: MissingRoadAddress): RoadAddressLink = {
@@ -101,7 +101,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
-      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly)
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, newGeometry = Some(roadLink.geometry), floating = false)
   }
 
 
@@ -159,7 +159,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
-      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType)
+      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, floating = false)
   }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
@@ -179,7 +179,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.commonHistoryId, floating = roadAddress.floating)
   }
 
   def capToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
