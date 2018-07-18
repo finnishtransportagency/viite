@@ -51,7 +51,8 @@
       current = data;
     };
 
-    var extractDataForDisplay = function(selectedData) {
+    var extractDataForDisplay = function(selectedData, id, linkId) {
+
       var extractUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
           .pluck(property)
@@ -64,24 +65,38 @@
         var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
         var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
         if (isMultiSelect) {
+          //To be used if we go by the matching id/linkId approach
+            //Filter by id, or by linkId or no filtering at all
+            var filteredData = _.filter(selectedData, function(sd){
+                if(!_.isUndefined(id))
+                    return sd.id === id;
+                if(!_.isUndefined(linkId))
+                    return sd.linkId === linkId;
+                else return true;
+            });
+            //To be used if we chose to go by the "last" link in the bounding box
+            var biggestEndAddrMData = _.chain(selectedData)
+                .sortBy(function(sd){
+                    return sd.endAddressM;
+                }).first().value();
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate'];
         properties = _.omit(properties, ambiguousFields);
-        var latestModified = dateutil.extractLatestModifications(selectedData);
-        var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
-        var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
-        var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
-        var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
-        var trackCode = {trackCode: extractUniqueValues(selectedData, 'trackCode')};
-        var discontinuity = {discontinuity: extractUniqueValues(selectedData, 'discontinuity')};
-        var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
-        var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
-        var roadLinkSource = {roadLinkSource: extractUniqueValues(selectedData, 'roadLinkSource')};
+        var latestModified = dateutil.extractLatestModifications(filteredData);
+        var municipalityCodes = {municipalityCode: extractUniqueValues(filteredData, 'municipalityCode')};
+        var verticalLevels = {verticalLevel: extractUniqueValues(filteredData, 'verticalLevel')};
+        var roadPartNumbers = {roadPartNumber: extractUniqueValues(filteredData, 'roadPartNumber')};
+        var elyCodes = {elyCode: extractUniqueValues(filteredData, 'elyCode')};
+        var trackCode = {trackCode: extractUniqueValues(filteredData, 'trackCode')};
+        var discontinuity = {discontinuity: extractUniqueValues(filteredData, 'discontinuity')};
+        var startAddressM = {startAddressM: _.min(_.chain(filteredData).pluck('startAddressM').uniq().value())};
+        var endAddressM = {endAddressM: _.max(_.chain(filteredData).pluck('endAddressM').uniq().value())};
+        var roadLinkSource = {roadLinkSource: extractUniqueValues(filteredData, 'roadLinkSource')};
         var roadNames = {
-          roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
-          roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
-          roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
+          roadNameFi: extractUniqueValues(filteredData, 'roadNameFi'),
+          roadNameSe: extractUniqueValues(filteredData, 'roadNameSe'),
+          roadNameSm: extractUniqueValues(filteredData, 'roadNameSm')
         };
         _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
       }
@@ -114,7 +129,7 @@
           selected.select();
         });
         processOl3Features(visibleFeatures);
-        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get(), id));
       }
     };
 
@@ -201,7 +216,7 @@
         });
 
         if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
-          if(_.isArray(extractDataForDisplay(get()))){
+          if(_.isArray(extractDataForDisplay(get(),id, linkId))){
             featuresToKeep = featuresToKeep.concat(data4Display);
           } else {
             addToFeaturesToKeep(data4Display);
