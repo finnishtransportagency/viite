@@ -416,6 +416,9 @@
         var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
         if (!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
           newSources.push(fetchedFeature.getData());
+        newSources = _.filter(newSources, function (link) {
+          return link.endDate === "";
+        });
         var data = _.map(newSources, function (ns) {
           return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
             "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
