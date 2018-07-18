@@ -597,11 +597,13 @@
 
         var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
         _.each(orderFloatGroup, function(floatGroup) {
-          _.each(floatGroup, function(floating){
-              marker = cachedLinkPropertyMarker.createMarker(floating);
-              if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-                  floatingMarkerLayer.getSource().addFeature(marker);
+          floatGroup.sort(function(firstFloat, secondFloat){
+            return firstFloat.startAddressM - secondFloat.startAddressM;
           });
+          middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
+          marker = cachedLinkPropertyMarker.createMarker(middlefloating);
+            if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
+            floatingMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(directionRoadMarker, function(directionlink) {
@@ -1111,7 +1113,6 @@
               _.each(pickAnomalousMarker, function(pickRoads){
                 pickRoadsLayer.getSource().removeFeature(pickRoads);
               });
-              if(applicationModel.getSelectionType() !== 'unknown')
               geometryChangedLayer.setVisible(false);
             }
           });
