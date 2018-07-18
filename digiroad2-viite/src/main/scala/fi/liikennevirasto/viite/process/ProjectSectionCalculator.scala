@@ -48,8 +48,7 @@ object ProjectSectionCalculator {
 
       val allProjectLinks = nonTerminatedLinks.filter(_.status != LinkStatus.New) ++ terminated
       val group = allProjectLinks.groupBy {
-        pl => (pl.roadAddressRoadNumber.getOrElse(throw new InvalidAddressDataException("Missing original road number")),
-          pl.roadAddressRoadPart.getOrElse(throw new InvalidAddressDataException("Missing original road part number")))
+        pl => (pl.roadAddressRoadNumber.getOrElse(pl.roadNumber), pl.roadAddressRoadPart.getOrElse(pl.roadPartNumber))
       }
 
       group.flatMap { case (part, projectLinks) =>
