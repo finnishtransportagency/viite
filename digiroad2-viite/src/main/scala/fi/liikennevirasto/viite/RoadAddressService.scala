@@ -494,7 +494,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressLink(id: Long): List[RoadAddressLink] = {
 
     val (addresses, missedRL) = withDynTransaction {
-      (RoadAddressDAO.fetchByLinkId(Set(id), includeFloating = true, includeHistory = true, includeTerminated = false), // cannot builld terminated link because missing geometry
+      (RoadAddressDAO.fetchByLinkId(Set(id), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
         RoadAddressDAO.getMissingRoadAddresses(Set(id)))
     }
     val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
