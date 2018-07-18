@@ -132,7 +132,7 @@ trait AddressLinkBuilder {
         (record.commonHistoryId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
 
       groupedRoadAddresses.flatMap { case (_, record) =>
-        fuseRoadAddressInGroup(record.sortBy(_.startAddrMValue))
+        fuseRoadAddressInGroup(record.sortBy(_.startMValue))
       }.toSeq
     }
   }
