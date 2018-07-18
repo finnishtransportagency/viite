@@ -1255,11 +1255,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
-    val projectLinks =
-      //if (roadParts.isEmpty)
-        ProjectDAO.getProjectLinks(projectId)
-      //else
-        //ProjectDAO.fetchByProjectRoadParts(roadParts, projectId)
+    val projectLinks = ProjectDAO.getProjectLinks(projectId)
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => s"${p._1}/${p._2}").mkString(", ")}")
 
     time(logger, "Recalculate links") {

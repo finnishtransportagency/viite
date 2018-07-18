@@ -45,13 +45,38 @@ object ProjectSectionCalculator {
   def assignTerminatedMValues(terminated: Seq[ProjectLink], nonTerminatedLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${terminated.size} links")
     try{
-      recalculate(terminated, nonTerminatedLinks)
+
+      val allProjectLinks = nonTerminatedLinks.filter(_.status != LinkStatus.New) ++ terminated
+      val group = allProjectLinks.groupBy {
+        pl => (pl.roadAddressRoadNumber.getOrElse(throw new InvalidAddressDataException("Missing original road number")),
+          pl.roadAddressRoadPart.getOrElse(throw new InvalidAddressDataException("Missing original road part number")))
+      }
+
+      group.flatMap { case (part, projectLinks) =>
+        try {
+          calculateSectionAddressValues(part, projectLinks)
+        } catch {
+          case ex: InvalidAddressDataException =>
+            logger.info(s"Can't calculate terminated road/road part ${part._1}/${part._2}: " + ex.getMessage)
+            terminated
+          case ex: NoSuchElementException =>
+            logger.info("Delta terminated calculation failed: " + ex.getMessage, ex)
+            terminated
+          case ex: NullPointerException =>
+            logger.info("Delta terminated calculation failed (NPE)", ex)
+            terminated
+          case ex: Throwable =>
+            logger.info("Delta terminated calculation not possible: " + ex.getMessage)
+            terminated
+        }
+      }.toSeq
+
     } finally {
       logger.info(s"Finished MValue assignment for ${terminated.size} links")
     }
   }
 
-  def recalculate(terminated: Seq[ProjectLink], recalculateProjectLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
+  private def calculateSectionAddressValues(part: (Long, Long), projectLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
 
     def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
       val pl = s.head
@@ -69,48 +94,6 @@ object ProjectSectionCalculator {
           Seq(tracks.head ++ Seq(pl)) ++ tracks.tail
         }
       }.reverse.map(fromProjectLinks)
-    }
-
-    def process(part: (Long, Long), projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-      try {
-        if (terminated.isEmpty) {
-          Seq[ProjectLink]()
-        } else {
-
-          val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
-          val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
-
-          if (left.isEmpty || right.isEmpty) {
-            Seq[ProjectLink]()
-          } else {
-            val leftLinks = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
-            val rightLinks = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
-
-            val (lefta, righta) = adjustTracksToMatch(leftLinks, rightLinks, None)
-            val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(righta), groupIntoSections(lefta))
-            calculatedSections.flatMap { sec =>
-              if (sec.right == sec.left)
-                sec.right.links
-              else {
-                sec.right.links ++ sec.left.links
-              }
-            }.filter(_.status == LinkStatus.Terminated)
-          }
-        }
-      } catch {
-        case ex: InvalidAddressDataException =>
-          logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
-          terminated
-        case ex: NoSuchElementException =>
-          logger.info("Delta calculation failed: " + ex.getMessage, ex)
-          terminated
-        case ex: NullPointerException =>
-          logger.info("Delta calculation failed (NPE)", ex)
-          terminated
-        case ex: Throwable =>
-          logger.info("Delta calculation not possible: " + ex.getMessage)
-          terminated
-      }
     }
 
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
@@ -140,13 +123,25 @@ object ProjectSectionCalculator {
       }
     }
 
-    val allProjectLinks = recalculateProjectLinks.filter(_.status != LinkStatus.New) ++ terminated
-    //TODO should return a excetion here and on the assing m values
-    val group = allProjectLinks.groupBy(record => (record.roadAddressRoadNumber.getOrElse(record.roadNumber), record.roadAddressRoadPart.getOrElse(record.roadPartNumber)))
+    val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
+    val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
 
-    group.flatMap { case (part, projectLinks) =>
-      process(part, projectLinks)
-    }.toSeq
+    if (left.isEmpty || right.isEmpty) {
+      Seq[ProjectLink]()
+    } else {
+      val leftLinks = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
+      val rightLinks = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
+
+      val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
+      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(rightAdjusted), groupIntoSections(leftAdjusted))
+      calculatedSections.flatMap { sec =>
+        if (sec.right == sec.left)
+          sec.right.links
+        else {
+          sec.right.links ++ sec.left.links
+        }
+      }.filter(_.status == LinkStatus.Terminated)
+    }
   }
 }
 
