@@ -139,7 +139,7 @@ trait RoadAddressMapper {
 
   def preTransferChecks(addresses: Seq[RoadAddress]): Unit = {
     val nonHistoric = addresses.filter(_.endDate.isEmpty)
-    calibrationPointCountCheck(true, nonHistoric)
+    calibrationPointCountCheck(true, addresses)
     nonHistoric.find(_.startCalibrationPoint.nonEmpty) match {
       case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
       case _ =>
