@@ -963,8 +963,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
   private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
     time(logger, "Set the black underline") {
-      val (streetRoads, othersRoads) = addresses.partition(_.roadType == RoadType.MunicipalityStreetRoad)
-      streetRoads.map(_.copy(blackUnderline = true)) ++ othersRoads
+      val typesForBlackUnderline = Set(RoadType.MunicipalityStreetRoad.value, RoadType.PrivateRoadType.value)
+      addresses.map(a => a.copy(blackUnderline = typesForBlackUnderline.contains(a.roadType.value)))
     }
   }
 }
