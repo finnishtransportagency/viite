@@ -222,7 +222,7 @@
         dataType: "json",
         success: success,
         error: failure
-      })
+      });
     });
 
     this.getCutLine = _.throttle(function (data, success, error) {
