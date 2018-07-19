@@ -571,7 +571,7 @@
 
     var handleRoadsVisibility = function () {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
+        vectorLayer.setVisible($('#roadsVisibleCheckbox')[0].checked && map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
 
@@ -813,6 +813,7 @@
     });
 
       me.redraw = function () {
+        toggleProjectLayersVisibility($('#roadsVisibleCheckbox')[0].checked, true);
       var ids = {};
       _.each(selectedProjectLinkProperty.get(), function (sel) {
         ids[sel.linkId] = true;
