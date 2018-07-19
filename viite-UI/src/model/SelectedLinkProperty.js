@@ -73,20 +73,20 @@
                   'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
                   'endDate'];
               properties = _.omit(properties, ambiguousFields);
-              var latestModified = dateutil.extractLatestModifications(filteredData);
-              var municipalityCodes = {municipalityCode: extractUniqueValues(filteredData, 'municipalityCode')};
-              var verticalLevels = {verticalLevel: extractUniqueValues(filteredData, 'verticalLevel')};
-              var roadPartNumbers = {roadPartNumber: extractUniqueValues(filteredData, 'roadPartNumber')};
-              var elyCodes = {elyCode: extractUniqueValues(filteredData, 'elyCode')};
-              var trackCode = {trackCode: extractUniqueValues(filteredData, 'trackCode')};
+              var latestModified = dateutil.extractLatestModifications(selectedData);
+              var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
+              var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
+              var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
+              var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
+              var trackCode = {trackCode: extractUniqueValues(selectedData, 'trackCode')};
               var discontinuity = {discontinuity: extractUniqueValues(filteredData, 'discontinuity')};
-              var startAddressM = {startAddressM: _.min(_.chain(filteredData).pluck('startAddressM').uniq().value())};
-              var endAddressM = {endAddressM: _.max(_.chain(filteredData).pluck('endAddressM').uniq().value())};
-              var roadLinkSource = {roadLinkSource: extractUniqueValues(filteredData, 'roadLinkSource')};
+              var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
+              var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
+              var roadLinkSource = {roadLinkSource: extractUniqueValues(selectedData, 'roadLinkSource')};
               var roadNames = {
-                  roadNameFi: extractUniqueValues(filteredData, 'roadNameFi'),
-                  roadNameSe: extractUniqueValues(filteredData, 'roadNameSe'),
-                  roadNameSm: extractUniqueValues(filteredData, 'roadNameSm')
+                  roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
+                  roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
+                  roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
               };
               _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
           }
