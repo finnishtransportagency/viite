@@ -650,6 +650,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def convertRoadAddressToFloating(linkId: Long) = {
+    withDynTransaction {
+      val addresses = RoadAddressDAO.fetchByLinkId(Set(linkId), includeHistory = false, includeTerminated = false)
+      addresses.foreach { address =>
+        println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
+        RoadAddressDAO.changeRoadAddressFloating(float = true, address.id)
+        RoadAddressDAO.createMissingRoadAddress(address.linkId, address.startAddrMValue, address.endAddrMValue, Anomaly.GeometryChanged.value, address.startMValue, address.endMValue)
+      }
+    }
+  }
+
   /*
     Kalpa-API methods
   */

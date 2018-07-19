@@ -783,6 +783,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  put("/roadlinks/roadaddress/tofloating/:linkId") {
+    time(logger, "PUT request for /roadaddress/tofloating") {
+      val linkId = params("linkId").toLong
+      try{
+        roadAddressService.convertRoadAddressToFloating(linkId)
+      }
+      catch{
+        case _: Exception => BadRequest(s"an error occurred when trying to convert linkId $linkId to floating")
+      }
+    }
+  }
+
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String, Any]]
     val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]
