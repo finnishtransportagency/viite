@@ -19,6 +19,7 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
+import org.joda.time.LocalDate
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -398,28 +399,27 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, ignoreHistory: Boolean = true): List[RoadAddress] = {
+  def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now.toString): List[RoadAddress] = {
     time(logger, "Fetch road addresses by link id to API") {
+      if (linkIds.size > 1000) {
+        return fetchByLinkIdMassQueryToApi(linkIds, useLatestNetwork, searchDate = searchDate)
+      }
+
+      def dateFilter(table: String): String = {
+        s"($table.START_DATE <= to_date('$searchDate', 'yyyy-mm-dd') AND (to_date('$searchDate', 'yyyy-mm-dd') < $table.END_DATE OR $table.END_DATE IS NULL))"
+      }
+
       val (networkData, networkWhere) =
         if (useLatestNetwork) {
           (", net.id as road_version, net.created as version_date ",
             "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)")
         } else ("", "")
 
-      if (linkIds.size > 1000) {
-        return fetchByLinkIdMassQueryToApi(linkIds, useLatestNetwork)
-      }
       val linkIdString = linkIds.mkString(",")
       val where = if (linkIds.isEmpty) {
         return List()
       } else {
         s""" where ra.link_id in ($linkIdString)"""
-      }
-
-      val historyFilter = if (ignoreHistory) {
-        "AND ra.end_date is null"
-      } else {
-        s""""""
       }
 
       val query =
@@ -428,13 +428,13 @@ object RoadAddressDAO {
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
         ra.side_code, ra.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-        (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+        (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL AND ${dateFilter(table = "rn")})
         $networkData
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         $networkWhere
-        $where $historyFilter and t.id < t2.id and
+        $where ${dateFilter(table = "ra")} and t.id < t2.id and
           ra.valid_to is null
       """
       queryList(query)
@@ -512,13 +512,12 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, ignoreHistory: Boolean = true): List[RoadAddress] = {
+  def fetchByLinkIdMassQueryToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now.toString): List[RoadAddress] = {
     time(logger, "Fetch road addresses by link id - mass query to API") {
-      val historyFilter = if (ignoreHistory) {
-        "AND ra.end_date is null"
-      } else {
-        s""""""
+      def dateFilter(table: String): String = {
+        s"($table.START_DATE <= to_date('$searchDate', 'yyyy-mm-dd') AND (to_date('$searchDate', 'yyyy-mm-dd') < $table.END_DATE OR $table.END_DATE IS NULL))"
       }
+
       val (networkData, networkWhere) =
         if (useLatestNetwork) {
           (", net.id as road_version, net.created as version_date ",
@@ -528,20 +527,21 @@ object RoadAddressDAO {
         idTableName =>
           val query =
             s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-        ra.side_code, ra.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-        (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-        $networkData
-        from ROAD_ADDRESS ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join $idTableName i on i.id = ra.link_id
-        $networkWhere
-        where t.id < t2.id and
-          ra.valid_to is null $historyFilter
-      """
+              select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+              ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+              ra.side_code, ra.adjusted_timestamp,
+              ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+              (SELECT max(rn.road_name) FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL AND ${dateFilter(table = "rn")})
+              $networkData
+              from ROAD_ADDRESS ra cross join
+              TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+              TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+              join $idTableName i on i.id = ra.link_id
+              $networkWhere
+              where t.id < t2.id and
+                ra.valid_to is null AND ${dateFilter(table = "ra")}
+            """
+          println(query)
           queryList(query)
       }
     }

@@ -79,7 +79,8 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
           geometryWKT(
               if(roadAddressLink.sideCode == SideCode.BothDirections || roadAddressLink.sideCode == SideCode.AgainstDigitizing )
                 roadAddressLink.geometry.reverse
-              else roadAddressLink.geometry
+              else
+                roadAddressLink.geometry
             , roadAddressLink.startAddressM, roadAddressLink.endAddressM),
           "id" -> roadAddressLink.id,
           "link_id" -> roadAddressLink.linkId,
@@ -116,8 +117,8 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
       contentType = formats("json")
       params.get("municipality").map { municipality =>
         val municipalityCode = municipality.toInt
-        val knownAddressLinks = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode).
-          filter(ral => ral.roadNumber > 0)
+        val knownAddressLinks = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode)
+          .filter(ral => ral.roadNumber > 0)
         roadAddressLinksToApi(knownAddressLinks)
       } getOrElse {
         BadRequest("Missing mandatory 'municipality' parameter")
