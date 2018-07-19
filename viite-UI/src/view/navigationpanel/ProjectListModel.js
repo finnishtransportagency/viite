@@ -129,7 +129,7 @@
       if (showFilters) {
         searchBox.show();
         if (textField.val() === "") {
-          textField.val(applicationModel.getSessionUser());
+          textField.val(applicationModel.getSessionUsername());
         }
       } else {
         textField.val("");
