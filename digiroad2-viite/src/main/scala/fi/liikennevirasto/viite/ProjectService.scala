@@ -1255,23 +1255,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
-    val projectLinks =
-      if (roadParts.isEmpty)
-        ProjectDAO.getProjectLinks(projectId)
-      else
-        ProjectDAO.fetchByProjectRoadParts(roadParts, projectId)
+    val projectLinks = ProjectDAO.getProjectLinks(projectId)
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => s"${p._1}/${p._2}").mkString(", ")}")
 
     time(logger, "Recalculate links") {
-      projectLinks.groupBy(
-        pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
+      val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
+
+      val recalculated = others.groupBy(
+        pl => (pl.roadNumber, pl.roadPartNumber)).flatMap {
         grp =>
           val calibrationPoints = CalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
-          val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
+          ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadAddressId != 0L))
           )
-          ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
-      }
+      }.toSeq
+
+      val recalculatedTerminated = ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
+
+      ProjectDAO.updateProjectLinksToDB(recalculated ++ recalculatedTerminated, userName)
     }
   }
 
