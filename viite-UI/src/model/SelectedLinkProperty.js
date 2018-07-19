@@ -51,7 +51,7 @@
       current = data;
     };
 
-    var extractDataForDisplay = function(selectedData, id, linkId) {
+    var extractDataForDisplay = function(selectedData) {
 
       var extractUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
@@ -65,20 +65,10 @@
         var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
         var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
         if (isMultiSelect) {
-          //To be used if we go by the matching id/linkId approach
-            //Filter by id, or by linkId or no filtering at all
-            var filteredData = _.filter(selectedData, function(sd){
-                if(!_.isUndefined(id))
-                    return sd.id === id;
-                if(!_.isUndefined(linkId))
-                    return sd.linkId === linkId;
-                else return true;
-            });
-            //To be used if we chose to go by the "last" link in the bounding box
-            var biggestEndAddrMData = _.chain(selectedData)
+            var filteredData = _.chain(selectedData)
                 .sortBy(function(sd){
                     return sd.endAddressM;
-                }).first().value();
+                }).last().value();
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate'];
@@ -129,7 +119,7 @@
           selected.select();
         });
         processOl3Features(visibleFeatures);
-        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get(), id));
+        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
     };
 
@@ -216,7 +206,7 @@
         });
 
         if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
-          if(_.isArray(extractDataForDisplay(get(),id, linkId))){
+          if(_.isArray(extractDataForDisplay(get()))){
             featuresToKeep = featuresToKeep.concat(data4Display);
           } else {
             addToFeaturesToKeep(data4Display);
