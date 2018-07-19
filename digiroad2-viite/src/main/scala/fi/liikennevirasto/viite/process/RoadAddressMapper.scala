@@ -34,7 +34,7 @@ trait RoadAddressMapper {
       }
     }
 
-    roadAddressMapping.filter(_.matches(ra)).map(m => adjust(m, ra.startMValue, ra.endMValue)).map(adjMap => {
+    roadAddressMapping.filter(_.matches(ra)).map(/*m => adjust(m, ra.startMValue, ra.endMValue)).map(*/adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(adjMap))
           (ra.sideCode, adjMap.targetGeom, splitRoadAddressValues(ra, adjMap))
@@ -71,7 +71,7 @@ trait RoadAddressMapper {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
     else {
-      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM * mapping.coefficient, mapping.targetEndM * mapping.coefficient)).get
       roadAddress.addressBetween(startM, endM)
     }
   }
