@@ -42,7 +42,7 @@
 
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
+        vectorLayer.setVisible($('#roadsVisibleCheckbox')[0].checked && map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
 
