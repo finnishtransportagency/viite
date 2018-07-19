@@ -627,11 +627,31 @@ object ProjectValidator {
     }
 
     def checkContinuityBetweenLinksOnParts: Seq[ValidationErrorDetails] = {
-      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(roadProjectLinks.sortBy(_.startAddrMValue).filterNot { pl =>
-        // Check that pl is continuous or after it there is no connected project link
-        val disconnectedLinks = roadProjectLinks.exists(pl2 => (pl2.startAddrMValue != pl.endAddrMValue || !pl.connected(pl2)) && Track.isTrackContinuous(pl2.track, pl.track))
-        disconnectedLinks || pl.discontinuity == Continuous
-      }).toSeq
+      def checkConnected(curr: ProjectLink, next: Option[ProjectLink]): Boolean = {
+        if(next.isEmpty)
+          false
+        else
+          curr.endAddrMValue == next.get.startAddrMValue && curr.connected(next.get)
+      }
+      val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
+        val trackIntervals: Seq[Seq[ProjectLink]] = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+        trackIntervals.flatMap {
+          interval => {
+            if (interval.size > 1) {
+              interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
+                case Seq(curr, next) =>
+                  val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
+                  if ((checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) && (curr.discontinuity == MinorDiscontinuity || curr.discontinuity == Discontinuous))
+                    Some(curr)
+                  else
+                    None
+              }
+            } else None
+          }
+        }
+      }.toSeq
+
+      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(discontinuous).toSeq
     }
 
     def checkMinorDiscontinuityBetweenLinksOnPart: Seq[ValidationErrorDetails] = {
@@ -644,7 +664,7 @@ object ProjectValidator {
       }
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap{ g =>
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
-        val connectedLinks: Seq[ProjectLink] = trackIntervals.flatMap{
+        trackIntervals.flatMap{
           interval => {
             if (interval.size > 1) {
               interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
@@ -673,7 +693,7 @@ object ProjectValidator {
                   //optional opposite second track validation where the first node could be disconnected but connected to the next track joint
                   val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
 
-                  if(checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack))
+                  if ((checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity)
                     None
                   else
                     Some(curr)
@@ -681,7 +701,6 @@ object ProjectValidator {
             } else None
           }
         }
-        connectedLinks.filterNot(c => c.discontinuity == MinorDiscontinuity)
       }.toSeq
 
       error(project.id, ValidationErrorList.MinorDiscontinuityFound)(discontinuous).toSeq
