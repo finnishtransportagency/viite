@@ -581,7 +581,7 @@
         if (errorObject.status === INTERNAL_SERVER_ERROR_500 || errorObject.status === BAD_REQUEST) {
           eventbus.trigger('linkProperties:transferFailed', errorObject.status);
         }
-      })
+      });
     };
 
     var getFloatingRoadMarker = function() {
