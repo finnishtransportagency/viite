@@ -566,6 +566,24 @@
       });
     };
 
+    var revertToFloatingAddress= function (idToFloating) {
+      var data = {
+        "linkId" : idToFloating
+      };
+
+      backend.revertToFloating(data, idToFloating, function () {
+        eventbus.trigger('linkProperties:activateAllSelections');
+        eventbus.trigger('roadLinks:refreshView');
+        close();
+        clearAndReset(false);
+      }, function (errorObject) {
+        applicationModel.removeSpinner();
+        if (errorObject.status === INTERNAL_SERVER_ERROR_500 || errorObject.status === BAD_REQUEST) {
+          eventbus.trigger('linkProperties:transferFailed', errorObject.status);
+        }
+      })
+    };
+
     var getFloatingRoadMarker = function() {
       return floatingRoadMarker;
     };
@@ -848,7 +866,8 @@
       linkIdsToExclude: linkIdsToExclude,
       extractDataForDisplay: extractDataForDisplay,
       setCurrent: setCurrent,
-      processOL3Features: processOl3Features
+      processOL3Features: processOl3Features,
+      revertToFloatingAddress: revertToFloatingAddress
     };
   };
 })(this);

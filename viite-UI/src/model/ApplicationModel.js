@@ -18,7 +18,8 @@
     var actionCalculated = 1;
     var currentAction;
     var selectionType = 'all';
-    var sessionUser = '';
+    var sessionUsername = '';
+    var sessionUserRoles = '';
 
     var getSelectionType = function (){
       return selectionType;
@@ -121,7 +122,8 @@
     };
 
     eventbus.on("userData:fetched", function (userData) {
-      sessionUser = userData.userName;
+      sessionUsername = userData.userName;
+      sessionUserRoles = userData.roles;
     });
 
     return {
@@ -209,8 +211,11 @@
       toggleSelectionTypeAll: toggleSelectionTypeAll,
       toggleSelectionTypeFloating: toggleSelectionTypeFloating,
       toggleSelectionTypeUnknown: toggleSelectionTypeUnknown,
-      getSessionUser: function () {
-        return sessionUser;
+      getSessionUsername: function () {
+        return sessionUsername;
+      },
+      getSessionUserRoles: function () {
+        return sessionUserRoles;
       }
     };
   };
