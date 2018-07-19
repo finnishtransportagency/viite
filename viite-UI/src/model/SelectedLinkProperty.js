@@ -53,45 +53,45 @@
 
     var extractDataForDisplay = function(selectedData) {
 
-      var extractUniqueValues = function(selectedData, property) {
-        return _.chain(selectedData)
-          .pluck(property)
-          .uniq()
-          .value()
-          .join(', ');
-      };
+          var extractUniqueValues = function(selectedData, property) {
+              return _.chain(selectedData)
+                  .pluck(property)
+                  .uniq()
+                  .value()
+                  .join(', ');
+          };
 
-      var isMultiSelect = selectedData.length > 1;
-        var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
-        var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
-        if (isMultiSelect) {
-            var filteredData = _.chain(selectedData)
-                .sortBy(function(sd){
-                    return sd.endAddressM;
-                }).last().value();
-        var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
-          'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
-          'endDate'];
-        properties = _.omit(properties, ambiguousFields);
-        var latestModified = dateutil.extractLatestModifications(filteredData);
-        var municipalityCodes = {municipalityCode: extractUniqueValues(filteredData, 'municipalityCode')};
-        var verticalLevels = {verticalLevel: extractUniqueValues(filteredData, 'verticalLevel')};
-        var roadPartNumbers = {roadPartNumber: extractUniqueValues(filteredData, 'roadPartNumber')};
-        var elyCodes = {elyCode: extractUniqueValues(filteredData, 'elyCode')};
-        var trackCode = {trackCode: extractUniqueValues(filteredData, 'trackCode')};
-        var discontinuity = {discontinuity: extractUniqueValues(filteredData, 'discontinuity')};
-        var startAddressM = {startAddressM: _.min(_.chain(filteredData).pluck('startAddressM').uniq().value())};
-        var endAddressM = {endAddressM: _.max(_.chain(filteredData).pluck('endAddressM').uniq().value())};
-        var roadLinkSource = {roadLinkSource: extractUniqueValues(filteredData, 'roadLinkSource')};
-        var roadNames = {
-          roadNameFi: extractUniqueValues(filteredData, 'roadNameFi'),
-          roadNameSe: extractUniqueValues(filteredData, 'roadNameSe'),
-          roadNameSm: extractUniqueValues(filteredData, 'roadNameSm')
-        };
-        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
-      }
-      return properties;
-    };
+          var isMultiSelect = selectedData.length > 1;
+          var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
+          var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
+          if (isMultiSelect) {
+              var filteredData = _.chain(selectedData)
+                  .sortBy(function(sd){
+                      return sd.endAddressM;
+                  }).last().value();
+              var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
+                  'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
+                  'endDate'];
+              properties = _.omit(properties, ambiguousFields);
+              var latestModified = dateutil.extractLatestModifications(filteredData);
+              var municipalityCodes = {municipalityCode: extractUniqueValues(filteredData, 'municipalityCode')};
+              var verticalLevels = {verticalLevel: extractUniqueValues(filteredData, 'verticalLevel')};
+              var roadPartNumbers = {roadPartNumber: extractUniqueValues(filteredData, 'roadPartNumber')};
+              var elyCodes = {elyCode: extractUniqueValues(filteredData, 'elyCode')};
+              var trackCode = {trackCode: extractUniqueValues(filteredData, 'trackCode')};
+              var discontinuity = {discontinuity: extractUniqueValues(filteredData, 'discontinuity')};
+              var startAddressM = {startAddressM: _.min(_.chain(filteredData).pluck('startAddressM').uniq().value())};
+              var endAddressM = {endAddressM: _.max(_.chain(filteredData).pluck('endAddressM').uniq().value())};
+              var roadLinkSource = {roadLinkSource: extractUniqueValues(filteredData, 'roadLinkSource')};
+              var roadNames = {
+                  roadNameFi: extractUniqueValues(filteredData, 'roadNameFi'),
+                  roadNameSe: extractUniqueValues(filteredData, 'roadNameSe'),
+                  roadNameSm: extractUniqueValues(filteredData, 'roadNameSm')
+              };
+              _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
+          }
+          return properties;
+      };
 
     var open = function(linkId, id, singleLinkSelect, visibleFeatures, isSuravage) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
