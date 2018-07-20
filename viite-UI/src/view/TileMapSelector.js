@@ -1,5 +1,5 @@
 (function(root) {
-  root.TileMapSelector = function(container) {
+  root.TileMapSelector = function(container, applicationModel) {
     var element =
     '<div class="tile-map-selector">' +
       '<ul>' +
@@ -31,10 +31,10 @@
       eventbus.trigger('suravageRoads:toggleVisibility', this.checked);
       eventbus.trigger("suravageProjectRoads:toggleVisibility", this.checked);
     });
-      $('#roadsVisibleCheckbox').change(function () {
-          eventbus.trigger('allRoads:toggleVisibility', this.checked);
-          eventbus.trigger("allProjectRoads:toggleVisibility", this.checked);
-      });
+    $('#roadsVisibleCheckbox').change(function () {
+      applicationModel.toggleRoadVisibility();
+      eventbus.trigger('allRoads:toggleVisibility');
+    });
 
   };
 })(this);

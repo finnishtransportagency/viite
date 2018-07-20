@@ -571,7 +571,7 @@
 
     var handleRoadsVisibility = function () {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisible($('#roadsVisibleCheckbox')[0].checked && map.getView().getZoom() >= minimumContentZoomLevel());
+        vectorLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
 
@@ -813,7 +813,7 @@
     });
 
       me.redraw = function () {
-        toggleProjectLayersVisibility($('#roadsVisibleCheckbox')[0].checked, true);
+        toggleProjectLayersVisibility(applicationModel.getRoadVisibility(), true);
       var ids = {};
       _.each(selectedProjectLinkProperty.get(), function (sel) {
         ids[sel.linkId] = true;
@@ -1032,9 +1032,9 @@
       suravageProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
-      eventbus.on('allProjectRoads:toggleVisibility', function (visibility) {
-          toggleProjectLayersVisibility(visibility, true);
-      });
+    eventbus.on('allRoads:toggleVisibility', function () {
+      toggleProjectLayersVisibility(applicationModel.getRoadVisibility(), true);
+    });
 
     eventbus.on('roadAddressProject:toggleEditingRoad', function (notEditingData) {
       isNotEditingData = notEditingData;
