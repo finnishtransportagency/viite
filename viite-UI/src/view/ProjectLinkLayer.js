@@ -1032,7 +1032,7 @@
       suravageProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
-    eventbus.on('allRoads:toggleVisibility', function () {
+    eventbus.on('allRoads:visibilityChanged', function () {
       toggleProjectLayersVisibility(applicationModel.getRoadVisibility(), true);
     });
 

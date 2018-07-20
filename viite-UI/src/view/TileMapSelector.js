@@ -33,7 +33,7 @@
     });
     $('#roadsVisibleCheckbox').change(function () {
       applicationModel.toggleRoadVisibility();
-      eventbus.trigger('allRoads:toggleVisibility');
+      eventbus.trigger('allRoads:visibilityChanged');
     });
 
   };

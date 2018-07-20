@@ -822,7 +822,7 @@
         suravageRoadLayer.setVisible(visibility);
         suravageMarkerLayer.setVisible(visibility);
       });
-      eventListener.listenTo(eventbus, 'allRoads:toggleVisibility', function () {
+      eventListener.listenTo(eventbus, 'allRoads:visibilityChanged', function () {
         toggleLayerVisibility(applicationModel.getRoadVisibility(), true);
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
