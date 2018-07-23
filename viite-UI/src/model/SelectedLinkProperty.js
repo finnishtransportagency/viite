@@ -525,13 +525,9 @@
       }), function (target){
         return !_.isUndefined(target);
       }));
-      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
-        if(feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value){
-          return feature.linkId;
-        }
-      }), function (source){
-        return !_.isUndefined(source);
-      });
+      var sourceDataIds = _.chain(get().concat(featuresToKeep)).map(function(feature) {
+        return feature.linkId;
+      }).uniq().value();
 
       var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds};
 
