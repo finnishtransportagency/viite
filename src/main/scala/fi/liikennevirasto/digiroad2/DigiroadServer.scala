@@ -41,6 +41,7 @@ trait DigiroadServer {
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    appContext.addServlet(classOf[NLSProxyServlet], "/kiinteisto/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
@@ -54,7 +55,7 @@ trait DigiroadServer {
 
 class NLSProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad|viite)".r
+  def regex = "/(viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI

@@ -7,7 +7,8 @@
         '<li data-layerid="aerial" title="Ortokuvat">Ortokuvat</li>' +
         '<li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>' +
         '<li data-layerid="greyscale" title="Harmaasävy">Harmaasävykartta</li>' +
-      '</ul>' +
+        '<li data-layerid="propertyBorder" title="Kiinteistörajat">Kiinteistörajat</li>' +
+    '</ul>' +
       '<div class="suravage-visible-wrapper">' +
         '<div class="checkbox">' +
           '<label><input type="checkbox" name="suravageVisible" value="suravageVisible" checked="true" id="suravageVisibleCheckbox">Näytä Suravage-Linkit</label>' +
