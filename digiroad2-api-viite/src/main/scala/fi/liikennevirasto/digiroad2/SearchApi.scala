@@ -87,6 +87,15 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     }
   }
 
+  post("/road_address/:road/?") {
+    time(logger, s"POST request for /road_address/:road/?"){
+      val roadNumber = params("road").toLong
+      val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
+      val tracks = (parsedBody \ "tracks").extract[Seq[Int]]
+      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts, tracks).map(roadAddressMapper)
+    }
+  }
+
   private def roadAddressMapper(roadAddress : RoadAddress) = {
     Map(
       "id" -> roadAddress.id,

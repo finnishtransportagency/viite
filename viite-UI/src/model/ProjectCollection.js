@@ -148,7 +148,9 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: _.map(self.getAllReservedParts(), function (part) {
+        roadPartList: _.map(_.filter(self.getAllReservedParts(), function (part) {
+          return !_.isUndefined(part.newLength, part.currentLength, part.newEly, part.currentEly);
+        }), function (part) {
           return {
             discontinuity: (part.newDiscontinuity ? part.newDiscontinuity : part.currentDiscontinuity),
             ely: (part.newEly ? part.newEly : part.currentEly),
