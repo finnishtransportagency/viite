@@ -5,8 +5,11 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
+
+case class RoadNetworkError(id: Long, roadAddressId: Long, error: AddressError, error_timestamp: Long, network_version: Long)
 
 object RoadNetworkDAO {
 
@@ -59,6 +62,16 @@ def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
 
   def getLatestPublishedNetworkDate: Option[DateTime] = {
     sql"""SELECT MAX(created) as created FROM published_road_network""".as[Option[DateTime]].first
+  }
+
+  def getRoadNetworkError(addressId: Long, error: AddressError): Option[RoadNetworkError] = {
+
+    val query = s"""SELECT * FROM road_network_errors where road_address_id = $addressId and error_code = ${error.value} order by road_network_version desc"""
+
+    Q.queryNA[(Long, Long, Int, Long, Long)](query).list.headOption.map {
+      case (id, roadAddressId, errorCode, timestamp, version) =>
+        RoadNetworkError(id, roadAddressId, AddressError.apply(errorCode), timestamp, version)
+    }
   }
 
 }

@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.RoadNetworkDAO.getLatestRoadNetworkVersionId
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -354,7 +355,11 @@ object DataFixture {
             }
           }.values.flatten.toSet
           println(s"Found ${roadErrors.size} errors for ely $ely")
-          roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+          val lastVersion = getLatestRoadNetworkVersionId
+          roadErrors.filter{ road =>
+              val error = RoadNetworkDAO.getRoadNetworkError(road.id, InconsistentLrmHistory)
+            error.isEmpty || error.get.network_version != lastVersion
+          }.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
         }
       })
     }
