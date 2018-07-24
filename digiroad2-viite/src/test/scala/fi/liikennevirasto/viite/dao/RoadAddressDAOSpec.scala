@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.dao.FloatingReason.GeometryChanged
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
@@ -124,7 +125,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("Set road address to floating and update the geometry as well") {
     runWithRollback {
       val address = RoadAddressDAO.fetchByLinkId(Set(5170942)).head
-      RoadAddressDAO.changeRoadAddressFloating(true, address.id, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
+      RoadAddressDAO.changeRoadAddressFloating(true, address.id, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))), floatingReason = GeometryChanged)
     }
   }
 

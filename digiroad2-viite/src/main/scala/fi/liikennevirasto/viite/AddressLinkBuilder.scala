@@ -230,7 +230,7 @@ trait AddressLinkBuilder {
         discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.createdBy,
         nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
         calibrationPoints, floating = false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
-        nextSegment.commonHistoryId))
+        nextSegment.commonHistoryId, floatingReason = nextSegment.floatingReason))
 
     } else Seq(nextSegment, previousSegment)
 
