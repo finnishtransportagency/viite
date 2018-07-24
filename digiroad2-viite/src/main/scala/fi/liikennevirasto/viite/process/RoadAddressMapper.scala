@@ -81,38 +81,27 @@ trait RoadAddressMapper {
     commonPostTransferChecks(seq, addrMin, addrMax)
   }
 
-  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress], Seq[RoadAddress])): Unit = {
-    val (section, current, history) = s
-    if (current.nonEmpty) {
-      if (current.groupBy(_.linkId).exists { case (_, addresses) =>
+  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress])): Unit = {
+    val (section, roadAddresses) = s
+    if (roadAddresses.nonEmpty) {
+      if (roadAddresses.groupBy(_.linkId).exists { case (_, addresses) =>
         partition(addresses).size > 1
       })
         throw new InvalidAddressDataException(s"Address gaps generated for links ${
-          current.groupBy(_.linkId).filter { case (_, addresses) =>
+          roadAddresses.groupBy(_.linkId).filter { case (_, addresses) =>
             partition(addresses).size > 1
           }.keySet.mkString(", ")
         }")
-      commonPostTransferChecks(current, section.startMAddr, section.endMAddr)
-    }
-    if (history.nonEmpty) {
-      if (history.groupBy(_.linkId).exists { case (_, addresses) =>
-        partition(addresses).size > 1
-      })
-        throw new InvalidAddressDataException(s"Address gaps generated for links ${
-          history.groupBy(_.linkId).filter { case (_, addresses) =>
-            partition(addresses).size > 1
-          }.keySet.mkString(", ")
-        }")
-      commonPostTransferChecks(history, section.startMAddr, section.endMAddr)
+      commonPostTransferChecks(roadAddresses, section.startMAddr, section.endMAddr)
     }
   }
 
   def postTransferChecksForCurrent(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
-    postTransferChecks((s._1, s._2.flatMap(_.currentSegments), Seq()))
+    postTransferChecks((s._1, s._2.flatMap(_.currentSegments)))
   }
 
   def postTransferChecksForHistory(s: (RoadAddressSection, Seq[LinkRoadAddressHistory])): Unit = {
-    postTransferChecks((s._1, Seq(), s._2.flatMap(_.historySegments)))
+    postTransferChecks((s._1, s._2.flatMap(_.historySegments)))
   }
 
   protected def commonPostTransferChecks(addresses: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
@@ -233,7 +222,7 @@ trait RoadAddressMapper {
 
   /**
     * Partitioning for transfer checks. Stops at calibration points, changes of road part etc.
- *
+    *
     * @param roadAddresses
     * @return
     */

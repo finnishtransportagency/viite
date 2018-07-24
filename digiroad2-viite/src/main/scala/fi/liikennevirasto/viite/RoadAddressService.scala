@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.RoadAddressDAO.logger
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
@@ -191,7 +191,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         Await.result(combinedFuture, Duration.Inf)
       }
 
-    val (missingFloating, addresses, floating) = (roadAddressResults.historyFloatingLinkAddresses, roadAddressResults.current, roadAddressResults.floating)
+    val (missingFloating, addresses, existingFloating) = (roadAddressResults.historyFloatingLinkAddresses, roadAddressResults.current, roadAddressResults.floating)
+    //TODO remove this line of code
     // We should not have any road address history for links that do not have current address (they should be terminated)
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val normalRoadLinkIds = roadLinks.map(_.linkId).toSet
@@ -203,15 +204,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val missedRL = time(logger, "Find missing road addresses") {
       withDynTransaction {
         if (everything || !frozenTimeVVHAPIServiceEnabled) {
-          RoadAddressDAO.getMissingRoadAddresses(linkIds -- floating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
+          RoadAddressDAO.getMissingRoadAddresses(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
         } else {
           List[MissingRoadAddress]()
         }
       }.groupBy(_.linkId)
     }
 
-    val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, suravageLinks, buildFloatingAddresses(allRoadLinks, suravageLinks, floating),
-      allRoadAddressesAfterChangeTable.flatMap(_.currentSegments), missedRL)
+    val (floating, changedRoadAddresses) = allRoadAddressesAfterChangeTable.flatMap(_.currentSegments).partition(_.floating)
+    val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, suravageLinks, buildFloatingAddresses(allRoadLinks, suravageLinks, existingFloating ++ floating),
+      changedRoadAddresses, missedRL)
 
     val inUseSuravageLinks = suravageLinks.filter(sl => roadAddressLinkMap.keySet.contains(sl.linkId))
 
@@ -386,6 +388,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           unchanged.filter(ra => ra.floating).foreach {
             ra => RoadAddressDAO.changeRoadAddressFloating(1, ra.id, None)
           }
+
+          checkRoadAddressFloatingWithoutTX(unchanged.map(_.linkId).toSet, float = true)
           val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
           val changedRoadParts = addressesToCreate.map(a => (a.roadNumber, a.roadPartNumber)).toSet
 
@@ -800,7 +804,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         includeTerminated = false)
       RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
-      recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
+      val roadNumber = roadAddresses.head.roadNumber.toInt
+      val roadPartNumber = roadAddresses.head.roadPartNumber.toInt
+      if(!recalculateRoadAddresses(roadNumber, roadPartNumber))
+        throw new RoadAddressException(s"Road address recalculation failed for $roadNumber / $roadPartNumber")
       RoadAddressDAO.fetchAllFloatingRoadAddresses().nonEmpty
     }
     if (!hasFloatings)
