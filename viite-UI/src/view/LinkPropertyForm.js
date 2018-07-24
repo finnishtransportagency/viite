@@ -1,6 +1,7 @@
 (function (root) {
     root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool) {
     var compactForm = false;
+    var idToFloating;
     var decodedAttributes = [
       {
         id: 'AJORATA',
@@ -227,6 +228,21 @@
       return field;
     };
 
+    var revertToFloatingButton = function(){
+        var linkIds = _.uniq(_.map(_.filter(selectedLinkProperty.get(), function (link) {
+            return link.roadNumber !== 0 && link.anomaly === LinkValues.Anomaly.None.value;
+        }), function (link) {
+            return link.linkId;
+        }));
+
+        if(linkIds.length === 1 && _.contains(applicationModel.getSessionUserRoles(), 'operator') && !applicationModel.isReadOnly()){
+          idToFloating = linkIds[0];
+          return '<button id ="revertToFloating-button" class="toFloating btn btn-block btn-toFloating">Irrota geometriasta</button>';
+        }
+        else
+            return '';
+    };
+
     var title = function() {
       return '<span>Tieosoitteen ominaisuustiedot</span>';
     };
@@ -275,6 +291,7 @@
             roadTypes +
             staticField('JATKUVUUS', linkProperty.discontinuity) +
           '</div>' +
+          revertToFloatingButton()+
         '</div>' +
         '<footer>' + '</footer>');
     };
@@ -389,7 +406,8 @@
         var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature) {
           return feature.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
         }));
-        var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
+        //checks if previousSelected road was not unknown and current select road IS unknown
+        var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].anomaly !== LinkValues.Anomaly.NoAddressGiven.value;
         if (canStartTransfer)
           _.defer(function() {
             selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
@@ -634,18 +652,24 @@
       });
       rootElement.on('click', '.link-properties button.continue',function() {
         if (selectedLinkProperty.continueSelectUnknown()) {
-            eventbus.once('linkProperties:unknownsTreated', function () {
-                rootElement.find('.link-properties button.continue').attr('disabled', true);
-                eventbus.trigger('linkProperties:deselectFeaturesSelected');
-                applicationModel.toggleSelectionTypeUnknown();
-                applicationModel.setContinueButton(false);
-                eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
-                eventbus.trigger('linkProperties:activateInteractions');
-                eventbus.trigger('linkProperties:deactivateDoubleClick');
-            });
-            eventbus.trigger('linkProperties:drawUnknowns');
+          eventbus.once('linkProperties:unknownsTreated', function () {
+            rootElement.find('.link-properties button.continue').attr('disabled', true);
+            eventbus.trigger('linkProperties:deselectFeaturesSelected');
+            applicationModel.toggleSelectionTypeUnknown();
+            applicationModel.setContinueButton(false);
+            eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
+            eventbus.trigger('linkProperties:activateInteractions');
+            eventbus.trigger('linkProperties:deactivateDoubleClick');
+          });
+          eventbus.trigger('linkProperties:drawUnknowns');
         }
       });
+      rootElement.on('click', 'button.toFloating',function() {
+        applicationModel.addSpinner();
+        selectedLinkProperty.revertToFloatingAddress(idToFloating);
+      });
+
+
 
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
         $('#additionalSource').remove();

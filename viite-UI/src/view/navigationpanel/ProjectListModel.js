@@ -129,7 +129,7 @@
       if (showFilters) {
         searchBox.show();
         if (textField.val() === "") {
-          textField.val(applicationModel.getSessionUser());
+          textField.val(applicationModel.getSessionUsername());
         }
       } else {
         textField.val("");
@@ -170,16 +170,18 @@
           return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
         });
 
-          var triggerOpening = function (event) {
-              if (this.className === "project-open btn btn-new-error") {
-                  projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-                  eventbus.once("roadAddressProject:reOpenedProject", function (successData) {
-                      openProjectSteps(event);
-                  });
-              } else {
-                  openProjectSteps(event);
-              }
-          };
+        var triggerOpening = function (event) {
+          userFilterVisibility(false);
+          $('#TRProjectsVisibleCheckbox').prop('checked', false);
+          if (this.className === "project-open btn btn-new-error") {
+            projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
+            eventbus.once("roadAddressProject:reOpenedProject", function (successData) {
+              openProjectSteps(event);
+            });
+          } else {
+            openProjectSteps(event);
+          }
+        };
 
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
         if (!_.isEmpty(sortedProjects)) {
@@ -197,7 +199,7 @@
                   html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden" data-projectStatus="' + proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
                     '</tr>';
                 break;
-              case projectStatus.ErroredInTR.value:
+              case projectStatus.ErrorInTR.value:
                   html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
                     '</tr>';
                 break;
@@ -281,6 +283,7 @@
 
       projectList.on('click', 'button.new', function() {
         userFilterVisibility(false);
+        $('#TRProjectsVisibleCheckbox').prop('checked', false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger('roadAddress:newProject');
         if(applicationModel.isReadOnly()) {
