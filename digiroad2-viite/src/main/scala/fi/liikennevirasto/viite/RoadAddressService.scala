@@ -1003,7 +1003,7 @@ object AddressConsistencyValidator {
   }
 
   object AddressError {
-    val values = Set(OverlappingRoadAddresses, InconsistentTopology)
+    val values = Set(OverlappingRoadAddresses, InconsistentTopology, InconsistentLrmHistory)
 
     case object OverlappingRoadAddresses extends AddressError {
       def value = 1

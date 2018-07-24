@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-case class RoadNetworkError(id: Long, roadAddressId: Long, error: AddressError, error_timestamp: Long, network_version: Long)
+case class RoadNetworkError(id: Long, roadAddressId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
 
 object RoadNetworkDAO {
 
@@ -68,7 +68,7 @@ def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
 
     val query = s"""SELECT * FROM road_network_errors where road_address_id = $addressId and error_code = ${error.value} order by road_network_version desc"""
 
-    Q.queryNA[(Long, Long, Int, Long, Long)](query).list.headOption.map {
+    Q.queryNA[(Long, Long, Int, Long, Option[Long])](query).list.headOption.map {
       case (id, roadAddressId, errorCode, timestamp, version) =>
         RoadNetworkError(id, roadAddressId, AddressError.apply(errorCode), timestamp, version)
     }
