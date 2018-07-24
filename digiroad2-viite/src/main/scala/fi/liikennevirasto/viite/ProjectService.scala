@@ -165,7 +165,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def projectWritableCheck(projectId: Long): Option[String] = {
     ProjectDAO.getProjectStatus(projectId) match {
       case Some(projectState) =>
-        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErroredInTR)
+        if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
@@ -1252,23 +1252,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
-    val projectLinks =
-      if (roadParts.isEmpty)
-        ProjectDAO.getProjectLinks(projectId)
-      else
-        ProjectDAO.fetchByProjectRoadParts(roadParts, projectId)
+    val projectLinks = ProjectDAO.getProjectLinks(projectId)
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => s"${p._1}/${p._2}").mkString(", ")}")
 
     time(logger, "Recalculate links") {
-      projectLinks.groupBy(
-        pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
+      val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
+
+      val recalculated = others.groupBy(
+        pl => (pl.roadNumber, pl.roadPartNumber)).flatMap {
         grp =>
           val calibrationPoints = CalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
-          val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
+          ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadAddressId != 0L))
           )
-          ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
-      }
+      }.toSeq
+
+      val recalculatedTerminated = ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
+
+      ProjectDAO.updateProjectLinksToDB(recalculated ++ recalculatedTerminated, userName)
     }
   }
 
@@ -1501,7 +1502,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
       logger.info(s"Status update is needed as Project Current status (${currentStatus}) differs from TR Status(${newStatus})")
       val projects = ProjectDAO.getRoadAddressProjects(projectId)
-      if (projects.nonEmpty && newStatus == ProjectState.ErroredInTR) {
+      if (projects.nonEmpty && newStatus == ProjectState.ErrorInTR) {
         // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
         logger.info(s"Writing error message and clearing old TR_ID: ($errorMessage)")
         ProjectDAO.updateProjectStateInfo(errorMessage, projectId)
@@ -1571,8 +1572,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case "S" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
       case "K" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
       case "T" => Some(ProjectState.apply(ProjectState.Saved2TR.value))
-      case "V" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
-      case "null" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
+      case "V" => Some(ProjectState.apply(ProjectState.ErrorInTR.value))
+      case "null" => Some(ProjectState.apply(ProjectState.ErrorInTR.value))
       case _ => None
     }
   }

@@ -112,7 +112,6 @@ class AssetDataImporter {
 
   }
 
-  // TODO
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                             importOptions: ImportOptions): Unit = {
 
@@ -125,6 +124,7 @@ class AssetDataImporter {
       sqlu"""DELETE FROM PROJECT""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERRORS""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
       println(s"${DateTime.now()} - Old address data removed")

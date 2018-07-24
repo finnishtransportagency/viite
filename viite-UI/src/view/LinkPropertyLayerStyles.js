@@ -140,6 +140,7 @@
       new OpenLayersRule().where('roadClass').is('9').use({ strokeColor: '#ff55dd'}),
       new OpenLayersRule().where('roadClass').is('10').use({ strokeColor: '#ff55dd'}),
       new OpenLayersRule().where('roadClass').is('11').use({ strokeColor: '#444444'}),
+      new OpenLayersRule().where('roadClass').is('12').use({ strokeColor: '#ff55dd'}),
       new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#a4a4a2'})
     ];
 

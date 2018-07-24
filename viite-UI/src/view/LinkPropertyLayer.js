@@ -280,9 +280,9 @@
 
     var zoomDoubleClickListener = function (event) {
       if (activeLayer)
-        _.defer(function () {
-          if (selectDoubleClick.getFeatures().getLength() === 0 && applicationModel.getSelectedLayer() == 'linkProperty' && map.getView().getZoom() <= 13) {
-            map.getView().setZoom(map.getView().getZoom() + 1);
+        _.defer(function(){
+          if((selectDoubleClick.getFeatures().getLength() === 0 && selectSingleClick.getFeatures().getLength() === 0) && applicationModel.getSelectedLayer() == 'linkProperty' && map.getView().getZoom() <= 13){
+            map.getView().setZoom(map.getView().getZoom()+1);
           }
         });
     };
@@ -596,14 +596,12 @@
         });
 
         var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
-        _.each(orderFloatGroup, function (floatGroup) {
-          floatGroup.sort(function (firstFloat, secondFloat) {
-            return firstFloat.startAddressM - secondFloat.startAddressM;
-          });
-          middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
-          marker = cachedLinkPropertyMarker.createMarker(middlefloating);
-          if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-            floatingMarkerLayer.getSource().addFeature(marker);
+        _.each(orderFloatGroup, function(floatGroup) {
+            _.each(floatGroup, function(floating){
+                marker = cachedLinkPropertyMarker.createMarker(floating);
+                if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
+                    floatingMarkerLayer.getSource().addFeature(marker);
+            });
         });
 
         _.each(directionRoadMarker, function (directionlink) {
@@ -1114,7 +1112,8 @@
               _.each(pickAnomalousMarker, function (pickRoads) {
                 pickRoadsLayer.getSource().removeFeature(pickRoads);
               });
-              geometryChangedLayer.setVisible(false);
+              if(applicationModel.getSelectionType() !== 'unknown')
+                geometryChangedLayer.setVisible(false);
             }
           });
           addFeaturesToSelection(features);

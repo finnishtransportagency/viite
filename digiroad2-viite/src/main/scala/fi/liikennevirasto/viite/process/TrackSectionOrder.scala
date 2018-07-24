@@ -244,7 +244,7 @@ object TrackSectionOrder {
       val pl = s.head
       TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, s.map(_.geometryLength).sum, s)
     }
-    def groupIntoSections(seq: Seq[ProjectLink]): (Seq[TrackSection]) = {
+    def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
       if (seq.isEmpty)
         throw new InvalidAddressDataException("Missing track")
       val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.track != pl2.track}
@@ -256,6 +256,13 @@ object TrackSectionOrder {
         }
       }.reverse.map(fromProjectLinks)
     }
+
+    val rightSections = groupIntoSections(rightLinks)
+    val leftSections = groupIntoSections(leftLinks)
+    createCombinedSectionss(rightSections, leftSections)
+  }
+
+  def createCombinedSectionss(rightSections: Seq[TrackSection], leftSections: Seq[TrackSection]): Seq[CombinedSection] = {
 
     def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]): Seq[CombinedSection] = {
       rightSection.map { r =>
@@ -274,12 +281,14 @@ object TrackSectionOrder {
               Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
             CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
               l, r)
-          case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
+          case _ =>
+            throw new RoadAddressException(s"Incorrect track code ${r.track}")
         }
       }
 
     }
-    combineSections(groupIntoSections(rightLinks), groupIntoSections(leftLinks))
+
+    combineSections(rightSections, leftSections)
   }
 }
 
