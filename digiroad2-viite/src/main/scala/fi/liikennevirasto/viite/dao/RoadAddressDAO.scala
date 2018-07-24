@@ -1437,6 +1437,26 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
+  //TODO remove "where ra.road_number = 14039" from query
+
+  def getAllRoadAddress: Seq[RoadAddress] = {
+    time(logger, "Get road addresses by filter") {
+      val query =
+        s"""
+         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+          ra.side_code, ra.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+          link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to, null as road_name
+        from road_address ra where ra.road_number = 14039
+      """
+      queryList(query)
+    }
+  }
 
   def getRoadAddressByFilter(queryFilter: String => String): Seq[RoadAddress] = {
     time(logger, "Get road addresses by filter") {

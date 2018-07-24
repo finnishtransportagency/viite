@@ -314,13 +314,12 @@ object DataFixture {
   def checkLinearLocation(): Unit = {
 
     OracleDatabase.withDynTransaction {
-      val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
-      elyCodes.foreach(ely => {
+//      val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
+//      elyCodes.foreach(ely => {
         // We must get current and history separately => Nothing guarantees that the history ones haven't changed their ELY meanwhile
-        val roads = RoadAddressDAO.getRoadAddressByEly(ely, onlyCurrent = true)
+        val roads = RoadAddressDAO.getAllRoadAddress
 
-        roads.grouped(25000).foreach { group =>
-
+          roads.grouped(25000).foreach { group =>
           val current = group
           val history = RoadAddressDAO.fetchByLinkId(group.map(_.linkId).toSet, includeCurrent = false)
           val combined = current ++ history
@@ -354,14 +353,14 @@ object DataFixture {
               Set.empty[RoadAddress]
             }
           }.values.flatten.toSet
-          println(s"Found ${roadErrors.size} errors for ely $ely")
+          println(s"Found ${roadErrors.size} errors for road number ${group.head.roadNumber}")
           val lastVersion = getLatestRoadNetworkVersionId
           roadErrors.filter{ road =>
               val error = RoadNetworkDAO.getRoadNetworkError(road.id, InconsistentLrmHistory)
             error.isEmpty || error.get.network_version != lastVersion
           }.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
         }
-      })
+//      })
     }
   }
 
