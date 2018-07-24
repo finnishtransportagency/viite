@@ -192,7 +192,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
 
     val (missingFloating, addresses, existingFloating) = (roadAddressResults.historyFloatingLinkAddresses, roadAddressResults.current, roadAddressResults.floating)
-    //TODO remove this line of code
     // We should not have any road address history for links that do not have current address (they should be terminated)
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val normalRoadLinkIds = roadLinks.map(_.linkId).toSet
