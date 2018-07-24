@@ -38,7 +38,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
 
   get("/road_numbers?") {
     time(logger, "GET request for /road_numbers?") {
-      roadAddressService.getRoadNumbers()
+      roadAddressService.getRoadNumbers
     }
   }
 
