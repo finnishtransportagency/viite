@@ -213,6 +213,18 @@
       });
     }, 1000);
 
+    this.revertToFloating = _.throttle(function (data, linkId, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/tofloating/" + linkId,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    });
+
     this.getCutLine = _.throttle(function (data, success, error) {
       $.ajax({
         contentType: "application/json",

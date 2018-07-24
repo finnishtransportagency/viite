@@ -46,7 +46,7 @@ object CalibrationPointSource {
 
 object ProjectState {
 
-  val values = Set(Closed, Incomplete, Sent2TR, ErroredInTR, TRProcessing, Saved2TR,
+  val values = Set(Closed, Incomplete, Sent2TR, ErrorInTR, TRProcessing, Saved2TR,
     Failed2GenerateTRIdInViite, Deleted, ErrorInViite, SendingToTR, Unknown)
 
   // These states are final
@@ -57,12 +57,12 @@ object ProjectState {
   }
 
   case object Closed extends ProjectState {def value = 0; def description = "Suljettu"}
-  case object Incomplete extends ProjectState { def value = 1; def description = "Keskeneräinen"}
-  case object Sent2TR extends ProjectState {def value=2; def description ="Lähetetty tierekisteriin"}
-  case object ErroredInTR extends ProjectState {def value=3; def description ="Virhe tierekisterissä"}
-  case object TRProcessing extends ProjectState {def value=4; def description="Tierekisterissä käsittelyssä"}
-  case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
-  case object Failed2GenerateTRIdInViite extends ProjectState { def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
+  case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
+  case object Sent2TR extends ProjectState {def value = 2; def description = "Lähetetty tierekisteriin"}
+  case object ErrorInTR extends ProjectState {def value = 3; def description = "Virhe tierekisterissä"}
+  case object TRProcessing extends ProjectState {def value = 4; def description = "Tierekisterissä käsittelyssä"}
+  case object Saved2TR extends ProjectState{def value = 5; def description = "Viety tierekisteriin"}
+  case object Failed2GenerateTRIdInViite extends ProjectState {def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
 
   case object ErrorInViite extends ProjectState {
@@ -127,7 +127,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None)
+                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, commonHistoryId: Long = NewCommonHistoryId, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
+                       roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -218,6 +219,10 @@ object ProjectDAO {
     END AS road_name_pl,
   ROAD_ADDRESS.START_ADDR_M as RA_START_ADDR_M,
   ROAD_ADDRESS.END_ADDR_M as RA_END_ADDR_M,
+  ROAD_ADDRESS.TRACK_CODE as TRACK_CODE,
+  ROAD_ADDRESS.ROAD_NUMBER as ROAD_NUMBER,
+  ROAD_ADDRESS.ROAD_PART_NUMBER as ROAD_PART_NUMBER
+  ROAD_ADDRESS.END_ADDR_M as RA_END_ADDR_M,
   PROJECT_LINK.CALIBRATION_POINTS_SOURCE
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
     LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)
@@ -258,11 +263,17 @@ object ProjectDAO {
       val roadName = r.nextString()
       val roadAddressStartAddrM = r.nextLongOption()
       val roadAddressEndAddrM = r.nextLongOption()
+      val roadAddressTrack = r.nextIntOption().map(Track.apply)
+      val roadAddressRoadNumber = r.nextLongOption()
+      val roadAddressRoadPart = r.nextLongOption()
       val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), false, parseStringGeometry(geom.getOrElse("")), projectId,
-        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName), roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)))
+        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
+        roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
+        roadAddressStartAddrM = roadAddressStartAddrM, roadAddressEndAddrM = roadAddressEndAddrM, roadAddressTrack = roadAddressTrack,
+        roadAddressRoadNumber = roadAddressRoadNumber, roadAddressRoadPart = roadAddressRoadPart)
     }
   }
 
