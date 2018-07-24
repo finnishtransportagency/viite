@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.util
 
+import java.sql.Timestamp
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
@@ -19,7 +20,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
 import scala.collection.parallel.immutable.ParSet
-import scala.collection.parallel.{ForkJoinTaskSupport}
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
 
 object DataFixture {
@@ -323,20 +324,35 @@ object DataFixture {
           val history = RoadAddressDAO.fetchByLinkId(group.map(_.linkId).toSet, includeCurrent = false)
           val combined = current ++ history
 
-          val groupedRoads = combined.groupBy(r => (r.linkId, r.commonHistoryId))
+          val groupedRoads = combined.groupBy(_.commonHistoryId)
+          val roadErrors: Set[RoadAddress] = groupedRoads.mapValues { group =>
+            val dateTimeLines = group.map(_.startDate).distinct
 
-          val roadErrors: Seq[RoadAddress] = groupedRoads.mapValues { g =>
-            val (curr, hist) = g.partition(_.endDate.isEmpty)
+            val mappedTimeLines: Map[Long, TimeLine] = dateTimeLines.map {
+              date =>
+                val roads = group.filter { ra => (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis <= ra.endDate.get.getMillis) }
+                TimeLine
+                date.get.getMillis -> TimeLine(roads.maxBy(_.endAddrMValue).endAddrMValue, roads)
+            }.toMap
 
-            val errors: Seq[RoadAddress] = curr.sortBy(_.startAddrMValue).zip(hist.sortBy(_.startAddrMValue)).flatMap { case (c, h) =>
-              if (c.startMValue != h.startMValue || c.endMValue != h.endMValue || c.sideCode != h.sideCode) {
-                println(s"Error in linear location check for road address with id ${c.id} ")
-                Seq(c, h)
+            if (mappedTimeLines.size > 1) {
+
+              val errors: Set[RoadAddress] = mappedTimeLines.values.sliding(2).flatMap { case Seq(first, second) => {
+
+                if (first.addressLength != second.addressLength) {
+                  println(s"Error in linear location check for road address with id ${first.addresses.head.id} ")
+                  first.addresses.toSet
+                }
+                else {
+                  Set.empty[RoadAddress]
+                }
               }
-              else Seq.empty[RoadAddress]
+              }.toSet
+              errors
+            } else {
+              Set.empty[RoadAddress]
             }
-            errors
-          }.values.flatten.toSeq
+          }.values.flatten.toSet
           println(s"Found ${roadErrors.size} errors for ely $ely")
           roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
         }
@@ -488,4 +504,6 @@ object DataFixture {
         "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names | fuse_road_address_with_history | check_lrm_position ")
     }
   }
+
+  case class TimeLine(addressLength: Long, addresses: Seq[RoadAddress])
 }
