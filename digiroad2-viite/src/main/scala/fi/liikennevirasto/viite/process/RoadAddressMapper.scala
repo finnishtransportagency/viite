@@ -9,38 +9,12 @@ import fi.liikennevirasto.viite._
 trait RoadAddressMapper {
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
-    def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
-      // When operating with fake geometries (automatic change tables) the geometry may not have correct length
-      val startM = Math.min(Math.max(Math.min(d1, d2), 0.0), GeometryUtils.geometryLength(geometry))
-      val endM = Math.min(Math.max(d1, d2), GeometryUtils.geometryLength(geometry))
-      GeometryUtils.truncateGeometry3D(geometry, startM, endM)
-    }
-
-    // When mapping contains a larger span (sourceStart, sourceEnd) than the road address then split the mapping
-    def adjust(mapping: RoadAddressMapping, startM: Double, endM: Double) = {
-      if (withinTolerance(mapping.sourceStartM, startM) && withinTolerance(mapping.sourceEndM, endM))
-        mapping
-      else {
-        val (newStartM, newEndM) =
-          (if (withinTolerance(startM, mapping.sourceStartM) || startM < mapping.sourceStartM) mapping.sourceStartM else startM,
-            if (withinTolerance(endM, mapping.sourceEndM) || endM > mapping.sourceEndM) mapping.sourceEndM else endM)
-        val (newTargetStartM, newTargetEndM) = (mapping.interpolate(newStartM), mapping.interpolate(newEndM))
-        val geomStartM = Math.min(mapping.sourceStartM, mapping.sourceEndM)
-        val geomTargetStartM = Math.min(mapping.interpolate(mapping.sourceStartM), mapping.interpolate(mapping.sourceEndM))
-        mapping.copy(sourceStartM = newStartM, sourceEndM = newEndM, sourceGeom =
-          truncate(mapping.sourceGeom, newStartM - geomStartM, newEndM - geomStartM),
-          targetStartM = newTargetStartM, targetEndM = newTargetEndM, targetGeom =
-            truncate(mapping.targetGeom, newTargetStartM - geomTargetStartM, newTargetEndM - geomTargetStartM))
-      }
-    }
-
     roadAddressMapping.filter(_.matches(ra)).map(/*m => adjust(m, ra.startMValue, ra.endMValue)).map(*/adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(adjMap))
-          (ra.sideCode, adjMap.targetGeom, splitRoadAddressValues(ra, adjMap))
+          (ra.sideCode, truncateGeometriesWithAddressValues(ra, adjMap), splitRoadAddressValues(ra, adjMap))
         else {
-          (switchSideCode(ra.sideCode), adjMap.targetGeom.reverse,
-            splitRoadAddressValues(ra, adjMap))
+          (switchSideCode(ra.sideCode), truncateGeometriesWithAddressValues(ra, adjMap).reverse, splitRoadAddressValues(ra, adjMap))
         }
       val (startM, endM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
 
@@ -57,7 +31,7 @@ trait RoadAddressMapper {
       ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
         startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
-        calibrationPoints = (startCP, endCP), floating = false, geometry = mappedGeom)
+        calibrationPoints = (startCP, endCP), floating = false, geometry = if(mappedGeom.isEmpty) ra.geometry else mappedGeom)
     })
   }
 
@@ -70,9 +44,34 @@ trait RoadAddressMapper {
   private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
-    else {
+    else if(mapping.sourceLinkId == mapping.targetLinkId) {
       val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
-      roadAddress.addressBetween(startM, endM)
+      val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, mapping.targetEndM)
+      (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
+    }
+    else{
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
+      val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, endM)
+      (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
+    }
+  }
+
+  private def truncateGeometriesWithAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): Seq[Point] = {
+    def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
+      // When operating with fake geometries (automatic change tables) the geometry may not have correct length
+      val startM = Math.min(Math.max(Math.min(d1, d2), 0.0), GeometryUtils.geometryLength(geometry))
+      val endM = Math.min(Math.max(d1, d2), GeometryUtils.geometryLength(geometry))
+      GeometryUtils.truncateGeometry3D(geometry, startM, endM)
+    }
+
+    if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
+      truncate(roadAddress.geometry, roadAddress.startMValue, roadAddress.endMValue )
+    else if(mapping.sourceLinkId == mapping.targetLinkId) {
+      truncate(roadAddress.geometry, mapping.targetStartM, mapping.targetEndM )
+    }
+    else{
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
+      truncate(roadAddress.geometry, startM, endM )
     }
   }
 
@@ -116,12 +115,11 @@ trait RoadAddressMapper {
   }
 
   protected def commonPostTransferChecks(addresses: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
-    calibrationPointCountCheck(false, addresses)
-    addresses.find(_.startCalibrationPoint.nonEmpty) match {
+    addresses.sortBy(_.startAddrMValue).find(_.startCalibrationPoint.nonEmpty) match {
       case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
       case _ =>
     }
-    addresses.find(_.endCalibrationPoint.nonEmpty) match {
+    addresses.sortBy(_.startAddrMValue).reverse.find(_.endCalibrationPoint.nonEmpty) match {
       case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
       case _ =>
     }
@@ -139,7 +137,6 @@ trait RoadAddressMapper {
 
   def preTransferChecks(addresses: Seq[RoadAddress]): Unit = {
     val nonHistoric = addresses.filter(_.endDate.isEmpty)
-    calibrationPointCountCheck(true, nonHistoric)
     nonHistoric.find(_.startCalibrationPoint.nonEmpty) match {
       case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
       case _ =>
@@ -173,14 +170,6 @@ trait RoadAddressMapper {
       })
     ) > MinAllowedRoadAddressLength)
       throw new IllegalArgumentException(s"End calibration point linear location mismatch in $cp")
-  }
-
-  protected def calibrationPointCountCheck(before: Boolean, seq: Seq[RoadAddress]): Unit = {
-    val str = if (before) "before" else "after"
-    if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException(s"Too many starting calibration points $str transfer")
-    if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException(s"Too many starting calibration points $str transfer")
   }
 
   protected def checkSingleSideCodeForLink(before: Boolean, grouped: Map[Long, Seq[RoadAddress]]): Unit = {
