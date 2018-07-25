@@ -331,7 +331,6 @@ object DataFixture {
         val roadErrors = if (mappedTimeLines.size > 1) {
           val errors: Set[RoadAddress] = mappedTimeLines.sliding(2).flatMap { case Seq(first, second) => {
             if (first.addressLength != second.addressLength) {
-              println(s"Error in linear location check for road address with id ${first.addresses.head.id} ")
               first.addresses.toSet
             }
             else {
