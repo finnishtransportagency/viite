@@ -491,10 +491,10 @@
         return !_.isUndefined(target);
       }));
 
-
-      var sourceDataIds =_.map(getSources(), function(source) {
+      var sourceDataIds = _.map(getSources(), function (source) {
         return source.linkId.toString();
       });
+
       var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
       if(!_.isEmpty(data.sourceLinkIds) && !_.isEmpty(data.targetLinkIds)){

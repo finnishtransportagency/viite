@@ -42,7 +42,7 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     roadAddressTarget.size should be (4)
   }
 
-  test("test mapping complex situations") {
+  ignore("test mapping complex situations") {
     val roadAddressSource = sources.map(roadAddressLinkToRoadAddress(true))
     // Note: this mapping doesn't make sense, it's only for unit testing on complex situation
     val mapping = Seq(
