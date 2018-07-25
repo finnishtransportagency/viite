@@ -865,7 +865,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           )
           logger.info(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
           changed.foreach(addr => RoadAddressDAO.update(addr, None))
-          changed.nonEmpty
+          return true
         } catch {
           case ex: InvalidAddressDataException => logger.error(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!", ex)
         }
