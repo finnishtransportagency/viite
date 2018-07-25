@@ -321,7 +321,7 @@ object DataFixture {
         val mappedTimeLines: Seq[TimeLine] = dateTimeLines.flatMap {
           date =>
             val groupedAddresses:  Seq[TimeLine] = group._2.groupBy(g => (g.roadNumber, g.roadPartNumber)).map{ roadAddresses =>
-            val filteredAdresses: Seq[RoadAddress] = roadAddresses._2.filter{ ra => (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis < ra.endDate.get.getMillis)}
+            val filteredAdresses: Seq[RoadAddress] = roadAddresses._2.filter{ ra => ra.validTo.isEmpty && (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis < ra.endDate.get.getMillis)}
             val addrLength = filteredAdresses.map(_.endAddrMValue).sum-filteredAdresses.map(_.startAddrMValue).sum
               TimeLine(addrLength, filteredAdresses)
             }.filter(_.addresses.nonEmpty).toSeq
