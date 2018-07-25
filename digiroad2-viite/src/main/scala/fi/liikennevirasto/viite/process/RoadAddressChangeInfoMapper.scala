@@ -201,7 +201,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         s
       } catch {
         case ex: InvalidAddressDataException =>
-          logger.info(s"Invalid address data after transfer on ${s._1}, not applying changes (${ex.getMessage})")
+          logger.info(s"Invalid history address data after transfer on ${s._1}, not applying changes (${ex.getMessage})")
           s._1 -> history(s._1)
       }
     )

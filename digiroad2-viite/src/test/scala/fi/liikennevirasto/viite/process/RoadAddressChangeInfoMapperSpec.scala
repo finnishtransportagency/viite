@@ -272,11 +272,11 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val changes = Seq(
       //common parts
       ChangeInfo(Some(roadLinkId1), Some(roadLinkId1), 123L, 7, Some(0.535), Some(960.969), Some(0.0), Some(960.434), changesVVHTimestamp),
-      ChangeInfo(Some(roadLinkId2), Some(roadLinkId2), 456L, 7, Some(201.333), Some(0.0), Some(0.0), Some(201.333), changesVVHTimestamp),
+      ChangeInfo(Some(roadLinkId2), Some(roadLinkId2), 456L, 7, Some(201.986), Some(0.0), Some(0.0), Some(201.986), changesVVHTimestamp),
       ChangeInfo(Some(roadLinkId3), Some(roadLinkId3), 757L, 7, Some(0.0), Some(10.0), Some(0.0), Some(10.0), changesVVHTimestamp),
       //removed parts
       ChangeInfo(Some(roadLinkId1), None, 123L, 8, Some(0.0), Some(0.535), None, None, changesVVHTimestamp),
-      ChangeInfo(Some(roadLinkId2), None, 456L, 8, Some(201.333), Some(201.986), None, None, changesVVHTimestamp),
+      ChangeInfo(Some(roadLinkId2), None, 456L, 8, Some(201.986), Some(201.986), None, None, changesVVHTimestamp),
       ChangeInfo(Some(roadLinkId3), None, 757L, 8, Some(10.0), Some(31.001), None, None, changesVVHTimestamp)
     )
     val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
@@ -293,7 +293,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.sideCode should be (AgainstDigitizing)
     val addr2 = results(roadLinkId2).head
     addr2.startMValue should be (0.0)
-    addr2.endMValue should be (201.333)
+    addr2.endMValue should be (201.986)
     addr2.startAddrMValue should be (1400)
     addr2.endAddrMValue should be (1600)
     addr2.floating should be (false)
