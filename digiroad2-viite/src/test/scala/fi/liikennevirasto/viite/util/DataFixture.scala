@@ -312,55 +312,45 @@ object DataFixture {
   }
 
   def checkLinearLocation(): Unit = {
-
     OracleDatabase.withDynTransaction {
-//      val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
-//      elyCodes.foreach(ely => {
-        // We must get current and history separately => Nothing guarantees that the history ones haven't changed their ELY meanwhile
-        val roads = RoadAddressDAO.getAllRoadAddress
+      val roads = RoadAddressDAO.getAllRoadAddress
 
-          roads.grouped(25000).foreach { group =>
-          val current = group
-          val history = RoadAddressDAO.fetchByLinkId(group.map(_.linkId).toSet, includeCurrent = false)
-          val combined = current ++ history
+      roads.groupBy(_.commonHistoryId).foreach{ group =>
+        val dateTimeLines = group._2.map(_.startDate).distinct
 
-          val groupedRoads = combined.groupBy(_.commonHistoryId)
-          val roadErrors: Set[RoadAddress] = groupedRoads.mapValues { group =>
-            val dateTimeLines = group.map(_.startDate).distinct
+        val mappedTimeLines: Seq[TimeLine] = dateTimeLines.flatMap {
+          date =>
+            val groupedAddresses:  Seq[TimeLine] = group._2.groupBy(g => (g.roadNumber, g.roadPartNumber)).map{ roadAddresses =>
+            val filteredAdresses: Seq[RoadAddress] = roadAddresses._2.filter{ ra => (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis < ra.endDate.get.getMillis)}
+            val addrLength = filteredAdresses.map(_.endAddrMValue).sum-filteredAdresses.map(_.startAddrMValue).sum
+              TimeLine(addrLength, filteredAdresses)
+            }.filter(_.addresses.nonEmpty).toSeq
+            groupedAddresses
+        }
 
-            val mappedTimeLines: Map[Long, TimeLine] = dateTimeLines.map {
-              date =>
-                val roads = group.filter { ra => (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis <= ra.endDate.get.getMillis) }
-                TimeLine
-                date.get.getMillis -> TimeLine(roads.maxBy(_.endAddrMValue).endAddrMValue, roads)
-            }.toMap
-
-            if (mappedTimeLines.size > 1) {
-
-              val errors: Set[RoadAddress] = mappedTimeLines.values.sliding(2).flatMap { case Seq(first, second) => {
-
-                if (first.addressLength != second.addressLength) {
-                  println(s"Error in linear location check for road address with id ${first.addresses.head.id} ")
-                  first.addresses.toSet
-                }
-                else {
-                  Set.empty[RoadAddress]
-                }
-              }
-              }.toSet
-              errors
-            } else {
+        val roadErrors = if (mappedTimeLines.size > 1) {
+          val errors: Set[RoadAddress] = mappedTimeLines.sliding(2).flatMap { case Seq(first, second) => {
+            if (first.addressLength != second.addressLength) {
+              println(s"Error in linear location check for road address with id ${first.addresses.head.id} ")
+              first.addresses.toSet
+            }
+            else {
               Set.empty[RoadAddress]
             }
-          }.values.flatten.toSet
-          println(s"Found ${roadErrors.size} errors for road number ${group.head.roadNumber}")
-          val lastVersion = getLatestRoadNetworkVersionId
-          roadErrors.filter{ road =>
-              val error = RoadNetworkDAO.getRoadNetworkError(road.id, InconsistentLrmHistory)
-            error.isEmpty || error.get.network_version != lastVersion
-          }.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+          }
+          }.toSet
+          errors
+        } else {
+          Set.empty[RoadAddress]
         }
-//      })
+        println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.commonHistoryId}")
+        val lastVersion = getLatestRoadNetworkVersionId
+
+        roadErrors.filter { road =>
+          val error = RoadNetworkDAO.getRoadNetworkError(road.id, InconsistentLrmHistory)
+          error.isEmpty || error.get.network_version != lastVersion
+        }.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+      }
     }
   }
 
