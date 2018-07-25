@@ -491,13 +491,10 @@
         return !_.isUndefined(target);
       }));
 
-      var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
-        if(feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value){
-          return feature.linkId.toString();
-        }
-      }), function (source){
-        return !_.isUndefined(source);
+      var sourceDataIds = _.map(getSources(), function (feature) {
+        return feature.linkId.toString();
       });
+
       var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
       if(!_.isEmpty(data.sourceLinkIds) && !_.isEmpty(data.targetLinkIds)){
