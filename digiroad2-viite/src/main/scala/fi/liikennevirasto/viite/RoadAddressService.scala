@@ -799,14 +799,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
     val hasFloatings = withDynTransaction {
-      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = true,
+      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true,
         includeTerminated = false)
       RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
       val roadNumber = roadAddresses.head.roadNumber.toInt
       val roadPartNumber = roadAddresses.head.roadPartNumber.toInt
-      if(!recalculateRoadAddresses(roadNumber, roadPartNumber))
-        throw new RoadAddressException(s"Road address recalculation failed for $roadNumber / $roadPartNumber")
+      if(RoadAddressDAO.fetchFloatingRoadAddressesBySegment(roadNumber, roadPartNumber).filterNot(address => sourceIds.contains(address.linkId)).isEmpty) {
+        if (!recalculateRoadAddresses(roadNumber, roadPartNumber))
+          throw new RoadAddressException(s"Road address recalculation failed for $roadNumber / $roadPartNumber")
+      }
       RoadAddressDAO.fetchAllFloatingRoadAddresses().nonEmpty
     }
     if (!hasFloatings)
