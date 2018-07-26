@@ -675,6 +675,9 @@
           });
           eventbus.trigger('linkProperties:drawUnknowns');
         }
+        else{
+          rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        }
       });
       rootElement.on('click', 'button.toFloating',function() {
         applicationModel.addSpinner();
