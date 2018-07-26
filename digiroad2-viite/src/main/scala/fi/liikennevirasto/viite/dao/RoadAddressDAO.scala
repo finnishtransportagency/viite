@@ -1437,6 +1437,12 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
+  def getCommonHistoryIdsFromRoadAddress: Seq[Long] = {
+        sql"""
+         select distinct(ra.common_history_id)
+        from road_address ra order by ra.common_history_id asc
+      """.as[Long].list
+  }
 
   def getRoadAddressByFilter(queryFilter: String => String): Seq[RoadAddress] = {
     time(logger, "Get road addresses by filter") {
@@ -1534,6 +1540,10 @@ object RoadAddressDAO {
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
+  }
+
+  def withCommonHistoryIds(fromCommonId: Long, toCommonId: Long)(query: String): String = {
+    query + s" WHERE ra.common_history_id >= $fromCommonId AND ra.common_history_id <= $toCommonId"
   }
 
   /**

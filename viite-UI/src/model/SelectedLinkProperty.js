@@ -27,7 +27,7 @@
         eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
         previousAdjacents = [];
-        current = [];
+        setCurrent([]);
         sources = [];
         targets = [];
         dirty = false;
@@ -91,15 +91,15 @@
       if (canIOpen) {
         if(isSuravage){
           if(!_.isUndefined(linkId)){
-            current = singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId);
+            setCurrent(singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId));
           } else {
-            current = singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id);
+            setCurrent(singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id));
           }
         } else {
           if(!_.isUndefined(linkId)){
-            current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+            setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
           } else {
-            current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+            setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
           }
         }
 
@@ -121,9 +121,9 @@
         if (canIOpen) {
             applicationModel.toggleSelectionTypeFloating();
             if (!_.isUndefined(linkId)) {
-                current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+                setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
             } else {
-                current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+                setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
             }
             var currentFloatings = getCurrentFloatings();
             if (!_.isEmpty(currentFloatings)) {
@@ -161,14 +161,14 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual);
+          setCurrent(_.uniq(roadCollection.getByLinkId([linkId]), _.isEqual));
         } else {
-          current = _.uniq(roadCollection.getById([id]), _.isEqual);
+          setCurrent(_.uniq(roadCollection.getById([id]), _.isEqual));
         }
         if(current[0].getData().anomaly === Anomaly.GeometryChanged.value) {
-          current = _.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
-            return linkGroup.getData().linkId === linkId;
-          });
+          setCurrent(_.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
+              return linkGroup.getData().linkId === linkId;
+          }));
         }
 
         eventbus.trigger('linkProperties:activateAllSelections');
@@ -256,9 +256,9 @@
               };
 
               findAdjacents(current, selectedFeature);
-              current = _.sortBy(adjacentsArray, function (curr) {
+              setCurrent(_.sortBy(adjacentsArray, function (curr) {
                   return curr.getData().endAddressM;
-              });
+              }));
           }
           applicationModel.setContinueButton(true);
       };
@@ -455,7 +455,7 @@
 
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
-      current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
+      setCurrent(roadCollection.get(_.pluck(uniqueLinks, 'linkId')));
       _.forEach(current, function (selected) {
         selected.select();
       });
@@ -491,13 +491,10 @@
         return !_.isUndefined(target);
       }));
 
-      var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
-        if(feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value){
-          return feature.linkId.toString();
-        }
-      }), function (source){
-        return !_.isUndefined(source);
+      var sourceDataIds = _.map(getSources(), function (source) {
+        return source.linkId.toString();
       });
+
       var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
       if(!_.isEmpty(data.sourceLinkIds) && !_.isEmpty(data.targetLinkIds)){
@@ -528,13 +525,9 @@
       }), function (target){
         return !_.isUndefined(target);
       }));
-      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
-        if(feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value){
-          return feature.linkId;
-        }
-      }), function (source){
-        return !_.isUndefined(source);
-      });
+      var sourceDataIds = _.chain(get().concat(featuresToKeep)).map(function(feature) {
+        return feature.linkId;
+      }).uniq().value();
 
       var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds};
 
@@ -646,7 +639,7 @@
         eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
       }
       clearAndReset(false);
-      current = [];
+      setCurrent([]);
       eventbus.trigger('linkProperties:clearHighlights');
     };
 
@@ -666,7 +659,7 @@
         previousAdjacents = [];
         _.defer(function () {
             if (!_.isEmpty(featuresToKeep)) {
-                current = roadCollection.toRoadLinkModel(featuresToKeep);
+                setCurrent(roadCollection.toRoadLinkModel(featuresToKeep));
                 eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
             }
         });
