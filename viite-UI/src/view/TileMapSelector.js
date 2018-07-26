@@ -7,8 +7,12 @@
         '<li data-layerid="aerial" title="Ortokuvat">Ortokuvat</li>' +
         '<li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>' +
         '<li data-layerid="greyscale" title="Harmaasävy">Harmaasävykartta</li>' +
-        '<li data-layerid="propertyBorder" title="Kiinteistörajat">Kiinteistörajat</li>' +
-    '</ul>' +
+      '</ul>' +
+      '<div class="property-boundaries-visible-wrapper">' +
+        '<div class="checkbox">' +
+          '<label><input type="checkbox" name="propertyBoundariesVisible" value="propertyBoundariesVisible" checked="true" id="propertyBoundariesVisibleCheckbox">Näytä kiinteistörajat</label>' +
+        '</div>' +
+      '</div>' +
       '<div class="suravage-visible-wrapper">' +
         '<div class="checkbox">' +
           '<label><input type="checkbox" name="suravageVisible" value="suravageVisible" checked="true" id="suravageVisibleCheckbox">Näytä Suravage-Linkit</label>' +
@@ -20,12 +24,16 @@
         '</div>' +
         '</div>' +
     '</div>';
+    eventbus.trigger('tileMap:togglepropertyBorder', true);
     container.append(element);
     container.find('li').click(function(event) {
       container.find('li.selected').removeClass('selected');
       var selectedTileMap = $(event.target);
       selectedTileMap.addClass('selected');
       eventbus.trigger('tileMap:selected', selectedTileMap.attr('data-layerid'));
+    });
+    $('#propertyBoundariesVisibleCheckbox').change(function () {
+      eventbus.trigger('tileMap:togglepropertyBorder', this.checked);
     });
 
     $('#suravageVisibleCheckbox').change(function() {

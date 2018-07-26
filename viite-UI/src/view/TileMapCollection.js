@@ -7,6 +7,12 @@
       extent: [-548576, 6291456, 1548576, 8388608]
     };
 
+    var propertyLayerConfig = {
+      maxResolution: 5,
+      visible: true,
+      extent: [-548576, 6291456, 1548576, 8388608]
+    };
+
     var sourceConfig = {
       cacheSize: 4096,
       projection: 'EPSG:3067',
@@ -24,19 +30,19 @@
     };
 
     var aerialMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
+      url: 'wmts/maasto/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
     });
 
     var backgroundMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var propertyBorderMapConfig = _.merge({}, sourceConfig, {
-      url: 'kiinteisto/1.0.0/kiinteistotunnukset/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/kiinteisto/1.0.0/kiinteistojaotus/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var terrainMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var aerialMapLayer = new ol.layer.Tile(_.merge({
@@ -57,7 +63,7 @@
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, propertyBorderMapConfig))
-    }, layerConfig));
+    }, propertyLayerConfig));
     propertyBorderLayer.set('name','propertyBorderLayer');
 
     var terrainMapLayer = new ol.layer.Tile(_.merge({
@@ -73,7 +79,6 @@
           terrain: terrainMapLayer,
           propertyBorder : propertyBorderLayer
       };
-
     if(arcgisConfig) {
         var parser = new ol.format.WMTSCapabilities();
         var result = parser.read(arcgisConfig);
@@ -83,21 +88,6 @@
         greyscaleLayer.set('name', 'greyScaleLayer');
         tileMapLayers.greyscale = greyscaleLayer;
     }
-
-    /*
-
-     if(true) {
-     var parser = new ol.format.WMTSCapabilities();
-     var result = parser.read(arcgisConfig);
-     var config = {layer: "Taustakartat_Harmaasavy"};
-     var options = ol.source.WMTS.optionsFromCapabilities(result, config);
-     var propertyBorderLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
-     propertyBorderLayer.set('name', 'propertyBorder');
-     tileMapLayers.propertyBorder = greyscaleLayer;
-     }
-     */
-
-
 
     var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
@@ -109,8 +99,14 @@
       });
     };
 
-    selectMap('background');
+    var togglepropertyBorderVisibility = function(showPropertyBorder) {
+    propertyBorderLayer.setVisible(showPropertyBorder);
+    };
+
+
+    selectMap('background',true);
     eventbus.on('tileMap:selected', selectMap);
+    eventbus.on('tileMap:togglepropertyBorder', togglepropertyBorderVisibility);
 
     return {
       layers: _.map(tileMapLayers, function(layer) { return layer; })
