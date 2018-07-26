@@ -525,9 +525,9 @@
       }), function (target){
         return !_.isUndefined(target);
       }));
-      var sourceDataIds = _.chain(get().concat(featuresToKeep)).map(function(feature) {
-        return feature.linkId;
-      }).uniq().value();
+      var sourceDataIds = _.map(getSources(), function (source) {
+        return source.linkId;
+      });
 
       var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds};
 
