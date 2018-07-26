@@ -752,6 +752,27 @@ object RoadAddressDAO {
     }
   }
 
+  def fetchFloatingRoadAddressesBySegment(roadNumber: Long, roadPartNumber: Long, includesHistory: Boolean = false) = {
+    time(logger, "Fetch all floating road addresses") {
+      val history = if (!includesHistory) s" AND ra.END_DATE is null " else ""
+      val query =
+        s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+          ra.side_code, ra.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+          (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+          from ROAD_ADDRESS ra cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+          where t.id < t2.id and ra.floating = 1 $history and road_number = $roadNumber and road_part_number = $roadPartNumber and
+          valid_to is null
+          order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
+      """
+      queryList(query)
+    }
+  }
+
   def fetchAllRoadAddressErrors(includesHistory: Boolean = false) = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
