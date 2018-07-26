@@ -14,6 +14,7 @@
     var INTERNAL_SERVER_ERROR_500 = 500;
     var RoadLinkType = LinkValues.RoadLinkType;
     var Anomaly = LinkValues.Anomaly;
+    var LinkSource = LinkValues.LinkGeomSource;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -61,6 +62,14 @@
       var isMultiSelect = selectedData.length > 1;
         var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
         var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
+        var roadLinkSource = {roadLinkSource: _.chain(selectedData).map(function (s) {
+                return s.roadLinkSource;
+            }).uniq().map(function(a) {
+                return _.find(LinkSource, function (source) {
+                    return source.value === parseInt(a);
+                }).descriptionFI;
+            }).join(", ").value()
+        };
         if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
@@ -75,14 +84,14 @@
         var discontinuity = {discontinuity: extractUniqueValues(selectedData, 'discontinuity')};
         var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
         var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
-        var roadLinkSource = {roadLinkSource: extractUniqueValues(selectedData, 'roadLinkSource')};
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
+        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
       }
+      properties = _.merge(properties, roadLinkSource);
       return properties;
     };
 

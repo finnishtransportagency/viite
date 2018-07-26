@@ -18,12 +18,12 @@
     };
 
     root.LinkGeomSource = {
-        NormalLinkInterface:        {value: 1, description: "NormalLinkInterface"},
-        ComplimentaryLinkInterface: {value: 2, description: "ComplimentaryLinkInterface"},
-        SuravageLinkInterface:      {value: 3, description: "SuravageLinkInterface"},
-        FrozenLinkInterface:        {value: 4, description: "FrozenLinkInterface"},
-        HistoryLinkInterface:       {value: 5, description: "HistoryLinkInterface"},
-        Unknown:                    {value: 99, description: "Unknown"}
+        NormalLinkInterface:        {value: 1 , descriptionFI: "MML",            description: "NormalLinkInterface"},
+        ComplimentaryLinkInterface: {value: 2 , descriptionFI: "Täydentävä",     description: "ComplimentaryLinkInterface"},
+        SuravageLinkInterface:      {value: 3 , descriptionFI: "Suravage",       description: "SuravageLinkInterface"},
+        FrozenLinkInterface:        {value: 4 , descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
+        HistoryLinkInterface:       {value: 5 , descriptionFI: "MML historia",   description: "HistoryLinkInterface"},
+        Unknown:                    {value: 99, descriptionFI: "Tuntematon",     description: "Unknown"}
     };
 
     root.RoadLinkType = {
