@@ -428,7 +428,7 @@
 
     var zoomDoubleClickListener = function (event) {
       _.defer(function () {
-          if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey && selectedProjectLinkProperty.get().length === 0 &&
+          if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey && selectedProjectLinkProperty.get().length === 0 && selectSingleClick.getFeatures().getLength() === 0 &&
               applicationModel.getSelectedLayer() === 'roadAddressProject' && map.getView().getZoom() <= 13) {
           map.getView().setZoom(map.getView().getZoom() + 1);
         }
