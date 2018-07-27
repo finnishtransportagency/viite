@@ -375,23 +375,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, changedRoadLinks)
           val roadLinkMap = roadLinks.map(rl => rl.linkId -> rl).toMap
 
-          val (addressesToCreate, unchanged) = newRoadAddresses.flatMap(_._2.allSegments).toSeq.partition(_.id == NewRoadAddress)
+          val (addressesToCreate, addressesExceptNew) = newRoadAddresses.flatMap(_._2.allSegments).toSeq.partition(_.id == NewRoadAddress)
           val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
             r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
               r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
-          val removedIds = addresses.values.flatMap(_.allSegments).map(_.id).toSet -- (savedRoadAddresses ++ unchanged).map(x => x.id)
+          val removedIds = addresses.values.flatMap(_.allSegments).map(_.id).toSet -- (savedRoadAddresses ++ addressesExceptNew).map(x => x.id)
           removedIds.grouped(500).foreach(s => {
             RoadAddressDAO.expireById(s)
             logger.debug("Expired: " + s.mkString(","))
           })
-          val toFloating = unchanged.filter(ra => ra.floating)
+          val toFloating = addressesExceptNew.filter(ra => ra.floating)
             logger.info(s"Found ${toFloating.size} road addresses that were left floating after changes, saving them.")
             toFloating.foreach {
             ra => RoadAddressDAO.changeRoadAddressFloatingWithHistory(1, ra.id, None)
           }
 
-          checkRoadAddressFloatingWithoutTX(unchanged.map(_.linkId).toSet, float = true)
-          val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
+          checkRoadAddressFloatingWithoutTX(addressesExceptNew.map(_.linkId).toSet, float = true)
+          val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ addressesExceptNew.map(_.id).toSet
           val changedRoadParts = addressesToCreate.map(a => (a.roadNumber, a.roadPartNumber)).toSet
 
           val adjustedRoadParts = changedRoadParts.filter { x => recalculateRoadAddresses(x._1, x._2) }
