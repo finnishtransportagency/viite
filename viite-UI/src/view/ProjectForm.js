@@ -377,7 +377,6 @@
         eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
         disableFormInputs();
-        textFieldChangeHandler();
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -489,8 +488,7 @@
       var reserveFieldChangeHandler = function(eventData) {
           var textIsNonEmpty = $('#tie').val() !== "" && $('#aosa').val() !== ""  && $('#losa').val() !== "";
           var textIsAllNumbers = $.isNumeric($('#tie').val()) && $.isNumeric($('#aosa').val()) && $.isNumeric($('#losa').val());
-          if(textIsNonEmpty && textIsAllNumbers)
-            rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
+          rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement) && textIsNonEmpty && textIsAllNumbers);
       };
 
       var emptyFields = function (fieldIds) {
