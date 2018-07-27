@@ -377,6 +377,7 @@
         eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
         disableFormInputs();
+        textFieldChangeHandler();
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -485,6 +486,13 @@
         }
       };
 
+      var reserveFieldChangeHandler = function(eventData) {
+          var textIsNonEmpty = $('#tie').val() !== "" && $('#aosa').val() !== ""  && $('#losa').val() !== "";
+          var textIsAllNumbers = $.isNumeric($('#tie').val()) && $.isNumeric($('#aosa').val()) && $.isNumeric($('#losa').val());
+          if(textIsNonEmpty && textIsAllNumbers)
+            rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
+      };
+
       var emptyFields = function (fieldIds) {
         fieldIds.forEach(function (id) {
           $('#' + id).val('');
@@ -499,6 +507,16 @@
       });
       rootElement.on('change', '#lisatiedot', function () {
         textFieldChangeHandler();
+      });
+
+      rootElement.on('change', '#tie', function () {
+          reserveFieldChangeHandler();
+      });
+      rootElement.on('change', '#aosa', function () {
+          reserveFieldChangeHandler();
+      });
+      rootElement.on('change', '#losa', function () {
+          reserveFieldChangeHandler();
       });
 
       rootElement.on('click', '.btn-reserve', function () {
