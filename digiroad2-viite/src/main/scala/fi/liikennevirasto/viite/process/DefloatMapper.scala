@@ -59,14 +59,14 @@ object DefloatMapper extends RoadAddressMapper {
     }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
-    val joinedSource = fuseAddressByLinkId(orderedSource)
+    //VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple road_addresses as target
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
-    val targetCoeff = joinedSource.map(_.length).sum / orderedTarget.map(_.length).sum
-    val runningLength = (joinedSource.scanLeft(0.0)((len, link) => len+link.length) ++
+    val targetCoeff = orderedSource.map(_.length).sum / orderedTarget.map(_.length).sum
+    val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
       orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
-      val startSource = findStartLinearLocation(st, joinedSource)
-      val endSource = findEndLinearLocationSource(end, joinedSource, startSource._1.id)
+      val startSource = findStartLinearLocation(st, orderedSource)
+      val endSource = findEndLinearLocationSource(end, orderedSource, startSource._1.id)
       val startTarget = findStartLinearLocation(st/targetCoeff, orderedTarget)
       val endTarget = findEndLinearLocationTarget(end/targetCoeff, orderedTarget, startTarget._1.linkId)
       (startSource, endSource, startTarget, endTarget)}
