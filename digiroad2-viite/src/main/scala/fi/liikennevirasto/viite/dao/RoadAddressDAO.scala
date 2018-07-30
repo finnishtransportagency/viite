@@ -1354,7 +1354,10 @@ object RoadAddressDAO {
       })
       val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
       addressPS.setString(10,newCreatedBy)
-      addressPS.setString(11,newCreatedBy)
+      addressPS.setString(11,modifiedBy match {
+        case Some(creator) => creator
+        case None => ""
+      })
       val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
