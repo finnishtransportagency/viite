@@ -105,11 +105,11 @@ trait RoadAddressMapper {
 
   protected def commonPostTransferChecks(addresses: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
     addresses.sortBy(_.startAddrMValue).find(_.startCalibrationPoint.nonEmpty) match {
-      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
+      case Some(addr) => if(addr.startAddrMValue == addrMin) startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
       case _ =>
     }
     addresses.sortBy(_.startAddrMValue).reverse.find(_.endCalibrationPoint.nonEmpty) match {
-      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
+      case Some(addr) => if(addr.endAddrMValue == addrMax) endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
       case _ =>
     }
     checkSingleSideCodeForLink(false, addresses.groupBy(_.linkId))
