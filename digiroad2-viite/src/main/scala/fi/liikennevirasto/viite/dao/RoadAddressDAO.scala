@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.{PreparedStatement, Timestamp}
+import java.sql.Timestamp
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
@@ -1313,12 +1313,12 @@ object RoadAddressDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadAddresses: Iterable[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
+  def create(roadAddresses: Iterable[RoadAddress], createdBy : Option[String] = None, modifiedBy : Option[String] = None): Seq[Long] = {
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, road_number, road_part_number, " +
-      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, modified_by, " +
       "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, common_history_id," +
       "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
-      "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
+      "TO_DATE(?, 'YYYY-MM-DD'), ?, ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
       "?, ?, ?, ?, ?, ?)")
     val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
@@ -1353,7 +1353,7 @@ object RoadAddressDAO {
         case None => ""
       })
       val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
-      addressPS.setString(10, if (newCreatedBy == null) "-" else newCreatedBy)
+      addressPS.setString(10,newCreatedBy)
       val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(11, p1.x)
       addressPS.setDouble(12, p1.y)
