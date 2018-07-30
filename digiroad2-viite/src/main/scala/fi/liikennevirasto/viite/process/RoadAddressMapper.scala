@@ -45,12 +45,19 @@ trait RoadAddressMapper {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
     else if(mapping.sourceLinkId == mapping.targetLinkId) {
-      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
-      val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, endM)
-      (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).getOrElse(mapping.sourceStartM, mapping.sourceEndM)
+      if(mapping.coefficient <= 1 + MinAllowedRoadAddressLength){
+        val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, Math.max(mapping.targetEndM, endM))
+        (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
+      }
+      else{
+        val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, endM)
+        (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
+      }
+
     }
     else{
-      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).getOrElse(mapping.sourceStartM, mapping.sourceEndM)
       val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, endM)
       (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
     }
