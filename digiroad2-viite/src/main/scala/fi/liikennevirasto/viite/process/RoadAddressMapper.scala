@@ -8,8 +8,8 @@ import fi.liikennevirasto.viite._
 
 trait RoadAddressMapper {
 
-  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
-    roadAddressMapping.filter(_.matches(ra)).map(/*m => adjust(m, ra.startMValue, ra.endMValue)).map(*/adjMap => {
+  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping], allRoadAddresses : Seq[RoadAddress])(ra: RoadAddress): Seq[RoadAddress] = {
+    roadAddressMapping.filter(_.matches(ra, allRoadAddresses)).map(adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(adjMap))
           (ra.sideCode, truncateGeometriesWithAddressValues(ra, adjMap), splitRoadAddressValues(ra, adjMap))

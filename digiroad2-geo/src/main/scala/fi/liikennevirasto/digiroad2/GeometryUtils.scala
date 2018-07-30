@@ -113,8 +113,12 @@ object GeometryUtils {
     }
   }
 
-  private def to2DGeometry(p: Point) = {
+  def to2DGeometry(p: Point) = {
     p.copy(z = 0.0)
+  }
+
+  def to2DGeometry(geom: Seq[Point]) = {
+    geom.map(p => p.copy(z = 0.0))
   }
 
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
