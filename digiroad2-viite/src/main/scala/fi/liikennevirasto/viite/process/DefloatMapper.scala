@@ -59,7 +59,7 @@ object DefloatMapper extends RoadAddressMapper {
     }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
-    val joinedSource = fuseAddressByLinkId(orderedSource).groupBy(_.linkId).values.flatMap( links => links.sortBy(_.startMValue)).toSeq
+    val joinedSource = fuseAddressByLinkId(orderedSource)
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
     val targetCoeff = joinedSource.map(_.length).sum / orderedTarget.map(_.length).sum
     val runningLength = (joinedSource.scanLeft(0.0)((len, link) => len+link.length) ++
@@ -129,7 +129,7 @@ object DefloatMapper extends RoadAddressMapper {
 
   private def applySideCode(mValue: Double, linkLength: Double, sideCode: SideCode) = {
     sideCode match {
-      case SideCode.AgainstDigitizing => mValue
+      case SideCode.AgainstDigitizing => linkLength - mValue
       case SideCode.TowardsDigitizing => mValue
       case _ => throw new InvalidAddressDataException(s"Unhandled sidecode $sideCode")
     }
