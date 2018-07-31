@@ -261,9 +261,11 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceId: 
     * (overlap amount is the overlapping length divided by the smallest length)
    */
   def matches(roadAddress: RoadAddress, allRoadAddresses: Seq[RoadAddress]): Boolean = {
-    if(allRoadAddresses.count(_.linkId == roadAddress.linkId) > 1){
+    //Trasfer floatings that have sourceId defined
+    if(allRoadAddresses.count(_.linkId == roadAddress.linkId) > 1 && sourceId > 0){
       sourceId == roadAddress.id
     }
+    //Apply changes has always sourceId = 0
     else{
       sourceLinkId == roadAddress.linkId &&
         (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
