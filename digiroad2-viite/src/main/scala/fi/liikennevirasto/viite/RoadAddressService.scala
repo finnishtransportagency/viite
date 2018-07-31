@@ -378,7 +378,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             logger.debug("Expired: " + s.mkString(","))
           })
           unchanged.filter(ra => ra.floating).foreach {
-            ra => RoadAddressDAO.changeRoadAddressFloating(1, ra.id, None, FloatingReason.ApplyChangesBoundingBox)
+            ra => RoadAddressDAO.changeRoadAddressFloating(1, ra.id, None, FloatingReason.ApplyChanges)
           }
 
           checkRoadAddressFloatingWithoutTX(unchanged.map(_.linkId).toSet, float = true)
