@@ -559,7 +559,7 @@
           });
           rootElement.find('.link-properties button.calculate').attr('disabled', true);
           rootElement.find('.link-properties button.cancel').attr('disabled', false);
-          rootElement.find('.link-properties button.continue').attr('disabled', true);
+          rootElement.find('.link-properties button.continue').attr('disabled', false);
           applicationModel.setActiveButtons(true);
           $('[id*="additionalSourceButton"]').click(sources,function(event) {
             processAdditionalFloatings(sources, event.currentTarget.value);
@@ -668,7 +668,10 @@
         applicationModel.setActiveButtons(true);
       });
       rootElement.on('click', '.link-properties button.continue',function() {
-        if (selectedLinkProperty.continueSelectUnknown()) {
+          $('[id^=additionalSource]').remove();
+          $('#control-label-floating').remove();
+          $('#adjacentsData').empty();
+          eventbus.trigger('linkProperties:clearIndicators');
           eventbus.once('linkProperties:unknownsTreated', function () {
             rootElement.find('.link-properties button.continue').attr('disabled', true);
             eventbus.trigger('linkProperties:deselectFeaturesSelected');
@@ -679,10 +682,6 @@
             eventbus.trigger('linkProperties:deactivateDoubleClick');
           });
           eventbus.trigger('linkProperties:drawUnknowns');
-        }
-        else{
-          rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        }
       });
       rootElement.on('click', 'button.toFloating',function() {
         applicationModel.addSpinner();
@@ -711,11 +710,6 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        if (!applicationModel.isContinueButton()) {
-          rootElement.find('.link-properties button.continue').attr('disabled', true);
-        } else {
-          rootElement.find('.link-properties button.continue').attr('disabled', false);
-        }
         applicationModel.setActiveButtons(true);
         eventbus.trigger('layer:enableButtons', false);
       });
