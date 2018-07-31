@@ -272,10 +272,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val targetIds = data.targetIds
       val user = userProvider.getCurrentUser()
 
-      val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
       try {
-        val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses, user.username)
-        transferredRoadAddresses
+        val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
+        roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses, user.username)
       }
       catch {
         case e: RoadAddressException =>
@@ -779,6 +778,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         }
       } catch {
         case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
+      }
+    }
+  }
+
+  put("/roadlinks/roadaddress/tofloating/:linkId") {
+    time(logger, "PUT request for /roadaddress/tofloating") {
+      val linkId = params("linkId").toLong
+      try{
+        roadAddressService.convertRoadAddressToFloating(linkId)
+      }
+      catch{
+        case _: Exception => BadRequest(s"an error occurred when trying to convert linkId $linkId to floating")
       }
     }
   }
