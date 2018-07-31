@@ -79,12 +79,19 @@
     };
 
     var roadTypeShown = true;
+
     var isDirty = function() {
       return _.any(models, function(model) { return model.isDirty(); });
     };
     var setZoomLevel = function(level) {
       zoom.level = level;
     };
+
+    var roadsVisibility = true;
+
+    function toggleRoadVisibility(){
+      roadsVisibility = !roadsVisibility;
+    }
 
     function setSelectedTool(tool) {
       if (tool !== selectedTool) {
@@ -145,6 +152,10 @@
       },
       zoom: zoom,
       setZoomLevel: setZoomLevel,
+      getRoadVisibility: function(){
+          return roadsVisibility;
+      },
+      toggleRoadVisibility: toggleRoadVisibility,
       setMinDirtyZoomLevel: function(level) {
         minDirtyZoomLevel = level;
       },

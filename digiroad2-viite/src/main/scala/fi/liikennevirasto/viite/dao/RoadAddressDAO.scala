@@ -12,7 +12,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
@@ -85,7 +86,7 @@ object CalibrationCode {
   case object AtBeginning extends CalibrationCode { def value = 2 }
   case object AtBoth extends CalibrationCode { def value = 3 }
 }
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
 
 sealed trait TerminationCode {
   def value: Int
@@ -119,7 +120,7 @@ trait BaseRoadAddress {
   def startMValue: Double
   def endMValue: Double
   def sideCode: SideCode
-  def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])
+  def calibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint])
   def floating: Boolean
   def geometry: Seq[Point]
   def ely: Long
@@ -203,6 +204,16 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
+  }
+
+  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+    val calibrationPointSource = if (id == noRoadAddressId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
+    calibrationPoints match {
+      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
+      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)) , Option.empty[ProjectLinkCalibrationPoint])
+      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
+    }
   }
 }
 
