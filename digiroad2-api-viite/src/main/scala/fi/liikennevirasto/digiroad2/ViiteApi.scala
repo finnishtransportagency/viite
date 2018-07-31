@@ -150,7 +150,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for /roadlinks/$linkId") {
       val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
       val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
-      foldSegments(roadLinks).orElse(foldSegments(projectLinks)).map(midPoint).getOrElse(
+      foldSegments(roadLinks)
+        .orElse(foldSegments(projectLinks))
+        .map(midPoint)
+        .getOrElse(
         Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
   }
@@ -1143,8 +1146,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private def midPoint(link: RoadAddressLinkLike) = {
-    Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(link.geometry,
-      link.length / 2.0)) ++ (link match {
+    Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(link.geometry, link.length / 2.0).getOrElse(Point(link.geometry.head.x, link.geometry.head.y))) ++ (link match {
       case l: RoadAddressLink => roadAddressLinkToApi(l)
       case l: ProjectAddressLink => projectAddressLinkToApi(l)
     })
