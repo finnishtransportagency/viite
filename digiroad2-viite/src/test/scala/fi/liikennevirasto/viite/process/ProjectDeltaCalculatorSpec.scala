@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
@@ -48,9 +49,13 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue + project.id, roadAddress.endAddrMValue + project.id, roadAddress.startDate,
       roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status,
+      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating=false, roadAddress.geometry, project.id, status,
       roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely, false,
       None, 748800L)
+  }
+
+  private def createCalibrationPoints(a: RoadAddress): (Option[ProjectLinkCalibrationPoint] ,Option[ProjectLinkCalibrationPoint] ) = {
+    (Option.empty[ProjectLinkCalibrationPoint], Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectLinkSource)))
   }
 
   test("Multiple transfers on single road part") {
@@ -106,7 +111,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("2 track termination + transfer") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i*10, 10L)).map(l => l.copy(track = Track.LeftSide, id=l.id+1))
-    val terminations = Seq(addresses.head, addresses2.head)
+    val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.head), toProjectLink(project, LinkStatus.Terminated)(addresses2.head))
     val transfers = (addresses.tail ++ addresses2.tail).map(t => {
       val d = if (t.track == Track.RightSide) 12 else 10
       (t, toProjectLink(project, LinkStatus.Transfer)(t.copy(startAddrMValue = t.startAddrMValue - d,
@@ -134,7 +139,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("unchanged + 2 track termination + different commonHistoryIds, commonHistoryIds should not be considered on partition") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
-    val terminations = Seq(addresses.last, addresses2.last)
+    val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
     val unchanged = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
     val termPart = ProjectDeltaCalculator.partition(terminations)
@@ -155,7 +160,9 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("unchanged + 2 track termination + transfer") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i*10, 10L)).map(l => l.copy(track = Track.LeftSide, id=l.id+1))
-    val terminations = Seq(addresses(4), addresses(5), addresses2(5), addresses2(6))
+    val terminations = Seq(addresses(4), addresses(5), addresses2(5), addresses2(6)).map(t => {
+      toProjectLink(project, LinkStatus.Terminated)(t)
+    })
     val unchanged = (addresses.take(3) ++ addresses2.take(4)).map(toTransition(project, LinkStatus.UnChanged))
     val transfers = (addresses.drop(5) ++ addresses2.drop(6)).map(toTransition(project, LinkStatus.Transfer)).map {
       case (a, pl) =>
@@ -259,12 +266,14 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("Calculate delta for split suravage link") {
     runWithRollback {
       val reservationId = Sequences.nextViitePrimaryKeySeqValue
-      val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
+      val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue).sorted
       val project = RoadAddressProject(Sequences.nextViitePrimaryKeySeqValue, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(), None , None)
       ProjectDAO.createRoadAddressProject(project)
+
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
             values ($reservationId, 6591, 1, ${project.id}, '-')
           """.execute
+
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
             START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
@@ -278,7 +287,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(1)},${project.id},'0','5','6591','1','0','62','silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'1','0','1',${ids(0)},'6550673','',
+            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.UnChanged.value},'0','1',${ids(0)},'6550673','',
             '3','0',63.926,'499972936','0','3')""".execute
 
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -286,7 +295,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(2)},${project.id},'0','5','6591','1','62','85','silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'2','0','1',${ids(0)},'6550673','',
+            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.New.value},'0','1',${ids(0)},'6550673','',
             '3',63.926,307.99,'499972936','0','3')""".execute
 
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -294,7 +303,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(3)},${project.id},'0','5','6591','1','62','85','silari',null,
-            to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936','',
+            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.Terminated.value},'2','9',${ids(0)},'499972936','',
             '3',63.752,86.818,'6550673','0','1')""".execute
 
       val delta = ProjectDeltaCalculator.delta(project)
@@ -304,11 +313,14 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       val term = delta.terminations.head
       term.startAddrMValue should be (62)
       term.endAddrMValue should be (85)
-      term.id should be (ids(0))
+      term.id should be (ids(3))
       val (uncSource, uncTarget) = delta.unChanged.mapping.head
       uncSource.startAddrMValue should be (0)
       uncSource.endAddrMValue should be (62)
       uncSource.id should be (ids(0))
+      uncTarget.startAddrMValue should be (0)
+      uncTarget.endAddrMValue should be (62)
+      uncTarget.id should be (ids(1))
       val cre = delta.newRoads.head
       cre.startAddrMValue should be (62)
       cre.endAddrMValue should be (85)
@@ -366,5 +378,27 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       else
         to.discontinuity should be (MinorDiscontinuity)
     }
+  }
+
+  test("Partitioner should separate links containing calibration points whose origin is ProjectLink") {
+    val addresses = ( 0 to 9 ).map(i => {
+      createRoadAddress(i*2, 2L)
+    })
+   val projectLinksWithCp =  addresses.map(a => {
+      val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
+      if(a.id == 10L)
+        (a, projectLink.copy(calibrationPoints = createCalibrationPoints(a)))
+     else
+      (a, projectLink)
+    })
+    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp)
+    partitionCp.size should be(2)
+    val firstSection = partitionCp.head
+    val secondSection = partitionCp.last
+    val cutPoint = projectLinksWithCp.find(_._2.roadAddressId == 10L).get._2
+    firstSection._1.startMAddr should be (projectLinksWithCp.head._2.startAddrMValue)
+    firstSection._1.endMAddr should be (cutPoint.endAddrMValue)
+    secondSection._1.startMAddr should be (cutPoint.endAddrMValue)
+    secondSection._1.endMAddr should be (projectLinksWithCp.last._2.endAddrMValue)
   }
 }
