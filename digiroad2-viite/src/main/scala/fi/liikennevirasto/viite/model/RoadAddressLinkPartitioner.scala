@@ -12,6 +12,7 @@ object RoadAddressLinkPartitioner extends GraphPartitioner {
       link.roadLinkType.equals(RoadLinkType.FloatingRoadLinkType), link.roadLinkSource.equals(LinkGeomSource.ComplimentaryLinkInterface), link.roadLinkSource.equals(LinkGeomSource.SuravageLinkInterface)
       )
     }
+
     val clusters = for (linkGroup <- linkGroups.values.toSeq;
                         cluster <- clusterLinks(linkGroup, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)) yield cluster
 

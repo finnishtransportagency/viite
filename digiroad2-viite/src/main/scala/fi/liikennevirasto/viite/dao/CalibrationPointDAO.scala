@@ -4,14 +4,15 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-/**
-  * Created by pedrosag on 04-10-2017.
-  */
 object CalibrationPointDAO {
 
   trait CalibrationPointMValues {
     def segmentMValue: Double
     def addressMValue: Long
+  }
+
+  trait BaseCalibrationPoint extends CalibrationPointMValues{
+    def linkId: Long
   }
 
   case class UserDefinedCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
