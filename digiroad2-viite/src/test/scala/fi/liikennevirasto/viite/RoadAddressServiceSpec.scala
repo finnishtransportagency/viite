@@ -725,7 +725,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       // pre-checks
       RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true) should have size (3)
       val mapping = DefloatMapper.createAddressMap(sourceLinks, targetLinks)
-      mapping should have size (2)
+      mapping should have size (3)
 
       val roadLinks = targetLinks.map(roadAddressLinkToRoadLink)
       when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(Set(1392315L))).thenReturn((roadLinks, historyLinks.filter(_.linkId == 1392315L)))
