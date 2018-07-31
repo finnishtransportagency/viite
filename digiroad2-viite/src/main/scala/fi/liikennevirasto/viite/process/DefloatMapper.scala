@@ -256,17 +256,18 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceId: 
   override def toString: String = {
     s"$sourceLinkId -> $targetLinkId: $sourceStartM-$sourceEndM ->  $targetStartM-$targetEndM, $sourceGeom -> $targetGeom"
   }
+
   /**
     * Test if this mapping matches the road address: Road address is on source link and overlap match is at least 99,9%
     * (overlap amount is the overlapping length divided by the smallest length)
-   */
+    */
   def matches(roadAddress: RoadAddress, allRoadAddresses: Seq[RoadAddress]): Boolean = {
-    //Trasfer floatings that have sourceId defined
-    if(allRoadAddresses.count(_.linkId == roadAddress.linkId) > 1 && sourceId > 0){
+    // Transfer floatings that have sourceId defined
+    if (allRoadAddresses.count(_.linkId == roadAddress.linkId) > 1 && sourceId > 0) {
       sourceId == roadAddress.id
     }
-    //Apply changes has always sourceId = 0
-    else{
+    // Apply changes has always sourceId = 0
+    else {
       sourceLinkId == roadAddress.linkId &&
         (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
         GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
