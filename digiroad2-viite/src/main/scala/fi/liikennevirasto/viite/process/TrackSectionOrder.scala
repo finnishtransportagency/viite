@@ -7,7 +7,8 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.LinkStatus._
-import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLinkCalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 
 object TrackSectionOrder {
@@ -68,10 +69,21 @@ object TrackSectionOrder {
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
+
+      val startCp = startCalibrationPoint.getOrElse(pl.calibrationPoints._1) match {
+        case None => Option.empty[ProjectLinkCalibrationPoint]
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadAddressId))
+      }
+
+      val endCP = endCalibrationPoint.getOrElse(pl.calibrationPoints._2) match {
+        case None => Option.empty[ProjectLinkCalibrationPoint]
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadAddressId))
+      }
+
       pl.copy(sideCode = sideCode.getOrElse(pl.sideCode),
         startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
         endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue),
-        calibrationPoints = (startCalibrationPoint.getOrElse(pl.calibrationPoints._1), endCalibrationPoint.getOrElse(pl.calibrationPoints._2))
+        calibrationPoints = (startCp, endCP)
       )
     }
     def firstPoint(pl: ProjectLink) = {
