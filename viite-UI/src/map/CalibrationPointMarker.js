@@ -6,14 +6,13 @@
       externalGraphic: "images/calibration-point.svg"
     };
     var firstCustomCalibrationPointValue=4;
-    var createCalibrationPointMarker = function() {
-      if(!_.isUndefined(data.points)){
+    var createCalibrationPointMarker = function () {
+      if (!_.isUndefined(data.points)) {
         var marker = new ol.Feature({
             geometry: new ol.geom.Point([data.points.x, data.points.y])
           }
         );
-
-
+        
         var calibrationPointMarkerStyle = new ol.style.Style({
           image: new ol.style.Icon({
             src: "images/calibration-point.svg",
