@@ -126,9 +126,10 @@ class DefloatMapperSpec extends FunSuite with Matchers{
       createRoadAddressLink(0L, 5172091L, sources.tail.head.geometry ++ sources.head.geometry, 0, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
     )
     val mappings = DefloatMapper.createAddressMap(sources, targets)
-    mappings.exists(m => m.sourceStartM == 0.0 && m.targetStartM == 0.0) should be (true)
-    mappings.exists(m => m.sourceEndM == 604.285 && m.targetEndM == 604.285) should be (true)
-    mappings.size should be (1)
+    //fuse is not applying anymore for same linkId, as a result the targets are not being fused
+    mappings.exists(m => m.targetStartM == 0.0 && m.targetEndM == 101.0) should be (true)
+    mappings.exists(m => m.targetStartM == 101.0 && m.targetEndM == 604.285) should be (true)
+    mappings.size should be (2)
     val mapped = sources.map(roadAddressLinkToRoadAddress(true)).flatMap(DefloatMapper.mapRoadAddresses(mappings, sources.map(roadAddressLinkToRoadAddress(true))))
     mapped.exists(r =>
       mapped.filterNot(_ == r).exists(r2 =>
