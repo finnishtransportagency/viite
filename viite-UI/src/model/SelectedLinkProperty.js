@@ -50,32 +50,34 @@
       current = data;
     };
 
-    var extractDataForDisplay = function(selectedData) {
+    var extractDataForDisplay = function (selectedData) {
 
-          var extractUniqueValues = function(selectedData, property) {
-              return _.chain(selectedData)
-                  .pluck(property)
-                  .uniq()
-                  .value()
-                  .join(', ');
-          };
+      var extractUniqueValues = function (selectedData, property) {
+        return _.chain(selectedData)
+          .pluck(property)
+          .uniq()
+          .value()
+          .join(', ');
+      };
 
       var isMultiSelect = selectedData.length > 1;
-        var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
-        var properties =  _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
-        var roadLinkSource = {roadLinkSource: _.chain(selectedData).map(function (s) {
-                return s.roadLinkSource;
-            }).uniq().map(function(a) {
-                return _.find(LinkSource, function (source) {
-                    return source.value === parseInt(a);
-                }).descriptionFI;
-            }).join(", ").value()
-        };if (isMultiSelect) {
+      var selectedLinks = {selectedLinks: _.pluck(selectedData, 'linkId')};
+      var properties = _.merge(_.cloneDeep(_.first(selectedData)), selectedLinks);
+      var roadLinkSource = {
+        roadLinkSource: _.chain(selectedData).map(function (s) {
+          return s.roadLinkSource;
+        }).uniq().map(function (a) {
+          return _.find(LinkSource, function (source) {
+            return source.value === parseInt(a);
+          }).descriptionFI;
+        }).join(", ").value()
+      };
+      if (isMultiSelect) {
         var filteredData = _.chain(selectedData)
-                  .sortBy(function(sd){
-                      return sd.endAddressM;
-                  }).last().value();
-              varambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
+          .sortBy(function (sd) {
+            return sd.endAddressM;
+          }).last().value();
+        var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate'];
         properties = _.omit(properties, ambiguousFields);
@@ -94,8 +96,9 @@
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        properties =_.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
-      }properties = _.merge(properties, roadLinkSource);
+        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
+      }
+      properties = _.merge(properties, roadLinkSource);
       return properties;
     };
 
