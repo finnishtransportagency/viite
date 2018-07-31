@@ -67,10 +67,13 @@
         roadLinkSource: _.chain(selectedData).map(function (s) {
           return s.roadLinkSource;
         }).uniq().map(function (a) {
-          return _.find(LinkSource, function (source) {
-            return source.value === parseInt(a);
-          }).descriptionFI;
-        }).join(", ").value()
+          var linkGeom = _.find(LinkSource, function (source) {
+              return source.value === parseInt(a);
+          });
+          if(_.isUndefined(linkGeom))
+            return LinkSource.Unknown.descriptionFI;
+          else return linkGeom.descriptionFI;
+        }).uniq().join(", ").value()
       };
       if (isMultiSelect) {
         var filteredData = _.chain(selectedData)

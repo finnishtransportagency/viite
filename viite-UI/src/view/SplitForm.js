@@ -56,10 +56,14 @@
       var roadLinkSources = _.chain(selected).map(function(s) {
           return s.roadLinkSource;
       }).uniq().map(function(a) {
-          return _.find(LinkGeomSource, function (source) {
+        var linkGeom = _.find(LinkGeomSource, function (source) {
               return source.value === parseInt(a);
-          }).descriptionFI;
-      }).join(", ").value();
+          });
+        if(_.isUndefined(linkGeom))
+          return LinkGeomSource.Unknown.descriptionFI;
+        else
+          return linkGeom.descriptionFI;
+      }).uniq().join(", ").value();
       return _.template('' +
         '<header>' +
         formCommon.title(project.name) +

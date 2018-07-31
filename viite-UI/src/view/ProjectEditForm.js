@@ -48,10 +48,14 @@
       var roadLinkSources = _.chain(selected).map(function(s) {
         return s.roadLinkSource;
       }).uniq().map(function(a) {
-        return _.find(LinkSources, function (source) {
+        var linkGeom = _.find(LinkSources, function (source) {
             return source.value === parseInt(a);
-        }).descriptionFI;
-      }).join(", ").value();
+        });
+        if(_.isUndefined(linkGeom))
+          return LinkSources.Unknown.descriptionFI;
+        else
+          return linkGeom.descriptionFI;
+      }).uniq().join(", ").value();
 
       var selection = formCommon.selectedData(selected);
       return _.template('' +
