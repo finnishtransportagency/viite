@@ -1169,7 +1169,7 @@
       var selectedFloatingIds = _.pluck(selectedLinkProperty.getFeaturesToKeepFloatings(), 'linkId');
 
       _.each(allFeatures, function(feature){
-          if (feature.linkData.anomaly === 1 || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === -1))
+          if (feature.linkData.anomaly === Anomaly.NoAddressGiven.value || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value))
           pickRoadsLayer.getSource().addFeature(feature);
       });
       pickRoadsLayer.setOpacity(1);

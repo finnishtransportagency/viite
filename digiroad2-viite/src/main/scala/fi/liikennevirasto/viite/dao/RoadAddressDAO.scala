@@ -763,6 +763,27 @@ object RoadAddressDAO {
     }
   }
 
+  def fetchFloatingRoadAddressesBySegment(roadNumber: Long, roadPartNumber: Long, includesHistory: Boolean = false) = {
+    time(logger, "Fetch all floating road addresses") {
+      val history = if (!includesHistory) s" AND ra.END_DATE is null " else ""
+      val query =
+        s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+          ra.side_code, ra.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+          (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+          from ROAD_ADDRESS ra cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+          where t.id < t2.id and ra.floating = 1 $history and road_number = $roadNumber and road_part_number = $roadPartNumber and
+          valid_to is null
+          order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
+      """
+      queryList(query)
+    }
+  }
+
   def fetchAllRoadAddressErrors(includesHistory: Boolean = false) = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
@@ -1448,6 +1469,12 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
+  def getCommonHistoryIdsFromRoadAddress: Seq[Long] = {
+        sql"""
+         select distinct(ra.common_history_id)
+        from road_address ra order by ra.common_history_id asc
+      """.as[Long].list
+  }
 
   def getRoadAddressByFilter(queryFilter: String => String): Seq[RoadAddress] = {
     time(logger, "Get road addresses by filter") {
@@ -1521,7 +1548,7 @@ object RoadAddressDAO {
       s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
-  def withLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long])(query: String): String = {
+  def withLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double])(query: String): String = {
     val startFilter = startM match {
       case Some(s) => s" AND ra.start_Measure <= $s"
       case None => ""
@@ -1545,6 +1572,10 @@ object RoadAddressDAO {
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
+  }
+
+  def withCommonHistoryIds(fromCommonId: Long, toCommonId: Long)(query: String): String = {
+    query + s" WHERE ra.common_history_id >= $fromCommonId AND ra.common_history_id <= $toCommonId"
   }
 
   /**
