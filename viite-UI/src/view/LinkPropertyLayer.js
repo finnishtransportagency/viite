@@ -822,9 +822,9 @@
         suravageRoadLayer.setVisible(visibility);
         suravageMarkerLayer.setVisible(visibility);
       });
-        eventListener.listenTo(eventbus, 'allRoads:toggleVisibility', function (visibility) {
-            toggleLayerVisibility(visibility, true);
-        });
+      eventListener.listenTo(eventbus, 'allRoads:visibilityChanged', function () {
+        toggleLayerVisibility(applicationModel.getRoadVisibility(), true);
+      });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
@@ -1169,7 +1169,7 @@
       var selectedFloatingIds = _.pluck(selectedLinkProperty.getFeaturesToKeepFloatings(), 'linkId');
 
       _.each(allFeatures, function(feature){
-          if (feature.linkData.anomaly === 1 || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === -1))
+          if (feature.linkData.anomaly === Anomaly.NoAddressGiven.value || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value))
           pickRoadsLayer.getSource().addFeature(feature);
       });
       pickRoadsLayer.setOpacity(1);
