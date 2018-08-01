@@ -8,8 +8,8 @@ import fi.liikennevirasto.viite._
 
 trait RoadAddressMapper {
 
-  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
-    roadAddressMapping.filter(_.matches(ra)).map(/*m => adjust(m, ra.startMValue, ra.endMValue)).map(*/adjMap => {
+  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping], allRoadAddresses : Seq[RoadAddress])(ra: RoadAddress): Seq[RoadAddress] = {
+    roadAddressMapping.filter(_.matches(ra, allRoadAddresses)).map(adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(adjMap))
           (ra.sideCode, truncateGeometriesWithAddressValues(ra, adjMap), splitRoadAddressValues(ra, adjMap))
@@ -38,19 +38,23 @@ trait RoadAddressMapper {
   /** Used when road address span is larger than mapping: road address must be split into smaller parts
     *
     * @param roadAddress Road address to split
-    * @param mapping Mapping entry that may or may not have smaller or larger span than road address
+    * @param mapping     Mapping entry that may or may not have smaller or larger span than road address
     * @return A pair of address start and address end values this mapping and road address applies to
     */
   private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
-    if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
+    if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM)) {
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
-    else if(mapping.sourceLinkId == mapping.targetLinkId) {
-      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
-      val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, Math.max(mapping.targetEndM, endM))
-      (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
-    }
-    else{
-      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
+    } else if (mapping.sourceLinkId == mapping.targetLinkId) {
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue), (mapping.sourceStartM, mapping.sourceEndM)).getOrElse(mapping.sourceStartM, mapping.sourceEndM)
+      if (mapping.coefficient <= 1 + MinAllowedRoadAddressLength) {
+        val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, Math.max(mapping.targetEndM, endM))
+        (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
+      } else {
+        val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, endM)
+        (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
+      }
+    } else {
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue), (mapping.sourceStartM, mapping.sourceEndM)).getOrElse(mapping.sourceStartM, mapping.sourceEndM)
       val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, endM)
       (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
     }
@@ -105,11 +109,11 @@ trait RoadAddressMapper {
 
   protected def commonPostTransferChecks(addresses: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
     addresses.sortBy(_.startAddrMValue).find(_.startCalibrationPoint.nonEmpty) match {
-      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
+      case Some(addr) => if (addr.startAddrMValue == addrMin) startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, addresses)
       case _ =>
     }
     addresses.sortBy(_.startAddrMValue).reverse.find(_.endCalibrationPoint.nonEmpty) match {
-      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
+      case Some(addr) => if (addr.endAddrMValue == addrMax) endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
       case _ =>
     }
     checkSingleSideCodeForLink(false, addresses.groupBy(_.linkId))
@@ -121,7 +125,6 @@ trait RoadAddressMapper {
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
     if (!addresses.forall(ra => ra.endAddrMValue == addrMax || addresses.exists(_.startAddrMValue == ra.endAddrMValue)))
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-
   }
 
   def preTransferChecks(addresses: Seq[RoadAddress]): Unit = {
