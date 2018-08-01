@@ -192,15 +192,15 @@ package object util {
     if (status == LinkStatus.New) {
       ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-        roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-        roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status, roadAddress.roadType,
+        roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+        roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating=false, roadAddress.geometry, project.id, status, roadAddress.roadType,
         roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely,false,
         None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
     } else {
       ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-        roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-        roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status, roadAddress.roadType,
+        roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+        roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating=false, roadAddress.geometry, project.id, status, roadAddress.roadType,
         roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely,false,
         None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
     }
@@ -209,8 +209,8 @@ package object util {
   def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating=false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.ely,false,
       None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
   }
@@ -227,7 +227,7 @@ package object util {
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
-      rl.sideCode, (rl.startCalibrationPoint, rl.endCalibrationPoint), floating = false, rl.geometry, project.id,
+      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadAddressId), floating = false, rl.geometry, project.id,
       LinkStatus.NotHandled, RoadType.PublicRoad,
       rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, rl.elyCode, false,
       None, rl.vvhTimeStamp)
@@ -237,7 +237,7 @@ package object util {
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
-      rl.sideCode, (rl.startCalibrationPoint, rl.endCalibrationPoint), floating=false, rl.geometry, project.id,
+      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadAddressId), floating=false, rl.geometry, project.id,
       rl.status, RoadType.PublicRoad,
       rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), 0, rl.elyCode,false,
       None, rl.vvhTimeStamp)

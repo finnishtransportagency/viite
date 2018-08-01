@@ -33,12 +33,14 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       else
         None
 
+    val calibrationPoints = pl.toCalibrationPoints()
+
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
       pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, roadLinkType, ConstructionType.UnknownConstructionType,
       pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, None, Some("vvh_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
-      pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, pl.calibrationPoints._1,
-      pl.calibrationPoints._2, Anomaly.None, pl.status, pl.roadAddressId,
+      pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1,
+      calibrationPoints._2, Anomaly.None, pl.status, pl.roadAddressId,
       pl.reversed, pl.connectedLinkId, originalGeometry)
   }
 
@@ -84,10 +86,12 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       else
         None
 
+    val calibrationPoints = projectLink.toCalibrationPoints()
+
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode,
       linkType, roadLinkType, projectLink.roadType,  projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
-      projectLink.calibrationPoints._1, projectLink.calibrationPoints._2,
+      calibrationPoints._1, calibrationPoints._2,
       Anomaly.None, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
       originalGeometry
     )
