@@ -54,7 +54,7 @@ trait DigiroadServer {
 
 class NLSProxyServlet extends ProxyServlet {
 
-  def regex = "/(viite)".r
+  def regex = "/(digiroad|viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
