@@ -88,18 +88,17 @@ trait TrackCalculatorStrategy {
 
   /**
     * Average between two address measures.
-    * If the right side is greater then left side returns the largest (closest to positive infinity) value
-    * If the left side is less then the right side returns the smallest (closest to negative infinity) value
+    * If the right side is greater than the left side returns the largest (closest to positive infinity) value
+    * If the right side is less than the left side returns the smallest (closest to negative infinity) value
     * NOTE: If we have the reversed set to true the previous conditions are inverted
     *
-    * @param rAddrM   Left address measure
-    * @param lAddrM   Right address measure
+    * @param rAddrM   Right address measure
+    * @param lAddrM   Left address measure
     * @param reversed True if the road was reverted
-    * @return Returns te average between two measures
+    * @return Returns the average between two measures
     */
   protected def averageOfAddressMValues(rAddrM: Double, lAddrM: Double, reversed: Boolean): Long = {
     val average = 0.5 * (rAddrM + lAddrM)
-
     if (reversed) {
       if (rAddrM > lAddrM) Math.floor(average).round else Math.ceil(average).round
     } else {
@@ -163,7 +162,7 @@ trait TrackCalculatorStrategy {
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
-    //The getFixedAddress method have to be call twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
+    //The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
     // NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
     val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
 

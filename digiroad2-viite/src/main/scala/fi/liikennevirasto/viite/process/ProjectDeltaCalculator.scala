@@ -173,7 +173,7 @@ object ProjectDeltaCalculator {
     val fusedValues = addrMValues%2 match {
       case 0 => addrMValues/2
       case _ =>
-        if(track == RightSide ^ (mValue * 2 < addrMValues)){
+        if (track == RightSide ^ (mValue * 2 < addrMValues)) {
           (addrMValues+1)/2
         } else {
           addrMValues/2
@@ -208,7 +208,7 @@ object ProjectDeltaCalculator {
     val result = paired.flatMap { case (key, target) =>
       val matches = matchingTracks(paired, key)
       if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get))
-        adjustTrackEndAddr((target, matches.get))
+        adjustTrack((target, matches.get))
       else
         target
     }.toSeq
