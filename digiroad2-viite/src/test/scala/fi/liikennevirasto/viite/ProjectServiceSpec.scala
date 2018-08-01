@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad}
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
@@ -91,7 +92,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, status, RoadType.PublicRoad,
+      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating = false, roadAddress.geometry, project.id, status, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), if (status == LinkStatus.New) 0 else roadAddress.id, roadAddress.ely, false,
       None, roadAddress.adjustedTimestamp)
   }
@@ -309,7 +310,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely, false,
       None, roadAddress.adjustedTimestamp)
   }
@@ -450,11 +451,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.UnChanged } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
-      updatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(CalibrationPoint(5168579, 15.173, 4681))))
+      updatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(5168579, 15.173, 4681, ProjectLinkSource))))
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168579), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       val updatedProjectLinks2 = ProjectDAO.getProjectLinks(savedProject.id)
       updatedProjectLinks2.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, None))
-      updatedProjectLinks2.filter(pl => pl.linkId == 5168583).head.calibrationPoints should be((None, Some(CalibrationPoint(5168583, 63.8, 4666))))
+      updatedProjectLinks2.filter(pl => pl.linkId == 5168583).head.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(5168583, 63.8, 4666, ProjectLinkSource))))
       updatedProjectLinks2.filter(pl => pl.roadPartNumber == 205).exists { x => x.status == LinkStatus.Terminated } should be(false)
     }
     runWithRollback {
@@ -496,11 +497,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
-      updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.calibrationPoints should be((Some(CalibrationPoint(5168540, 0.0, 0)), None))
-      updatedProjectLinks.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be((None, Some(CalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue)))) //we terminated link with distance 172
+      updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.calibrationPoints should be((Some(ProjectLinkCalibrationPoint(5168540, 0.0, 0, ProjectLinkSource)), None))
+      updatedProjectLinks.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue, ProjectLinkSource)))) //we terminated link with distance 172
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
       val updatedProjectLinks2 = ProjectDAO.getProjectLinks(savedProject.id)
-      updatedProjectLinks2.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be(None, Some(CalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)))
+      updatedProjectLinks2.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue,ProjectLinkSource)))
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects
@@ -542,11 +543,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
-      updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.calibrationPoints should be((Some(CalibrationPoint(5168540, 0.0, 0)), None))
-      updatedProjectLinks.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be((None, Some(CalibrationPoint(6463199, 442.89, highestDistanceEnd - 172)))) //we terminated link with distance 172
+      updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.calibrationPoints should be((Some(ProjectLinkCalibrationPoint(5168540, 0.0, 0, ProjectLinkSource)), None))
+      updatedProjectLinks.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(6463199, 442.89, highestDistanceEnd - 172, ProjectLinkSource)))) //we terminated link with distance 172
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       val updatedProjectLinks2 = ProjectDAO.getProjectLinks(savedProject.id)
-      updatedProjectLinks2.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be(None, Some(CalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)))
+      updatedProjectLinks2.filter(pl => pl.linkId == 6463199).head.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(6463199, 442.89, highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue, ProjectLinkSource)))
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects
@@ -809,7 +810,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 1, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1, 0)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'another road name test')""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
@@ -826,7 +827,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 1, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1, 0)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
@@ -1074,13 +1075,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
         SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
+      val calibrationPoints = projectLink.toCalibrationPoints()
       val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, Some(""), Some("vvh_modified"),
         Map(), projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
         projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
         projectLink.sideCode,
-        projectLink.calibrationPoints._1,
-        projectLink.calibrationPoints._2, Anomaly.None, projectLink.status, 0)
+        calibrationPoints._1,
+        calibrationPoints._2, Anomaly.None, projectLink.status, 0)
 
       mockForProject(id, Seq(p))
 
@@ -1268,15 +1270,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
       val unchangedAndNew = Seq(ProjectLink(2L, road, roadPart, Track.Combined, Continuous, origStartM, origStartM + 52L, Some(DateTime.now()), None, user,
-        suravageLinkId, 0.0, 51.984, SideCode.TowardsDigitizing, (Some(CalibrationPoint(linkId, 0.0, origStartM)), None),
+        suravageLinkId, 0.0, 51.984, SideCode.TowardsDigitizing, (Some(ProjectLinkCalibrationPoint(linkId, 0.0, origStartM, UnknownSource)), None),
         false, Seq(Point(1024.0, 0.0), Point(1024.0, 51.984)),
         -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 51.984, id, 8L, false, Some(linkId), 85088L),
         ProjectLink(3L, road, roadPart, Track.Combined, EndOfRoad, origStartM + 52L, origStartM + 177L, Some(DateTime.now()), None, user,
-          suravageLinkId, 51.984, 176.695, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(suravageLinkId, 176.695, origStartM + 177L))),
+          suravageLinkId, 51.984, 176.695, SideCode.TowardsDigitizing, (None, Some(ProjectLinkCalibrationPoint(suravageLinkId, 176.695, origStartM + 177L, UnknownSource))),
           false, Seq(Point(1024.0, 99.384), Point(1148.711, 99.4)),
           -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 124.711, id, 8L, false, Some(linkId), 85088L),
         ProjectLink(4L, 5, 205, Track.Combined, EndOfRoad, origStartM + 52L, origEndM, Some(DateTime.now()), None, user,
-          linkId, 50.056, endM, SideCode.TowardsDigitizing, (None, Some(CalibrationPoint(linkId, endM, origEndM))), false,
+          linkId, 50.056, endM, SideCode.TowardsDigitizing, (None, Some(ProjectLinkCalibrationPoint(linkId, endM, origEndM, UnknownSource))), false,
           Seq(Point(1024.0, 51.984), Point(1024.0, 102.04)),
           -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 50.056, id, 8L, false, Some(suravageLinkId), 85088L))
       projectService.updateTerminationForHistory(Set(), unchangedAndNew)
@@ -2072,7 +2074,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 1, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1, 0)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'ROAD TEST')""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
@@ -2242,7 +2244,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 1, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 70001, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 70001, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 70001, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1, 0)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 70001, NULL)""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(70001)
       namesBeforeUpdate.isEmpty should be(true)

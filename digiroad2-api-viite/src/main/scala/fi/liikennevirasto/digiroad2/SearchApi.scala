@@ -28,8 +28,8 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
 
   get("/road_address/?") {
     val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toLong
-    val startMeasure = params.get("startMeasure").map(_.toLong)
-    val endMeasure = params.get("endMeasure").map(_.toLong)
+    val startMeasure = params.get("startMeasure").map(_.toDouble)
+    val endMeasure = params.get("endMeasure").map(_.toDouble)
 
     time(logger, s"GET request for /road_address/? (linkId: $linkId, startMeasure: $startMeasure, endMeasure: $endMeasure)") {
       roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId, startMeasure, endMeasure).map(roadAddressMapper)

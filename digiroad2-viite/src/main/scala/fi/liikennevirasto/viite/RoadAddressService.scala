@@ -799,14 +799,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
     val hasFloatings = withDynTransaction {
-      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = true,
+      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true,
         includeTerminated = false)
       RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
       val roadNumber = roadAddresses.head.roadNumber.toInt
       val roadPartNumber = roadAddresses.head.roadPartNumber.toInt
-      if(!recalculateRoadAddresses(roadNumber, roadPartNumber))
-        throw new RoadAddressException(s"Road address recalculation failed for $roadNumber / $roadPartNumber")
+      if(RoadAddressDAO.fetchFloatingRoadAddressesBySegment(roadNumber, roadPartNumber).filterNot(address => sourceIds.contains(address.linkId)).isEmpty) {
+        if (!recalculateRoadAddresses(roadNumber, roadPartNumber))
+          throw new RoadAddressException(s"Road address recalculation failed for $roadNumber / $roadPartNumber")
+      }
       RoadAddressDAO.fetchAllFloatingRoadAddresses().nonEmpty
     }
     if (!hasFloatings)
@@ -839,12 +841,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (currentSourceRoadAddresses, historySourceRoadAddresses) = sourceRoadAddresses.partition(ra => ra.endDate.isEmpty)
 
     DefloatMapper.preTransferChecks(currentSourceRoadAddresses)
-    val currentTargetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(currentSourceRoadAddresses.sortBy(_.startAddrMValue).flatMap(DefloatMapper.mapRoadAddresses(mapping))).filterNot(_.geometry.isEmpty)
+    val currentTargetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(currentSourceRoadAddresses.sortBy(_.startAddrMValue).flatMap(DefloatMapper.mapRoadAddresses(mapping, currentSourceRoadAddresses)))
     DefloatMapper.postTransferChecks(currentTargetRoadAddresses.filter(_.endDate.isEmpty), currentSourceRoadAddresses)
 
     val historyTargetRoadAddresses = historySourceRoadAddresses.groupBy(_.endDate).flatMap(group => {
       DefloatMapper.preTransferChecks(group._2)
-      val targetHistory = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(group._2.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
+      val targetHistory = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(group._2.flatMap(DefloatMapper.mapRoadAddresses(mapping, group._2 )))
       targetHistory
     })
 
@@ -920,7 +922,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long]): Seq[RoadAddress] = {
+  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
     withDynSession {
       RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
     }

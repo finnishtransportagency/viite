@@ -12,7 +12,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointMValues
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
@@ -85,7 +86,7 @@ object CalibrationCode {
   case object AtBeginning extends CalibrationCode { def value = 2 }
   case object AtBoth extends CalibrationCode { def value = 3 }
 }
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
 
 sealed trait TerminationCode {
   def value: Int
@@ -119,7 +120,7 @@ trait BaseRoadAddress {
   def startMValue: Double
   def endMValue: Double
   def sideCode: SideCode
-  def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])
+  def calibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint])
   def floating: Boolean
   def geometry: Seq[Point]
   def ely: Long
@@ -203,6 +204,16 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
+  }
+
+  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+    val calibrationPointSource = if (id == noRoadAddressId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
+    calibrationPoints match {
+      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
+      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)) , Option.empty[ProjectLinkCalibrationPoint])
+      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
+    }
   }
 }
 
@@ -745,6 +756,27 @@ object RoadAddressDAO {
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
           where t.id < t2.id and ra.floating = 1 $history and
+          valid_to is null
+          order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
+      """
+      queryList(query)
+    }
+  }
+
+  def fetchFloatingRoadAddressesBySegment(roadNumber: Long, roadPartNumber: Long, includesHistory: Boolean = false) = {
+    time(logger, "Fetch all floating road addresses") {
+      val history = if (!includesHistory) s" AND ra.END_DATE is null " else ""
+      val query =
+        s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+          ra.side_code, ra.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+          (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+          from ROAD_ADDRESS ra cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+          where t.id < t2.id and ra.floating = 1 $history and road_number = $roadNumber and road_part_number = $roadPartNumber and
           valid_to is null
           order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
       """
@@ -1517,7 +1549,7 @@ object RoadAddressDAO {
       s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
-  def withLinkIdAndMeasure(linkId: Long, startM: Option[Long], endM: Option[Long])(query: String): String = {
+  def withLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double])(query: String): String = {
     val startFilter = startM match {
       case Some(s) => s" AND ra.start_Measure <= $s"
       case None => ""
