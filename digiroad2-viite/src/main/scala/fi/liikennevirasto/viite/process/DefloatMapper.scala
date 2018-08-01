@@ -18,7 +18,7 @@ object DefloatMapper extends RoadAddressMapper {
         formMapping(startSourceLink, endSourceM, endSourceLink, startSourceM,
           startTargetLink, endTargetM, endTargetLink, startTargetM)
       else
-        RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceM,
+        RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceLink.id, startSourceM,
           if (startSourceLink.linkId == endSourceLink.linkId) endSourceM else Double.NaN,
           startTargetM,
           if (startTargetLink.linkId == endTargetLink.linkId) endTargetM else Double.NaN,
@@ -38,7 +38,7 @@ object DefloatMapper extends RoadAddressMapper {
       else {
         val next = s.head
         val previousOpt = fused.headOption.filter(_.linkId == next.linkId)
-        if (previousOpt.nonEmpty) {
+        if (previousOpt.nonEmpty && !((previousOpt.get.endCalibrationPoint.isDefined && next.startCalibrationPoint.isDefined ) || (previousOpt.get.startCalibrationPoint.isDefined && next.endCalibrationPoint.isDefined))) {
           // At this point we know that the chain is continuous, all are on same road part and track and ordered
           val edited = previousOpt.get.copy(startAddressM = Math.min(previousOpt.get.startAddressM, next.startAddressM),
             endAddressM = Math.max(previousOpt.get.endAddressM, next.endAddressM),
@@ -59,16 +59,16 @@ object DefloatMapper extends RoadAddressMapper {
     }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
-    val joinedSource = fuseAddressByLinkId(orderedSource)
+    //VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple road_addresses as target
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
-    val targetCoeff = joinedSource.map(_.length).sum / orderedTarget.map(_.length).sum
-    val runningLength = (joinedSource.scanLeft(0.0)((len, link) => len+link.length) ++
+    val targetCoeff = orderedSource.map(_.length).sum / orderedTarget.map(_.length).sum
+    val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
       orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
-      val startSource = findStartLinearLocation(st, joinedSource)
-      val endSource = findEndLinearLocation(end, joinedSource, startSource._1.linkId)
+      val startSource = findStartLinearLocation(st, orderedSource)
+      val endSource = findEndLinearLocationSource(end, orderedSource, startSource._1.id)
       val startTarget = findStartLinearLocation(st/targetCoeff, orderedTarget)
-      val endTarget = findEndLinearLocation(end/targetCoeff, orderedTarget, startTarget._1.linkId)
+      val endTarget = findEndLinearLocationTarget(end/targetCoeff, orderedTarget, startTarget._1.linkId)
       (startSource, endSource, startTarget, endTarget)}
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
@@ -95,12 +95,28 @@ object DefloatMapper extends RoadAddressMapper {
     }
   }
 
-  private def findEndLinearLocation(mValue: Double, links: Seq[RoadAddressLink], linkId: Long): (RoadAddressLink, Double) = {
+  private def findEndLinearLocationSource(mValue: Double, links: Seq[RoadAddressLink], id: Long): (RoadAddressLink, Double) = {
+    if (links.isEmpty)
+      throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
+    val current = links.head
+    if (current.id != id)
+      findEndLinearLocationSource(mValue - current.length, links.tail, id)
+    else {
+      if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
+        (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
+      } else {
+        val dist = applySideCode(mValue, current.length, current.sideCode)
+        (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
+      }
+    }
+  }
+
+  private def findEndLinearLocationTarget(mValue: Double, links: Seq[RoadAddressLink], linkId: Long): (RoadAddressLink, Double) = {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
     if (current.linkId != linkId)
-      findEndLinearLocation(mValue - current.length, links.tail, linkId)
+      findEndLinearLocationTarget(mValue - current.length, links.tail, linkId)
     else {
       if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
         (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
@@ -234,20 +250,28 @@ object DefloatMapper extends RoadAddressMapper {
   }
 }
 
-case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStartM: Double, sourceEndM: Double,
+case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceId: Long, sourceStartM: Double, sourceEndM: Double,
                               targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point],
                               vvhTimeStamp: Option[Long] = None) {
   override def toString: String = {
     s"$sourceLinkId -> $targetLinkId: $sourceStartM-$sourceEndM ->  $targetStartM-$targetEndM, $sourceGeom -> $targetGeom"
   }
+
   /**
     * Test if this mapping matches the road address: Road address is on source link and overlap match is at least 99,9%
     * (overlap amount is the overlapping length divided by the smallest length)
-   */
-  def matches(roadAddress: RoadAddress): Boolean = {
-    sourceLinkId == roadAddress.linkId &&
-      (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
-      GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
+    */
+  def matches(roadAddress: RoadAddress, allRoadAddresses: Seq[RoadAddress]): Boolean = {
+    // Transfer floatings that have sourceId defined
+    if (allRoadAddresses.count(_.linkId == roadAddress.linkId) > 1 && sourceId > 0) {
+      sourceId == roadAddress.id
+    }
+    // Apply changes has always sourceId = 0
+    else {
+      sourceLinkId == roadAddress.linkId &&
+        (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
+        GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
+    }
   }
 
   val sourceDelta = sourceEndM - sourceStartM
