@@ -1,7 +1,7 @@
 (function(root) {
   var RoadLinkModel = function(data) {
     var selected = false;
-    var original = _.clone(data);
+    var original = _.cloneDeep(data);
 
     var getId = function() {
       return data.roadLinkId || data.linkId;
