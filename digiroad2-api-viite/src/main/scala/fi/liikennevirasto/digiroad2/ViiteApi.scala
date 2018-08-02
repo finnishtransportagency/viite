@@ -170,14 +170,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/adjacent") {
     val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String, Any]]
-    val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
+    val chainLinkIds = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
+    val chainIds = data("selectedIds").asInstanceOf[Seq[Long]].toSet
     val linkId = data("linkId").asInstanceOf[Long]
+    val id = data("id").asInstanceOf[Long]
     val roadNumber = data("roadNumber").asInstanceOf[Long]
     val roadPartNumber = data("roadPartNumber").asInstanceOf[Long]
     val trackCode = data("trackCode").asInstanceOf[Long].toInt
 
-    time(logger, s"GET request for /roadlinks/adjacent (chainLinks: $chainLinks, linkId: $linkId, roadNumber: $roadNumber, roadPartNumber: $roadPartNumber, trackCode: $trackCode)") {
-      roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+    time(logger, s"GET request for /roadlinks/adjacent (chainLinks: $chainLinkIds, linkId: $linkId, roadNumber: $roadNumber, roadPartNumber: $roadPartNumber, trackCode: $trackCode)") {
+      roadAddressService.getFloatingAdjacent(chainLinkIds, chainIds, linkId, id, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
     }
   }
 
@@ -225,11 +227,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val adjacents: Seq[RoadAddressLink] = {
           roadData.flatMap(rd => {
             val chainLinks = rd("selectedLinks").asInstanceOf[Seq[Long]].toSet
+            val chainIds = rd("selectedIds").asInstanceOf[Seq[Long]].toSet
             val linkId = rd("linkId").asInstanceOf[Long]
+            val id = rd("id").asInstanceOf[Long]
             val roadNumber = rd("roadNumber").asInstanceOf[Long]
             val roadPartNumber = rd("roadPartNumber").asInstanceOf[Long]
             val trackCode = rd("trackCode").asInstanceOf[Long].toInt
-            roadAddressService.getFloatingAdjacent(chainLinks, linkId,
+            roadAddressService.getFloatingAdjacent(chainLinks, chainIds, linkId, id,
               roadNumber, roadPartNumber, trackCode)
           })
         }
