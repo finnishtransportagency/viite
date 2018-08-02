@@ -61,13 +61,20 @@ object DefloatMapper extends RoadAddressMapper {
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
     //VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple road_addresses as target
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
-    val targetCoeff = orderedSource.map(_.length).sum / orderedTarget.map(_.length).sum
-    val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
-      orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
+
+    /**
+      * TargetCoefficient =>
+      *         Purpose of floating transfer is that source geometries are incorrect, so we should not trust in its geometry length, neither in its geometry
+      *         And so TargetCoefficient should be calculated through mValues (!= geometryLength) relation coefficient.
+      */
+    val targetCoeff = orderedSource.map(s => s.endMValue-s.startMValue).sum / orderedTarget.map(t => t.endMValue-t.startMValue).sum
+    val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+(link.endMValue - link.startMValue)) ++
+      orderedTarget.scanLeft(0.0)((len, link) => {
+          len+targetCoeff*(link.endMValue - link.startMValue)})).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
-      val startSource = findStartLinearLocation(st, orderedSource)
+      val startSource = findStartLinearLocationSource(st, orderedSource)
       val endSource = findEndLinearLocationSource(end, orderedSource, startSource._1.id)
-      val startTarget = findStartLinearLocation(st/targetCoeff, orderedTarget)
+      val startTarget = findStartLinearLocationTarget(st/targetCoeff, orderedTarget)
       val endTarget = findEndLinearLocationTarget(end/targetCoeff, orderedTarget, startTarget._1.linkId)
       (startSource, endSource, startTarget, endTarget)}
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
@@ -95,18 +102,57 @@ object DefloatMapper extends RoadAddressMapper {
     }
   }
 
+  private def findStartLinearLocationSource(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
+    if (links.isEmpty)
+      throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
+    val current = links.head
+    val mValueLength = current.endMValue - current.startMValue
+
+      if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
+      if (links.tail.nonEmpty)
+        findStartLinearLocationSource(0.0, links.tail)
+      else
+        (current, setPrecision(applySideCode(mValueLength, mValueLength, current.sideCode)))
+    } else if (mValueLength < mValue) {
+        findStartLinearLocationSource(mValue - mValueLength, links.tail)
+    } else {
+      val dist = applySideCode(mValue, mValueLength, current.sideCode)
+      (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
+    }
+  }
+
+  private def findStartLinearLocationTarget(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
+    if (links.isEmpty)
+      throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
+    val current = links.head
+    val mValueLength = current.endMValue - current.startMValue
+
+    if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
+      if (links.tail.nonEmpty)
+        findStartLinearLocationTarget(0.0, links.tail)
+      else
+        (current, setPrecision(applySideCode(mValueLength, mValueLength, current.sideCode)))
+    } else if (mValueLength < mValue) {
+      findStartLinearLocationTarget(mValue - mValueLength, links.tail)
+    } else {
+      val dist = applySideCode(mValue, mValueLength, current.sideCode)
+      (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
+    }
+  }
+
   private def findEndLinearLocationSource(mValue: Double, links: Seq[RoadAddressLink], id: Long): (RoadAddressLink, Double) = {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
+    val mValueLength = current.endMValue - current.startMValue
     if (current.id != id)
-      findEndLinearLocationSource(mValue - current.length, links.tail, id)
+      findEndLinearLocationSource(mValue - mValueLength, links.tail, id)
     else {
-      if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
+      if (Math.abs(mValueLength - mValue) < MaxDistanceDiffAllowed) {
         (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
       } else {
-        val dist = applySideCode(mValue, current.length, current.sideCode)
-        (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
+        val dist = applySideCode(mValue, mValueLength, current.sideCode)
+        (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
       }
     }
   }
@@ -129,7 +175,7 @@ object DefloatMapper extends RoadAddressMapper {
 
   private def applySideCode(mValue: Double, linkLength: Double, sideCode: SideCode) = {
     sideCode match {
-      case SideCode.AgainstDigitizing => linkLength - mValue
+      case SideCode.AgainstDigitizing => mValue
       case SideCode.TowardsDigitizing => mValue
       case _ => throw new InvalidAddressDataException(s"Unhandled sidecode $sideCode")
     }
