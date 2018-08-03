@@ -12,8 +12,10 @@ import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.FiniteDuration
+import scala.util.control.NonFatal
 
 class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
@@ -65,12 +67,14 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-
+  val logger = LoggerFactory.getLogger(getClass)
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
     try {
       projectService.updateProjectsWaitingResponseFromTR()
     } catch {
-      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
+      case  NonFatal(ex) =>
+        logger.error("Exception at TR checks:" + ex.getMessage)
+        System.err.println("Exception at TR checks: " + ex.getMessage)
     }
   }
 

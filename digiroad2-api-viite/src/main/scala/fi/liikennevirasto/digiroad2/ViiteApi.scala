@@ -150,7 +150,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for /roadlinks/$linkId") {
       val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
       val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
-      foldSegments(roadLinks).orElse(foldSegments(projectLinks)).map(midPoint).getOrElse(
+      foldSegments(roadLinks)
+        .orElse(foldSegments(projectLinks))
+        .map(midPoint)
+        .getOrElse(
         Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
   }
@@ -701,6 +704,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                 "roadPartNumber" -> roadWithInfo.roadPartNumber,
                 "trackCode" -> roadWithInfo.track,
                 "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
+                "roadLinkSource" -> roadWithInfo.linkGeomSource.value,
                 "split" -> Map(
                   "geometry" -> cutGeom
                 )
@@ -1078,7 +1082,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
       case LinkStatus.Terminated => {
@@ -1093,7 +1098,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
       case _ => {
@@ -1108,7 +1114,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
     }
@@ -1143,8 +1150,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private def midPoint(link: RoadAddressLinkLike) = {
-    Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(link.geometry,
-      link.length / 2.0)) ++ (link match {
+    Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(link.geometry, link.length / 2.0).getOrElse(Point(link.geometry.head.x, link.geometry.head.y))) ++ (link match {
       case l: RoadAddressLink => roadAddressLinkToApi(l)
       case l: ProjectAddressLink => projectAddressLinkToApi(l)
     })
@@ -1161,8 +1167,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {
-      case Some(point) =>
-        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)), ("value", point.addressMValue)).toMap)
+      case Some(point) => {
+        val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)
+        val returningPoint = if (calculatedPoint.isDefined) {
+          calculatedPoint
+        } else {
+          val atBeginning = point.segmentMValue == 0.0
+          val (startPoint, endPoint) = GeometryUtils.geometryEndpoints(geometry)
+          if (atBeginning) Some(startPoint) else Some(endPoint)
+        }
+        Option(Seq(("point", returningPoint), ("value", point.addressMValue)).toMap)
+      }
       case _ => None
     }
   }
