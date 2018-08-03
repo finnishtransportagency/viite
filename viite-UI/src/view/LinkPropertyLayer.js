@@ -726,7 +726,7 @@
         var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
         var features = [];
         _.each(selectedLink, function (featureLink){
-         if((featureLink.id !== 0 && featureLink.id !== -1000)){
+         if(selectedLinkProperty.idTestForOpen(featureLink.id)){
              _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
                  if (_.contains(featureLink.selectedIds, feature.linkData.id))
                      return features.push(feature);
