@@ -49,6 +49,10 @@
       current = data;
     };
 
+    var idTestForOpen = function(id){
+        return !_.isUndefined(id) && id !== LinkValues.UnknownRoadId && id !== LinkValues.NewRoadId;
+    };
+
     var extractDataForDisplay = function(selectedData) {
 
           var extractUniqueValues = function(selectedData, property) {
@@ -96,16 +100,17 @@
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         if(isSuravage){
-          if(!_.isUndefined(linkId)){
-            setCurrent(singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId));
-          } else {
+          if(idTestForOpen(id)){
             setCurrent(singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id));
+
+          } else {
+            setCurrent(singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId));
           }
         } else {
-          if(!_.isUndefined(linkId)){
-            setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
-          } else {
+          if(idTestForOpen(id)){
             setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
+          } else {
+            setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
           }
         }
 
@@ -126,7 +131,7 @@
         var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) : !isSelectedById(id);
         if (canIOpen) {
             applicationModel.toggleSelectionTypeFloating();
-            if (!_.isUndefined(id)) {
+            if (idTestForOpen(id)) {
                 setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
             } else {
                 setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
@@ -223,7 +228,7 @@
     var processOl3Features = function (visibleFeatures){
       var selectedOL3Features = _.filter(visibleFeatures, function(vf){
         return (_.some(get().concat(featuresToKeep), function(s){
-            if(s.id !== 0 && s.id !== -1000){
+            if(s.id !== LinkValues.UnknownRoadId && s.id !== LinkValues.NewRoadId){
                 return s.id === vf.linkData.id && s.mmlId === vf.linkData.mmlId;
             } else {
                 return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId;
@@ -876,7 +881,8 @@
       extractDataForDisplay: extractDataForDisplay,
       setCurrent: setCurrent,
       processOL3Features: processOl3Features,
-      revertToFloatingAddress: revertToFloatingAddress
+      revertToFloatingAddress: revertToFloatingAddress,
+      idTestForOpen: idTestForOpen
     };
   };
 })(this);

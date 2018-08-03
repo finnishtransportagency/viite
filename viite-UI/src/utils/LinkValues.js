@@ -126,5 +126,9 @@
 
     root.SelectKeyName = "ContextMenu";
 
+    root.UnknownRoadId = 0;
+
+    root.NewRoadId = -1000;
+
 })(window.LinkValues = window.LinkValues || {});
 
