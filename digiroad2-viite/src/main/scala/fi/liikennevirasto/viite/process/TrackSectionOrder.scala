@@ -7,7 +7,8 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.LinkStatus._
-import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLinkCalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 
 object TrackSectionOrder {
@@ -68,10 +69,21 @@ object TrackSectionOrder {
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
+
+      val startCp = startCalibrationPoint.getOrElse(pl.calibrationPoints._1) match {
+        case None => Option.empty[ProjectLinkCalibrationPoint]
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadAddressId))
+      }
+
+      val endCP = endCalibrationPoint.getOrElse(pl.calibrationPoints._2) match {
+        case None => Option.empty[ProjectLinkCalibrationPoint]
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadAddressId))
+      }
+
       pl.copy(sideCode = sideCode.getOrElse(pl.sideCode),
         startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
         endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue),
-        calibrationPoints = (startCalibrationPoint.getOrElse(pl.calibrationPoints._1), endCalibrationPoint.getOrElse(pl.calibrationPoints._2))
+        calibrationPoints = (startCp, endCP)
       )
     }
     def firstPoint(pl: ProjectLink) = {
@@ -244,7 +256,7 @@ object TrackSectionOrder {
       val pl = s.head
       TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, s.map(_.geometryLength).sum, s)
     }
-    def groupIntoSections(seq: Seq[ProjectLink]): (Seq[TrackSection]) = {
+    def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
       if (seq.isEmpty)
         throw new InvalidAddressDataException("Missing track")
       val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.track != pl2.track}
@@ -256,6 +268,13 @@ object TrackSectionOrder {
         }
       }.reverse.map(fromProjectLinks)
     }
+
+    val rightSections = groupIntoSections(rightLinks)
+    val leftSections = groupIntoSections(leftLinks)
+    createCombinedSectionss(rightSections, leftSections)
+  }
+
+  def createCombinedSectionss(rightSections: Seq[TrackSection], leftSections: Seq[TrackSection]): Seq[CombinedSection] = {
 
     def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]): Seq[CombinedSection] = {
       rightSection.map { r =>
@@ -274,12 +293,14 @@ object TrackSectionOrder {
               Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
             CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
               l, r)
-          case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
+          case _ =>
+            throw new RoadAddressException(s"Incorrect track code ${r.track}")
         }
       }
 
     }
-    combineSections(groupIntoSections(rightLinks), groupIntoSections(leftLinks))
+
+    combineSections(rightSections, leftSections)
   }
 }
 

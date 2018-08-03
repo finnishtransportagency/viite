@@ -428,7 +428,7 @@
 
     var zoomDoubleClickListener = function (event) {
       _.defer(function () {
-          if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey && selectedProjectLinkProperty.get().length === 0 &&
+          if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey && selectedProjectLinkProperty.get().length === 0 && selectSingleClick.getFeatures().getLength() === 0 &&
               applicationModel.getSelectedLayer() === 'roadAddressProject' && map.getView().getZoom() <= 13) {
           map.getView().setZoom(map.getView().getZoom() + 1);
         }
@@ -571,7 +571,7 @@
 
     var handleRoadsVisibility = function () {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
+        vectorLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
 
@@ -813,6 +813,7 @@
     });
 
       me.redraw = function () {
+        toggleProjectLayersVisibility(applicationModel.getRoadVisibility(), true);
       var ids = {};
       _.each(selectedProjectLinkProperty.get(), function (sel) {
         ids[sel.linkId] = true;
@@ -1031,9 +1032,9 @@
       suravageProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
-      eventbus.on('allProjectRoads:toggleVisibility', function (visibility) {
-          toggleProjectLayersVisibility(visibility, true);
-      });
+    eventbus.on('allRoads:visibilityChanged', function () {
+      toggleProjectLayersVisibility(applicationModel.getRoadVisibility(), true);
+    });
 
     eventbus.on('roadAddressProject:toggleEditingRoad', function (notEditingData) {
       isNotEditingData = notEditingData;

@@ -281,7 +281,7 @@
     var zoomDoubleClickListener = function(event) {
       if (activeLayer)
         _.defer(function(){
-          if(selectDoubleClick.getFeatures().getLength() === 0 && applicationModel.getSelectedLayer() == 'linkProperty' && map.getView().getZoom() <= 13){
+          if((selectDoubleClick.getFeatures().getLength() === 0 && selectSingleClick.getFeatures().getLength() === 0) && applicationModel.getSelectedLayer() == 'linkProperty' && map.getView().getZoom() <= 13){
             map.getView().setZoom(map.getView().getZoom()+1);
           }
         });
@@ -597,13 +597,11 @@
 
         var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
         _.each(orderFloatGroup, function(floatGroup) {
-          floatGroup.sort(function(firstFloat, secondFloat){
-            return firstFloat.startAddressM - secondFloat.startAddressM;
-          });
-          middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
-          marker = cachedLinkPropertyMarker.createMarker(middlefloating);
-            if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-            floatingMarkerLayer.getSource().addFeature(marker);
+            _.each(floatGroup, function(floating){
+                marker = cachedLinkPropertyMarker.createMarker(floating);
+                if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
+                    floatingMarkerLayer.getSource().addFeature(marker);
+            });
         });
 
         _.each(directionRoadMarker, function(directionlink) {
@@ -824,9 +822,9 @@
         suravageRoadLayer.setVisible(visibility);
         suravageMarkerLayer.setVisible(visibility);
       });
-        eventListener.listenTo(eventbus, 'allRoads:toggleVisibility', function (visibility) {
-            toggleLayerVisibility(visibility, true);
-        });
+      eventListener.listenTo(eventbus, 'allRoads:visibilityChanged', function () {
+        toggleLayerVisibility(applicationModel.getRoadVisibility(), true);
+      });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
@@ -1113,7 +1111,8 @@
               _.each(pickAnomalousMarker, function(pickRoads){
                 pickRoadsLayer.getSource().removeFeature(pickRoads);
               });
-              geometryChangedLayer.setVisible(false);
+              if(applicationModel.getSelectionType() !== 'unknown')
+                geometryChangedLayer.setVisible(false);
             }
           });
           addFeaturesToSelection(features);
@@ -1170,7 +1169,7 @@
       var selectedFloatingIds = _.pluck(selectedLinkProperty.getFeaturesToKeepFloatings(), 'linkId');
 
       _.each(allFeatures, function(feature){
-          if (feature.linkData.anomaly === 1 || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === -1))
+          if (feature.linkData.anomaly === Anomaly.NoAddressGiven.value || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value))
           pickRoadsLayer.getSource().addFeature(feature);
       });
       pickRoadsLayer.setOpacity(1);

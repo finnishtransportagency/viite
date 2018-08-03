@@ -18,7 +18,8 @@
     var actionCalculated = 1;
     var currentAction;
     var selectionType = 'all';
-    var sessionUser = '';
+    var sessionUsername = '';
+    var sessionUserRoles = '';
 
     var getSelectionType = function (){
       return selectionType;
@@ -78,12 +79,19 @@
     };
 
     var roadTypeShown = true;
+
     var isDirty = function() {
       return _.any(models, function(model) { return model.isDirty(); });
     };
     var setZoomLevel = function(level) {
       zoom.level = level;
     };
+
+    var roadsVisibility = true;
+
+    function toggleRoadVisibility(){
+      roadsVisibility = !roadsVisibility;
+    }
 
     function setSelectedTool(tool) {
       if (tool !== selectedTool) {
@@ -121,7 +129,8 @@
     };
 
     eventbus.on("userData:fetched", function (userData) {
-      sessionUser = userData.userName;
+      sessionUsername = userData.userName;
+      sessionUserRoles = userData.roles;
     });
 
     return {
@@ -143,6 +152,10 @@
       },
       zoom: zoom,
       setZoomLevel: setZoomLevel,
+      getRoadVisibility: function(){
+          return roadsVisibility;
+      },
+      toggleRoadVisibility: toggleRoadVisibility,
       setMinDirtyZoomLevel: function(level) {
         minDirtyZoomLevel = level;
       },
@@ -209,8 +222,11 @@
       toggleSelectionTypeAll: toggleSelectionTypeAll,
       toggleSelectionTypeFloating: toggleSelectionTypeFloating,
       toggleSelectionTypeUnknown: toggleSelectionTypeUnknown,
-      getSessionUser: function () {
-        return sessionUser;
+      getSessionUsername: function () {
+        return sessionUsername;
+      },
+      getSessionUserRoles: function () {
+        return sessionUserRoles;
       }
     };
   };
