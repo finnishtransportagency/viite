@@ -110,13 +110,13 @@ object DefloatMapper extends RoadAddressMapper {
     val current = links.head
     val mValueLength = current.endMValue - current.startMValue
 
-      if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
+    if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
       if (links.tail.nonEmpty)
         findStartLinearLocationSource(0.0, links.tail)
       else
         (current, setPrecision(applySideCode(mValueLength, mValueLength, current.sideCode)))
     } else if (mValueLength < mValue) {
-        findStartLinearLocationSource(mValue - mValueLength, links.tail)
+      findStartLinearLocationSource(mValue - mValueLength, links.tail)
     } else {
       val dist = applySideCode(mValue, mValueLength, current.sideCode)
       (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
