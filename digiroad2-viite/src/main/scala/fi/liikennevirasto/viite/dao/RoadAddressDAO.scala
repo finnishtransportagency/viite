@@ -1342,7 +1342,7 @@ object RoadAddressDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadAddresses: Iterable[RoadAddress], createdBy : Option[String] = None, modifiedBy : Option[String] = None): Seq[Long] = {
+  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, modified_by, " +
       "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, common_history_id," +
@@ -1382,8 +1382,8 @@ object RoadAddressDAO {
         case None => ""
       })
       val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
-      addressPS.setString(10,if (newCreatedBy == null) "-" else newCreatedBy)
-      addressPS.setString(11,modifiedBy match {
+      addressPS.setString(10, if (newCreatedBy == null) "-" else newCreatedBy)
+      addressPS.setString(11, modifiedBy match {
         case Some(creator) => creator
         case None => ""
       })
