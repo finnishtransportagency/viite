@@ -202,7 +202,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart).map {
       case (_, linkId, addrLength, discontinuity, ely, _, _) =>
         ReservedRoadPart(0L, roadNumber, roadPart, Some(addrLength), Some(Discontinuity.apply(discontinuity.toInt)), Some(ely),
-          newLength = None, newDiscontinuity = None, newEly = None, Some(linkId))
+          newLength = Some(addrLength), newDiscontinuity = Some(Discontinuity.apply(discontinuity.toInt)), newEly = Some(ely), Some(linkId))
     }
   }
 
@@ -1645,7 +1645,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val linkGeomSources = splitReplacements.map(pl => pl.linkId -> pl.linkGeomSource).toMap
     val addresses = RoadAddressDAO.fetchByLinkId(splitTerminationLinkIds, includeFloating = true, includeHistory = true,
       includeTerminated = false, includeCurrent = false, splitCurrentRoadAddressIds) // Do not include current ones as they're created separately with other project links
-    val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping)).map(ra =>
+    val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping, addresses)).map(ra =>
       ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination,
         linkGeomSource = linkGeomSources(ra.linkId)))
     roadAddressService.expireRoadAddresses(addresses.map(_.id).toSet)
