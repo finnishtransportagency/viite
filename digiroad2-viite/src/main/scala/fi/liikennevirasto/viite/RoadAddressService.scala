@@ -721,9 +721,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   private def getAdjacentAddresses(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
     withDynSession {
-      val roadAddresses = (if(chainIds.nonEmpty)
+      val roadAddresses = (if (chainIds.nonEmpty)
         RoadAddressDAO.queryById(chainIds)
-      else if(chainLinks.nonEmpty)
+      else if (chainLinks.nonEmpty)
         RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false)
       else Seq.empty[RoadAddress]
         ).sortBy(_.startAddrMValue)

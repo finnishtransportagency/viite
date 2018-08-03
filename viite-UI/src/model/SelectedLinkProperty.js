@@ -49,8 +49,8 @@
       current = data;
     };
 
-    var idTestForOpen = function(id){
-        return !_.isUndefined(id) && id !== LinkValues.UnknownRoadId && id !== LinkValues.NewRoadId;
+    var idTestForOpen = function (id) {
+      return !_.isUndefined(id) && id !== LinkValues.UnknownRoadId && id !== LinkValues.NewRoadId;
     };
 
     var extractDataForDisplay = function(selectedData) {
@@ -96,18 +96,18 @@
           return properties;
       };
 
-    var open = function(linkId, id, singleLinkSelect, visibleFeatures, isSuravage) {
+    var open = function (linkId, id, singleLinkSelect, visibleFeatures, isSuravage) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
-        if(isSuravage){
-          if(idTestForOpen(id)){
+        if (isSuravage) {
+          if (idTestForOpen(id)) {
             setCurrent(singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id));
 
           } else {
             setCurrent(singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId));
           }
         } else {
-          if(idTestForOpen(id)){
+          if (idTestForOpen(id)) {
             setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
           } else {
             setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
@@ -115,7 +115,7 @@
         }
 
         var currentFloatings = getCurrentFloatings();
-        if(!_.isEmpty(currentFloatings)){
+        if (!_.isEmpty(currentFloatings)) {
           setSources(currentFloatings);
         }
 
@@ -225,15 +225,15 @@
       }
     };
 
-    var processOl3Features = function (visibleFeatures){
-      var selectedOL3Features = _.filter(visibleFeatures, function(vf){
-        return (_.some(get().concat(featuresToKeep), function(s){
-            if(s.id !== LinkValues.UnknownRoadId && s.id !== LinkValues.NewRoadId){
-                return s.id === vf.linkData.id && s.mmlId === vf.linkData.mmlId;
-            } else {
-                return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId;
-            }
-          }));
+    var processOl3Features = function (visibleFeatures) {
+      var selectedOL3Features = _.filter(visibleFeatures, function (vf) {
+        return (_.some(get().concat(featuresToKeep), function (s) {
+          if (s.id !== LinkValues.UnknownRoadId && s.id !== LinkValues.NewRoadId) {
+            return s.id === vf.linkData.id && s.mmlId === vf.linkData.mmlId;
+          } else {
+            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId;
+          }
+        }));
       });
       eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
     };
