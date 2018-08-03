@@ -40,7 +40,7 @@ trait DigiroadServer {
     appContext.setContextPath(viiteContextPath)
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
-    appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    appContext.addServlet(classOf[NLSProxyServlet], "/wmts/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
@@ -58,22 +58,22 @@ class NLSProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("http://karttamoottori.maanmittauslaitos.fi"
+    java.net.URI.create("https://oag.liikennevirasto.fi"
       + regex.replaceFirstIn(uri, ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    proxyRequest.header("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
+    proxyRequest.header("Referer", "http://liikennevirasto.fi/viite/")
     proxyRequest.header("Host", null)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
-
+//not sure if following is still needed
   override def getHttpClient: HttpClient = {
     val client = super.getHttpClient
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (properties.getProperty("http.proxySet", "false").toBoolean) {
-      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "80").toInt)
+      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "443").toInt)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)

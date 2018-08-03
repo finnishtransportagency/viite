@@ -47,7 +47,7 @@ case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None, commonHistoryID: Long = 0, newGeometry: Option[Seq[Point]] = None, blackUnderline: Boolean = false) extends RoadAddressLinkLike {
+                           anomaly: Anomaly = Anomaly.None, commonHistoryID: Long = 0, newGeometry: Option[Seq[Point]] = None, blackUnderline: Boolean = false, floating: Boolean = false) extends RoadAddressLinkLike {
 }
 
 sealed trait Anomaly {

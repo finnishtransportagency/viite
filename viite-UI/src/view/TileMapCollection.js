@@ -7,6 +7,12 @@
       extent: [-548576, 6291456, 1548576, 8388608]
     };
 
+    var propertyLayerConfig = {
+      maxResolution: 5,
+      visible: true,
+      extent: [-548576, 6291456, 1548576, 8388608]
+    };
+
     var sourceConfig = {
       cacheSize: 4096,
       projection: 'EPSG:3067',
@@ -24,15 +30,19 @@
     };
 
     var aerialMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
+      url: 'wmts/maasto/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
     });
 
     var backgroundMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+    });
+
+    var propertyBorderMapConfig = _.merge({}, sourceConfig, {
+      url: 'wmts/kiinteisto/1.0.0/kiinteistojaotus/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var terrainMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var aerialMapLayer = new ol.layer.Tile(_.merge({
@@ -47,7 +57,14 @@
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, backgroundMapConfig))
     }, layerConfig));
-    backgroundMapLayer.set('name','backgroundMapLayer');
+      backgroundMapLayer.set('name','backgroundMapLayer');
+
+    var propertyBorderLayer = new ol.layer.Tile(_.merge({
+      source: new ol.source.XYZ(_.merge({
+        tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
+      }, propertyBorderMapConfig))
+    }, propertyLayerConfig));
+    propertyBorderLayer.set('name','propertyBorderLayer');
 
     var terrainMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
@@ -59,9 +76,9 @@
       var tileMapLayers = {
           background: backgroundMapLayer,
           aerial: aerialMapLayer,
-          terrain: terrainMapLayer
+          terrain: terrainMapLayer,
+          propertyBorder : propertyBorderLayer
       };
-
     if(arcgisConfig) {
         var parser = new ol.format.WMTSCapabilities();
         var result = parser.read(arcgisConfig);
@@ -82,8 +99,14 @@
       });
     };
 
-    selectMap('background');
+    var togglepropertyBorderVisibility = function(showPropertyBorder) {
+    propertyBorderLayer.setVisible(showPropertyBorder);
+    };
+
+
+    selectMap('background',true);
     eventbus.on('tileMap:selected', selectMap);
+    eventbus.on('tileMap:togglepropertyBorder', togglepropertyBorderVisibility);
 
     return {
       layers: _.map(tileMapLayers, function(layer) { return layer; })

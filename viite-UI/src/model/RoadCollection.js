@@ -1,7 +1,7 @@
 (function(root) {
   var RoadLinkModel = function(data) {
     var selected = false;
-    var original = _.clone(data);
+    var original = _.cloneDeep(data);
 
     var getId = function() {
       return data.roadLinkId || data.linkId;
@@ -161,6 +161,7 @@
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
           });
           roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
+          applicationModel.removeSpinner();
           eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknows) && drawUnknows), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);

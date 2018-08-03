@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.util
 
+import java.sql.Timestamp
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
@@ -12,6 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.RoadNetworkDAO.getLatestRoadNetworkVersionId
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -19,7 +21,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
 import scala.collection.parallel.immutable.ParSet
-import scala.collection.parallel.{ForkJoinTaskSupport}
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
 
 object DataFixture {
@@ -311,37 +313,50 @@ object DataFixture {
   }
 
   def checkLinearLocation(): Unit = {
-
     OracleDatabase.withDynTransaction {
-      val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
-      elyCodes.foreach(ely => {
-        // We must get current and history separately => Nothing guarantees that the history ones haven't changed their ELY meanwhile
-        val roads = RoadAddressDAO.getRoadAddressByEly(ely, onlyCurrent = true)
+      val commonHistoryIds = RoadAddressDAO.getCommonHistoryIdsFromRoadAddress
+      println(s"Found a total of ${commonHistoryIds.size} common history ids")
+      val chunks = generateCommonIdChunks(commonHistoryIds, 1000)
+      chunks.par.foreach {
+        case (min, max) =>
+          println(s"Processing common history ids from $min to $max")
+          val roads = RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withCommonHistoryIds(min, max))
+          roads.groupBy(_.commonHistoryId).foreach { group =>
+            val dateTimeLines = group._2.map(_.startDate).distinct
 
-        roads.grouped(25000).foreach { group =>
-
-          val current = group
-          val history = RoadAddressDAO.fetchByLinkId(group.map(_.linkId).toSet, includeCurrent = false)
-          val combined = current ++ history
-
-          val groupedRoads = combined.groupBy(r => (r.linkId, r.commonHistoryId))
-
-          val roadErrors: Seq[RoadAddress] = groupedRoads.mapValues { g =>
-            val (curr, hist) = g.partition(_.endDate.isEmpty)
-
-            val errors: Seq[RoadAddress] = curr.sortBy(_.startAddrMValue).zip(hist.sortBy(_.startAddrMValue)).flatMap { case (c, h) =>
-              if (c.startMValue != h.startMValue || c.endMValue != h.endMValue || c.sideCode != h.sideCode) {
-                println(s"Error in linear location check for road address with id ${c.id} ")
-                Seq(c, h)
-              }
-              else Seq.empty[RoadAddress]
+            val mappedTimeLines: Seq[TimeLine] = dateTimeLines.flatMap {
+              date =>
+                val groupedAddresses: Seq[TimeLine] = group._2.groupBy(g => (g.roadNumber, g.roadPartNumber)).map { roadAddresses =>
+                  val filteredAdresses: Seq[RoadAddress] = roadAddresses._2.filter { ra => ra.validTo.isEmpty && (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis < ra.endDate.get.getMillis) }
+                  val addrLength = filteredAdresses.map(_.endAddrMValue).sum - filteredAdresses.map(_.startAddrMValue).sum
+                  TimeLine(addrLength, filteredAdresses)
+                }.filter(_.addresses.nonEmpty).toSeq
+                groupedAddresses
             }
-            errors
-          }.values.flatten.toSeq
-          println(s"Found ${roadErrors.size} errors for ely $ely")
-          roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
-        }
-      })
+
+            val roadErrors = if (mappedTimeLines.size > 1) {
+              val errors: Set[RoadAddress] = mappedTimeLines.sliding(2).flatMap { case Seq(first, second) => {
+                if (first.addressLength != second.addressLength) {
+                  first.addresses.toSet
+                }
+                else {
+                  Set.empty[RoadAddress]
+                }
+              }
+              }.toSet
+              errors
+            } else {
+              Set.empty[RoadAddress]
+            }
+            println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.commonHistoryId}")
+            val lastVersion = getLatestRoadNetworkVersionId
+
+            roadErrors.filter { road =>
+              val error = RoadNetworkDAO.getRoadNetworkError(road.id, InconsistentLrmHistory)
+              error.isEmpty || error.get.network_version != lastVersion
+            }.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+          }
+      }
     }
   }
 
@@ -488,5 +503,24 @@ object DataFixture {
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names | fuse_road_address_with_history | check_lrm_position ")
     }
+  }
+
+  case class TimeLine(addressLength: Long, addresses: Seq[RoadAddress])
+  private def generateCommonIdChunks(ids: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+    val (chunks, _) = ids.foldLeft((Seq[Long](0), 0)) {
+      case ((fchunks, index), linkId) =>
+        if (index > 0 && index % chunkNumber == 0) {
+          (fchunks ++ Seq(linkId), index + 1)
+        } else {
+          (fchunks, index + 1)
+        }
+    }
+    val result = if (chunks.last == ids.last) {
+      chunks
+    } else {
+      chunks ++ Seq(ids.last)
+    }
+
+    result.zip(result.tail)
   }
 }
