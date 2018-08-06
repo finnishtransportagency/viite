@@ -177,7 +177,7 @@ object DefloatMapper extends RoadAddressMapper {
 
   private def applySideCode(mValue: Double, linkLength: Double, sideCode: SideCode) = {
     sideCode match {
-      case SideCode.AgainstDigitizing => mValue
+      case SideCode.AgainstDigitizing => linkLength - mValue
       case SideCode.TowardsDigitizing => mValue
       case _ => throw new InvalidAddressDataException(s"Unhandled sidecode $sideCode")
     }
