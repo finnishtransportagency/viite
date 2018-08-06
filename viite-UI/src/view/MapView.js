@@ -106,6 +106,7 @@
     }, this);
 
     map.on('moveend', function() {
+      console.log("map move ended");
       applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
       setCursor(applicationModel.getSelectedTool());
     });
