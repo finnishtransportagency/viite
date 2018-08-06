@@ -73,15 +73,14 @@ object DefloatMapper extends RoadAddressMapper {
         len + targetCoeff * (link.endMValue - link.startMValue)
       })).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map { case (st, end) =>
-      val startSource = findStartLinearLocationSource(st, orderedSource)
+      val startSource = findStartLinearLocation(st, orderedSource)
       val endSource = findEndLinearLocationSource(end, orderedSource, startSource._1.id)
-      val startTarget = findStartLinearLocationTarget(st / targetCoeff, orderedTarget)
+      val startTarget = findStartLinearLocation(st / targetCoeff, orderedTarget)
       val endTarget = findEndLinearLocationTarget(end / targetCoeff, orderedTarget, startTarget._1.linkId)
       (startSource, endSource, startTarget, endTarget)
     }
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
-
 
   private def setPrecision(d: Double) = {
     BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
@@ -91,51 +90,15 @@ object DefloatMapper extends RoadAddressMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    if (Math.abs(current.length - mValue) < MinAllowedRoadAddressLength) {
+    val mValueLength = current.endMValue - current.startMValue
+
+    if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
       if (links.tail.nonEmpty)
         findStartLinearLocation(0.0, links.tail)
       else
-        (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
-    } else if (current.length < mValue) {
-      findStartLinearLocation(mValue - current.length, links.tail)
-    } else {
-      val dist = applySideCode(mValue, current.length, current.sideCode)
-      (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
-    }
-  }
-
-  private def findStartLinearLocationSource(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
-    if (links.isEmpty)
-      throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
-    val current = links.head
-    val mValueLength = current.endMValue - current.startMValue
-
-    if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
-      if (links.tail.nonEmpty)
-        findStartLinearLocationSource(0.0, links.tail)
-      else
         (current, setPrecision(applySideCode(mValueLength, mValueLength, current.sideCode)))
     } else if (mValueLength < mValue) {
-      findStartLinearLocationSource(mValue - mValueLength, links.tail)
-    } else {
-      val dist = applySideCode(mValue, mValueLength, current.sideCode)
-      (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
-    }
-  }
-
-  private def findStartLinearLocationTarget(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
-    if (links.isEmpty)
-      throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
-    val current = links.head
-    val mValueLength = current.endMValue - current.startMValue
-
-    if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
-      if (links.tail.nonEmpty)
-        findStartLinearLocationTarget(0.0, links.tail)
-      else
-        (current, setPrecision(applySideCode(mValueLength, mValueLength, current.sideCode)))
-    } else if (mValueLength < mValue) {
-      findStartLinearLocationTarget(mValue - mValueLength, links.tail)
+      findStartLinearLocation(mValue - mValueLength, links.tail)
     } else {
       val dist = applySideCode(mValue, mValueLength, current.sideCode)
       (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
