@@ -66,7 +66,8 @@
     };
 
 
-      this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
+    this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
+      console.log("FETCH project collection");
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;

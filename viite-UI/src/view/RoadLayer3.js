@@ -28,6 +28,13 @@
     }
 
     var loadFeatures = function (features) {
+      console.log("load features");
+      map.getLayers().forEach( function(layer) {
+        if (layer.values_.name === "roadAddressProject"){
+          layer.setVisible(false);
+          //layer.getSource().clear(false);
+        }
+      });
       vectorSource.clear(true);
       vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
       eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
@@ -42,6 +49,7 @@
 
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
+        console.log("set visible");
         vectorLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
@@ -50,16 +58,24 @@
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
       }
+      console.log("Road layer 3")
       if (mapState.zoom < minimumContentZoomLevel()) {
+        console.log("zoom < minZoom");
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
-      } else if (mapState.selectedLayer == 'linkProperty'){
+      } else if (mapState.selectedLayer === 'linkProperty'){
+        console.log("selected layer is linkProperty");
         roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
+        //loadFeatures(vectorSource.features);
+        //eventbus.trigger('roadLinks:fetched');
+        console.log("roadlinks fetched");
         handleRoadsVisibility();
+
       }
     };
 
     var clear = function(){
+
       vectorLayer.getSource().clear();
     };
 

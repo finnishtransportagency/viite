@@ -1,7 +1,7 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel,styler) {
     var layerName = 'linkProperty';
-    var unknownCalibrationPointValue=-1;
+    var unknownCalibrationPointValue = -1;
     var cachedLinkPropertyMarker = null;
     var cachedMarker = null;
     Layer.call(this, layerName, roadLayer);
@@ -166,6 +166,7 @@
     map.addLayer(historicRoadsLayer);
 
       var toggleLayerVisibility = function (visibleToggle, withVectorLayer) {
+        console.log("set visible");
           floatingMarkerLayer.setVisible(visibleToggle);
           anomalousMarkerLayer.setVisible(visibleToggle);
           suravageMarkerLayer.setVisible(visibleToggle);
@@ -659,6 +660,7 @@
     };
 
     this.refreshView = function() {
+      console.log("refresh view");
       //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.reset();
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom());
@@ -708,6 +710,7 @@
     var concludeLinkPropertyEdit = function(eventListener) {
       addSelectInteractions();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      console.log("set visible");
       geometryChangedLayer.setVisible(false);
       setGeneralOpacity(1);
       if(selectDoubleClick.getFeatures().getLength() !== 0){
@@ -765,7 +768,7 @@
         indicatorLayer.getSource().clear();
       });
 
-        eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection, selectedIds) {
+      eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, noReselection, selectedIds) {
         draw();
         if (!noReselection && applicationModel.getSelectionType() !== 'unknown') {_.defer(function(){
           var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
@@ -819,6 +822,7 @@
         suravageRoadLayer.getSource().addFeatures(ol3SuravageRoads);
       });
       eventListener.listenTo(eventbus, 'suravageRoads:toggleVisibility', function(visibility){
+        console.log("set visible");
         suravageRoadLayer.setVisible(visibility);
         suravageMarkerLayer.setVisible(visibility);
       });
@@ -1142,6 +1146,7 @@
     });
 
     eventbus.on('linkProperties:deselectFeaturesSelected', function(){
+      console.log("set visible");
       clearHighlights();
       geometryChangedLayer.setVisible(true);
     });
@@ -1430,6 +1435,7 @@
     });
 
     eventListener.listenTo(eventbus, 'layer:selected', function(layer, previouslySelectedLayer){
+      console.log("listen to layer:selected");
       //TODO: there might be room for improvement on this, but I am not seeing it
       if (layer !== 'linkProperty') {
         deactivateSelectInteractions(true);
@@ -1440,18 +1446,20 @@
         activateSelectInteractions(true);
         addSelectInteractions();
       }
+      clearLayers();
+      clearHighlights();
       if (previouslySelectedLayer === 'linkProperty') {
-        clearLayers();
-        clearHighlights();
+        console.log("if");
         hideLayer();
         removeSelectInteractions();
       } else if(previouslySelectedLayer === 'roadAddressProject') {
-        clearLayers();
-        clearHighlights();
+        console.log("else if");
         setGeneralOpacity(1);
         showLayer();
         _.defer(function(){
           roadCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom());
+          eventbus.trigger('roadLinks:fetched');
+          console.log("roadlinks fetched in layer selected");
         });
       }
     });
@@ -1463,6 +1471,7 @@
     });
     
     var show = function(map) {
+      console.log("set visible");
       vectorLayer.setVisible(true);
     };
 

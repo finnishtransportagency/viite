@@ -550,8 +550,9 @@
         projectCollection.clearProjectErrors();
         eventbus.trigger('layer:enableButtons', true);
         if (changeLayerMode) {
-          eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
+          eventbus.trigger('roadAddressProject:clearOnClose');
+          projectLinkLayer.hide();
         }
         applicationModel.removeSpinner();
       };
@@ -636,7 +637,6 @@
       });
 
       rootElement.on('click', '#deleteProjectSpan', function(){
-        //Insert the correct message for delete confirmation here!
         displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?", true);
       });
 

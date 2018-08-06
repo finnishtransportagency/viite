@@ -93,6 +93,7 @@
     };
 
     this.fetch = function(boundingBox, zoom) {
+      console.log("FETCH road collection");
       var withHistory = date.length !== 0;
       var day = withHistory ? date[0] : -1;
       var month = withHistory ? date[1] : -1;

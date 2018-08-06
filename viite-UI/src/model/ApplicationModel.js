@@ -160,13 +160,18 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function(layer, toggleStart, noSave) {
+        console.log("select layer");
         if (layer !== selectedLayer) {
+          console.log("layer not layer");
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if(layer === 'linkProperty' && toggleStart) {
+          console.log("layer is layer and start");
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
+        } else {
+          console.log("nothing happened");
         }
       },
       getSelectedLayer: function() {

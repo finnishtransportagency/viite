@@ -20,8 +20,7 @@
     };
 
     bindEvents();
-    window.applicationModel = new ApplicationModel([
-      selectedLinkProperty]);
+    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
 
     var linkGroups = groupLinks(selectedProjectLinkProperty);
 

@@ -75,6 +75,7 @@
     var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
         if (key === tileMap) {
+          console.log("set visible");
           layer.setVisible(true);
         } else {
           layer.setVisible(false);
