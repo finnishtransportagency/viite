@@ -708,6 +708,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                 "roadPartNumber" -> roadWithInfo.roadPartNumber,
                 "trackCode" -> roadWithInfo.track,
                 "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
+                "roadLinkSource" -> roadWithInfo.linkGeomSource.value,
                 "split" -> Map(
                   "geometry" -> cutGeom
                 )
@@ -1085,7 +1086,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
       case LinkStatus.Terminated => {
@@ -1100,7 +1102,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
       case _ => {
@@ -1115,7 +1118,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
     }
