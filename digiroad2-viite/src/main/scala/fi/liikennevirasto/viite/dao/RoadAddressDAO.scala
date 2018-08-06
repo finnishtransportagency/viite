@@ -896,7 +896,7 @@ object RoadAddressDAO {
     }
   }
 
-  def updateConcerningHistory(roadAddress: RoadAddress, geometry: Option[Seq[Point]]) : Unit = {
+  def updateConcerningHistory(roadAddress: RoadAddress, geometry: Option[Seq[Point]] = Option.empty[Seq[Point]]) : Unit = {
     if(geometry.isDefined){
       val startTS = toTimeStamp(roadAddress.startDate)
       val endTS = toTimeStamp(roadAddress.endDate)
