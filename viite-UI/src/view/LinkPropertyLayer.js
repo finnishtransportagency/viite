@@ -28,7 +28,7 @@
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var SideCode = LinkValues.SideCode;
     var RoadZIndex = LinkValues.RoadZIndex;
-    var activeLayer = false;
+    var isActiveLayer = false;
 
     var projectLinkStyler = new ProjectLinkStyler();
 
@@ -166,7 +166,7 @@
     map.addLayer(historicRoadsLayer);
 
       var toggleLayerVisibility = function (visibleToggle, withVectorLayer) {
-        console.log("set visible");
+        console.log("set visible " + visibleToggle);
           floatingMarkerLayer.setVisible(visibleToggle);
           anomalousMarkerLayer.setVisible(visibleToggle);
           suravageMarkerLayer.setVisible(visibleToggle);
@@ -280,9 +280,9 @@
 
 
     var zoomDoubleClickListener = function(event) {
-      if (activeLayer)
+      if (isActiveLayer)
         _.defer(function(){
-          if((selectDoubleClick.getFeatures().getLength() === 0 && selectSingleClick.getFeatures().getLength() === 0) && applicationModel.getSelectedLayer() == 'linkProperty' && map.getView().getZoom() <= 13){
+          if((selectDoubleClick.getFeatures().getLength() === 0 && selectSingleClick.getFeatures().getLength() === 0) && applicationModel.getSelectedLayer() === 'linkProperty' && map.getView().getZoom() <= 13){
             map.getView().setZoom(map.getView().getZoom()+1);
           }
         });
@@ -294,11 +294,11 @@
      * We declare the type of interaction we want the map to be able to respond.
      * A selected feature is moved to a new/temporary layer out of the default roadLayer.
      * This interaction is restricted to a single click (there is a 250 ms enforced
-     * delay between single clicks in order to diferentiate from double click).
+     * delay between single clicks in order to differentiate from double click).
      * @type {ol.interaction.Select}
      */
     var selectSingleClick = new ol.interaction.Select({
-      //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
+      //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
       layer: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer, suravageRoadLayer, historicRoadsLayer],
@@ -421,7 +421,7 @@
     };
 
     /**
-     * Event triggred by the selectedLinkProperty.open() returning all the open layers 3 features
+     * Event triggered by the selectedLinkProperty.open() returning all the open layers 3 features
      * that need to be included in the selection.
      */
     eventbus.on('linkProperties:ol3Selected',function(ol3Features){
@@ -547,28 +547,28 @@
 
     var draw = function() {
       var marker;
-      var middlefloating;
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var roadLinks = roadCollection.getAll();
       var suravageLinks=roadCollection.getSuravageLinks();
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
-      if(floatingMarkerLayer.getSource() !== null)
-        floatingMarkerLayer.getSource().clear();
-      if(anomalousMarkerLayer.getSource() !== null)
-        anomalousMarkerLayer.getSource().clear();
-      if(geometryChangedLayer.getSource() !== null)
-        geometryChangedLayer.getSource().clear();
-      if(suravageMarkerLayer.getSource() !== null)
-        suravageMarkerLayer.getSource().clear();
-      if(directionMarkerLayer.getSource() !== null)
-        directionMarkerLayer.getSource().clear();
+      floatingMarkerLayer.getSource().clear();
+      anomalousMarkerLayer.getSource().clear();
+      geometryChangedLayer.getSource().clear();
+      suravageMarkerLayer.getSource().clear();
+      directionMarkerLayer.getSource().clear();
+      calibrationPointLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
 
         var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
+        });
+        _.each(directionRoadMarker, function(directionlink) {
+          var marker = cachedMarker.createMarker(directionlink);
+          if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+            directionMarkerLayer.getSource().addFeature(marker);
         });
 
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -578,26 +578,26 @@
         var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.anomaly === Anomaly.NoAddressGiven.value;
         });
+        _.each(anomalousRoadMarkers, function(anomalouslink) {
+          var marker = cachedMarker.createMarker(anomalouslink);
+          if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
+            anomalousMarkerLayer.getSource().addFeature(marker);
+        });
+
         var suravageRoadMarkers = _.filter(suravageLinks, function(roadlink) {
           return roadlink.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
         });
-
         _.each(suravageRoadMarkers, function(directionLink) {
           var marker = cachedMarker.createMarker(directionLink);
           if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
             suravageMarkerLayer.getSource().addFeature(marker);
         });
 
-        var geometryChangedRoadMarkers = _.filter(roadLinks, function(roadlink){
-          return roadlink.anomaly === Anomaly.GeometryChanged.value;
-        });
 
-        var floatingGroups = _.groupBy(floatingRoadMarkers, function(value){
+        var floatingGroups = _.sortBy(_.groupBy(floatingRoadMarkers, function(value){
           return value.linkId;
-        });
-
-        var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
-        _.each(orderFloatGroup, function(floatGroup) {
+        }), 'startAddressM');
+        _.each(floatingGroups, function(floatGroup) {
             _.each(floatGroup, function(floating){
                 marker = cachedLinkPropertyMarker.createMarker(floating);
                 if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
@@ -605,18 +605,9 @@
             });
         });
 
-        _.each(directionRoadMarker, function(directionlink) {
-          var marker = cachedMarker.createMarker(directionlink);
-          if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
-            directionMarkerLayer.getSource().addFeature(marker);
+        var geometryChangedRoadMarkers = _.filter(roadLinks, function(roadlink){
+          return roadlink.anomaly === Anomaly.GeometryChanged.value;
         });
-
-        _.each(anomalousRoadMarkers, function(anomalouslink) {
-          var marker = cachedMarker.createMarker(anomalouslink);
-            if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-            anomalousMarkerLayer.getSource().addFeature(marker);
-        });
-
         _.each(geometryChangedRoadMarkers, function(geometryChangedLink) {
 
             var newLinkData = Object.assign({}, geometryChangedLink);
@@ -644,7 +635,6 @@
           geometryChangedLayer.getSource().addFeature(feature);
         });
 
-        calibrationPointLayer.getSource().clear();
         if (!applicationModel.isActiveButtons() && map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
@@ -826,7 +816,8 @@
         suravageRoadLayer.setVisible(visibility);
         suravageMarkerLayer.setVisible(visibility);
       });
-      eventListener.listenTo(eventbus, 'allRoads:visibilityChanged', function () {
+      eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
+        console.log("get road visibility");
         toggleLayerVisibility(applicationModel.getRoadVisibility(), true);
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
@@ -1436,15 +1427,13 @@
 
     eventListener.listenTo(eventbus, 'layer:selected', function(layer, previouslySelectedLayer){
       console.log("listen to layer:selected");
-      //TODO: there might be room for improvement on this, but I am not seeing it
-      if (layer !== 'linkProperty') {
-        deactivateSelectInteractions(true);
-        removeSelectInteractions();
-        activeLayer = false;
-      } else {
-        activeLayer = true;
+      isActiveLayer = layer === 'linkProperty';
+      if (isActiveLayer) {
         activateSelectInteractions(true);
         addSelectInteractions();
+      } else {
+        deactivateSelectInteractions(true);
+        removeSelectInteractions();
       }
       clearLayers();
       clearHighlights();

@@ -89,11 +89,11 @@
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
-
+      console.log(layers);
       if (layerToBeHidden) layerToBeHidden.hide(map);
       layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
-        enableCtrlModifier = (layer === "roadAddressProject");
+      enableCtrlModifier = (layer === "roadAddressProject");
     }, this);
 
     eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
