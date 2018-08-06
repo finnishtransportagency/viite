@@ -50,6 +50,7 @@
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
         console.log("set visible");
+        console.log("get road visibility");
         vectorLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
@@ -75,7 +76,6 @@
     };
 
     var clear = function(){
-
       vectorLayer.getSource().clear();
     };
 

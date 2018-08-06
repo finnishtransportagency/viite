@@ -15,7 +15,7 @@
     };
 
     this.eventListener = _.extend({running: false}, eventbus);
-    this.refreshView = function() {};
+    this.refreshView = function(event) {};
     this.isDirty = function() { return false; };
     this.layerStarted = function() {};
     this.removeLayerFeatures = function() {};
@@ -71,13 +71,12 @@
     this.drawCalibrationMarkers = function(layer, roadLinks) {
       var calibrationPointsWithValue = [];
       _.filter(roadLinks, function (roadLink) {
-          return roadLink.calibrationPoints.length > 0;
-        }
-      ).forEach(function (roadLink) {
+        return roadLink.calibrationPoints.length > 0;
+      }).forEach(function (roadLink) {
         roadLink.calibrationPoints.forEach(function (currentPoint) {
-          var point=currentPoint.point;
-          if(point)
-            calibrationPointsWithValue.push({points:point,calibrationCode:roadLink.calibrationCode});
+          var point = currentPoint.point;
+          if (point)
+            calibrationPointsWithValue.push({points: point, calibrationCode: roadLink.calibrationCode});
         });
       });
 

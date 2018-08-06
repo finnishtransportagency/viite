@@ -540,7 +540,7 @@
 
 
       var closeProjectMode = function (changeLayerMode, noSave) {
-        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('roadAddressProject:startAllInteractions');
         applicationModel.setOpenProject(false);
         eventbus.trigger('projectChangeTable:hide');
         rootElement.find('header').toggle();

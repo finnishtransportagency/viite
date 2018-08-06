@@ -168,7 +168,7 @@
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if(layer === 'linkProperty' && toggleStart) {
-          console.log("layer is layer and start");
+          console.log("layer is link layer and start");
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         } else {
           console.log("nothing happened");
