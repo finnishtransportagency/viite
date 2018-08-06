@@ -202,7 +202,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart).map {
       case (_, linkId, addrLength, discontinuity, ely, _, _) =>
         ReservedRoadPart(0L, roadNumber, roadPart, Some(addrLength), Some(Discontinuity.apply(discontinuity.toInt)), Some(ely),
-          newLength = None, newDiscontinuity = None, newEly = None, Some(linkId))
+          newLength = Some(addrLength), newDiscontinuity = Some(Discontinuity.apply(discontinuity.toInt)), newEly = Some(ely), Some(linkId))
     }
   }
 
