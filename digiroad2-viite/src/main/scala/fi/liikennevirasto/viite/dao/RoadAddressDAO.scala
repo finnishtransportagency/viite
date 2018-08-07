@@ -897,7 +897,7 @@ object RoadAddressDAO {
   }
 
   def updateConcerningHistory(roadAddress: RoadAddress, geometry: Option[Seq[Point]] = Option.empty[Seq[Point]]) : Unit = {
-    if(geometry.isDefined){
+    if (geometry.isDefined) {
       val startTS = toTimeStamp(roadAddress.startDate)
       val endTS = toTimeStamp(roadAddress.endDate)
       val first = geometry.get.head
@@ -913,8 +913,8 @@ object RoadAddressDAO {
            END_ADDR_M= ${roadAddress.endAddrMValue},
            start_date= $startTS,
            end_date= $endTS,
-           geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-             $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+           geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(
+             $x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
         WHERE id = ${roadAddress.id}""".execute
     }
     updateWithoutGeometryWithHistory(roadAddress)
