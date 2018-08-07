@@ -167,20 +167,21 @@ object DataFixture {
     println()
   }
 
-  private def combineMultipleSegmentsOnLinks(): Unit ={
+  private def combineMultipleSegmentsOnLinks(): Unit = {
     println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
       RoadAddressDAO.getAllValidRoadNumbers().foreach(road => {
         val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
         val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
-        roadAddresses.foreach{ case (linkId, list) =>
+        roadAddresses.foreach { case (linkId, list) =>
           val currReplacement = replacements(linkId)
           if (list.lengthCompare(currReplacement.size) != 0) {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
             val created = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
-            RoadAddressDAO.create(created, Some("Automatic_merged"))
+            if (created.nonEmpty)
+              RoadAddressDAO.create(created, created.head.createdBy, Some("Automatic_merged"))
           }
         }
       })
