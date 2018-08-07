@@ -182,9 +182,9 @@ object RoadAddressChangesDAO {
     sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES WHERE project_id = $projectId""".execute
   }
 
-  def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
+  def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean = {
     def addToBatch(roadAddressSection: RoadAddressSection, ely: Long, addressChangeType: AddressChangeType,
-                   roadAddressChangePS: PreparedStatement) = {
+                   roadAddressChangePS: PreparedStatement): Unit = {
       addressChangeType match {
         case AddressChangeType.New =>
           roadAddressChangePS.setNull(3, java.sql.Types.INTEGER)
@@ -232,7 +232,8 @@ object RoadAddressChangesDAO {
       roadAddressChangePS.addBatch()
     }
 
-    def addToBatchWithOldValues(oldRoadAddressSection: RoadAddressSection, newRoadAddressSection:RoadAddressSection, ely: Long, addressChangeType: AddressChangeType, roadAddressChangePS: PreparedStatement) = {
+    def addToBatchWithOldValues(oldRoadAddressSection: RoadAddressSection, newRoadAddressSection:RoadAddressSection,
+                                ely: Long, addressChangeType: AddressChangeType, roadAddressChangePS: PreparedStatement): Unit = {
       roadAddressChangePS.setLong(1, projectId)
       roadAddressChangePS.setLong(2, addressChangeType.value)
       roadAddressChangePS.setLong(3, oldRoadAddressSection.roadNumber)
@@ -258,21 +259,20 @@ object RoadAddressChangesDAO {
     val startTime = System.currentTimeMillis()
     logger.info("Begin delta insertion in ChangeTable")
     ProjectDAO.getRoadAddressProjectById(projectId) match {
-      case Some(project) => {
+      case Some(project) =>
         project.ely match {
-          case Some(ely) => {
+          case Some(ely) =>
             val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
               "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
               "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+
             val terminated = ProjectDeltaCalculator.partition(delta.terminations)
-            terminated.foreach { case (roadAddressSection) =>
-              addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS)
-            }
+            terminated.foreach(roadAddressSection => addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS))
+
             val news = ProjectDeltaCalculator.partition(delta.newRoads)
-            news.foreach { case (roadAddressSection) =>
-              addToBatch(roadAddressSection, ely, AddressChangeType.New, roadAddressChangePS)
-            }
+            news.foreach(roadAddressSection => addToBatch(roadAddressSection, ely, AddressChangeType.New, roadAddressChangePS))
+
             ProjectDeltaCalculator.partition(delta.unChanged.mapping).foreach { case (roadAddressSection1, roadAddressSection2) =>
               addToBatchWithOldValues(roadAddressSection1, roadAddressSection2, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
@@ -290,10 +290,9 @@ object RoadAddressChangesDAO {
             val endTime = System.currentTimeMillis()
             logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
             true
-          }
-          case _=>  false
+          case _ =>  false
         }
-      } case _=> false
+      case _ => false
     }
   }
 }

@@ -53,6 +53,17 @@
           b: selected[1]
         };
       var selection = selectedSplitData(selected, currentSplitData);
+      var roadLinkSources = _.chain(selected).map(function(s) {
+          return s.roadLinkSource;
+      }).uniq().map(function(a) {
+        var linkGeom = _.find(LinkGeomSource, function (source) {
+              return source.value === parseInt(a);
+          });
+        if(_.isUndefined(linkGeom))
+          return LinkGeomSource.Unknown.descriptionFI;
+        else
+          return linkGeom.descriptionFI;
+      }).uniq().join(", ").value();
       return _.template('' +
         '<header>' +
         formCommon.title(project.name) +
@@ -62,6 +73,7 @@
         '<div class="edit-control-group project-choice-group">' +
         formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate) +
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
+        formCommon.staticField('Geometrian Lähde', roadLinkSources)+
         '<div class="split-form-group editable form-editable-roadAddressProject"> ' +
         selectionFormCutted(selection, selected, currentSplitData) +
         (isReSplitMode ? '' : formCommon.changeDirection(selected)) +

@@ -1065,28 +1065,29 @@ object RoadAddressDAO {
     * @param isFloating '0' for not floating, '1' for floating
     * @param roadAddressId The Id of a road addresss
     */
-  def changeRoadAddressFloatingWithHistory(isFloating: Int, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
+  def changeRoadAddressFloatingWithHistory(isFloating: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
+    val floatingValue = if(isFloating) 1 else 0
     if (geometry.nonEmpty) {
       val first = geometry.get.head
       val last = geometry.get.last
       val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
       val length = GeometryUtils.geometryLength(geometry.get)
       sqlu"""
-           Update road_address Set floating = $isFloating,
+           Update road_address Set floating = $floatingValue,
                   geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
                   $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
              Where id = $roadAddressId
       """.execute
     }
     sqlu"""
-       update road_address set floating = $isFloating where id in(
+       update road_address set floating = $floatingValue where id in(
        select road_address.id from road_address where link_id =
        (select link_id from road_address where road_address.id = $roadAddressId))
         """.execute
   }
 
   def changeRoadAddressFloating(float: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]] = None): Unit = {
-    changeRoadAddressFloatingWithHistory(if (float) 1 else 0, roadAddressId, geometry)
+    changeRoadAddressFloatingWithHistory(float, roadAddressId, geometry)
   }
 
   def getAllValidRoadNumbers(filter: String = "") = {
