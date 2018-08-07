@@ -50,8 +50,8 @@
       current = data;
     };
 
-    var idTestForOpen = function (id) {
-      return !_.isUndefined(id) && id !== LinkValues.UnknownRoadId && id !== LinkValues.NewRoadId;
+    var canOpenById = function (id) {
+      return !_.isUndefined(id) && id > LinkValues.UnknownRoadId;
     };
 
     var extractDataForDisplay = function (selectedData) {
@@ -114,14 +114,14 @@
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         if (isSuravage) {
-          if (idTestForOpen(id)) {
+          if (canOpenById(id)) {
             setCurrent(singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id));
 
           } else {
             setCurrent(singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId));
           }
         } else {
-          if (idTestForOpen(id)) {
+          if (canOpenById(id)) {
             setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
           } else {
             setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
@@ -145,7 +145,7 @@
         var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) : !isSelectedById(id);
         if (canIOpen) {
             applicationModel.toggleSelectionTypeFloating();
-            if (idTestForOpen(id)) {
+            if (canOpenById(id)) {
                 setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
             } else {
                 setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
@@ -896,7 +896,7 @@
       setCurrent: setCurrent,
       processOL3Features: processOl3Features,
       revertToFloatingAddress: revertToFloatingAddress,
-      idTestForOpen: idTestForOpen
+      canOpenById: canOpenById
     };
   };
 })(this);
