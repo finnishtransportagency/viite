@@ -620,7 +620,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/getchangetable/$projectId") {
       val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
-      //TODO change UI to not override proj validator errors on change table call
+      //TODO change UI to not override project validator errors on change table call
       val changeTableData = projectService.getChangeProject(projectId).map(project =>
         Map(
           "id" -> project.id,
