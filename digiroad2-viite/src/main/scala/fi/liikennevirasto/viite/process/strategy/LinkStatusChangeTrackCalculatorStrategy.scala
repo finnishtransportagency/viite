@@ -9,11 +9,6 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
   val AdjustmentToleranceMeters = 3L
 
-  protected def getUntilLinkStatusChange(seq: Seq[ProjectLink], status: LinkStatus): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val continuousProjectLinks = seq.takeWhile(pl => pl.status == status)
-    (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
-  }
-
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes FROM or TO a status equal "NEW" or "TERMINATED" and track is Left or Right
     projectLink.status != headProjectLink.status &&
@@ -22,8 +17,8 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
-    val (left, restLeft) = getUntilLinkStatusChange(leftProjectLinks, leftProjectLinks.head.status)
-    val (right, restRight) = getUntilLinkStatusChange(rightProjectLinks, rightProjectLinks.head.status)
+    val (left, restLeft) = leftProjectLinks.span(_.status == leftProjectLinks.head.status)
+    val (right, restRight) = rightProjectLinks.span(_.status == rightProjectLinks.head.status)
 
     val (lastLeft, lastRight) = (left.last, right.last)
 
@@ -75,11 +70,10 @@ class TerminatedLinkStatusChangeStrategy extends  LinkStatusChangeTrackCalculato
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
-    val (left, restLeft) = getUntilLinkStatusChange(leftProjectLinks, leftProjectLinks.head.status)
-    val (right, restRight) = getUntilLinkStatusChange(rightProjectLinks, rightProjectLinks.head.status)
+    val (left, restLeft) = leftProjectLinks.span(_.status == leftProjectLinks.head.status)
+    val (right, restRight) = rightProjectLinks.span(_.status == rightProjectLinks.head.status)
 
     val (lastLeft, lastRight) = (left.last, right.last)
-
     if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
       val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
       adjustTwoTrackss(startAddress, Some(lastRight.endAddrMValue), newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
