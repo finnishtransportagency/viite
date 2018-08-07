@@ -285,7 +285,6 @@
     var getLinkAdjacents = function(link) {
       var linkIds = {};
       var chainLinks = [];
-      var startLinkId= link.linkId;
       _.each(current, function (link) {
         if (!_.isUndefined(link))
           chainLinks.push(link.getData().linkId);
@@ -314,7 +313,7 @@
             });
             var filteredDuplicatedAdjacents = _.reject(adjacents, function(adj){
                 var foundDuplicatedLink = _.find(previousAdjacents, function(prev){
-                   return prev.linkId === adj.linkId && prev.roadLinkType === adj.roadLinkType;
+                   return prev.linkId === adj.linkId;
                 });
                 return _.some(foundDuplicatedLink);
             });
@@ -322,7 +321,7 @@
 
             var filteredAdjacents = _.reject(filteredPreviousAdjacents, function(adj){
                 var foundDuplicatedLink = _.find(selectedLinks, function(prev){
-                      return prev.linkId === adj.linkId && prev.roadLinkType === adj.roadLinkType;
+                      return prev.linkId === adj.linkId;
                 });
                 return _.some(foundDuplicatedLink);
             });
