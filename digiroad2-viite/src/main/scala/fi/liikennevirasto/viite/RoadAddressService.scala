@@ -828,7 +828,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
 
-    val mapping = DefloatMapper.createAddressMap(latestSegments(sources.sortBy(_.startMValue)), targets)
+    val mapping = DefloatMapper.createAddressMap(latestSegments(sources.sortBy(_.startMValue)), targets).filter(_.sourceLen > MinAllowedRoadAddressLength)
     if (mapping.exists(DefloatMapper.invalidMapping)) {
       throw new InvalidAddressDataException("Mapping failed to map following items: " +
         mapping.filter(DefloatMapper.invalidMapping).map(
