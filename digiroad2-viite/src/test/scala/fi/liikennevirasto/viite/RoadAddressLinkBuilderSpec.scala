@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
 import fi.liikennevirasto.viite.dao._
@@ -29,27 +30,27 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Fuse road address should accept single road address") {
     val roadAddress = Seq(RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, None, None, Option("tester"),
-      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should be(roadAddress)
   }
 
   test("Fuse road address should merge consecutive road addresses even if floating") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (1)
   }
 
   test("Fuse road address should not merge consecutive road addresses with differing start dates") {
     val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1902-02-02")), None, Option("tester"), 12345L, 9.8, 20.2, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1902-02-02")), None, Option("tester"), 12345L, 9.8, 20.2, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 20.2, 30.2, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 20.2, 30.2, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 20.2), Point(0.0, 30.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val fused = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
@@ -60,9 +61,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Fuse road address should not merge consecutive road addresses with differing link ids") {
     val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
@@ -72,9 +73,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Fuse road address should not merge consecutive road addresses if side code differs") {
     val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), false,
+      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     intercept[InvalidAddressDataException] {
@@ -85,13 +86,13 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Fuse road address should merge multiple road addresses with random ordering") {
     val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), false,
+      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (1)
@@ -101,16 +102,16 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     // TODO: Or do we throw an exception then?
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
 
       RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), false, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), NoFloating, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
 
       RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0,
-        SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
 
       RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8,
-        SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     //Changed fuseRoadAddressWithTransaction size from 3 to 2 the reasoning behind it is that although we cannot fuse  1 and 2, there is nothing stopping us from fusing 2,3 and 4
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
@@ -240,7 +241,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
         Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       val newLink = Seq(ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 7096025L, 0.0, 43.1, SideCode.AgainstDigitizing, (None, None), false,
+        None, 7096025L, 0.0, 43.1, SideCode.AgainstDigitizing, (None, None), NoFloating,
         Seq(Point(468.5, 0.5), Point(512.0, 0.0)), project.id, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
         None, 86400L))
 
@@ -263,10 +264,10 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))
     val roadAddress = Seq(
       RoadAddress(3767413, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")), None, Option("tester"), 138834, 0.0, 21.0,
-        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(138834, 0.0, 679L)), None), false, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(138834, 0.0, 679L)), None), NoFloating, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
 
       RoadAddress(3767414, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")), None, Option("tester"), 138834, 21.0, 230.776,
-        SideCode.TowardsDigitizing, 0, (None, None), false, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val fusedList = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
     fusedList should have size (1)
@@ -288,10 +289,10 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     val roadAddress = Seq(
       RoadAddress(3767413, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")),
         None, Option("tester"), 138834, 0.0, 21.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(138834, 0.0, 679L)),
-          Some(CalibrationPoint(138834, 21.0, 920L))), false, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+          Some(CalibrationPoint(138834, 21.0, 920L))), NoFloating, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
 
       RoadAddress(3767414, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")),
-        None, Option("tester"), 138834, 21.0, 230.776, SideCode.TowardsDigitizing, 0, (None, None), false,
+        None, Option("tester"), 138834, 21.0, 230.776, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val fusedList = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
@@ -313,13 +314,13 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Fuse road address should fuse against digitization road addresses properly") {
     OracleDatabase.withDynSession {
       val roadAddress = Seq(
-        RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.AgainstDigitizing, 0, (None, None), false,
+        RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
           Seq(Point(0.0, 9.8), Point(0.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-        RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.AgainstDigitizing, 0, (None, None), false,
+        RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
           Seq(Point(0.0, 39.8), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-        RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.AgainstDigitizing, 0, (None, None), false,
+        RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
           Seq(Point(0.0, 30.0), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-        RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), false,
+        RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
           Seq(Point(0.0, 20.2), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
       )
       RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (1)
@@ -328,14 +329,14 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Building ProjectAddressLink partitioner") {
     val unknownProjectLink = ProjectLink(0, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0.0, 0.0,
-      SideCode.Unknown, (None, None), false, List(), 0, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false,
+      SideCode.Unknown, (None, None), NoFloating, List(), 0, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false,
       None, 85088L)
     val projectLinks =
       Map(
         1717380l -> ProjectLink(1270, 0, 0, Track.apply(99), Continuous, 1021, 1028, None, None, None, 1717380, 0.0, 6.0,
-          AgainstDigitizing, (None, None), false, List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false, None, 85088L),
+          AgainstDigitizing, (None, None), NoFloating, List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false, None, 85088L),
         1717374l -> ProjectLink(1259, 1130, 0, Combined, Continuous, 959, 1021, None, None, None, 1717374, 0.0, 61.0,
-          AgainstDigitizing, (None, None), false, List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false, None, 85088L)
+          AgainstDigitizing, (None, None), NoFloating, List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 8, false, None, 85088L)
       )
 
     val roadLinks = Seq(
@@ -367,11 +368,11 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Fuse road address should not merge different termination status") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, Termination, 0),
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, Termination, 0),
       RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 20.2), Point(0.0, 40.2)), LinkGeomSource.NormalLinkInterface, 8, Subsequent, 0)
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 20.2), Point(0.0, 40.2)), LinkGeomSource.NormalLinkInterface, 8, Subsequent, 0)
     )
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (3)
   }
@@ -379,9 +380,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Fuse road address should not merge different ely code") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
     )
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
   }
@@ -389,9 +390,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Fuse road address should not merge different road type") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(2, 1, 1, RoadType.FerryRoad, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
+        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
     )
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
   }
@@ -410,7 +411,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
     val roadAddress = RoadAddress(411482, 70006, 561, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 626,
       Some(DateTime.parse("2018-01-16T00:00:00.000+02:00")), None, Some("silari"), 7519921, 0.0, 625.547, SideCode.TowardsDigitizing,
-      1515766393000L, (Some(CalibrationPoint(7519921, 0.0, 0)), Some(CalibrationPoint(7519921, 625.547, 626))), false,
+      1515766393000L, (Some(CalibrationPoint(7519921, 0.0, 0)), Some(CalibrationPoint(7519921, 625.547, 626))), NoFloating,
       List(Point(642357.37, 6946486.267, 0.0), Point(642420.432, 6947101.047, 0.0)), SuravageLinkInterface, 8, NoTermination, 0)
 
     val supposedRoadAddressGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
