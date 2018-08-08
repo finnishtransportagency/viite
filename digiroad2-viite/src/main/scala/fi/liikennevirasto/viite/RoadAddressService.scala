@@ -721,14 +721,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  private def getAdjacentAddresses(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
+  private def getAdjacentAddresses(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
     withDynSession {
-      val ra = RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false).sortBy(_.startAddrMValue)
-      assert(ra.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
-        s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + ra.map(r =>
+      val roadAddresses = (if (chainIds.nonEmpty)
+        RoadAddressDAO.queryById(chainIds)
+      else if (chainLinks.nonEmpty)
+        RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false)
+      else Seq.empty[RoadAddress]
+        ).sortBy(_.startAddrMValue)
+      assert(roadAddresses.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
+        s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + roadAddresses.map(r =>
           s"${r.linkId} = ${r.roadNumber}/${r.roadPartNumber}/${r.track.value}").mkString(", "))
-      val startValues = ra.map(_.startAddrMValue)
-      val endValues = ra.map(_.endAddrMValue)
+      val startValues = roadAddresses.map(_.startAddrMValue)
+      val endValues = roadAddresses.map(_.endAddrMValue)
       val orphanStarts = startValues.filterNot(st => endValues.contains(st))
       val orphanEnds = endValues.filterNot(st => startValues.contains(st))
       (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
@@ -737,8 +742,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
-    val adjacentAddresses = getAdjacentAddresses(chainLinks, linkId, roadNumber, roadPartNumber, Track.apply(trackCode))
+  def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
+    val adjacentAddresses = getAdjacentAddresses(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, Track.apply(trackCode))
     val adjacentLinkIds = adjacentAddresses.map(_.linkId).toSet
     val roadLinks = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds, frozenTimeVVHAPIServiceEnabled)
     val adjacentAddressLinks = roadLinks._1.map(rl => rl.linkId -> rl).toMap
