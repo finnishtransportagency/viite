@@ -93,7 +93,7 @@ object DataFixture {
     }
   }
 
-  def importRoadAddresses(isDevDatabase: Boolean, importTableName: Option[String]): Unit = {
+  def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
@@ -450,7 +450,7 @@ object DataFixture {
         findFloatingRoadAddresses()
       case Some("import_road_addresses") =>
         if (args.length > 1)
-          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("viitetestuser"), Some(args(1)))
+          importRoadAddresses(Some(args(1)))
         else
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
