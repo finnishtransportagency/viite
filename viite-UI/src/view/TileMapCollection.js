@@ -30,11 +30,11 @@
     };
 
     var aerialMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
+      url: 'wmts/maasto/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
     });
 
     var backgroundMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var propertyBorderMapConfig = _.merge({}, sourceConfig, {
@@ -42,7 +42,7 @@
     });
 
     var terrainMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var aerialMapLayer = new ol.layer.Tile(_.merge({
