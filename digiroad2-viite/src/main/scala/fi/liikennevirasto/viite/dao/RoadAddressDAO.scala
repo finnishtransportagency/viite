@@ -20,8 +20,7 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import org.joda.time.DateTime
-import org.joda.time.LocalDate
+import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -1365,12 +1364,12 @@ object RoadAddressDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadAddresses: Iterable[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
+  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, road_number, road_part_number, " +
-      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, modified_by, " +
       "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, common_history_id," +
       "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
-      "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
+      "TO_DATE(?, 'YYYY-MM-DD'), ?, ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
       "?, ?, ?, ?, ?, ?)")
     val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
@@ -1406,25 +1405,29 @@ object RoadAddressDAO {
       })
       val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
       addressPS.setString(10, if (newCreatedBy == null) "-" else newCreatedBy)
+      addressPS.setString(11, modifiedBy match {
+        case Some(creator) => creator
+        case None => ""
+      })
       val (p1, p2) = (address.geometry.head, address.geometry.last)
-      addressPS.setDouble(11, p1.x)
-      addressPS.setDouble(12, p1.y)
-      addressPS.setDouble(13, address.startAddrMValue)
-      addressPS.setDouble(14, p2.x)
-      addressPS.setDouble(15, p2.y)
-      addressPS.setDouble(16, address.endAddrMValue)
-      addressPS.setInt(17, address.floating.value)
-      addressPS.setInt(18, CalibrationCode.getFromAddress(address).value)
-      addressPS.setLong(19, address.ely)
-      addressPS.setInt(20, address.roadType.value)
-      addressPS.setInt(21, address.terminated.value)
-      addressPS.setLong(22, nextCommonHistoryId)
-      addressPS.setLong(23, address.linkId)
-      addressPS.setLong(24, address.sideCode.value)
-      addressPS.setDouble(25, address.startMValue)
-      addressPS.setDouble(26, address.endMValue)
-      addressPS.setDouble(27, address.adjustedTimestamp)
-      addressPS.setInt(28, address.linkGeomSource.value)
+      addressPS.setDouble(12, p1.x)
+      addressPS.setDouble(13, p1.y)
+      addressPS.setDouble(14, address.startAddrMValue)
+      addressPS.setDouble(15, p2.x)
+      addressPS.setDouble(16, p2.y)
+      addressPS.setDouble(17, address.endAddrMValue)
+      addressPS.setInt(18, address.floating.value)
+      addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
+      addressPS.setLong(20, address.ely)
+      addressPS.setInt(21, address.roadType.value)
+      addressPS.setInt(22, address.terminated.value)
+      addressPS.setLong(23, nextCommonHistoryId)
+      addressPS.setLong(24, address.linkId)
+      addressPS.setLong(25, address.sideCode.value)
+      addressPS.setDouble(26, address.startMValue)
+      addressPS.setDouble(27, address.endMValue)
+      addressPS.setDouble(28, address.adjustedTimestamp)
+      addressPS.setInt(29, address.linkGeomSource.value)
       addressPS.addBatch()
     }
     addressPS.executeBatch()
