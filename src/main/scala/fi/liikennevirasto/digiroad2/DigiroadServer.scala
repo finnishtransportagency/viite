@@ -58,7 +58,7 @@ class NLSProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("https://oag.liikennevirasto.fi"
+    java.net.URI.create("https://oag.liikennevirasto.fi/rasteripalvelu-mml/"
       + regex.replaceFirstIn(uri, ""))
   }
 

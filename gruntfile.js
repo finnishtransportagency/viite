@@ -105,10 +105,7 @@ module.exports = function(grunt) {
             https: true,
             changeOrigin: true,
             xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'},
-            rewrite: {
-              '^/wmts': '/rasteripalvelu-mml/wmts'
-            }
+            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
           },
           {
             context: '/maasto',
