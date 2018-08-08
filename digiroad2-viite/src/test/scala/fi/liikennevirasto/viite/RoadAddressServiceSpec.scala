@@ -485,7 +485,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn(
       (Seq(), Stream()))
 
-    val result = roadAddressService.getFloatingAdjacent(Set(road75FloatingAddresses.linkId), road75FloatingAddresses.linkId, road75FloatingAddresses.roadNumber, road75FloatingAddresses.roadPartNumber, road75FloatingAddresses.track.value)
+    val result = roadAddressService.getFloatingAdjacent(Set(road75FloatingAddresses.linkId), Set(road75FloatingAddresses.id), road75FloatingAddresses.linkId, road75FloatingAddresses.id, road75FloatingAddresses.roadNumber, road75FloatingAddresses.roadPartNumber, road75FloatingAddresses.track.value)
     result.size should be (0)
   }
 

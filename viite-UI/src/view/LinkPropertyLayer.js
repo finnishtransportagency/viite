@@ -529,7 +529,7 @@
       var featuresToHighlight = [];
       _.each(roadLayer.layer.features, function(feature) {
         var gapTransfering = x.data.gapTransfering;
-        var canIHighlight = !_.isUndefined(feature.attributes.linkId) ? selectedLinkProperty.isSelectedByLinkId(feature.attributes.linkId) : selectedLinkProperty.isSelectedById(feature.attributes.id);
+        var canIHighlight = !_.isUndefined(feature.attributes.id) ? selectedLinkProperty.isSelectedById(feature.attributes.id) : selectedLinkProperty.isSelectedByLinkId(feature.attributes.linkId);
         if(gapTransfering || canIHighlight){
           featuresToHighlight.push(feature);
         }
@@ -722,15 +722,21 @@
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
       eventListener.listenTo(eventbus, 'linkProperties:closed', refreshViewAfterClosingFloating);
 
-      eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
+      eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function (link) {
         var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
         var features = [];
-        _.each(selectedLink, function (featureLink){
-         _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
-             if (featureLink.linkId !== 0 && _.contains(featureLink.selectedLinks, feature.linkData.linkId)) {
-              return features.push(feature);
-            }
-          });
+        _.each(selectedLink, function (featureLink) {
+          if (selectedLinkProperty.canOpenById(featureLink.id)) {
+            _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
+              if (_.contains(featureLink.selectedIds, feature.linkData.id))
+                return features.push(feature);
+            });
+          } else if (featureLink.linkId !== 0) {
+            _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
+              if (_.contains(featureLink.selectedLinks, feature.linkData.linkId))
+                return features.push(feature);
+            });
+          }
         });
         if (features) {
           addFeaturesToSelection(features);
@@ -769,19 +775,25 @@
         draw();
         if (!noReselection && applicationModel.getSelectionType() !== 'unknown') {_.defer(function(){
           var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
-          var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
+          var floatingsIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function (feature) {
+            return feature.id;
+          }).uniq().value();
+          var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function (feature) {
             return feature.linkId;
           }).uniq().value();
-          var visibleFeatures = getVisibleFeatures(true,false,true);
-          var featuresToReSelect = _.filter(visibleFeatures, function(feature){
+          var visibleFeatures = getVisibleFeatures(true, false, true);
+          var featuresToReSelect = floatingsIds.length !== 0 ?
+            _.filter(visibleFeatures, function (feature) {
+              return _.contains(floatingsIds, feature.linkData.id);
+            }) : _.filter(visibleFeatures, function (feature) {
               return _.contains(floatingsLinkIds, feature.linkData.linkId);
-          });
-          var filteredFeaturesToReselect = _.reject(featuresToReSelect, function (feat) {
-                return _.some(currentGreenFeatures, function (green) {
-                    return green.linkData.id === feat.linkData.id;
-                });
             });
-            if (filteredFeaturesToReselect.length !== 0){
+          var filteredFeaturesToReselect = _.reject(featuresToReSelect, function (feat) {
+            return _.some(currentGreenFeatures, function (green) {
+              return green.linkData.id === feat.linkData.id;
+            });
+          });
+          if (filteredFeaturesToReselect.length !== 0) {
             addFeaturesToSelection(filteredFeaturesToReselect);
           }
 
