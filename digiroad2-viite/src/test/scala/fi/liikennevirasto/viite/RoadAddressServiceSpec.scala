@@ -318,7 +318,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
       addressUpdated.geometry shouldNot be (address.geometry)
       addressUpdated.geometry should be(roadLink.geometry)
-      addressUpdated.isFloating should be (false)
+      addressUpdated.isFloating should be (true)
       addressUpdated.commonHistoryId should be (addressList.head.commonHistoryId)
     }
   }
