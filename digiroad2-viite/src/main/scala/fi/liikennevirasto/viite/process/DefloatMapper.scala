@@ -93,18 +93,17 @@ object DefloatMapper extends RoadAddressMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    val mValueLength = current.endMValue - current.startMValue
 
-    if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
+    if (Math.abs(current.length - mValue) < MinAllowedRoadAddressLength) {
       if (links.tail.nonEmpty)
         findStartLinearLocation(0.0, links.tail)
       else
-        (current, setPrecision(applySideCode(mValueLength, mValueLength, current.sideCode)))
-    } else if (mValueLength < mValue) {
-      findStartLinearLocation(mValue - mValueLength, links.tail)
+        (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
+    } else if (current.length < mValue) {
+      findStartLinearLocation(mValue - current.length, links.tail)
     } else {
-      val dist = applySideCode(mValue, mValueLength, current.sideCode)
-      (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
+      val dist = applySideCode(mValue, current.length, current.sideCode)
+      (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
     }
   }
 
@@ -112,15 +111,14 @@ object DefloatMapper extends RoadAddressMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    val mValueLength = current.endMValue - current.startMValue
     if (current.id != id)
-      findEndLinearLocationSource(mValue - mValueLength, links.tail, id)
+      findEndLinearLocationSource(mValue - current.length, links.tail, id)
     else {
-      if (Math.abs(mValueLength - mValue) < MaxDistanceDiffAllowed) {
+      if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
         (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
       } else {
-        val dist = applySideCode(mValue, mValueLength, current.sideCode)
-        (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
+        val dist = applySideCode(mValue, current.length, current.sideCode)
+        (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
       }
     }
   }
