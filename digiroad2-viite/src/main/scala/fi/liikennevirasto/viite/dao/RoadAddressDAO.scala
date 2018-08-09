@@ -124,6 +124,7 @@ object FloatingReason {
   case object NewAddressGiven extends FloatingReason { def value = 3}
   case object GapInGeometry extends FloatingReason {def value = 4}
   case object ManualFloating extends FloatingReason { def value = 5}
+  case object SplittingTool extends FloatingReason { def value = 6}
 
 }
 

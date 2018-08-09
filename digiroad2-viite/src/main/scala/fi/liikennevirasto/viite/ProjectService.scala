@@ -1603,10 +1603,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     split.flatMap(pl => {
-
-      // TODO If valid to is defined, what should be the floating reason? - Sami
-      val floatingValue = if (roadAddress.validTo.isDefined) NewAddressGiven else NoFloating
-
+      val floatingValue = if (roadAddress.validTo.isDefined) FloatingReason.SplittingTool else NoFloating
       pl.status match {
         case UnChanged =>
           Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
