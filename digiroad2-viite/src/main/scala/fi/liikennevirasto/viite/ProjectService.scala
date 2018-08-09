@@ -199,7 +199,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart).map {
       case (_, linkId, addrLength, discontinuity, ely, _, _) =>
         ReservedRoadPart(0L, roadNumber, roadPart, Some(addrLength), Some(Discontinuity.apply(discontinuity.toInt)), Some(ely),
-          newLength = None, newDiscontinuity = None, newEly = None, Some(linkId))
+          newLength = Some(addrLength), newDiscontinuity = Some(Discontinuity.apply(discontinuity.toInt)), newEly = Some(ely), Some(linkId))
     }
   }
 
@@ -1304,7 +1304,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  /** Nullifies projects tr_id attribute, changes status to unfinnished and saves tr_info value to status_info. Tries to append old status info if it is possible
+  /** Nullifies projects tr_id attribute, changes status to unfinished and saves tr_info value to status_info. Tries to append old status info if it is possible
     * otherwise it only takes first 300 chars
     *
     * @param projectId project-id
@@ -1317,7 +1317,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
       val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.head + "]"
       if (projects.isEmpty)
-        return Some("Projectia ei löytynyt")
+        return Some("Projektia ei löytynyt")
       val project = projects.head
       appendStatusInfo(project, addedStatus)
     }

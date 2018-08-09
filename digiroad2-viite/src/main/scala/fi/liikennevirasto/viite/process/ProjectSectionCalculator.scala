@@ -28,7 +28,7 @@ object ProjectSectionCalculator {
     */
   def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
-    val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
+    val others = projectLinks.filterNot(_.status == LinkStatus.Terminated)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     try {
 
@@ -124,21 +124,18 @@ object ProjectSectionCalculator {
 
     val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
     val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
-
     if (left.isEmpty || right.isEmpty) {
       Seq[ProjectLink]()
     } else {
-      val leftLinks = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
-      val rightLinks = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
-
+      val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
+      val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
       val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
       val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(rightAdjusted), groupIntoSections(leftAdjusted))
       calculatedSections.flatMap { sec =>
         if (sec.right == sec.left)
           sec.right.links
-        else {
+        else
           sec.right.links ++ sec.left.links
-        }
       }.filter(_.status == LinkStatus.Terminated)
     }
   }
