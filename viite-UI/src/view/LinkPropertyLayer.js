@@ -180,6 +180,8 @@
           suravageRoadLayer.setVisible(visibleToggle);
           reservedRoadLayer.setVisible(visibleToggle);
           historicRoadsLayer.setVisible(visibleToggle);
+        console.log(map.getLayers());
+        console.log(roadLayer.layer);
           if (withVectorLayer) {
               roadLayer.layer.setVisible(visibleToggle);
           }
@@ -812,7 +814,7 @@
         suravageRoadLayer.getSource().addFeatures(ol3SuravageRoads);
       });
       eventListener.listenTo(eventbus, 'suravageRoads:toggleVisibility', function(visibility){
-        console.log("set visible");
+        console.log(map.getLayers());
         suravageRoadLayer.setVisible(visibility);
         suravageMarkerLayer.setVisible(visibility);
       });
@@ -824,7 +826,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
         applicationModel.addSpinner();
-        if(applicationModel.getCurrentAction()!==applicationModel.actionCalculated){
+        if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated) {
           drawIndicators(adjacents);
           selectedLinkProperty.addTargets(targets, adjacents);
         }
@@ -1451,6 +1453,7 @@
           console.log("roadlinks fetched in layer selected");
         });
       }
+      toggleLayerVisibility(applicationModel.getRoadVisibility());
     });
 
     eventListener.listenTo(eventbus, 'roadAddressProject:clearOnClose', function(){
@@ -1460,7 +1463,8 @@
     });
     
     var show = function(map) {
-      console.log("set visible");
+      console.log("set visible: true");
+      console.log(vectorLayer);
       vectorLayer.setVisible(true);
     };
 

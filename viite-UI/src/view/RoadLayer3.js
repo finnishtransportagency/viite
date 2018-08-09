@@ -7,6 +7,7 @@
     var vectorSource = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
+        console.log("loader");
         eventbus.once('roadLinks:fetched', function() {
           var features = _.map(roadCollection.getAll(), function(roadLink) {
             var points = _.map(roadLink.points, function(point) {
@@ -17,8 +18,10 @@
               feature.linkData = roadLink;
             return feature;
           });
+          console.log("load features ->");
           loadFeatures(features);
         });
+        console.log("loader end");
       },
       strategy: ol.loadingstrategy.bbox
     });
@@ -29,12 +32,7 @@
 
     var loadFeatures = function (features) {
       console.log("load features");
-      map.getLayers().forEach( function(layer) {
-        if (layer.values_.name === "roadAddressProject"){
-          layer.setVisible(false);
-          //layer.getSource().clear(false);
-        }
-      });
+
       vectorSource.clear(true);
       vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
       eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
@@ -59,7 +57,7 @@
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
       }
-      console.log("Road layer 3")
+      console.log("Road layer 3");
       if (mapState.zoom < minimumContentZoomLevel()) {
         console.log("zoom < minZoom");
         vectorSource.clear();
