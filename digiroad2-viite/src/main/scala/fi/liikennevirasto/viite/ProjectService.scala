@@ -1769,15 +1769,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Seq()
     }
 
-    val floatingValue = source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow
+    val floatingReason = if (source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow) FloatingReason.ProjectToRoadAddress else NoFloating
     val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewRoadAddress), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
       pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
       pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.commonHistoryId).getOrElse(0))
     pl.status match {
       case UnChanged =>
-        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = if (floatingValue) FloatingReason.GeometryChanged else NoFloating) // TODO Floating reason? - Sami
+        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
       case Transfer | Numbering =>
-        roadAddress.copy(startDate = Some(project.startDate), floating = if (floatingValue) FloatingReason.NewAddressGiven else NoFloating) // TODO Floating reason? - Sami
+        roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
       case New =>
         roadAddress.copy(startDate = Some(project.startDate))
       case Terminated =>
