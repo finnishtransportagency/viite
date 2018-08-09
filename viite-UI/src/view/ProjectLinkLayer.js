@@ -401,9 +401,9 @@
     eventbus.on('layer:selected', function (layer) {
       console.log("layer:selected");
       var isRoadAddressProjectLayer = layer === 'roadAddressProject';
-      console.log("set visible");
-      vectorLayer.setVisible(isRoadAddressProjectLayer);
-      calibrationPointLayer.setVisible(isRoadAddressProjectLayer);
+      console.log("set visible: " + isRoadAddressProjectLayer);
+      vectorLayer.setVisible(isRoadAddressProjectLayer && applicationModel.getRoadVisibility());
+      calibrationPointLayer.setVisible(isRoadAddressProjectLayer && applicationModel.getRoadVisibility());
       if (!isRoadAddressProjectLayer) {
         clearHighlights();
         eventbus.trigger('roadLinks:fetched');
@@ -592,7 +592,7 @@
         vectorLayer.getSource().removeFeature(feature);
       });*/
       //vectorLayer.getSource().clear();
-      console.log("set visible");
+      console.log("set visible: false");
       vectorLayer.setVisible(false);
     };
 
@@ -1030,12 +1030,14 @@
     });
 
     var toggleProjectLayersVisibility = function (visibility, withRoadLayer) {
-      console.log("set visible");
+      console.log("set visible: " + visibility);
+      console.log(map.getLayers());
       vectorLayer.setVisible(visibility);
       suravageRoadProjectLayer.setVisible(visibility);
       calibrationPointLayer.setVisible(visibility);
       directionMarkerLayer.setVisible(visibility);
       suravageProjectDirectionMarkerLayer.setVisible(visibility);
+
       if (withRoadLayer) {
         console.log("ROADLAYER:");
         console.log(roadLayer);
