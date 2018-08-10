@@ -9,6 +9,35 @@ import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnected
 
 object DefloatMapper extends RoadAddressMapper {
 
+  def adjustAdjacentRoadAddresses(roadAddress: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] ={
+    def overrideStartAddrM(ra: RoadAddress, address: Long) : RoadAddress = {
+      ra.copy(startAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = address)), ra.calibrationPoints._2))
+    }
+    def overrideEndAddrM(ra: RoadAddress, address: Long): RoadAddress = {
+      ra.copy(endAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1, ra.calibrationPoints._2.map(_.copy(addressMValue = address))))
+    }
+    def overrideBothAddrM(ra: RoadAddress, startAddr: Long, endAddr: Long) : RoadAddress = {
+      ra.copy(startAddrMValue = startAddr, endAddrMValue = endAddr, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = startAddr)), ra.calibrationPoints._2.map(_.copy(addressMValue = endAddr))))
+    }
+    def adjustTwo(address: (RoadAddress, RoadAddress)): RoadAddress = {
+      val (previousRoadAddress, nextRoadAddress) = address
+      if(previousRoadAddress.endAddrMValue != nextRoadAddress.startAddrMValue)
+        overrideStartAddrM(nextRoadAddress, previousRoadAddress.endAddrMValue)
+      else
+        nextRoadAddress
+    }
+    val (minAddr, maxAddr) = (current.map(_.startAddrMValue).min, current.map(_.endAddrMValue).max)
+
+    roadAddress.size match {
+      case 0 => Seq()
+      case 1 => Seq(overrideBothAddrM(roadAddress.head, minAddr, maxAddr))
+      case _ =>
+        val ordered = roadAddress.sortBy(ra => (ra.endAddrMValue, ra.startAddrMValue))
+        val overrideed = ordered.head +: ordered.zip(ordered.tail).map(adjustTwo)
+        overrideStartAddrM(overrideed.head, minAddr) +: overrideed.init.tail :+ overrideEndAddrM(overrideed.last, maxAddr)
+    }
+  }
+
   def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
     def formMapping(startSourceLink: RoadAddressLink, startSourceM: Double,
                     endSourceLink: RoadAddressLink, endSourceM: Double,
@@ -16,6 +45,9 @@ object DefloatMapper extends RoadAddressMapper {
                     endTargetLink: RoadAddressLink, endTargetM: Double): RoadAddressMapping = {
       if (startSourceM > endSourceM)
         formMapping(startSourceLink, endSourceM, endSourceLink, startSourceM,
+          startTargetLink, startTargetM, endTargetLink, endTargetM)
+      else if (startTargetM > endTargetM)
+        formMapping(startSourceLink, startSourceM, endSourceLink, endSourceM,
           startTargetLink, endTargetM, endTargetLink, startTargetM)
       else
         RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceLink.id, startSourceM,
@@ -90,18 +122,17 @@ object DefloatMapper extends RoadAddressMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    val mValueLength = current.endMValue - current.startMValue
 
-    if (Math.abs(mValueLength - mValue) < MinAllowedRoadAddressLength) {
+    if (Math.abs(current.length - mValue) < MinAllowedRoadAddressLength) {
       if (links.tail.nonEmpty)
         findStartLinearLocation(0.0, links.tail)
       else
-        (current, setPrecision(applySideCode(mValueLength, mValueLength, current.sideCode)))
-    } else if (mValueLength < mValue) {
-      findStartLinearLocation(mValue - mValueLength, links.tail)
+        (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
+    } else if (current.length < mValue) {
+      findStartLinearLocation(mValue - current.length, links.tail)
     } else {
-      val dist = applySideCode(mValue, mValueLength, current.sideCode)
-      (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
+      val dist = applySideCode(mValue, current.length, current.sideCode)
+      (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
     }
   }
 
@@ -109,15 +140,14 @@ object DefloatMapper extends RoadAddressMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    val mValueLength = current.endMValue - current.startMValue
     if (current.id != id)
-      findEndLinearLocationSource(mValue - mValueLength, links.tail, id)
+      findEndLinearLocationSource(mValue - current.length, links.tail, id)
     else {
-      if (Math.abs(mValueLength - mValue) < MaxDistanceDiffAllowed) {
+      if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
         (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
       } else {
-        val dist = applySideCode(mValue, mValueLength, current.sideCode)
-        (current, setPrecision(Math.min(Math.max(0.0, dist), mValueLength)))
+        val dist = applySideCode(mValue, current.length, current.sideCode)
+        (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
       }
     }
   }

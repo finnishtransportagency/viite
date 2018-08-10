@@ -11,7 +11,7 @@ trait RoadAddressMapper {
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping], allRoadAddresses : Seq[RoadAddress])(ra: RoadAddress): Seq[RoadAddress] = {
     roadAddressMapping.filter(_.matches(ra, allRoadAddresses)).map(adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
-        if (isDirectionMatch(adjMap))
+        if (isDirectionMatch(ra.geometry, adjMap.targetGeom))
           (ra.sideCode, truncateGeometriesWithAddressValues(ra, adjMap), splitRoadAddressValues(ra, adjMap))
         else {
           (switchSideCode(ra.sideCode), truncateGeometriesWithAddressValues(ra, adjMap).reverse, splitRoadAddressValues(ra, adjMap))
