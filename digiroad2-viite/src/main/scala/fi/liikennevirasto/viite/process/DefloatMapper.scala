@@ -9,6 +9,35 @@ import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnected
 
 object DefloatMapper extends RoadAddressMapper {
 
+  def adjustAdjacentRoadAddresses(roadAddress: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] ={
+    def overrideStartAddrM(ra: RoadAddress, address: Long) : RoadAddress = {
+      ra.copy(startAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = address)), ra.calibrationPoints._2))
+    }
+    def overrideEndAddrM(ra: RoadAddress, address: Long): RoadAddress = {
+      ra.copy(endAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1, ra.calibrationPoints._2.map(_.copy(addressMValue = address))))
+    }
+    def overrideBothAddrM(ra: RoadAddress, startAddr: Long, endAddr: Long) : RoadAddress = {
+      ra.copy(startAddrMValue = startAddr, endAddrMValue = endAddr, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = startAddr)), ra.calibrationPoints._2.map(_.copy(addressMValue = endAddr))))
+    }
+    def adjustTwo(address: (RoadAddress, RoadAddress)): RoadAddress = {
+      val (previousRoadAddress, nextRoadAddress) = address
+      if(previousRoadAddress.endAddrMValue != nextRoadAddress.startAddrMValue)
+        overrideStartAddrM(nextRoadAddress, previousRoadAddress.endAddrMValue)
+      else
+        nextRoadAddress
+    }
+    val (minAddr, maxAddr) = (current.map(_.startAddrMValue).min, current.map(_.endAddrMValue).max)
+
+    roadAddress.size match {
+      case 0 => Seq()
+      case 1 => Seq(overrideBothAddrM(roadAddress.head, minAddr, maxAddr))
+      case _ =>
+        val ordered = roadAddress.sortBy(ra => (ra.endAddrMValue, ra.startAddrMValue))
+        val overrideed = ordered.head +: ordered.zip(ordered.tail).map(adjustTwo)
+        overrideStartAddrM(overrideed.head, minAddr) +: overrideed.init.tail :+ overrideEndAddrM(overrideed.last, maxAddr)
+    }
+  }
+
   def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
     def formMapping(startSourceLink: RoadAddressLink, startSourceM: Double,
                     endSourceLink: RoadAddressLink, endSourceM: Double,
