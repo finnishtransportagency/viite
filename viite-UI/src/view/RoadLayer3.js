@@ -1,8 +1,6 @@
 (function(root) {
   root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
     var vectorLayer;
-    var layerMinContentZoomLevels = {};
-    var currentZoom = 0;
 
     var vectorSource = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
@@ -27,7 +25,7 @@
     });
 
     function vectorLayerStyle(feature) {
-        return styler.generateStyleByFeature(feature.linkData, currentZoom);
+        return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
     }
 
     var loadFeatures = function (features) {
@@ -36,41 +34,6 @@
       vectorSource.clear(true);
       vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
       eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
-    };
-
-    var minimumContentZoomLevel = function() {
-      if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
-        return layerMinContentZoomLevels[applicationModel.getSelectedLayer()];
-      }
-      return zoomlevels.minZoomForRoadLinks;
-    };
-
-    var handleRoadsVisibility = function() {
-      if (_.isObject(vectorLayer)) {
-        console.log("set visible");
-        console.log("get road visibility");
-        vectorLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= minimumContentZoomLevel());
-      }
-    };
-
-    var mapMovedHandler = function(mapState) {
-      if (mapState.zoom !== currentZoom) {
-        currentZoom = mapState.zoom;
-      }
-      console.log("Road layer 3");
-      if (mapState.zoom < minimumContentZoomLevel()) {
-        console.log("zoom < minZoom");
-        vectorSource.clear();
-        eventbus.trigger('map:clearLayers');
-      } else if (mapState.selectedLayer === 'linkProperty'){
-        console.log("selected layer is linkProperty");
-        roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
-        //loadFeatures(vectorSource.features);
-        //eventbus.trigger('roadLinks:fetched');
-        console.log("roadlinks fetched");
-        handleRoadsVisibility();
-
-      }
     };
 
     var clear = function(){
@@ -83,9 +46,6 @@
     });
     vectorLayer.setVisible(true);
     vectorLayer.set('name', 'roadLayer');
-    map.addLayer(vectorLayer);
-
-    eventbus.on('map:moved', mapMovedHandler, this);
 
     return {
       layer: vectorLayer,

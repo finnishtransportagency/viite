@@ -108,9 +108,9 @@
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
-        var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
+    var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
-      new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -119,7 +119,8 @@
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)
+    });
 
     var mapPluginsContainer = jQuery('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
@@ -157,7 +158,7 @@
     ];
   }
 
-  // Shows modal with message and close button
+  // Shows modal with message and close button>
   function showInformationModal(message) {
     jQuery('.container').append('<div class="modal-overlay confirm-modal" style="z-index: 2000"><div class="modal-dialog"><div class="content">' + message + '</div><div class="actions"><button class="btn btn-secondary close">Sulje</button></div></div></div></div>');
     jQuery('.confirm-modal .close').on('click', function() {
