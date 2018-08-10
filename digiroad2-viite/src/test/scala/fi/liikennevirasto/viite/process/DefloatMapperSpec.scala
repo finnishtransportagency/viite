@@ -175,7 +175,7 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     )
 
     val result = DefloatMapper.adjustRoadAddresses(targets, sources)
-    result.size should be 3
+    result.size should be (3)
 
     val head = result.find(ra => ra.id == 3L).get
     val middle = result.find(ra => ra.id == 4L).get
