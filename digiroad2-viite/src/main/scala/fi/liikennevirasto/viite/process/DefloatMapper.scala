@@ -15,8 +15,8 @@ object DefloatMapper extends RoadAddressMapper {
                     startTargetLink: RoadAddressLink, startTargetM: Double,
                     endTargetLink: RoadAddressLink, endTargetM: Double): RoadAddressMapping = {
       if (startSourceM > endSourceM)
-        formMapping(startSourceLink, startSourceM, endSourceLink, endSourceM,
-          startTargetLink, endTargetM, endTargetLink, startTargetM)
+        formMapping(startSourceLink, endSourceM, endSourceLink, startSourceM,
+          startTargetLink, startTargetM, endTargetLink, endTargetM)
       else if (startTargetM > endTargetM)
         formMapping(startSourceLink, startSourceM, endSourceLink, endSourceM,
           startTargetLink, endTargetM, endTargetLink, startTargetM)
