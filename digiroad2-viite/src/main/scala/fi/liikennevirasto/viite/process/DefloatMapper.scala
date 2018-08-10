@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnected
 
 object DefloatMapper extends RoadAddressMapper {
 
-  def adjustAdjacentRoadAddresses(roadAddress: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] ={
+  def adjustRoadAddresses(roadAddress: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] ={
     def overrideStartAddrM(ra: RoadAddress, address: Long) : RoadAddress = {
       ra.copy(startAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = address)), ra.calibrationPoints._2))
     }
