@@ -287,7 +287,7 @@
         line.setLineDash([10, 10]);
       }
 
-      if (linkData.roadClass == 99 && linkData.constructionType == 1) {
+      if (linkData.roadClass === 99 && linkData.constructionType === 1) {
         line.setLineDash([10, 10]);
       }
 

@@ -20,6 +20,7 @@
     var selectionType = 'all';
     var sessionUsername = '';
     var sessionUserRoles = '';
+    var debugInfo = new Map();
 
     var getSelectionType = function (){
       return selectionType;
@@ -232,8 +233,12 @@
       },
       getSessionUserRoles: function () {
         return sessionUserRoles;
-      }
-    };
+      },
+      debug: function() {
+        console.log(debugInfo);
+      },
+      debugInfo: debugInfo
+    }
   };
 })(this);
 

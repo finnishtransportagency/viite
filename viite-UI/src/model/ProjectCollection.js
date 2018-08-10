@@ -406,7 +406,7 @@
           new ModalConfirm(successObject.errorMessage);
           applicationModel.removeSpinner();
         } else {
-          eventbus.trigger('split:splitedCutLine', successObject.response);
+          eventbus.trigger('split:splitCutLine', successObject.response);
         }
       }, function(failureObject){
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', BAD_REQUEST_400);
