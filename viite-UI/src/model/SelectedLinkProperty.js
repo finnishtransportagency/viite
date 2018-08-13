@@ -164,7 +164,7 @@
             if (!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === RoadLinkType.FloatingRoadLinkType.value) {
                 addToFeaturesToKeep(data4Display);
             }
-            if (!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)) {
+            if (!_.isEmpty(getFeaturesToKeep()) && !isLinkIdInFeaturesToKeep(linkId)) {
                 addToFeaturesToKeep(data4Display);
             }
             processOl3Features(visibleFeatures);
@@ -216,16 +216,16 @@
         if(!applicationModel.isReadOnly() && get()[0].anomaly === Anomaly.NoAddressGiven.value){
           addToFeaturesToKeep(data4Display);
         }
-        if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
+        if(!_.isEmpty(getFeaturesToKeep()) && !isLinkIdInFeaturesToKeep(linkId)){
           addToFeaturesToKeep(data4Display);
         }
-        var contains = _.find(featuresToKeep, function(fk){
+        var contains = _.find(getFeaturesToKeep(), function(fk){
           return fk.linkId === linkId;
         });
 
-        if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
+        if(!_.isEmpty(getFeaturesToKeep()) && _.isUndefined(contains)){
           if(_.isArray(extractDataForDisplay(get()))){
-            featuresToKeep = featuresToKeep.concat(data4Display);
+            addToFeaturesToKeep(data4Display);
           } else {
             addToFeaturesToKeep(data4Display);
           }
@@ -318,7 +318,7 @@
           }
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
-            var selectedLinks = _.reject(get().concat(featuresToKeep), function(feature){
+            var selectedLinks = _.reject(get().concat(getFeaturesToKeep()), function(feature){
                 return (feature.segmentId === "" || (_.contains(linkIds, feature.linkId) && (feature.anomaly === Anomaly.GeometryChanged.value || feature.anomaly === Anomaly.None.value)));
             });
             var filteredDuplicatedAdjacents = _.reject(adjacents, function(adj){
@@ -389,7 +389,7 @@
           }
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
-            var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
+            var rejectedRoads = _.reject(get().concat(getFeaturesToKeep()), function(link){
               return link.segmentId === "" || link.anomaly === Anomaly.GeometryChanged.value;
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
@@ -434,7 +434,7 @@
 
         if (!_.isUndefined(fetchedFeature)) {
           sources.push(fetchedFeature);
-          featuresToKeep.push(fetchedFeature.getData());
+          addToFeaturesToKeep(fetchedFeature.getData());
         }
         var chainLinks = [];
         var chainIds = [];
@@ -517,7 +517,7 @@
         } else return t;
       });
 
-      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
+      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(getFeaturesToKeep()), function(feature){
         if(feature.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && feature.anomaly === Anomaly.NoAddressGiven.value){
           return feature.linkId.toString();
         }
@@ -552,7 +552,7 @@
         }else return t;
       });
 
-      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
+      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(getFeaturesToKeep()), function(feature){
         if(feature.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && feature.anomaly === Anomaly.NoAddressGiven.value){
           return feature.linkId;
         }
@@ -692,9 +692,9 @@
         resetTargets();
         previousAdjacents = [];
         _.defer(function () {
-            if (!_.isEmpty(featuresToKeep)) {
-                setCurrent(roadCollection.toRoadLinkModel(featuresToKeep));
-                eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
+            if (!_.isEmpty(getFeaturesToKeep())) {
+                setCurrent(roadCollection.toRoadLinkModel(getFeaturesToKeep()));
+                eventbus.trigger("linkProperties:selected", extractDataForDisplay(getFeaturesToKeep()));
             }
         });
       }
@@ -748,13 +748,13 @@
     };
 
     var getFeaturesToKeepFloatings = function() {
-      return _.filter(featuresToKeep, function (fk) {
+      return _.filter(getFeaturesToKeep(), function (fk) {
         return fk.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
       });
     };
 
     var getFeaturesToKeepUnknown = function() {
-      return _.filter(featuresToKeep, function (fk) {
+      return _.filter(getFeaturesToKeep(), function (fk) {
         return fk.anomaly === Anomaly.NoAddressGiven.value;
       });
     };
@@ -767,7 +767,7 @@
     };
 
     var isLinkIdInFeaturesToKeep = function(linkId){
-      var featuresToKeepLinkIds = _.map(featuresToKeep, function(fk){
+      var featuresToKeepLinkIds = _.map(getFeaturesToKeep(), function(fk){
         return fk.linkId;
       });
       return _.contains(featuresToKeepLinkIds, linkId);
@@ -819,7 +819,7 @@
     };
 
     var isFloatingHomogeneous = function(floatingFeature) {
-      var firstFloating = _.first(featuresToKeep);
+      var firstFloating = _.first(getFeaturesToKeep());
       return floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) &&
           floatingFeature.data.trackCode === firstFloating.trackCode &&
           floatingFeature.data.roadNumber === firstFloating.roadNumber;
