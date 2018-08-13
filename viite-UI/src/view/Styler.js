@@ -218,11 +218,13 @@
      * the second is for the border and the third is for the line itself.
      */
     var generateStyleByFeature = function (linkData, currentZoom, notSelection) {
-        var strokeWidth = strokeWidthByZoomLevel(currentZoom, linkData.roadLinkType, linkData.anomaly,
-            linkData.roadLinkSource, notSelection, linkData.constructionType);
+      console.log("------GENERATE STYLE------");
+      console.log(linkData.roadClass);
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, linkData.roadLinkType, linkData.anomaly,
+        linkData.roadLinkSource, notSelection, linkData.constructionType);
       // Gray line behind all of the styles present in the layer.
-        var underLineColor = generateStrokeColor(99, linkData.anomaly, linkData.constructionType,
-            linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+      var underLineColor = generateStrokeColor(99, linkData.anomaly, linkData.constructionType,
+        linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
       // If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the
       // dashed/colored line and above the border and grey lines
       var middleLineColor;
@@ -230,23 +232,26 @@
       var lineCap;
       var borderCap;
       var middleLineCap;
-        var lineColor = generateStrokeColor(linkData.roadClass, linkData.anomaly, linkData.constructionType,
-            linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
-        if (linkData.roadClass >= 7 && linkData.roadClass <= 10 || linkData.roadClass === 12) {
+      var lineColor = generateStrokeColor(linkData.roadClass, linkData.anomaly, linkData.constructionType,
+        linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+      if (linkData.roadClass >= 7 && linkData.roadClass <= 10 || linkData.roadClass === 12) {
+        console.log("if");
         borderColor = lineColor;
-            middleLineColor = generateStrokeColor(98, linkData.anomaly, linkData.constructionType, linkData.roadLinkType,
-                linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+        middleLineColor = generateStrokeColor(98, linkData.anomaly, linkData.constructionType, linkData.roadLinkType,
+          linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
         lineCap = 'butt';
         middleLineCap = 'butt';
         borderCap = 'round';
-        } else if (linkData.roadClass === 99 && linkData.constructionType === 1) {
+      } else if (linkData.roadClass === 99 && linkData.constructionType === 1) {
+        console.log("else if");
         borderColor = lineColor;
-            middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, linkData.roadLinkType,
-                linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, linkData.roadLinkType,
+          linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
         lineCap = 'butt';
         middleLineCap = 'butt';
         borderCap = 'round';
       } else {
+        console.log("else");
         borderColor = modifyColorProperties(lineColor, 1.45, true, false);
         borderColor = modifyColorProperties(borderColor, 0.75, false, true);
         lineCap = 'round';
@@ -275,7 +280,7 @@
         lineCap: lineCap
       });
 
-        var roadTypeDetails = generateUnderLineColor(linkData, opacityMultiplier, middleLineWidth);
+      var roadTypeDetails = generateUnderLineColor(linkData, opacityMultiplier, middleLineWidth);
       var roadTypeLine = new ol.style.Stroke({
         width: roadTypeDetails.width,
         color: roadTypeDetails.color,
