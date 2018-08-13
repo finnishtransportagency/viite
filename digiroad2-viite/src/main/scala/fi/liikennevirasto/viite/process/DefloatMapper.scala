@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnected
 
 object DefloatMapper extends RoadAddressMapper {
 
-  def adjustRoadAddresses(roadAddress: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] ={
+  def adjustRoadAddresses(roadAddress: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] = {
     def overrideStartAddrM(ra: RoadAddress, address: Long) : RoadAddress = {
       ra.copy(startAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = address)), ra.calibrationPoints._2))
     }
@@ -21,7 +21,7 @@ object DefloatMapper extends RoadAddressMapper {
     }
     def adjustTwo(address: (RoadAddress, RoadAddress)): RoadAddress = {
       val (previousRoadAddress, nextRoadAddress) = address
-      if(previousRoadAddress.endAddrMValue != nextRoadAddress.startAddrMValue)
+      if (previousRoadAddress.endAddrMValue != nextRoadAddress.startAddrMValue)
         overrideStartAddrM(nextRoadAddress, previousRoadAddress.endAddrMValue)
       else
         nextRoadAddress
@@ -33,8 +33,8 @@ object DefloatMapper extends RoadAddressMapper {
       case 1 => Seq(overrideBothAddrM(roadAddress.head, minAddr, maxAddr))
       case _ =>
         val ordered = roadAddress.sortBy(ra => (ra.endAddrMValue, ra.startAddrMValue))
-        val overrideed = ordered.head +: ordered.zip(ordered.tail).map(adjustTwo)
-        overrideStartAddrM(overrideed.head, minAddr) +: overrideed.init.tail :+ overrideEndAddrM(overrideed.last, maxAddr)
+        val overridden = ordered.head +: ordered.zip(ordered.tail).map(adjustTwo)
+        overrideStartAddrM(overridden.head, minAddr) +: overridden.init.tail :+ overrideEndAddrM(overridden.last, maxAddr)
     }
   }
 
