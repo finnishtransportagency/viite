@@ -555,4 +555,42 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     sqlu"""UPDATE ROAD_ADDRESS SET Terminated = 1 Where ID = ${roadAddressId}""".execute
   }
 
+  test("Check correct update of MAddressValues of historic links") {
+    runWithRollback {
+
+      val linkId = 12345L
+      val futureDate = DateTime.now.plusDays(5)
+      val roadAddresses = Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(futureDate), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(1.0, 1.0), Point(1.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+        RoadAddress(RoadAddressDAO.getNextRoadAddressId, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 5L, Some(futureDate), Some(DateTime.now.minusDays(5)), Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(1.0, 1.0), Point(1.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      RoadAddressDAO.create(roadAddresses)
+
+      val addresses = RoadAddressDAO.fetchByLinkId(Set(linkId),includeHistory = true)
+
+      addresses.size should be (2)
+      val (history, current) = addresses.partition(_.endDate.isDefined)
+      history.size should be (1)
+      current.size should be (1)
+      RoadAddressDAO.updateConcerningHistory(current.head.copy(startAddrMValue = 50L, endAddrMValue = 60L))
+
+      val addressesAfterUpdate = RoadAddressDAO.fetchByLinkId(Set(linkId),includeHistory = true)
+      addressesAfterUpdate.size should be (2)
+      val (historyAfterUpdate, currentAfterUpdate) = addressesAfterUpdate.partition(_.endDate.isDefined)
+      historyAfterUpdate.size should be (1)
+      currentAfterUpdate.size should be (1)
+
+      currentAfterUpdate.head.startAddrMValue should be (50L)
+      currentAfterUpdate.head.endAddrMValue should be (60L)
+
+      historyAfterUpdate.head.startAddrMValue should be (50L)
+      historyAfterUpdate.head.endAddrMValue should be (60L)
+
+      historyAfterUpdate.head.startAddrMValue should not be (history.head.startAddrMValue)
+      historyAfterUpdate.head.endAddrMValue should not be (history.head.endAddrMValue)
+
+    }
+  }
+
 }

@@ -895,6 +895,30 @@ object RoadAddressDAO {
     }
   }
 
+  def updateConcerningHistory(roadAddress: RoadAddress, geometry: Option[Seq[Point]] = Option.empty[Seq[Point]]) : Unit = {
+    if (geometry.isDefined) {
+      val startTS = toTimeStamp(roadAddress.startDate)
+      val endTS = toTimeStamp(roadAddress.endDate)
+      val first = geometry.get.head
+      val last = geometry.get.last
+      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
+      val length = GeometryUtils.geometryLength(geometry.get)
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET road_number = ${roadAddress.roadNumber},
+           road_part_number= ${roadAddress.roadPartNumber},
+           track_code = ${roadAddress.track.value},
+           discontinuity= ${roadAddress.discontinuity.value},
+           START_ADDR_M= ${roadAddress.startAddrMValue},
+           END_ADDR_M= ${roadAddress.endAddrMValue},
+           start_date= $startTS,
+           end_date= $endTS,
+           geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(
+             $x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
+        WHERE id = ${roadAddress.id}""".execute
+    }
+    updateWithoutGeometryWithHistory(roadAddress)
+  }
+
   def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
     if (!geometry.isEmpty) {
       val first = geometry.head
@@ -928,6 +952,33 @@ object RoadAddressDAO {
            start_date= $startTS,
            end_date= $endTS
         WHERE id = ${roadAddress.id}""".execute
+  }
+
+  private def updateWithoutGeometryWithHistory(roadAddress: RoadAddress) = {
+    val startTS = toTimeStamp(roadAddress.startDate)
+    val endTS = toTimeStamp(roadAddress.endDate)
+
+    logger.info(s"Updating M addresses and M values for history regarding road address ${roadAddress.id}.")
+
+    sqlu"""UPDATE ROAD_ADDRESS
+        SET road_number = ${roadAddress.roadNumber},
+           road_part_number= ${roadAddress.roadPartNumber},
+           START_ADDR_M= ${roadAddress.startAddrMValue},
+           END_ADDR_M= ${roadAddress.endAddrMValue}
+        WHERE link_id = (select link_id from road_address where road_address.id = ${roadAddress.id})""".execute
+
+    logger.info(s"Updating for the current address ${roadAddress.id}.")
+
+    sqlu"""UPDATE ROAD_ADDRESS
+        SET road_number = ${roadAddress.roadNumber},
+           road_part_number= ${roadAddress.roadPartNumber},
+           track_code = ${roadAddress.track.value},
+           discontinuity= ${roadAddress.discontinuity.value},
+           START_ADDR_M= ${roadAddress.startAddrMValue},
+           END_ADDR_M= ${roadAddress.endAddrMValue},
+           start_date= $startTS,
+           end_date= $endTS
+           WHERE id = ${roadAddress.id}""".execute
   }
 
   def createMissingRoadAddress (mra: MissingRoadAddress) = {
