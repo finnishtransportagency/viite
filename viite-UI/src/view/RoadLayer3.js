@@ -1,6 +1,9 @@
 (function(root) {
   root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
     var vectorLayer;
+    var projectLinkStyler = new ProjectLinkStyler();
+    var roadLinkStyler = new RoadLinkStyler();
+    var linkStatus = LinkValues.LinkStatus
 
     var vectorSource = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
@@ -11,9 +14,10 @@
             var points = _.map(roadLink.points, function(point) {
               return [point.x, point.y];
             });
-            var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+            var feature =  new ol.Feature({
+              geometry: new ol.geom.LineString(points)
             });
-              feature.linkData = roadLink;
+            feature.linkData = roadLink;
             return feature;
           });
           console.log("load features ->");
@@ -25,7 +29,22 @@
     });
 
     function vectorLayerStyle(feature) {
+      console.log(applicationModel.getSelectedLayer());
+      console.log(feature);
+      if (applicationModel.getSelectedLayer() === 'linkProperty') {
+        console.log("selected layer is link property");
         return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
+      } else{
+        var status = feature.linkData.status;
+        console.log(status);
+        if (status === linkStatus.NotHandled.value || status === linkStatus.Terminated.value || status  === linkStatus.New.value || status === linkStatus.Transfer.value || status === linkStatus.Unchanged.value || status === linkStatus.Numbering.value) {
+          console.log("link is project link");
+          return projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()});
+        } else {
+          console.log("other road in project");
+          return roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, map.getView().getZoom());
+        }
+      }
     }
 
     var loadFeatures = function (features) {

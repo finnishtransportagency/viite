@@ -17,7 +17,6 @@
     var LinkStatus = LinkValues.LinkStatus;
     var RoadClass = LinkValues.RoadClass;
 
-    var layerMinContentZoomLevels = {};
     var currentZoom = 0;
     var isNotEditingData = true;
     var isActiveLayer = false;
@@ -721,7 +720,7 @@
       });
       features = [];
       _.each(partitioned[0], function (feature) {
-          var editedLink = (!_.isUndefined(feature.linkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.linkData.linkId));
+        var editedLink = (!_.isUndefined(feature.linkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.linkData.linkId));
         if (editedLink) {
           if (_.contains( _.pluck(toBeTerminated, 'id'), feature.linkData.linkId)) {
             feature.linkData.status = LinkStatus.Terminated.value;
@@ -735,8 +734,10 @@
       if (features.length !== 0)
         addFeaturesToSelection(features);
       features = features.concat(partitioned[1]);
+      _.each(features, function(feature) {
+        feature
+      });
       roadLayer.layer.getSource().clear(true);
-      console.log("redraw");
       roadLayer.layer.getSource().addFeatures(features);
       roadLayer.layer.changed();
     };
