@@ -778,9 +778,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }.map(rl => rl.linkId -> rl).toMap
     val (missingLinks, roadAddresses) = if(newSession)
       withDynSession {
-      (RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet),
-      RoadAddressDAO.fetchByLinkId(connectedLinks.keySet, includeFloating = true))
-    } else
+        (RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet),
+          RoadAddressDAO.fetchByLinkId(connectedLinks.keySet, includeFloating = true))
+      } 
+    else
       (RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet),
         RoadAddressDAO.fetchByLinkId(connectedLinks.keySet, includeFloating = true))
     val builtMissing = missingLinks.map(ml => RoadAddressLinkBuilder.build(connectedLinks(ml.linkId), ml))
