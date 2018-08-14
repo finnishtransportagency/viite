@@ -8,6 +8,10 @@ import fi.liikennevirasto.viite._
 
 trait RoadAddressMapper {
 
+  def calculateMeasures(ra: RoadAddress, adjMap: RoadAddressMapping) : (Double, Double) = {
+    (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+  }
+
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping], allRoadAddresses : Seq[RoadAddress])(ra: RoadAddress): Seq[RoadAddress] = {
     roadAddressMapping.filter(_.matches(ra, allRoadAddresses)).map(adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
@@ -16,7 +20,8 @@ trait RoadAddressMapper {
         else {
           (switchSideCode(ra.sideCode), truncateGeometriesWithAddressValues(ra, adjMap).reverse, splitRoadAddressValues(ra, adjMap))
         }
-      val (startM, endM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+
+      val (startM, endM) = calculateMeasures(ra, adjMap)
 
       val startCP = ra.startCalibrationPoint match {
         case None => None

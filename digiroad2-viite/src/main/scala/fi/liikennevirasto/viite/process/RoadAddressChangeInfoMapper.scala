@@ -141,6 +141,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }
   }
 
+  override def calculateMeasures(ra: RoadAddress, adjMap: RoadAddressMapping): (Double, Double) = {
+    val coef = adjMap.targetDelta / adjMap.sourceDelta
+    (ra.startMValue * coef, ra.endMValue * coef)
+  }
+
   def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
     val current = roadAddresses.flatMap(_._2.currentSegments).toSeq
     val history = roadAddresses.flatMap(_._2.historySegments).toSeq
