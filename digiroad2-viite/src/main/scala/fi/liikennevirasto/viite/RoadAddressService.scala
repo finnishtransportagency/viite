@@ -738,7 +738,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val orphanEnds = endValues.filterNot(st => startValues.contains(st))
       (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
         ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
-        .distinct
+        .distinct.filterNot(fo => chainIds.contains(fo.id) || chainLinks.contains(fo.linkId))
     }
   }
 
