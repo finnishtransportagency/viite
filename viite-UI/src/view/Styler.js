@@ -6,6 +6,8 @@
     var roadNormalType = 0;
     var borderWidth = 3;
     var dashedLinesRoadClasses = [7, 8, 9, 10, 12];
+    var linkStatus = LinkValues.LinkStatus;
+    var projectLinkStyler = new ProjectLinkStyler();
 
     var LINKSOURCE_NORMAL = 1;
     var LINKSOURCE_COMPLEM = 2;
@@ -218,8 +220,8 @@
      * the second is for the border and the third is for the line itself.
      */
     var generateStyleByFeature = function (linkData, currentZoom, notSelection) {
-      console.log("------GENERATE STYLE------");
-      console.log(linkData.roadClass);
+      //console.log("------GENERATE STYLE------");
+      //console.log(linkData.roadClass);
       var strokeWidth = strokeWidthByZoomLevel(currentZoom, linkData.roadLinkType, linkData.anomaly,
         linkData.roadLinkSource, notSelection, linkData.constructionType);
       // Gray line behind all of the styles present in the layer.
@@ -234,29 +236,33 @@
       var middleLineCap;
       var lineColor = generateStrokeColor(linkData.roadClass, linkData.anomaly, linkData.constructionType,
         linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
-      if (linkData.roadClass >= 7 && linkData.roadClass <= 10 || linkData.roadClass === 12) {
-        console.log("if");
-        borderColor = lineColor;
-        middleLineColor = generateStrokeColor(98, linkData.anomaly, linkData.constructionType, linkData.roadLinkType,
-          linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
-        lineCap = 'butt';
-        middleLineCap = 'butt';
-        borderCap = 'round';
-      } else if (linkData.roadClass === 99 && linkData.constructionType === 1) {
-        console.log("else if");
-        borderColor = lineColor;
-        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, linkData.roadLinkType,
-          linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
-        lineCap = 'butt';
-        middleLineCap = 'butt';
-        borderCap = 'round';
+      if (applicationModel.getSelectedLayer() === 'linkProperty' || _.isUndefined(linkData.status) || linkData.status === linkStatus.Undefined.value) {
+        if (linkData.roadClass >= 7 && linkData.roadClass <= 10 || linkData.roadClass === 12) {
+          //console.log("if");
+          borderColor = lineColor;
+          middleLineColor = generateStrokeColor(98, linkData.anomaly, linkData.constructionType, linkData.roadLinkType,
+            linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+          lineCap = 'butt';
+          middleLineCap = 'butt';
+          borderCap = 'round';
+        } else if (linkData.roadClass === 99 && linkData.constructionType === 1) {
+          //console.log("else if");
+          borderColor = lineColor;
+          middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, linkData.roadLinkType,
+            linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+          lineCap = 'butt';
+          middleLineCap = 'butt';
+          borderCap = 'round';
+        } else {
+          //console.log("else");
+          borderColor = modifyColorProperties(lineColor, 1.45, true, false);
+          borderColor = modifyColorProperties(borderColor, 0.75, false, true);
+          lineCap = 'round';
+          borderCap = 'round';
+          middleLineColor = lineColor;
+        }
       } else {
-        console.log("else");
-        borderColor = modifyColorProperties(lineColor, 1.45, true, false);
-        borderColor = modifyColorProperties(borderColor, 0.75, false, true);
-        lineCap = 'round';
-        borderCap = 'round';
-        middleLineColor = lineColor;
+        return projectLinkStyler.getProjectLinkStyle().getStyle(linkData, {zoomLevel: currentZoom});
       }
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,

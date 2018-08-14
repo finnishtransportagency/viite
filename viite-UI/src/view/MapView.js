@@ -29,7 +29,7 @@
         geometry: new ol.geom.Point(position)
       });
 
-      //create the style of the icon of the 'Merkistse' Button
+      //create the style of the icon of the 'Merkitse' Button
       var styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
           src: 'images/center-marker.svg'
