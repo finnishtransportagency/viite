@@ -721,8 +721,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getAdjacentAddressesWithoutTX(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long,
+                                    id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, useDynSession: Boolean = true) = {
+    if(useDynSession)
+      withDynSession {
+        getAdjacentAddresses(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, track)
+      }
+    else getAdjacentAddresses(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, track)
+  }
+
   private def getAdjacentAddresses(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
-    withDynSession {
       val roadAddresses = (if (chainIds.nonEmpty)
         RoadAddressDAO.queryById(chainIds)
       else if (chainLinks.nonEmpty)
@@ -739,11 +747,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
         ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
         .distinct.filterNot(fo => chainIds.contains(fo.id) || chainLinks.contains(fo.linkId))
-    }
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
-    val adjacentAddresses = getAdjacentAddresses(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, Track.apply(trackCode))
+    val adjacentAddresses = getAdjacentAddressesWithoutTX(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, Track.apply(trackCode))
     val adjacentLinkIds = adjacentAddresses.map(_.linkId).toSet
     val roadLinks = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds, frozenTimeVVHAPIServiceEnabled)
     val adjacentAddressLinks = roadLinks._1.map(rl => rl.linkId -> rl).toMap
