@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.viite.LinkRoadAddressHistory
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.viite.MinAllowedRoadAddressLength
 
 object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -142,8 +143,20 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   override def calculateMeasures(ra: RoadAddress, adjMap: RoadAddressMapping): (Double, Double) = {
-    val coef = adjMap.targetDelta / adjMap.sourceDelta
-    (ra.startMValue * coef, ra.endMValue * coef)
+    val coef = adjMap.targetLen / adjMap.sourceLen
+    val (sourceStartM, sourceEndM) = (Math.min(adjMap.sourceStartM, adjMap.sourceEndM), Math.max(adjMap.sourceStartM, adjMap.sourceEndM))
+    val (targetStartM, targetEndM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+    val startM = if((ra.startMValue - sourceStartM) > MinAllowedRoadAddressLength) {
+      targetStartM + ra.startMValue * coef
+    } else {
+      targetStartM
+    }
+    val endM = if((sourceEndM - ra.endMValue) > MinAllowedRoadAddressLength) {
+      targetStartM + ra.endMValue * coef
+    } else {
+      targetEndM
+    }
+    (startM, endM)
   }
 
   def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
