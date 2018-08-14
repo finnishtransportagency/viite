@@ -226,15 +226,15 @@
         var selection = _.find(event.selected, function(selectionTarget){
             return !_.isUndefined(selectionTarget.linkData);
         });
-          if (selection.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
+        if (selection.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
           ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
           !applicationModel.isReadOnly()) {
-              selectedLinkProperty.openFloating(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures);
-          floatingMarkerLayer.setOpacity(1);
+            selectedLinkProperty.openFloating(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures);
+            floatingMarkerLayer.setOpacity(1);
         } else {
-              selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures, selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
+          selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures, selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
         }
-      } else if (event.selected.length === 0 && event.deselected.length !== 0){
+      } else if (event.selected.length === 0 && event.deselected.length !== 0) {
         selectedLinkProperty.close();
         setGeneralOpacity(1);
       }
@@ -291,7 +291,7 @@
         selectDoubleClick.getFeatures().clear();
       }
       var selection = _.find(event.selected, function (selectionTarget) {
-          return !_.isUndefined(selectionTarget.linkData);
+        return !_.isUndefined(selectionTarget.linkData);
       });
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (!_.isUndefined(selection)) {
@@ -306,13 +306,12 @@
               selectedLinkProperty.openFloating(selection.linkData.linkId, selection.linkData.id, false, visibleFeatures);
               floatingMarkerLayer.setOpacity(1);
               anomalousMarkerLayer.setOpacity(1);
-          } else if (selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && 'floating' === applicationModel.getSelectionType() &&
-            !applicationModel.isReadOnly() && event.deselected.length !== 0) {
-              var floatings = event.deselected;
-              var nonFloatings = event.selected;
-              removeFeaturesFromSelection(nonFloatings);
-              addFeaturesToSelection(floatings);
-          }else if('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly()) {
+          } else if (selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && 'floating' === applicationModel.getSelectionType() && !applicationModel.isReadOnly() && event.deselected.length !== 0) {
+            var floatings = event.deselected;
+            var nonFloatings = event.selected;
+            removeFeaturesFromSelection(nonFloatings);
+            addFeaturesToSelection(floatings);
+          } else if ('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly()) {
             if ((selection.linkData.anomaly === Anomaly.NoAddressGiven.value || selection.linkData.anomaly === Anomaly.GeometryChanged.value) && selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value) {
               selectedLinkProperty.openUnknown(selection.linkData.linkId, selection.linkData.id, visibleFeatures);
             } else if(event.selected.length !== 0){
@@ -323,18 +322,13 @@
             }
           }
           else {
-            if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
-              selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, false, visibleFeatures, selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
-            } else {
-              selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures, selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
-            }
+            selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, !(isAnomalousById(selection.id) || isFloatingById(selection.id)),
+              visibleFeatures, selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
           }
         }
       } else if (event.selected.length === 0 && event.deselected.length !== 0 && applicationModel.getSelectionType() !== 'unknown') {
         selectedLinkProperty.close();
         setGeneralOpacity(1);
-      } else if (event.selected.length === 0 && event.deselected.length !== 0 && applicationModel.getSelectionType() === 'unknown'){
-        return new ModalConfirm("Olet muokannut tietoja. Tallenna tai peru muutoksesi.");
       }
 
       if (!_.isUndefined(selection)) {
@@ -342,8 +336,7 @@
           greenRoadLayer.setOpacity(1);
           var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
               return ft.anomaly === Anomaly.NoAddressGiven.value;
-            })
-          );
+          }));
           anomalousFeatures.forEach(function (fmf) {
             editFeatureDataForGreen(fmf);
           });
@@ -406,16 +399,6 @@
     };
     
     /**
-     * This will remove all the following interactions from the map:
-     * -selectDoubleClick
-     * -selectSingleClick
-     */
-    var removeSelectInteractions = function() {
-      map.removeInteraction(selectDoubleClick);
-      map.removeInteraction(selectSingleClick);
-    };
-
-    /**
      * This will add all the following interactions from the map:
      * -selectDoubleClick
      * -selectSingleClick
@@ -426,38 +409,24 @@
     };
 
     /**
-     * This will deactivate the following interactions from the map:
+     * This will remove all the following interactions from the map:
      * -selectDoubleClick
-     * -selectSingleClick - only if demanded with the Both
+     * -selectSingleClick
      */
-    var deactivateSelectInteractions = function(both) {
-      selectDoubleClick.setActive(false);
-      if(both){
-        selectSingleClick.setActive(false);
-      }
-    };
-
-    /**
-     * This will activate the following interactions from the map:
-     * -selectDoubleClick
-     * -selectSingleClick - only if demanded with the Both
-     */
-    var activateSelectInteractions = function(both) {
-      selectDoubleClick.setActive(true);
-      if(both){
-        selectSingleClick.setActive(true);
-      }
+    var removeSelectInteractions = function() {
+      map.removeInteraction(selectDoubleClick);
+      map.removeInteraction(selectSingleClick);
     };
 
     var unselectRoadLink = function() {
       indicatorLayer.getSource().clear();
       greenRoadLayer.getSource().clear();
       _.map(roadLayer.layer.getSource().getFeatures(),function (feature){
-          if (feature.linkData.gapTransfering) {
-              feature.linkData.gapTransfering = false;
-              feature.linkData.anomaly = feature.linkData.prevAnomaly;
-              var unknownRoadStyle = styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
-          feature.setStyle(unknownRoadStyle);
+        if (feature.linkData.gapTransfering) {
+          feature.linkData.gapTransfering = false;
+          feature.linkData.anomaly = feature.linkData.prevAnomaly;
+          var unknownRoadStyle = styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
+        feature.setStyle(unknownRoadStyle);
         }
       });
     };
@@ -539,6 +508,7 @@
         var geometryChangedRoadMarkers = _.filter(roadLinks, function(roadlink){
           return roadlink.anomaly === Anomaly.GeometryChanged.value;
         });
+
         _.each(geometryChangedRoadMarkers, function(geometryChangedLink) {
 
             var newLinkData = Object.assign({}, geometryChangedLink);
@@ -772,7 +742,7 @@
           simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
             var marker = cachedMarker.createMarker(feature.linkData);
-          if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
+          if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
             simulatedRoadsLayer.getSource().addFeature(marker);
           }
         });
@@ -919,7 +889,7 @@
       eventbus.trigger('form:showPropertyForm');
       me.clearLayers();
       me.refreshView();
-      activateSelectInteractions(true);
+      me.toggleSelectInteractions(true, true);
       applicationModel.toggleSelectionTypeAll();
       selectedLinkProperty.clearFeaturesToKeep();
       greenRoadLayer.getSource().clear();
@@ -929,7 +899,7 @@
       });
     };
 
-    var redrawNextSelectedTarget= function(targets, adjacents) {
+    var redrawNextSelectedTarget = function(targets, adjacents) {
       _.find(roadLayer.layer.getSource().getFeatures(), function(feature) {
           return targets !== 0 && feature.linkData.linkId === parseInt(targets);
       }).linkData.gapTransfering = true;
@@ -1245,16 +1215,16 @@
       });
     };
 
+    me.eventListener.listenTo(eventbus, 'linkProperty:fetch', function() {
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), map.getView().getZoom() + 1);
+    });
+
     me.eventListener.listenTo(eventbus, 'linkProperties:activateInteractions', function(){
-      activateSelectInteractions(true);
+      me.toggleSelectInteractions(true, true);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:deactivateInteractions', function(){
-        deactivateSelectInteractions(true);
-    });
-
-    me.eventListener.listenTo(eventbus, 'linkProperties:addFeaturesToInteractions', function(){
-      activateSelectInteractions();
+      me.toggleSelectInteractions(false, true);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperty:fetchedHistoryLinks', function(historyLinkData) {
@@ -1310,36 +1280,35 @@
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:deactivateDoubleClick', function(){
-      deactivateSelectInteractions(false);
+      me.toggleSelectInteractions(false, false);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections roadAddressProject:deactivateAllSelections', function(){
-      deactivateSelectInteractions(true);
+      me.toggleSelectInteractions(false, true);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function(){
-      activateSelectInteractions(false);
+      me.toggleSelectInteractions(true, false);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections roadAddressProject:startAllInteractions', function(){
-      activateSelectInteractions(true);
+      me.toggleSelectInteractions(true, true);
     });
 
     me.eventListener.listenTo(eventbus, 'layer:selected', function(layer, previouslySelectedLayer){
       console.log("listen to layer:selected");
       isActiveLayer = layer === 'linkProperty';
+        me.toggleSelectInteractions(isActiveLayer, true);
       if (isActiveLayer) {
-        activateSelectInteractions(true);
         addSelectInteractions();
       } else {
-        deactivateSelectInteractions(true);
         removeSelectInteractions();
       }
       me.clearLayers();
       me.clearHighlights();
       if (previouslySelectedLayer === 'linkProperty') {
         console.log("if");
-        hideLayer();
+        //hideLayer();
         removeSelectInteractions();
       } else if(previouslySelectedLayer === 'roadAddressProject') {
         console.log("else if");
@@ -1367,8 +1336,8 @@
 
     var hideLayer = function() {
       unselectRoadLink();
-      me.stop();
-      me.hide();
+      //me.stop();
+      //me.hide();
     };
 
     me.toggleLayersVisibility(layers, true);
@@ -1378,8 +1347,6 @@
     return {
       show: showLayer,
       hide: hideLayer,
-      deactivateSelection: removeSelectInteractions,
-      activateSelection: addSelectInteractions,
       minZoomForContent: me.minZoomForContent
     };
   };

@@ -1,5 +1,5 @@
 (function(root) {
-  root.Layer = function(map, layerName, roadLayer, roadCollection, projectCollection) {
+  root.Layer = function(map, layerName, roadCollection, projectCollection) {
     var me = this;
     var selectSingleClick = new ol.interaction.Select({});
     var selectDoubleClick = new ol.interaction.Select({});
@@ -39,9 +39,18 @@
     };
 
     this.clearHighlights = function(){
-      selectDoubleClick.getFeatures().clear();
+      console.log(selectSingleClick.getFeatures());
+      console.log(selectDoubleClick.getFeatures());
       selectSingleClick.getFeatures().clear();
+      selectDoubleClick.getFeatures().clear();
       map.updateSize();
+    };
+
+    this.toggleSelectInteractions = function (activate, both) {
+      selectDoubleClick.setActive(activate);
+      if (both) {
+        selectSingleClick.setActive(activate);
+      }
     };
 
     this.isStarted = function() {
@@ -62,7 +71,7 @@
         me.eventListener.running = false;
       }
     };
-
+    /*
     var handleRoadsVisibility = function () {
       if (_.isObject(roadLayer))
         roadLayer.layer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= zoomlevels.minZoomForRoadLinks);
@@ -86,58 +95,7 @@
         handleRoadsVisibility();
       }
     };
-
-    //Listen pointerMove and get pixel for displaying roadAddress feature info
-    me.eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
-      if (event.dragging) {
-        return;
-      }
-      if (applicationModel.getSelectedTool() === 'Cut' && suravageCutter) {
-        suravageCutter.updateByPosition(event.coordinate);
-      } else {
-        displayRoadAddressInfo(event, pixel);
-      }
-    });
-
-    var infoContainer = document.getElementById('popup');
-    var infoContent = document.getElementById('popup-content');
-
-    var overlay = new ol.Overlay(({
-      element: infoContainer
-    }));
-
-    applicationModel.debugInfo.set('overlay', overlay);
-    map.addOverlay(overlay);
-
-    var displayRoadAddressInfo = function (event, pixel) {
-      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
-        return feature;
-      });
-      var coordinate;
-      //Ignore if target feature is marker
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.linkData)) {
-        var roadData = featureAtPixel.linkData;
-        coordinate = map.getEventCoordinate(event.originalEvent);
-        //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
-        if (infoContent !== null) {
-          if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 )) {
-            console.log("display road address info");
-            infoContent.innerHTML = '<p>' +
-              'Tienumero: ' + roadData.roadNumber + '<br>' +
-              'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
-              'Ajorata: ' + roadData.trackCode + '<br>' +
-              'AET: ' + roadData.startAddressM + '<br>' +
-              'LET: ' + roadData.endAddressM + '<br>' + '</p>';
-          } else {
-            infoContent.innerHTML = '<p>' +
-              'Tuntematon tien segmentti' + '</p>';
-          }
-        }
-      }
-      //console.log(overlay);
-      overlay.setPosition(coordinate);
-    };
-
+*/
     this.drawCalibrationMarkers = function(layer, roadLinks) {
       var calibrationPointsWithValue = [];
       _.filter(roadLinks, function (roadLink) {
@@ -156,7 +114,7 @@
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       if (map.getView().getZoom() >= me.minZoomForContent) {
-        roadLayer.layer.setVisible(true);
+        //roadLayer.layer.setVisible(true);
       }
     };
     this.hide = function() {
