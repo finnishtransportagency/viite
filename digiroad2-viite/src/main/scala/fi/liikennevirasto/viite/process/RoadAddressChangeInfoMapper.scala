@@ -146,12 +146,12 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     val coef = adjMap.targetLen / adjMap.sourceLen
     val (sourceStartM, sourceEndM) = (Math.min(adjMap.sourceStartM, adjMap.sourceEndM), Math.max(adjMap.sourceStartM, adjMap.sourceEndM))
     val (targetStartM, targetEndM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
-    val startM = if((ra.startMValue - sourceStartM) > MinAllowedRoadAddressLength) {
+    val startM = if ((ra.startMValue - sourceStartM) > MinAllowedRoadAddressLength) {
       targetStartM + ra.startMValue * coef
     } else {
       targetStartM
     }
-    val endM = if((sourceEndM - ra.endMValue) > MinAllowedRoadAddressLength) {
+    val endM = if ((sourceEndM - ra.endMValue) > MinAllowedRoadAddressLength) {
       targetStartM + ra.endMValue * coef
     } else {
       targetEndM
