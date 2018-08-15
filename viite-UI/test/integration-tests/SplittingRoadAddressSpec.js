@@ -54,6 +54,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
         eventbus.on('roadAddressProject:reOpenCurrent', function () {
           done();
         });
+        testHelpers.clickVisibleCloseConfirmPopup();
         testHelpers.clickCancelButton();
       });
 
