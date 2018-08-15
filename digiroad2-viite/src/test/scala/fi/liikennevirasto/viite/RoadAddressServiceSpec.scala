@@ -1363,7 +1363,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     runWithRollback{
       RoadAddressDAO.create(Seq(selectedRoadAddress, roadAddress1, roadAddress2))
-      val returnedAdjacents = roadAddressService.getAdjacentAddressesWithoutTX(Set.empty[Long], Set(selectedId, id1), selectedLinkId, selectedId, roadNumber, roadPartNumber, Track.Combined, false )
+      val returnedAdjacents = roadAddressService.getAdjacentAddressesInTX(Set.empty[Long], Set(selectedId, id1), selectedLinkId, selectedId, roadNumber, roadPartNumber, Track.Combined)
       returnedAdjacents.size should be (1)
       returnedAdjacents.map(ra => (ra.id, ra.linkId, ra.roadNumber, ra.roadPartNumber)).head should be (Seq(roadAddress2).map(ra => (ra.id, ra.linkId, ra.roadNumber, ra.roadPartNumber)).head)
     }
