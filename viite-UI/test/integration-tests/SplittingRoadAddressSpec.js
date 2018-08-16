@@ -53,19 +53,15 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
 
       describe('cancel the split', function () {
           before(function (done) {
-              debugger;
               eventbus.on('roadAddressProject:enableInteractions', function () {
-                  debugger;
                   done();
               });
               testHelpers.clickCancelButton();
           });
 
           it('verify that split form was cleared', function () {
-              debugger;
               expect($('#projectErrors').length).to.equals(0);
           });
-
       });
 
     });
