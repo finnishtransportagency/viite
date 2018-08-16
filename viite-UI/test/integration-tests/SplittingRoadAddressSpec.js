@@ -30,11 +30,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
     });
 
     describe('select cut tool and make a split', function () {
-      before(function (done) {
+      before(function () {
         testHelpers.selectTool('Cut');
-        eventbus.on('projectLink:clickHandled', function(){
-           done();
-        });
+        testHelpers.clickMap(openLayersMap, 480905.40280654473, 7058825.968613995);
         eventbus.trigger('map:clicked', {x: 480905.40280654473, y: 7058825.968613995});
       });
 
@@ -60,7 +58,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
           });
 
           it('verify that split form was cleared', function () {
-              expect($('#projectErrors').length).to.equals(0);
+              expect($('.form-horizontal > label.highlighted').text()).to.equals('ALOITA VALITSEMALLA KOHDE KARTALTA.');
           });
       });
 
