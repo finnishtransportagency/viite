@@ -30,8 +30,11 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
     });
 
     describe('select cut tool and make a split', function () {
-      before(function () {
+      before(function (done) {
         testHelpers.selectTool('Cut');
+        eventbus.on('projectLink:clickHandled', function(){
+           done();
+        });
         eventbus.trigger('map:clicked', {x: 480905.40280654473, y: 7058825.968613995});
       });
 
@@ -47,20 +50,26 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
         expect($('#discontinuityDropdown')[0].value).to.equal('5');
         expect($('#roadTypeDropDown')[0].value).to.equal('3');
       });
-    });
 
-    describe('cancel the split', function () {
-      before(function (done) {
-        eventbus.on('roadAddressProject:enableInteractions', function () {
-          done();
-        });
-        testHelpers.clickVisibleCloseConfirmPopup();
-        testHelpers.clickCancelButton();
+      describe('cancel the split', function () {
+          before(function (done) {
+              debugger;
+              eventbus.on('roadAddressProject:enableInteractions', function () {
+                  debugger;
+                  done();
+              });
+              testHelpers.clickCancelButton();
+          });
+
+          it('verify that split form was cleared', function () {
+              debugger;
+              expect($('#projectErrors').length).to.equals(0);
+          });
+
       });
 
-      it('verify that split form was cleared', function () {
-          expect($('#projectErrors').length).to.equal(0);
-      });
     });
+
+
   });
 });
