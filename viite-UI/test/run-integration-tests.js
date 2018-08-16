@@ -25,7 +25,7 @@ require(['chai',
          'chai-jquery',
          'TestHelpers',
          'integration-tests/FloatingRoadAddressSpec',
-         'integration-tests/SplittingRoadAddressSpec',
+         // 'integration-tests/SplittingRoadAddressSpec',
          'integration-tests/RoadAddressProjectSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
