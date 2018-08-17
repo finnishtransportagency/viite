@@ -147,14 +147,14 @@
       return field;
     };
 
-    var additionalSource = function(linkId, marker) {
+    var additionalSource = function(linkId, marker, id) {
       return (!_.isUndefined(marker)) ? '' +
       '<div class = "form-group" id = "additionalSource">' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
       '<label class="control-label-floating"> LINK ID:</label>' +
       '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
       '<span class="marker">' + marker + '</span>' +
-      '<button class="add-source btn btn-new" id="additionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
+      '<button class="add-source btn btn-new" id="additionalSourceButton-' + linkId + '" value="' + linkId + '" data-id="' + id + '">Lisää kelluva tieosoite</button>' +
       '</div>' +
       '</div>' : '' +
       '<div class = "form-group" id = "additionalSource">' +
@@ -368,21 +368,33 @@
         '<footer>' + editButtons + '</footer> </div>');
     };
 
-    var processAdditionalFloatings = function(floatingRoads, value) {
-      var floatingRoadsLinkId = _.map(floatingRoads, function (fr) {
-        return fr.linkId;
-      });
-      if (_.contains(floatingRoadsLinkId, parseInt(value))) {
-        var rootElement = $('#feature-attributes');
-        var floatingToAdd = _.filter(floatingRoads, function(floating){
-          return floating.linkId === parseInt(value);
-        });
-
+    var aditionalSourceEventTriggering = function(rootElement, floatingToAdd, value, id) {
         applicationModel.addSpinner();
-        eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, value);
+        eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, value, id);
         rootElement.find('.link-properties button.continue').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
+
+    };
+
+    var processAdditionalFloatings = function(floatingRoads, value, id) {
+      var floatingRoadsId = _.map(floatingRoads, function (fr) {
+          return fr.id;
+      });
+      var floatingRoadsLinkId = _.map(floatingRoads, function (fr) {
+        return fr.linkId;
+      });
+      var rootElement = $('#feature-attributes');
+      if(floatingRoadsId.size !== 0 && !_.isUndefined(id) && _.contains(floatingRoadsId, parseInt(id))){
+          var floatingToAddById = _.filter(floatingRoads, function(floating){
+              return floating.id === parseInt(id);
+          });
+          aditionalSourceEventTriggering(rootElement, floatingToAddById, value, id);
+      } else if (_.contains(floatingRoadsLinkId, parseInt(value))) {
+        var floatingToAddByLinkId = _.filter(floatingRoads, function(floating){
+          return floating.linkId === parseInt(value);
+        });
+          aditionalSourceEventTriggering(rootElement, floatingToAddByLinkId, value, id);
       }
     };
 
@@ -562,7 +574,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', false);
           applicationModel.setActiveButtons(true);
           $('[id*="additionalSourceButton"]').click(sources,function(event) {
-            processAdditionalFloatings(sources, event.currentTarget.value);
+            processAdditionalFloatings(sources, event.currentTarget.value, event.currentTarget.dataset.id);
           });
         }
       };
@@ -599,7 +611,7 @@
               rootElement.find('.link-properties button.continue').attr('disabled', true);
               applicationModel.setActiveButtons(true);
               $('[id*="additionalSourceButton"]').click(sources,function(event) {
-                  processAdditionalFloatings(sources, event.currentTarget.value);
+                  processAdditionalFloatings(sources, event.currentTarget.value, event.currentTarget.dataset.id);
               });
           }
       };
@@ -719,7 +731,7 @@
       eventbus.on('adjacents:floatingAdded', function(floatingRoads) {
         var floatingPart = '<br><label id="control-label-floating" class="control-label-floating">VIERESSÄ KELLUVIA TIEOSOITTEITA:</label>';
         _.each(floatingRoads,function(fr) {
-          floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker);
+          floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker, fr.id);
         });
         if (floatingRoads.length === 0) {
           applicationModel.setContinueButton(true);
@@ -728,12 +740,12 @@
         else{
           $(".form-group:last").after(floatingPart);
           $('[id*="additionalSourceButton"]').click(floatingRoads,function(event) {
-              processAdditionalFloatings(floatingRoads,event.currentTarget.value);
+              processAdditionalFloatings(floatingRoads,event.currentTarget.value, event.currentTarget.dataset.id);
           });
         }
       });
       eventbus.on('linkProperties:additionalFloatingSelected',function(data) {
-        processAdditionalFloatings(data.selectedFloatings, data.selectedLinkId);
+        processAdditionalFloatings(data.selectedFloatings, data.selectedLinkId, data.selectedIds);
       });
 
       eventbus.on('linkProperties:transferFailed',function(errorCode) {

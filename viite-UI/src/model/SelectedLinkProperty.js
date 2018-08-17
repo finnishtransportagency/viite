@@ -427,9 +427,27 @@
       return linkIds;
     };
 
-    eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
-      sources = current;
-      backend.getRoadLinkByLinkId(parseInt(additionalSourceLinkId), function (response) {
+    var getFromMultipleAdjacents = function(data, newSources) {
+        backend.getAdjacentsFromMultipleSources(data, function(adjacents) {
+            var calculatedRoads;
+            if (!_.isEmpty(adjacents) && !applicationModel.isReadOnly()) {
+                calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index) {
+                        return _.merge({}, a, {"marker": markers[index]});
+                    }), "links": newSources};
+                eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
+            } else {
+                calculatedRoads = {
+                    "adjacents": _.map(adjacents, function (a, index) {
+                        return _.merge({}, a, {"marker": markers[index]});
+                    }), "links": newSources
+                };
+                sources = sources.concat(roadCollection.toRoadLinkModel(calculatedRoads.links));
+                eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
+            }
+        });
+    };
+
+    var processReturnedRoadLinkData = function(additionalSourceIdentifier, existingSources, sources, response) {
         var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
 
         if (!_.isUndefined(fetchedFeature)) {
@@ -439,42 +457,45 @@
         var chainLinks = [];
         var chainIds = [];
         _.each(sources, function(link) {
-          if (!_.isUndefined(link))
-            chainLinks.push(link.getData().linkId);
+            if (!_.isUndefined(link))
+                chainLinks.push(link.getData().linkId);
             chainIds.push(link.getData().id);
         });
         _.each(targets, function(link) {
-          chainLinks.push(link.getData().linkId);
-          chainIds.push(link.getData().id);
+            chainLinks.push(link.getData().linkId);
+            chainIds.push(link.getData().id);
         });
         var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
-        if (!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
-          newSources.push(fetchedFeature.getData());
+        if (!_.isUndefined(additionalSourceIdentifier) && !_.isUndefined(fetchedFeature))
+            newSources.push(fetchedFeature.getData());
         newSources = _.filter(newSources, function (link) {
-          return link.endDate === "";
+            return link.endDate === "";
         });
         var data = _.map(newSources, function (ns) {
-          return {"selectedLinks": _.uniq(chainLinks), "selectedIds": _.uniq(chainIds), "linkId": parseInt(ns.linkId), "id": parseInt(ns.id), "roadNumber": parseInt(ns.roadNumber),
-            "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
+            return {"selectedLinks": _.uniq(chainLinks), "selectedIds": _.uniq(chainIds), "linkId": parseInt(ns.linkId), "id": parseInt(ns.id), "roadNumber": parseInt(ns.roadNumber),
+                "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
         });
-        backend.getAdjacentsFromMultipleSources(data, function(adjacents) {
-          var calculatedRoads;
-          if (!_.isEmpty(adjacents) && !applicationModel.isReadOnly()) {
-             calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index) {
-              return _.merge({}, a, {"marker": markers[index]});
-            }), "links": newSources};
-              eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
-          } else {
-             calculatedRoads = {
-              "adjacents": _.map(adjacents, function (a, index) {
-                return _.merge({}, a, {"marker": markers[index]});
-              }), "links": newSources
-            };
-            sources = sources.concat(roadCollection.toRoadLinkModel(calculatedRoads.links));
-            eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
-          }
+        getFromMultipleAdjacents(data, newSources);
+    };
+
+    var fetchRoadLinkDataByLinkId = function(additionalSourceLinkId, existingSources, sources) {
+        backend.getRoadLinkByLinkId(parseInt(additionalSourceLinkId), function (response) {
+            processReturnedRoadLinkData(additionalSourceLinkId, existingSources, sources, response);
         });
-      });
+    };
+
+    var fetchRoadLinkDataById = function(additionalSourceId, existingSources, sources) {
+       backend.getRoadLinkById(parseInt(additionalSourceId), function(response) {
+           processReturnedRoadLinkData(additionalSourceId, existingSources, sources, response);
+       })
+    };
+
+    eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId, additionalSourceId) {
+      sources = current;
+      if(_.isUndefined(additionalSourceId) && id !== LinkValues.UnknownRoadId && id !== LinkValues.NewRoadId)
+        fetchRoadLinkDataById(existingSources, additionalSourceId, sources);
+          else
+        fetchRoadLinkDataByLinkId(existingSources, additionalSourceLinkId, sources);
     });
 
     eventbus.on('linkProperties:closed', function(){
