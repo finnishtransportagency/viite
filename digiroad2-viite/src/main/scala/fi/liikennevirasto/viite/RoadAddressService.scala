@@ -627,7 +627,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @param ids
     */
   def checkRoadAddressFloatingWithoutTX(ids: Set[Long], float: Boolean = false): Unit = {
-    def nonEmptyTargetLinkGeometry(roadLinkOpt: Option[RoadLinkLike], geometryOpt: Option[Seq[Point]]) = {
+    def hasTargetRoadLink(roadLinkOpt: Option[RoadLinkLike], geometryOpt: Option[Seq[Point]]) = {
       !(roadLinkOpt.isEmpty || geometryOpt.isEmpty || GeometryUtils.geometryLength(geometryOpt.get) == 0.0)
     }
 
@@ -638,12 +638,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val roadLink = roadLinks.find(_.linkId == address.linkId)
       val addressGeometry = roadLink.map(rl =>
         GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
-      if (float && nonEmptyTargetLinkGeometry(roadLink, addressGeometry)) {
+      if (float && hasTargetRoadLink(roadLink, addressGeometry)) {
         println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = true, address.id, addressGeometry)
         val missing = MissingRoadAddress(address.linkId, Some(address.startAddrMValue), Some(address.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None, None, Some(address.startMValue), Some(address.endMValue), Anomaly.GeometryChanged, Seq.empty[Point])
         RoadAddressDAO.createMissingRoadAddress(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
-      } else if (!nonEmptyTargetLinkGeometry(roadLink, addressGeometry)) {
+      } else if (!hasTargetRoadLink(roadLink, addressGeometry)) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = true, address.id, None)
       } else {
@@ -743,27 +743,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
-    val adjacentAddresses = getAdjacentAddresses(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, Track.apply(trackCode))
-    val adjacentLinkIds = adjacentAddresses.map(_.linkId).toSet
-    val roadLinks = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds, frozenTimeVVHAPIServiceEnabled)
-    val adjacentAddressLinks = roadLinks._1.map(rl => rl.linkId -> rl).toMap
-    val historyLinks = roadLinks._2.groupBy(rl => rl.linkId)
-
-    val anomaly2List = withDynSession {
-      RoadAddressDAO.getMissingRoadAddresses(adjacentLinkIds).filter(_.anomaly == Anomaly.GeometryChanged)
-    }
-
-    val floatingAdjacents = adjacentAddresses.filter(_.floating).map(ra =>
-      if (anomaly2List.exists(_.linkId == ra.linkId)) {
-        val rl = adjacentAddressLinks(ra.linkId)
-        RoadAddressLinkBuilder.build(rl, ra, floating = true, Some(rl.geometry))
-      } else if (roadLinks._2.exists(_.linkId == ra.linkId)) {
-        RoadAddressLinkBuilder.build(historyLinks(ra.linkId).head, ra)
-      } else {
-        RoadAddressLinkBuilder.build(adjacentAddressLinks(ra.linkId), ra)
+      val (floatings, _) = withDynTransaction {
+        RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.floating)
       }
-    )
-    floatingAdjacents
+      val historyLinks = time(logger, "Fetch floating history links") {
+        roadLinkService.getRoadLinksHistoryFromVVH(floatings.map(_.linkId).toSet)
+      }
+
+      val historyLinkAddresses = time(logger, "Build history link addresses") {
+        historyLinks.flatMap(fh => {
+          buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
+        })
+      }
+      //ir ao VVH HIST buscar a geom e ver adjacencia
+      val selected = historyLinkAddresses.find(_.id == id).getOrElse(historyLinkAddresses.find(_.linkId == linkId).get)
+      val filtered = historyLinkAddresses.filterNot(_.id == id).filter(ra => {
+        GeometryUtils.areAdjacent(ra.geometry, selected.geometry)
+      })
+      filtered
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long): Seq[RoadAddressLink] = {

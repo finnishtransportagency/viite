@@ -158,6 +158,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/id/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /roalinks/$id") {
+      val roadLinks = roadAddressService.getRoadAddressLink(id)
+        foldSegments(roadLinks)
+        .map(midPoint)
+        .getOrElse(
+          Map("success" -> false, "reason" -> ("ID:" + id + " not found"))
+        )
+    }
+
+  }
+
   get("/roadlinks/project/prefillfromvvh/:linkId") {
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadlinks/project/prefillfromvvh/$linkId") {
@@ -238,8 +251,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           })
         }
         val linkIds: Seq[Long] = roadData.map(rd => rd("linkId").asInstanceOf[Long])
+        val ids: Seq[Long] = roadData.map(rd => rd("id").asInstanceOf[Long])
         val result = adjacents.filter(adj => {
-          !linkIds.contains(adj.linkId)
+          if(ids.nonEmpty){
+            !ids.contains(adj.id)
+          }
+          else {
+            !linkIds.contains(adj.linkId)
+          }
         }).distinct
         result.map(roadAddressLinkToApi)
       }
