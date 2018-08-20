@@ -430,14 +430,20 @@
     var getFromMultipleAdjacents = function(data, newSources) {
         backend.getAdjacentsFromMultipleSources(data, function(adjacents) {
             var calculatedRoads;
-            if (!_.isEmpty(adjacents) && !applicationModel.isReadOnly()) {
-                calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index) {
+            var sourcesIds = _.map(sources, function(s){
+                return s.getData().id;
+            });
+            var unselectedAdjacents = _.filter(adjacents, function(adj){
+                return !_.contains(sourcesIds, adj.id);
+            });
+            if (!_.isEmpty(unselectedAdjacents) && !applicationModel.isReadOnly()) {
+                calculatedRoads = {"adjacents" : _.map(unselectedAdjacents, function(a, index) {
                         return _.merge({}, a, {"marker": markers[index]});
                     }), "links": newSources};
                 eventbus.trigger("adjacents:floatingAdded", calculatedRoads.adjacents);
             } else {
                 calculatedRoads = {
-                    "adjacents": _.map(adjacents, function (a, index) {
+                    "adjacents": _.map(unselectedAdjacents, function (a, index) {
                         return _.merge({}, a, {"marker": markers[index]});
                     }), "links": newSources
                 };
@@ -447,7 +453,7 @@
         });
     };
 
-    var processReturnedRoadLinkData = function(additionalSourceIdentifier, existingSources, sources, response) {
+    var processReturnedRoadLinkData = function(additionalSourceIdentifier, floatingsToAdd, sources, response) {
         var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
 
         if (!_.isUndefined(fetchedFeature)) {
@@ -465,8 +471,16 @@
             chainLinks.push(link.getData().linkId);
             chainIds.push(link.getData().id);
         });
-        var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
-        if (!_.isUndefined(additionalSourceIdentifier) && !_.isUndefined(fetchedFeature))
+        var sourceData = _.map(sources, function(s){
+            return s.getData();
+        });
+
+        var newSources = _.isArray(sourceData) ? sourceData : [sourceData];
+        var isAddedToNewSources = _.chain(newSources).map(function (ns) {
+            return ns.id;
+        }).contains(fetchedFeature.getData().id).value();
+
+        if (!_.isUndefined(additionalSourceIdentifier) && !_.isUndefined(fetchedFeature) && !isAddedToNewSources)
             newSources.push(fetchedFeature.getData());
         newSources = _.filter(newSources, function (link) {
             return link.endDate === "";
@@ -478,24 +492,24 @@
         getFromMultipleAdjacents(data, newSources);
     };
 
-    var fetchRoadLinkDataByLinkId = function(additionalSourceLinkId, existingSources, sources) {
+    var fetchRoadLinkDataByLinkId = function(existingSources, additionalSourceLinkId, sources) {
         backend.getRoadLinkByLinkId(parseInt(additionalSourceLinkId), function (response) {
             processReturnedRoadLinkData(additionalSourceLinkId, existingSources, sources, response);
         });
     };
 
-    var fetchRoadLinkDataById = function(additionalSourceId, existingSources, sources) {
+    var fetchRoadLinkDataById = function(floatingsToAdd, additionalSourceId, sources) {
        backend.getRoadLinkById(parseInt(additionalSourceId), function(response) {
-           processReturnedRoadLinkData(additionalSourceId, existingSources, sources, response);
-       })
+           processReturnedRoadLinkData(additionalSourceId, floatingsToAdd, sources, response);
+       });
     };
 
-    eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId, additionalSourceId) {
+    eventbus.on("adjacents:additionalSourceSelected", function(floatingsToAdd, additionalSourceLinkId, additionalSourceId) {
       sources = current;
-      if(_.isUndefined(additionalSourceId) && id !== LinkValues.UnknownRoadId && id !== LinkValues.NewRoadId)
-        fetchRoadLinkDataById(existingSources, additionalSourceId, sources);
+      if(!_.isUndefined(additionalSourceId) && additionalSourceId !== LinkValues.UnknownRoadId && additionalSourceId !== LinkValues.NewRoadId)
+        fetchRoadLinkDataById(floatingsToAdd, additionalSourceId, sources);
           else
-        fetchRoadLinkDataByLinkId(existingSources, additionalSourceLinkId, sources);
+        fetchRoadLinkDataByLinkId(floatingsToAdd, additionalSourceLinkId, sources);
     });
 
     eventbus.on('linkProperties:closed', function(){

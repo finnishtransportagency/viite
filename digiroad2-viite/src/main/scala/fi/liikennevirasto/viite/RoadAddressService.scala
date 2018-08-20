@@ -487,20 +487,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }.toSeq
   }
 
-  /**
-    * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
-    *
-    * @param id link-id, boolean if we want
-    * @return roadaddress[]
-    */
-  def getRoadAddressLink(id: Long): List[RoadAddressLink] = {
-
-    val (addresses, missedRL) = withDynTransaction {
-      (RoadAddressDAO.fetchByLinkId(Set(id), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
-        RoadAddressDAO.getMissingRoadAddresses(Set(id)))
-    }
+  private def processRoadAddresses(addresses: Seq[RoadAddress], missedRL: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
+    val linkIds = addresses.map(_.linkId).toSet
     val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
-    val (roadLinks, vvhHistoryLinks) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(Set(id), frozenTimeVVHAPIServiceEnabled)
+    val (roadLinks, vvhHistoryLinks) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(linkIds, frozenTimeVVHAPIServiceEnabled)
     (anomaly, addresses.size, roadLinks.size, vvhHistoryLinks.size) match {
       case (_, 0, 0, _) => List() // No road link currently exists and no addresses on this link id => ignore
       case (Anomaly.GeometryChanged, _, _, 0) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
@@ -509,6 +499,35 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case (Anomaly.NoAddressGiven, 0, _, _) => missedRL.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
       case (_, _, _, _) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
     }
+  }
+
+  /**
+    * returns road addresses with ID currently does not include terminated links which it cannot build roadaddress with out geometry
+    *
+    * @param id id
+    * @return roadaddress[]
+    */
+  def getRoadAddressLinkById(id: Long): Seq[RoadAddressLink] = {
+    val (addresses, missedRL) = withDynTransaction {
+      val addr = RoadAddressDAO.fetchByIdMassQuery(Set(id), includeFloating = true, includeHistory = false)
+      (addr, RoadAddressDAO.getMissingRoadAddresses(addr.map(_.linkId).toSet))
+    }
+    processRoadAddresses(addresses, missedRL)
+  }
+
+  /**
+    * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
+    *
+    * @param linkId link-id
+    * @return roadaddress[]
+    */
+  def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
+
+    val (addresses, missedRL) = withDynTransaction {
+      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
+        RoadAddressDAO.getMissingRoadAddresses(Set(linkId)))
+    }
+    processRoadAddresses(addresses, missedRL)
   }
 
   /**
@@ -544,7 +563,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getUniqueRoadAddressLink(id: Long): List[RoadAddressLink] = getRoadAddressLink(id)
+  def getUniqueRoadAddressLink(id: Long): List[RoadAddressLink] = getRoadAddressLink(id).toList
 
   def createMissingRoadAddress(missingRoadLinks: Seq[MissingRoadAddress]): Unit = {
     withDynTransaction {

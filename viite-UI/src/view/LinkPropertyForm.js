@@ -370,7 +370,7 @@
 
     var aditionalSourceEventTriggering = function(rootElement, floatingToAdd, value, id) {
         applicationModel.addSpinner();
-        eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, value, id);
+        eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, _.parseInt(value), _.parseInt(id));
         rootElement.find('.link-properties button.continue').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
