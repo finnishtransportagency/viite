@@ -5,6 +5,7 @@
     };
     var selectedLayer;
     var selectedTool = 'Select';
+    var activeOl3Interaction;
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
@@ -30,16 +31,8 @@
       return continueButton;
     };
 
-    var toggleSelectionTypeAll = function () {
-      selectionType = 'all';
-    };
-
-    var toggleSelectionTypeFloating = function(){
-      selectionType = 'floating';
-    };
-
-    var toggleSelectionTypeUnknown = function (){
-      selectionType = 'unknown';
+    var toggleSelectionType = function (type) {
+      selectionType = type;
     };
 
     var setReadOnly = function(newState) {
@@ -224,10 +217,14 @@
       getCurrentLocation: function() {
         return centerLonLat;
       },
+      setSelectionType: toggleSelectionType,
       getSelectionType: getSelectionType,
-      toggleSelectionTypeAll: toggleSelectionTypeAll,
-      toggleSelectionTypeFloating: toggleSelectionTypeFloating,
-      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown,
+      setActiveOl3Interaction: function(selection) {
+        activeOl3Interaction = selection;
+      },
+      getActiveOl3Interaction: function() {
+        return activeOl3Interaction;
+      },
       getSessionUsername: function () {
         return sessionUsername;
       },
@@ -238,7 +235,7 @@
         console.log(debugInfo);
       },
       debugInfo: debugInfo
-    }
+    };
   };
 })(this);
 

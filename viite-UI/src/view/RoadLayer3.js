@@ -3,15 +3,10 @@
     var layerName = 'roadLayer';
     Layer.call(this, map, layerName, undefined, undefined);
     var me = this;
-    var vectorLayer;
-    var projectLinkStyler = new ProjectLinkStyler();
-    var roadLinkStyler = new RoadLinkStyler();
-    var linkStatus = LinkValues.LinkStatus;
 
-    var vectorSource = new ol.source.Vector({
+    var roadVector = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
-        console.log("loader");
         eventbus.once('roadLinks:fetched', function() {
           var features = _.map(roadCollection.getAll(), function(roadLink) {
             var points = _.map(roadLink.points, function(point) {
@@ -23,13 +18,18 @@
             feature.linkData = roadLink;
             return feature;
           });
-          console.log("load features ->");
           loadFeatures(features);
         });
-        console.log("loader end");
       },
       strategy: ol.loadingstrategy.bbox
     });
+
+    var roadLayer = new ol.layer.Vector({
+      source: roadVector,
+      style: vectorLayerStyle
+    });
+    roadLayer.setVisible(true);
+    roadLayer.set('name', 'roadLayer');
 
     function vectorLayerStyle(feature) {
       return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
@@ -38,8 +38,8 @@
     var loadFeatures = function (features) {
       console.log("load features");
 
-      vectorSource.clear(true);
-      vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
+      roadVector.clear(true);
+      roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
       eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
@@ -91,16 +91,23 @@
 
     var handleRoadsVisibility = function () {
       console.log(applicationModel.getRoadVisibility() && map.getView().getZoom() >= zoomlevels.minZoomForRoadLinks);
-      vectorLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= zoomlevels.minZoomForRoadLinks);
+      roadLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= zoomlevels.minZoomForRoadLinks);
     };
 
     this.mapMovedHandler = function (mapState) {
       //if ((applicationModel.getSelectedTool() === 'Cut' && selectSingleClick.getFeatures().getArray().length > 0))
         //return;
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
-        vectorLayer.getSource().clear();
+        roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
       } else {
+        switch(applicationModel.getSelectedLayer()) {
+          case 'linkProperty':
+            eventbus.trigger('linkProperty:fetch');
+            break;
+          case 'roadAddressProject':
+            eventbus.trigger('roadAddressProject:fetch');
+        }
         eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');
         handleRoadsVisibility();
       }
@@ -109,18 +116,12 @@
     this.eventListener.listenTo(eventbus, 'map:moved', me.mapMovedHandler, this);
 
     var clear = function(){
-      vectorLayer.getSource().clear();
+      roadLayer.getSource().clear();
     };
 
-    vectorLayer = new ol.layer.Vector({
-      source: vectorSource,
-      style: vectorLayerStyle
-    });
-    vectorLayer.setVisible(true);
-    vectorLayer.set('name', 'roadLayer');
 
     return {
-      layer: vectorLayer,
+      layer: roadLayer,
       clear: clear
     };
   };
