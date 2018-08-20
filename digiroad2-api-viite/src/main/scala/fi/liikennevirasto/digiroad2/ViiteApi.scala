@@ -161,7 +161,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/id/:id") {
     val id = params("id").toLong
     time(logger, s"GET request for /roalinks/$id") {
-      val roadLinks = roadAddressService.getRoadAddressLink(id)
+      val roadLinks = roadAddressService.getRoadAddressLinkById(id)
         foldSegments(roadLinks)
         .map(midPoint)
         .getOrElse(
