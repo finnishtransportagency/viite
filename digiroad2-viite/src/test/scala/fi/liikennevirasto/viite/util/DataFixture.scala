@@ -496,11 +496,12 @@ object DataFixture {
         fuseRoadAddressWithHistory()
       case Some("revert_overlapped_road_addresses") =>
         val options = args.tail
-        val dryRun = options.contains("dry-run")
+        val save = options.contains("save")
         val fixAddressValues = options.contains("fix-address-values")
+        val witPartialOverlap = options.contains("with-partial-overlap")
         OracleDatabase.withDynTransaction {
           val overlapDataFixture = new OverlapDataFixture
-          overlapDataFixture.fixOverlapRoadAddresses(dryRun, fixAddressValues)
+          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, witPartialOverlap)
         }
       case Some("test") =>
         tearDown()

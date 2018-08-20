@@ -15,7 +15,7 @@ class OverlapDataFixture {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def fetchAllOverlapRoadAddresses(): Seq[OverlapRoadAddress] = {
+  private def fetchAllWithPartialOverlapRoadAddresses(): Seq[OverlapRoadAddress] = {
     sql"""
       SELECT
         RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
@@ -73,6 +73,18 @@ class OverlapDataFixture {
       """.as[OverlapRoadAddress].list
   }
 
+  private def fetchAllOverlapRoadAddresses(): Seq[OverlapRoadAddress] = {
+    sql"""
+         SELECT RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
+         FROM ROAD_ADDRESS RA
+         	INNER JOIN (SELECT IRA.LINK_ID, IRA.START_MEASURE, IRA.ROAD_NUMBER, IRA.ROAD_PART_NUMBER, IRA.END_MEASURE, IRA.START_DATE, IRA.END_DATE
+               FROM ROAD_ADDRESS IRA
+             	 WHERE IRA.VALID_TO IS NULL GROUP BY IRA.LINK_ID, IRA.START_MEASURE, IRA.END_MEASURE, IRA.ROAD_NUMBER, IRA.ROAD_PART_NUMBER, IRA.START_DATE, IRA.END_DATE HAVING count(*) = 2) OM
+          	ON OM.LINK_ID = RA.LINK_ID AND OM.START_MEASURE = RA.START_MEASURE AND OM.END_MEASURE = RA.END_MEASURE AND OM.ROAD_NUMBER = RA.ROAD_NUMBER AND OM.ROAD_PART_NUMBER = RA.ROAD_PART_NUMBER
+          		AND (OM.START_DATE = RA.START_DATE OR (OM.START_DATE IS NULL AND RA.START_DATE IS NULL)) AND (OM.END_DATE = RA.END_DATE OR (OM.END_DATE IS NULL AND RA.END_DATE IS NULL))
+    """.as[OverlapRoadAddress].list
+  }
+
   private def expireRoadAddress(id: Long, dryRun: Boolean) = {
     //Should expire road address with the given id and set the modified by to batch_overlap_data_fixture
     if (!dryRun) {
@@ -100,7 +112,7 @@ class OverlapDataFixture {
     }
   }
 
-  def fixOverlapRoadAddresses(dryRun: Boolean, fixAddrMeasure: Boolean): Unit = {
+  private def fixRoadAddresses(overlapMeasures: Seq[OverlapRoadAddress], dryRun: Boolean = false, fixAddrMeasure: Boolean = false): Unit = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
     logger.info(s"Start fixing overlapped road addresses with following options { dry-run=$dryRun, fix-address-measure=$fixAddrMeasure }")
@@ -136,11 +148,15 @@ class OverlapDataFixture {
                     sortBy { case (ra, distance) => (ra.validTo, distance) }.
                     headOption.getOrElse(throw new Exception(s"Could not find any expired road address to match the overlapped measures $overlapMeasure"))
 
-                  logger.info(s"Fix road address ${overlapMeasure.id} -> ${oldRoadAddress.id}, expire id(${overlapMeasure.id}), revert id(${oldRoadAddress.id}) startAddrM(${oldRoadAddress.startAddrM}) endAddrM(${oldRoadAddress.endAddrM})")
-                  //Revert expired road address
-                  revertRoadAddress(oldRoadAddress.id, overlapMeasure.startAddrM, overlapMeasure.endAddrM, dryRun)
-                  //Expired current road address
-                  expireRoadAddress(overlapMeasure.id, dryRun)
+                  if(distance < 6) {
+                    logger.info(s"Fix road address ${overlapMeasure.id} -> ${oldRoadAddress.id}, expire id(${overlapMeasure.id}), revert id(${oldRoadAddress.id}) startAddrM(${oldRoadAddress.startAddrM}) endAddrM(${oldRoadAddress.endAddrM})")
+                    //Revert expired road address
+                    revertRoadAddress(oldRoadAddress.id, overlapMeasure.startAddrM, overlapMeasure.endAddrM, dryRun)
+                    //Expired current road address
+                    expireRoadAddress(overlapMeasure.id, dryRun)
+                  } else {
+                    throw new Exception(s"Found one expired road address with more than 6 address units from the overlapped measures $overlapMeasures")
+                  }
                 } else {
                   throw new Exception(s"Could not find any expired road address to match the overlapped measures $overlapMeasures")
                 }
@@ -158,6 +174,11 @@ class OverlapDataFixture {
           case e: Exception => logger.error(s"Error at link id $linkId with following message: " + e.getMessage())
         }
     }
+  }
+
+  def fixOverlapRoadAddresses(dryRun: Boolean, fixAddrMeasure: Boolean, withPartial: Boolean) = {
+    val roadAddresses = if(withPartial) fetchAllWithPartialOverlapRoadAddresses() else fetchAllOverlapRoadAddresses()
+    fixRoadAddresses(roadAddresses, dryRun, fixAddrMeasure)
   }
 
   implicit val getOverlapRoadAddress = new GetResult[OverlapRoadAddress] {
