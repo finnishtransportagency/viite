@@ -773,10 +773,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
         })
       }
-      //ir ao VVH HIST buscar a geom e ver adjacencia
       val selected = historyLinkAddresses.find(_.id == id).getOrElse(historyLinkAddresses.find(_.linkId == linkId).get)
       val filtered = historyLinkAddresses.filterNot(_.id == id).filter(ra => {
-        GeometryUtils.areAdjacent(ra.geometry, selected.geometry)
+        GeometryUtils.areAdjacent(ra.geometry, selected.geometry) && !chainIds.contains(ra.id)
       })
       filtered
   }
@@ -811,7 +810,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressLinkBuilder.build(connectedLinks(fa.linkId), fa, false, Some(connectedLinks(fa.linkId).geometry))
     })
 
-    builtMissing ++ filteredAddresses
+    builtMissing ++ filteredAddresses.filter(_.floating)
   }
 
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
