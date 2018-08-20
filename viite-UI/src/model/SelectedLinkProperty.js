@@ -20,9 +20,15 @@
       "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
       "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
 
-    var close = function() {
+    var close = function(result) {
+      console.log("--------CLOSE---------");
+      console.log(current);
+      console.log(isDirty());
       if (!_.isEmpty(current) && !isDirty()) {
-        _.forEach(current, function(selected) { selected.unselect(); });
+        _.each(current, function(selected) {
+          console.log(selected);
+          selected.unselect();
+        });
         applicationModel.setActiveButtons(false);
         eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
@@ -91,15 +97,15 @@
       if (canIOpen) {
         if(isSuravage){
           if(!_.isUndefined(linkId)){
-            current = singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId);
+            setCurrent(singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId));
           } else {
-            current = singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id);
+            setCurrent(singleLinkSelect ? roadCollection.getSuravageById([id]) : roadCollection.getSuravageGroupById(id));
           }
         } else {
           if(!_.isUndefined(linkId)){
-            current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+            setCurrent(singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId));
           } else {
-            current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+            setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
           }
         }
 
@@ -112,6 +118,7 @@
           selected.select();
         });
         processOl3Features(visibleFeatures);
+        console.log("open");
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
     };
@@ -119,7 +126,7 @@
     var openFloating = function (linkId, id, singleLinkSelect, visibleFeatures) {
         var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) : !isSelectedById(id);
         if (canIOpen) {
-            applicationModel.toggleSelectionTypeFloating();
+            applicationModel.setSelectionType('floating');
             if (!_.isUndefined(linkId)) {
                 current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
             } else {
@@ -144,8 +151,9 @@
             }
             processOl3Features(visibleFeatures);
             eventbus.trigger('adjacents:startedFloatingTransfer');
+            console.log("...");
             if (!_.isEmpty(data4Display))
-            eventbus.trigger('linkProperties:selected', data4Display);
+              eventbus.trigger('linkProperties:selected', data4Display);
             eventbus.trigger('linkProperties:deactivateInteractions');
         }
     };
@@ -207,6 +215,7 @@
         }
         processOl3Features(visibleFeatures);
         eventbus.trigger('adjacents:startedFloatingTransfer');
+        console.log("...");
         eventbus.trigger('linkProperties:selected', data4Display);
         _.defer(function(){
           eventbus.trigger('linkProperties:deactivateAllSelections');
@@ -445,13 +454,14 @@
 
     eventbus.on('linkProperties:closed', function(){
       eventbus.trigger('layer:enableButtons', true);
-      applicationModel.toggleSelectionTypeAll();
+      applicationModel.setSelectionType('all');
       clearFeaturesToKeep();
     });
 
-      eventbus.on('roadAddress:openProject', function () {
-          close();
-      });
+    eventbus.on('roadAddress:openProject', function(result) {
+      console.log("close-->");
+      close(result);
+    });
 
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
@@ -459,6 +469,7 @@
       _.forEach(current, function (selected) {
         selected.select();
       });
+      console.log("open multiple");
       eventbus.trigger('linkProperties:multiSelected', extractDataForDisplay(get()));
     };
 
@@ -641,11 +652,12 @@
     };
 
     var cancelAndReselect = function(action){
-      if(action===applicationModel.actionCalculating){
+      if (action === applicationModel.actionCalculating) {
         var floatingMarkers = getFloatingRoadMarker();
         eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
       }
       clearAndReset(false);
+      console.log("ei se mene tänne");
       current = [];
       eventbus.trigger('linkProperties:clearHighlights');
     };
@@ -665,10 +677,11 @@
         resetTargets();
         previousAdjacents = [];
         _.defer(function () {
-            if (!_.isEmpty(featuresToKeep)) {
-                current = roadCollection.toRoadLinkModel(featuresToKeep);
-                eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
-            }
+          if (!_.isEmpty(featuresToKeep)) {
+            current = roadCollection.toRoadLinkModel(featuresToKeep);
+            console.log("...");
+            eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
+          }
         });
       }
     };
@@ -682,6 +695,7 @@
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
         clearAndReset(true);
+        console.log("...");
         eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
       $('#adjacentsData').remove();
@@ -694,7 +708,7 @@
           applicationModel.setContinueButton(false);
           eventbus.trigger('roadLinks:deleteSelection');
         }
-        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+        eventbus.trigger('roadLinks:fetched', action, !changedTargetIds);
         applicationModel.setContinueButton(true);
       }
     };

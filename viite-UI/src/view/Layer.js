@@ -1,9 +1,6 @@
 (function(root) {
   root.Layer = function(map, layerName, roadCollection, projectCollection) {
     var me = this;
-    var selectSingleClick = new ol.interaction.Select({});
-    var selectDoubleClick = new ol.interaction.Select({});
-    var suravageCutter;
     this.eventListener = _.extend({running: false}, eventbus);
 
     var mapOverLinkMiddlePoints = function(links, transformation) {
@@ -36,21 +33,6 @@
       _.each(layers, function(layer) {
         layer.getSource().clear();
       });
-    };
-
-    this.clearHighlights = function(){
-      console.log(selectSingleClick.getFeatures());
-      console.log(selectDoubleClick.getFeatures());
-      selectSingleClick.getFeatures().clear();
-      selectDoubleClick.getFeatures().clear();
-      map.updateSize();
-    };
-
-    this.toggleSelectInteractions = function (activate, both) {
-      selectDoubleClick.setActive(activate);
-      if (both) {
-        selectSingleClick.setActive(activate);
-      }
     };
 
     this.isStarted = function() {
@@ -119,7 +101,7 @@
     };
     this.hide = function() {
       this.eventListener.stopListening(eventbus, 'map:moved', me.mapMovedHandler, this);
-      roadLayer.clear();
+      //roadLayer.clear();
     };
 
   };

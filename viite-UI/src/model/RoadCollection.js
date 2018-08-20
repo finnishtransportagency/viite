@@ -102,15 +102,17 @@
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom,
         withHistory: withHistory, day: day, month: month, year: year}, function(fetchedRoadLinks) {
           currentAllRoadLinks = fetchedRoadLinks;
+          console.log("fetch process-->");
           fetchProcess(fetchedRoadLinks, zoom);
       });
     };
 
       eventbus.on("linkProperties:drawUnknowns", function () {
-          fetchProcess(currentAllRoadLinks, currentZoom, true);
+        console.log("draw unknowns");
+        fetchProcess(currentAllRoadLinks, currentZoom, true);
       });
 
-      var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknows) {
+      var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
           var selectedLinkIds = _.map(getSelectedRoadLinks(), function(roadLink) {
               return roadLink.getId();
           });
@@ -120,14 +122,13 @@
               });
           });
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
-              var isUnknownGroup = _.every(model, function (mod) {
+              return _.every(model, function (mod) {
                   var modData = mod.getData();
                   return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
               });
-              return isUnknownGroup;
           });
           unknownRoadLinkGroups = fetched[0];
-          var includeUnknowns = _.isUndefined(drawUnknows) && !drawUnknows;
+          var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
           if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && (applicationModel.getSelectionType() !== 'unknown'))) {
               roadLinkGroups = fetched[1];
           } else {
@@ -163,7 +164,9 @@
           });
           roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
           applicationModel.removeSpinner();
-          eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknows) && drawUnknows), selectedLinkIds);
+          console.log("fetch process");
+          console.log(drawUnknowns);
+          eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
@@ -173,7 +176,7 @@
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
           }
-          if (!_.isUndefined(drawUnknows) && drawUnknows) {
+          if (!_.isUndefined(drawUnknowns) && drawUnknowns) {
               eventbus.trigger('linkProperties:unknownsTreated');
           }
       };
@@ -386,6 +389,7 @@
     
     this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
       backend.getProjectLinks({boundingBox: boundingBox, zoom: zoomLevel, projectId: projectId}, function(fetchedLinks) {
+        console.log("project links fetched");
         var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
           return link.status ===  LinkStatus.NotHandled.value;
         }).uniq().value();
@@ -396,10 +400,11 @@
           var feature = new ol.Feature({
             geometry: new ol.geom.LineString(points)
           });
-            feature.linkData = road;
+          feature.linkData = road;
           feature.projectId = projectId;
           return feature;
         });
+        console.log(notHandledOL3Features);
         eventbus.trigger('linkProperties:highlightReservedRoads', notHandledOL3Features);
       });
     };

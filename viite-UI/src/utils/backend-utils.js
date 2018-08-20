@@ -35,22 +35,22 @@
       };
     });
 
-      this.getProjectLinksById = _.throttle(function (projectId, callback) {
-          return $.getJSON('api/viite/project/links/' + projectId, function (data) {
-              return _.isFunction(callback) && callback(data);
-          });
-      }, 1000);
+    this.getProjectLinksById = _.throttle(function (projectId, callback) {
+      return $.getJSON('api/viite/project/links/' + projectId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
 
     this.revertChangesRoadlink = _.throttle(function (data, success, errorCallback) {
-        $.ajax({
-            contentType: "application/json",
-            type: "PUT",
-            url: "api/viite/roadlinks/roadaddress/project/revertchangesroadlink",
-            data: JSON.stringify(data),
-            dataType: "json",
-            success: success,
-            error: errorCallback
-        });
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/revertchangesroadlink",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: errorCallback
+      });
     }, 1000);
 
     this.getRoadLinkByLinkId = _.throttle(function (linkId, callback) {
@@ -457,7 +457,8 @@
         } else {
             callback(linkData);
         }
-          eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
+        console.log("self.getRoadLinks");
+        eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
       };
       return self;
     };
