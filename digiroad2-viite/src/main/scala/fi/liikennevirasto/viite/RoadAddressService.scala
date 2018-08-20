@@ -215,7 +215,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       changedRoadAddresses, missedRL)
 
     val inUseSuravageLinks = suravageLinks.filter(sl => roadAddressLinkMap.keySet.contains(sl.linkId))
-
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks ++ inUseSuravageLinks, roadAddressLinkMap)
 
     publishChangeSet(changeSet)
@@ -782,7 +781,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       filtered
   }
 
-  def getAdjacent(chainLinks: Set[Long], linkId: Long): Seq[RoadAddressLink] = {
+  def getAdjacent(chainLinks: Set[Long], linkId: Long, newSession: Boolean = true): Seq[RoadAddressLink] = {
     val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks, frozenTimeVVHAPIServiceEnabled)
     val pointCloud = chainRoadLinks.map(_.geometry).map(GeometryUtils.geometryEndpoints).flatMap(x => Seq(x._1, x._2))
     val boundingPoints = GeometryUtils.boundingRectangleCorners(pointCloud)
@@ -793,10 +792,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val endPoints = GeometryUtils.geometryEndpoints(rl.geometry)
         pointCloud.exists(p => GeometryUtils.areAdjacent(p, endPoints._1) || GeometryUtils.areAdjacent(p, endPoints._2))
       }.map(rl => rl.linkId -> rl).toMap
-    val missingLinks = withDynSession {
-      RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet)
+    val (missingLinks, roadAddresses) = if (newSession) {
+      withDynSession {
+        (RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet),
+          RoadAddressDAO.fetchByLinkId(connectedLinks.keySet, includeFloating = true))
+      }
+    } else {
+      (RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet),
+        RoadAddressDAO.fetchByLinkId(connectedLinks.keySet, includeFloating = true))
     }
-    missingLinks.map(ml => RoadAddressLinkBuilder.build(connectedLinks(ml.linkId), ml))
+    val builtMissing = missingLinks.map(ml => RoadAddressLinkBuilder.build(connectedLinks(ml.linkId), ml))
+    val remainingAddresses = roadAddresses.filterNot(ra => builtMissing.map(_.linkId).contains(ra.linkId))
+
+    val filteredAddresses = remainingAddresses.filter(ra => {
+      val rl = connectedLinks(ra.linkId)
+      !GeometryUtils.withinTolerance(ra.geometry, rl.geometry, MaxDistanceDiffAllowed)
+    }).map(fa => {
+      RoadAddressLinkBuilder.build(connectedLinks(fa.linkId), fa, false, Some(connectedLinks(fa.linkId).geometry))
+    })
+
+    builtMissing ++ filteredAddresses
   }
 
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
