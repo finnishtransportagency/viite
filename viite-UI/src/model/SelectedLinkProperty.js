@@ -813,7 +813,7 @@
     };
 
     var getFeaturesToKeep = function(){
-      return featuresToKeep;
+      return _.cloneDeep(featuresToKeep);
     };
 
     var addToFeaturesToKeep = function(data4Display){
