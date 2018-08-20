@@ -494,7 +494,7 @@ object DataFixture {
         checkLinearLocation()
       case Some("fuse_road_address_with_history") =>
         fuseRoadAddressWithHistory()
-      case Some("revert_overlaped_road_addresses") =>
+      case Some("revert_overlapped_road_addresses") =>
         val options = args.tail
         val dryRun = options.contains("dry-run")
         val fixAddressValues = options.contains("fix-address-values")
@@ -511,7 +511,7 @@ object DataFixture {
         "| find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names " +
-        "| fuse_road_address_with_history | check_lrm_position | revert_overlaped_road_addresses")
+        "| fuse_road_address_with_history | check_lrm_position | revert_overlapped_road_addresses")
     }
   }
 
