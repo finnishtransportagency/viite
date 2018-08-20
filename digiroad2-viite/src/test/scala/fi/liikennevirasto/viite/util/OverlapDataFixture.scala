@@ -1,7 +1,25 @@
 package fi.liikennevirasto.viite.util
 
-import org.joda.time.DateTime
+import java.util.Properties
+import javax.sql.DataSource
+
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
+import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
+import Database.dynamicSession
+import _root_.oracle.sql.STRUCT
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceResetterDAO}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite._
+import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
+import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
@@ -13,7 +31,7 @@ class OverlapDataFixture {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  def fetchAllOverlapRoadAddresses(): Seq[OverlapRoadAddress] = {
+  private def fetchAllOverlapRoadAddresses(): Seq[OverlapRoadAddress] = {
     sql"""
          SELECT RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
          FROM ROAD_ADDRESS RA
@@ -25,7 +43,7 @@ class OverlapDataFixture {
     """.as[OverlapRoadAddress].list
   }
 
-  def expireRoadAddress(id: Long, dryRun: Boolean) = {
+  private def expireRoadAddress(id: Long, dryRun: Boolean) = {
     //Should expire road address with the given id and set the modified by to batch_overlap_data_fixture
     if(!dryRun){
       sqlu"""
@@ -34,7 +52,7 @@ class OverlapDataFixture {
     }
   }
 
-  def revertRoadAddress(id: Long, startAddrM: Long, endAddrM: Long, dryRun: Boolean) = {
+  private def revertRoadAddress(id: Long, startAddrM: Long, endAddrM: Long, dryRun: Boolean) = {
     //Should remove valid_to and set road Address
     if(!dryRun){
       sqlu"""
@@ -43,7 +61,7 @@ class OverlapDataFixture {
     }
   }
 
-  def revertRoadAddress(id: Long, dryRun: Boolean) = {
+  private def revertRoadAddress(id: Long, dryRun: Boolean) = {
     //Should remove valid_to and set road Address
     if(!dryRun){
       sqlu"""
@@ -53,6 +71,8 @@ class OverlapDataFixture {
   }
 
   def fixOverlapRoadAddresses(dryRun: Boolean, fixAddrMeasure: Boolean): Unit = {
+    implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+    logger.info(s"Start fixing overlaped road addresses with following options { dry-run=$dryRun, fix-address-measure=$fixAddrMeasure }")
     val overlapMeasures = fetchAllOverlapRoadAddresses()
 
     val (currentOverlaped, expiredOverlaps) = overlapMeasures.partition(_.validTo.isEmpty)
@@ -60,7 +80,7 @@ class OverlapDataFixture {
     val groupedCurrentOverlaped = currentOverlaped.groupBy(_.linkId)
     val groupedExpiredOverlaps = expiredOverlaps.groupBy(_.linkId)
 
-    logger.info(s"Fetched ${overlapMeasures.size} overlaped road addresses!")
+    logger.info(s"Fetched ${currentOverlaped.size} overlaped road addresses!")
     groupedCurrentOverlaped.foreach {
       case (linkId, overlaps) =>
         logger.info(s"Processing link id $linkId")
@@ -70,25 +90,33 @@ class OverlapDataFixture {
               val expiredOverlaps = groupedExpiredOverlaps.getOrElse(overlapMeasure.linkId,
                 throw new Exception(s"The overlaped measure for link id ${overlapMeasure.linkId} doesn't have a expired road addresses!"))
 
+              //Find a expired road address in the same link id at the same road number, road part number start address measure and end address measure
               val previousRoadAddresses = expiredOverlaps.
                 filter(ra =>
                   ra.roadNumber == overlapMeasure.roadNumber && ra.roadPartNumber == overlapMeasure.roadPartNumber && ra.startAddrM == overlapMeasure.startAddrM && ra.endAddrM == overlapMeasure.endAddrM)
 
-              if (previousRoadAddresses.isEmpty && fixAddrMeasure) {
-                //get the nearest
-                val (oldRoadAddress, distance) = previousRoadAddresses.
-                  filter(ra =>
-                    ra.roadNumber == overlapMeasure.roadNumber && ra.roadPartNumber == overlapMeasure.roadPartNumber).
-                  map(ra => (ra, Math.abs(ra.startAddrM - overlapMeasure.startAddrM) + Math.abs(ra.endAddrM - overlapMeasure.endAddrM))).
-                  sortBy { case (ra, distance) => (ra.validTo, distance) }.
-                  headOption.getOrElse(throw new Exception(s"Could not find any expired road address to match the overlaped measures $overlapMeasure"))
+              //If there is any expired match for the current road addresses try to find the nearest one
+              if (previousRoadAddresses.isEmpty) {
+                if(fixAddrMeasure) {
+                  val (oldRoadAddress, distance) = expiredOverlaps.
+                    filter(ra =>
+                      ra.roadNumber == overlapMeasure.roadNumber && ra.roadPartNumber == overlapMeasure.roadPartNumber).
+                    map(ra => (ra, Math.abs(ra.startAddrM - overlapMeasure.startAddrM) + Math.abs(ra.endAddrM - overlapMeasure.endAddrM))).
+                    sortBy { case (ra, distance) => (ra.validTo, distance) }.
+                    headOption.getOrElse(throw new Exception(s"Could not find any expired road address to match the overlaped measures $overlapMeasure"))
 
-                //Revert expired road address
-                revertRoadAddress(oldRoadAddress.id, oldRoadAddress.startAddrM, oldRoadAddress.endAddrM, dryRun)
-                //Expired current road address
-                expireRoadAddress(overlapMeasure.id, dryRun)
+                  logger.info(s"Fix road address ${overlapMeasure.id} -> ${oldRoadAddress.id}, expire id(${overlapMeasure.id}), revert id(${oldRoadAddress.id}) startAddrM(${oldRoadAddress.startAddrM}) endAddrM(${oldRoadAddress.endAddrM})")
+                  //Revert expired road address
+                  revertRoadAddress(oldRoadAddress.id, overlapMeasure.startAddrM, overlapMeasure.endAddrM, dryRun)
+                  //Expired current road address
+                  expireRoadAddress(overlapMeasure.id, dryRun)
+                } else {
+                  throw new Exception(s"Could not find any expired road address to match the overlaped measures $overlapMeasures")
+                }
               } else {
                 val oldRoadAddress = previousRoadAddresses.maxBy(_.validTo)
+
+                logger.info(s"Fix road address ${overlapMeasure.id} -> ${oldRoadAddress.id}, expire id(${overlapMeasure.id}), revert id(${oldRoadAddress.id})")
                 //Revert expired road address
                 revertRoadAddress(oldRoadAddress.id, dryRun)
                 //Expired current road address
@@ -96,7 +124,7 @@ class OverlapDataFixture {
               }
           }
         } catch {
-          case e: Exception => logger.error(s"Error at link id $linkId with following message: ", e.getMessage())
+          case e: Exception => logger.error(s"Error at link id $linkId with following message: " + e.getMessage())
         }
     }
   }
