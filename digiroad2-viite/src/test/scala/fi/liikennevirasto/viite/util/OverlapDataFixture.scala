@@ -131,7 +131,7 @@ class OverlapDataFixture {
           overlaps.foreach {
             overlapMeasure =>
               val expiredOverlaps = groupedExpiredOverlaps.getOrElse(overlapMeasure.linkId,
-                throw new Exception(s"The overlapped measure for link id ${overlapMeasure.linkId} doesn't have an expired road addresses!"))
+                throw new Exception(s"The overlapped measure for link id ${overlapMeasure.linkId} doesn't have expired road addresses!"))
 
               //Find an expired road address in the same link id at the same road number, road part number start address measure and end address measure
               val previousRoadAddresses = expiredOverlaps.
