@@ -412,6 +412,7 @@ object DataFixture {
       "test_fixture_sequences.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
+      "insert_overlapping_road_addresses.sql", // Test data for OverLapDataFixture (VIITE-1518)
       "insert_project_link_data.sql",
       "insert_road_names.sql"
     ))
@@ -498,10 +499,11 @@ object DataFixture {
         val options = args.tail
         val save = options.contains("save")
         val fixAddressValues = options.contains("fix-address-values")
-        val witPartialOverlap = options.contains("with-partial-overlap")
+        val withPartialOverlap = options.contains("with-partial-overlap")
+        val addressThreshold = options.find(_.startsWith("address-threshold=")).map(_.replace("address-threshold=", "").toInt).getOrElse(6)
         OracleDatabase.withDynTransaction {
           val overlapDataFixture = new OverlapDataFixture
-          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, witPartialOverlap)
+          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, withPartialOverlap, addressThreshold)
         }
       case Some("test") =>
         tearDown()
