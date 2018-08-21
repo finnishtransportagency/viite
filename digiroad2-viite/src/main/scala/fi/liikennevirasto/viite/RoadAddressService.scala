@@ -767,17 +767,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val historyLinks = time(logger, "Fetch floating history links") {
         roadLinkService.getRoadLinksHistoryFromVVH(floatings.map(_.linkId).toSet)
       }
-
-      val historyLinkAddresses = time(logger, "Build history link addresses") {
-        historyLinks.flatMap(fh => {
-          buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
+      if(historyLinks.nonEmpty){
+        val historyLinkAddresses = time(logger, "Build history link addresses") {
+          historyLinks.flatMap(fh => {
+            buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
+          })
+        }
+        val selected = historyLinkAddresses.find(_.id == id).getOrElse(historyLinkAddresses.find(_.linkId == linkId).get)
+        val filtered = historyLinkAddresses.filterNot(_.id == id).filter(ra => {
+          GeometryUtils.areAdjacent(ra.geometry, selected.geometry) && !chainIds.contains(ra.id)
         })
+        filtered
+      } else {
+        Seq.empty[RoadAddressLink]
       }
-      val selected = historyLinkAddresses.find(_.id == id).getOrElse(historyLinkAddresses.find(_.linkId == linkId).get)
-      val filtered = historyLinkAddresses.filterNot(_.id == id).filter(ra => {
-        GeometryUtils.areAdjacent(ra.geometry, selected.geometry) && !chainIds.contains(ra.id)
-      })
-      filtered
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long, newSession: Boolean = true): Seq[RoadAddressLink] = {

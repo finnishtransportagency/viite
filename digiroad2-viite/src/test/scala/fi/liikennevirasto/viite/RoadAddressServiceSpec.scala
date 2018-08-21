@@ -480,10 +480,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("GetFloatingAdjacents road links on road 75 part 2 sourceLinkId 5176142") {
     val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
     val road75FloatingAddresses = RoadAddress(367,75,2,RoadType.Unknown, Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),
-      5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)),
+      LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
-    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn(
-      (Seq(), Stream()))
+    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(
+      Seq.empty[VVHHistoryRoadLink]
+    )
 
     val result = roadAddressService.getFloatingAdjacent(Set(road75FloatingAddresses.linkId), Set(road75FloatingAddresses.id), road75FloatingAddresses.linkId, road75FloatingAddresses.id, road75FloatingAddresses.roadNumber, road75FloatingAddresses.roadPartNumber, road75FloatingAddresses.track.value)
     result.size should be (0)
@@ -1396,6 +1398,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def toHistoryLink(rl: RoadLink): VVHHistoryRoadLink = {
     VVHHistoryRoadLink(rl.linkId, rl.municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection,
       FeatureClass.AllOthers, 84600, 86400, rl.attributes)
+  }
+
+  private def toHistoryLink(ra: RoadAddress): VVHHistoryRoadLink = {
+    VVHHistoryRoadLink(ra.linkId, 0, ra.geometry, State, TrafficDirection.TowardsDigitizing,
+      FeatureClass.AllOthers, 84600, 86400, Map.empty[String, Any])
   }
 
   private def createChangeTable(oldId: Long, newId: Long, changeType: ChangeType, oldStart: Double, oldEnd: Double,
