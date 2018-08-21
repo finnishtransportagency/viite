@@ -500,9 +500,10 @@ object DataFixture {
         val save = options.contains("save")
         val fixAddressValues = options.contains("fix-address-values")
         val withPartialOverlap = options.contains("with-partial-overlap")
+        val addressThreshold = options.find(_.startsWith("address-threshold=")).map(_.replace("address-threshold=", "").toInt).getOrElse(6)
         OracleDatabase.withDynTransaction {
           val overlapDataFixture = new OverlapDataFixture
-          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, withPartialOverlap)
+          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, withPartialOverlap, addressThreshold)
         }
       case Some("test") =>
         tearDown()
