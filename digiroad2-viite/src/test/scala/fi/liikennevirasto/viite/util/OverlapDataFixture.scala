@@ -131,9 +131,9 @@ class OverlapDataFixture {
           overlaps.foreach {
             overlapMeasure =>
               val expiredOverlaps = groupedExpiredOverlaps.getOrElse(overlapMeasure.linkId,
-                throw new Exception(s"The overlapped measure for link id ${overlapMeasure.linkId} doesn't have a expired road addresses!"))
+                throw new Exception(s"The overlapped measure for link id ${overlapMeasure.linkId} doesn't have an expired road addresses!"))
 
-              //Find a expired road address in the same link id at the same road number, road part number start address measure and end address measure
+              //Find an expired road address in the same link id at the same road number, road part number start address measure and end address measure
               val previousRoadAddresses = expiredOverlaps.
                 filter(ra =>
                   ra.roadNumber == overlapMeasure.roadNumber && ra.roadPartNumber == overlapMeasure.roadPartNumber && ra.startAddrM == overlapMeasure.startAddrM && ra.endAddrM == overlapMeasure.endAddrM)
@@ -148,7 +148,7 @@ class OverlapDataFixture {
                     sortBy { case (ra, distance) => (ra.validTo, distance) }.
                     headOption.getOrElse(throw new Exception(s"Could not find any expired road address to match the overlapped measures $overlapMeasure"))
 
-                  if(distance < 6) {
+                  if (distance < 6) {
                     logger.info(s"Fix road address ${overlapMeasure.id} -> ${oldRoadAddress.id}, expire id(${overlapMeasure.id}), revert id(${oldRoadAddress.id}) startAddrM(${oldRoadAddress.startAddrM}) endAddrM(${oldRoadAddress.endAddrM})")
                     //Revert expired road address
                     revertRoadAddress(oldRoadAddress.id, overlapMeasure.startAddrM, overlapMeasure.endAddrM, dryRun)
@@ -177,7 +177,7 @@ class OverlapDataFixture {
   }
 
   def fixOverlapRoadAddresses(dryRun: Boolean, fixAddrMeasure: Boolean, withPartial: Boolean) = {
-    val roadAddresses = if(withPartial) fetchAllWithPartialOverlapRoadAddresses() else fetchAllOverlapRoadAddresses()
+    val roadAddresses = if (withPartial) fetchAllWithPartialOverlapRoadAddresses() else fetchAllOverlapRoadAddresses()
     fixRoadAddresses(roadAddresses, dryRun, fixAddrMeasure)
   }
 
