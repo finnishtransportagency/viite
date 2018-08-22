@@ -154,7 +154,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         .orElse(foldSegments(projectLinks))
         .map(midPoint)
         .getOrElse(
-        Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
+          Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
   }
 
@@ -163,9 +163,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for /roalinks/$id") {
       val roadLinks = roadAddressService.getRoadAddressLinkById(id)
         foldSegments(roadLinks)
-        .map(midPoint)
-        .getOrElse(
-          Map("success" -> false, "reason" -> ("ID:" + id + " not found"))
+          .map(midPoint)
+          .getOrElse(
+            Map("success" -> false, "reason" -> ("ID:" + id + " not found"))
         )
     }
 
@@ -253,10 +253,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val linkIds: Seq[Long] = roadData.map(rd => rd("linkId").asInstanceOf[Long])
         val ids: Seq[Long] = roadData.map(rd => rd("id").asInstanceOf[Long])
         val result = adjacents.filter(adj => {
-          if(ids.nonEmpty){
+          if (ids.nonEmpty) {
             !ids.contains(adj.id)
-          }
-          else {
+          } else {
             !linkIds.contains(adj.linkId)
           }
         }).distinct
