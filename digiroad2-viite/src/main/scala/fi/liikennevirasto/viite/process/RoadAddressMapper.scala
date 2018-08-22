@@ -184,7 +184,7 @@ trait RoadAddressMapper {
     * @param geom2 Geometry two
     */
   def isDirectionMatch(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
-    val x = distancesBetweenEndPoints(geom1, geom2)
+    val x = distancesBetweenEndPointsInOrigin(geom1, geom2)
     x._1 < x._2
   }
 
@@ -201,6 +201,19 @@ trait RoadAddressMapper {
     * @return h2h distance, h2t distance sums
     */
   def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
+    (geom1.head.distance2DTo(geom2.head) + geom1.last.distance2DTo(geom2.last),
+      geom1.last.distance2DTo(geom2.head) + geom1.head.distance2DTo(geom2.last))
+  }
+
+  /**
+    * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
+    * The measurement is taken after the geometries are reduced to the origin point.
+    * @param geom1 Geometry 1
+    * @param geom2 Goemetry 2
+    * @return h2h distance, h2t distance sums
+    */
+
+  def distancesBetweenEndPointsInOrigin(geom1: Seq[Point], geom2: Seq[Point]): (Double, Double) = {
     val sourcePoint = geom1.minBy(p => p.distance2DTo(Point(0,0,0)))
     val targetPoint = geom2.minBy(p => p.distance2DTo(Point(0,0,0)))
     val movedGeom1 = geom1.map(p => p.minus(sourcePoint))
