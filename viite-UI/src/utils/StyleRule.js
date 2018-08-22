@@ -247,15 +247,19 @@
             var context = _.merge({}, feature, extraProperties);
             var allRules = getRulesByName(name);
             var configObj = _.merge({}, defaultStyle);
+            console.log(allRules.length);
+            console.log(context);
             for(var i=0; i < allRules.length; i++){
                 var rule = allRules[i];
                 if(rule._match(context)){
                     var styles = rule._get();
+                    console.log(styles);
                     for(var j=0; j < styles.length ; j++){
                         configObj = _.merge(configObj, styles[j]);
                     }
                 }
             }
+            //console.log(configObj);
             return createOpenLayerStyle(configObj, feature);
         };
     };

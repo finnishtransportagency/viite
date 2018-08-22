@@ -24,6 +24,7 @@
     };
 
     this.toggleLayersVisibility = function (layers, visibleToggle) {
+
       _.each(layers, function(layer) {
         layer.setVisible(visibleToggle);
       });

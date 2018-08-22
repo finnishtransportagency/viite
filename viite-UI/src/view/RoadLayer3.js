@@ -8,6 +8,7 @@
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
         eventbus.once('roadLinks:fetched', function() {
+          console.log("road layer loader");
           var features = _.map(roadCollection.getAll(), function(roadLink) {
             var points = _.map(roadLink.points, function(point) {
               return [point.x, point.y];
@@ -36,7 +37,7 @@
     }
 
     var loadFeatures = function (features) {
-      console.log("load features");
+      console.log("load features road layer");
 
       roadVector.clear(true);
       roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));

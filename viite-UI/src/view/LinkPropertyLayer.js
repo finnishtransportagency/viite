@@ -342,7 +342,7 @@
 
     map.on('click', function(event) {
       console.log("select click");
-      if (_.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature}))) {
+      if (_.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}))) {
         console.log("close feature");
         selectedLinkProperty.close();
       }
@@ -1392,13 +1392,15 @@
     
     var showLayer = function(){
       me.start();
+      //me.addLayers(layers);
       me.show(map);
     };
 
     var hideLayer = function() {
       unselectRoadLink();
+      me.clearLayers(layers);
       //me.stop();
-      //me.hide();
+      me.hide();
     };
 
     me.toggleLayersVisibility(layers, true);
