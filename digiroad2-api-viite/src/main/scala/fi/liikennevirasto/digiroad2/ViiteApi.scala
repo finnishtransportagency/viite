@@ -153,8 +153,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       foldSegments(roadLinks)
         .orElse(foldSegments(projectLinks))
         .map(midPoint)
-        .getOrElse(
-          Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
+        .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
   }
 
@@ -164,9 +163,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val roadLinks = roadAddressService.getRoadAddressLinkById(id)
         foldSegments(roadLinks)
           .map(midPoint)
-          .getOrElse(
-            Map("success" -> false, "reason" -> ("ID:" + id + " not found"))
-        )
+          .getOrElse(Map("success" -> false, "reason" -> ("ID:" + id + " not found")))
     }
 
   }
