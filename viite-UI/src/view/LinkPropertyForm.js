@@ -368,13 +368,12 @@
         '<footer>' + editButtons + '</footer> </div>');
     };
 
-    var aditionalSourceEventTriggering = function(rootElement, floatingToAdd, value, id) {
-        applicationModel.addSpinner();
-        eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, _.parseInt(value), _.parseInt(id));
-        rootElement.find('.link-properties button.continue').attr('disabled', false);
-        rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        applicationModel.setActiveButtons(true);
-
+    var additionalSourceEventTriggering = function(rootElement, floatingToAdd, value, id) {
+      applicationModel.addSpinner();
+      eventbus.trigger("adjacents:additionalSourceSelected", floatingToAdd, _.parseInt(value), _.parseInt(id));
+      rootElement.find('.link-properties button.continue').attr('disabled', false);
+      rootElement.find('.link-properties button.cancel').attr('disabled', false);
+      applicationModel.setActiveButtons(true);
     };
 
     var processAdditionalFloatings = function(floatingRoads, value, id) {
@@ -385,16 +384,16 @@
         return fr.linkId;
       });
       var rootElement = $('#feature-attributes');
-      if(floatingRoadsId.size !== 0 && !_.isUndefined(id) && _.contains(floatingRoadsId, parseInt(id))){
-          var floatingToAddById = _.filter(floatingRoads, function(floating){
-              return floating.id === parseInt(id);
-          });
-          aditionalSourceEventTriggering(rootElement, floatingToAddById, value, id);
+      if (floatingRoadsId.size !== 0 && !_.isUndefined(id) && _.contains(floatingRoadsId, parseInt(id))) {
+        var floatingToAddById = _.filter(floatingRoads, function(floating){
+          return floating.id === parseInt(id);
+        });
+        additionalSourceEventTriggering(rootElement, floatingToAddById, value, id);
       } else if (_.contains(floatingRoadsLinkId, parseInt(value))) {
         var floatingToAddByLinkId = _.filter(floatingRoads, function(floating){
           return floating.linkId === parseInt(value);
         });
-          aditionalSourceEventTriggering(rootElement, floatingToAddByLinkId, value, id);
+        additionalSourceEventTriggering(rootElement, floatingToAddByLinkId, value, id);
       }
     };
 
@@ -730,25 +729,24 @@
 
       eventbus.on('adjacents:floatingAdded', function(floatingRoads) {
         var floatingPart = '<br><label id="control-label-floating" class="control-label-floating">VIERESSÄ KELLUVIA TIEOSOITTEITA:</label>';
-        _.each(floatingRoads,function(fr) {
+        _.each(floatingRoads, function(fr) {
           floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker, fr.id);
         });
         if (floatingRoads.length === 0) {
           applicationModel.setContinueButton(true);
           rootElement.find('.link-properties button.continue').attr('disabled', false);
-        }
-        else{
+        } else {
           $(".form-group:last").after(floatingPart);
-          $('[id*="additionalSourceButton"]').click(floatingRoads,function(event) {
+          $('[id*="additionalSourceButton"]').click(floatingRoads, function(event) {
               processAdditionalFloatings(floatingRoads,event.currentTarget.value, event.currentTarget.dataset.id);
           });
         }
       });
-      eventbus.on('linkProperties:additionalFloatingSelected',function(data) {
+      eventbus.on('linkProperties:additionalFloatingSelected', function(data) {
         processAdditionalFloatings(data.selectedFloatings, data.selectedLinkId, data.selectedIds);
       });
 
-      eventbus.on('linkProperties:transferFailed',function(errorCode) {
+      eventbus.on('linkProperties:transferFailed', function(errorCode) {
         if (errorCode === 400) {
           return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
         } else if (errorCode === 401) {
