@@ -562,13 +562,6 @@
       return self;
     };
 
-    this.withGetRoadLinkById = function (returnData) {
-      self.getRoadLinkById = function (id, callback) {
-        callback(returnData);
-        return returnData;
-      };
-      return self;
-    };
 
     this.withGetTargetAdjacent = function (returnData) {
       self.getTargetAdjacent = function (linkId, callback) {
