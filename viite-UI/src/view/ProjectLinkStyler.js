@@ -40,16 +40,7 @@
     ];
 
     var selectionStyleRules = [
-      new StyleRule().where('status').is(notHandledStatus).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('status').is(unchangedStatus).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('status').is(newRoadAddressStatus).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('status').is(transferredStatus).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('status').is(terminatedStatus).and('connectedLinkId').isUndefined().use({stroke: {color: '#00FF00'}}),
       new StyleRule().where('status').is(terminatedStatus).and('connectedLinkId').isDefined().use({stroke: {color: '#C6C00F'}}),
-      new StyleRule().where('roadLinkSource').is(3).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('anomaly').is(3).and('status').is(unknownStatus).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('roadClass').is(99).use({stroke: {color: '#00FF00'}})
     ];
 
     var cutterStyleRules = [
@@ -60,10 +51,9 @@
     projectLinkStyle.addRules(projectLinkRules);
     projectLinkStyle.addRules(strokeWidthRules);
 
-    var selectionLinkStyle = new StyleRuleProvider({opacity: 0.95, lineCap: 'round', width: 8});
-    selectionLinkStyle.addRules(projectLinkRules);
-    selectionLinkStyle.addRules(strokeWidthRules);
+    var selectionLinkStyle = new StyleRuleProvider({stroke: {lineCap: 'round', width: 8, color: '#00FF00'}});
     selectionLinkStyle.addRules(selectionStyleRules);
+    selectionLinkStyle.addRules(strokeWidthRules);
     selectionLinkStyle.addRules(cutterStyleRules);
 
     var getProjectLinkStyle = function () {

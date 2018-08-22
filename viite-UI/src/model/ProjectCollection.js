@@ -110,6 +110,7 @@
         };
         projectErrors = result.projectErrors;
         publishableProject = result.publishable;
+        console.log("projectFetched");
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
       });
     };
