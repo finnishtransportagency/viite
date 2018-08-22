@@ -506,6 +506,13 @@ object DataFixture {
           val overlapDataFixture = new OverlapDataFixture(vvhClient)
           overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, withPartialOverlap, fetchAllChangesFromVVH, addressThreshold)
         }
+      case Some("revert_overlapped_road_addresses_by_date") =>
+        val options = args.tail
+        val save = options.contains("save")
+        OracleDatabase.withDynTransaction {
+          val overlapDataFixture = new OverlapDataFixture(vvhClient)
+          overlapDataFixture.fixOverlapRoadAddressesByDates(dryRun = !save)
+        }
       case Some("test") =>
         tearDown()
         setUpTest()
