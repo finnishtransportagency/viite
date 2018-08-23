@@ -412,6 +412,7 @@ object DataFixture {
       "test_fixture_sequences.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
+      "insert_overlapping_road_addresses.sql", // Test data for OverLapDataFixture (VIITE-1518)
       "insert_project_link_data.sql",
       "insert_road_names.sql"
     ))
@@ -494,14 +495,27 @@ object DataFixture {
         checkLinearLocation()
       case Some("fuse_road_address_with_history") =>
         fuseRoadAddressWithHistory()
+      case Some("revert_overlapped_road_addresses") =>
+        val options = args.tail
+        val save = options.contains("save")
+        val fixAddressValues = options.contains("fix-address-values")
+        val withPartialOverlap = options.contains("with-partial-overlap")
+        val fetchAllChangesFromVVH = options.contains("fetch-all-changes-from-vvh")
+        val addressThreshold = options.find(_.startsWith("address-threshold=")).map(_.replace("address-threshold=", "").toInt).getOrElse(6)
+        OracleDatabase.withDynTransaction {
+          val overlapDataFixture = new OverlapDataFixture(vvhClient)
+          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, withPartialOverlap, fetchAllChangesFromVVH, addressThreshold)
+        }
       case Some("test") =>
         tearDown()
         setUpTest()
         importMunicipalityCodes()
-      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
-        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
+
+      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing " +
+        "| find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names | fuse_road_address_with_history | check_lrm_position ")
+        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names " +
+        "| fuse_road_address_with_history | check_lrm_position | revert_overlapped_road_addresses")
     }
   }
 
