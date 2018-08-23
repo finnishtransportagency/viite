@@ -969,14 +969,24 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     * @return ChangeInfo for given links
     */
   def fetchByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
-    queryByLinkIds(linkIds)
+    queryByLinkIds(linkIds, "OLD_ID")
   }
 
-  protected def queryByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
+  /**
+    * Fetch change information where given link id is in the new_id list (source)
+    *
+    * @param linkIds Link ids to check as sources
+    * @return ChangeInfo for given links
+    */
+  def fetchByNewLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
+    queryByLinkIds(linkIds, "NEW_ID")
+  }
+
+  protected def queryByLinkIds(linkIds: Set[Long], field: String): Seq[ChangeInfo] = {
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(withFilter("OLD_ID", ids))
+      val definition = layerDefinition(withFilter(field, ids))
       val url = serviceUrl(definition, queryParameters(false))
       fetchFeaturesAndLog(url)
     }.toList
