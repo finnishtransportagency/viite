@@ -4,7 +4,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.joda.time.format.ISODateTimeFormat
@@ -115,15 +115,13 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
       sql"""
            SELECT RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
            FROM ROAD_ADDRESS RA
-           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE IS NULL AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_TO <= $plusOneSecond AND
-           RA.VALID_FROM <= $minusOneSecond
+           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE IS NULL AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_FROM <= $minusOneSecond
       """.as[OverlapRoadAddress].list
     else
       sql"""
            SELECT RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
            FROM ROAD_ADDRESS RA
-           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE = ${endDate.get} AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_TO <= $plusOneSecond AND
-           RA.VALID_FROM <= $minusOneSecond
+           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE = ${endDate.get} AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_FROM <= $minusOneSecond
       """.as[OverlapRoadAddress].list
   }
 
@@ -258,12 +256,12 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
     fixRoadAddresses(currentOverlapped, expiredOverlaps, dryRun, fixAddrMeasure, fetchAllChangesFromVVH, addressThreshold)
   }
 
-  def fixOverlapRoadAddressesByDates(dryRun: Boolean) = {
-    val currentOverlapped = fetchAllWithPartialOverlapRoadAddresses()
-    fixRoadAddressesWithValidDates(currentOverlapped, dryRun)
+  def fixOverlapRoadAddressesByDates(dryRun: Boolean, addressSectionThreshold: Int) = {
+    val currentOverlapped = OracleDatabase.withDynSession {fetchAllWithPartialOverlapRoadAddresses()}
+    fixRoadAddressesWithValidDates(currentOverlapped, dryRun, addressSectionThreshold)
   }
 
-  private def fixRoadAddressesWithValidDates(currentOverlapped: Seq[OverlapRoadAddress], dryRun: Boolean): Unit = {
+  private def fixRoadAddressesWithValidDates(currentOverlapped: Seq[OverlapRoadAddress], dryRun: Boolean, addressSectionThreshold: Int): Unit = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
     logger.info(s"Start fixing overlapped road addresses with valid dates and following options { dry-run=$dryRun }")
 
@@ -272,57 +270,59 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
     groupedCurrentOverlapped.foreach {
       case ((roadNumber, roadPartNumber, endDate), overlaps) =>
         try {
-          logger.info(s"Processing road number $roadNumber and road part number $roadPartNumber and end date $endDate")
+          OracleDatabase.withDynTransaction {
+            logger.info(s"Processing road number $roadNumber and road part number $roadPartNumber and end date $endDate")
 
-          val revertMinDate = overlaps.flatMap(_.validFrom).min
-          val roadAddressesToRevert = fetchExpiredByValidDate(roadNumber, roadPartNumber, endDate, revertMinDate)
+            val revertMinDate = overlaps.flatMap(_.validFrom).min
+            val roadAddressesToRevert = fetchExpiredByValidDate(roadNumber, roadPartNumber, endDate, revertMinDate)
 
-          if(roadAddressesToRevert.isEmpty)
-            throw new Exception(s"The overlapped measure for road number($roadNumber) road part number($roadPartNumber) and end date($endDate) doesn't have expired road addresses!")
+            if(roadAddressesToRevert.isEmpty)
+              throw new Exception(s"The overlapped measure for road number($roadNumber) road part number($roadPartNumber) and end date($endDate) doesn't have expired road addresses!")
 
-          val validSection = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate, revertMinDate)
+            val validSection = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate, revertMinDate)
 
-          logger.info(s"Revert road address section to date($revertMinDate)")
+            logger.info(s"Revert road address section to date($revertMinDate)")
 
-          val toExpireRoadAddresses = validSection.filter(ra => ra.validFrom.get.isAfter(revertMinDate.minusSeconds(2)))
+            val toExpireRoadAddresses = validSection.filter(ra => ra.validFrom.get.isAfter(revertMinDate.minusSeconds(2)))
 
-          if(toExpireRoadAddresses.isEmpty)
-            throw new Exception(s"The overlapped measure for road number($roadNumber) road part number($roadPartNumber) and end date($endDate) doesn't have any valid road addresses!")
+            if(toExpireRoadAddresses.isEmpty)
+              throw new Exception(s"The overlapped measure for road number($roadNumber) road part number($roadPartNumber) and end date($endDate) doesn't have any valid road addresses!")
 
-          toExpireRoadAddresses.foreach{
-            ra =>
-              logger.info(s"Expire road address ${ra.id}")
-              expireRoadAddress(ra.id, dryRun)
-          }
+            toExpireRoadAddresses.foreach{
+              ra =>
+                logger.info(s"Expire road address ${ra.id}")
+                expireRoadAddress(ra.id, dryRun)
+            }
 
-          val groupedToRevertByAddress = groupOverlapedRoadAddresses(roadAddressesToRevert.sortBy(_.startAddrM))
-          val groupedToExpireByAddress = groupOverlapedRoadAddresses(toExpireRoadAddresses.sortBy(_.startAddrM))
+            val groupedToRevertByAddress = groupOverlapedRoadAddresses(roadAddressesToRevert.sortBy(_.startAddrM))
+            val groupedToExpireByAddress = groupOverlapedRoadAddresses(toExpireRoadAddresses.sortBy(_.startAddrM))
 
-          if(groupedToExpireByAddress.size != groupedToRevertByAddress.size)
-            throw new Exception(s"There is not the same amount of continuous addresses to be expired and reverted")
+            if(groupedToExpireByAddress.size != groupedToRevertByAddress.size)
+              throw new Exception(s"There is not the same amount of continuous addresses to be expired and reverted")
 
-          //recalculate reverted road addresses
-          groupedToRevertByAddress.foreach{
-            section =>
-              //Find the nearest section to set the road address equal
-              val nearestSection = groupedToExpireByAddress.minBy(expiredSection => Math.abs(section.head.startAddrM - expiredSection.head.startAddrM) + Math.abs(section.head.endAddrM - expiredSection.head.endAddrM))
+            //recalculate reverted road addresses
+            groupedToRevertByAddress.foreach{
+              section =>
+                //Find the nearest section to set the road address equal
+                val nearestSection = groupedToExpireByAddress.minBy(expiredSection => Math.abs(section.head.startAddrM - expiredSection.head.startAddrM) + Math.abs(section.head.endAddrM - expiredSection.head.endAddrM))
 
-              section.size match {
-                case 1 =>
-                  //Fix road adddresses wer
-                  logger.info(s"Revert road address id(${section.head.id}) to startAddrM(${nearestSection.head.startAddrM}) and endAddrM(${nearestSection.last.endAddrM})")
-                  revertRoadAddress(section.head.id, nearestSection.head.startAddrM, nearestSection.last.endAddrM, dryRun)
-                case _ =>
-                  logger.info(s"Revert road address id(${section.head.id}) to startAddrM(${nearestSection.head.startAddrM}) and endAddrM(${section.head.endAddrM})")
-                  revertRoadAddress(section.head.id, nearestSection.head.startAddrM, section.head.endAddrM, dryRun)
-                  section.tail.init.foreach{
-                    ra =>
-                      logger.info(s"Revert road address id(${ra.id})")
-                      revertRoadAddress(ra.id, dryRun)
-                  }
-                  logger.info(s"Revert road address id(${section.last.id}) to startAddrM(${section.last.startAddrM}) and endAddrM(${nearestSection.last.endAddrM})")
-                  revertRoadAddress(section.last.id, section.last.startAddrM, nearestSection.last.endAddrM, dryRun)
-              }
+                section.size match {
+                  case 1 =>
+                    //Fix road adddresses wer
+                    logger.info(s"Revert road address id(${section.head.id}) to startAddrM(${nearestSection.head.startAddrM}) and endAddrM(${nearestSection.last.endAddrM})")
+                    revertRoadAddress(section.head.id, nearestSection.head.startAddrM, nearestSection.last.endAddrM, dryRun)
+                  case _ =>
+                    logger.info(s"Revert road address id(${section.head.id}) to startAddrM(${nearestSection.head.startAddrM}) and endAddrM(${section.head.endAddrM})")
+                    revertRoadAddress(section.head.id, nearestSection.head.startAddrM, section.head.endAddrM, dryRun)
+                    section.tail.init.foreach{
+                      ra =>
+                        logger.info(s"Revert road address id(${ra.id})")
+                        revertRoadAddress(ra.id, dryRun)
+                    }
+                    logger.info(s"Revert road address id(${section.last.id}) to startAddrM(${section.last.startAddrM}) and endAddrM(${nearestSection.last.endAddrM})")
+                    revertRoadAddress(section.last.id, section.last.startAddrM, nearestSection.last.endAddrM, dryRun)
+                }
+            }
           }
         } catch {
           case e: Exception => logger.error(s"Error at road number $roadNumber and road part number $roadPartNumber and end date $endDate with following message: " + e.getMessage())

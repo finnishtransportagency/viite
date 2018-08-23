@@ -509,10 +509,9 @@ object DataFixture {
       case Some("revert_overlapped_road_addresses_by_date") =>
         val options = args.tail
         val save = options.contains("save")
-        OracleDatabase.withDynTransaction {
+        val addressSectionThreshold = options.find(_.startsWith("address-section-threshold=")).map(_.replace("address-section-threshold=", "").toInt).getOrElse(10)
           val overlapDataFixture = new OverlapDataFixture(vvhClient)
-          overlapDataFixture.fixOverlapRoadAddressesByDates(dryRun = !save)
-        }
+          overlapDataFixture.fixOverlapRoadAddressesByDates(dryRun = !save, addressSectionThreshold)
       case Some("test") =>
         tearDown()
         setUpTest()
