@@ -5,6 +5,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.joda.time.format.ISODateTimeFormat
@@ -294,8 +295,15 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
                 expireRoadAddress(ra.id, dryRun)
             }
 
-            val groupedToRevertByAddress = groupOverlapedRoadAddresses(roadAddressesToRevert.sortBy(_.startAddrM))
-            val groupedToExpireByAddress = groupOverlapedRoadAddresses(toExpireRoadAddresses.sortBy(_.startAddrM))
+            val groupedToRevertByAddress =
+              groupOverlapedRoadAddresses(roadAddressesToRevert.filter(_.trackCode == Track.Combined.value).sortBy(_.startAddrM)) ++
+              groupOverlapedRoadAddresses(roadAddressesToRevert.filter(_.trackCode == Track.LeftSide.value).sortBy(_.startAddrM)) ++
+              groupOverlapedRoadAddresses(roadAddressesToRevert.filter(_.trackCode == Track.RightSide.value).sortBy(_.startAddrM))
+
+            val groupedToExpireByAddress =
+              groupOverlapedRoadAddresses(toExpireRoadAddresses.filter(_.trackCode == Track.Combined.value).sortBy(_.startAddrM)) ++
+              groupOverlapedRoadAddresses(toExpireRoadAddresses.filter(_.trackCode == Track.LeftSide.value).sortBy(_.startAddrM)) ++
+              groupOverlapedRoadAddresses(toExpireRoadAddresses.filter(_.trackCode == Track.RightSide.value).sortBy(_.startAddrM))
 
             if(groupedToExpireByAddress.size != groupedToRevertByAddress.size)
               throw new Exception(s"There is not the same amount of continuous addresses to be expired and reverted")
@@ -303,8 +311,9 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
             //recalculate reverted road addresses
             groupedToRevertByAddress.foreach{
               section =>
-                //Find the nearest section to set the road address equal
-                val nearestSection = groupedToExpireByAddress.minBy(expiredSection => Math.abs(section.head.startAddrM - expiredSection.head.startAddrM) + Math.abs(section.head.endAddrM - expiredSection.head.endAddrM))
+                //Find the nearest section to set the road address section to use the same addresses values
+                val nearestSection = groupedToExpireByAddress.filter(expiredSection => expiredSection.head.trackCode == section.head.trackCode).
+                  minBy(expiredSection => Math.abs(section.head.startAddrM - expiredSection.head.startAddrM) + Math.abs(section.head.endAddrM - expiredSection.head.endAddrM))
 
                 section.size match {
                   case 1 =>
