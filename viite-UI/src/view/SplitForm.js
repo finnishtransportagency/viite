@@ -127,10 +127,10 @@
     var dropdownOption = function (index) {
       return '<div class="input-unit-combination">' +
         '<select class="split-form-control" id="dropdown_' + index + '" hidden size="1">' +
-        '<option id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
-        '<option id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
+        '<option disabled id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
+        '<option disabled id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.New.description + '" value="' + LinkStatus.New.description + '" hidden>Uusi</option>' +
-        '<option id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden>Lakkautus</option>' +
+        '<option disabled id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden>Lakkautus</option>' +
         '</select>' +
         '</div>';
     };
