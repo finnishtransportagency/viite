@@ -485,7 +485,7 @@
       };
 
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        var props = _.isArray(linkProperties) ? _.first(linkProperties) : linkProperties;
+        var props = _.cloneDeep(_.isArray(linkProperties) ? _.first(linkProperties) : linkProperties);
         rootElement.empty();
         if (!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(props)) {
 

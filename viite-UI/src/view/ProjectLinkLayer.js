@@ -680,6 +680,7 @@
           removeCutterMarkers();
           self.cut(evt);
         }
+        eventbus.trigger('projectLink:clickHandled');
       };
 
           this.deactivate = function () {
