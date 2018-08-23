@@ -115,13 +115,13 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
       sql"""
            SELECT RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
            FROM ROAD_ADDRESS RA
-           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE IS NULL AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_FROM <= $minusOneSecond
+           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE IS NULL AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_FROM <= $plusOneSecond
       """.as[OverlapRoadAddress].list
     else
       sql"""
            SELECT RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
            FROM ROAD_ADDRESS RA
-           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE = ${endDate.get} AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_FROM <= $minusOneSecond
+           WHERE RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber AND RA.END_DATE = ${endDate.get} AND RA.VALID_TO >= $minusOneSecond AND RA.VALID_FROM <= $plusOneSecond
       """.as[OverlapRoadAddress].list
   }
 
@@ -308,7 +308,6 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
 
                 section.size match {
                   case 1 =>
-                    //Fix road adddresses wer
                     logger.info(s"Revert road address id(${section.head.id}) to startAddrM(${nearestSection.head.startAddrM}) and endAddrM(${nearestSection.last.endAddrM})")
                     revertRoadAddress(section.head.id, nearestSection.head.startAddrM, nearestSection.last.endAddrM, dryRun)
                   case _ =>
