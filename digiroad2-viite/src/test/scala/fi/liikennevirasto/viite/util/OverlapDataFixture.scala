@@ -168,8 +168,22 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
     }
   }
 
-  private def checkContinuousRoadAddress(roadNumber: Long, roadPartNumber: Long, endDate: Option[DateTime]): Unit ={
+  private def checkContinuousRoadAddress(roadNumber: Long, roadPartNumber: Long, oldSection: Seq[OverlapRoadAddress], endDate: Option[DateTime]): Unit ={
     val addresses = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate)
+
+    if(oldSection.size != addresses.size)
+      throw new Exception("Generated section have more road addresses then the estimated")
+
+    val sortedOldSection = oldSection.sortBy(_.startAddrM)
+    val sortedAddresses = addresses.sortBy(_.startAddrM)
+
+    sortedOldSection.zipWithIndex.foreach {
+      case (ra, index) =>
+        val newRa = sortedAddresses(index)
+        if(newRa.id != ra.id)
+          throw new Exception("Generated address list don't keep the same order")
+    }
+
     val addrMin = addresses.map(_.startAddrM).min
     val addrMax = addresses.map(_.endAddrM).max
     if (!addresses.forall(ra => ra.startAddrM == addrMin || addresses.exists(_.endAddrM == ra.startAddrM)))
@@ -342,7 +356,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
                 }
             }
 
-            checkContinuousRoadAddress(roadNumber, roadPartNumber, endDate)
+            checkContinuousRoadAddress(roadNumber, roadPartNumber, section, endDate)
 
             if(dryRun)
               throw new Exception("Dry run exception!")
