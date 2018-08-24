@@ -302,7 +302,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
             toExpireRoadAddresses.foreach{
               ra =>
                 logger.info(s"Expire road address ${ra.id}")
-                expireRoadAddress(ra.id, dryRun)
+                expireRoadAddress(ra.id, dryRun = false)
             }
 
             val groupedToRevertByAddress =
