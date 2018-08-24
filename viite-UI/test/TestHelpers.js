@@ -118,6 +118,10 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       $('.link-properties button.continue').click();
     };
 
+    var clickVisibleCloseConfirmPopup = function(){
+      $('.btn.close:visible').click();
+    };
+
     var clickMap = function(map, longitude, latitude) {
       map.dispatchEvent({ type: 'singleclick', coordinate: [longitude, latitude] });
     };
@@ -324,6 +328,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       clickOpenProjectButton: clickOpenProjectButton,
       clickNewProjectButton: clickNewProjectButton,
       clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
+      clickVisibleCloseConfirmPopup: clickVisibleCloseConfirmPopup,
       clickEnabledSaveButton: clickEnabledSaveButton,
       clickMap: clickMap,
       getLineStringFeatures: getLineStringFeatures,

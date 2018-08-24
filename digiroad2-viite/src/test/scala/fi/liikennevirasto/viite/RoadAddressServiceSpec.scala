@@ -1343,6 +1343,43 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("getAdjacents should return correct adjacents based on the existing of missing") {
+    val baseLinkId = 12345L
+    val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus)
+
+    val ra = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, Some(DateTime.now.minusDays(5)), None, Some("tr"),
+      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    val ra2 = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3533, 3599, Some(DateTime.now.minusDays(2)), None, Some("tr"),
+      baseLinkId+2L, 0.0, 60.259, SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 25.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    val roadLink1 = RoadLink(baseLinkId, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+
+    val roadLink2 = RoadLink(baseLinkId + 1L, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+
+    val roadLink3 = RoadLink(baseLinkId + 2L, Seq(Point(5.0, 5.0, 0.0), Point(5.0, 15.0, 0.0))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+
+
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink2, roadLink3), Seq.empty[ChangeInfo]))
+
+    val returnedAdjacents = runWithRollback {
+      RoadAddressDAO.create(Seq(ra,ra2))
+      RoadAddressDAO.createMissingRoadAddress(
+        MissingRoadAddress(baseLinkId+1L, Some(ra.startAddrMValue), Some(ra.endAddrMValue), RoadType.PublicRoad, Some(ra.roadNumber),
+          Some(ra.roadPartNumber), None, None, Anomaly.NoAddressGiven, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))))
+      roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
+    }
+    returnedAdjacents.size should be (2)
+    returnedAdjacents.map(_.linkId) should contain allOf (baseLinkId+1L, baseLinkId+2L)
+  }
+
   test("getAdjacentAddressesWithoutTX should not return addresses that are already selected by ") {
     val selectedId = 741L
     val selectedLinkId = 852L
@@ -1411,9 +1448,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def sanityCheck(result: Seq[RoadAddress]) = {
     result.size should be > 0
     result.forall(l =>
-      l.startCalibrationPoint.isEmpty || l.startCalibrationPoint.get.addressMValue == l.startAddrMValue) should be (true)
+      l.startCalibrationPoint.isEmpty || l.startCalibrationPoint.get.addressMValue == l.startAddrMValue) should be(true)
     result.forall(l =>
-      l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.get.addressMValue == l.endAddrMValue) should be (true)
+      l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.get.addressMValue == l.endAddrMValue) should be(true)
     result.forall(l =>
       Set[SideCode](SideCode.AgainstDigitizing, SideCode.TowardsDigitizing).contains(l.sideCode)
     )
