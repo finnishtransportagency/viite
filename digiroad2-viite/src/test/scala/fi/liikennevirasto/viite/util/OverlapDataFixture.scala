@@ -290,7 +290,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
             if(roadAddressesToRevert.isEmpty)
               throw new Exception(s"The overlapped measure for road number($roadNumber) road part number($roadPartNumber) and end date($endDate) doesn't have expired road addresses!")
 
-            val validSection = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate, revertMinDate)
+            val validSection = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate)
 
             logger.info(s"Revert road address section to date($revertMinDate)")
 
