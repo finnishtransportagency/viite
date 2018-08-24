@@ -720,25 +720,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  private def getAdjacentAddresses(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
+  def getAdjacentAddresses(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long,
+                           id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
     withDynSession {
-      val roadAddresses = (if (chainIds.nonEmpty)
-        RoadAddressDAO.queryById(chainIds)
-      else if (chainLinks.nonEmpty)
-        RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false)
-      else Seq.empty[RoadAddress]
-        ).sortBy(_.startAddrMValue)
-      assert(roadAddresses.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
-        s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + roadAddresses.map(r =>
-          s"${r.linkId} = ${r.roadNumber}/${r.roadPartNumber}/${r.track.value}").mkString(", "))
-      val startValues = roadAddresses.map(_.startAddrMValue)
-      val endValues = roadAddresses.map(_.endAddrMValue)
-      val orphanStarts = startValues.filterNot(st => endValues.contains(st))
-      val orphanEnds = endValues.filterNot(st => startValues.contains(st))
-      (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
-        ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
-        .distinct
+      getAdjacentAddressesInTX(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, track)
     }
+  }
+
+  def getAdjacentAddressesInTX(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
+    val roadAddresses = (if (chainIds.nonEmpty)
+      RoadAddressDAO.queryById(chainIds)
+    else if (chainLinks.nonEmpty)
+      RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false)
+    else Seq.empty[RoadAddress]
+      ).sortBy(_.startAddrMValue)
+    assert(roadAddresses.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
+      s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + roadAddresses.map(r =>
+        s"${r.linkId} = ${r.roadNumber}/${r.roadPartNumber}/${r.track.value}").mkString(", "))
+    val startValues = roadAddresses.map(_.startAddrMValue)
+    val endValues = roadAddresses.map(_.endAddrMValue)
+    val orphanStarts = startValues.filterNot(st => endValues.contains(st))
+    val orphanEnds = endValues.filterNot(st => startValues.contains(st))
+    (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
+      ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
+      .distinct.filterNot(fo => chainIds.contains(fo.id) || chainLinks.contains(fo.linkId))
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {

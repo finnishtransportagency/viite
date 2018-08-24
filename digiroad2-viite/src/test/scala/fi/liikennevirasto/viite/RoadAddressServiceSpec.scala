@@ -1380,6 +1380,32 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     returnedAdjacents.map(_.linkId) should contain allOf (baseLinkId+1L, baseLinkId+2L)
   }
 
+  test("getAdjacentAddressesWithoutTX should not return addresses that are already selected by ") {
+    val selectedId = 741L
+    val selectedLinkId = 852L
+    val selectedGeom = List(Point(10.0, 10.0, 0.0), Point(10.0, 10.0, 0.0))
+    val (id1, id2) = (456L, 789L)
+    val (linkId1, linkId2) = (987L, 654L)
+    val (geom1, geom2) = (List(Point(0.0, 0.0, 0.0), Point(10.0, 10.0, 0.0)), List(Point(10.0, 10.0, 0.0), Point(20.0, 20.0, 0.0)))
+    val (roadNumber, roadPartNumber) = (99, 1)
+
+    val selectedRoadAddress = RoadAddress(selectedId, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 10, 20, Some(DateTime.now()), None, Some("tr"),
+      selectedLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, selectedGeom, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    val roadAddress1 = RoadAddress(id1, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.now()), None, Some("tr"),
+      linkId1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    val roadAddress2 = RoadAddress(id2, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 20, 30, Some(DateTime.now()), None, Some("tr"),
+      linkId2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    runWithRollback{
+      RoadAddressDAO.create(Seq(selectedRoadAddress, roadAddress1, roadAddress2))
+      val returnedAdjacents = roadAddressService.getAdjacentAddressesInTX(Set.empty[Long], Set(selectedId, id1), selectedLinkId, selectedId, roadNumber, roadPartNumber, Track.Combined)
+      returnedAdjacents.size should be (1)
+      returnedAdjacents.map(ra => (ra.id, ra.linkId, ra.roadNumber, ra.roadPartNumber)).head should be (Seq(roadAddress2).map(ra => (ra.id, ra.linkId, ra.roadNumber, ra.roadPartNumber)).head)
+    }
+  }
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false, commonHistoryId: Long = 0) = {
