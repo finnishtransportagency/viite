@@ -168,14 +168,15 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
     }
   }
 
-  private def checkContinuousRoadAddress(roadNumber: Long, roadPartNumber: Long, oldSection: Seq[OverlapRoadAddress], endDate: Option[DateTime]): Unit ={
-    val addresses = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate)
+  private def checkRoadAddressesOrderByTrackCode(oldRoadAddresses: Seq[OverlapRoadAddress], newRoadAddresses: Seq[OverlapRoadAddress], track: Track) = {
+    val oldSection = oldRoadAddresses.filter(_.trackCode == track.value)
+    val newSection = newRoadAddresses.filter(_.trackCode == track.value)
 
-    if(oldSection.size != addresses.size)
+    if(oldSection.size != newSection.size)
       throw new Exception("Generated section have more road addresses then the estimated")
 
     val sortedOldSection = oldSection.sortBy(_.startAddrM)
-    val sortedAddresses = addresses.sortBy(_.startAddrM)
+    val sortedAddresses = newSection.sortBy(_.startAddrM)
 
     sortedOldSection.zipWithIndex.foreach {
       case (ra, index) =>
@@ -183,6 +184,14 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
         if(newRa.id != ra.id)
           throw new Exception("Generated address list don't keep the same order")
     }
+  }
+
+  private def checkContinuousRoadAddress(roadNumber: Long, roadPartNumber: Long, oldAddresses: Seq[OverlapRoadAddress], endDate: Option[DateTime]): Unit ={
+    val addresses = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate)
+
+    checkRoadAddressesOrderByTrackCode(oldAddresses, addresses, Track.RightSide)
+    checkRoadAddressesOrderByTrackCode(oldAddresses, addresses, Track.LeftSide)
+    checkRoadAddressesOrderByTrackCode(oldAddresses, addresses, Track.Combined)
 
     val addrMin = addresses.map(_.startAddrM).min
     val addrMax = addresses.map(_.endAddrM).max
@@ -356,7 +365,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
                 }
             }
 
-            checkContinuousRoadAddress(roadNumber, roadPartNumber, section, endDate)
+            checkContinuousRoadAddress(roadNumber, roadPartNumber, roadAddressesToRevert, endDate)
 
             if(dryRun)
               throw new Exception("Dry run exception!")
