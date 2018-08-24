@@ -126,7 +126,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
       """.as[OverlapRoadAddress].list
   }
 
-  private def fetchAllValidRoadAddressSection(roadNumber: Long, roadPartNumber: Long, endDate: Option[DateTime], validDate: DateTime): List[OverlapRoadAddress] = {
+  private def fetchAllValidRoadAddressSection(roadNumber: Long, roadPartNumber: Long, endDate: Option[DateTime]): List[OverlapRoadAddress] = {
     if(endDate.isEmpty)
       sql"""
            SELECT RA.ID, RA.ROAD_NUMBER, RA.ROAD_PART_NUMBER, RA.TRACK_CODE, RA.START_ADDR_M, RA.END_ADDR_M, RA.LINK_ID, RA.START_MEASURE, RA.END_MEASURE, RA.START_DATE, RA.END_DATE, RA.VALID_FROM, RA.VALID_TO
@@ -166,6 +166,16 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
           UPDATE ROAD_ADDRESS SET VALID_TO = NULL WHERE ID = $id
         """.execute
     }
+  }
+
+  private def checkContinuousRoadAddress(roadNumber: Long, roadPartNumber: Long, endDate: Option[DateTime]): Unit ={
+    val addresses = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate)
+    val addrMin = addresses.map(_.startAddrM).min
+    val addrMax = addresses.map(_.endAddrM).max
+    if (!addresses.forall(ra => ra.startAddrM == addrMin || addresses.exists(_.endAddrM == ra.startAddrM)))
+      throw new Exception(s"Generated address list was non-continuous")
+    if (!addresses.forall(ra => ra.endAddrM == addrMax || addresses.exists(_.startAddrM == ra.endAddrM)))
+      throw new Exception(s"Generated address list was non-continuous")
   }
 
   private def fetchAllExpiredRoadAddressesByChangeInfo(linkId: Long) ={
@@ -318,19 +328,24 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
                 section.size match {
                   case 1 =>
                     logger.info(s"Revert road address id(${section.head.id}) to startAddrM(${nearestSection.head.startAddrM}) and endAddrM(${nearestSection.last.endAddrM})")
-                    revertRoadAddress(section.head.id, nearestSection.head.startAddrM, nearestSection.last.endAddrM, dryRun)
+                    revertRoadAddress(section.head.id, nearestSection.head.startAddrM, nearestSection.last.endAddrM, dryRun = false)
                   case _ =>
                     logger.info(s"Revert road address id(${section.head.id}) to startAddrM(${nearestSection.head.startAddrM}) and endAddrM(${section.head.endAddrM})")
-                    revertRoadAddress(section.head.id, nearestSection.head.startAddrM, section.head.endAddrM, dryRun)
+                    revertRoadAddress(section.head.id, nearestSection.head.startAddrM, section.head.endAddrM, dryRun = false)
                     section.tail.init.foreach{
                       ra =>
                         logger.info(s"Revert road address id(${ra.id})")
-                        revertRoadAddress(ra.id, dryRun)
+                        revertRoadAddress(ra.id, dryRun = false)
                     }
                     logger.info(s"Revert road address id(${section.last.id}) to startAddrM(${section.last.startAddrM}) and endAddrM(${nearestSection.last.endAddrM})")
-                    revertRoadAddress(section.last.id, section.last.startAddrM, nearestSection.last.endAddrM, dryRun)
+                    revertRoadAddress(section.last.id, section.last.startAddrM, nearestSection.last.endAddrM, dryRun = false)
                 }
             }
+
+            checkContinuousRoadAddress(roadNumber, roadPartNumber, endDate)
+
+            if(dryRun)
+              throw new Exception("Dry run exception!")
           }
         } catch {
           case e: Exception => logger.error(s"Error at road number $roadNumber and road part number $roadPartNumber and end date $endDate with following message: " + e.getMessage())
