@@ -170,7 +170,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
 
   private def checkRoadAddressesOrderByTrackCode(oldRoadAddresses: Seq[OverlapRoadAddress], newRoadAddresses: Seq[OverlapRoadAddress], track: Track) = {
     val oldSection = oldRoadAddresses.filter(_.trackCode == track.value)
-    val newSection = newRoadAddresses.filter(_.trackCode == track.value)
+    val newSection = newRoadAddresses.filter(ra => ra.trackCode == track.value && oldSection.map(_.id).contains(ra.id))
 
     if(oldSection.size != newSection.size)
       throw new Exception("Generated section have more road addresses then the estimated")
@@ -181,12 +181,14 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
     sortedOldSection.zipWithIndex.foreach {
       case (ra, index) =>
         val newRa = sortedAddresses(index)
+        if(newRa.startAddrM > newRa.endAddrM)
+          throw new Exception("There are road addresses with start measure greater than end measures")
         if(newRa.id != ra.id)
           throw new Exception("Generated address list don't keep the same order")
     }
   }
 
-  private def checkContinuousRoadAddress(roadNumber: Long, roadPartNumber: Long, oldAddresses: Seq[OverlapRoadAddress], endDate: Option[DateTime]): Unit ={
+  private def checkContinuousRoadAddress(roadNumber: Long, roadPartNumber: Long, oldAddresses: Seq[OverlapRoadAddress], endDate: Option[DateTime], revertMinDate: DateTime): Unit ={
     val addresses = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate)
 
     checkRoadAddressesOrderByTrackCode(oldAddresses, addresses, Track.RightSide)
@@ -365,7 +367,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
                 }
             }
 
-            checkContinuousRoadAddress(roadNumber, roadPartNumber, roadAddressesToRevert, endDate)
+            checkContinuousRoadAddress(roadNumber, roadPartNumber, roadAddressesToRevert, endDate, revertMinDate)
 
             if(dryRun)
               throw new Exception("Dry run exception!")
