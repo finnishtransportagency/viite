@@ -30,6 +30,7 @@ require(['chai',
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
+  chai.config.includeStack = true;
   //Workaround to give PhantomJS openlayers support
   Function.prototype.bind = Function.prototype.bind || function (thisp) {
     var fn = this;
