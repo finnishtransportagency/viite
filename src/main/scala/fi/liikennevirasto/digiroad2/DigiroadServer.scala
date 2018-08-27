@@ -40,7 +40,7 @@ trait DigiroadServer {
     appContext.setContextPath(viiteContextPath)
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
-    appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    appContext.addServlet(classOf[NLSProxyServlet], "/wmts/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
@@ -54,16 +54,16 @@ trait DigiroadServer {
 
 class NLSProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad|viite)".r
+  def regex = "/(viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("http://karttamoottori.maanmittauslaitos.fi"
+    java.net.URI.create("http://oag.liikennevirasto.fi/rasteripalvelu-mml"
       + regex.replaceFirstIn(uri, ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    proxyRequest.header("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
+    proxyRequest.header("Referer", "http://liikennevirasto.fi/viite/")
     proxyRequest.header("Host", null)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
