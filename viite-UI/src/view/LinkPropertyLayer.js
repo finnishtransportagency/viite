@@ -940,7 +940,7 @@
             return features.roadLinkType == RoadLinkType.FloatingRoadLinkType.value;
           });
           _.each(selectedFloatings, function(sf){
-            selectedLinkProperty.getFeaturesToKeep().push(sf);
+            selectedLinkProperty.addToFeaturesToKeep(sf);
           });
         }
       });
