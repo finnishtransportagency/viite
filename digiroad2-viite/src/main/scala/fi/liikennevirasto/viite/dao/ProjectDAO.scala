@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
-import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
+import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, Saved2TR}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -628,6 +628,48 @@ object ProjectDAO {
     }
   }
 
+  def fetchHistoryRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
+    time(logger, s"Fetch reserved road parts for project: $projectId") {
+      val sql =
+        s"""
+        SELECT id, road_number, road_part_number, length, length_new,
+          ely, ely_new,
+          (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
+            ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
+            AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
+          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK_HISTORY pl WHERE pl.project_id = gr.project_id
+            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1)
+            AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
+          (SELECT LINK_ID FROM PROJECT_LINK_HISTORY pl
+            WHERE pl.project_id = gr.project_id
+            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
+            AND PL.STATUS != 5 AND PL.TRACK_CODE IN (0,1) AND pl.START_ADDR_M = 0
+            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
+          FROM (
+            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
+              MAX(ra.END_ADDR_M) as length,
+              MAX(pl.END_ADDR_M) as length_new,
+              MAX(ra.ely) as ELY,
+              MAX(pl.ely) as ELY_NEW
+              FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
+              PROJECT_LINK_HISTORY pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
+              pl.road_part_number = rp.road_part_number AND pl.status != 5)
+              LEFT JOIN
+              ROAD_ADDRESS ra ON (ra.id = pl.ROAD_ADDRESS_ID OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
+              WHERE
+                rp.project_id = $projectId
+                GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
+            ) gr"""
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
+        Option[Long], Option[Long])](sql).list.map {
+        case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, startingLinkId) =>
+          ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
+            newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
+      }
+    }
+  }
+
   def fetchReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
     time(logger, s"Fetch reserved road parts for project: $projectId") {
       val sql =
@@ -728,8 +770,16 @@ object ProjectDAO {
            FROM project $filter order by ely nulls first, name, id """
       Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
         case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
-          RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
-            modifiedDate, addInfo, if(projectId != 0) fetchReservedRoadParts(id) else Seq(), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          val projectState = ProjectState.apply(state)
+          val reservedRoadParts = if(projectId != 0)
+            fetchReservedRoadParts(id)
+          else
+          if(projectState == Saved2TR)
+            fetchHistoryRoadParts(id)
+          else
+            Seq()
+          RoadAddressProject(id, projectState, name, createdBy, createdDate, modifiedBy, start_date,
+            modifiedDate, addInfo, reservedRoadParts, statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
         }
       }
     }
@@ -1032,10 +1082,11 @@ object ProjectDAO {
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {
-    sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT ID,
-       PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M,
-       END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE,
-       STATUS, CALIBRATION_POINTS, ROAD_TYPE, SIDE_CODE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE
+    sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT(id, project_id,
+                  road_number, road_part_number,
+                  track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by,
+                  calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry,
+                  link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source
        FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
     sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""".execute

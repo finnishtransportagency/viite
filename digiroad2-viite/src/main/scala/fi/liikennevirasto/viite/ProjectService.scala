@@ -1526,7 +1526,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def updateProjectsWaitingResponseFromTR(): Unit = {
-    val listOfPendingProjects = getProjectsPendingInTR
+    val listOfPendingProjects = Seq.empty[Long]//Seq(6159212L)//getProjectsPendingInTR
     for (project <- listOfPendingProjects) {
       try {
         if (withDynTransaction {
@@ -1550,12 +1550,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case Some(trId) =>
         ProjectDAO.getProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
-          val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
-          logger.info(s"Retrived TR status: ${trProjectState.getOrElse(None)}")
-          val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
-          val errorMessage = getTRErrorMessage(trProjectState)
+//          val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
+//          logger.info(s"Retrived TR status: ${trProjectState.getOrElse(None)}")
+          val newState = ProjectState.Saved2TR//getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
+          val errorMessage = ""//getTRErrorMessage(trProjectState)
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
-          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
+          val updatedStatus = Saved2TR//updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
           if (updatedStatus == Saved2TR) {
             logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
             updateRoadAddressWithProjectLinks(updatedStatus, projectID)
