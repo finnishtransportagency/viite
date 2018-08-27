@@ -1,15 +1,11 @@
 package fi.liikennevirasto.viite.process
 
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.NewRoadAddress
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus, ProjectLink, RoadAddress}
-import fi.liikennevirasto.viite.process.ProjectSectionCalculator.getClass
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, RoadAddress}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils.fillCPs
 import org.slf4j.LoggerFactory
 
@@ -24,7 +20,7 @@ object CommonHistoryFiller {
       case ((roadNumber, roadPartNumber, trackCode, roadType), groupedLinks) =>
         val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.sortBy(_.startAddrMValue).map(_.roadAddressId).contains(ra.id))
 
-        val roadAddressesToCompare = currentRoadAddresses.filter(ra => ra.roadNumber == roadNumber && ra.roadPartNumber == roadPartNumber && ra.track == trackCode && ra.roadType == roadType).sortBy(_.startAddrMValue)
+        val roadAddressesToCompare = currentRoadAddresses.filter(ra => ra.roadNumber == roadNumber && ra.roadPartNumber == roadPartNumber && ra.track == trackCode).sortBy(_.startAddrMValue)
         if (groupedLinks.nonEmpty && roadAddressesToCompare.nonEmpty && groupedLinks.lengthCompare(roadAddressesToCompare.length) == 0 && (groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue)) {
           roadAddressesToReturn
         }
@@ -92,7 +88,7 @@ object CommonHistoryFiller {
     } ++ rest
   }
 
-  private def generateValuesForTransfer(currentRoadAddresses: Seq[RoadAddress], transferredLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) = {
+  private def generateValuesForTransfer(currentRoadAddresses: Seq[RoadAddress], transferredLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     transferredLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
       case ((_, _, _, _), groupedLinks) =>
         val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.sortBy(_.startAddrMValue).map(_.roadAddressId).contains(ra.id) && ra.endDate.isEmpty)
@@ -165,19 +161,15 @@ object CommonHistoryFiller {
       val startNeedsCP = roadAddresses.head
       val endNeedsCP = roadAddresses.last
 
-      val returnObject = roadAddresses.length match {
-        case 2 => {
+      roadAddresses.length match {
+        case 2 =>
           Seq(fillCPs(startNeedsCP, atStart = true)) ++ Seq(fillCPs(endNeedsCP, atEnd = true))
-        }
-        case 1 => {
-          Seq(fillCPs(startNeedsCP, true, true))
-        }
-        case _ => {
+        case 1 =>
+          Seq(fillCPs(startNeedsCP, atStart = true, atEnd = true))
+        case _ =>
           val middle = roadAddresses.drop(1).dropRight(1)
           Seq(fillCPs(startNeedsCP, atStart = true)) ++ middle ++ Seq(fillCPs(endNeedsCP, atEnd = true))
-        }
       }
-      returnObject
     }
   }
 
