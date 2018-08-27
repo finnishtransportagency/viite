@@ -58,7 +58,7 @@ class NLSProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("https://oag.liikennevirasto.fi/rasteripalvelu-mml/"
+    java.net.URI.create("http://oag.liikennevirasto.fi/rasteripalvelu-mml/"
       + regex.replaceFirstIn(uri, ""))
   }
 
@@ -73,7 +73,7 @@ class NLSProxyServlet extends ProxyServlet {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (properties.getProperty("http.proxySet", "false").toBoolean) {
-      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "443").toInt)
+      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "80").toInt)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)
