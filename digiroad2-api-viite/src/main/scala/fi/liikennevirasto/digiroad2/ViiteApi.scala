@@ -445,7 +445,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("id").toLong
     time(logger, s"GET request for /roadlinks/roadaddress/project/all/projectId/$projectId") {
       try {
-        val test = projectService.getRoadAddressSingleProject(projectId) match {
+        projectService.getRoadAddressSingleProject(projectId) match {
           case Some(project) =>
             val projectMap = roadAddressProjectToApi(project)
             val parts = project.reservedParts.map(reservedRoadPartToApi)
@@ -457,7 +457,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork))
           case _ => halt(NotFound("Project not found"))
         }
-        test
       } catch {
         case e: Exception => {
           logger.error(e.toString, e)
