@@ -872,7 +872,7 @@ object RoadAddressDAO {
     else {
       roadAddress.copy(id = NewRoadAddress, geometry = geometry.get)
     }
-    expireById(Set(roadAddress.id));
+    expireById(Set(roadAddress.id))
     create(List(updatedRoadAddress))
   }
 
