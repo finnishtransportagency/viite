@@ -72,7 +72,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         selectionForm(selection, selected, road) +
-        formCommon.changeDirection(selected) +
+        formCommon.changeDirection(selected, projectCollection.isDirty()) +
         formCommon.actionSelectedField()+
         '</div>'+
         '</div>' +
