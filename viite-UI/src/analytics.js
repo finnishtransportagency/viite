@@ -26,7 +26,7 @@
       eventbus.on('all', function(eventName, eventParams) {
         var excludedEvents = [
           'map:mouseMoved',
-          'map:moved',
+          'map:refresh',
           'map:clicked',
           'asset:saving',
           'asset:moved',

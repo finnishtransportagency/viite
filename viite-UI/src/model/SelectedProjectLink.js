@@ -4,6 +4,7 @@
         var current = [];
         var me = this;
         var ids = [];
+        var featuresToKeep = [];
         var dirty = false;
         var splitSuravage = {};
         var LinkStatus = LinkValues.LinkStatus;
@@ -171,6 +172,22 @@
             });
         };
 
+        var getFeaturesToKeep = function(){
+          return featuresToKeep;
+        };
+
+        var addToFeaturesToKeep = function(data4Display){
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
+        };
+
+        var clearFeaturesToKeep = function() {
+          featuresToKeep = [];
+        };
+
         var isSelected = function(linkId) {
             return _.contains(me.ids, linkId);
         };
@@ -251,6 +268,9 @@
             isSelected: isSelected,
             setCurrent: setCurrent,
             getCurrent: getCurrent,
+            getFeaturesToKeep: getFeaturesToKeep,
+            addToFeaturesToKeep: addToFeaturesToKeep,
+                clearFeaturesToKeep: clearFeaturesToKeep,
             isSplit: isSplit,
             isMultiLink: isMultiLink,
             isDirty: isDirty,

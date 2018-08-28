@@ -347,7 +347,7 @@
         projectLinkLayer.clearHighlights();
         selectedProjectLinkProperty.cleanIds();
         selectedProjectLinkProperty.clean();
-          $('.wrapper').remove();
+        $('.wrapper').remove();
         eventbus.trigger('roadAddress:projectLinksEdited');
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         eventbus.trigger('roadAddressProject:reOpenCurrent');

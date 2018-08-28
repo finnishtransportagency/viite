@@ -1,14 +1,13 @@
 (function(root) {
   root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
     var layerName = 'roadLayer';
-    Layer.call(this, map, layerName, undefined, undefined);
+    Layer.call(this, map);
     var me = this;
 
     var roadVector = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
         eventbus.once('roadLinks:fetched', function() {
-          console.log("road layer loader");
           var features = _.map(roadCollection.getAll(), function(roadLink) {
             var points = _.map(roadLink.points, function(point) {
               return [point.x, point.y];
@@ -37,8 +36,6 @@
     }
 
     var loadFeatures = function (features) {
-      console.log("load features road layer");
-
       roadVector.clear(true);
       roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
       eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
@@ -52,7 +49,6 @@
       element: infoContainer
     }));
 
-    applicationModel.debugInfo.set('overlay', overlay);
     map.addOverlay(overlay);
 
     var displayRoadAddressInfo = function (event, pixel) {
@@ -67,7 +63,6 @@
         //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
         if (infoContent !== null) {
           if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 )) {
-            console.log("display road address info");
             infoContent.innerHTML = '<p>' +
               'Tienumero: ' + roadData.roadNumber + '<br>' +
               'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
@@ -80,28 +75,29 @@
           }
         }
       }
-      //console.log(overlay);
       overlay.setPosition(coordinate);
     };
 
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
-      //console.log("update overlay");
       displayRoadAddressInfo(event, pixel);
     });
 
     var handleRoadsVisibility = function () {
-      console.log(applicationModel.getRoadVisibility() && map.getView().getZoom() >= zoomlevels.minZoomForRoadLinks);
       roadLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= zoomlevels.minZoomForRoadLinks);
     };
 
-    this.mapMovedHandler = function (mapState) {
+    this.refreshMap = function (mapState) {
       //if ((applicationModel.getSelectedTool() === 'Cut' && selectSingleClick.getFeatures().getArray().length > 0))
         //return;
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
       } else {
+        /*
+         This could be implemented also with eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');
+         but this implementation makes it easier to find the eventbus call when needed.
+        */
         switch(applicationModel.getSelectedLayer()) {
           case 'linkProperty':
             eventbus.trigger('linkProperty:fetch');
@@ -109,17 +105,15 @@
           case 'roadAddressProject':
             eventbus.trigger('roadAddressProject:fetch');
         }
-        eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');
         handleRoadsVisibility();
       }
     };
 
-    this.eventListener.listenTo(eventbus, 'map:moved', me.mapMovedHandler, this);
+    this.eventListener.listenTo(eventbus, 'map:refresh', me.refreshMap, this);
 
-    var clear = function(){
+    var clear = function() {
       roadLayer.getSource().clear();
     };
-
 
     return {
       layer: roadLayer,

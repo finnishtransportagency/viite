@@ -21,12 +21,8 @@
       "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
 
     var close = function(result) {
-      console.log("--------CLOSE---------");
-      console.log(current);
-      console.log(isDirty());
       if (!_.isEmpty(current) && !isDirty()) {
         _.each(current, function(selected) {
-          console.log(selected);
           selected.unselect();
         });
         applicationModel.setActiveButtons(false);
@@ -118,7 +114,6 @@
           selected.select();
         });
         processOl3Features(visibleFeatures);
-        console.log("open");
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
     };
@@ -151,7 +146,6 @@
             }
             processOl3Features(visibleFeatures);
             eventbus.trigger('adjacents:startedFloatingTransfer');
-            console.log("...");
             if (!_.isEmpty(data4Display))
               eventbus.trigger('linkProperties:selected', data4Display);
             eventbus.trigger('linkProperties:deactivateInteractions');
@@ -215,7 +209,6 @@
         }
         processOl3Features(visibleFeatures);
         eventbus.trigger('adjacents:startedFloatingTransfer');
-        console.log("...");
         eventbus.trigger('linkProperties:selected', data4Display);
         _.defer(function(){
           eventbus.trigger('linkProperties:deactivateAllSelections');
@@ -459,7 +452,6 @@
     });
 
     eventbus.on('roadAddress:openProject', function(result) {
-      console.log("close-->");
       close(result);
     });
 
@@ -469,7 +461,6 @@
       _.forEach(current, function (selected) {
         selected.select();
       });
-      console.log("open multiple");
       eventbus.trigger('linkProperties:multiSelected', extractDataForDisplay(get()));
     };
 
@@ -657,7 +648,6 @@
         eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
       }
       clearAndReset(false);
-      console.log("ei se mene tänne");
       current = [];
       eventbus.trigger('linkProperties:clearHighlights');
     };
@@ -679,7 +669,6 @@
         _.defer(function () {
           if (!_.isEmpty(featuresToKeep)) {
             current = roadCollection.toRoadLinkModel(featuresToKeep);
-            console.log("...");
             eventbus.trigger("linkProperties:selected", extractDataForDisplay(featuresToKeep));
           }
         });
@@ -695,7 +684,6 @@
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
         clearAndReset(true);
-        console.log("...");
         eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
       $('#adjacentsData').remove();
