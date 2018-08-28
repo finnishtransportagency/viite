@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.viite.switchSideCode
 import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
 import fi.liikennevirasto.viite.model.RoadAddressLink
@@ -243,13 +244,28 @@ object DefloatMapper extends RoadAddressMapper {
         // Partition target links by counting adjacency: anything that touches only the neighbor (and itself) is a starting or ending link
         val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
         val sortedEndingLinks = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry))
-        if (GeometryUtils.areAdjacent(sortedEndingLinks.head.geometry, orderedSources.last.geometry)) {
+
+        //if (lastSourcePoint.distance2DTo(sortedEndingLinks.head.geometry.head) < lastSourcePoint.distance2DTo(sortedEndingLinks.last.geometry.head)) {
+        if (distanceOfRoadAddressLinks(orderedSources, sortedEndingLinks)) {
           sortedEndingLinks.reverse ++ middleLinks
         } else {
           sortedEndingLinks ++ middleLinks
         }
       }
     }
+
+      def distanceOfRoadAddressLinks(sourceLinks: Seq[RoadAddressLink], targetLinks: Seq[RoadAddressLink]): Boolean = {
+        val movedGeom1 = getMovedGeomForAddresses(sourceLinks)
+        val movedGeom2 = getMovedGeomForAddresses(targetLinks)
+        (minDistanceBetweenEndPoints(movedGeom1.head.geometry, movedGeom2.head.geometry) + minDistanceBetweenEndPoints(movedGeom1.last.geometry, movedGeom2.last.geometry)) >
+          (minDistanceBetweenEndPoints(movedGeom1.head.geometry, movedGeom2.last.geometry) + minDistanceBetweenEndPoints(movedGeom1.last.geometry, movedGeom2.head.geometry))
+      }
+
+    def getMovedGeomForAddresses(list: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+      val point = list.flatMap(_.geometry).minBy(p => p.distance2DTo(Point(0, 0)))
+      list.map(link => link.copy(geometry = link.geometry.map(p => p.minus(point))))
+    }
+
 
     val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
     val startingPoint = orderedSources.head.sideCode match {

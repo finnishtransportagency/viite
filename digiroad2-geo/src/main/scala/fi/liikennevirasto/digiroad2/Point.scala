@@ -102,6 +102,10 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
   def distance3DTo(point: Point): Double =
     Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2) + Math.pow(point.z - z, 2))
 
+  def minus(other: Point): Point = {
+    Point (this.x - other.x, this.y - other.y, this.z - other.z)
+  }
+
   def -(that: Point): Vector3d = {
     Vector3d(x - that.x, y - that.y, z - that.z)
   }
