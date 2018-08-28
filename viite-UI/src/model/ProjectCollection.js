@@ -65,9 +65,7 @@
       });
     };
 
-
     this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
-      console.log("FETCH project collection");
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
@@ -110,7 +108,6 @@
         };
         projectErrors = result.projectErrors;
         publishableProject = result.publishable;
-        console.log("projectFetched");
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
       });
     };

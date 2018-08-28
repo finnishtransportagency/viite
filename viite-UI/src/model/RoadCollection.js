@@ -93,7 +93,6 @@
     };
 
     this.fetch = function(boundingBox, zoom) {
-      console.log("FETCH road collection");
       var withHistory = date.length !== 0;
       var day = withHistory ? date[0] : -1;
       var month = withHistory ? date[1] : -1;
@@ -102,13 +101,11 @@
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom,
         withHistory: withHistory, day: day, month: month, year: year}, function(fetchedRoadLinks) {
           currentAllRoadLinks = fetchedRoadLinks;
-          console.log("fetch process-->");
           fetchProcess(fetchedRoadLinks, zoom);
       });
     };
 
       eventbus.on("linkProperties:drawUnknowns", function () {
-        console.log("draw unknowns");
         fetchProcess(currentAllRoadLinks, currentZoom, true);
       });
 
@@ -164,8 +161,6 @@
           });
           roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
           applicationModel.removeSpinner();
-          console.log("fetch process");
-          console.log(drawUnknowns);
           eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
@@ -389,7 +384,6 @@
     
     this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
       backend.getProjectLinks({boundingBox: boundingBox, zoom: zoomLevel, projectId: projectId}, function(fetchedLinks) {
-        console.log("project links fetched");
         var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
           return link.status ===  LinkStatus.NotHandled.value;
         }).uniq().value();
@@ -404,7 +398,6 @@
           feature.projectId = projectId;
           return feature;
         });
-        console.log(notHandledOL3Features);
         eventbus.trigger('linkProperties:highlightReservedRoads', notHandledOL3Features);
       });
     };

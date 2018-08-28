@@ -5,7 +5,6 @@
     };
     var selectedLayer;
     var selectedTool = 'Select';
-    var activeOl3Interaction;
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
@@ -21,7 +20,6 @@
     var selectionType = 'all';
     var sessionUsername = '';
     var sessionUserRoles = '';
-    var debugInfo = new Map();
 
     var getSelectionType = function (){
       return selectionType;
@@ -133,11 +131,11 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      moveMap: function(zoom, bbox, center) {
+      refreshMap: function(zoom, bbox, center) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
         centerLonLat = center;
-        eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
+        eventbus.trigger('map:refresh', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
@@ -147,25 +145,20 @@
       zoom: zoom,
       setZoomLevel: setZoomLevel,
       getRoadVisibility: function(){
-          return roadsVisibility;
+        return roadsVisibility;
       },
       toggleRoadVisibility: toggleRoadVisibility,
       setMinDirtyZoomLevel: function(level) {
         minDirtyZoomLevel = level;
       },
       selectLayer: function(layer, toggleStart, noSave) {
-        console.log("select layer");
         if (layer !== selectedLayer) {
-          console.log("layer not layer");
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if (layer === 'linkProperty' && toggleStart) {
-          console.log("layer is link layer and start");
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
-        } else {
-          console.log("nothing happened");
         }
       },
       getSelectedLayer: function() {
@@ -219,22 +212,12 @@
       },
       setSelectionType: toggleSelectionType,
       getSelectionType: getSelectionType,
-      setActiveOl3Interaction: function(selection) {
-        activeOl3Interaction = selection;
-      },
-      getActiveOl3Interaction: function() {
-        return activeOl3Interaction;
-      },
       getSessionUsername: function () {
         return sessionUsername;
       },
       getSessionUserRoles: function () {
         return sessionUserRoles;
-      },
-      debug: function() {
-        console.log(debugInfo);
-      },
-      debugInfo: debugInfo
+      }
     };
   };
 })(this);

@@ -457,7 +457,6 @@
         } else {
             callback(linkData);
         }
-        console.log("self.getRoadLinks");
         eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
       };
       return self;

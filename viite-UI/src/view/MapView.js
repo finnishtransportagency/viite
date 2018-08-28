@@ -17,7 +17,7 @@
       return zoomlevels.minZoomForAssets;
     };
 
-    var mapMovedHandler = function(mapState) {
+    var refreshMap = function(mapState) {
       if (mapState.zoom < minZoomForContent() && (isInitialized && mapState.hasZoomLevelChanged)) {
         showAssetZoomDialog();
       }
@@ -82,7 +82,7 @@
       }
     }, this);
 
-    eventbus.on('map:moved', mapMovedHandler, this);
+    eventbus.on('map:refresh', refreshMap, this);
 
     eventbus.on('coordinates:marked', drawCenterMarker, this);
 
@@ -90,24 +90,16 @@
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
 
-      if (layerToBeHidden) layerToBeHidden.hide(map);
+      if (layerToBeHidden) {
+        layerToBeHidden.hide(map);
+      }
       if (applicationModel.getRoadVisibility()) layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
       enableCtrlModifier = (layer === 'roadAddressProject');
     }, this);
 
-    eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
-      var layerToBeHidden = layers[previouslySelectedLayer];
-      var layerToBeShown = layers[layer];
-
-      if (layerToBeHidden) layerToBeHidden.hide(map);
-      layerToBeShown.show(map);
-      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
-    }, this);
-
     map.on('moveend', function() {
-      console.log("map move ended");
-      applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      applicationModel.refreshMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
       setCursor(applicationModel.getSelectedTool());
     });
 

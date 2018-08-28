@@ -235,11 +235,9 @@
       });
 
       var openProjectSteps = function(event) {
-        console.log("open project steps");
         applicationModel.addSpinner();
         projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
           setTimeout(function(){}, 0);
-          console.log("then");
           eventbus.trigger('roadAddress:openProject', result);
           if(applicationModel.isReadOnly()) {
             $('.edit-mode-btn:visible').click();

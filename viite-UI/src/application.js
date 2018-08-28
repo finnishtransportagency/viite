@@ -83,9 +83,9 @@
       condition: function(mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
         return (
-            originalEvent.shiftKey &&
-        !(originalEvent.metaKey || originalEvent.altKey) &&
-            !originalEvent.ctrlKey);
+          originalEvent.shiftKey &&
+          !(originalEvent.metaKey || originalEvent.altKey) &&
+          !originalEvent.ctrlKey);
       }
     });
     map.getInteractions().forEach(function(interaction) {
@@ -128,7 +128,7 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    // Show environment name next to Digiroad logo
+    // Show environment name next to Viite logo
     var notification = jQuery('#notification');
     notification.append(Environment.localizedName());
     notification.append(' Päivämäärä: ' + startupParameters.deploy_date);
@@ -140,7 +140,7 @@
 
     new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
 
-    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
+    applicationModel.refreshMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };
