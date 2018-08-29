@@ -62,7 +62,6 @@ class OAGProxyServlet extends ProxyServlet {
       + regex.replaceFirstIn(uri, ""))
   }
 
-
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
