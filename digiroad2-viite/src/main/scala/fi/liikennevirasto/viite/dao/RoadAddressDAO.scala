@@ -1005,23 +1005,22 @@ object RoadAddressDAO {
     * @param roadAddressId The Id of a road addresss
     */
   def changeRoadAddressFloatingWithHistory(isFloating: Boolean, roadAddress: RoadAddress, geometry: Option[Seq[Point]]): Unit = {
-    val floatingValue = if (isFloating) 1 else 0
-    if (geometry.nonEmpty) {
-      val first = geometry.get.head
-      val last = geometry.get.last
-      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
-      sqlu"""
-           Update road_address Set floating = $floatingValue,
-                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-                  $x1,$y1,$z1,${roadAddress.startMValue},$x2,$y2,$z2,${roadAddress.endMValue}))
-             Where id = ${roadAddress.id}
-      """.execute
+
+    // Current
+    val updatedRoadAddress: RoadAddress = if (geometry.nonEmpty) {
+      roadAddress.copy(id = NewRoadAddress, geometry = geometry.get, floating = isFloating)
+    } else {
+      roadAddress.copy(id = NewRoadAddress, floating = isFloating)
     }
-    sqlu"""
-       update road_address set floating = $floatingValue where id in(
-       select road_address.id from road_address where link_id =
-       (select link_id from road_address where road_address.id = ${roadAddress.id}))
-        """.execute
+    expireById(Set(roadAddress.id))
+    create(Seq(updatedRoadAddress))
+
+    // History
+    val historyAddresses: List[RoadAddress] = fetchByLinkId(Set(roadAddress.linkId), includeFloating = true, includeHistory = true, includeCurrent = false)
+    expireById(historyAddresses.map(_.id).toSet)
+    val updatedHistory: List[RoadAddress] = historyAddresses.map(_.copy(id = NewRoadAddress, floating = isFloating))
+    create(updatedHistory)
+    
   }
 
   def changeRoadAddressFloating(float: Boolean, roadAddress: RoadAddress, geometry: Option[Seq[Point]] = None): Unit = {
