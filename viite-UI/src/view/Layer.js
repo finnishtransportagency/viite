@@ -27,16 +27,6 @@
       });
     };
 
-    this.toggleFeatureVisibility = function (features, visibleToggle) {
-      _.each(features, function(feature) {
-        feature.setStyle(function() {
-          if (feature.getProperties().hidden && !visibleToggle)
-            return;
-          return feature.style;
-        });
-      });
-    };
-
     this.clearLayers = function(layers){
       _.each(layers, function(layer) {
         layer.getSource().clear();

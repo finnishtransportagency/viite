@@ -165,7 +165,7 @@
           selectedProjectLinkProperty.openShift(previouslySelectedIds);
         }
         highlightFeatures();
-      } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
+      } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -174,6 +174,8 @@
         } else {
           selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
         }
+      } else {
+        eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
       }
     };
 
