@@ -785,10 +785,10 @@ object ProjectDAO {
         case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
           val projectState = ProjectState.apply(state)
           val reservedRoadParts = if(projectState == Saved2TR)
-            fetchHistoryRoadParts(id)
+            fetchHistoryRoadParts(id).distinct
           else
           if(projectId != 0)
-            fetchReservedRoadParts(id)
+            fetchReservedRoadParts(id).distinct
           else
             Seq()
           RoadAddressProject(id, projectState, name, createdBy, createdDate, modifiedBy, start_date,
@@ -1095,21 +1095,12 @@ object ProjectDAO {
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {
-
-    try {
-      sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE,
+      sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE,
               ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
                MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROAD_ADDRESS_ID, CONNECTED_LINK_ID, ELY,
                 REVERSED, GEOMETRY, SIDE_CODE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
                  LINK_SOURCE, CALIBRATION_POINTS_SOURCE
           FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
-    } catch {
-      case e:Exception => {
-        e.printStackTrace()
-        println("HELP")
-      }
-    }
-
     sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""".execute
   }
