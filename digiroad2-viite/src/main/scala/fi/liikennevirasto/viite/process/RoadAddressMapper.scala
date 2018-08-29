@@ -214,10 +214,8 @@ trait RoadAddressMapper {
     */
 
   def distancesBetweenEndPointsInOrigin(geom1: Seq[Point], geom2: Seq[Point]): (Double, Double) = {
-    val sourcePoint = geom1.minBy(p => p.distance2DTo(Point(0,0,0)))
-    val targetPoint = geom2.minBy(p => p.distance2DTo(Point(0,0,0)))
-    val movedGeom1 = geom1.map(p => p.minus(sourcePoint))
-    val movedGeom2 = geom2.map(p => p.minus(targetPoint))
+    val movedGeom1 = GeometryUtils.moveGeomToOrigin(geom1)
+    val movedGeom2 = GeometryUtils.moveGeomToOrigin(geom2)
     (movedGeom1.head.distance2DTo(movedGeom2.head) + movedGeom1.last.distance2DTo(movedGeom2.last),
       movedGeom1.last.distance2DTo(movedGeom2.head) + movedGeom1.head.distance2DTo(movedGeom2.last))
   }
