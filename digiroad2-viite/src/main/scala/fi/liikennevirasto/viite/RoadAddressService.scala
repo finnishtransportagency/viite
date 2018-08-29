@@ -384,8 +384,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             logger.debug("Expired: " + s.mkString(","))
           })
           val toFloating = addressesExceptNew.filter(ra => ra.floating)
-            logger.info(s"Found ${toFloating.size} road addresses that were left floating after changes, saving them.")
-            toFloating.foreach {
+          logger.info(s"Found ${toFloating.size} road addresses that were left floating after changes, saving them.")
+          toFloating.foreach {
             ra => RoadAddressDAO.changeRoadAddressFloatingWithHistory(true, ra, None)
           }
 
