@@ -56,12 +56,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   }
 
   def checkRoadNetwork(username: String = ""): List[RoadAddress] = {
-    val roadNumbers = if (username.startsWith("dr2dev") || username.startsWith("viitetestuser")) {
-      RoadAddressDAO.getValidRoadNumbersWithFilterToTestAndDevEnv
-    } else {
-      RoadAddressDAO.getAllValidRoadNumbers()
-    }
-
+    val roadNumbers = RoadAddressDAO.getAllValidRoadNumbers()
     println(s"Got ${roadNumbers.size} roads")
     val groupSize = 1 + (roadNumbers.size - 1) / 4
     roadNumbers.sliding(groupSize, groupSize).toSeq.par.flatMap(l => l.flatMap(checkRoad)).toList

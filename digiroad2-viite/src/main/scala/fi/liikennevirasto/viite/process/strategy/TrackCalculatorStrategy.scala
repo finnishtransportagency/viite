@@ -4,8 +4,9 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.NewRoadAddress
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, LinkStatus, ProjectLink, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
@@ -88,18 +89,17 @@ trait TrackCalculatorStrategy {
 
   /**
     * Average between two address measures.
-    * If the right side is greater then left side returns the largest (closest to positive infinity) value
-    * If the left side is less then the right side returns the smallest (closest to negative infinity) value
+    * If the right side is greater than the left side returns the largest (closest to positive infinity) value
+    * If the right side is less than the left side returns the smallest (closest to negative infinity) value
     * NOTE: If we have the reversed set to true the previous conditions are inverted
     *
-    * @param rAddrM   Left address measure
-    * @param lAddrM   Right address measure
+    * @param rAddrM   Right address measure
+    * @param lAddrM   Left address measure
     * @param reversed True if the road was reverted
-    * @return Returns te average between two measures
+    * @return Returns the average between two measures
     */
   protected def averageOfAddressMValues(rAddrM: Double, lAddrM: Double, reversed: Boolean): Long = {
     val average = 0.5 * (rAddrM + lAddrM)
-
     if (reversed) {
       if (rAddrM > lAddrM) Math.floor(average).round else Math.ceil(average).round
     } else {
@@ -163,7 +163,7 @@ trait TrackCalculatorStrategy {
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
-    //The getFixedAddress method have to be call twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
+    //The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
     // NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
     val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
 
@@ -174,25 +174,25 @@ trait TrackCalculatorStrategy {
   protected def setOnSideCalibrationPoints(projectlinks: Seq[ProjectLink], raCalibrationPoints: Map[Long, CalibrationCode], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     projectlinks.size match {
       case 1 =>
-        projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true))
+        projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true, ProjectLinkSource))
       case _ =>
         val pls = projectlinks.map {
           pl =>
             val raCalibrationCode = raCalibrationPoints.get(pl.roadAddressId).getOrElse(CalibrationCode.No)
             val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
             val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
-            setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP)
+            setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
         }
 
-        Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false)) ++ pls.init.tail ++
-          Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true))
+        Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false, ProjectLinkSource)) ++ pls.init.tail ++
+          Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true, ProjectLinkSource))
     }
   }
 
-  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean) = {
+  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource) = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
-    pl.copy(calibrationPoints = (sCP, eCP))
+    pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {

@@ -379,13 +379,14 @@
     });
 
     var zoomDoubleClickListener = function (event) {
-      if (isActiveLayer)
+      if (isActiveLayer) {
         _.defer(function () {
           if (applicationModel.getSelectedTool() !== 'Cut' && !event.originalEvent.ctrlKey &&
             selectedProjectLinkProperty.get().length === 0 && map.getView().getZoom() <= 13) {
               map.getView().setZoom(map.getView().getZoom() + 1);
           }
         });
+      }
     };
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
@@ -532,6 +533,7 @@
           removeCutterMarkers();
           self.cut(evt);
         }
+        eventbus.trigger('projectLink:clickHandled');
       };
 
       this.deactivate = function () {

@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.viite.LinkRoadAddressHistory
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.viite.MinAllowedRoadAddressLength
 
 object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -69,11 +70,11 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       ChangeType.apply(ci.changeType) match {
         case CombinedModifiedPart | CombinedRemovedPart | DividedModifiedPart | DividedNewPart =>
           logger.debug("Change info> oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType)
-          Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+          Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
             ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
         case LengthenedCommonPart | LengthenedNewPart | ShortenedCommonPart | ShortenedRemovedPart =>
           logger.debug("Change info, length change > oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType + s" $ci")
-          Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+          Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
             ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
         case _ => None
       }
@@ -93,10 +94,10 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }
   }
 
-  private def mapAddress(mapping: Seq[RoadAddressMapping])(ra: RoadAddress) = {
-    if (!ra.floating && mapping.exists(_.matches(ra))) {
+  private def mapAddress(mapping: Seq[RoadAddressMapping], allRoadAddresses: Seq[RoadAddress])(ra: RoadAddress) = {
+    if (!ra.floating && mapping.exists(_.matches(ra, allRoadAddresses))) {
       val changeVVHTimestamp = mapping.head.vvhTimeStamp.get
-      mapRoadAddresses(mapping)(ra).map(_.copy(adjustedTimestamp = changeVVHTimestamp))
+      mapRoadAddresses(mapping, allRoadAddresses)(ra).map(_.copy(adjustedTimestamp = changeVVHTimestamp))
     } else
       Seq(ra)
   }
@@ -106,7 +107,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       roadAddresses
     else {
       val mapping = createAddressMap(changes)
-      val mapped = roadAddresses.mapValues(_.flatMap(mapAddress(mapping)))
+      val mapped = roadAddresses.mapValues(_.flatMap(mapAddress(mapping, roadAddresses.values.flatten.toSeq)))
       mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.commonHistoryId))
     }
   }
@@ -118,10 +119,10 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       val mapping = createAddressMap(changes)
       val mapped = roadAddresses.mapValues(_.flatMap(ra =>
         // If change is not within maximum allowed then float the address
-        if (mapping.exists(m => m.matches(ra) && Math.abs(m.sourceLen - m.targetLen) > fi.liikennevirasto.viite.MaxLengthChange)) {
+        if (mapping.exists(m => m.matches(ra, roadAddresses.values.flatten.toSeq) && Math.abs(m.sourceLen - m.targetLen) > fi.liikennevirasto.viite.MaxLengthChange)) {
           Seq(ra.copy(floating = true))
         } else
-          mapAddress(mapping)(ra)
+          mapAddress(mapping, roadAddresses.values.flatten.toSeq)(ra)
       ))
       mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.commonHistoryId))
     }
@@ -141,6 +142,23 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }
   }
 
+  override def calculateMeasures(ra: RoadAddress, adjMap: RoadAddressMapping): (Double, Double) = {
+    val coef = adjMap.targetLen / adjMap.sourceLen
+    val (sourceStartM, sourceEndM) = (Math.min(adjMap.sourceStartM, adjMap.sourceEndM), Math.max(adjMap.sourceStartM, adjMap.sourceEndM))
+    val (targetStartM, targetEndM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+    val startM = if ((ra.startMValue - sourceStartM) > MinAllowedRoadAddressLength) {
+      targetStartM + ra.startMValue * coef
+    } else {
+      targetStartM
+    }
+    val endM = if ((sourceEndM - ra.endMValue) > MinAllowedRoadAddressLength) {
+      targetStartM + ra.endMValue * coef
+    } else {
+      targetEndM
+    }
+    (startM, endM)
+  }
+
   def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
     val current = roadAddresses.flatMap(_._2.currentSegments).toSeq
     val history = roadAddresses.flatMap(_._2.historySegments).toSeq
@@ -150,8 +168,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     preTransferCheckBySection(originalCurrentSections)
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
     val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses.mapValues(_.allSegments))
-    val mappedChanges = appliedChanges.values.map(
-      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
+    val mappedChanges = appliedChanges.values.map(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
     val (changedCurrentSections, changedHistorySections) = groupByRoadSections(currentSections, historySections, mappedChanges)
     val (resultCurr, resultHist) = postTransferCheckBySection(changedCurrentSections, changedHistorySections, originalCurrentSections, originalHistorySections)
     (resultCurr.values ++ resultHist.values).flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
@@ -201,7 +218,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         s
       } catch {
         case ex: InvalidAddressDataException =>
-          logger.info(s"Invalid address data after transfer on ${s._1}, not applying changes (${ex.getMessage})")
+          logger.info(s"Invalid history address data after transfer on ${s._1}, not applying changes (${ex.getMessage})")
           s._1 -> history(s._1)
       }
     )

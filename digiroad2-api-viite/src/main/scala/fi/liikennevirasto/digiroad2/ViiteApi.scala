@@ -6,14 +6,14 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, SendingToTR}
+import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.SplitOptions
@@ -150,9 +150,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for /roadlinks/$linkId") {
       val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
       val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
-      foldSegments(roadLinks).orElse(foldSegments(projectLinks)).map(midPoint).getOrElse(
-        Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
+      foldSegments(roadLinks)
+        .orElse(foldSegments(projectLinks))
+        .map(midPoint)
+        .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
+  }
+
+  get("/roadlinks/id/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /roalinks/$id") {
+      val roadLinks = roadAddressService.getRoadAddressLinkById(id)
+        foldSegments(roadLinks)
+          .map(midPoint)
+          .getOrElse(Map("success" -> false, "reason" -> ("ID:" + id + " not found")))
+    }
+
   }
 
   get("/roadlinks/project/prefillfromvvh/:linkId") {
@@ -167,14 +180,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/adjacent") {
     val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String, Any]]
-    val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
+    val chainLinkIds = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
+    val chainIds = data("selectedIds").asInstanceOf[Seq[Long]].toSet
     val linkId = data("linkId").asInstanceOf[Long]
+    val id = data("id").asInstanceOf[Long]
     val roadNumber = data("roadNumber").asInstanceOf[Long]
     val roadPartNumber = data("roadPartNumber").asInstanceOf[Long]
     val trackCode = data("trackCode").asInstanceOf[Long].toInt
 
-    time(logger, s"GET request for /roadlinks/adjacent (chainLinks: $chainLinks, linkId: $linkId, roadNumber: $roadNumber, roadPartNumber: $roadPartNumber, trackCode: $trackCode)") {
-      roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+    time(logger, s"GET request for /roadlinks/adjacent (chainLinks: $chainLinkIds, linkId: $linkId, roadNumber: $roadNumber, roadPartNumber: $roadPartNumber, trackCode: $trackCode)") {
+      roadAddressService.getFloatingAdjacent(chainLinkIds, chainIds, linkId, id, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
     }
   }
 
@@ -222,17 +237,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val adjacents: Seq[RoadAddressLink] = {
           roadData.flatMap(rd => {
             val chainLinks = rd("selectedLinks").asInstanceOf[Seq[Long]].toSet
+            val chainIds = rd("selectedIds").asInstanceOf[Seq[Long]].toSet
             val linkId = rd("linkId").asInstanceOf[Long]
+            val id = rd("id").asInstanceOf[Long]
             val roadNumber = rd("roadNumber").asInstanceOf[Long]
             val roadPartNumber = rd("roadPartNumber").asInstanceOf[Long]
             val trackCode = rd("trackCode").asInstanceOf[Long].toInt
-            roadAddressService.getFloatingAdjacent(chainLinks, linkId,
+            roadAddressService.getFloatingAdjacent(chainLinks, chainIds, linkId, id,
               roadNumber, roadPartNumber, trackCode)
           })
         }
         val linkIds: Seq[Long] = roadData.map(rd => rd("linkId").asInstanceOf[Long])
+        val ids: Seq[Long] = roadData.map(rd => rd("id").asInstanceOf[Long])
         val result = adjacents.filter(adj => {
-          !linkIds.contains(adj.linkId)
+          if (ids.nonEmpty) {
+            !ids.contains(adj.id)
+          } else {
+            !linkIds.contains(adj.linkId)
+          }
         }).distinct
         result.map(roadAddressLinkToApi)
       }
@@ -272,10 +294,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val targetIds = data.targetIds
       val user = userProvider.getCurrentUser()
 
-      val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
       try {
-        val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses, user.username)
-        transferredRoadAddresses
+        val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
+        roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses, user.username)
       }
       catch {
         case e: RoadAddressException =>
@@ -618,7 +639,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /project/getchangetable/$projectId") {
       val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
-      //TODO change UI to not override proj validator errors on change table call
+      //TODO change UI to not override project validator errors on change table call
       val changeTableData = projectService.getChangeProject(projectId).map(project =>
         Map(
           "id" -> project.id,
@@ -702,6 +723,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                 "roadPartNumber" -> roadWithInfo.roadPartNumber,
                 "trackCode" -> roadWithInfo.track,
                 "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
+                "roadLinkSource" -> roadWithInfo.linkGeomSource.value,
                 "split" -> Map(
                   "geometry" -> cutGeom
                 )
@@ -902,6 +924,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
+    val roadLinkTypeValue = roadAddressLink match {
+      case ra: RoadAddressLink => if (ra.floating) RoadLinkType.FloatingRoadLinkType.value else roadAddressLink.roadLinkType.value
+      case _ => roadAddressLink.roadLinkType.value
+    }
     Map(
       "success" -> true,
       "segmentId" -> roadAddressLink.id,
@@ -930,7 +956,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
       "anomaly" -> roadAddressLink.anomaly.value,
-      "roadLinkType" -> roadAddressLink.roadLinkType.value,
+      "roadLinkType" -> roadLinkTypeValue,
       "constructionType" -> roadAddressLink.constructionType.value,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,
@@ -1079,7 +1105,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
       case LinkStatus.Terminated => {
@@ -1094,7 +1121,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
       case _ => {
@@ -1109,7 +1137,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadTypeId" -> splittedLinks.roadType.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
-            "roadName" -> splittedLinks.roadName.getOrElse("")
+            "roadName" -> splittedLinks.roadName.getOrElse(""),
+            "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
       }
     }
@@ -1144,8 +1173,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private def midPoint(link: RoadAddressLinkLike) = {
-    Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(link.geometry,
-      link.length / 2.0)) ++ (link match {
+    Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(link.geometry, link.length / 2.0).getOrElse(Point(link.geometry.head.x, link.geometry.head.y))) ++ (link match {
       case l: RoadAddressLink => roadAddressLinkToApi(l)
       case l: ProjectAddressLink => projectAddressLinkToApi(l)
     })
@@ -1162,8 +1190,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {
-      case Some(point) =>
-        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)), ("value", point.addressMValue)).toMap)
+      case Some(point) => {
+        val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)
+        val returningPoint = if (calculatedPoint.isDefined) {
+          calculatedPoint
+        } else {
+          val atBeginning = point.segmentMValue == 0.0
+          val (startPoint, endPoint) = GeometryUtils.geometryEndpoints(geometry)
+          if (atBeginning) Some(startPoint) else Some(endPoint)
+        }
+        Option(Seq(("point", returningPoint), ("value", point.addressMValue)).toMap)
+      }
       case _ => None
     }
   }
