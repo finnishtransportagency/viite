@@ -867,9 +867,9 @@ object RoadAddressDAO {
   }
 
   def update(roadAddress: RoadAddress, geometry: Option[Seq[Point]]): Unit = {
-    val updatedRoadAddress = if (geometry.isEmpty)
+    val updatedRoadAddress = if (geometry.isEmpty) {
       roadAddress.copy(id = NewRoadAddress)
-    else {
+    } else {
       roadAddress.copy(id = NewRoadAddress, geometry = geometry.get)
     }
     expireById(Set(roadAddress.id))
