@@ -601,7 +601,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         where t.id < t2.id AND ra.road_number = $roadNumber AND ra.road_part_number = $roadPartNumber AND
          ra.track_code = ${track.value} and
-          valid_to is null $startFilter $endFilter
+          valid_to is null and end_date is null $startFilter $endFilter
       """
     queryList(query).headOption
   }
