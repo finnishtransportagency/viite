@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.lang.management.ManagementFactory
 import java.util.Properties
 
+import fi.liikennevirasto.viite.process.ProjectSectionCalculator.getClass
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
@@ -41,6 +42,7 @@ trait DigiroadServer {
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    appContext.addServlet(classOf[MapTileProxyServlet], "/mapTest/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
@@ -79,6 +81,21 @@ class NLSProxyServlet extends ProxyServlet {
       client.setIdleTimeout(60000)
     }
     client
+  }
+}
+
+class MapTileProxyServlet extends ProxyServlet {
+  def regex = "/(digiroad|viite)/mapTest/".r
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
+    val url = "http://oag.liikennevirasto.fi/" + regex.replaceFirstIn(req.getRequestURI, "")
+    logger.info("MapTileProxyServlet->rewriteURI "+url)
+    java.net.URI.create(url)
+  }
+
+  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
 
