@@ -4,6 +4,7 @@
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
     var selectedProjectLink = false;
+    var LinkSources = LinkValues.LinkGeomSource;
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
@@ -43,6 +44,19 @@
         roadPartNumber: selected[0].roadPartNumber,
         trackCode: selected[0].trackCode
       };
+
+      var roadLinkSources = _.chain(selected).map(function(s) {
+        return s.roadLinkSource;
+      }).uniq().map(function(a) {
+        var linkGeom = _.find(LinkSources, function (source) {
+            return source.value === parseInt(a);
+        });
+        if(_.isUndefined(linkGeom))
+          return LinkSources.Unknown.descriptionFI;
+        else
+          return linkGeom.descriptionFI;
+      }).uniq().join(", ").value();
+
       var selection = formCommon.selectedData(selected);
       return _.template('' +
         '<header>' +
@@ -54,6 +68,7 @@
         insertErrorMessage(errorMessage) +
         formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
+        formCommon.staticField('Geometrian Lähde', roadLinkSources)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         selectionForm(selection, selected, road) +

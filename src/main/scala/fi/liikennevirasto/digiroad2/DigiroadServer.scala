@@ -67,7 +67,7 @@ class NLSProxyServlet extends ProxyServlet {
     proxyRequest.header("Host", null)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
-
+//not sure if following is still needed
   override def getHttpClient: HttpClient = {
     val client = super.getHttpClient
     val properties = new Properties()

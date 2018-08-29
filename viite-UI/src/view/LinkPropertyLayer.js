@@ -598,15 +598,19 @@
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
       eventListener.listenTo(eventbus, 'linkProperties:closed', refreshViewAfterClosingFloating);
 
-      eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
+      eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function (link) {
         var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
         var features = [];
-        _.each(selectedLink, function (featureLink){
-          if (featureLink.linkId !== 0) {
-            _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
-              if (_.contains(featureLink.selectedLinks, feature.linkData.linkId)) {
+        _.each(selectedLink, function (featureLink) {
+          if (selectedLinkProperty.canOpenById(featureLink.id)) {
+            _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
+              if (_.contains(featureLink.selectedIds, feature.linkData.id))
                 return features.push(feature);
-              }
+            });
+          } else if (featureLink.linkId !== 0) {
+            _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
+              if (_.contains(featureLink.selectedLinks, feature.linkData.linkId))
+                return features.push(feature);
             });
           }
         });
@@ -793,7 +797,7 @@
             return features.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
           });
           _.each(selectedFloatings, function(sf){
-            selectedLinkProperty.getFeaturesToKeep().push(sf);
+            selectedLinkProperty.addToFeaturesToKeep(sf);
           });
         }
       });
@@ -1034,7 +1038,7 @@
       var selectedFloatingIds = _.pluck(selectedLinkProperty.getFeaturesToKeepFloatings(), 'linkId');
 
       _.each(allFeatures, function(feature){
-          if (feature.linkData.anomaly === 1 || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === -1))
+          if (feature.linkData.anomaly === Anomaly.NoAddressGiven.value || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value))
           pickRoadsLayer.getSource().addFeature(feature);
       });
       pickRoadsLayer.setOpacity(1);

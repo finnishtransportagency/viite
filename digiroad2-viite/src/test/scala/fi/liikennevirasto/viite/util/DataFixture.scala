@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.util
 
+import java.sql.Timestamp
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
@@ -12,6 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.RoadNetworkDAO.getLatestRoadNetworkVersionId
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -19,7 +21,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
 import scala.collection.parallel.immutable.ParSet
-import scala.collection.parallel.{ForkJoinTaskSupport}
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
 
 object DataFixture {
@@ -91,7 +93,7 @@ object DataFixture {
     }
   }
 
-  def importRoadAddresses(isDevDatabase: Boolean, importTableName: Option[String]): Unit = {
+  def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
@@ -165,20 +167,21 @@ object DataFixture {
     println()
   }
 
-  private def combineMultipleSegmentsOnLinks(): Unit ={
+  private def combineMultipleSegmentsOnLinks(): Unit = {
     println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
       RoadAddressDAO.getAllValidRoadNumbers().foreach(road => {
         val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
         val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
-        roadAddresses.foreach{ case (linkId, list) =>
+        roadAddresses.foreach { case (linkId, list) =>
           val currReplacement = replacements(linkId)
           if (list.lengthCompare(currReplacement.size) != 0) {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
             val created = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
-            RoadAddressDAO.create(created, Some("Automatic_merged"))
+            if (created.nonEmpty)
+              RoadAddressDAO.create(created, created.head.createdBy, Some("Automatic_merged"))
           }
         }
       })
@@ -310,37 +313,50 @@ object DataFixture {
   }
 
   def checkLinearLocation(): Unit = {
-
     OracleDatabase.withDynTransaction {
-      val elyCodes = MunicipalityDAO.getMunicipalityMapping.values.toSet
-      elyCodes.foreach(ely => {
-        // We must get current and history separately => Nothing guarantees that the history ones haven't changed their ELY meanwhile
-        val roads = RoadAddressDAO.getRoadAddressByEly(ely, onlyCurrent = true)
+      val commonHistoryIds = RoadAddressDAO.getCommonHistoryIdsFromRoadAddress
+      println(s"Found a total of ${commonHistoryIds.size} common history ids")
+      val chunks = generateCommonIdChunks(commonHistoryIds, 1000)
+      chunks.par.foreach {
+        case (min, max) =>
+          println(s"Processing common history ids from $min to $max")
+          val roads = RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withCommonHistoryIds(min, max))
+          roads.groupBy(_.commonHistoryId).foreach { group =>
+            val dateTimeLines = group._2.map(_.startDate).distinct
 
-        roads.grouped(25000).foreach { group =>
-
-          val current = group
-          val history = RoadAddressDAO.fetchByLinkId(group.map(_.linkId).toSet, includeCurrent = false)
-          val combined = current ++ history
-
-          val groupedRoads = combined.groupBy(r => (r.linkId, r.commonHistoryId))
-
-          val roadErrors: Seq[RoadAddress] = groupedRoads.mapValues { g =>
-            val (curr, hist) = g.partition(_.endDate.isEmpty)
-
-            val errors: Seq[RoadAddress] = curr.sortBy(_.startAddrMValue).zip(hist.sortBy(_.startAddrMValue)).flatMap { case (c, h) =>
-              if (c.startMValue != h.startMValue || c.endMValue != h.endMValue || c.sideCode != h.sideCode) {
-                println(s"Error in linear location check for road address with id ${c.id} ")
-                Seq(c, h)
-              }
-              else Seq.empty[RoadAddress]
+            val mappedTimeLines: Seq[TimeLine] = dateTimeLines.flatMap {
+              date =>
+                val groupedAddresses: Seq[TimeLine] = group._2.groupBy(g => (g.roadNumber, g.roadPartNumber)).map { roadAddresses =>
+                  val filteredAdresses: Seq[RoadAddress] = roadAddresses._2.filter { ra => ra.validTo.isEmpty && (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis < ra.endDate.get.getMillis) }
+                  val addrLength = filteredAdresses.map(_.endAddrMValue).sum - filteredAdresses.map(_.startAddrMValue).sum
+                  TimeLine(addrLength, filteredAdresses)
+                }.filter(_.addresses.nonEmpty).toSeq
+                groupedAddresses
             }
-            errors
-          }.values.flatten.toSeq
-          println(s"Found ${roadErrors.size} errors for ely $ely")
-          roadErrors.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
-        }
-      })
+
+            val roadErrors = if (mappedTimeLines.size > 1) {
+              val errors: Set[RoadAddress] = mappedTimeLines.sliding(2).flatMap { case Seq(first, second) => {
+                if (first.addressLength != second.addressLength) {
+                  first.addresses.toSet
+                }
+                else {
+                  Set.empty[RoadAddress]
+                }
+              }
+              }.toSet
+              errors
+            } else {
+              Set.empty[RoadAddress]
+            }
+            println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.commonHistoryId}")
+            val lastVersion = getLatestRoadNetworkVersionId
+
+            roadErrors.filter { road =>
+              val error = RoadNetworkDAO.getRoadNetworkError(road.id, InconsistentLrmHistory)
+              error.isEmpty || error.get.network_version != lastVersion
+            }.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
+          }
+      }
     }
   }
 
@@ -396,6 +412,7 @@ object DataFixture {
       "test_fixture_sequences.sql",
       "insert_road_address_data.sql",
       "insert_floating_road_addresses.sql",
+      "insert_overlapping_road_addresses.sql", // Test data for OverLapDataFixture (VIITE-1518)
       "insert_project_link_data.sql",
       "insert_road_names.sql"
     ))
@@ -434,7 +451,7 @@ object DataFixture {
         findFloatingRoadAddresses()
       case Some("import_road_addresses") =>
         if (args.length > 1)
-          importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("viitetestuser"), Some(args(1)))
+          importRoadAddresses(Some(args(1)))
         else
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
@@ -478,14 +495,52 @@ object DataFixture {
         checkLinearLocation()
       case Some("fuse_road_address_with_history") =>
         fuseRoadAddressWithHistory()
+      case Some("revert_overlapped_road_addresses") =>
+        val options = args.tail
+        val save = options.contains("save")
+        val fixAddressValues = options.contains("fix-address-values")
+        val withPartialOverlap = options.contains("with-partial-overlap")
+        val fetchAllChangesFromVVH = options.contains("fetch-all-changes-from-vvh")
+        val addressThreshold = options.find(_.startsWith("address-threshold=")).map(_.replace("address-threshold=", "").toInt).getOrElse(6)
+        OracleDatabase.withDynTransaction {
+          val overlapDataFixture = new OverlapDataFixture(vvhClient)
+          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, withPartialOverlap, fetchAllChangesFromVVH, addressThreshold)
+        }
+      case Some("revert_overlapped_road_addresses_by_date") =>
+        val options = args.tail
+        val save = options.contains("save")
+        val addressSectionThreshold = options.find(_.startsWith("address-section-threshold=")).map(_.replace("address-section-threshold=", "").toInt).getOrElse(10)
+          val overlapDataFixture = new OverlapDataFixture(vvhClient)
+          overlapDataFixture.fixOverlapRoadAddressesByDates(dryRun = !save, addressSectionThreshold)
       case Some("test") =>
         tearDown()
         setUpTest()
         importMunicipalityCodes()
-      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing | " +
-        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
+
+      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing " +
+        "| find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names | fuse_road_address_with_history | check_lrm_position ")
+        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names " +
+        "| fuse_road_address_with_history | check_lrm_position | revert_overlapped_road_addresses")
     }
+  }
+
+  case class TimeLine(addressLength: Long, addresses: Seq[RoadAddress])
+  private def generateCommonIdChunks(ids: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+    val (chunks, _) = ids.foldLeft((Seq[Long](0), 0)) {
+      case ((fchunks, index), linkId) =>
+        if (index > 0 && index % chunkNumber == 0) {
+          (fchunks ++ Seq(linkId), index + 1)
+        } else {
+          (fchunks, index + 1)
+        }
+    }
+    val result = if (chunks.last == ids.last) {
+      chunks
+    } else {
+      chunks ++ Seq(ids.last)
+    }
+
+    result.zip(result.tail)
   }
 }

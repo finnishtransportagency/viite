@@ -329,7 +329,6 @@
         coordinates: coordinates,
         roadName: roadAddressProjectForm.find('#roadName')[0].value
       };
-
       if (dataJson.trackCode === Track.Unknown.value) {
         new ModalConfirm("Tarkista ajoratakoodi");
         applicationModel.removeSpinner();
@@ -338,7 +337,7 @@
       var changedLink = _.chain(changedLinks).uniq().sortBy(function(cl){
         return cl.endAddressM;
       }).last().value();
-      var isNewRoad = changedLink.status == LinkStatus.New.value;
+      var isNewRoad = changedLink.status === LinkStatus.New.value;
 
       if(isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM)){
         new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
