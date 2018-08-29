@@ -330,7 +330,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       address.floating should be (false)
       roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
       dynamicSession.rollback()
-      val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
+      val addressUpdated = RoadAddressDAO.fetchByAddressStart(address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue).get
       addressUpdated.geometry should be (address.geometry)
       addressUpdated.floating should be (true)
       addressUpdated.commonHistoryId should be (addressList.head.commonHistoryId)
