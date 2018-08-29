@@ -40,7 +40,7 @@ trait DigiroadServer {
     appContext.setContextPath(viiteContextPath)
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
-    appContext.addServlet(classOf[NLSProxyServlet], "/wmts/*")
+    appContext.addServlet(classOf[OAGProxyServlet], "/wmts/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
@@ -52,7 +52,7 @@ trait DigiroadServer {
   }
 }
 
-class NLSProxyServlet extends ProxyServlet {
+class OAGProxyServlet extends ProxyServlet {
 
   def regex = "/(viite)".r
 
