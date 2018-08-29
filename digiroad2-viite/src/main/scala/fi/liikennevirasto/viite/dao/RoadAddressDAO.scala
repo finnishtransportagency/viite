@@ -1012,15 +1012,13 @@ object RoadAddressDAO {
     } else {
       roadAddress.copy(id = NewRoadAddress, floating = isFloating)
     }
-    expireById(Set(roadAddress.id))
-    create(Seq(updatedRoadAddress))
 
     // History
     val historyAddresses: List[RoadAddress] = fetchByLinkId(Set(roadAddress.linkId), includeFloating = true, includeHistory = true, includeCurrent = false)
-    expireById(historyAddresses.map(_.id).toSet)
     val updatedHistory: List[RoadAddress] = historyAddresses.map(_.copy(id = NewRoadAddress, floating = isFloating))
-    create(updatedHistory)
-    
+
+    expireById(historyAddresses.map(_.id).toSet ++ Set(roadAddress.id))
+    create(Seq(updatedRoadAddress) ++ updatedHistory)
   }
 
   def changeRoadAddressFloating(float: Boolean, roadAddress: RoadAddress, geometry: Option[Seq[Point]] = None): Unit = {
