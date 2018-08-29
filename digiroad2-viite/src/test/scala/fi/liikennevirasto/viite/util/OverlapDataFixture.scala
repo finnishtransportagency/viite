@@ -172,7 +172,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
     val oldSection = oldRoadAddresses.filter(_.trackCode == track.value)
     val newSection = newRoadAddresses.filter(ra => ra.trackCode == track.value)
 
-    if(oldSection.size != newSection.size)
+    if (oldSection.size != newSection.size)
       throw new Exception("Generated section have more road addresses then the estimated")
 
     val sortedOldSection = oldSection.sortBy(_.startAddrM)
@@ -181,9 +181,9 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
     sortedOldSection.zipWithIndex.foreach {
       case (ra, index) =>
         val newRa = sortedAddresses(index)
-        if(newRa.startAddrM > newRa.endAddrM)
+        if (newRa.startAddrM > newRa.endAddrM)
           throw new Exception("There are road addresses with start measure greater than end measures")
-        if(newRa.id != ra.id)
+        if (newRa.id != ra.id)
           throw new Exception("Generated address list don't keep the same order")
     }
   }
@@ -312,7 +312,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
             val revertMinDate = overlaps.flatMap(_.validFrom).min
             val roadAddressesToRevert = fetchExpiredByValidDate(roadNumber, roadPartNumber, endDate, revertMinDate)
 
-            if(roadAddressesToRevert.isEmpty)
+            if (roadAddressesToRevert.isEmpty)
               throw new Exception(s"The overlapped measure for road number($roadNumber) road part number($roadPartNumber) and end date($endDate) doesn't have expired road addresses!")
 
             val validSection = fetchAllValidRoadAddressSection(roadNumber, roadPartNumber, endDate)
@@ -321,7 +321,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
 
             val (toExpireRoadAddresses, toKeepRoadAddresses) = validSection.partition(ra => ra.validFrom.get.isAfter(revertMinDate.minusSeconds(2)))
 
-            if(toExpireRoadAddresses.isEmpty)
+            if (toExpireRoadAddresses.isEmpty)
               throw new Exception(s"The overlapped measure for road number($roadNumber) road part number($roadPartNumber) and end date($endDate) doesn't have any valid road addresses!")
 
             toExpireRoadAddresses.foreach{
@@ -340,7 +340,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
               groupOverlapedRoadAddresses(toExpireRoadAddresses.filter(_.trackCode == Track.LeftSide.value).sortBy(_.startAddrM)) ++
               groupOverlapedRoadAddresses(toExpireRoadAddresses.filter(_.trackCode == Track.RightSide.value).sortBy(_.startAddrM))
 
-            if(groupedToExpireByAddress.size != groupedToRevertByAddress.size)
+            if (groupedToExpireByAddress.size != groupedToRevertByAddress.size)
               throw new Exception(s"There is not the same amount of continuous addresses to be expired and reverted")
 
             //recalculate reverted road addresses
@@ -369,7 +369,7 @@ class OverlapDataFixture(val vvhClient: VVHClient) {
 
             checkContinuousRoadAddress(roadNumber, roadPartNumber, roadAddressesToRevert ++ toKeepRoadAddresses, endDate, revertMinDate)
 
-            if(dryRun)
+            if (dryRun)
               throw new Exception("Dry run exception!")
           }
         } catch {
