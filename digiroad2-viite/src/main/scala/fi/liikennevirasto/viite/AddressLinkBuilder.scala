@@ -132,7 +132,7 @@ trait AddressLinkBuilder {
         (record.commonHistoryId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
 
       groupedRoadAddresses.flatMap { case (_, record) =>
-        fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+        fuseRoadAddressInGroup(record.sortBy(_.startAddrMValue))
       }.toSeq
     }
   }
@@ -174,8 +174,24 @@ trait AddressLinkBuilder {
           previousSegment.startAddrMValue <= nextSegment.endAddrMValue)
     }
 
-    val cpNext = nextSegment.calibrationPoints
-    val cpPrevious = previousSegment.calibrationPoints
+    def getCalibrationPoints = {
+      /*  If the road addresses have a calibration in between check if one of the road addresses have
+          the same start and end addresses, if so the calibration point of the road address with same addresses
+          should be ignored
+       */
+      val cpNextSegment = nextSegment.calibrationPoints
+      val cpPreviousSegment = previousSegment.calibrationPoints
+      if (cpNextSegment._1.isDefined && cpPreviousSegment._2.isDefined) {
+        (
+          if (cpPreviousSegment._2.get.addressMValue != previousSegment.startAddrMValue) cpPreviousSegment else (cpPreviousSegment._1, None),
+          if (cpNextSegment._1.get.addressMValue != nextSegment.endAddrMValue) cpNextSegment else (None, cpNextSegment._2)
+        )
+      } else {
+        (cpNextSegment, cpPreviousSegment)
+      }
+    }
+
+    val (cpNext, cpPrevious) = getCalibrationPoints
 
     def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
                       getValue: (Option[CalibrationPoint], Option[CalibrationPoint]) => Option[T]) = {
