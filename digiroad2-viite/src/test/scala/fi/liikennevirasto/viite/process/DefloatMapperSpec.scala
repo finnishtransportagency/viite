@@ -332,13 +332,19 @@ class DefloatMapperSpec extends FunSuite with Matchers{
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false) = {
     val length = GeometryUtils.geometryLength(geom)
+    val startCP = if (startCalibrationPoint) {
+      Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))
+    } else {
+      None
+    }
+    val endCP = if (endCalibrationPoint) {
+      Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))
+    } else {
+      None
+    }
     RoadAddressLink(id, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
       ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
-      trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
-      if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,
-      if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
-      anomaly)
-
+      trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, length, sideCode, startCP, endCP, anomaly)
   }
 
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
