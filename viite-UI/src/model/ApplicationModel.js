@@ -36,7 +36,7 @@
     var selectionTypeIs = function (type) {
       if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
         return selectionType.value === type.value;
-    }
+    };
 
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
