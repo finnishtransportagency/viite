@@ -126,7 +126,7 @@
           });
           unknownRoadLinkGroups = fetched[0];
           var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
-          if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && (applicationModel.getSelectionType() !== 'unknown'))) {
+          if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
               roadLinkGroups = fetched[1];
           } else {
               roadLinkGroups = fetchedRoadLinkModels;

@@ -41,6 +41,12 @@
         UnknownConstructionType:    {value: 99, description: "UnknownConstructionType"}
     };
 
+    root.SelectionType = {
+        All:                        {value: 0, description: "all"},
+        Floating:                   {value: 1, description: "floating"},
+        Unknown:                    {value: 99, description: "unknown"}
+    };
+
     root.RoadClass = {
         HighwayClass:               {value: 1, description: "HighwayClass"},
         MainRoadClass:              {value: 2, description: "MainRoadClass"},

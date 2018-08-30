@@ -17,21 +17,26 @@
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
-    var selectionType = 'all';
+    var selectionType = LinkValues.SelectionType.All;
     var sessionUsername = '';
     var sessionUserRoles = '';
-
-    var getSelectionType = function (){
-      return selectionType;
-    };
 
     var getContinueButtons = function(){
       return continueButton;
     };
 
-    var toggleSelectionType = function (type) {
+    var getSelectionType = function (){
+      return selectionType;
+    };
+
+    var setSelectionType = function (type) {
       selectionType = type;
     };
+
+    var selectionTypeIs = function (type) {
+      if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
+        return selectionType.value === type.value;
+    }
 
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
@@ -210,8 +215,9 @@
       getCurrentLocation: function() {
         return centerLonLat;
       },
-      setSelectionType: toggleSelectionType,
+      setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,
+      selectionTypeIs: selectionTypeIs,
       getSessionUsername: function () {
         return sessionUsername;
       },
