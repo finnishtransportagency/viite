@@ -440,6 +440,38 @@
         addFeaturesToSelection(featuresToHighlight);
     };
 
+    me.drawIndicators = function(links) {
+      var features = [];
+
+      var markerContainer = function(link, position) {
+        var style = new ol.style.Style({
+          image : new ol.style.Icon({
+            src: 'images/center-marker2.svg'
+          }),
+          text : new ol.style.Text({
+            text : link.marker,
+            fill: new ol.style.Fill({
+              color: '#ffffff'
+            }),
+            font : '12px sans-serif'
+          })
+        });
+        var marker = new ol.Feature({
+          geometry : new ol.geom.Point([position.x, position.y])
+        });
+        marker.setStyle(style);
+        features.push(marker);
+      };
+
+      var indicators = function() {
+        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+          markerContainer(link, middlePoint);
+        });
+      };
+      indicators();
+      indicatorLayer.getSource().addFeatures(features);
+    };
+
     var redraw = function() {
       var marker;
       var cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
@@ -840,38 +872,6 @@
       };
 
       eventListener.listenTo(eventListener, 'map:clearLayers', me.clearLayers);
-    };
-
-    me.drawIndicators = function(links) {
-      var features = [];
-
-      var markerContainer = function(link, position) {
-        var style = new ol.style.Style({
-          image : new ol.style.Icon({
-            src: 'images/center-marker2.svg'
-          }),
-          text : new ol.style.Text({
-            text : link.marker,
-            fill: new ol.style.Fill({
-              color: '#ffffff'
-            }),
-            font : '12px sans-serif'
-          })
-        });
-        var marker = new ol.Feature({
-          geometry : new ol.geom.Point([position.x, position.y])
-        });
-        marker.setStyle(style);
-        features.push(marker);
-      };
-
-      var indicators = function() {
-        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-          markerContainer(link, middlePoint);
-        });
-      };
-      indicators();
-      indicatorLayer.getSource().addFeatures(features);
     };
 
     var cancelSelection = function() {
