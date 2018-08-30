@@ -270,7 +270,7 @@
             getCurrent: getCurrent,
             getFeaturesToKeep: getFeaturesToKeep,
             addToFeaturesToKeep: addToFeaturesToKeep,
-                clearFeaturesToKeep: clearFeaturesToKeep,
+            clearFeaturesToKeep: clearFeaturesToKeep,
             isSplit: isSplit,
             isMultiLink: isMultiLink,
             isDirty: isDirty,

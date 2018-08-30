@@ -15,6 +15,7 @@
     var RoadLinkType = LinkValues.RoadLinkType;
     var Anomaly = LinkValues.Anomaly;
     var LinkSource = LinkValues.LinkGeomSource;
+    var selectionType = LinkValues.SelectionType;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -146,7 +147,7 @@
     var openFloating = function (linkId, id, singleLinkSelect, visibleFeatures) {
         var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) : !isSelectedById(id);
         if (canIOpen) {
-            applicationModel.setSelectionType('floating');
+            applicationModel.setSelectionType(selectionType.Floating);
             if (canOpenById(id)) {
                 setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
             } else {
@@ -309,7 +310,7 @@
         "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
       };
 
-      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
+      if (!applicationModel.isReadOnly() && !applicationModel.selectionTypeIs(selectionType.All)){
         applicationModel.addSpinner();
         backend.getTargetAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
@@ -342,11 +343,11 @@
                return t.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
             });
             var markedRoads = {
-              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? unknownAdjacents : unknownAdjacents, function (a, index) {
+              "adjacents": _.map(applicationModel.selectionTypeIs(selectionType.Floating) ? unknownAdjacents : unknownAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
-            if(applicationModel.getSelectionType() === 'floating') {
+            if(applicationModel.selectionTypeIs(selectionType.Floating)) {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
               if(_.isEmpty(markedRoads.adjacents)){
                 applicationModel.setContinueButton(true);
@@ -355,7 +356,7 @@
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
             }
-            if(applicationModel.getSelectionType() !== 'unknown'){
+            if(!applicationModel.selectionTypeIs(selectionType.Unknown)){
               eventbus.trigger('adjacents:startedFloatingTransfer');
             }
           }
@@ -382,7 +383,7 @@
         "roadPartNumber": parseInt(selectedLink.roadPartNumber), "trackCode": parseInt(selectedLink.trackCode)
       };
 
-      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
+      if (!applicationModel.isReadOnly() && !applicationModel.selectionTypeIs(selectionType.All)){
         applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
@@ -405,13 +406,13 @@
             });
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
-              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
+              "adjacents": _.map(applicationModel.selectionTypeIs(selectionType.Floating) ? _.reject(filteredAdjacents, function(t){
                 return t.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
               }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": selectedLink
             };
-            if(applicationModel.getSelectionType() === 'floating') {
+            if(applicationModel.selectionTypeIs(selectionType.Floating)) {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
               if(_.isEmpty(markedRoads.adjacents)){
                 applicationModel.setContinueButton(true);
@@ -420,7 +421,7 @@
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
             }
-            if(applicationModel.getSelectionType() !== 'unknown'){
+            if(!applicationModel.selectionTypeIs(selectionType.Unknown)){
               eventbus.trigger('adjacents:startedFloatingTransfer');
             }
           }
@@ -515,7 +516,7 @@
 
     eventbus.on('linkProperties:closed', function(){
       eventbus.trigger('layer:enableButtons', true);
-      applicationModel.setSelectionType('all');
+      applicationModel.setSelectionType(selectionType.All);
       clearFeaturesToKeep();
     });
 
@@ -826,7 +827,7 @@
     };
 
     var clearFeaturesToKeep = function() {
-      if('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()){
+      if(applicationModel.selectionTypeIs(selectionType.Floating) || applicationModel.selectionTypeIs(selectionType.Unknown)){
         featuresToKeep = _.filter(featuresToKeep, function(feature){
           return feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
         });

@@ -158,7 +158,7 @@
     ];
   }
 
-  // Shows modal with message and close button>
+  // Shows modal with message and close button
   function showInformationModal(message) {
     jQuery('.container').append('<div class="modal-overlay confirm-modal" style="z-index: 2000"><div class="modal-dialog"><div class="content">' + message + '</div><div class="actions"><button class="btn btn-secondary close">Sulje</button></div></div></div></div>');
     jQuery('.confirm-modal .close').on('click', function() {

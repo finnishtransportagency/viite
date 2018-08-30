@@ -438,7 +438,6 @@
 
     var hideLayer = function () {
       me.clearLayers(layers);
-      //me.stop();
     };
 
     var clearHighlights = function(){
