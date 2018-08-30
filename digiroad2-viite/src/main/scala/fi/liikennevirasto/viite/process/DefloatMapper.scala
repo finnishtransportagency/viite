@@ -244,8 +244,6 @@ object DefloatMapper extends RoadAddressMapper {
         // Partition target links by counting adjacency: anything that touches only the neighbor (and itself) is a starting or ending link
         val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
         val sortedEndingLinks = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry))
-
-        //if (lastSourcePoint.distance2DTo(sortedEndingLinks.head.geometry.head) < lastSourcePoint.distance2DTo(sortedEndingLinks.last.geometry.head)) {
         if (distanceOfRoadAddressLinks(orderedSources, sortedEndingLinks)) {
           sortedEndingLinks.reverse ++ middleLinks
         } else {
