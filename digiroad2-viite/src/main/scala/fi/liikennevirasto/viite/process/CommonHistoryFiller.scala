@@ -42,6 +42,35 @@ object CommonHistoryFiller {
     }.toSeq ++ newRoadAddresses.filterNot(ra => unchangedLinks.map(_.roadAddressId).contains(ra.id))
   }
 
+  private def applyTerminated(currentRoadAddresses: Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+    val terminatedLinks = projectLinks.filter(_.status == LinkStatus.Terminated)
+
+    terminatedLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
+      case ((roadNumber, roadPartNumber, trackCode, roadType), groupedLinks) =>
+        val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.sortBy(_.startAddrMValue).map(_.roadAddressId).contains(ra.id))
+
+        val roadAddressesToCompare = currentRoadAddresses.filter(ra => ra.roadNumber == roadNumber && ra.roadPartNumber == roadPartNumber && ra.track == trackCode && ra.roadType == roadType).sortBy(_.startAddrMValue)
+        if (groupedLinks.nonEmpty && roadAddressesToCompare.nonEmpty && groupedLinks.lengthCompare(roadAddressesToCompare.length) == 0 && (groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue)) {
+          roadAddressesToReturn
+        }
+        else {
+          roadAddressesToReturn.groupBy(_.commonHistoryId).values.toSeq.foldLeft(Seq.empty[RoadAddress]) { case (seqComplete, addresses) =>
+            val currentsInsideGroup = roadAddressesToCompare.filter(ra => addresses.map(_.id).contains(ra.id))
+            val groupWithSameCommonHistory = roadAddressesToCompare.filter(_.commonHistoryId == addresses.head.commonHistoryId)
+            if (currentsInsideGroup.nonEmpty && groupWithSameCommonHistory.nonEmpty && currentsInsideGroup.lengthCompare(groupWithSameCommonHistory.length) == 0 && (currentsInsideGroup.last.endAddrMValue - currentsInsideGroup.head.startAddrMValue == groupWithSameCommonHistory.last.endAddrMValue - groupWithSameCommonHistory.head.startAddrMValue)) {
+              seqComplete ++ addresses
+            }
+            else {
+              val changedAddresses = addresses.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) { case (seq, address) =>
+                seq ++ Seq(fillCommonHistoryId(seq, address))
+              }
+              seqComplete ++ changedAddresses
+            }
+          }
+        }
+    }.toSeq ++ newRoadAddresses.filterNot(ra => terminatedLinks.map(_.roadAddressId).contains(ra.id))
+  }
+
   private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
     val addressesGroups = newRoadAddresses.filter(_.id == NewRoadAddress)
     addressesGroups.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType)).flatMap{ group =>
@@ -132,7 +161,8 @@ object CommonHistoryFiller {
       applyNew,
       applyTransfer(currentRoadAddresses),
       applyTransferToNew, //This method should always be after transfer and new operations
-      applyNumbering(currentRoadAddresses)
+      applyNumbering(currentRoadAddresses),
+      applyTerminated(currentRoadAddresses)
     )
 
     val processedAddresses = fillOperations.foldLeft(newRoadAddresses) {
