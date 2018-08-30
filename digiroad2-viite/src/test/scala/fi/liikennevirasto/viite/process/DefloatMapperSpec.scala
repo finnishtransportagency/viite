@@ -223,17 +223,165 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     last.startAddrMValue should be(middle.endAddrMValue)
   }
 
+  test("Choosing the correct starting link from targets - Towards"){
+    //           /|
+    //          / |
+    //         /  |
+    //        .___+ (starting point)
+
+    val sources = Seq(
+      createRoadAddressLink(1L, 1021200L, Seq(Point(0,0), Point(100, 0)), 1L, 1L, 0, 0, 100, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 1021217L, Seq(Point(100, 0), Point(200, 0)), 1L, 1L, 0, 100, 200, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 1021218L, Seq(Point(200, 0), Point(300, 0)), 1L, 1L, 0, 200, 300, SideCode.TowardsDigitizing, Anomaly.None)
+    )
+    val targets = Seq(
+      createRoadAddressLink(4L, 500073988L, Seq(Point(300,0), Point(200,200)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(5L, 500073981L, Seq(Point(200,200), Point(100,300)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(6L, 500073990L, Seq(Point(100,300), Point(0,400)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+
+    val result = DefloatMapper.orderRoadAddressLinks(sources, targets)
+    val orderedSources = result._1
+    val orderedTarget = result._2
+
+    orderedSources.size should be (3)
+    orderedTarget.size should be (3)
+    orderedTarget.head.id should be (6)
+    orderedTarget.head.linkId should be (500073990L)
+  }
+
+  test("Choosing the correct starting link from targets - Against"){
+    //        |\
+    //        | \
+    //        |  \
+    //        +___. (starting point)
+
+    val sources = Seq(
+
+      createRoadAddressLink(1L, 1021218L, Seq(Point(200, 0), Point(300, 0)), 1L, 1L, 0, 0, 100, SideCode.AgainstDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 1021217L, Seq(Point(100, 0), Point(200, 0)), 1L, 1L, 0, 100, 200, SideCode.AgainstDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 1021200L, Seq(Point(0,0), Point(100, 0)), 1L, 1L, 0, 200, 300, SideCode.AgainstDigitizing, Anomaly.None)
+
+
+    )
+    val targets = Seq(
+      createRoadAddressLink(4L, 500073988L, Seq(Point(300,0), Point(200,200)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(5L, 500073981L, Seq(Point(200,200), Point(100,250)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(6L, 500073990L, Seq(Point(100,250), Point(0,300)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+
+    val result = DefloatMapper.orderRoadAddressLinks(sources, targets)
+    val orderedSources = result._1
+    val orderedTarget = result._2
+
+    orderedSources.size should be (3)
+    orderedTarget.size should be (3)
+    orderedTarget.head.id should be (4)
+    orderedTarget.head.linkId should be (500073988L)
+  }
+
+  test("Choosing the correct starting link from targets - case with start closer to starting point"){
+    //           /|
+    //          / |
+    //         /  |
+    //        .___+ (starting point)
+
+    val sources = Seq(
+
+      createRoadAddressLink(1L, 1021218L, Seq(Point(0, 0), Point(100, 0)), 1L, 1L, 0, 0, 100, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 1021217L, Seq(Point(100, 0), Point(200, 0)), 1L, 1L, 0, 100, 200, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 1021200L, Seq(Point(200,0), Point(300, 0)), 1L, 1L, 0, 200, 300, SideCode.TowardsDigitizing, Anomaly.None)
+
+
+    )
+    val targets = Seq(
+      createRoadAddressLink(4L, 500073988L, Seq(Point(0,100), Point(100,70)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(5L, 500073981L, Seq(Point(100,70), Point(200,30)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(6L, 500073990L, Seq(Point(200,30), Point(300,0)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+
+    val result = DefloatMapper.orderRoadAddressLinks(sources, targets)
+    val orderedSources = result._1
+    val orderedTarget = result._2
+
+    orderedSources.size should be (3)
+    orderedTarget.size should be (3)
+    orderedTarget.head.id should be (4)
+    orderedTarget.head.linkId should be (500073988L)
+  }
+
+  test("Choosing the correct starting link from targets - case with start closer to starting point - Against"){
+    //        |\
+    //        | \
+    //        |  \
+    //        +___. (starting point)
+
+    val sources = Seq(
+
+      createRoadAddressLink(1L, 1021218L, Seq(Point(200, 0), Point(300, 0)), 1L, 1L, 0, 0, 100, SideCode.AgainstDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 1021217L, Seq(Point(100, 0), Point(200, 0)), 1L, 1L, 0, 100, 200, SideCode.AgainstDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 1021200L, Seq(Point(0,0), Point(100, 0)), 1L, 1L, 0, 200, 300, SideCode.AgainstDigitizing, Anomaly.None)
+    )
+    val targets = Seq(
+      createRoadAddressLink(4L, 500073988L, Seq(Point(0,100), Point(100,70)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(5L, 500073981L, Seq(Point(100,70), Point(200,30)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(6L, 500073990L, Seq(Point(200,30), Point(300,0)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+
+    val result = DefloatMapper.orderRoadAddressLinks(sources, targets)
+    val orderedSources = result._1
+    val orderedTarget = result._2
+
+    orderedSources.size should be (3)
+    orderedTarget.size should be (3)
+    orderedTarget.head.id should be (6)
+    orderedTarget.head.linkId should be (500073990L)
+  }
+
+  test("Choosing the correct starting link from targets - linear cases that change position forward"){
+    //
+    //     Sources   Targets
+    //
+    //     |--|--|   |--|--|
+
+    val sources = Seq(
+      createRoadAddressLink(1L, 1021218L, Seq(Point(0, 0), Point(100, 0)), 1L, 1L, 0, 0, 100, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 1021217L, Seq(Point(100, 0), Point(200, 0)), 1L, 1L, 0, 100, 200, SideCode.TowardsDigitizing, Anomaly.None)
+    )
+    val targets = Seq(
+      createRoadAddressLink(3L, 500073988L, Seq(Point(300,0), Point(400,0)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(4L, 500073981L, Seq(Point(400,0), Point(500,0)), 0L, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+
+    val result = DefloatMapper.orderRoadAddressLinks(sources, targets)
+    val orderedSources = result._1
+    val orderedTarget = result._2
+
+    orderedSources.size should be (2)
+    orderedTarget.size should be (2)
+    orderedTarget.head.id should be (3)
+    orderedTarget.head.linkId should be (500073988L)
+  }
+
+
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false) = {
     val length = GeometryUtils.geometryLength(geom)
+    val startCP = if (startCalibrationPoint) {
+      Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))
+    } else {
+      None
+    }
+    val endCP = if (endCalibrationPoint) {
+      Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))
+    } else {
+      None
+    }
     RoadAddressLink(id, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
       ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
-      trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
-      if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,
-      if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
-      anomaly, 0, floating = false)
-
+      trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, length, sideCode, startCP, endCP, anomaly)
   }
 
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
