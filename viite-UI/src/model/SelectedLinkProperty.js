@@ -336,11 +336,9 @@
                 return _.some(foundDuplicatedLink);
             });
             previousAdjacents = filteredAdjacents;
-            var unknownAdjacents = _.reject(filteredAdjacents, function(t){
-               return t.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
-            });
+
             var markedRoads = {
-              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? unknownAdjacents : unknownAdjacents, function (a, index) {
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? filteredAdjacents : filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };

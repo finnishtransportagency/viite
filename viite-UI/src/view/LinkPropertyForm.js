@@ -579,9 +579,6 @@
       };
 
       var processAdjacents = function (sources, targets) {
-          var adjacents = _.reject(targets, function(t) {
-              return t.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
-          });
 
           $('[id^=VALITUTLINKIT]').remove();
 
@@ -600,9 +597,9 @@
           $('.form-group:last').after(fields);
           var lastLinkElement = $(".form-group[id^='VALITUTLINKIT']:last");
           if (lastLinkElement.length !== 0 && lastLinkElement[0].childNodes.length <= 2) {
-              lastLinkElement.append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
+              lastLinkElement.append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": targets}))));
               $('#floatingEditModeForm').show();
-              $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
+              $('[id*="sourceButton"]').click({"sources": sources, "adjacents": targets},function(event) {
                   eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
               });
               rootElement.find('.link-properties button.calculate').attr('disabled', false);
