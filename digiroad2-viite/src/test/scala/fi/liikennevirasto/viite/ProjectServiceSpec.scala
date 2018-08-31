@@ -758,8 +758,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId))
-      roadsAfterChanges.filterNot(_.endDate.get.isAfter(DateTime.now())).size should be(1)
-      val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty && x.endDate.get.isAfter(DateTime.now()))
+      roadsAfterChanges.size should be(1)
+      val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty)
       endedAddress.head.endDate.nonEmpty should be(true)
       endedAddress.size should be(1)
       endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
