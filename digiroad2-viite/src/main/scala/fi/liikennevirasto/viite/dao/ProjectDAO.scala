@@ -784,10 +784,9 @@ object ProjectDAO {
       Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
         case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
           val projectState = ProjectState.apply(state)
-          val reservedRoadParts = if(projectState == Saved2TR)
+          val reservedRoadParts = if (projectState == Saved2TR)
             fetchHistoryRoadParts(id).distinct
-          else
-          if(projectId != 0)
+          else if (projectId != 0)
             fetchReservedRoadParts(id).distinct
           else
             Seq()
