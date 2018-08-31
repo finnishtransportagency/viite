@@ -37,13 +37,13 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Fuse road address with calibration point in between when one of the road addresses have the same start and end address") {
     val roadAddress = Seq(
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Continuous, 0L, 10L, None, None, Option("tester"),
-      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), false, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
       RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 10L, None, None, Option("tester"),
-        12345L, 9.8, 11, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), false, Seq(Point(0.0, 9.8), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+        12345L, 9.8, 11, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), FloatingReason.NoFloating, Seq(Point(0.0, 9.8), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
 
     val resultRoadAddress = Seq(RoadAddress(-1000, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, None, None, Option("tester"),
-      12345L, 0.0, 11, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 11, 10L))), false, Seq(Point(0.0, 0.0), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      12345L, 0.0, 11, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 11, 10L))), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
     RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should be(resultRoadAddress)
   }
