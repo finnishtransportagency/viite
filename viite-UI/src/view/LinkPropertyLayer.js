@@ -440,7 +440,7 @@
         addFeaturesToSelection(featuresToHighlight);
     };
 
-    me.drawIndicators = function(links) {
+    var drawIndicators = function(links) {
       var features = [];
 
       var markerContainer = function(link, position) {
@@ -746,7 +746,7 @@
         });
       });
 
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources,targets) {
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources, targets) {
           clearIndicators();
           drawIndicators(targets);
       });
