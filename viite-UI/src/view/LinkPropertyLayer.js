@@ -28,6 +28,7 @@
     var unknownCalibrationPointValue = -1;
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
     var isActiveLayer = false;
+    var cachedMarker = null;
 
     var projectLinkStyler = new ProjectLinkStyler();
 
@@ -475,7 +476,7 @@
     var redraw = function() {
       var marker;
       var cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
-      var cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
+      cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var roadLinks = roadCollection.getAll();
       var suravageLinks=roadCollection.getSuravageLinks();
@@ -774,10 +775,10 @@
           });
           var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
           });
-            feature.linkData = road;
+          feature.linkData = road;
           simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
-            var marker = cachedMarker.createMarker(feature.linkData);
+          var marker = cachedMarker.createMarker(feature.linkData);
           if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
             simulatedRoadsLayer.getSource().addFeature(marker);
           }
