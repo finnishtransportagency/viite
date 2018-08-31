@@ -330,7 +330,7 @@ class AssetDataImporter {
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
                 (isLoopOrEmptyGeom)) {
-                RoadAddressDAO.updateGeometry(segment.id, newGeom)
+                RoadAddressDAO.updateGeometry(segment, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId =" + segment.linkId)
                 changed += 1
               } else {

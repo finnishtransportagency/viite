@@ -384,9 +384,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             logger.debug("Expired: " + s.mkString(","))
           })
           val toFloating = addressesExceptNew.filter(ra => ra.floating)
-            logger.info(s"Found ${toFloating.size} road addresses that were left floating after changes, saving them.")
-            toFloating.foreach {
-            ra => RoadAddressDAO.changeRoadAddressFloatingWithHistory(true, ra.id, None)
+          logger.info(s"Found ${toFloating.size} road addresses that were left floating after changes, saving them.")
+          toFloating.foreach {
+            ra => RoadAddressDAO.changeRoadAddressFloatingWithHistory(true, ra, None)
           }
 
           checkRoadAddressFloatingWithoutTX(addressesExceptNew.map(_.linkId).toSet, float = true)
@@ -657,16 +657,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
       if (float && hasTargetRoadLink(roadLink, addressGeometry)) {
         println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
-        RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = true, address.id, addressGeometry)
+        RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = true, address, addressGeometry)
         val missing = MissingRoadAddress(address.linkId, Some(address.startAddrMValue), Some(address.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None, None, Some(address.startMValue), Some(address.endMValue), Anomaly.GeometryChanged, Seq.empty[Point])
         RoadAddressDAO.createMissingRoadAddress(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
       } else if (!hasTargetRoadLink(roadLink, addressGeometry)) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
-        RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = true, address.id, None)
+        RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = true, address, None)
       } else {
         if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geometry)) {
           println("Updating geometry for id %d (link id %d)".format(address.id, address.linkId))
-          RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = false, address.id, addressGeometry)
+          RoadAddressDAO.changeRoadAddressFloatingWithHistory(isFloating = false, address, addressGeometry)
         }
       }
     }
@@ -677,7 +677,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val addresses = RoadAddressDAO.fetchByLinkId(Set(linkId), includeHistory = false, includeTerminated = false)
       addresses.foreach { address =>
         println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
-        RoadAddressDAO.changeRoadAddressFloating(float = true, address.id)
+        RoadAddressDAO.changeRoadAddressFloating(float = true, address)
         RoadAddressDAO.createMissingRoadAddress(address.linkId, address.startAddrMValue, address.endAddrMValue, Anomaly.GeometryChanged.value, address.startMValue, address.endMValue)
       }
     }
@@ -736,32 +736,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynTransaction {
       addresses.foreach(RoadAddressDAO.updateLinearLocation)
     }
-  }
-
-  def getAdjacentAddresses(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long,
-                           id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
-    withDynSession {
-      getAdjacentAddressesInTX(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, track)
-    }
-  }
-
-  def getAdjacentAddressesInTX(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
-    val roadAddresses = (if (chainIds.nonEmpty)
-      RoadAddressDAO.queryById(chainIds)
-    else if (chainLinks.nonEmpty)
-      RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false)
-    else Seq.empty[RoadAddress]
-      ).sortBy(_.startAddrMValue)
-    assert(roadAddresses.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
-      s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + roadAddresses.map(r =>
-        s"${r.linkId} = ${r.roadNumber}/${r.roadPartNumber}/${r.track.value}").mkString(", "))
-    val startValues = roadAddresses.map(_.startAddrMValue)
-    val endValues = roadAddresses.map(_.endAddrMValue)
-    val orphanStarts = startValues.filterNot(st => endValues.contains(st))
-    val orphanEnds = endValues.filterNot(st => startValues.contains(st))
-    (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
-      ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
-      .distinct.filterNot(fo => chainIds.contains(fo.id) || chainLinks.contains(fo.linkId))
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {

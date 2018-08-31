@@ -389,9 +389,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   test("Project Links must have a major discontinuity code if and only if next part exists in road address / project link table and is not connected") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
-      val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 1999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+      val address = RoadAddress(NewRoadAddress, 1999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-        floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))).head
+        floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0)
+      val raId = RoadAddressDAO.create(Seq(address)).head
       val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks).distinct
       errors should have size 1
       errors.head.validationError should be(MajorDiscontinuityFound)
@@ -401,7 +402,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous))).distinct
       errorsUpd should have size 0
 
-      RoadAddressDAO.updateGeometry(raId, Seq(Point(0.0, 40.0), Point(0.0, 50.0)))
+      RoadAddressDAO.updateGeometry(address.copy(id = raId), Seq(Point(0.0, 40.0), Point(0.0, 50.0)))
 
       val connectedError = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous))).distinct
@@ -413,9 +414,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   ignore("Project Links must have a ely change discontinuity code if next part is on different ely") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
-      val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+      val address = RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-        floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination, 0))).head
+        floating = false, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination, 0)
+      val raId = RoadAddressDAO.create(Seq(address)).head
       val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks).distinct
       errors should have size 1
       errors.head.validationError should be(ElyCodeChangeDetected)
@@ -425,7 +427,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         starting ++ last.map(_.copy(discontinuity = Discontinuity.ChangingELYCode))).distinct
       errorsUpd should have size 0
 
-      RoadAddressDAO.updateGeometry(raId, Seq(Point(0.0, 40.0), Point(0.0, 50.0)))
+      RoadAddressDAO.updateGeometry(address.copy(id = raId), Seq(Point(0.0, 40.0), Point(0.0, 50.0)))
 
       val connectedError = ProjectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Continuous))).distinct
