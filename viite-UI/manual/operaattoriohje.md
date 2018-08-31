@@ -317,9 +317,9 @@ Keltaisten kohteiden valinta toimii yksinkertaisemmin, kuin muiden tieosoitesegm
 9. Geometriasta irti olevien tieosoitesegmenttien korjaaminen takaisin geometrialle
 --------------------------
 
-Geometriasta irti olevien tieosoitesegmenttien korjausta varten k&auml;ytt&auml;j&auml;n tulee siirty&auml; muokkaustilaan. Korjausprosessissa geometriasta irti olevat tieosoitesegmentit kiinnitet&auml;&auml;n takaisin geometriaan kertomalla niille uudet tielinkit, joihin ne kiinnittyv&auml;t.
+Geometriasta irti olevien tieosoitesegmenttien korjausta varten k&auml;ytt&auml;j&auml;n tulee siirty&auml; muokkaustilaan. Korjausprosessissa geometriasta irti olevat tieosoitesegmentit kiinnitet&auml;&auml;n takaisin geometriaan kertomalla niille uudet tielinkit, joihin ne kiinnittyv&auml;t. 
 
-Yleispiirteinen korjausprosessi: ensin valitaan kartalta keltainen, geometriasta irti oleva tieosoitesegmentti. T&auml;m&auml;n j&auml;lkeen sovellus ohjeistaa k&auml;ytt&auml;j&auml;&auml; n&auml;yt&ouml;n oikean laidan ominaisuustietotaulussa jatkamaan valintoja tai painamaan Valinta valmis -painiketta. Muutokset voi tarkistaa Siirr&auml;-painikkeen painamisen j&auml;lkeen ennen Tallennusta.
+Yleispiirteinen korjausprosessi: ensin valitaan kartalta keltainen, geometriasta irti oleva tieosoitesegmentti. T&auml;m&auml;n j&auml;lkeen sovellus ohjeistaa k&auml;ytt&auml;j&auml;&auml; n&auml;yt&ouml;n oikean laidan ominaisuustietotaulussa jatkamaan valintoja tai painamaan Valinta valmis -painiketta. Muutokset voi tarkistaa Siirr&auml;-painikkeen painamisen j&auml;lkeen ennen Tallennusta. 
 
 __Korjausprosessi tarkemmin:__
 
@@ -369,6 +369,13 @@ Korjauksen j&auml;lkeen tieosoiteverkko on ehe&auml;. Tallentamisen j&auml;lkeen
 
 ![korjaus](k33.JPG)
 
+__Tieosoitteellisen segmentin irrotus geometriasta__
+
+Joidenkin geometriasta irti olevien tieosoitesegmenttien korjaamistapaukset vaativat tai niiden korjaamista helpottaa jo tieosoitteellisen segmentin irrottaminen geometriasta. Tieosoitteellinen segmentti irroitetaan geometriasta valitsemalla muokkaustilassa kaksoisnäpäytyksellä linkki ja klikkaamalla ominaisuustietonäkymään ilmestyvää "Irrota geometriasta"-nappia.
+
+![Irrotus geometriasta](k51.PNG)
+
+_Kaikki geometriasta irrallaan olevat segmentit voidaan käsitellä kerralla jos lyhyt tieosoitteellinen tielinkki irrotetaan ensin geometriasta._
 
 9.1 Siirron ep&auml;onnistuminen
 --------------------------

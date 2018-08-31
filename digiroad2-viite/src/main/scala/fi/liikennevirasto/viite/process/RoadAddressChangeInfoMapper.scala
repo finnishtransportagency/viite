@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.viite.LinkRoadAddressHistory
 import fi.liikennevirasto.viite.dao.{FloatingReason, RoadAddress}
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.viite.MinAllowedRoadAddressLength
 
 object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -141,6 +142,23 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }
   }
 
+  override def calculateMeasures(ra: RoadAddress, adjMap: RoadAddressMapping): (Double, Double) = {
+    val coef = adjMap.targetLen / adjMap.sourceLen
+    val (sourceStartM, sourceEndM) = (Math.min(adjMap.sourceStartM, adjMap.sourceEndM), Math.max(adjMap.sourceStartM, adjMap.sourceEndM))
+    val (targetStartM, targetEndM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+    val startM = if ((ra.startMValue - sourceStartM) > MinAllowedRoadAddressLength) {
+      targetStartM + ra.startMValue * coef
+    } else {
+      targetStartM
+    }
+    val endM = if ((sourceEndM - ra.endMValue) > MinAllowedRoadAddressLength) {
+      targetStartM + ra.endMValue * coef
+    } else {
+      targetEndM
+    }
+    (startM, endM)
+  }
+
   def resolveChangesToMap(roadAddresses: Map[(Long, Long), LinkRoadAddressHistory], changes: Seq[ChangeInfo]): Map[Long, LinkRoadAddressHistory] = {
     val current = roadAddresses.flatMap(_._2.currentSegments).toSeq
     val history = roadAddresses.flatMap(_._2.historySegments).toSeq
@@ -150,8 +168,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     preTransferCheckBySection(originalCurrentSections)
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
     val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses.mapValues(_.allSegments))
-    val mappedChanges = appliedChanges.values.map(
-      s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
+    val mappedChanges = appliedChanges.values.map(s => LinkRoadAddressHistory(s.partition(_.endDate.isEmpty)))
     val (changedCurrentSections, changedHistorySections) = groupByRoadSections(currentSections, historySections, mappedChanges)
     val (resultCurr, resultHist) = postTransferCheckBySection(changedCurrentSections, changedHistorySections, originalCurrentSections, originalHistorySections)
     (resultCurr.values ++ resultHist.values).flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))

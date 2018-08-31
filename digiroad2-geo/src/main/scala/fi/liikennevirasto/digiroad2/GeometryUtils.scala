@@ -418,4 +418,13 @@ object GeometryUtils {
   def scaleToThreeDigits(value: Double): Double = {
     BigDecimal(value).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
+
+  def moveGeomToOrigin(geom: Seq[Point]): Seq[Point] = {
+    moveGeomToPoint(geom, Point(0.0, 0.0, 0.0))
+  }
+
+  def moveGeomToPoint(geom: Seq[Point], referencePoint: Point): Seq[Point] = {
+    val sourcePoint = geom.minBy(p => p.distance2DTo(referencePoint))
+    geom.map(p => p.minus(sourcePoint))
+  }
 }

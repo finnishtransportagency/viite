@@ -10,7 +10,7 @@
       '</ul>' +
       '<div class="property-boundaries-visible-wrapper">' +
         '<div class="checkbox">' +
-          '<label><input type="checkbox" name="propertyBoundariesVisible" value="propertyBoundariesVisible" checked="true" id="propertyBoundariesVisibleCheckbox">Näytä kiinteistörajat</label>' +
+          '<label><input type="checkbox" name="propertyBoundariesVisible" value="propertyBoundariesVisible"  id="propertyBoundariesVisibleCheckbox">Näytä kiinteistörajat</label>' +
         '</div>' +
       '</div>' +
       '<div class="suravage-visible-wrapper">' +
@@ -24,7 +24,7 @@
         '</div>' +
         '</div>' +
     '</div>';
-    eventbus.trigger('tileMap:togglepropertyBorder', true);
+
     container.append(element);
     container.find('li').click(function(event) {
       container.find('li.selected').removeClass('selected');
