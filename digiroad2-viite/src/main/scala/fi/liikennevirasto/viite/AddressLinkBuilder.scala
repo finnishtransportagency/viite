@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType._
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, MunicipalityDAO, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -244,7 +244,7 @@ trait AddressLinkBuilder {
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
         discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.createdBy,
         nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
-        calibrationPoints, floating = false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
+        calibrationPoints, floating = nextSegment.floating, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
         nextSegment.commonHistoryId))
 
     } else Seq(nextSegment, previousSegment)
