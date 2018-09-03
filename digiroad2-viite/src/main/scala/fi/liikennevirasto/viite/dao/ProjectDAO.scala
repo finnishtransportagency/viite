@@ -230,18 +230,18 @@ object ProjectDAO {
 
   private val projectLinkHistoryQueryBase =
     s"""
-        select PROJECT_LINK_HISTORY.ID, PROJECT_LINK_HISTORY.PROJECT_ID, PROJECT_LINK_HISTORY.TRACK_CODE, PROJECT_LINK_HISTORY.DISCONTINUITY_TYPE,
-          PROJECT_LINK_HISTORY.ROAD_NUMBER, PROJECT_LINK_HISTORY.ROAD_PART_NUMBER, PROJECT_LINK_HISTORY.START_ADDR_M, PROJECT_LINK_HISTORY.END_ADDR_M,
-          PROJECT_LINK_HISTORY.START_MEASURE, PROJECT_LINK_HISTORY.END_MEASURE, PROJECT_LINK_HISTORY.SIDE_CODE,
-          PROJECT_LINK_HISTORY.CREATED_BY, PROJECT_LINK_HISTORY.MODIFIED_BY, PROJECT_LINK_HISTORY.link_id, PROJECT_LINK_HISTORY.GEOMETRY,
-          (PROJECT_LINK_HISTORY.END_MEASURE - PROJECT_LINK_HISTORY.START_MEASURE) as length, PROJECT_LINK_HISTORY.CALIBRATION_POINTS, PROJECT_LINK_HISTORY.STATUS,
-          PROJECT_LINK_HISTORY.ROAD_TYPE, PROJECT_LINK_HISTORY.LINK_SOURCE as source, PROJECT_LINK_HISTORY.ROAD_ADDRESS_ID, PROJECT_LINK_HISTORY.ELY, PROJECT_LINK_HISTORY.REVERSED, PROJECT_LINK_HISTORY.CONNECTED_LINK_ID,
+        select plh.ID, plh.PROJECT_ID, plh.TRACK_CODE, plh.DISCONTINUITY_TYPE,
+          plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.START_ADDR_M, plh.END_ADDR_M,
+          plh.START_MEASURE, plh.END_MEASURE, plh.SIDE_CODE,
+          plh.CREATED_BY, plh.MODIFIED_BY, plh.link_id, plh.GEOMETRY,
+          (plh.END_MEASURE - plh.START_MEASURE) as length, plh.CALIBRATION_POINTS, plh.STATUS,
+          plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROAD_ADDRESS_ID, plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
           CASE
             WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
             WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROAD_ADDRESS.START_DATE
             ELSE PRJ.START_DATE END as start_date,
           CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
-          PROJECT_LINK_HISTORY.ADJUSTED_TIMESTAMP,
+          plh.ADJUSTED_TIMESTAMP,
           CASE
             WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
             WHEN rn.road_name IS NULL AND pln.road_name IS NOT NULL THEN pln.road_name
@@ -251,11 +251,11 @@ object ProjectDAO {
           ROAD_ADDRESS.TRACK_CODE as TRACK_CODE,
           ROAD_ADDRESS.ROAD_NUMBER as ROAD_NUMBER,
           ROAD_ADDRESS.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
-          PROJECT_LINK_HISTORY.CALIBRATION_POINTS_SOURCE
-          from PROJECT prj JOIN PROJECT_LINK_HISTORY ON (prj.id = PROJECT_LINK_HISTORY.PROJECT_ID)
-            LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK_HISTORY.ROAD_ADDRESS_ID)
-            LEFT JOIN road_names rn ON (rn.road_number = project_link_history.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
-        	  LEFT JOIN project_link_name pln ON (pln.road_number = project_link_history.road_number AND pln.project_id = project_link_history.project_id)
+          plh.CALIBRATION_POINTS_SOURCE
+          from PROJECT prj JOIN PROJECT_LINK_HISTORY plh ON (prj.id = plh.PROJECT_ID)
+            LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = plh.ROAD_ADDRESS_ID)
+            LEFT JOIN road_names rn ON (rn.road_number = plh.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
+        	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """.stripMargin
 
   implicit val getProjectLinkRow = new GetResult[ProjectLink] {
