@@ -6,9 +6,10 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewRoadAddress, RoadType}
-import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
+import fi.liikennevirasto.viite.dao.{Discontinuity, FloatingReason, RoadAddress}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
@@ -16,7 +17,7 @@ import org.scalatest.{FunSuite, Matchers}
 class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
 
   val roadAddr = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
-    None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
+    None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
     LinkGeomSource.NormalLinkInterface, 8, NoTermination, 123456)
 
   test("resolve simple case") {
@@ -85,7 +86,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
       adjustedTimestamp = roadAdjustedTimestamp, geometry = Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)))
     val roadAddress3 = roadAddr.copy(roadNumber = 75, roadPartNumber = 2, track = Track.Combined, startAddrMValue = 3532, endAddrMValue = 3598,
       createdBy = Some("tr"), linkId = roadLinkId3, endMValue = 65.259, adjustedTimestamp = roadAdjustedTimestamp,
-      floating = true, geometry = List(Point(538889.668, 6999800.979, 0.0), Point(538912.266, 6999862.199, 0.0)))
+      floating = FloatingReason.ApplyChanges, geometry = List(Point(538889.668, 6999800.979, 0.0), Point(538912.266, 6999862.199, 0.0)))
     val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(s => LinkRoadAddressHistory(s, Seq()))
     val changes = Seq(
       ChangeInfo(Some(roadLinkId1), Some(roadLinkId2), 123L, 2, Some(0.0), Some(1000.234), Some(399.648), Some(1399.882), changesVVHTimestamp),
@@ -234,7 +235,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.endMValue should be (960.969)
     addr1.startAddrMValue should be (400)
     addr1.endAddrMValue should be (1400)
-    addr1.floating should be (false)
+    addr1.isFloating should be (false)
     addr1.adjustedTimestamp should be (changesVVHTimestamp)
     addr1.sideCode should be (AgainstDigitizing)
     val addr2 = results(roadLinkId2).head
@@ -242,7 +243,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr2.endMValue should be (201.986)
     addr2.startAddrMValue should be (1400)
     addr2.endAddrMValue should be (1600)
-    addr2.floating should be (false)
+    addr2.isFloating should be (false)
     addr2.adjustedTimestamp should be (changesVVHTimestamp)
     addr2.sideCode should be (AgainstDigitizing)
     val addr3 = results(roadLinkId3).head
@@ -250,7 +251,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.endMValue should be (20.0)
     addr3.startAddrMValue should be (1600)
     addr3.endAddrMValue should be (1610)
-    addr3.floating should be (true)
+    addr3.isFloating should be (true)
     addr3.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr3.sideCode should be (TowardsDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
@@ -290,7 +291,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.endMValue should be (400.222 +- 0.001)
     addr1.startAddrMValue should be (400)
     addr1.endAddrMValue should be (800)
-    addr1.floating should be (false)
+    addr1.isFloating should be (false)
     addr1.adjustedTimestamp should be (changesVVHTimestamp)
     addr1.sideCode should be (AgainstDigitizing)
 
@@ -299,7 +300,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr2.endMValue should be (960.969)
     addr2.startAddrMValue should be (800)
     addr2.endAddrMValue should be (1400)
-    addr2.floating should be (false)
+    addr2.isFloating should be (false)
     addr2.adjustedTimestamp should be (changesVVHTimestamp)
     addr2.sideCode should be (AgainstDigitizing)
 
@@ -308,7 +309,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.endMValue should be (201.986)
     addr3.startAddrMValue should be (1400)
     addr3.endAddrMValue should be (1600)
-    addr3.floating should be (false)
+    addr3.isFloating should be (false)
     addr3.adjustedTimestamp should be (changesVVHTimestamp)
     addr3.sideCode should be (AgainstDigitizing)
 
@@ -317,7 +318,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr4.endMValue should be (20.0)
     addr4.startAddrMValue should be (1600)
     addr4.endAddrMValue should be (1610)
-    addr4.floating should be (true)
+    addr4.isFloating should be (true)
     addr4.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr4.sideCode should be (TowardsDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
@@ -355,7 +356,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.endMValue should be (960.434)
     addr1.startAddrMValue should be (400)
     addr1.endAddrMValue should be (1400)
-    addr1.floating should be (false)
+    addr1.isFloating should be (false)
     addr1.adjustedTimestamp should be (changesVVHTimestamp)
     addr1.sideCode should be (AgainstDigitizing)
     val addr2 = results(roadLinkId2).head
@@ -363,7 +364,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr2.endMValue should be (201.986)
     addr2.startAddrMValue should be (1400)
     addr2.endAddrMValue should be (1600)
-    addr2.floating should be (false)
+    addr2.isFloating should be (false)
     addr2.adjustedTimestamp should be (changesVVHTimestamp)
     addr2.sideCode should be (AgainstDigitizing)
     val addr3 = results(roadLinkId3).head
@@ -372,7 +373,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.endMValue should be (31.001)
     addr3.startAddrMValue should be (1600)
     addr3.endAddrMValue should be (1610)
-    addr3.floating should be (true)
+    addr3.isFloating should be (true)
     addr3.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr3.sideCode should be (TowardsDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
@@ -412,7 +413,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.endMValue should be (399.777 +- 0.001)
     addr1.startAddrMValue should be (400)
     addr1.endAddrMValue should be (800)
-    addr1.floating should be (false)
+    addr1.isFloating should be (false)
     addr1.adjustedTimestamp should be (changesVVHTimestamp)
     addr1.sideCode should be (AgainstDigitizing)
 
@@ -421,7 +422,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr2.endMValue should be (960.434)
     addr2.startAddrMValue should be (800)
     addr2.endAddrMValue should be (1400)
-    addr2.floating should be (false)
+    addr2.isFloating should be (false)
     addr2.adjustedTimestamp should be (changesVVHTimestamp)
     addr2.sideCode should be (AgainstDigitizing)
 
@@ -430,7 +431,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.endMValue should be (201.986)
     addr3.startAddrMValue should be (1400)
     addr3.endAddrMValue should be (1600)
-    addr3.floating should be (false)
+    addr3.isFloating should be (false)
     addr3.adjustedTimestamp should be (changesVVHTimestamp)
     addr3.sideCode should be (AgainstDigitizing)
     val addr4 = results(roadLinkId3).head
@@ -439,7 +440,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr4.endMValue should be (31.001)
     addr4.startAddrMValue should be (1600)
     addr4.endAddrMValue should be (1610)
-    addr4.floating should be (true)
+    addr4.isFloating should be (true)
     addr4.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr4.sideCode should be (TowardsDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
@@ -463,7 +464,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.endMValue should be (960.434)
     addr1.startAddrMValue should be (400)
     addr1.endAddrMValue should be (1400)
-    addr1.floating should be (true)
+    addr1.isFloating should be (true)
     addr1.adjustedTimestamp should be (roadAdjustedTimestamp)
     addr1.sideCode should be (AgainstDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
@@ -498,7 +499,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr1.endMValue should be (960.969-399.648 +- 0.001)
     addr1.startAddrMValue should be (816)
     addr1.endAddrMValue should be (1400)
-    addr1.floating should be (false)
+    addr1.isFloating should be (false)
     addr1.adjustedTimestamp should be (changesVVHTimestamp2)
     addr1.sideCode should be (TowardsDigitizing)
     val addr2 = results(roadLinkId2).head
@@ -506,7 +507,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr2.endMValue should be (399.648)
     addr2.startAddrMValue should be (400)
     addr2.endAddrMValue should be (addr1.startAddrMValue)
-    addr2.floating should be (false)
+    addr2.isFloating should be (false)
     addr2.adjustedTimestamp should be (changesVVHTimestamp2)
     addr2.sideCode should be (AgainstDigitizing)
     results.values.flatten.map(_.commonHistoryId).toSet.size should be (1)
