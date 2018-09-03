@@ -869,7 +869,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val ((floating, addresses), currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
-    val projectLinks = if(!currentProjectLinks.isEmpty && (projectState.isEmpty || projectState.isDefined && projectState.get != Saved2TR))
+    val projectLinks = if (!currentProjectLinks.isEmpty && (projectState.isEmpty || projectState.isDefined && projectState.get != Saved2TR))
       currentProjectLinks
     else fetchProjectHistoryLinks(projectId)
     val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
