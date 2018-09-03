@@ -934,9 +934,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (floating.groupBy(_.linkId), addresses.groupBy(_.linkId))
     })
 
-    val fetchProjectLinksF = Future(withDynSession{
+    val fetchProjectLinksF = Future(withDynSession {
       val projectState = ProjectDAO.getProjectStatus(projectId)
-      if(projectState.isDefined && projectState.get == Saved2TR)
+      if (projectState.isDefined && projectState.get == Saved2TR)
         ProjectDAO.getProjectLinksHistory(projectId).groupBy(_.linkId)
       else
         ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)
