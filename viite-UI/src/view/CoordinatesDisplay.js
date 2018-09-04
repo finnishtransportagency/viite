@@ -21,7 +21,7 @@
     container.append(element);
 
     var centerLonLat = {lon: 0, lat: 0};
-    eventbus.on('map:moved', function(event) {
+    eventbus.on('map:refresh', function(event) {
       centerLonLat = event.center;
       if (centerLonLat) {
         container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat[1]));

@@ -6,6 +6,8 @@
     var roadNormalType = 0;
     var borderWidth = 3;
     var dashedLinesRoadClasses = [7, 8, 9, 10, 12];
+    var linkStatus = LinkValues.LinkStatus;
+    var projectLinkStyler = new ProjectLinkStyler();
 
     var LINKSOURCE_NORMAL = 1;
     var LINKSOURCE_COMPLEM = 2;
@@ -34,48 +36,53 @@
     var opacityMultiplier = 1;
 
     var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering, roadLinkSource, roadId) {
+      if (applicationModel.getSelectedLayer() !== 'linkProperty' && roadClass !== 99) {
+        setOpacityMultiplier(0.2);
+      } else {
+        setOpacityMultiplier(1);
+      }
       var unsavedRoadId = 0;
       if (roadLinkSource === LINKSOURCE_SURAVAGE && roadId === unsavedRoadId) {
-        return 'rgba(211, 175, 246,' + 0.65 * opacityMultiplier + ')';
+        return 'rgba(211, 175, 246,' + opacityMultiplier + ')';
       } else if (anomaly !== 1) {
         if (roadLinkType === -1) {
           if (constructionType === 1) {
-            return 'rgba(164, 164, 162,' + 0.65 * opacityMultiplier + ')';
+            return 'rgba(164, 164, 162,' + opacityMultiplier + ')';
           } else {
-            return 'rgba(247, 254, 46,' + 0.45 * opacityMultiplier + ')';
+            return 'rgba(247, 254, 46,' + opacityMultiplier + ')';
           }
         } else {
           switch (roadClass) {
             case 1 :
-              return 'rgba(255, 0, 0,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(255, 0, 0,' + opacityMultiplier + ')';
             case 2 :
-              return 'rgba(255, 102, 0,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(255, 102, 0,' + opacityMultiplier + ')';
             case 3 :
-              return 'rgba(255, 153, 51,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(255, 153, 51,' + opacityMultiplier + ')';
             case 4 :
-              return 'rgba(0, 17, 187,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(0, 17, 187,' + opacityMultiplier + ')';
             case 5 :
-              return 'rgba(51, 204, 204,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(51, 204, 204,' + opacityMultiplier + ')';
             case 6 :
-              return 'rgba(224, 29, 217,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(224, 29, 217,' + opacityMultiplier + ')';
             case 7 :
-              return 'rgba(0, 204, 221,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(0, 204, 221,' + opacityMultiplier + ')';
             case 8 :
-              return 'rgba(252, 109, 160,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(252, 109, 160,' + opacityMultiplier + ')';
             case 9 :
-              return 'rgba(255, 85, 221,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(255, 85, 221,' + opacityMultiplier + ')';
             case 10 :
-              return 'rgba(255, 85, 221,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(255, 85, 221,' + opacityMultiplier + ')';
             case 11 :
-              return 'rgba(68, 68, 68,' + 0.75 * opacityMultiplier + ')';
+              return 'rgba(68, 68, 68,' + opacityMultiplier + ')';
             case 12 :
-              return 'rgba(255, 85, 221,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(255, 85, 221,' + opacityMultiplier + ')';
             case 97 :
               return 'rgba(30, 30, 30,' + opacityMultiplier + ')';
             case 98 :
               return 'rgba(250, 250, 250,' + opacityMultiplier + ')';
             case 99 :
-              return 'rgba(164, 164, 162,' + 0.65 * opacityMultiplier + ')';
+              return 'rgba(164, 164, 162,' + opacityMultiplier + ')';
           }
         }
       } else {
@@ -90,9 +97,10 @@
     };
 
       var generateUnderLineColor = function (linkData, opacityMultiplier, middleLineWidth) {
-          if (linkData.blackUnderline)
-        return {color: 'rgba(30, 30, 30,' + opacityMultiplier + ')', width: middleLineWidth + 7};
-      else return {color: undefined, width: undefined};
+        if (linkData.blackUnderline)
+          return {color: 'rgba(30, 30, 30,' + opacityMultiplier + ')', width: middleLineWidth + 7};
+        else
+          return {color: undefined, width: undefined};
     };
 
     /**
@@ -218,11 +226,11 @@
      * the second is for the border and the third is for the line itself.
      */
     var generateStyleByFeature = function (linkData, currentZoom, notSelection) {
-        var strokeWidth = strokeWidthByZoomLevel(currentZoom, linkData.roadLinkType, linkData.anomaly,
-            linkData.roadLinkSource, notSelection, linkData.constructionType);
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, linkData.roadLinkType, linkData.anomaly,
+        linkData.roadLinkSource, notSelection, linkData.constructionType);
       // Gray line behind all of the styles present in the layer.
-        var underLineColor = generateStrokeColor(99, linkData.anomaly, linkData.constructionType,
-            linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+      var underLineColor = generateStrokeColor(99, linkData.anomaly, linkData.constructionType,
+        linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
       // If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the
       // dashed/colored line and above the border and grey lines
       var middleLineColor;
@@ -230,28 +238,32 @@
       var lineCap;
       var borderCap;
       var middleLineCap;
-        var lineColor = generateStrokeColor(linkData.roadClass, linkData.anomaly, linkData.constructionType,
-            linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+      var lineColor = generateStrokeColor(linkData.roadClass, linkData.anomaly, linkData.constructionType,
+        linkData.roadLinkType, linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+      if (applicationModel.getSelectedLayer() === 'linkProperty' || _.isUndefined(linkData.status) || linkData.status === linkStatus.Undefined.value) {
         if (linkData.roadClass >= 7 && linkData.roadClass <= 10 || linkData.roadClass === 12) {
-        borderColor = lineColor;
-            middleLineColor = generateStrokeColor(98, linkData.anomaly, linkData.constructionType, linkData.roadLinkType,
-                linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
-        lineCap = 'butt';
-        middleLineCap = 'butt';
-        borderCap = 'round';
+          borderColor = lineColor;
+          middleLineColor = generateStrokeColor(98, linkData.anomaly, linkData.constructionType, linkData.roadLinkType,
+            linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+          lineCap = 'butt';
+          middleLineCap = 'butt';
+          borderCap = 'round';
         } else if (linkData.roadClass === 99 && linkData.constructionType === 1) {
-        borderColor = lineColor;
-            middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, linkData.roadLinkType,
-                linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
-        lineCap = 'butt';
-        middleLineCap = 'butt';
-        borderCap = 'round';
+          borderColor = lineColor;
+          middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, linkData.roadLinkType,
+            linkData.gapTransfering, linkData.roadLinkSource, linkData.id);
+          lineCap = 'butt';
+          middleLineCap = 'butt';
+          borderCap = 'round';
+        } else {
+          borderColor = modifyColorProperties(lineColor, 1.45, true, false);
+          borderColor = modifyColorProperties(borderColor, 0.75, false, true);
+          lineCap = 'round';
+          borderCap = 'round';
+          middleLineColor = lineColor;
+        }
       } else {
-        borderColor = modifyColorProperties(lineColor, 1.45, true, false);
-        borderColor = modifyColorProperties(borderColor, 0.75, false, true);
-        lineCap = 'round';
-        borderCap = 'round';
-        middleLineColor = lineColor;
+        return projectLinkStyler.getProjectLinkStyle().getStyle(linkData, {zoomLevel: currentZoom});
       }
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
@@ -275,7 +287,7 @@
         lineCap: lineCap
       });
 
-        var roadTypeDetails = generateUnderLineColor(linkData, opacityMultiplier, middleLineWidth);
+      var roadTypeDetails = generateUnderLineColor(linkData, opacityMultiplier, middleLineWidth);
       var roadTypeLine = new ol.style.Stroke({
         width: roadTypeDetails.width,
         color: roadTypeDetails.color,
@@ -287,7 +299,7 @@
         line.setLineDash([10, 10]);
       }
 
-      if (linkData.roadClass == 99 && linkData.constructionType == 1) {
+      if (linkData.roadClass === 99 && linkData.constructionType === 1) {
         line.setLineDash([10, 10]);
       }
 
@@ -313,7 +325,10 @@
       middleLineStyle.setZIndex(zIndex + 1);
       lineStyle.setZIndex(zIndex + 2);
       roadTypeStyle.setZIndex(zIndex - 2);
-      return [borderStyle, underlineStyle, middleLineStyle, lineStyle, roadTypeStyle];
+      var style = [borderStyle, middleLineStyle, lineStyle];
+      if (linkData.blackUnderline)
+        style.push(roadTypeStyle);
+      return style;
     };
 
     var setOpacityMultiplier = function (multiplier) {
