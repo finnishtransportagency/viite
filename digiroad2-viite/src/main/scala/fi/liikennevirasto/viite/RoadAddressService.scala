@@ -765,34 +765,34 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
-      val (floatings, _) = withDynTransaction {
-        RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.floating)
+    val (floatings, _) = withDynTransaction {
+      RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.floating)
+    }
+    val historyLinks = time(logger, "Fetch floating history links") {
+      roadLinkService.getRoadLinksHistoryFromVVH(floatings.map(_.linkId).toSet)
+    }
+    if (historyLinks.nonEmpty) {
+      val historyLinkAddresses = time(logger, "Build history link addresses") {
+        historyLinks.flatMap(fh => {
+          buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
+        })
       }
-      val historyLinks = time(logger, "Fetch floating history links") {
-        roadLinkService.getRoadLinksHistoryFromVVH(floatings.map(_.linkId).toSet)
-      }
-      if (historyLinks.nonEmpty) {
-        val historyLinkAddresses = time(logger, "Build history link addresses") {
-          historyLinks.flatMap(fh => {
-            buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
-          })
-        }
-        val selectedById = historyLinkAddresses.find(_.id == id)
-        val selectedByLinkId = historyLinkAddresses.find(_.linkId == linkId)
-        val selected = if(selectedById.isDefined)
-          selectedById
-        else if(selectedByLinkId.isDefined)
-          selectedByLinkId
-        else Option.empty[RoadAddressLink]
-        if(selected.isDefined)
+      val selectedById = historyLinkAddresses.find(_.id == id)
+      val selectedByLinkId = historyLinkAddresses.find(_.linkId == linkId)
+      val selected = if (selectedById.isDefined)
+        selectedById
+      else if (selectedByLinkId.isDefined)
+        selectedByLinkId
+      else Option.empty[RoadAddressLink]
+      if (selected.isDefined)
         historyLinkAddresses.filter(ra => {
           ra.id != id && GeometryUtils.areAdjacent(ra.geometry, selected.get.geometry) && !chainIds.contains(ra.id)
         })
-        else
-          Seq.empty[RoadAddressLink]
-      } else {
+      else
         Seq.empty[RoadAddressLink]
-      }
+    } else {
+      Seq.empty[RoadAddressLink]
+    }
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long, newSession: Boolean = true): Seq[RoadAddressLink] = {
@@ -819,7 +819,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val nonRoadAddressesLinks = connectedLinks.filter(cl => !allRoadAddresses.map(_.linkId).toSet.contains(cl._1))
       .values.flatMap(rl => RoadAddressFiller.generateUnknownRoadAddressesForRoadLink(rl, Seq.empty[RoadAddressLink]))
       .toSeq.filter(_.anomaly == Anomaly.NoAddressGiven)
-    val builtMissing = (nonRoadAddressesLinks++missingLinks).map(ml => RoadAddressLinkBuilder.build(connectedLinks(ml.linkId), ml))
+    val builtMissing = (nonRoadAddressesLinks ++ missingLinks).map(ml => RoadAddressLinkBuilder.build(connectedLinks(ml.linkId), ml))
     val remainingAddresses = onlyFloatingRoadAddresses.filterNot(ra => builtMissing.map(_.linkId).contains(ra.linkId) && ra.floating)
 
     val filteredAddresses = remainingAddresses.filter(ra => {
