@@ -227,8 +227,8 @@ trait AddressLinkBuilder {
       val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
         val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
         val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
-        (left.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) endMValue else startMValue)),
-          right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else endMValue)))
+        (left.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) endMValue - startMValue else startMValue - endMValue)),
+          right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue - endMValue else endMValue - startMValue)))
       }
 
       if (nextSegment.sideCode.value != previousSegment.sideCode.value && GeometryUtils.geometryLength(previousSegment.geometry) != 0 && GeometryUtils.geometryLength(nextSegment.geometry) != 0)
