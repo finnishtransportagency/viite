@@ -2257,11 +2257,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val linkIds = projectLinks.map(pl => pl.track.value -> pl.linkId).groupBy(_._1).mapValues(_.map(_._2).toSet)
       val newLinkTemplates = Seq(ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 1234L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
+        None, 1234L, 0.0, 43.1, SideCode.Unknown, (None, None), FloatingReason.NoFloating,
         Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
         None, 86400L),
         ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
-          None, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), false,
+          None, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), FloatingReason.NoFloating,
           Seq(Point(510.0, 0.0), Point(581.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 71.1, 0L, 0, false,
           None, 86400L))
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", 5, 205, 0, None)
