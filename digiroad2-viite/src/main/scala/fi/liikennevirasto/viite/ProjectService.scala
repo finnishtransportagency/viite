@@ -854,6 +854,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
+    val projectState = getProjectState(projectId)
     val fetchRoadAddressesByBoundingBoxF = Future(withDynTransaction {
       val (floating, addresses) = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating = false,
         roadNumberLimits = roadNumberLimits).partition(_.isFloating)
@@ -868,8 +869,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
 
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
-    val ((floating, addresses), projectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
-
+    val ((floating, addresses), currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
+    val projectLinks = if (!currentProjectLinks.isEmpty && (projectState.isEmpty || projectState.isDefined && projectState.get != Saved2TR))
+      currentProjectLinks
+    else fetchProjectHistoryLinks(projectId)
     val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
 
     val missedRL = if (useFrozenVVHLinks) {
@@ -916,6 +919,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+
+  def fetchProjectHistoryLinks(projectId: Long): Seq[ProjectLink] = {
+    withDynTransaction{
+      ProjectDAO.getProjectLinksHistory(projectId)
+    }
+  }
+
   def fetchProjectRoadLinksLinearGeometry(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                           everything: Boolean = false, publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
 
@@ -925,7 +935,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (floating.groupBy(_.linkId), addresses.groupBy(_.linkId))
     })
 
-    val fetchProjectLinksF = Future(withDynSession(ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)))
+    val fetchProjectLinksF = Future(withDynSession {
+      val projectState = ProjectDAO.getProjectStatus(projectId)
+      if (projectState.isDefined && projectState.get == Saved2TR)
+        ProjectDAO.getProjectLinksHistory(projectId).groupBy(_.linkId)
+      else
+        ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)
+    })
     val ((_, addresses), projectLinks) = time(logger, "Fetch road addresses by bounding box") {
       Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
     }
@@ -1544,6 +1560,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
+  }
+
+  def getProjectState(projectId: Long): Option[ProjectState] = {
+    withDynTransaction {
+      ProjectDAO.getProjectStatus(projectId)
+    }
   }
 
   private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
