@@ -13,7 +13,7 @@ object CommonHistoryFiller {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private def applyUnchanged(currentRoadAddresses : Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+  private def applyUnchanged(currentRoadAddresses: Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val unchangedLinks = projectLinks.filter(_.status == LinkStatus.UnChanged)
 
     unchangedLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
@@ -69,11 +69,11 @@ object CommonHistoryFiller {
     }.toSeq ++ newRoadAddresses.filterNot(ra => terminatedLinks.exists(_.roadAddressId == ra.id))
   }
 
-  private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
+  private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val addressesGroups = newRoadAddresses.filter(_.id == NewRoadAddress)
-    addressesGroups.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType)).flatMap{ group =>
+    addressesGroups.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType)).flatMap { group =>
       val addressesInGroup = group._2
-      addressesInGroup.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]){ case (seq, address) =>
+      addressesInGroup.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) { case (seq, address) =>
         val changedAddress = fillCommonHistoryId(seq, address)
         seq ++ Seq(changedAddress)
       }
@@ -137,23 +137,22 @@ object CommonHistoryFiller {
     }.toSeq
   }
 
-  private def applyNumbering(currentRoadAddresses : Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]) :Seq[RoadAddress]={
+  private def applyNumbering(currentRoadAddresses: Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val renumberedLinks = projectLinks.filter(_.status == LinkStatus.Numbering)
     renumberedLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
-      case((_, _, _, _), groupedLinks) =>
+      case ((_, _, _, _), groupedLinks) =>
         val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.exists(_.roadAddressId == ra.id))
         val roadAddressesToCompare = currentRoadAddresses.filter(ra => groupedLinks.exists(_.roadAddressId == ra.id))
         //if the length of the renumbering part is the same in road address table
-        if(groupedLinks.nonEmpty && roadAddressesToCompare.nonEmpty && groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue){
+        if (groupedLinks.nonEmpty && roadAddressesToCompare.nonEmpty && groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue) {
           roadAddressesToReturn
-        }
-        else{
+        } else {
           assignNewCommonHistoryIds(roadAddressesToReturn)
         }
     }.toSeq ++ newRoadAddresses.filterNot(ra => renumberedLinks.exists(_.roadAddressId == ra.id))
   }
 
-  def fillCommonHistory(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress], currentRoadAddresses: Seq[RoadAddress]) : Seq[RoadAddress]= {
+  def fillCommonHistory(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress], currentRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val fillOperations: Seq[(Seq[ProjectLink], Seq[RoadAddress]) => Seq[RoadAddress]] = Seq(
       applyUnchanged(currentRoadAddresses),
       applyNew,
@@ -173,8 +172,8 @@ object CommonHistoryFiller {
     }).values.flatten.toSeq
   }
 
-  private def assignNewCommonHistoryIds(roadAddresses: Seq[RoadAddress]) : Seq[RoadAddress] = {
-    roadAddresses.groupBy(_.commonHistoryId).mapValues{ addresses =>
+  private def assignNewCommonHistoryIds(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+    roadAddresses.groupBy(_.commonHistoryId).mapValues { addresses =>
       val changedAddresses = addresses.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) { case (seq, address) =>
         seq ++ Seq(fillCommonHistoryId(seq, address))
       }
@@ -203,11 +202,11 @@ object CommonHistoryFiller {
 
 
   private def fillCommonHistoryId(seq: Seq[RoadAddress], address: RoadAddress): RoadAddress = {
-    if(seq.isEmpty) {
+    if (seq.isEmpty) {
       val nextId = Sequences.nextCommonHistorySeqValue
       address.copy(commonHistoryId = nextId)
     } else {
-      if(address.startAddrMValue != seq.last.endAddrMValue ){
+      if (address.startAddrMValue != seq.last.endAddrMValue) {
         val nextId = Sequences.nextCommonHistorySeqValue
         address.copy(commonHistoryId = nextId)
       } else
