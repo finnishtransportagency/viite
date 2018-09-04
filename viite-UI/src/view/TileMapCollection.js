@@ -91,22 +91,18 @@
 
     var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
-        if (key === tileMap) {
-          layer.setVisible(true);
-        } else {
-          layer.setVisible(false);
-        }
+        layer.setVisible(key === tileMap);
       });
     };
 
-    var togglepropertyBorderVisibility = function(showPropertyBorder) {
+    var togglePropertyBorderVisibility = function(showPropertyBorder) {
     propertyBorderLayer.setVisible(showPropertyBorder);
     };
 
 
     selectMap('background',true);
     eventbus.on('tileMap:selected', selectMap);
-    eventbus.on('tileMap:togglepropertyBorder', togglepropertyBorderVisibility);
+    eventbus.on('tileMap:togglepropertyBorder', togglePropertyBorderVisibility);
 
     return {
       layers: _.map(tileMapLayers, function(layer) { return layer; })

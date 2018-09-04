@@ -4,7 +4,7 @@
      * RoadLinkstyler is styler for normal roadlinks in projectmode for setting them opacity. Does not include linedashes since we are not sure if those will be included in project mode
      */
 
-    var projectMode=projectmode;
+    var projectMode = projectmode;
 
     var strokeByZoomLevel = function (zoomLevel, style) {
       return new StyleRule().where('zoomLevel').is(zoomLevel).use(style);

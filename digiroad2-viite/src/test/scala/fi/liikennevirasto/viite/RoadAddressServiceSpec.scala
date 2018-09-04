@@ -22,6 +22,7 @@ import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao.Discontinuity._
 import fi.liikennevirasto.viite.dao.TerminationCode._
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.model.Anomaly.NoAddressGiven
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
@@ -308,14 +309,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val addressList = RoadAddressDAO.fetchByLinkId(Set(linkId))
       addressList should have size (1)
       val address = addressList.head
-      address.floating should be (false)
+      address.isFloating should be (false)
       address.geometry shouldNot be (roadLink.geometry)
       roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
       dynamicSession.rollback()
       val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
       addressUpdated.geometry shouldNot be (address.geometry)
       addressUpdated.geometry should be(roadLink.geometry)
-      addressUpdated.floating should be (false)
+      addressUpdated.isFloating should be (true)
       addressUpdated.commonHistoryId should be (addressList.head.commonHistoryId)
     }
   }
@@ -327,12 +328,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val addressList = RoadAddressDAO.fetchByLinkId(Set(linkId))
       addressList should have size (1)
       val address = addressList.head
-      address.floating should be (false)
+      address.isFloating should be (false)
       roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
       dynamicSession.rollback()
       val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
       addressUpdated.geometry should be (address.geometry)
-      addressUpdated.floating should be (true)
+      addressUpdated.isFloating should be (true)
       addressUpdated.commonHistoryId should be (addressList.head.commonHistoryId)
     }
   }
@@ -375,7 +376,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
           NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
           None, None, Map("linkId" -> linkId1, "segmentId" -> segmentId1), 5, 205, 1, 0, 0, 0, 500, "01.01.2015", "", 0.0, floatGeomLength,
           SideCode.TowardsDigitizing, Option(CalibrationPoint(linkId1, 0.0, 0)), Option(CalibrationPoint(linkId1, floatGeomLength, 500)), Anomaly.None, commonHistoryId))
-      RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(true)))
+      RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(FloatingReason.NewAddressGiven)))
 
       val cutPoint = GeometryUtils.calculatePointFromLinearReference(floatGeom, 230.0).get
       val geom1 = Seq(floatGeom.head, cutPoint)
@@ -420,7 +421,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, 123, 123, Map("MUNICIPALITYCODE" -> BigInt.apply(749)))
   }
 
-  private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
+  private def roadAddressLinkToRoadAddress(floating: FloatingReason)(l: RoadAddressLink) = {
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, l.linkId, l.startMValue, l.endMValue, l.sideCode, 0,
       (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, LinkGeomSource.NormalLinkInterface, l.elyCode, NoTermination,
@@ -480,7 +481,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("GetFloatingAdjacents road links on road 75 part 2 sourceLinkId 5176142") {
     val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
     val road75FloatingAddresses = RoadAddress(367,75,2,RoadType.Unknown, Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),
-      5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)),
+      5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),FloatingReason.ApplyChanges,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)),
       LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(
@@ -507,7 +508,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     val targetLinks = targets.map(roadAddressLinkToRoadLink)
     val result = runWithRollback {
-      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
+      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.NewAddressGiven)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
     sanityCheck(result)
@@ -539,7 +540,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     val result = runWithRollback {
-      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
+      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
     sanityCheck(result)
@@ -571,7 +572,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     val result = runWithRollback {
-      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
+      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
     sanityCheck(result)
@@ -604,7 +605,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     val result = runWithRollback {
-      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
+      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
     sanityCheck(result)
@@ -656,7 +657,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     val result = runWithRollback {
-      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
+      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
     sanityCheck(result)
@@ -713,7 +714,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val sourceLinks = Seq(sourceLinkData0, sourceLinkData1, sourceLinkData2).map(_.copy(roadLinkType = FloatingRoadLinkType))
       val historyLinks = Seq(sourceLinkData0, sourceLinkDataC).map(roadAddressLinkToHistoryLink)
       val targetLinks = Seq(targetLinkData)
-      val roadAddressSeq = sourceLinks.map(roadAddressLinkToRoadAddress(true)).map { ra =>
+      val roadAddressSeq = sourceLinks.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)).map { ra =>
         if (ra.startAddrMValue == 3164)
           ra.copy(startMValue = 15.753, endMValue = 20.676,
             calibrationPoints = (None, ra.calibrationPoints._2.map(_.copy(segmentMValue = 20.676))))
@@ -752,7 +753,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     def DummyRoadAddress(id: Long, linkId: Long, timestamp: Long): RoadAddress = {
       RoadAddress(1, 199, 199, PublicRoad, Track.Combined, Continuous, 100L, 105L,
         Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, linkId, 0.0, 4.61, TowardsDigitizing,
-        timestamp, (None, None), true, Seq(Point(0, 0), Point(1.0, 4.5)), NormalLinkInterface, 20L, NoTermination, 0)
+        timestamp, (None, None), FloatingReason.ApplyChanges, Seq(Point(0, 0), Point(1.0, 4.5)), NormalLinkInterface, 20L, NoTermination, 0)
     }
 
     def DummyChangeInfo(oldId: Option[Long], newId: Option[Long], timestamp: Long): ChangeInfo ={
@@ -817,7 +818,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, linkId5, geom5, 2825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true, commonHistoryId) // end calibration point for testing
       )
 
-      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
 
       val newLinks = Seq(
         createRoadAddressLink(NewRoadAddress, linkId6, geom6, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, commonHistoryId),
@@ -886,7 +887,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622953, o5622953Geom, 92825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true, commonHistoryId) // end calibration point for testing
       )
 
-      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
 
       val newLinks = Seq(
         createRoadAddressLink(0, 499914628, n499914628Geom, 15, 1, 0, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, commonHistoryId),
@@ -932,8 +933,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, commonHistoryId)
       )
 
-      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(false))
-      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(false)).map(_.copy(endDate = Option(new DateTime(new Date()))))
+      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
+      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(endDate = Option(new DateTime(new Date()))))
 
       val roadLinks = Seq(
         RoadLink(90000, linkGeom, GeometryUtils.geometryLength(linkGeom),
@@ -977,8 +978,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, commonHistoryId)
       )
 
-      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(false))
-      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(false)).map(_.copy(endDate = Option(new DateTime(new Date())), validTo = Option(new DateTime(new Date()))))
+      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
+      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(endDate = Option(new DateTime(new Date())), validTo = Option(new DateTime(new Date()))))
 
       val roadLinks = Seq(
         RoadLink(90000, linkGeom, GeometryUtils.geometryLength(linkGeom),
@@ -1022,8 +1023,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, commonHistoryId)
       )
 
-      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(false)).map(_.copy(validTo = Option(new DateTime(new Date()))))
-      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(false)).map(_.copy(endDate = Option(new DateTime(new Date()))))
+      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(validTo = Option(new DateTime(new Date()))))
+      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(endDate = Option(new DateTime(new Date()))))
 
       val roadLinks = Seq(
         RoadLink(90000, linkGeom, GeometryUtils.geometryLength(linkGeom),
@@ -1063,7 +1064,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1, o1Geom, 92826, 3, 0, 0, 1984, SideCode.TowardsDigitizing, Anomaly.None, true, false, commonHistoryId)
       )
 
-      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
 
       val newLinks = Seq(
         createRoadAddressLink(0, 1, o1Geom, 100,1, 1, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, commonHistoryId),
@@ -1121,26 +1122,26 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       val history1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 100L, 105L,
         Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 123L, 0.0, 4.61, TowardsDigitizing,
-        84600L, (None, None), true, linkGeom1, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
+        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
       val history2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 105L, 116L,
         Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 124L, 0.0, 11.801, TowardsDigitizing,
-        84600L, (None, None), true, linkGeom2, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
+        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom2, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
       val current1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 15L, 21L,
         Some(DateTime.now().minusYears(10)), None, None, 123L, 0.0, 4.61, TowardsDigitizing,
-        84600L, (None, None), true, linkGeom1, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
+        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
       val current2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 21L, 35L,
         Some(DateTime.now().minusYears(10)), None, None, 124L, 0.0, 11.801, TowardsDigitizing,
-        84600L, (None, None), true, linkGeom2, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
+        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom2, NormalLinkInterface, 20L, NoTermination, commonHistoryId)
       val terminatedAddress = RoadAddress(NewRoadAddress, 198, 201, PublicRoad, Track.Combined, Continuous, 10L, 15L,
         Some(DateTime.now().minusYears(20)), Some(DateTime.now().minusYears(17)), None, 123L, 0.0, 4.61, AgainstDigitizing,
-        84600L, (None, None), true, linkGeom1, NormalLinkInterface, 20L, Termination, commonHistoryId)
+        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, Termination, commonHistoryId)
 
       val surrounding1 = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 0L, 15L,
         Some(DateTime.now().minusYears(10)), None, None, 121L, 0.0, 15.0, AgainstDigitizing,
-        84600L, (Some(CalibrationPoint(121L, 15.0, 0L)), None), false, Seq(Point(0, 0), Point(-14, 5.385)), NormalLinkInterface, 20L, NoTermination, commonHistoryId)
+        84600L, (Some(CalibrationPoint(121L, 15.0, 0L)), None), NoFloating, Seq(Point(0, 0), Point(-14, 5.385)), NormalLinkInterface, 20L, NoTermination, commonHistoryId)
       val surrounding2 = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 35L, 50L,
         Some(DateTime.now().minusYears(10)), None, None, 125L, 0.0, 15.0, TowardsDigitizing,
-        84600L, (None, Some(CalibrationPoint(125L, 15.0, 50L))), false, Seq(Point(13.0, 7.0), Point(13.0, 22.0)), NormalLinkInterface, 20L, NoTermination, commonHistoryId)
+        84600L, (None, Some(CalibrationPoint(125L, 15.0, 50L))), NoFloating, Seq(Point(13.0, 7.0), Point(13.0, 22.0)), NormalLinkInterface, 20L, NoTermination, commonHistoryId)
       RoadAddressDAO.create(Seq(history1Address, history2Address, current1Address, current2Address, terminatedAddress)) should have size (5)
 
       val roadLinksSeq = Seq(RoadLink(123L, linkGeom1, 4.61, State, 99, BothDirections, UnknownLinkType,
@@ -1327,11 +1328,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Check correct constuction of floating links") {
+  test("Check correct construction of floating links") {
     val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
     val mockRoadLink = RoadLink(123456789, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 14.1, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
     val floatingAddress = RoadAddress(9988, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, None, None, Some("tr"),
-      123456789, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(11.0, 11.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      123456789, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(11.0, 11.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     runWithRollback {
       val returnedFloatingAddressees = roadAddressService.buildFloatingAddresses(Seq(mockRoadLink), Seq.empty[VVHRoadlink], Seq(floatingAddress))
@@ -1350,10 +1351,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus)
 
     val ra = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     val ra2 = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3533, 3599, Some(DateTime.now.minusDays(2)), None, Some("tr"),
-      baseLinkId+2L, 0.0, 60.259, SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 25.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      baseLinkId+2L, 0.0, 60.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 25.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     val roadLink1 = RoadLink(baseLinkId, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -1392,13 +1393,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val (roadNumber, roadPartNumber) = (99, 1)
 
     val selectedRoadAddress = RoadAddress(selectedId, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 10, 20, Some(DateTime.now()), None, Some("tr"),
-      selectedLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, selectedGeom, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      selectedLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, selectedGeom, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     val roadAddress1 = RoadAddress(id1, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.now()), None, Some("tr"),
-      linkId1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      linkId1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     val roadAddress2 = RoadAddress(id2, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 20, 30, Some(DateTime.now()), None, Some("tr"),
-      linkId2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      linkId2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     runWithRollback{
       RoadAddressDAO.create(Seq(selectedRoadAddress, roadAddress1, roadAddress2))
@@ -1411,7 +1412,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("check correct fetching of road address via ID") {
     val baseLinkId = 12345L
     val ra = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     val roadLink1 = RoadLink(baseLinkId, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -1438,11 +1439,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val geom3 = Seq(Point(25.0, 25.0, 0.0), Point(30.0, 30.0, 0.0))
 
     val ra1 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val ra2 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 5, 10, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-      baseLinkId+1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      baseLinkId+1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     val ra3 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 25, 30, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-      baseLinkId+2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), true, geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      baseLinkId+2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     val roadLink1 = RoadLink(baseLinkId, geom1, 540.3960283713503,
       State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),

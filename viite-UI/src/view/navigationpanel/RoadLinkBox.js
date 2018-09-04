@@ -131,7 +131,7 @@
 
     var Tool = function(toolName, icon) {
       var className = toolName.toLowerCase();
-      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
+      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).on('click', function() {
         executeOrShowConfirmDialog(function() {
           applicationModel.setSelectedTool(toolName);
         });
