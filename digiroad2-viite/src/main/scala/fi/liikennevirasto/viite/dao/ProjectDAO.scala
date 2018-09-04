@@ -450,10 +450,10 @@ object ProjectDAO {
 
   def getProjectLinksHistory(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project history links") {
-      val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK_HISTORY.STATUS = ${linkStatusFilter.get.value} AND"
+      val filter = if (linkStatusFilter.isEmpty) "" else s"plh.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
         s"""$projectLinkHistoryQueryBase
-                where $filter (PROJECT_LINK_HISTORY.PROJECT_ID = $projectId ) order by PROJECT_LINK_HISTORY.ROAD_NUMBER, PROJECT_LINK_HISTORY.ROAD_PART_NUMBER, PROJECT_LINK_HISTORY.END_ADDR_M """
+                where $filter (plh.PROJECT_ID = $projectId ) order by plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.END_ADDR_M """
       listQuery(query)
     }
   }
