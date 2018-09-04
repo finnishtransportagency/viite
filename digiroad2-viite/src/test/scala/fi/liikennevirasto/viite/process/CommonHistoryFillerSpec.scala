@@ -265,13 +265,10 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       val roadAddressesFetch = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(saved))
       mockForProject(saved.id, roadAddressesFetch)
       projectService.saveProject(saved.copy(reservedParts = parts))
-
       val projectLinks = ProjectDAO.getProjectLinks(saved.id)
       projectLinks.isEmpty should be(false)
-
-      val partitioned = projectLinks.partition(_.roadPartNumber == roadPartNumber)
-
-      val addressIds207 = partitioned._1.map(_.roadAddressId).toSet
+      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
+      val addressIds207 = filteredLinks.map(_.roadAddressId).toSet
       val filter = s" (${addressIds207.mkString(",")}) "
       sqlu""" update project_link set status=3 WHERE road_address_id in #$filter""".execute
 
@@ -298,30 +295,27 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
   }
 
   test("Filler should add calibration points when switching common history Id's blocks, one for the start and one for the end (or 2 if the start and the end are the same link)") {
+    val roadNumber = 5
+    val roadPartNumber = 207
     val roadLinks = Seq(
       RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface))
     runWithRollback {
       val id = 0
-      val addresses = List(
-        ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+      val reservedPart = ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, roadNumber: Long, roadPartNumber: Long, Some(5L),
+        Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
-      val roadAddressesfetch = RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(saved))
+      val roadAddressesfetch = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(saved))
       mockForProject(saved.id, roadAddressesfetch)
-      projectService.saveProject(saved.copy(reservedParts = addresses))
+      projectService.saveProject(saved.copy(reservedParts = List(reservedPart)))
       val projectLinks = ProjectDAO.getProjectLinks(saved.id)
       projectLinks.isEmpty should be(false)
       val sortedLinks = projectLinks.sortBy(_.startAddrMValue)
-      val (first, last) = (sortedLinks.head, sortedLinks.last)
-      val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-      val linkIds207 = partitioned._1.map(_.linkId).toSet
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207)).thenReturn(
-        partitioned._1.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
-
-      val addressIds207 = partitioned._1.map(_.roadAddressId).toSet
+      val linkIds207 = sortedLinks.map(_.linkId).toSet
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207)).thenReturn(sortedLinks.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
+      val addressIds207 = sortedLinks.map(_.roadAddressId).toSet
       val filter = s" (${addressIds207.mkString(",")}) "
       sqlu""" update project_link set status=1 WHERE road_address_id in #$filter""".execute
       val linksAfterUpdate = ProjectDAO.getProjectLinks(saved.id)
@@ -330,17 +324,15 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       val ids = Seq(projectLinks(1), projectLinks(projectLinks.size - 2)).map(_.roadAddressId).toSet
       val filter2 = s" (${ids.mkString(",")}) "
       sqlu""" update project_link set road_type=3 WHERE road_address_id in #$filter2""".execute
-
       val nextCommonId = Sequences.nextCommonHistorySeqValue
       sqlu""" update road_address set common_history_id= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
-      val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
+      val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
       afterAddressUpdates.groupBy(_.commonHistoryId).size should be(2)
       sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
       ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
       ProjectDAO.getProjectLinks(saved.id).size should be(0)
-
-      val roadAddresses = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
       roadAddresses.groupBy(_.commonHistoryId).size should be(6)
       //      Evaluate that EVERY single start and end of the common history id groups have a start and end calibration point
       roadAddresses.groupBy(_.commonHistoryId).forall(group => {
@@ -352,8 +344,102 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
         } else
           cpStart._1.isDefined && cpStart._2.isEmpty && cpEnd._1.isEmpty && cpEnd._2.isDefined
       }) should be(true)
-
     }
   }
 
+  test("CommonHistoryIds: Terminating the first link and transferring the others") {
+    val roadNumber = 5
+    val roadPartNumber = 207
+    runWithRollback {
+      val parts = List(
+        ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, roadNumber: Long, roadPartNumber: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      )
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.parse("2018-03-05"), DateTime.now(), "Some additional info", Seq(), None)
+      val saved = projectService.createRoadLinkProject(roadAddressProject)
+      val roadAddressesFetch = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(saved))
+      mockForProject(saved.id, roadAddressesFetch)
+      projectService.saveProject(saved.copy(reservedParts = parts))
+      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
+      projectLinks.isEmpty should be(false)
+      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
+      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadAddressId)
+      val filter = s"(${addressIds207.mkString(",")}) "
+      sqlu""" update project_link set status = 3 WHERE road_address_id in #$filter """.execute
+      sqlu""" update project_link set status = 5 WHERE road_address_id = ${addressIds207.head}""".execute
+
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
+      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
+      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
+      ProjectDAO.getProjectLinks(saved.id).size should be(0)
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
+      roadAddresses.groupBy(_.commonHistoryId).size should be > 2
+      roadAddresses.head.commonHistoryId should not be roadAddresses.tail.head.commonHistoryId
+    }
+  }
+
+  test("CommonHistoryIds: Terminating the last link and unchanging the others") {
+    val roadNumber = 5
+    val roadPartNumber = 207
+
+    runWithRollback {
+      val parts = List(
+        ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, roadNumber: Long, roadPartNumber: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      )
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.parse("2018-03-05"), DateTime.now(), "Some additional info", Seq(), None)
+      val saved = projectService.createRoadLinkProject(roadAddressProject)
+      val roadAddressesFetch = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(saved))
+      mockForProject(saved.id, roadAddressesFetch)
+      projectService.saveProject(saved.copy(reservedParts = parts))
+      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
+      projectLinks.isEmpty should be(false)
+      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
+      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadAddressId)
+      val filter = s"(${addressIds207.mkString(",")}) "
+      sqlu""" update project_link set status = 1 WHERE road_address_id in #$filter """.execute
+      sqlu""" update project_link set status = 5 WHERE road_address_id = ${addressIds207.last}""".execute
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
+      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
+      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
+      ProjectDAO.getProjectLinks(saved.id).size should be(0)
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
+      roadAddresses.groupBy(_.commonHistoryId).size should be(2)
+      roadAddresses.last.commonHistoryId should not be roadAddresses.head.commonHistoryId
+    }
+  }
+
+  test("CommonHistoryIds: Unchange to all road, just changing the roadType, the common history should keep the same") {
+    val roadNumber = 5
+    val roadPartNumber = 207
+
+    runWithRollback {
+      val parts = List(
+        ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, roadNumber: Long, roadPartNumber: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      )
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.parse("2018-03-05"), DateTime.now(), "Some additional info", Seq(), None)
+      val saved = projectService.createRoadLinkProject(roadAddressProject)
+      val roadAddressesBeforeUpdate = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+      val roadAddressesFetch = roadAddressesBeforeUpdate.map(toProjectLink(saved))
+      mockForProject(saved.id, roadAddressesFetch)
+      projectService.saveProject(saved.copy(reservedParts = parts))
+      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
+      projectLinks.isEmpty should be(false)
+      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
+      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadAddressId)
+      val filter = s"(${addressIds207.mkString(",")}) "
+      sqlu""" update project_link set status = 1, road_type = 5 WHERE road_address_id in #$filter """.execute
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
+      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
+      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
+      ProjectDAO.getProjectLinks(saved.id).size should be(0)
+      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
+      roadAddresses.groupBy(_.commonHistoryId).size should be(1)
+      roadAddressesBeforeUpdate.head.commonHistoryId should be (roadAddresses.head.commonHistoryId)
+    }
+  }
 }
