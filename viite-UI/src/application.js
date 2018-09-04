@@ -20,8 +20,7 @@
     };
 
     bindEvents();
-    window.applicationModel = new ApplicationModel([
-      selectedLinkProperty]);
+    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
 
     var linkGroups = groupLinks(selectedProjectLinkProperty);
 
@@ -84,9 +83,9 @@
       condition: function(mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
         return (
-            originalEvent.shiftKey &&
-        !(originalEvent.metaKey || originalEvent.altKey) &&
-            !originalEvent.ctrlKey);
+          originalEvent.shiftKey &&
+          !(originalEvent.metaKey || originalEvent.altKey) &&
+          !originalEvent.ctrlKey);
       }
     });
     map.getInteractions().forEach(function(interaction) {
@@ -109,9 +108,9 @@
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
-        var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
+    var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
-      new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -120,7 +119,8 @@
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)
+    });
 
     var mapPluginsContainer = jQuery('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
@@ -128,7 +128,7 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    // Show environment name next to Digiroad logo
+    // Show environment name next to Viite logo
     var notification = jQuery('#notification');
     notification.append(Environment.localizedName());
     notification.append(' Päivämäärä: ' + startupParameters.deploy_date);
@@ -140,7 +140,7 @@
 
     new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
 
-    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
+    applicationModel.refreshMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };

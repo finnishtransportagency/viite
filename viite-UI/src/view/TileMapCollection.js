@@ -91,11 +91,7 @@
 
     var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
-        if (key === tileMap) {
-          layer.setVisible(true);
-        } else {
-          layer.setVisible(false);
-        }
+        layer.setVisible(key === tileMap);
       });
     };
 
