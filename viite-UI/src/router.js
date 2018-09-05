@@ -114,16 +114,20 @@
         var baseUrl = 'roadAddressProject/' + project.id;
         var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
+        var initialCenter = map.getView().getCenter();
         if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
           applicationModel.selectLayer('linkProperty', false);
           map.getView().setCenter([project.coordX, project.coordY]);
           map.getView().setZoom(project.zoomLevel);
-        }
-        else if (typeof linkId !== 'undefined') {
+        } else if (typeof linkId !== 'undefined') {
           applicationModel.selectLayer('linkProperty', false);
           backend.getRoadLinkByLinkId(linkId, function (response) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           });
+        }
+        var newCenter = map.getView().getCenter();
+        if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
+          applicationModel.refreshMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), newCenter);
         }
       }
     });

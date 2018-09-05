@@ -759,8 +759,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId))
-      roadsAfterChanges.filterNot(_.endDate.get.isAfter(DateTime.now())).size should be(1)
-      val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty && x.endDate.get.isAfter(DateTime.now()))
+      roadsAfterChanges.size should be(1)
+      val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty)
       endedAddress.head.endDate.nonEmpty should be(true)
       endedAddress.size should be(1)
       endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
@@ -2241,6 +2241,44 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.isWritableState(incompleteProject.id) should be(true)
       projectService.isWritableState(errorInViiteProject.id) should be(true)
       projectService.isWritableState(erroredInTRProject.id) should be(true)
+    }
+  }
+
+  test("Check the correct creation of road project history") {
+    runWithRollback {
+      val id = 0
+      val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(5), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2021-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+      val savedProject = projectService.createRoadLinkProject(roadAddressProject)
+      mockForProject(savedProject.id, RoadAddressDAO.fetchByRoadPart(5, 205).map(toProjectLink(savedProject)))
+      projectService.saveProject(savedProject.copy(reservedParts = addresses))
+      val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
+      projectLinks.size should be(66)
+
+      val linkIds = projectLinks.map(pl => pl.track.value -> pl.linkId).groupBy(_._1).mapValues(_.map(_._2).toSet)
+      val newLinkTemplates = Seq(ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
+        None, 1234L, 0.0, 43.1, SideCode.Unknown, (None, None), FloatingReason.NoFloating,
+        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
+        None, 86400L),
+        ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
+          None, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), FloatingReason.NoFloating,
+          Seq(Point(510.0, 0.0), Point(581.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 71.1, 0L, 0, false,
+          None, 86400L))
+      projectService.updateProjectLinks(savedProject.id, Set(), Seq(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", 5, 205, 0, None)
+      linkIds.keySet.foreach(k =>
+        projectService.updateProjectLinks(savedProject.id, Set(), (linkIds(k) -- Set(5172715, 5172714, 5172031, 5172030)).toSeq, LinkStatus.Transfer, "-", 5, 205, k, None)
+      )
+      ProjectDAO.getProjectLinks(savedProject.id).size should be(66)
+      when(mockRoadLinkService.getSuravageRoadLinksFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLinkTemplates.take(1).map(toRoadLink))
+      createProjectLinks(newLinkTemplates.take(1).map(_.linkId), savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U", "road name").get("success") should be(Some(true))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLinkTemplates.tail.take(1).map(toRoadLink))
+      createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U", "road name").get("success") should be(Some(true))
+      ProjectDAO.getProjectLinks(savedProject.id).size should be(68)
+      projectService.allLinksHandled(savedProject.id) should be(true)
+      ProjectDAO.moveProjectLinksToHistory(savedProject.id)
+      ProjectDAO.getProjectLinks(savedProject.id).size should be(0)
+      projectService.fetchProjectHistoryLinks(savedProject.id).size should be (68)
     }
   }
 
