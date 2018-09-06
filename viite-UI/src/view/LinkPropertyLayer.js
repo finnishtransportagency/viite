@@ -328,8 +328,11 @@
     });
 
     map.on('click', function(event) {
+      //GUI - This seem to fix the problem with the clicking on the empty map after being in the defloating process would allow a deselection and enabling of the menus
+      var hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}));
+      var nonSpecialSelectionType = !_.contains(applicationModel.specialSelectionTypes, applicationModel.getSelectionType().value);
       if (isActiveLayer){
-        if (_.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}))) {
+        if (hasFeatureOnPoint && nonSpecialSelectionType) {
           selectedLinkProperty.close();
         }
       }
@@ -499,7 +502,7 @@
         });
 
         var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
-          return roadlink.anomaly === Anomaly.NoAddressGiven.value;
+          return roadlink.anomaly !== Anomaly.None.value;
         });
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
@@ -559,7 +562,8 @@
           geometryChangedLayer.getSource().addFeature(feature);
         });
 
-        if (!applicationModel.isActiveButtons() && map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
+        //GUI - Removed the need to check if the buttons are active in order to draw calibration points.
+        if (map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             var calMarker = new CalibrationPoint(actualPoint);
