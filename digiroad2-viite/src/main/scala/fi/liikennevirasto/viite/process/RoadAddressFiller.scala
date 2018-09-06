@@ -81,7 +81,7 @@ object RoadAddressFiller {
   }
 
   def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLinkLike, adjustedSegments: Seq[RoadAddressLink]): Seq[MissingRoadAddress] = {
-    if (adjustedSegments.isEmpty)
+    if (adjustedSegments.exists(s => s.anomaly != Anomaly.GeometryChanged))
       generateUnknownLink(roadLink)
     else
       Seq()
