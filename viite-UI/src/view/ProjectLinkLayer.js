@@ -146,6 +146,7 @@
         addFeaturesToSelection(selectedFeatures);
         fireDeselectionConfirmation(ctrlPressed, selection, 'single');
       }
+        highlightFeatures();
     });
 
     var showSingleClickChanges = function (ctrlPressed, selection) {
@@ -208,6 +209,7 @@
         addFeaturesToSelection(selectedFeatures);
         fireDeselectionConfirmation(ctrlPressed, selection, 'double');
       }
+        highlightFeatures();
     });
 
     var showDoubleClickChanges = function (shiftPressed, selection) {
@@ -643,13 +645,13 @@
     me.eventListener.listenTo(eventbus, 'changeProjectDirection:clicked', function () {
      projectLinkVector.clear();
       directionMarkerLayer.getSource().clear();
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), map.getView().getZoom() + 1, undefined, projectCollection.getPublishableStatus());
       me.eventListener.listenToOnce(eventbus, 'roadAddressProject:fetched', function () {
         if (selectedProjectLinkProperty.isSplit())
           selectedProjectLinkProperty.openSplit(selectedProjectLinkProperty.get()[0].linkId, true);
         else
           selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), selectedProjectLinkProperty.isMultiLink());
       });
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), map.getView().getZoom() + 1, undefined, projectCollection.getPublishableStatus());
     });
 
     me.eventListener.listenTo(eventbus, 'split:splitCutLine', function (cutGeom) {
