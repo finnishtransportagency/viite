@@ -686,14 +686,17 @@
           $('#control-label-floating').remove();
           $('#adjacentsData').empty();
           eventbus.trigger('linkProperties:clearIndicators');
-          eventbus.once('linkProperties:unknownsTreated', function () {
-            rootElement.find('.link-properties button.continue').attr('disabled', true);
-            eventbus.trigger('linkProperties:deselectFeaturesSelected');
-            applicationModel.setSelectionType(selectionType.Unknown);
-            applicationModel.setContinueButton(false);
-            eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
-            eventbus.trigger('linkProperties:activateInteractions');
-            eventbus.trigger('linkProperties:deactivateDoubleClick');
+          eventbus.once('linkProperties:unknownsTreated', function (unknowns) {
+            //GUI - this seems to fix the problem of the unknowns being drawn behing the floatings
+            _.defer(function(){
+              rootElement.find('.link-properties button.continue').attr('disabled', true);
+              eventbus.trigger('linkProperties:deselectFeaturesSelected');
+              applicationModel.setSelectionType(selectionType.Unknown);
+              applicationModel.setContinueButton(false);
+              eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
+              eventbus.trigger('linkProperties:activateInteractions');
+              eventbus.trigger('linkProperties:deactivateDoubleClick');
+            });
           });
           eventbus.trigger('linkProperties:drawUnknowns');
       });
