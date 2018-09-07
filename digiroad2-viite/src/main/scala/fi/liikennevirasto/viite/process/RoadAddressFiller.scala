@@ -95,7 +95,8 @@ object RoadAddressFiller {
   }
 
   private def generateUnknownLink(roadLink: RoadLinkLike, roadAdressLink: Option[RoadAddressLink]) = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, if(roadAdressLink.nonEmpty) roadAdressLink.get.startMValue
+      else 0.0, roadLink.length)
     Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), (roadAdressLink.nonEmpty, isPublicRoad(roadLink)) match {
       case (true, _) => Anomaly.GeometryChanged
       case (_ , true)=> Anomaly.NoAddressGiven
