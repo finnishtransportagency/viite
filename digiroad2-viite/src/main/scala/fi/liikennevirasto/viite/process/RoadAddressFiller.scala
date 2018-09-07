@@ -99,8 +99,8 @@ object RoadAddressFiller {
       else 0.0, roadLink.length)
     Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), (roadAdressLink.nonEmpty, isPublicRoad(roadLink)) match {
       case (true, _) => Anomaly.GeometryChanged
-      case (_ , true)=> Anomaly.NoAddressGiven
-      case (_ , false)=> Anomaly.None
+      case (false , true)=> Anomaly.NoAddressGiven
+      case (false , false)=> Anomaly.None
 
     }, geom))
   }
