@@ -280,6 +280,16 @@
       layers: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer, suravageRoadLayer, historicRoadsLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
+      filter: function(feature, layer) {
+        if(applicationModel.getSelectionType().value === selectionType.Floating.value){
+          return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+        }
+        else if (applicationModel.getSelectionType().value === selectionType.Unknown.value) {
+          return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.UnknownRoadLinkType.value;
+        } else {
+          return applicationModel.getSelectionType().value === selectionType.All.value;
+        }
+      },
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
           return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom(), true);
@@ -1057,6 +1067,7 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightSelectedFloatingFeatures', function(){
       highlightSelectedFloatingFeatures();
+      geometryChangedLayer.setOpacity(1);
     });
 
     var highlightAnomalousFeaturesByFloating = function() {
