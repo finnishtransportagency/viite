@@ -198,6 +198,7 @@
       directionMarkerLayer.setOpacity(opacity);
       suravageRoadLayer.setOpacity(opacity);
       historicRoadsLayer.setOpacity(opacity);
+      geometryChangedLayer.setOpacity(opacity);
     };
 
     /**
@@ -240,6 +241,8 @@
         var selection = _.find(event.selected, function(selectionTarget){
             return !_.isUndefined(selectionTarget.linkData);
         });
+        var isUnknown = selection.linkData.anomaly !== Anomaly.None.value && selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
+        var isSuravage = selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
         if (selection.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
           (applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) && !applicationModel.isReadOnly()) {
             selectedLinkProperty.openFloating(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures);
