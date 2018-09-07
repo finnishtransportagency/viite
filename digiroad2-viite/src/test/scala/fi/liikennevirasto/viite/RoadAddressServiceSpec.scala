@@ -1346,12 +1346,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("getAdjacents should return correct adjacents based on the existing of missing") {
+  test("getAdjacents should return correct adjacents in fork geometry based on the existing of missing") {
     val baseLinkId = 12345L
     val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus)
 
     val ra = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
     val ra2 = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3533, 3599, Some(DateTime.now.minusDays(2)), None, Some("tr"),
       baseLinkId+2L, 0.0, 60.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 25.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
@@ -1375,12 +1375,62 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val returnedAdjacents = runWithRollback {
       RoadAddressDAO.create(Seq(ra,ra2))
       RoadAddressDAO.createMissingRoadAddress(
-        MissingRoadAddress(baseLinkId+1L, Some(ra.startAddrMValue), Some(ra.endAddrMValue), RoadType.PublicRoad, Some(ra.roadNumber),
-          Some(ra.roadPartNumber), None, None, Anomaly.NoAddressGiven, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))))
+        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
+      )
+      RoadAddressDAO.createMissingRoadAddress(
+        MissingRoadAddress(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(10.0), Anomaly.GeometryChanged, Seq(Point(5.0, 5.0, 0.0), Point(5.0, 15.0, 0.0)))
+      )
+
       roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
     }
     returnedAdjacents.size should be (2)
     returnedAdjacents.map(_.linkId) should contain allOf (baseLinkId+1L, baseLinkId+2L)
+  }
+
+  test("getAdjacents should return correct adjacents in chain geometry (each one adjacent to next one) based on the existing of missing") {
+    val baseLinkId = 12345L
+    val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus)
+
+    val ra = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, Some(DateTime.now.minusDays(5)), None, Some("tr"),
+      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    val ra2 = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3533, 3599, Some(DateTime.now.minusDays(2)), None, Some("tr"),
+      baseLinkId+2L, 0.0, 60.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 25.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+
+    val roadLink1 = RoadLink(baseLinkId, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+
+    val roadLink2 = RoadLink(baseLinkId + 1L, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+
+    val roadLink3 = RoadLink(baseLinkId + 2L, Seq(Point(10, 10, 0.0), Point(15.0, 15.0, 0.0))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+
+
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink1, roadLink2), Seq.empty[ChangeInfo]))
+
+    runWithRollback {
+      RoadAddressDAO.create(Seq(ra,ra2))
+      RoadAddressDAO.createMissingRoadAddress(
+        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
+      )
+      RoadAddressDAO.createMissingRoadAddress(
+        MissingRoadAddress(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.GeometryChanged, Seq(Point(10.0, 10.0, 0.0), Point(15.0, 15.0, 0.0)))
+      )
+    val returnedAdjacents1 = roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
+      returnedAdjacents1.size should be (1)
+      returnedAdjacents1.map(_.linkId).head should be (baseLinkId+1L)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink2))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink2, roadLink3), Seq.empty[ChangeInfo]))
+      val returnedAdjacents2 = roadAddressService.getAdjacent(Set(baseLinkId+1), baseLinkId+1, false)
+      returnedAdjacents2.size should be (1)
+      returnedAdjacents2.map(_.linkId).head should be (baseLinkId+2L)
+    }
+
   }
 
   test("getAdjacentAddressesWithoutTX should not return addresses that are already selected by ") {

@@ -789,9 +789,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val endPoints = GeometryUtils.geometryEndpoints(rl.geometry)
         pointCloud.exists(p => GeometryUtils.areAdjacent(p, endPoints._1) || GeometryUtils.areAdjacent(p, endPoints._2))
       }.map(rl => rl.linkId -> rl).toMap
-    val missingLinks = withDynSession {
-      RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet)
-    }
+    val missingLinks = if (newSession) {
+        withDynSession {
+          RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet)
+        }
+      } else {
+        RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet)
+      }
     missingLinks.map(ml => RoadAddressLinkBuilder.build(connectedLinks(ml.linkId), ml))
   }
 
