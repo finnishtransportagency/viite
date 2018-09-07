@@ -113,7 +113,7 @@
       return properties;
     };
 
-    var open = function (linkId, id, singleLinkSelect, visibleFeatures, isSuravage) {
+    var open = function (linkId, id, singleLinkSelect, visibleFeatures, isSuravage, isUnknownWithOverlappingFloating) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         if (isSuravage) {
@@ -123,6 +123,8 @@
           } else {
             setCurrent(singleLinkSelect ? roadCollection.getSuravageByLinkId([linkId]) : roadCollection.getSuravageGroupByLinkId(linkId));
           }
+        } else if (isUnknownWithOverlappingFloating) {
+          setCurrent(findUnknown(linkId, id));
         } else {
           if (canOpenById(id)) {
             setCurrent(singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id));
@@ -176,6 +178,18 @@
               eventbus.trigger('linkProperties:selected', data4Display);
             eventbus.trigger('linkProperties:deactivateInteractions');
         }
+    };
+
+    var findUnknown = function(linkId, id) {
+      var permanent = !_.isUndefined(linkId) ? _.uniq(roadCollection.getTmpByLinkId([linkId]), _.isEqual) : (!_.isUndefined(id) ? _.uniq(roadCollection.getTmpById([id]), _.isEqual) : [] );
+      var temporary = !_.isUndefined(linkId) ? _.uniq(roadCollection.getTmpByLinkId([linkId]), _.isEqual) : (!_.isUndefined(id) ? _.uniq(roadCollection.getTmpById([id]), _.isEqual) : [] );
+      var permUnknown = _.reject(permanent, function(road) {
+        return road.roadLinkType !== RoadLinkType.UnknownRoadLinkType.value && road.anomaly !== Anomaly.None.value;
+      });
+      var tmpUnknown = _.reject(temporary, function(road) {
+        return road.getData().roadLinkType !== RoadLinkType.UnknownRoadLinkType.value && road.getData().anomaly !== Anomaly.None.value;
+      });
+      return _.flatten(permUnknown.concat(tmpUnknown));
     };
 
     var openUnknown = function(linkId, id, visibleFeatures) {
@@ -248,7 +262,7 @@
           if (s.id !== LinkValues.UnknownRoadId && s.id !== LinkValues.NewRoadId) {
             return s.id === vf.linkData.id && s.mmlId === vf.linkData.mmlId;
           } else {
-            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId;
+            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.roadLinkType === vf.linkData.roadLinkType && s.anomaly === vf.linkData.anomaly;
           }
         }));
       });
