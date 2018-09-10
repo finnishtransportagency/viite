@@ -43,6 +43,8 @@ package object viite {
 
   val noRoadAddressId: Long = 0L
 
+  val noReservedPartId: Long = 0L
+
   val NewCommonHistoryId: Long = -1000L
 
   val newCalibrationPointId: Long = -1000L
@@ -122,7 +124,7 @@ package object viite {
   val DefaultLongitude = 6900000.0
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
-  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Terminated, LinkStatus.Numbering)
+  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering)
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2

@@ -59,6 +59,12 @@
       });
     }, 1000);
 
+    this.getRoadLinkById = _.throttle(function (linkId, callback) {
+      return $.getJSON('api/viite/roadlinks/id/' + linkId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function (data) {
         return _.isFunction(callback) && callback(data);
@@ -563,6 +569,7 @@
       };
       return self;
     };
+
 
     this.withGetTargetAdjacent = function (returnData) {
       self.getTargetAdjacent = function (linkId, callback) {

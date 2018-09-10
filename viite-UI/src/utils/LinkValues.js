@@ -41,6 +41,12 @@
         UnknownConstructionType:    {value: 99, description: "UnknownConstructionType"}
     };
 
+    root.SelectionType = {
+        All:                        {value: 0, description: "all"},
+        Floating:                   {value: 1, description: "floating"},
+        Unknown:                    {value: 99, description: "unknown"}
+    };
+
     root.RoadClass = {
         HighwayClass:               {value: 1, description: "HighwayClass"},
         MainRoadClass:              {value: 2, description: "MainRoadClass"},
@@ -102,15 +108,15 @@
     };
 
     root.RoadZIndex = {
-      VectorLayer: {value: 1},
-      SuravageLayer: {value: 2},
+        VectorLayer:                {value: 1},
+        SuravageLayer:              {value: 2},
         AnomalousMarkerLayer:       {value: 3},
         CalibrationPointLayer:      {value: 4},
         GeometryChangedLayer:       {value: 5},
-        GreenLayer:                 {value: 10},
         ReservedRoadLayer:          {value: 6},
         HistoricRoadLayer:          {value: 7},
         DirectionMarkerLayer:       {value: 8},
+        GreenLayer:                 {value: 10},
         IndicatorLayer:             {value: 99}
     };
 

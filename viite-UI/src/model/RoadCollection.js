@@ -106,10 +106,10 @@
     };
 
       eventbus.on("linkProperties:drawUnknowns", function () {
-          fetchProcess(currentAllRoadLinks, currentZoom, true);
+        fetchProcess(currentAllRoadLinks, currentZoom, true);
       });
 
-      var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknows) {
+      var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
           var selectedLinkIds = _.map(getSelectedRoadLinks(), function(roadLink) {
               return roadLink.getId();
           });
@@ -119,18 +119,17 @@
               });
           });
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
-              var isUnknownGroup = _.every(model, function (mod) {
+              return _.every(model, function (mod) {
                   var modData = mod.getData();
                   return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
               });
-              return isUnknownGroup;
           });
           unknownRoadLinkGroups = fetched[0];
-          var includeUnknowns = _.isUndefined(drawUnknows) && !drawUnknows;
-          if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && (applicationModel.getSelectionType() !== 'unknown'))) {
-              roadLinkGroups = fetched[1];
+          var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
+          if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
+            setRoadLinkGroups(fetched[1]);
           } else {
-              roadLinkGroups = fetchedRoadLinkModels;
+            setRoadLinkGroups(fetchedRoadLinkModels);
           }
 
           if (!_.isEmpty(getSelectedRoadLinks())) {
@@ -160,9 +159,9 @@
           var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
           });
-          roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
+        setRoadLinkGroups(nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks));
           applicationModel.removeSpinner();
-          eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknows) && drawUnknows), selectedLinkIds);
+          eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
@@ -172,7 +171,7 @@
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
           }
-          if (!_.isUndefined(drawUnknows) && drawUnknows) {
+          if (!_.isUndefined(drawUnknowns) && drawUnknowns) {
               eventbus.trigger('linkProperties:unknownsTreated');
           }
       };
@@ -249,6 +248,19 @@
 
     this.getTmpRoadLinkGroups = function () {
       return tmpRoadLinkGroups;
+    };
+
+    this.getTmpByLinkId = function(ids) {
+      var segments = _.filter(tmpRoadLinkGroups, function (road){
+        return road.getData().linkId == ids;
+      });
+      return segments;
+    };
+
+    this.getTmpById = function(ids) {
+      return _.map(ids, function(id) {
+        return _.find(tmpRoadLinkGroups, function(road) { return road.getData().id === id; });
+      });
     };
 
     this.get = function(ids) {
@@ -341,6 +353,10 @@
       return changedIds;
     };
 
+    var setRoadLinkGroups = function(groups) {
+      roadLinkGroups = groups;
+    };
+
     this.reset = function(){
       roadLinkGroups = [];
     };
@@ -395,7 +411,7 @@
           var feature = new ol.Feature({
             geometry: new ol.geom.LineString(points)
           });
-            feature.linkData = road;
+          feature.linkData = road;
           feature.projectId = projectId;
           return feature;
         });

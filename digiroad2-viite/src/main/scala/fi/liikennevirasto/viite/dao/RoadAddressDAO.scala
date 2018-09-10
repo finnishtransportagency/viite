@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
@@ -20,7 +21,7 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.{DateTime, LocalDate}
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -103,6 +104,31 @@ object TerminationCode {
   case object Subsequent extends TerminationCode { def value = 2 }
 }
 
+
+sealed trait FloatingReason {
+  def value: Int
+
+  def isFloating: Boolean = value != 0
+}
+
+object FloatingReason {
+  val values = Set(NoFloating, ApplyChanges,GeometryChanged, NewAddressGiven, GapInGeometry, ManualFloating)
+
+  def apply(intValue: Long): FloatingReason = {
+    values.find(_.value == intValue).getOrElse(NoFloating)
+  }
+
+  case object NoFloating extends FloatingReason { def value = 0}
+  case object ApplyChanges extends FloatingReason { def value = 1}
+  case object GeometryChanged extends FloatingReason { def value = 2}
+  case object NewAddressGiven extends FloatingReason { def value = 3}
+  case object GapInGeometry extends FloatingReason {def value = 4}
+  case object ManualFloating extends FloatingReason { def value = 5}
+  case object SplittingTool extends FloatingReason { def value = 6}
+  case object ProjectToRoadAddress extends FloatingReason { def value = 7}
+
+}
+
 trait BaseRoadAddress {
   def id: Long
   def roadNumber: Long
@@ -120,13 +146,15 @@ trait BaseRoadAddress {
   def endMValue: Double
   def sideCode: SideCode
   def calibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint])
-  def floating: Boolean
+  def floating: FloatingReason
   def geometry: Seq[Point]
   def ely: Long
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
   def commonHistoryId: Long
   def blackUnderline: Boolean
+
+  def isFloating: Boolean = floating.isFloating
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -172,8 +200,9 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
                        linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
-                       floating: Boolean = false, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, commonHistoryId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, blackUnderline: Boolean = false, roadName: Option[String] = None) extends BaseRoadAddress {
+                       floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
+                       terminated: TerminationCode = NoTermination, commonHistoryId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
+                       blackUnderline: Boolean = false, roadName: Option[String] = None) extends BaseRoadAddress {
 
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
@@ -299,13 +328,13 @@ object RoadAddressDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
 
-  val formatter = ISODateTimeFormat.dateOptionalTimeParser()
+  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
-  def dateTimeParse(string: String) = {
+  def dateTimeParse(string: String): DateTime = {
     formatter.parseDateTime(string)
   }
 
-  val dateFormatter = ISODateTimeFormat.basicDate()
+  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
   def optDateTimeParse(string: String): Option[DateTime] = {
     try {
@@ -318,7 +347,7 @@ object RoadAddressDAO {
     }
   }
 
-  implicit val getRoadAddress= new GetResult[RoadAddress]{
+  implicit val getRoadAddress: GetResult[RoadAddress] = new GetResult[RoadAddress]{
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()
@@ -339,7 +368,7 @@ object RoadAddressDAO {
       val createdBy = r.nextStringOption.map(new String(_))
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val calibrationCode = r.nextInt()
-      val floating = r.nextBoolean()
+      val floatingReason = r.nextLong()
       val x = r.nextDouble()
       val y = r.nextDouble()
       val x2 = r.nextDouble()
@@ -353,7 +382,7 @@ object RoadAddressDAO {
       RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
         SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode),
-          linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), floating,
+          linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), FloatingReason.apply(floatingReason),
         Seq(Point(x, y), Point(x2, y2)), geomSource, ely, terminated, commonHistoryId, validFrom, validTo, blackUnderline = false, roadName)
     }
   }
@@ -365,9 +394,10 @@ object RoadAddressDAO {
         return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
       }
       val linkIdString = linkIds.mkString(",")
-      val where = linkIds.isEmpty match {
-        case true => return List()
-        case false => s""" where ra.link_id in ($linkIdString)"""
+      val where = if (linkIds.isEmpty) {
+        return List()
+      } else {
+        s""" where ra.link_id in ($linkIdString)"""
       }
       val floating = if (!includeFloating)
         "AND ra.floating='0'"
@@ -452,7 +482,7 @@ object RoadAddressDAO {
 
   private def queryList(query: String): List[RoadAddress] = {
     Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
-      case (id, roadAddressList) =>
+      case (_, roadAddressList) =>
         roadAddressList.head
     }.toList
   }
@@ -716,7 +746,7 @@ object RoadAddressDAO {
 
 
 
-  def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false) = {
+  def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false): List[RoadAddress] = {
     time(logger, "Fetch road addresses by road number") {
       val floating = if (!includeFloating)
         "ra.floating='0' AND"
@@ -741,7 +771,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchAllFloatingRoadAddresses(includesHistory: Boolean = false) = {
+  def fetchAllFloatingRoadAddresses(includesHistory: Boolean = false): List[RoadAddress] = {
     time(logger, "Fetch all floating road addresses") {
       val history = if (!includesHistory) s" AND ra.END_DATE is null " else ""
       val query =
@@ -762,7 +792,7 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchFloatingRoadAddressesBySegment(roadNumber: Long, roadPartNumber: Long, includesHistory: Boolean = false) = {
+  def fetchFloatingRoadAddressesBySegment(roadNumber: Long, roadPartNumber: Long, includesHistory: Boolean = false): List[RoadAddress] = {
     time(logger, "Fetch all floating road addresses") {
       val history = if (!includesHistory) s" AND ra.END_DATE is null " else ""
       val query =
@@ -823,7 +853,7 @@ object RoadAddressDAO {
       queryList(query)
     }
   }
-  def fetchNextRoadNumber(current: Int) = {
+  def fetchNextRoadNumber(current: Int): Option[Int] = {
     val query =
       s"""
           SELECT * FROM (
@@ -836,7 +866,7 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
-  def fetchNextRoadPartNumber(roadNumber: Int, current: Int) = {
+  def fetchNextRoadPartNumber(roadNumber: Int, current: Int): Option[Int] = {
     val query =
       s"""
           SELECT * FROM (
@@ -866,7 +896,7 @@ object RoadAddressDAO {
     update(roadAddress, None)
   }
 
-  def toTimeStamp(dateTime: Option[DateTime]) = {
+  def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
     dateTime.map(dt => new Timestamp(dt.getMillis))
   }
 
@@ -896,7 +926,7 @@ object RoadAddressDAO {
   }
 
   def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
-    if (!geometry.isEmpty) {
+    if (geometry.nonEmpty) {
       val first = geometry.head
       val last = geometry.last
       val (x1, y1, z1, x2, y2, z2) = (
@@ -915,7 +945,7 @@ object RoadAddressDAO {
     }
   }
 
-  private def updateWithoutGeometry(roadAddress: RoadAddress) = {
+  private def updateWithoutGeometry(roadAddress: RoadAddress): Unit = {
     val startTS = toTimeStamp(roadAddress.startDate)
     val endTS = toTimeStamp(roadAddress.endDate)
     sqlu"""UPDATE ROAD_ADDRESS
@@ -930,7 +960,7 @@ object RoadAddressDAO {
         WHERE id = ${roadAddress.id}""".execute
   }
 
-  def createMissingRoadAddress (mra: MissingRoadAddress) = {
+  def createMissingRoadAddress (mra: MissingRoadAddress): Unit = {
     val (p1, p2) = (mra.geom.head, mra.geom.last)
 
     sqlu"""
@@ -942,18 +972,18 @@ object RoadAddressDAO {
              MDSYS.SDO_ORDINATE_ARRAY(${p1.x},${p1.y},0.0,0.0,${p2.x},${p2.y},0.0,0.0))
               FROM dual WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${mra.linkId}) AND
               NOT EXISTS (SELECT * FROM ROAD_ADDRESS ra
-                WHERE link_id = ${mra.linkId} AND valid_to IS NULL ))
+                WHERE link_id = ${mra.linkId} AND valid_to IS NULL AND floating = 0))
            """.execute
   }
 
-  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int) = {
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int): Unit = {
     sqlu"""
            insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code)
            values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code)
            """.execute
   }
 
-  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int, start_m : Double, end_m : Double) = {
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int, start_m : Double, end_m : Double): Unit = {
     sqlu"""
            insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m)
            values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code, $start_m, $end_m)
@@ -971,7 +1001,7 @@ object RoadAddressDAO {
       Q.updateNA(query).first
   }
 
-  def expireRoadAddresses (sourceLinkIds: Set[Long]) = {
+  def expireRoadAddresses (sourceLinkIds: Set[Long]): AnyVal = {
     if (!sourceLinkIds.isEmpty) {
       val query =
         s"""
@@ -981,9 +1011,9 @@ object RoadAddressDAO {
     }
   }
 
-  def expireMissingRoadAddresses (targetLinkIds: Set[Long]) = {
+  def expireMissingRoadAddresses (targetLinkIds: Set[Long]): AnyVal = {
 
-    if (!targetLinkIds.isEmpty) {
+    if (targetLinkIds.nonEmpty) {
       val query =
         s"""
           Delete from missing_road_address Where link_id in (${targetLinkIds.mkString(",")})
@@ -1035,24 +1065,23 @@ object RoadAddressDAO {
   /**
     * Marks the road address identified by the supplied Id as eiher floating or not
     *
-    * @param isFloating '0' for not floating, '1' for floating
     * @param roadAddressId The Id of a road addresss
     */
-  def changeRoadAddressFloating(isFloating: Int, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
+  def changeRoadAddressFloating(roadAddressId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
     if (geometry.nonEmpty) {
       val first = geometry.get.head
       val last = geometry.get.last
       val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
       val length = GeometryUtils.geometryLength(geometry.get)
       sqlu"""
-           Update road_address Set floating = $isFloating,
+           Update road_address Set floating = ${floatingReason.value},
                   geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
                   $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
              Where id = $roadAddressId
       """.execute
     } else {
       sqlu"""
-           Update road_address Set floating = $isFloating
+           Update road_address Set floating = ${floatingReason.value}
              Where id = $roadAddressId
       """.execute
     }
@@ -1062,35 +1091,29 @@ object RoadAddressDAO {
     * Marks the road address identified by the supplied Id as eiher floating or not and also updates the history of
     * those who shares the same link_id and common_history_id
     *
-    * @param isFloating '0' for not floating, '1' for floating
     * @param roadAddressId The Id of a road addresss
     */
-  def changeRoadAddressFloatingWithHistory(isFloating: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
-    val floatingValue = if(isFloating) 1 else 0
+  def changeRoadAddressFloatingWithHistory(roadAddressId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
     if (geometry.nonEmpty) {
       val first = geometry.get.head
       val last = geometry.get.last
       val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
       val length = GeometryUtils.geometryLength(geometry.get)
       sqlu"""
-           Update road_address Set floating = $floatingValue,
+           Update road_address Set floating = ${floatingReason.value},
                   geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
                   $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
              Where id = $roadAddressId
       """.execute
     }
     sqlu"""
-       update road_address set floating = $floatingValue where id in(
+       update road_address set floating = ${floatingReason.value} where id in(
        select road_address.id from road_address where link_id =
        (select link_id from road_address where road_address.id = $roadAddressId))
         """.execute
   }
 
-  def changeRoadAddressFloating(float: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]] = None): Unit = {
-    changeRoadAddressFloatingWithHistory(float, roadAddressId, geometry)
-  }
-
-  def getAllValidRoadNumbers(filter: String = "") = {
+  def getAllValidRoadNumbers(filter: String = ""): List[Long] = {
     Q.queryNA[Long](s"""
        select distinct road_number
               from road_address ra
@@ -1100,11 +1123,11 @@ object RoadAddressDAO {
       """).list
   }
 
-  def getValidRoadNumbersWithFilterToTestAndDevEnv = {
+  def getValidRoadNumbersWithFilterToTestAndDevEnv: List[Long] = {
     getAllValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
-  def getValidRoadParts(roadNumber: Long) = {
+  def getValidRoadParts(roadNumber: Long): List[Long] = {
     sql"""
        select distinct road_part_number
               from road_address ra
@@ -1121,7 +1144,7 @@ object RoadAddressDAO {
     * @param startDate
     * @return
     */
-  def getValidRoadParts(roadNumber: Long, startDate: DateTime) = {
+  def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
     sql"""
        select distinct ra.road_part_number
               from road_address ra
@@ -1132,7 +1155,7 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
-  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment) = {
+  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment): Unit = {
     val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
     (startM, endM) match {
       case (Some(s), Some(e)) =>
@@ -1395,7 +1418,7 @@ object RoadAddressDAO {
       addressPS.setDouble(15, p2.x)
       addressPS.setDouble(16, p2.y)
       addressPS.setDouble(17, address.endAddrMValue)
-      addressPS.setInt(18, if (address.floating) 1 else 0)
+      addressPS.setInt(18, address.floating.value)
       addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
       addressPS.setLong(20, address.ely)
       addressPS.setInt(21, address.roadType.value)

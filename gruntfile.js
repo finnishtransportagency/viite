@@ -101,8 +101,8 @@ module.exports = function(grunt) {
           {
             context: '/wmts',
             host: 'oag.liikennevirasto.fi',
-            port: '443',
-            https: true,
+            port: '80',
+            https: false,
             changeOrigin: true,
             xforward: false,
             headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'},

@@ -17,28 +17,26 @@
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
-    var selectionType = 'all';
+    var selectionType = LinkValues.SelectionType.All;
     var sessionUsername = '';
     var sessionUserRoles = '';
-
-    var getSelectionType = function (){
-      return selectionType;
-    };
+    var specialSelectionTypes = [LinkValues.SelectionType.Floating.value, LinkValues.SelectionType.Unknown.value];
 
     var getContinueButtons = function(){
       return continueButton;
     };
 
-    var toggleSelectionTypeAll = function () {
-      selectionType = 'all';
+    var getSelectionType = function (){
+      return selectionType;
     };
 
-    var toggleSelectionTypeFloating = function(){
-      selectionType = 'floating';
+    var setSelectionType = function (type) {
+      selectionType = type;
     };
 
-    var toggleSelectionTypeUnknown = function (){
-      selectionType = 'unknown';
+    var selectionTypeIs = function (type) {
+      if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
+        return selectionType.value === type.value;
     };
 
     var setReadOnly = function(newState) {
@@ -139,11 +137,11 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      moveMap: function(zoom, bbox, center) {
+      refreshMap: function(zoom, bbox, center) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
         centerLonLat = center;
-        eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
+        eventbus.trigger('map:refresh', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
@@ -153,7 +151,7 @@
       zoom: zoom,
       setZoomLevel: setZoomLevel,
       getRoadVisibility: function(){
-          return roadsVisibility;
+        return roadsVisibility;
       },
       toggleRoadVisibility: toggleRoadVisibility,
       setMinDirtyZoomLevel: function(level) {
@@ -165,7 +163,7 @@
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
-        } else if(layer === 'linkProperty' && toggleStart) {
+        } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         }
       },
@@ -218,16 +216,16 @@
       getCurrentLocation: function() {
         return centerLonLat;
       },
+      setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,
-      toggleSelectionTypeAll: toggleSelectionTypeAll,
-      toggleSelectionTypeFloating: toggleSelectionTypeFloating,
-      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown,
+      selectionTypeIs: selectionTypeIs,
       getSessionUsername: function () {
         return sessionUsername;
       },
       getSessionUserRoles: function () {
         return sessionUserRoles;
-      }
+      },
+      specialSelectionTypes: specialSelectionTypes
     };
   };
 })(this);

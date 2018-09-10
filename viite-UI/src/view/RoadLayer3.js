@@ -1,10 +1,10 @@
 (function(root) {
   root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
-    var vectorLayer;
-    var layerMinContentZoomLevels = {};
-    var currentZoom = 0;
+    var layerName = 'roadLayer';
+    Layer.call(this, map);
+    var me = this;
 
-    var vectorSource = new ol.source.Vector({
+    var roadVector = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
         eventbus.once('roadLinks:fetched', function() {
@@ -12,9 +12,10 @@
             var points = _.map(roadLink.points, function(point) {
               return [point.x, point.y];
             });
-            var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+            var feature =  new ol.Feature({
+              geometry: new ol.geom.LineString(points)
             });
-              feature.linkData = roadLink;
+            feature.linkData = roadLink;
             return feature;
           });
           loadFeatures(features);
@@ -23,58 +24,99 @@
       strategy: ol.loadingstrategy.bbox
     });
 
+    var roadLayer = new ol.layer.Vector({
+      source: roadVector,
+      style: vectorLayerStyle
+    });
+    roadLayer.setVisible(true);
+    roadLayer.set('name', 'roadLayer');
+
     function vectorLayerStyle(feature) {
-        return styler.generateStyleByFeature(feature.linkData, currentZoom);
+      return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
     }
 
     var loadFeatures = function (features) {
-      vectorSource.clear(true);
-      vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
+      roadVector.clear(true);
+      roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
       eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
-    var minimumContentZoomLevel = function() {
-      if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
-        return layerMinContentZoomLevels[applicationModel.getSelectedLayer()];
+
+    var infoContainer = document.getElementById('popup');
+    var infoContent = document.getElementById('popup-content');
+
+    var overlay = new ol.Overlay(({
+      element: infoContainer
+    }));
+
+    map.addOverlay(overlay);
+
+    var displayRoadAddressInfo = function (event, pixel) {
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
+        return feature;
+      });
+      var coordinate;
+      //Ignore if target feature is marker
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.linkData)) {
+        var roadData = featureAtPixel.linkData;
+        coordinate = map.getEventCoordinate(event.originalEvent);
+        //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
+        if (infoContent !== null) {
+          if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 )) {
+            infoContent.innerHTML = '<p>' +
+              'Tienumero: ' + roadData.roadNumber + '<br>' +
+              'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+              'Ajorata: ' + roadData.trackCode + '<br>' +
+              'AET: ' + roadData.startAddressM + '<br>' +
+              'LET: ' + roadData.endAddressM + '<br>' + '</p>';
+          } else {
+            infoContent.innerHTML = '<p>' +
+              'Tuntematon tien segmentti' + '</p>';
+          }
+        }
       }
-      return zoomlevels.minZoomForRoadLinks;
+      overlay.setPosition(coordinate);
     };
 
-    var handleRoadsVisibility = function() {
-      if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= minimumContentZoomLevel());
-      }
+    //Listen pointerMove and get pixel for displaying roadAddress feature info
+    me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
+      displayRoadAddressInfo(event, pixel);
+    });
+
+    var handleRoadsVisibility = function () {
+      roadLayer.setVisible(applicationModel.getRoadVisibility() && map.getView().getZoom() >= zoomlevels.minZoomForRoadLinks);
     };
 
-    var mapMovedHandler = function(mapState) {
-      if (mapState.zoom !== currentZoom) {
-        currentZoom = mapState.zoom;
-      }
-      if (mapState.zoom < minimumContentZoomLevel()) {
-        vectorSource.clear();
+    this.refreshMap = function (mapState) {
+      //if ((applicationModel.getSelectedTool() === 'Cut' && selectSingleClick.getFeatures().getArray().length > 0))
+        //return;
+      if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
+        roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
-      } else if (mapState.selectedLayer == 'linkProperty'){
-        roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
+      } else {
+        /*
+         This could be implemented also with eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');
+         but this implementation makes it easier to find the eventbus call when needed.
+        */
+        switch(applicationModel.getSelectedLayer()) {
+          case 'linkProperty':
+            eventbus.trigger('linkProperty:fetch');
+            break;
+          case 'roadAddressProject':
+            eventbus.trigger('roadAddressProject:fetch');
+        }
         handleRoadsVisibility();
       }
     };
 
-    var clear = function(){
-      vectorLayer.getSource().clear();
+    this.eventListener.listenTo(eventbus, 'map:refresh', me.refreshMap, this);
+
+    var clear = function() {
+      roadLayer.getSource().clear();
     };
 
-    vectorLayer = new ol.layer.Vector({
-      source: vectorSource,
-      style: vectorLayerStyle
-    });
-    vectorLayer.setVisible(true);
-    vectorLayer.set('name', 'roadLayer');
-    map.addLayer(vectorLayer);
-
-    eventbus.on('map:moved', mapMovedHandler, this);
-
     return {
-      layer: vectorLayer,
+      layer: roadLayer,
       clear: clear
     };
   };
