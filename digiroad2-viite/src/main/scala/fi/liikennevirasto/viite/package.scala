@@ -43,6 +43,8 @@ package object viite {
 
   val noRoadAddressId: Long = 0L
 
+  val noReservedPartId: Long = 0L
+
   val NewCommonHistoryId: Long = -1000L
 
   val newCalibrationPointId: Long = -1000L

@@ -672,14 +672,23 @@ object ProjectDAO {
   def fetchHistoryRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
     time(logger, s"Fetch reserved road parts for project: $projectId") {
       val sql =
-        s"""Select id, ROAD_NUMBER, road_part_number, end_addr_m as length, end_addr_m as newLength, ely, ely as newEly, discontinuity_type, discontinuity_type as newDiscontinuity, link_id
-           From Project_link_history
-           Where project_id = ${projectId}"""
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
-        Option[Long], Option[Long])](sql).list.map {
-        case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, startingLinkId) =>
-          ReservedRoadPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
-            newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
+        s"""SELECT ROAD_NUMBER, ROAD_PART_NUMBER, LENGTH, ELY,
+           (SELECT IPLH.DISCONTINUITY_TYPE FROM PROJECT_LINK_HISTORY IPLH
+           WHERE IPLH.ROAD_NUMBER = PLH.ROAD_NUMBER AND IPLH.ROAD_PART_NUMBER = PLH.ROAD_PART_NUMBER AND IPLH.END_ADDR_M = PLH.LENGTH AND ROWNUM < 2) AS DISCONTINUITY_TYPE,
+           (SELECT IPLH.LINK_ID FROM PROJECT_LINK_HISTORY IPLH
+           WHERE IPLH.ROAD_NUMBER = PLH.ROAD_NUMBER AND IPLH.ROAD_PART_NUMBER = PLH.ROAD_PART_NUMBER AND IPLH.START_ADDR_M = 0 AND ROWNUM < 2) AS LINK_ID
+           FROM
+           (
+           	SELECT ROAD_NUMBER, ROAD_PART_NUMBER, MAX(END_ADDR_M) as LENGTH, ELY
+           	FROM PROJECT_LINK_HISTORY
+           	WHERE PROJECT_ID = ${projectId}
+           	GROUP BY (ROAD_NUMBER, ROAD_PART_NUMBER, ELY)
+           ) PLH
+        """
+      Q.queryNA[(Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
+        case (roadNumber, roadPartNumber, length, ely, discontinuityOpt, startingLinkId) =>
+          val discontinuity = discontinuityOpt.map(Discontinuity.apply)
+          ReservedRoadPart(noReservedPartId, roadNumber, roadPartNumber, length, discontinuity, ely, length, discontinuity, ely, startingLinkId)
       }
     }
   }
