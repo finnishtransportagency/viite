@@ -67,7 +67,6 @@
       });
     };
 
-
     this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
@@ -411,7 +410,7 @@
           new ModalConfirm(successObject.errorMessage);
           applicationModel.removeSpinner();
         } else {
-          eventbus.trigger('split:splitedCutLine', successObject.response);
+          eventbus.trigger('split:splitCutLine', successObject.response);
         }
       }, function (failureObject) {
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', BAD_REQUEST_400);

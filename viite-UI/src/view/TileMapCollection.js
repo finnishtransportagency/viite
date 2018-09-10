@@ -30,11 +30,11 @@
     };
 
     var aerialMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
+      url: 'wmts/maasto/1.0.0/ortokuva/default/ETRS-TM35FIN/{z}/{y}/{x}.jpg'
     });
 
     var backgroundMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/taustakartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var propertyBorderMapConfig = _.merge({}, sourceConfig, {
@@ -42,7 +42,7 @@
     });
 
     var terrainMapConfig = _.merge({}, sourceConfig, {
-      url: 'maasto/wmts/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+      url: 'wmts/maasto/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
     var aerialMapLayer = new ol.layer.Tile(_.merge({
@@ -91,22 +91,18 @@
 
     var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
-        if (key === tileMap) {
-          layer.setVisible(true);
-        } else {
-          layer.setVisible(false);
-        }
+        layer.setVisible(key === tileMap);
       });
     };
 
-    var togglepropertyBorderVisibility = function(showPropertyBorder) {
+    var togglePropertyBorderVisibility = function(showPropertyBorder) {
     propertyBorderLayer.setVisible(showPropertyBorder);
     };
 
 
     selectMap('background',true);
     eventbus.on('tileMap:selected', selectMap);
-    eventbus.on('tileMap:togglepropertyBorder', togglepropertyBorderVisibility);
+    eventbus.on('tileMap:togglepropertyBorder', togglePropertyBorderVisibility);
 
     return {
       layers: _.map(tileMapLayers, function(layer) { return layer; })

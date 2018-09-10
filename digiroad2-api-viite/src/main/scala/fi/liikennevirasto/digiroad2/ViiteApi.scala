@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
@@ -153,9 +153,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       foldSegments(roadLinks)
         .orElse(foldSegments(projectLinks))
         .map(midPoint)
-        .getOrElse(
-        Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
+        .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
+  }
+
+  get("/roadlinks/id/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /roalinks/$id") {
+      val roadLinks = roadAddressService.getRoadAddressLinkById(id)
+        foldSegments(roadLinks)
+          .map(midPoint)
+          .getOrElse(Map("success" -> false, "reason" -> ("ID:" + id + " not found")))
+    }
+
   }
 
   get("/roadlinks/project/prefillfromvvh/:linkId") {
@@ -238,8 +248,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           })
         }
         val linkIds: Seq[Long] = roadData.map(rd => rd("linkId").asInstanceOf[Long])
+        val ids: Seq[Long] = roadData.map(rd => rd("id").asInstanceOf[Long])
         val result = adjacents.filter(adj => {
-          !linkIds.contains(adj.linkId)
+          if (ids.nonEmpty) {
+            !ids.contains(adj.id)
+          } else {
+            !linkIds.contains(adj.linkId)
+          }
         }).distinct
         result.map(roadAddressLinkToApi)
       }
@@ -909,6 +924,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
+    val roadLinkTypeValue = roadAddressLink match {
+      case ra: RoadAddressLink => if (ra.floating) RoadLinkType.FloatingRoadLinkType.value else roadAddressLink.roadLinkType.value
+      case _ => roadAddressLink.roadLinkType.value
+    }
     Map(
       "success" -> true,
       "segmentId" -> roadAddressLink.id,
@@ -937,7 +956,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
       "anomaly" -> roadAddressLink.anomaly.value,
-      "roadLinkType" -> roadAddressLink.roadLinkType.value,
+      "roadLinkType" -> roadLinkTypeValue,
       "constructionType" -> roadAddressLink.constructionType.value,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,

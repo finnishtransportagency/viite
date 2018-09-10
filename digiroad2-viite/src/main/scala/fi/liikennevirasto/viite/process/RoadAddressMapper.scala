@@ -5,18 +5,24 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 
 trait RoadAddressMapper {
+
+  def calculateMeasures(ra: RoadAddress, adjMap: RoadAddressMapping) : (Double, Double) = {
+    (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+  }
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping], allRoadAddresses : Seq[RoadAddress])(ra: RoadAddress): Seq[RoadAddress] = {
     roadAddressMapping.filter(_.matches(ra, allRoadAddresses)).map(adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
-        if (isDirectionMatch(adjMap))
+        if (isDirectionMatch(adjMap)) {
           (ra.sideCode, truncateGeometriesWithAddressValues(ra, adjMap), splitRoadAddressValues(ra, adjMap))
-        else {
+        } else {
           (switchSideCode(ra.sideCode), truncateGeometriesWithAddressValues(ra, adjMap).reverse, splitRoadAddressValues(ra, adjMap))
         }
-      val (startM, endM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+
+      val (startM, endM) = calculateMeasures(ra, adjMap)
 
       val startCP = ra.startCalibrationPoint match {
         case None => None
@@ -31,7 +37,7 @@ trait RoadAddressMapper {
       ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
         startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
-        calibrationPoints = (startCP, endCP), floating = false, geometry = if(mappedGeom.isEmpty) ra.geometry else mappedGeom)
+        calibrationPoints = (startCP, endCP), floating = NoFloating, geometry = if(mappedGeom.isEmpty) ra.geometry else mappedGeom)
     })
   }
 
@@ -179,7 +185,7 @@ trait RoadAddressMapper {
     * @param geom2 Geometry two
     */
   def isDirectionMatch(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
-    val x = distancesBetweenEndPoints(geom1, geom2)
+    val x = distancesBetweenEndPointsInOrigin(geom1, geom2)
     x._1 < x._2
   }
 
@@ -190,7 +196,7 @@ trait RoadAddressMapper {
 
   /**
     * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
- *
+    *
     * @param geom1 Geometry 1
     * @param geom2 Goemetry 2
     * @return h2h distance, h2t distance sums
@@ -198,6 +204,21 @@ trait RoadAddressMapper {
   def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
     (geom1.head.distance2DTo(geom2.head) + geom1.last.distance2DTo(geom2.last),
       geom1.last.distance2DTo(geom2.head) + geom1.head.distance2DTo(geom2.last))
+  }
+
+  /**
+    * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
+    * The measurement is taken after the geometries are reduced to the origin point.
+    * @param geom1 Geometry 1
+    * @param geom2 Goemetry 2
+    * @return h2h distance, h2t distance sums
+    */
+
+  def distancesBetweenEndPointsInOrigin(geom1: Seq[Point], geom2: Seq[Point]): (Double, Double) = {
+    val movedGeom1 = GeometryUtils.moveGeomToOrigin(geom1)
+    val movedGeom2 = GeometryUtils.moveGeomToOrigin(geom2)
+    (movedGeom1.head.distance2DTo(movedGeom2.head) + movedGeom1.last.distance2DTo(movedGeom2.last),
+      movedGeom1.last.distance2DTo(movedGeom2.head) + movedGeom1.head.distance2DTo(movedGeom2.last))
   }
 
   def minDistanceBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {

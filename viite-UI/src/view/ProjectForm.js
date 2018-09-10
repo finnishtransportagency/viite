@@ -364,8 +364,6 @@
         var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('.modal-overlay').remove();
-        setTimeout(function () {
-        }, 0);
         if (!_.isUndefined(currentProject)) {
           eventbus.trigger('linkProperties:selectedProject', result.linkId, result.project);
           eventbus.trigger('roadAddressProject:deactivateAllSelections');
@@ -556,7 +554,7 @@
 
 
       var closeProjectMode = function (changeLayerMode, noSave) {
-        eventbus.trigger("roadAddressProject:startAllInteractions");
+        eventbus.trigger('roadAddressProject:startAllInteractions');
         applicationModel.setOpenProject(false);
         eventbus.trigger('projectChangeTable:hide');
         rootElement.find('header').toggle();
@@ -566,8 +564,9 @@
         projectCollection.clearProjectErrors();
         eventbus.trigger('layer:enableButtons', true);
         if (changeLayerMode) {
-          eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
+          eventbus.trigger('roadAddressProject:clearOnClose');
+          projectLinkLayer.hide();
         }
         applicationModel.removeSpinner();
       };
@@ -599,7 +598,6 @@
         rootElement.empty();
         selectedProjectLinkProperty.setDirty(false);
         nextStage();
-        rootElement.html(selectedProjectLinkTemplate(currentProject));
         toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
       };
@@ -651,8 +649,7 @@
         closeProjectMode(true);
       });
 
-      rootElement.on('click', '#deleteProjectSpan', function () {
-        //Insert the correct message for delete confirmation here!
+      rootElement.on('click', '#deleteProjectSpan', function(){
         displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?", true);
       });
 
