@@ -181,7 +181,7 @@
     };
 
     var findUnknown = function(linkId, id) {
-      var permanent = !_.isUndefined(linkId) ? _.uniq(roadCollection.getTmpByLinkId([linkId]), _.isEqual) : (!_.isUndefined(id) ? _.uniq(roadCollection.getTmpById([id]), _.isEqual) : [] );
+      var permanent = !_.isUndefined(linkId) ? _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual) : (!_.isUndefined(id) ? _.uniq(roadCollection.get([id]), _.isEqual) : [] );
       var temporary = !_.isUndefined(linkId) ? _.uniq(roadCollection.getTmpByLinkId([linkId]), _.isEqual) : (!_.isUndefined(id) ? _.uniq(roadCollection.getTmpById([id]), _.isEqual) : [] );
       var permUnknown = _.reject(permanent, function(road) {
         return road.roadLinkType !== RoadLinkType.UnknownRoadLinkType.value && road.anomaly !== Anomaly.None.value;

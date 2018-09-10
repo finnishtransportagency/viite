@@ -281,13 +281,14 @@
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       filter: function(feature, layer) {
-        if(applicationModel.getSelectionType().value === selectionType.Floating.value){
+        var currentSelectionType = applicationModel.getSelectionType().value;
+        if(currentSelectionType === selectionType.Floating.value){
           return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
         }
-        else if (applicationModel.getSelectionType().value === selectionType.Unknown.value) {
+        else if (currentSelectionType === selectionType.Unknown.value) {
           return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.UnknownRoadLinkType.value;
         } else {
-          return applicationModel.getSelectionType().value === selectionType.All.value;
+          return currentSelectionType === selectionType.All.value;
         }
       },
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -364,7 +365,8 @@
     });
 
     map.on('click', function(event) {
-      //GUI - This seem to fix the problem with the clicking on the empty map after being in the defloating process would allow a deselection and enabling of the menus
+      //The addition of the check for features on point and the selection mode
+      // seem to fix the problem with the clicking on the empty map after being in the defloating process would allow a deselection and enabling of the menus
       var hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}));
       var nonSpecialSelectionType = !_.contains(applicationModel.specialSelectionTypes, applicationModel.getSelectionType().value);
       if (isActiveLayer){
@@ -599,7 +601,7 @@
           geometryChangedLayer.getSource().addFeature(feature);
         });
 
-        //GUI - Removed the need to check if the buttons are active in order to draw calibration points.
+        //Removed the need to check if the buttons are active in order to draw calibration points.
         if (map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
