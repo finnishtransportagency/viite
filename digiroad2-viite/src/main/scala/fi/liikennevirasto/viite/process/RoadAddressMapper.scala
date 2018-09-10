@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 
 trait RoadAddressMapper {
 
@@ -36,7 +37,7 @@ trait RoadAddressMapper {
       ra.copy(id = NewRoadAddress, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
         startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
-        calibrationPoints = (startCP, endCP), floating = false, geometry = if(mappedGeom.isEmpty) ra.geometry else mappedGeom)
+        calibrationPoints = (startCP, endCP), floating = NoFloating, geometry = if(mappedGeom.isEmpty) ra.geometry else mappedGeom)
     })
   }
 

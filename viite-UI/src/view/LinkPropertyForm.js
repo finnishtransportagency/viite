@@ -2,6 +2,7 @@
     root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool) {
     var compactForm = false;
     var idToFloating;
+    var selectionType = LinkValues.SelectionType;
     var decodedAttributes = [
       {
         id: 'AJORATA',
@@ -458,7 +459,7 @@
             } else {
               if (lastFeatureToKeep.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
-                if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+                if (applicationModel.selectionTypeIs(selectionType.Floating) && firstSelectedLinkProperty.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
                   selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
@@ -480,7 +481,7 @@
               }
             } else {
               if (_.last(selectedLinkProperty.get()).roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
-                applicationModel.toggleSelectionTypeFloating();
+                applicationModel.setSelectionType(selectionType.Floating);
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
                 selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 $('#floatingEditModeForm').show();
@@ -636,7 +637,7 @@
       });
 
       eventbus.on('linkProperties:unselected', function() {
-        if (('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) && !applicationModel.isProjectOpen()) {
+        if ((applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) && !applicationModel.isProjectOpen()) {
           addOpenProjectButton();
         }
       });
@@ -660,14 +661,14 @@
         applicationModel.setCurrentAction(action);
         eventbus.trigger('linkProperties:activateAllSelections');
         eventbus.trigger('roadLinks:refreshView');
-        if ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) {
+        if (applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) {
           selectedLinkProperty.clearAndReset(false);
-          applicationModel.toggleSelectionTypeAll();
+          applicationModel.setSelectionType(selectionType.All);
           applicationModel.addSpinner();
           eventbus.trigger('linkProperties:closed');
           selectedLinkProperty.close();
         } else {
-          applicationModel.toggleSelectionTypeFloating();
+          applicationModel.setSelectionType(selectionType.Floating);
           selectedLinkProperty.cancelAndReselect(action);
         }
         applicationModel.setActiveButtons(false);
@@ -685,7 +686,7 @@
           eventbus.once('linkProperties:unknownsTreated', function () {
             rootElement.find('.link-properties button.continue').attr('disabled', true);
             eventbus.trigger('linkProperties:deselectFeaturesSelected');
-            applicationModel.toggleSelectionTypeUnknown();
+            applicationModel.setSelectionType(selectionType.Unknown);
             applicationModel.setContinueButton(false);
             eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
             eventbus.trigger('linkProperties:activateInteractions');
