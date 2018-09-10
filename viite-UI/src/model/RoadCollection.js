@@ -127,9 +127,9 @@
           unknownRoadLinkGroups = fetched[0];
           var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
           if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
-              roadLinkGroups = fetched[1];
+            setRoadLinkGroups(fetched[1]);
           } else {
-              roadLinkGroups = fetchedRoadLinkModels;
+            setRoadLinkGroups(fetchedRoadLinkModels);
           }
 
           if (!_.isEmpty(getSelectedRoadLinks())) {
@@ -159,7 +159,7 @@
           var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
           });
-          roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
+        setRoadLinkGroups(nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks));
           applicationModel.removeSpinner();
           eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
@@ -250,6 +250,19 @@
       return tmpRoadLinkGroups;
     };
 
+    this.getTmpByLinkId = function(ids) {
+      var segments = _.filter(tmpRoadLinkGroups, function (road){
+        return road.getData().linkId == ids;
+      });
+      return segments;
+    };
+
+    this.getTmpById = function(ids) {
+      return _.map(ids, function(id) {
+        return _.find(tmpRoadLinkGroups, function(road) { return road.getData().id === id; });
+      });
+    };
+
     this.get = function(ids) {
       return _.map(ids, function(id) {
         return _.find(roadLinks(), function(road) { return road.getId() === id; });
@@ -338,6 +351,10 @@
 
     this.getChangedIds = function (){
       return changedIds;
+    };
+
+    var setRoadLinkGroups = function(groups) {
+      roadLinkGroups = groups;
     };
 
     this.reset = function(){
