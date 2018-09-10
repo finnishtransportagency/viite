@@ -2015,8 +2015,40 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.allLinksHandled(savedProject.id) should be(false)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-      val highestDistanceStart = projectLinks.map(p => p.startAddrMValue).max
-      val highestDistanceEnd = projectLinks.map(p => p.endAddrMValue).max
+      val linkIds207 = partitioned._1.map(_.linkId)
+      reset(mockRoadLinkService)
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
+        toMockAnswer(projectLinks, roadLink)
+      )
+      projectService.updateProjectLinks(savedProject.id, Set(), linkIds207, LinkStatus.UnChanged, "-", 0, 0, 0, Option.empty[Int])
+      projectService.allLinksHandled(savedProject.id) should be(true)
+      val roadAddresses = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet)
+      val test = roadAddresses.map(ra => ra.id -> ra).toMap
+      val historicRoadsIds = projectService.createHistoryRows(projectLinks, test)
+      historicRoadsIds.isEmpty should be (true)
+    }
+  }
+
+  test("Check creation of new RoadAddress History entries with endDate = projectDate") {
+    var count = 0
+    val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects
+      val id = 0
+      val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2101-01-01"), DateTime.now(), "Some additional info", Seq(), None)
+      val savedProject = projectService.createRoadLinkProject(roadAddressProject)
+      mockForProject(savedProject.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(savedProject)))
+      projectService.saveProject(savedProject.copy(reservedParts = addresses))
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be(count)
+      projectService.allLinksHandled(savedProject.id) should be(false)
+      val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
+      val partitioned = projectLinks.partition(_.roadPartNumber == 207)
       val linkIds207 = partitioned._1.map(_.linkId).toSet
       reset(mockRoadLinkService)
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
@@ -2030,7 +2062,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val test = roadAddresses.map(ra => ra.id -> ra).toMap
       val historicRoadsIds = projectService.createHistoryRows(projectLinks, test)
       RoadAddressDAO.queryById(historicRoadsIds.toSet).map(_.endDate).forall(_.isDefined) should be(true)
-
+      RoadAddressDAO.queryById(historicRoadsIds.toSet).forall(_.endDate == DateTime.parse("2101-01-01")) should be (true)
     }
   }
 
