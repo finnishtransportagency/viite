@@ -758,7 +758,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
     val (floatings, _) = withDynTransaction {
-      RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.floating)
+      RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.floating != FloatingReason.NoFloating)
     }
     val historyLinks = time(logger, "Fetch floating history links") {
       roadLinkService.getRoadLinksHistoryFromVVH(floatings.map(_.linkId).toSet)
