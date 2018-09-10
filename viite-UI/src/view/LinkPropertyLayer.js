@@ -313,18 +313,18 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.linkData);
       });
-      var isSuravage = selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
-      var isUnknown = selection.linkData.anomaly !== Anomaly.None.value && selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
-      var hasOverlappingFloating = isUnknown && !(_.chain(event.selected).reject(function(sel) {
-        return sel.ol_uid === selection.ol_uid;
-      }).filter(function (s) {
-        return s.linkData.anomaly !== Anomaly.None.value && s.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
-      }).isEmpty().value());
-      //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (!_.isUndefined(selection)) {
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
+        var isSuravage = selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
+        var isUnknown = selection.linkData.anomaly !== Anomaly.None.value && selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
+        var hasOverlappingFloating = isUnknown && !(_.chain(event.selected).reject(function(sel) {
+          return sel.ol_uid === selection.ol_uid;
+        }).filter(function (s) {
+          return s.linkData.anomaly !== Anomaly.None.value && s.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+        }).isEmpty().value());
+        //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
         if (selection.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
           (applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) &&
           !applicationModel.isReadOnly()) {
