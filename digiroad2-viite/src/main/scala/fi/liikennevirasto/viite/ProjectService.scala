@@ -1686,18 +1686,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * This will insert new historic road addresses (valid_to = null and end_date = sysdate)
+    * This will insert new historic road addresses (valid_to = null and end_date = project_date)
     *
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadAddressId -> RoadAddress)
     */
   def createHistoryRows(projectLinks: Seq[ProjectLink], expiringRoadAddresses: Map[Long, RoadAddress]): Seq[Long] = {
-    val idsToHistory = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).map(_.roadAddressId)
-    val roadsToCreate = expiringRoadAddresses.filter(ex => {
-      idsToHistory.contains(ex._1)
-    }).mapValues(r => {
-      r.copy(id = NewRoadAddress, endDate = Some(DateTime.now()))
-    }).values
+    val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadAddressId)
+    val roadsToCreate = expiringRoadAddresses.values.flatMap(ex => {
+      groupedProjectLinks.get(ex.id) match {
+        case Some(pls) =>
+          pls.headOption.map(pl => ex.copy(id = NewRoadAddress, endDate =pl.startDate))
+        case _ => None
+      }
+
+    })
     RoadAddressDAO.create(roadsToCreate)
   }
 
