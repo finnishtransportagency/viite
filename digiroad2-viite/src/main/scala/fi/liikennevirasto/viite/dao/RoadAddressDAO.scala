@@ -972,7 +972,7 @@ object RoadAddressDAO {
              MDSYS.SDO_ORDINATE_ARRAY(${p1.x},${p1.y},0.0,0.0,${p2.x},${p2.y},0.0,0.0))
               FROM dual WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${mra.linkId}) AND
               NOT EXISTS (SELECT * FROM ROAD_ADDRESS ra
-                WHERE link_id = ${mra.linkId} AND valid_to IS NULL ))
+                WHERE link_id = ${mra.linkId} AND valid_to IS NULL AND floating = 0))
            """.execute
   }
 
