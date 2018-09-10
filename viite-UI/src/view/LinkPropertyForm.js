@@ -687,7 +687,7 @@
           $('#adjacentsData').empty();
           eventbus.trigger('linkProperties:clearIndicators');
           eventbus.once('linkProperties:unknownsTreated', function (unknowns) {
-            //GUI - this seems to fix the problem of the unknowns being drawn behing the floatings
+            //The addition of the defer seems to fix the problem of the unknowns being drawn behind the floatings
             _.defer(function(){
               rootElement.find('.link-properties button.continue').attr('disabled', true);
               eventbus.trigger('linkProperties:deselectFeaturesSelected');
