@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.viite.LinkRoadAddressHistory
-import fi.liikennevirasto.viite.dao.RoadAddress
+import fi.liikennevirasto.viite.dao.{FloatingReason, RoadAddress}
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.viite.MinAllowedRoadAddressLength
 
@@ -95,7 +95,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   private def mapAddress(mapping: Seq[RoadAddressMapping], allRoadAddresses: Seq[RoadAddress])(ra: RoadAddress) = {
-    if (!ra.floating && mapping.exists(_.matches(ra, allRoadAddresses))) {
+    if (!ra.isFloating && mapping.exists(_.matches(ra, allRoadAddresses))) {
       val changeVVHTimestamp = mapping.head.vvhTimeStamp.get
       mapRoadAddresses(mapping, allRoadAddresses)(ra).map(_.copy(adjustedTimestamp = changeVVHTimestamp))
     } else
@@ -120,7 +120,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       val mapped = roadAddresses.mapValues(_.flatMap(ra =>
         // If change is not within maximum allowed then float the address
         if (mapping.exists(m => m.matches(ra, roadAddresses.values.flatten.toSeq) && Math.abs(m.sourceLen - m.targetLen) > fi.liikennevirasto.viite.MaxLengthChange)) {
-          Seq(ra.copy(floating = true))
+          Seq(ra.copy(floating = FloatingReason.ApplyChanges))
         } else
           mapAddress(mapping, roadAddresses.values.flatten.toSeq)(ra)
       ))
@@ -134,7 +134,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     else {
       val mapped = roadAddresses.mapValues(_.map(ra =>
         if (changes.exists(c => c.oldId.contains(ra.linkId) && c.vvhTimeStamp > ra.adjustedTimestamp)) {
-          ra.copy(floating = true)
+          ra.copy(floating = FloatingReason.ApplyChanges)
         } else
           ra
       ))

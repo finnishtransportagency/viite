@@ -81,8 +81,11 @@ object RoadAddressFiller {
   }
 
   def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLinkLike, adjustedSegments: Seq[RoadAddressLink]): Seq[MissingRoadAddress] = {
-    if (adjustedSegments.isEmpty)
-      generateUnknownLink(roadLink)
+    //If NoAddressGiven given, then there is no adjust,which lead to one new unknown link
+    val adjustedSegs = adjustedSegments.filterNot(s => s.anomaly == Anomaly.GeometryChanged)
+    if (adjustedSegs.isEmpty)
+      //headOption could have GeometryChanged -> which should create one new unknown link
+      generateUnknownLink(roadLink, adjustedSegments.headOption)
     else
       Seq()
   }
@@ -91,11 +94,14 @@ object RoadAddressFiller {
     roadLink.administrativeClass == State || roadLink.attributes.get("ROADNUMBER").exists(_.toString.toInt > 0)
   }
 
-  private def generateUnknownLink(roadLink: RoadLinkLike) = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
-      case true => Anomaly.NoAddressGiven
-      case false => Anomaly.None
+  private def generateUnknownLink(roadLink: RoadLinkLike, roadAdressLink: Option[RoadAddressLink]) = {
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, if(roadAdressLink.nonEmpty) roadAdressLink.get.startMValue
+      else 0.0, roadLink.length)
+    Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), (roadAdressLink.nonEmpty, isPublicRoad(roadLink)) match {
+      case (true, _) => Anomaly.GeometryChanged
+      case (false , true)=> Anomaly.NoAddressGiven
+      case (false , false)=> Anomaly.None
+
     }, geom))
   }
 
