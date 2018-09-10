@@ -143,6 +143,10 @@
         });
         processOl3Features(visibleFeatures);
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+      } else {
+        _.defer(function(){
+          processOl3Features(visibleFeatures);
+        });
       }
     };
 
