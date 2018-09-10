@@ -9,6 +9,8 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
   val AdjustmentToleranceMeters = 3L
 
+  override def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.startAddrMValue
+
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes FROM or TO a status equal "NEW" or "TERMINATED" and track is Left or Right
     projectLink.status != headProjectLink.status &&
