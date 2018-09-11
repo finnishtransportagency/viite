@@ -380,6 +380,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           logger.info(s"Found ${toFloating.size} road addresses that were left floating after changes, saving them.")
           toFloating.foreach {
             ra => RoadAddressDAO.changeRoadAddressFloatingWithHistory(ra.id, None, FloatingReason.ApplyChanges)
+              val roadLink = roadLinks.find(_.linkId == ra.linkId)
+              if (roadLink.nonEmpty){
+                val missing = MissingRoadAddress(ra.linkId, Some(ra.startAddrMValue), Some(ra.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None, None, Some(ra.startMValue), Some(ra.endMValue), Anomaly.GeometryChanged, Seq.empty[Point])
+                RoadAddressDAO.createMissingRoadAddress(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
+              }
           }
 
           checkRoadAddressFloatingWithoutTX(addressesExceptNew.map(_.linkId).toSet, float = true)
