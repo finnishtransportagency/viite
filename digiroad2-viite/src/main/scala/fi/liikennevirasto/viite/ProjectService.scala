@@ -1636,7 +1636,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), pl.linkId,
             pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating,
             pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewRoadwayId))
-        case Transfer => // TODO if the whole common history -segment is transferred, keep the original common_history_id, otherwise generate new ids for the different segments
+        case Transfer => // TODO if the whole roadway -segment is transferred, keep the original common_history_id, otherwise generate new ids for the different segments
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
           Seq(
             //TODO we should check situations where we need to create one new roadway for new and transfer/unchanged

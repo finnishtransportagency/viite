@@ -93,7 +93,7 @@ object RoadwayFiller {
   }
 
   /**
-    * Copy the common history id from opposite track code of a transferred part to the new part
+    * Copy the roadway id from opposite track code of a transferred part to the new part
     *
     * @param projectLinks     The project links
     * @param newRoadAddresses The new road address
@@ -171,7 +171,7 @@ object RoadwayFiller {
         operation(projectLinks, pNewRoadAddresses)
     }
     processedAddresses.groupBy(_.roadwayId).mapValues(addresses => {
-      logger.info(s"Processing calibration points for common history id ${addresses.head.roadwayId}")
+      logger.info(s"Processing calibration points for roadway id ${addresses.head.roadwayId}")
       setCalibrationPoints(addresses.sortBy(_.startAddrMValue))
     }).values.flatten.toSeq
   }

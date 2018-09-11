@@ -156,7 +156,7 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
       // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart) &&
-      // and same common history
+      // and same roadway
       ra.roadwayId == roadwayId
   }
 }
