@@ -1779,7 +1779,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pureReplacements.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.roadAddressId))) ++
       additions.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.roadAddressId))) ++
       pureReplacements.flatMap(pl =>
-        setEndDate(roadAddresses(pl.roadAddressId), pl, None))
+        setEndDate(roadAddresses(pl.roadAddressId), pl, None, project))
   }
 
   private def convertProjectLinkToRoadAddress(pl: ProjectLink, project: RoadAddressProject,
@@ -1800,7 +1800,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.commonHistoryId).getOrElse(0))
     pl.status match {
       case UnChanged =>
-        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
+        if(source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely){
+          roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
+        }
+        else{
+          roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
+        }
       case Transfer | Numbering =>
         roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
       case New =>
@@ -1821,11 +1826,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param vvhLink
     * @return
     */
-  private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink]): Option[RoadAddress] = {
+  private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink], project: RoadAddressProject): Option[RoadAddress] = {
     pl.status match {
-      // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
-      case UnChanged | Terminated =>
+      // terminated is created from the project link in convertProjectLinkToRoadAddress
+      case Terminated =>
         None
+      // unchanged will get end_date if the road_type, discontinuity or ely code changes, otherwise we keep the same end_date
+      case UnChanged =>
+        if(roadAddress.roadType == pl.roadType && roadAddress.ely == pl.ely && roadAddress.discontinuity == pl.discontinuity){
+          None
+        }
+        else {
+          Some(roadAddress.copy(endDate = Some(project.startDate)))
+        }
       case Transfer | Numbering =>
         Some(roadAddress.copy(endDate = pl.startDate))
       case _ =>
