@@ -45,7 +45,7 @@ package object viite {
 
   val noReservedPartId: Long = 0L
 
-  val NewCommonHistoryId: Long = -1000L
+  val NewRoadwayId: Long = -1000L
 
   val newCalibrationPointId: Long = -1000L
 
