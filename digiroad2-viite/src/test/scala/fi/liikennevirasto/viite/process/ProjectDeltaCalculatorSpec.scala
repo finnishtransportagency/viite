@@ -32,11 +32,11 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     }
   }
 
-  private def createRoadAddress(start: Long, distance: Long, commonHistoryId: Long = 0L) = {
+  private def createRoadAddress(start: Long, distance: Long, roadwayId: Long = 0L) = {
     RoadAddress(id = start, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
       discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, linkId = start,
       startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
-      geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, commonHistoryId = commonHistoryId)
+      geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayId = roadwayId)
   }
 
   private val project: RoadAddressProject = RoadAddressProject(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
@@ -137,7 +137,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     })
   }
 
-  test("unchanged + 2 track termination + different commonHistoryIds, commonHistoryIds should not be considered on partition") {
+  test("unchanged + 2 track termination + different roadwayIds, roadwayIds should not be considered on partition") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
     val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))

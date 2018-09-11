@@ -111,7 +111,7 @@ object ProjectDeltaCalculator {
       (!pl1.reversed && existing.get.endMAddr == pl2.startAddrMValue) || (pl1.reversed && existing.get.endMAddr == pl2.endAddrMValue)
     else {
       pl1 match {
-        case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.commonHistoryId != ra2.commonHistoryId) || (x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning) && ra1.commonHistoryId != ra2.commonHistoryId)
+        case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.roadwayId != ra2.roadwayId) || (x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning) && ra1.roadwayId != ra2.roadwayId)
         case x: ProjectLink => {
           val (sourceL, sourceR) = x.getCalibrationSources()
           (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) || x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning)) &&
@@ -150,7 +150,7 @@ object ProjectDeltaCalculator {
     if (r1.endAddrMValue == r2.startAddrMValue)
       r1.status match {
         case LinkStatus.Terminated =>
-          if(hasCalibrationPoint && r1.commonHistoryId != r2.commonHistoryId)
+          if(hasCalibrationPoint && r1.roadwayId != r2.roadwayId)
             Seq(r2, r1)
           else if(openBasedOnSource)
             Seq(r2,r1)
@@ -224,7 +224,7 @@ object ProjectDeltaCalculator {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
       .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayId)
     ).toSeq
 
     val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track))
@@ -285,7 +285,7 @@ object ProjectDeltaCalculator {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.commonHistoryId))
+          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayId))
     }
 
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
