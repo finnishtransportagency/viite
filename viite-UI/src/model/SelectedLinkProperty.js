@@ -341,7 +341,7 @@
             previousAdjacents = filteredAdjacents;
 
             var markedRoads = {
-              "adjacents": _.map(applicationModel.selectionTypeIs(selectionType.Floating) ? filteredAdjacents : filteredAdjacents, function (a, index) {
+              "adjacents": _.map(filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
