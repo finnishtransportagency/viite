@@ -111,12 +111,16 @@ module.exports = function(grunt) {
             }
           },
           {
-            context: '/maasto',
-            host: 'karttamoottori.maanmittauslaitos.fi',
+            context: '/wmts',
+            host: '172.17.204.46',
+            /*host: '172.17.206.180',*/
+            port: '8080',
             https: false,
             changeOrigin: true,
             xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+            rewrite: {
+              '^/wmts/maasto': '/digiroad/maasto/wmts'
+            }
           },
           {
             context: '/vkm',
