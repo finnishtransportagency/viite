@@ -314,14 +314,14 @@ object DataFixture {
 
   def checkLinearLocation(): Unit = {
     OracleDatabase.withDynTransaction {
-      val commonHistoryIds = RoadAddressDAO.getCommonHistoryIdsFromRoadAddress
-      println(s"Found a total of ${commonHistoryIds.size} common history ids")
-      val chunks = generateCommonIdChunks(commonHistoryIds, 1000)
+      val roadwayIds = RoadAddressDAO.getRoadwayIdsFromRoadAddress
+      println(s"Found a total of ${roadwayIds.size} common history ids")
+      val chunks = generateCommonIdChunks(roadwayIds, 1000)
       chunks.par.foreach {
         case (min, max) =>
           println(s"Processing common history ids from $min to $max")
-          val roads = RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withCommonHistoryIds(min, max))
-          roads.groupBy(_.commonHistoryId).foreach { group =>
+          val roads = RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadwayIds(min, max))
+          roads.groupBy(_.roadwayId).foreach { group =>
             val dateTimeLines = group._2.map(_.startDate).distinct
 
             val mappedTimeLines: Seq[TimeLine] = dateTimeLines.flatMap {
@@ -348,7 +348,7 @@ object DataFixture {
             } else {
               Set.empty[RoadAddress]
             }
-            println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.commonHistoryId}")
+            println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.roadwayId}")
             val lastVersion = getLatestRoadNetworkVersionId
 
             roadErrors.filter { road =>
