@@ -769,19 +769,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
         })
       }
-      val selectedById = historyLinkAddresses.find(_.id == id)
-      val selectedByLinkId = historyLinkAddresses.find(_.linkId == linkId)
-      val selected = if (selectedById.isDefined)
-        selectedById
-      else if (selectedByLinkId.isDefined)
-        selectedByLinkId
-      else Option.empty[RoadAddressLink]
-      if (selected.isDefined)
-        historyLinkAddresses.filter(ra => {
-          ra.id != id && GeometryUtils.areAdjacent(ra.geometry, selected.get.geometry) && !chainIds.contains(ra.id)
-        })
-      else
-        Seq.empty[RoadAddressLink]
+      historyLinkAddresses.find(_.id == id).orElse(historyLinkAddresses.find(_.linkId == linkId).orElse(Option.empty[RoadAddressLink])) match {
+        case Some(sel) => {
+          historyLinkAddresses.filter(ra => {
+            ra.id != id && GeometryUtils.areAdjacent(ra.geometry, sel.geometry) && !chainIds.contains(ra.id)
+          })
+        }
+        case _ => Seq.empty[RoadAddressLink]
+      }
     } else {
       Seq.empty[RoadAddressLink]
     }
