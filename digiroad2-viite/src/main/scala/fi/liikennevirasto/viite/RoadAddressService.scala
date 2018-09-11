@@ -757,34 +757,29 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
-      val (floatings, _) = withDynTransaction {
-        RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.isFloating)
+    val (floatings, _) = withDynTransaction {
+      RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.isFloating)
+    }
+    val historyLinks = time(logger, "Fetch floating history links") {
+      roadLinkService.getRoadLinksHistoryFromVVH(floatings.map(_.linkId).toSet)
+    }
+    if (historyLinks.nonEmpty) {
+      val historyLinkAddresses = time(logger, "Build history link addresses") {
+        historyLinks.flatMap(fh => {
+          buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
+        })
       }
-      val historyLinks = time(logger, "Fetch floating history links") {
-        roadLinkService.getRoadLinksHistoryFromVVH(floatings.map(_.linkId).toSet)
-      }
-      if (historyLinks.nonEmpty) {
-        val historyLinkAddresses = time(logger, "Build history link addresses") {
-          historyLinks.flatMap(fh => {
-            buildFloatingRoadAddressLink(fh, floatings.filter(_.linkId == fh.linkId))
+      historyLinkAddresses.find(_.id == id).orElse(historyLinkAddresses.find(_.linkId == linkId).orElse(Option.empty[RoadAddressLink])) match {
+        case Some(sel) => {
+          historyLinkAddresses.filter(ra => {
+            ra.id != id && GeometryUtils.areAdjacent(ra.geometry, sel.geometry) && !chainIds.contains(ra.id)
           })
         }
-        val selectedById = historyLinkAddresses.find(_.id == id)
-        val selectedByLinkId = historyLinkAddresses.find(_.linkId == linkId)
-        val selected = if (selectedById.isDefined)
-          selectedById
-        else if (selectedByLinkId.isDefined)
-          selectedByLinkId
-        else Option.empty[RoadAddressLink]
-        if (selected.isDefined)
-          historyLinkAddresses.filter(ra => {
-            ra.id != id && GeometryUtils.areAdjacent(ra.geometry, selected.get.geometry) && !chainIds.contains(ra.id)
-          })
-        else
-          Seq.empty[RoadAddressLink]
-      } else {
-        Seq.empty[RoadAddressLink]
+        case _ => Seq.empty[RoadAddressLink]
       }
+    } else {
+      Seq.empty[RoadAddressLink]
+    }
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long, newSession: Boolean = true): Seq[RoadAddressLink] = {
