@@ -119,10 +119,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     *
     * Calibration point 3   2   0   1   2   1   3   3
     * Road address      --o---+---+---o---+---o---o--
-    * Common history    0   1   1   1   2   2   3   4
+    * Roadway           0   1   1   1   2   2   3   4
     * 100m            0   1   2   3   4   5   6   7   8
     */
-  ignore("Should have calibration points where common history changes") {
+  ignore("Should have calibration points where roadway changes") {
     val vvhRoadLinks = List(
       VVHRoadlink(1000L, 91, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     )

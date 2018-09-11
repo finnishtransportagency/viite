@@ -294,7 +294,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Filler should add calibration points when switching common history Id's blocks, one for the start and one for the end (or 2 if the start and the end are the same link)") {
+  test("Filler should add calibration points when switching roadway Id's blocks, one for the start and one for the end (or 2 if the start and the end are the same link)") {
     val roadNumber = 5
     val roadPartNumber = 207
     val roadLinks = Seq(
@@ -334,7 +334,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectDAO.getProjectLinks(saved.id).size should be(0)
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
       roadAddresses.groupBy(_.roadwayId).size should be(6)
-      //      Evaluate that EVERY single start and end of the common history id groups have a start and end calibration point
+      //      Evaluate that EVERY single start and end of the roadway id groups have a start and end calibration point
       roadAddresses.groupBy(_.roadwayId).forall(group => {
         val sorted = group._2.sortBy(_.startAddrMValue)
         val cpStart = sorted.head.calibrationPoints
@@ -411,7 +411,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("RoadwayIds: Unchange to all road, just changing the roadType, the common history should keep the same") {
+  test("RoadwayIds: Unchange to all road, just changing the roadType, the roadway should keep the same") {
     val roadNumber = 5
     val roadPartNumber = 207
 
