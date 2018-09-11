@@ -37,7 +37,7 @@ import scala.util.parsing.json.JSON
 /**
   * Created by marquesrf on 08-03-2018.
   */
-class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
+class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def runWithRollback[T](f: => T): T = {
@@ -135,7 +135,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       None, roadAddress.adjustedTimestamp)
   }
 
-  test("CommonHistoryIds: Unchanged addresses with new Road Type between different commonHistoryId groups") {
+  test("RoadwayIds: Unchanged addresses with new Road Type between different roadwayId groups") {
     val roadLinks = Seq(
       RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -169,21 +169,21 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       val filter2 = s" (${ids.mkString(",")}) "
       sqlu""" update project_link set road_type=3 WHERE road_address_id in #$filter2""".execute
 
-      val nextCommonId = Sequences.nextCommonHistorySeqValue
+      val nextCommonId = Sequences.nextRoadwaySeqValue
       sqlu""" update road_address set common_history_id= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
       val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
-      afterAddressUpdates.groupBy(_.commonHistoryId).size should be (2)
+      afterAddressUpdates.groupBy(_.roadwayId).size should be (2)
       sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
       ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
       ProjectDAO.getProjectLinks(saved.id).size should be (0)
 
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
-      roadAddresses.groupBy(_.commonHistoryId).size should be (6)
+      roadAddresses.groupBy(_.roadwayId).size should be (6)
     }
   }
 
-  test("CommonHistoryIds: New addresses with new Road Type between") {
+  test("RoadwayIds: New addresses with new Road Type between") {
     runWithRollback {
       sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -238,11 +238,11 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       ProjectDAO.getProjectLinks(id).size should be (0)
 
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
-      roadAddresses.groupBy(_.commonHistoryId).size should be (5)
+      roadAddresses.groupBy(_.roadwayId).size should be (5)
     }
   }
 
-  test("CommonHistoryIds: New addresses at the beginning and at the end of Transfer ones") {
+  test("RoadwayIds: New addresses at the beginning and at the end of Transfer ones") {
     val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 10.0))
     val geom2 = Seq(Point(0.0, 10.0), Point(0.0, 0.0))
     val geom3 = Seq(Point(4286.0, 0.0), Point(4296.0, 0.0))
@@ -290,7 +290,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
       ProjectDAO.getProjectLinks(saved.id).size should be(0)
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
-      roadAddresses.groupBy(_.commonHistoryId).size should be(3)
+      roadAddresses.groupBy(_.roadwayId).size should be(3)
     }
   }
 
@@ -324,18 +324,18 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       val ids = Seq(projectLinks(1), projectLinks(projectLinks.size - 2)).map(_.roadAddressId).toSet
       val filter2 = s" (${ids.mkString(",")}) "
       sqlu""" update project_link set road_type=3 WHERE road_address_id in #$filter2""".execute
-      val nextCommonId = Sequences.nextCommonHistorySeqValue
+      val nextCommonId = Sequences.nextRoadwaySeqValue
       sqlu""" update road_address set common_history_id= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
       val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
-      afterAddressUpdates.groupBy(_.commonHistoryId).size should be(2)
+      afterAddressUpdates.groupBy(_.roadwayId).size should be(2)
       sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
       ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
       ProjectDAO.getProjectLinks(saved.id).size should be(0)
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
-      roadAddresses.groupBy(_.commonHistoryId).size should be(6)
+      roadAddresses.groupBy(_.roadwayId).size should be(6)
       //      Evaluate that EVERY single start and end of the common history id groups have a start and end calibration point
-      roadAddresses.groupBy(_.commonHistoryId).forall(group => {
+      roadAddresses.groupBy(_.roadwayId).forall(group => {
         val sorted = group._2.sortBy(_.startAddrMValue)
         val cpStart = sorted.head.calibrationPoints
         val cpEnd = sorted.last.calibrationPoints
@@ -347,7 +347,7 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("CommonHistoryIds: Terminating the first link and transferring the others") {
+  test("RoadwayIds: Terminating the first link and transferring the others") {
     val roadNumber = 5
     val roadPartNumber = 207
     runWithRollback {
@@ -374,12 +374,12 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
       ProjectDAO.getProjectLinks(saved.id).size should be(0)
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
-      roadAddresses.groupBy(_.commonHistoryId).size should be > 2
-      roadAddresses.head.commonHistoryId should not be roadAddresses.tail.head.commonHistoryId
+      roadAddresses.groupBy(_.roadwayId).size should be > 2
+      roadAddresses.head.roadwayId should not be roadAddresses.tail.head.roadwayId
     }
   }
 
-  test("CommonHistoryIds: Terminating the last link and unchanging the others") {
+  test("RoadwayIds: Terminating the last link and unchanging the others") {
     val roadNumber = 5
     val roadPartNumber = 207
 
@@ -406,12 +406,12 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
       ProjectDAO.getProjectLinks(saved.id).size should be(0)
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
-      roadAddresses.groupBy(_.commonHistoryId).size should be(2)
-      roadAddresses.last.commonHistoryId should not be roadAddresses.head.commonHistoryId
+      roadAddresses.groupBy(_.roadwayId).size should be(2)
+      roadAddresses.last.roadwayId should not be roadAddresses.head.roadwayId
     }
   }
 
-  test("CommonHistoryIds: Unchange to all road, just changing the roadType, the common history should keep the same") {
+  test("RoadwayIds: Unchange to all road, just changing the roadType, the common history should keep the same") {
     val roadNumber = 5
     val roadPartNumber = 207
 
@@ -438,8 +438,8 @@ class CommonHistoryFillerSpec extends FunSuite with Matchers with BeforeAndAfter
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
       ProjectDAO.getProjectLinks(saved.id).size should be(0)
       val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
-      roadAddresses.groupBy(_.commonHistoryId).size should be(1)
-      roadAddressesBeforeUpdate.head.commonHistoryId should be (roadAddresses.head.commonHistoryId)
+      roadAddresses.groupBy(_.roadwayId).size should be(1)
+      roadAddressesBeforeUpdate.head.roadwayId should be (roadAddresses.head.roadwayId)
     }
   }
 }

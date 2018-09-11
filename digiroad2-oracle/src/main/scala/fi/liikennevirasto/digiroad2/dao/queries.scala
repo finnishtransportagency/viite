@@ -11,7 +11,7 @@ object Queries {
 
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
-  def nextCommonHistoryValue = sql"select common_history_seq.nextval from dual"
+  def nextRoadwayValue = sql"select common_history_seq.nextval from dual"
 
   def nextRoadNetworkErrorValue = sql"select road_network_errors_key_seq.nextval from dual"
 

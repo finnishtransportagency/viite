@@ -151,7 +151,7 @@ trait BaseRoadAddress {
   def ely: Long
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
-  def commonHistoryId: Long
+  def roadwayId: Long
   def blackUnderline: Boolean
 
   def isFloating: Boolean = floating.isFloating
@@ -201,7 +201,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, commonHistoryId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
+                       terminated: TerminationCode = NoTermination, roadwayId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
                        blackUnderline: Boolean = false, roadName: Option[String] = None) extends BaseRoadAddress {
 
   val endCalibrationPoint = calibrationPoints._2
@@ -376,14 +376,14 @@ object RoadAddressDAO {
       val geomSource = LinkGeomSource.apply(r.nextInt)
       val ely = r.nextLong()
       val terminated = TerminationCode.apply(r.nextInt())
-      val commonHistoryId = r.nextLong()
+      val roadwayId = r.nextLong()
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
       RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
         SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode),
           linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), FloatingReason.apply(floatingReason),
-        Seq(Point(x, y), Point(x2, y2)), geomSource, ely, terminated, commonHistoryId, validFrom, validTo, blackUnderline = false, roadName)
+        Seq(Point(x, y), Point(x2, y2)), geomSource, ely, terminated, roadwayId, validFrom, validTo, blackUnderline = false, roadName)
     }
   }
 
@@ -1385,10 +1385,10 @@ object RoadAddressDAO {
       } else {
         address.id
       }
-      val nextCommonHistoryId = if (address.commonHistoryId == NewCommonHistoryId) {
-        Sequences.nextCommonHistorySeqValue
+      val nextRoadwayId = if (address.roadwayId == NewRoadwayId) {
+        Sequences.nextRoadwaySeqValue
       } else {
-        address.commonHistoryId
+        address.roadwayId
       }
       addressPS.setLong(1, nextId)
       addressPS.setLong(2, address.roadNumber)
@@ -1423,7 +1423,7 @@ object RoadAddressDAO {
       addressPS.setLong(20, address.ely)
       addressPS.setInt(21, address.roadType.value)
       addressPS.setInt(22, address.terminated.value)
-      addressPS.setLong(23, nextCommonHistoryId)
+      addressPS.setLong(23, nextRoadwayId)
       addressPS.setLong(24, address.linkId)
       addressPS.setLong(25, address.sideCode.value)
       addressPS.setDouble(26, address.startMValue)
@@ -1496,7 +1496,7 @@ object RoadAddressDAO {
     sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
   }
 
-  def getCommonHistoryIdsFromRoadAddress: Seq[Long] = {
+  def getRoadwayIdsFromRoadAddress: Seq[Long] = {
         sql"""
          select distinct(ra.common_history_id)
         from road_address ra order by ra.common_history_id asc
@@ -1601,7 +1601,7 @@ object RoadAddressDAO {
       s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
   }
 
-  def withCommonHistoryIds(fromCommonId: Long, toCommonId: Long)(query: String): String = {
+  def withRoadwayIds(fromCommonId: Long, toCommonId: Long)(query: String): String = {
     query + s" WHERE ra.common_history_id >= $fromCommonId AND ra.common_history_id <= $toCommonId"
   }
 
