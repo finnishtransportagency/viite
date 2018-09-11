@@ -37,29 +37,34 @@
       name: 'indicatorLayer',
       zIndex: RoadZIndex.IndicatorLayer.value
     });
+    indicatorLayer.set('name', 'indicatorLayer');
 
     var floatingMarkerLayer = new ol.layer.Vector({
       source: floatingMarkerVector,
       name: 'floatingMarkerLayer'
     });
+    floatingMarkerLayer.set('name', 'floatingMarkerLayer');
 
     var anomalousMarkerLayer = new ol.layer.Vector({
       source: anomalousMarkerVector,
       name: 'anomalousMarkerLayer',
       zIndex: RoadZIndex.IndicatorLayer.value
     });
+    anomalousMarkerLayer.set('name', 'anomalousMarkerLayer');
 
     var suravageMarkerLayer = new ol.layer.Vector({
       source: suravageMarkerVector,
       name: 'suravageMarkerLayer',
       zIndex: RoadZIndex.DirectionMarkerLayer.value
     });
+    suravageMarkerLayer.set('name', 'suravageMarkerLayer');
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer',
       zIndex: RoadZIndex.DirectionMarkerLayer.value
     });
+    directionMarkerLayer.set('name', 'directionMarkerLayer');
 
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
@@ -68,24 +73,28 @@
       },
       zIndex: RoadZIndex.GeometryChangedLayer.value
     });
+    geometryChangedLayer.set('name', 'geometryChangedLayer');
 
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
       name: 'calibrationPointLayer',
       zIndex: RoadZIndex.CalibrationPointLayer.value
     });
+    calibrationPointLayer.set('name', 'calibrationPointLayer');
 
     var greenRoadLayer = new ol.layer.Vector({
       source: greenRoadLayerVector,
       name: 'greenRoadLayer',
       zIndex: RoadZIndex.GreenLayer.value
     });
+    greenRoadLayer.set('name', 'greenRoadLayer');
 
     var reservedRoadLayer = new ol.layer.Vector({
       source: reservedRoadVector,
       name: 'reservedRoadLayer',
       zIndex: RoadZIndex.ReservedRoadLayer.value
     });
+    reservedRoadLayer.set('name', 'reservedRoadLayer');
 
     var greenRoads = function(Ol3Features, addToGreenLayer) {
       var features = [];
@@ -125,6 +134,7 @@
           return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
       }
     });
+    pickRoadsLayer.set('name', 'pickRoadsLayer');
 
     var simulatedRoadsLayer = new ol.layer.Vector({
       source: simulationVector,
@@ -133,6 +143,8 @@
           return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
       }
     });
+    simulatedRoadsLayer.set('name', 'simulatedRoadsLayer');
+
 
     var suravageRoadLayer = new ol.layer.Vector({
       source: suravageRoadLayerVector,
@@ -141,6 +153,8 @@
           return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
       }
     });
+    suravageRoadLayer.set('name', 'suravageRoadLayer');
+
 
     var historicRoadsLayer = new ol.layer.Vector({
       source: historicRoadsVector,
@@ -150,6 +164,8 @@
       },
       zIndex: RoadZIndex.HistoricRoadLayer.value
     });
+    historicRoadsLayer.set('name', 'historicRoadsLayer');
+
 
     var layers = [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, suravageMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
       indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, suravageRoadLayer, reservedRoadLayer, historicRoadsLayer];
@@ -182,6 +198,7 @@
       directionMarkerLayer.setOpacity(opacity);
       suravageRoadLayer.setOpacity(opacity);
       historicRoadsLayer.setOpacity(opacity);
+      geometryChangedLayer.setOpacity(opacity);
     };
 
     /**
@@ -210,7 +227,7 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select',function(event) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, false, false, true,true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, false, false, true, true, true);
       selectSingleClick.getFeatures().clear();
 
       if(applicationModel.isReadOnly()){
@@ -224,12 +241,14 @@
         var selection = _.find(event.selected, function(selectionTarget){
             return !_.isUndefined(selectionTarget.linkData);
         });
+        var isUnknown = selection.linkData.anomaly !== Anomaly.None.value && selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
+        var isSuravage = selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
         if (selection.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
           (applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) && !applicationModel.isReadOnly()) {
             selectedLinkProperty.openFloating(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures);
             floatingMarkerLayer.setOpacity(1);
         } else {
-          selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures, selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
+          selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, true, visibleFeatures, isSuravage, isUnknown);
         }
       }
     });
@@ -256,11 +275,22 @@
      */
     var selectSingleClick = new ol.interaction.Select({
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
-      //multi: true,
+      multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer, suravageRoadLayer, historicRoadsLayer],
+      layers: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer, suravageRoadLayer, historicRoadsLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
+      filter: function(feature, layer) {
+        var currentSelectionType = applicationModel.getSelectionType().value;
+        if(currentSelectionType === selectionType.Floating.value){
+          return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+        }
+        else if (currentSelectionType === selectionType.Unknown.value) {
+          return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.UnknownRoadLinkType.value;
+        } else {
+          return currentSelectionType === selectionType.All.value;
+        }
+      },
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
           return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom(), true);
@@ -278,16 +308,23 @@
      * sending them to the selectedLinkProperty.open for further processing.
      */
     selectSingleClick.on('select', function(event) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true, true);
       selectDoubleClick.getFeatures().clear();
       var selection = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.linkData);
       });
-      //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (!_.isUndefined(selection)) {
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
+        var isSuravage = selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
+        var isUnknown = selection.linkData.anomaly !== Anomaly.None.value && selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
+        var hasOverlappingFloating = isUnknown && !(_.chain(event.selected).reject(function(sel) {
+          return sel.ol_uid === selection.ol_uid;
+        }).filter(function (s) {
+          return s.linkData.anomaly !== Anomaly.None.value && s.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+        }).isEmpty().value());
+        //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
         if (selection.linkData.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
           (applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) &&
           !applicationModel.isReadOnly()) {
@@ -311,7 +348,7 @@
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
           selectedLinkProperty.open(selection.linkData.linkId, selection.linkData.id, !(isAnomalousById(selection.id) || isFloatingById(selection.id)),
-            visibleFeatures, selection.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
+            visibleFeatures, isSuravage, hasOverlappingFloating);
         }
         if (applicationModel.selectionTypeIs(selectionType.Unknown) && selection.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && (selection.linkData.anomaly === Anomaly.NoAddressGiven.value || selection.linkData.anomaly === Anomaly.GeometryChanged.value)) {
           greenRoadLayer.setOpacity(1);
@@ -328,8 +365,12 @@
     });
 
     map.on('click', function(event) {
+      //The addition of the check for features on point and the selection mode
+      // seem to fix the problem with the clicking on the empty map after being in the defloating process would allow a deselection and enabling of the menus
+      var hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}));
+      var nonSpecialSelectionType = !_.contains(applicationModel.specialSelectionTypes, applicationModel.getSelectionType().value);
       if (isActiveLayer){
-        if (_.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}))) {
+        if (hasFeatureOnPoint && nonSpecialSelectionType) {
           selectedLinkProperty.close();
         }
       }
@@ -378,7 +419,7 @@
       addFeaturesToSelection(ol3Features);
     });
 
-    var getVisibleFeatures = function(withRoads, withAnomalyMarkers, withFloatingMarkers, withGreenRoads, withPickRoads, withDirectionalMarkers, withSuravageRoads){
+    var getVisibleFeatures = function(withRoads, withAnomalyMarkers, withFloatingMarkers, withGreenRoads, withPickRoads, withDirectionalMarkers, withSuravageRoads, withGeometryChanged){
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
       var visibleAnomalyMarkers =  withAnomalyMarkers ? anomalousMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
@@ -388,7 +429,8 @@
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleSuravageMarkers = withDirectionalMarkers ? suravageMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleSuravageRoads = withSuravageRoads ? suravageRoadLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleSuravageRoads).concat(visibleSuravageMarkers);
+      var visibleGeometryChanged = withGeometryChanged ? geometryChangedLayer.getSource().getFeaturesInExtent(extent) : [];
+      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleSuravageRoads).concat(visibleSuravageMarkers).concat(visibleGeometryChanged);
     };
 
     /**
@@ -499,7 +541,7 @@
         });
 
         var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
-          return roadlink.anomaly === Anomaly.NoAddressGiven.value;
+          return roadlink.anomaly !== Anomaly.None.value;
         });
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
@@ -559,7 +601,8 @@
           geometryChangedLayer.getSource().addFeature(feature);
         });
 
-        if (!applicationModel.isActiveButtons() && map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
+        //Removed the need to check if the buttons are active in order to draw calibration points.
+        if (map.getView().getZoom() >= zoomlevels.minZoomLevelForCalibrationPoints) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             var calMarker = new CalibrationPoint(actualPoint);
@@ -633,15 +676,19 @@
 
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function (link) {
         var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
+        var isUnknown = _.every(selectedLink, function(sl) {
+          return sl.anomaly !== Anomaly.None.value && sl.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
+        });
+        var roads = isUnknown ? geometryChangedLayer.getSource().getFeatures() : roadLayer.layer.getSource().getFeatures();
         var features = [];
         _.each(selectedLink, function (featureLink) {
           if (selectedLinkProperty.canOpenById(featureLink.id)) {
-            _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
+            _.each(roads, function (feature) {
               if (_.contains(featureLink.selectedIds, feature.linkData.id))
                 return features.push(feature);
             });
           } else if (featureLink.linkId !== 0) {
-            _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
+            _.each(roads, function (feature) {
               if (_.contains(featureLink.selectedLinks, feature.linkData.linkId))
                 return features.push(feature);
             });
@@ -1022,6 +1069,7 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightSelectedFloatingFeatures', function(){
       highlightSelectedFloatingFeatures();
+      geometryChangedLayer.setOpacity(1);
     });
 
     var highlightAnomalousFeaturesByFloating = function() {
