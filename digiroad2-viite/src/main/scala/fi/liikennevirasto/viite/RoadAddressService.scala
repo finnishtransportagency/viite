@@ -380,6 +380,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           logger.info(s"Found ${toFloating.size} road addresses that were left floating after changes, saving them.")
           toFloating.foreach {
             ra => RoadAddressDAO.changeRoadAddressFloatingWithHistory(ra.id, None, FloatingReason.ApplyChanges)
+              val roadLink = roadLinks.find(_.linkId == ra.linkId)
+              if (roadLink.nonEmpty){
+                val missing = MissingRoadAddress(ra.linkId, Some(ra.startAddrMValue), Some(ra.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None, None, Some(ra.startMValue), Some(ra.endMValue), Anomaly.GeometryChanged, Seq.empty[Point])
+                RoadAddressDAO.createMissingRoadAddress(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
+              }
           }
 
           checkRoadAddressFloatingWithoutTX(addressesExceptNew.map(_.linkId).toSet, float = true)
@@ -649,16 +654,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val addressGeometry = roadLink.map(rl =>
         GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
       if (float && hasTargetRoadLink(roadLink, addressGeometry)) {
-        println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
+        logger.info(s"Floating and update geometry id ${address.id} (link id ${address.linkId})")
         RoadAddressDAO.changeRoadAddressFloatingWithHistory(address.id, addressGeometry, FloatingReason.GeometryChanged)
         val missing = MissingRoadAddress(address.linkId, Some(address.startAddrMValue), Some(address.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None, None, Some(address.startMValue), Some(address.endMValue), Anomaly.GeometryChanged, Seq.empty[Point])
         RoadAddressDAO.createMissingRoadAddress(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
       } else if (!hasTargetRoadLink(roadLink, addressGeometry)) {
-        println("Floating id %d (link id %d)".format(address.id, address.linkId))
+        logger.info(s"Floating id ${address.id}")
         RoadAddressDAO.changeRoadAddressFloatingWithHistory(address.id, None, FloatingReason.NewAddressGiven)
       } else {
         if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geometry)) {
-          println("Updating geometry for id %d (link id %d)".format(address.id, address.linkId))
+          logger.info(s"Updating geometry for id ${address.id} (link id ${address.linkId})")
           RoadAddressDAO.changeRoadAddressFloatingWithHistory(address.id, addressGeometry, FloatingReason.GapInGeometry)}
       }
     }
@@ -668,7 +673,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynTransaction {
       val addresses = RoadAddressDAO.fetchByLinkId(Set(linkId), includeHistory = false, includeTerminated = false)
       addresses.foreach { address =>
-        println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
+        logger.info(s"Floating and update geometry id ${address.id} (link id ${address.linkId})")
         RoadAddressDAO.changeRoadAddressFloatingWithHistory(address.id, None, floatingReason = FloatingReason.ManualFloating)
         RoadAddressDAO.createMissingRoadAddress(address.linkId, address.startAddrMValue, address.endAddrMValue, Anomaly.GeometryChanged.value, address.startMValue, address.endMValue)
       }

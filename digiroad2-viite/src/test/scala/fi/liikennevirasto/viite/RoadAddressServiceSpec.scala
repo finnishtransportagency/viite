@@ -1373,7 +1373,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink2, roadLink3), Seq.empty[ChangeInfo]))
 
     val returnedAdjacents = runWithRollback {
-      RoadAddressDAO.create(Seq(ra,ra2))
+      RoadAddressDAO.create(Seq(ra))
       RoadAddressDAO.createMissingRoadAddress(
         MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
       )
@@ -1414,7 +1414,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink1, roadLink2), Seq.empty[ChangeInfo]))
 
     runWithRollback {
-      RoadAddressDAO.create(Seq(ra,ra2))
+      RoadAddressDAO.create(Seq(ra))
       RoadAddressDAO.createMissingRoadAddress(
         MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
       )
