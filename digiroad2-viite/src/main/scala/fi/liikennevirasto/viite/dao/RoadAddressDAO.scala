@@ -270,7 +270,7 @@ object RoadAddressDAO {
       val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
       val floatingFilter = if (fetchOnlyFloating)
-        " and ra.floating = '1'"
+        " and ra.floating > 0"
       else
         ""
       val normalRoadsFilter = if (onlyNormalRoads)
@@ -400,7 +400,7 @@ object RoadAddressDAO {
         s""" where ra.link_id in ($linkIdString)"""
       }
       val floating = if (!includeFloating)
-        "AND ra.floating='0'"
+        "AND ra.floating=0"
       else
         ""
       val history = if (!includeHistory)
@@ -512,7 +512,7 @@ object RoadAddressDAO {
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        $where AND $geomFilter $coarseWhere AND ra.floating='0' and t.id < t2.id and
+        $where AND $geomFilter $coarseWhere AND ra.floating=0 and t.id < t2.id and
           valid_to is null
       """
       queryList(query)
@@ -524,7 +524,7 @@ object RoadAddressDAO {
       MassQuery.withIds(linkIds) {
         idTableName =>
           val floating = if (!includeFloating)
-            "AND ra.floating='0'"
+            "AND ra.floating=0"
           else
             ""
           val history = if (!includeHistory)
@@ -590,7 +590,7 @@ object RoadAddressDAO {
       MassQuery.withIds(ids) {
         idTableName =>
           val floating = if (!includeFloating)
-            "AND ra.floating='0'"
+            "AND ra.floating=0"
           else
             ""
           val history = if (!includeHistory)
@@ -651,7 +651,7 @@ object RoadAddressDAO {
                       includeHistory: Boolean = false, includeSuravage: Boolean = true, fetchOnlyEnd: Boolean = false, fetchOnlyStart: Boolean = false): List[RoadAddress] = {
     time(logger, "Fetch road addresses by road part") {
       val floating = if (!includeFloating)
-        "ra.floating='0' AND"
+        "ra.floating=0 AND"
       else
         ""
       val expiredFilter = if (!includeExpired)
@@ -749,7 +749,7 @@ object RoadAddressDAO {
   def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false): List[RoadAddress] = {
     time(logger, "Fetch road addresses by road number") {
       val floating = if (!includeFloating)
-        "ra.floating='0' AND"
+        "ra.floating=0 AND"
       else
         ""
       // valid_to > sysdate because we may expire and query the data again in same transaction
@@ -784,7 +784,7 @@ object RoadAddressDAO {
           from ROAD_ADDRESS ra cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-          where t.id < t2.id and ra.floating = 1 $history and
+          where t.id < t2.id and ra.floating > 0 $history and
           valid_to is null
           order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
       """
@@ -805,7 +805,7 @@ object RoadAddressDAO {
           from ROAD_ADDRESS ra cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
           TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-          where t.id < t2.id and ra.floating = 1 $history and road_number = $roadNumber and road_part_number = $roadPartNumber and
+          where t.id < t2.id and ra.floating > 0 $history and road_number = $roadNumber and road_part_number = $roadPartNumber and
           valid_to is null
           order by ra.ELY, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.START_ADDR_M, ra.END_ADDR_M
       """
@@ -1117,7 +1117,7 @@ object RoadAddressDAO {
     Q.queryNA[Long](s"""
        select distinct road_number
               from road_address ra
-              where ra.floating = '0' AND valid_to IS NULL
+              where ra.floating = 0 AND valid_to IS NULL
               $filter
               order by road_number
       """).list
@@ -1232,7 +1232,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join $idTableName i on i.id = ra.link_id
-        where ra.floating='1' and t.id < t2.id and
+        where ra.floating > 0 and t.id < t2.id and
           valid_to is null
       """
           queryList(query)
@@ -1261,7 +1261,7 @@ object RoadAddressDAO {
         from ROAD_ADDRESS ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        $where AND ra.floating='1' and t.id < t2.id and
+        $where AND ra.floating > 0 and t.id < t2.id and
           valid_to is null
       """
       queryList(query)
@@ -1487,7 +1487,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         where t.id < t2.id and
-          valid_to is null and ra.terminated = 0 and ra.end_date is null and ra.floating = '0' $road"""
+          valid_to is null and ra.terminated = 0 and ra.end_date is null and ra.floating = 0 $road"""
       queryList(query)
     }
   }
