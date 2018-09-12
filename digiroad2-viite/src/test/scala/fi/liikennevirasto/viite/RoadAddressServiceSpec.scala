@@ -160,7 +160,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def getFloatingCount(): Long = {
     sql"""
        select count(*)
-       from ROAD_ADDRESS where floating = '1'
+       from ROAD_ADDRESS where floating > 0
        and valid_to is null and END_DATE is null
     """.as[Long].first
   }
