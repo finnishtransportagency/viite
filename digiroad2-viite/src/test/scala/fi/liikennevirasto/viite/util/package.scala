@@ -122,7 +122,7 @@ package object util {
 
     def createRoadAddresses(roadNumber: Long, roadPartNumber: Long, track: Long, start: Long, end: Long): (Long, Long) = {
       val nextLinkId = sql"""SELECT MAX(LINK_ID) FROM ROAD_ADDRESS""".as[Long].first + 1
-      val roadAddressId = Sequences.nextViitePrimaryKeySeqValue
+      val roadAddressId = Sequences.nextRoadAddressId
       val endMeasure = end - start
       sqlu"""INSERT INTO ROAD_ADDRESS VALUES ($roadAddressId, $roadNumber, $roadPartNumber, $track, ${discontinuity.value}, $start, $end,
             sysdate, NULL, 'test user', sysdate, 0, 0,

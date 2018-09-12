@@ -10,15 +10,27 @@ object Sequences {
     nextViitePrimaryKeyId.as[Long].first
   }
 
+  def nextRoadAddressId: Long = {
+    Queries.nextRoadAddressId.as[Long].first
+  }
+
+  def nextLinearLocationId: Long = {
+    Queries.nextLinearLocationId.as[Long].first
+  }
+
   def fetchViitePrimaryKeySeqValues(len: Int): List[Long] = {
     fetchViitePrimaryKeyId(len)
   }
 
+  def fetchRoadAddressIds(len: Int): List[Long] = {
+    Queries.fetchRoadAddressIds(len)
+  }
+
   def nextRoadwaySeqValue: Long = {
-    nextRoadwayValue.as[Long].first
+    nextRoadwayId.as[Long].first
   }
 
   def nextRoadNetworkErrorSeqValue: Long = {
-    nextRoadNetworkErrorValue.as[Long].first
+    nextRoadNetworkErrorId.as[Long].first
   }
 }

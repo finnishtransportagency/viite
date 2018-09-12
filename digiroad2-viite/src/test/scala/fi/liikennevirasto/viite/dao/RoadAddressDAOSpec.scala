@@ -539,14 +539,14 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   private def createRoadAddress8888(startDate: Option[DateTime], endDate: Option[DateTime] = None): Unit = {
     RoadAddressDAO.create(
       Seq(
-        RoadAddress(Sequences.nextViitePrimaryKeySeqValue, 8888, 1, RoadType.PublicRoad, Track.Combined,
+        RoadAddress(Sequences.nextRoadAddressId, 8888, 1, RoadType.PublicRoad, Track.Combined,
           Discontinuity.Continuous, 0, 35, startDate, endDate,
           Option("TestUser"), 8888888, 0, 35, SideCode.TowardsDigitizing,
           0, (None, None), NoFloating, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8, NoTermination, 0)))
   }
 
   private def createTerminatedRoadAddress7777(startDate: Option[DateTime]): Unit = {
-    val roadAddressId = Sequences.nextViitePrimaryKeySeqValue
+    val roadAddressId = Sequences.nextRoadAddressId
     RoadAddressDAO.create(
       Seq(
         RoadAddress(roadAddressId, 7777, 1, RoadType.PublicRoad, Track.Combined,
