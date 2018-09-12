@@ -1800,10 +1800,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.commonHistoryId).getOrElse(0))
     pl.status match {
       case UnChanged =>
-        if(source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely){
+        if (source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely) {
           roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
-        }
-        else{
+        } else {
           roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
         }
       case Transfer | Numbering =>
@@ -1833,10 +1832,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         None
       // unchanged will get end_date if the road_type, discontinuity or ely code changes, otherwise we keep the same end_date
       case UnChanged =>
-        if(roadAddress.roadType == pl.roadType && roadAddress.ely == pl.ely && roadAddress.discontinuity == pl.discontinuity){
+        if (roadAddress.roadType == pl.roadType && roadAddress.ely == pl.ely && roadAddress.discontinuity == pl.discontinuity) {
           None
-        }
-        else {
+        } else {
           Some(roadAddress.copy(endDate = Some(project.startDate)))
         }
       case Transfer | Numbering =>
