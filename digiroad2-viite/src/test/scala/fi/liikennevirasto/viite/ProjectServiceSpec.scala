@@ -189,7 +189,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
                     roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadAddressId: Long = 0L, startDate: Option[DateTime] = None) = {
       ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startDate, None,
         Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
-        floating = false, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
+        floating = FloatingReason.NoFloating, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
         LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadAddressId, ely, reversed = false, None, 0L)
     }
 
