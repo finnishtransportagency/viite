@@ -1,6 +1,6 @@
 create or replace TRIGGER ROADNAME_SEQ_TRIGGER
 BEFORE INSERT
-ON Road_Names
+ON Road_Name
 FOR EACH ROW
 BEGIN
 :NEW.ID:=road_name_seq.NEXTVAL;
