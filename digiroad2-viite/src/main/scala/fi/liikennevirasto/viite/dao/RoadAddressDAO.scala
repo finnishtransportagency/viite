@@ -1208,7 +1208,7 @@ object RoadAddressDAO {
   }
 
   def getNextRoadAddressId: Long = {
-    Queries.nextViitePrimaryKeyId.as[Long].first
+    Queries.nextRoadAddressId.as[Long].first
   }
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
@@ -1375,13 +1375,13 @@ object RoadAddressDAO {
       "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
       "?, ?, ?, ?, ?, ?)")
     val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
-    val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
+    val plIds = Sequences.fetchRoadAddressIds(idLess.size)
     val createAddresses = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
     val savedIds = createAddresses.foreach { case (address) =>
       val nextId = if (address.id == NewRoadAddress) {
-        Sequences.nextViitePrimaryKeySeqValue
+        Sequences.nextRoadAddressId
       } else {
         address.id
       }

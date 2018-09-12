@@ -286,7 +286,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     val projectId = Sequences.nextViitePrimaryKeySeqValue
     val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
     ProjectDAO.createRoadAddressProject(rap)
-    val raId = Sequences.nextViitePrimaryKeySeqValue
+    val raId = Sequences.nextRoadAddressId
     sqlu"""insert into ROAD_ADDRESS (id, road_number, road_part_number, track_code, discontinuity, START_ADDR_M, END_ADDR_M,
            start_date, end_date, created_by, VALID_FROM, geometry, floating, calibration_points,
            start_Measure,end_Measure,Link_id, side_code)
@@ -1428,7 +1428,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
     runWithRollback {
       val reservationId = Sequences.nextViitePrimaryKeySeqValue
-      val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
+      val ids = (0 until 4).map(_ => Sequences.nextRoadAddressId)
 
       //Roads for template links
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
