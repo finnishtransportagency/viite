@@ -1,3 +1,5 @@
+-- TODO Change this according to the new database structure
+
 --------------------------------------------------------
 --  File created - Thursday-June-28-2018   
 --------------------------------------------------------
