@@ -357,7 +357,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
     time(logger, "Apply changes") {
-      val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.commonHistoryId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
+      val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.roadwayId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
       val changes = filterRelevantChanges(roadAddresses, allChanges)
       val changedRoadLinks = changesSanityCheck(changes)
       if (changedRoadLinks.isEmpty) {
@@ -391,7 +391,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           val adjustedAddresses = adjustedRoadParts.flatMap { case (road, part) => RoadAddressDAO.fetchByRoadPart(road, part) }
 
           val changedRoadAddresses = adjustedAddresses ++ RoadAddressDAO.fetchByIdMassQuery(ids -- adjustedAddresses.map(_.id), includeFloating = true)
-          changedRoadAddresses.groupBy(cra => (cra.linkId, cra.commonHistoryId)).map(s => LinkRoadAddressHistory(s._2.toSeq.partition(_.endDate.isEmpty))).toSeq
+          changedRoadAddresses.groupBy(cra => (cra.linkId, cra.roadwayId)).map(s => LinkRoadAddressHistory(s._2.toSeq.partition(_.endDate.isEmpty))).toSeq
         }
       }
     }

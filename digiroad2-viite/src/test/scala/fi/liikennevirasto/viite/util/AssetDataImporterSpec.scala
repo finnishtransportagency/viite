@@ -119,10 +119,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     *
     * Calibration point 3   2   0   1   2   1   3   3
     * Road address      --o---+---+---o---+---o---o--
-    * Common history    0   1   1   1   2   2   3   4
+    * Roadway           0   1   1   1   2   2   3   4
     * 100m            0   1   2   3   4   5   6   7   8
     */
-  ignore("Should have calibration points where common history changes") {
+  ignore("Should have calibration points where roadway changes") {
     val vvhRoadLinks = List(
       VVHRoadlink(1000L, 91, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     )
@@ -235,7 +235,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadNumber = 9999999
     val roadPartNumber = 1
     val linkId = 12345L
-    val commonHistoryId = 123
+    val roadwayId = 123
     val geom1 = Seq(Point(9.9, 10.1), Point(20.0, 20.0))
     val geom2 = Seq(Point(20.1, 20.1), Point(9.9, 10.1))
     val vvhGeom = Seq(Point(40.0, 40.0, 40.0), Point(60.0, 60.0, 60.0))
@@ -246,10 +246,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       //Road Objects
       val ra = Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId),
+        geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayId),
         RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 10L, 20L,
           Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-          geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId))
+          geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayId))
       val vvhRoadLinks = List(
         VVHRoadlink(linkId, 91, vvhGeom, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
       )
