@@ -625,12 +625,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadNumber = 1943845
       val roadPartNumber = 1
       val linkId = 12345L
-      val commonHistoryId = 123
+      val roadwayId = 123
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, commonHistoryId))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayId))
       RoadAddressDAO.create(ra)
       val roadBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
@@ -673,7 +673,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadBeforeChanges.roadPartNumber should be(roadAfterPublishing.roadPartNumber)
       endedAddress.isEmpty should be(true)
       roadAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1901-01-01")
-      roadAfterPublishing.commonHistoryId should be(commonHistoryId)
+      roadAfterPublishing.roadwayId should be(roadwayId)
     }
   }
 
@@ -720,12 +720,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadNumber = 1943845
       val roadPartNumber = 1
       val linkId = 12345L
-      val commonHistoryId = 123
+      val roadwayId = 123
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, commonHistoryId))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, roadwayId))
       RoadAddressDAO.create(ra)
       val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
 
@@ -764,7 +764,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       endedAddress.head.endDate.nonEmpty should be(true)
       endedAddress.size should be(1)
       endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
-      endedAddress.head.commonHistoryId should be(commonHistoryId)
+      endedAddress.head.roadwayId should be(roadwayId)
       sql"""SELECT id FROM PROJECT_LINK WHERE project_id=$projectId""".as[Long].firstOption should be(None)
       sql"""SELECT id FROM PROJECT_RESERVED_ROAD_PART WHERE project_id=$projectId""".as[Long].firstOption should be(None)
     }
@@ -2234,7 +2234,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.count(_.startDate == roadAddress.startDate) should be(2)
     result.count(_.startDate.get == project.startDate) should be(2)
     result.count(_.endDate.isEmpty) should be(2)
-    result.filter(res => res.terminated == TerminationCode.NoTermination && res.commonHistoryId != -1000).forall(_.isFloating) should be(true)
+    result.filter(res => res.terminated == TerminationCode.NoTermination && res.roadwayId != -1000).forall(_.isFloating) should be(true)
 
   }
 

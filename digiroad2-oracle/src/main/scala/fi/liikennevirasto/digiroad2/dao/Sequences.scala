@@ -14,8 +14,8 @@ object Sequences {
     fetchViitePrimaryKeyId(len)
   }
 
-  def nextCommonHistorySeqValue: Long = {
-    nextCommonHistoryValue.as[Long].first
+  def nextRoadwaySeqValue: Long = {
+    nextRoadwayValue.as[Long].first
   }
 
   def nextRoadNetworkErrorSeqValue: Long = {

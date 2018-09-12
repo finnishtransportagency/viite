@@ -142,7 +142,7 @@ object ProjectSectionCalculator {
 }
 
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long, reversed: Boolean, commonHistoryId: Long) {
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long, reversed: Boolean, roadwayId: Long) {
   def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
@@ -156,8 +156,8 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
       // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart) &&
-      // and same common history
-      ra.commonHistoryId == commonHistoryId
+      // and same roadway
+      ra.roadwayId == roadwayId
   }
 }
 
