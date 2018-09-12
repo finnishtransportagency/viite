@@ -171,15 +171,15 @@ class AssetDataImporter {
               )
             )""".execute
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
-      commonHistoryResetter()
+      roadwayResetter()
     }
   }
 
-  def commonHistoryResetter(): Unit = {
+  def roadwayResetter(): Unit = {
     val sequenceResetter = new SequenceResetterDAO()
     sql"""select MAX(common_history_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
-      case Some(commonHistoryId) =>
-        sequenceResetter.resetSequenceToNumber("common_history_seq", commonHistoryId + 1)
+      case Some(roadwayId) =>
+        sequenceResetter.resetSequenceToNumber("common_history_seq", roadwayId + 1)
       case _ => sequenceResetter.resetSequenceToNumber("common_history_seq", 1)
     }
   }

@@ -39,11 +39,8 @@ object TrackCalculatorContext {
     val head = projectLinks.head
     projectLinks.flatMap {
       pl =>
-        strategies.find(strategy => strategy.applicableStrategy(head, pl)) match {
-          case Some(strategy) => Some(pl.endAddrMValue, strategy)
-          case _ => None
-        }
-    }.headOption
+        strategies.filter(strategy => strategy.applicableStrategy(head, pl)).map(strategy => (strategy.getStrategyAddress(pl), strategy))
+    }.sortBy(_._1).headOption
   }
 
   def getStrategy(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink]): TrackCalculatorStrategy = {
@@ -220,6 +217,8 @@ trait TrackCalculatorStrategy {
       setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint)
     )
   }
+
+  def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.endAddrMValue
 
   def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = false
 

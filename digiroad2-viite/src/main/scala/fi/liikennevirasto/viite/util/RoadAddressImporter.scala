@@ -19,21 +19,21 @@ case class ConversionRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCo
                                  startAddrM: Long, endAddrM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
                                  validFrom: Option[DateTime], validTo: Option[DateTime], ely: Long, roadType: Long,
                                  terminated: Long, linkId: Long, userId: String, x1: Option[Double], y1: Option[Double],
-                                 x2: Option[Double], y2: Option[Double], lrmId: Long, commonHistoryId: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
+                                 x2: Option[Double], y2: Option[Double], lrmId: Long, roadwayId: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) {
 
-  case class IncomingLrmPosition(id: Long, linkId: Long, startM: Double, endM: Double, sideCode: SideCode, linkSource: LinkGeomSource, commonHistoryId: Long)
+  case class IncomingLrmPosition(id: Long, linkId: Long, startM: Double, endM: Double, sideCode: SideCode, linkSource: LinkGeomSource, roadwayId: Long)
   case class IncomingRoadAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                                         startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime],
-                                         createdBy: String, validFrom: Option[DateTime], x1: Option[Double], y1: Option[Double],
-                                         x2: Option[Double], y2: Option[Double], roadType: Long, ely: Long, commonHistoryId: Long)
+                                 startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime],
+                                 createdBy: String, validFrom: Option[DateTime], x1: Option[Double], y1: Option[Double],
+                                 x2: Option[Double], y2: Option[Double], roadType: Long, ely: Long, roadwayId: Long)
 
   val dateFormatter = ISODateTimeFormat.basicDate()
 
   def printConversionRoadAddress(r: ConversionRoadAddress): String = {
     s"""linkid: %d, alku: %.2f, loppu: %.2f, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s, ajorataId: %s, kalibrointpiste: %s""".
-      format(r.linkId, r.startM, r.endM, r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.commonHistoryId, r.calibrationCode)
+      format(r.linkId, r.startM, r.endM, r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddrM, r.endAddrM, r.startDate, r.endDate, r.userId, r.validFrom, r.roadwayId, r.calibrationCode)
   }
 
   private def roadAddressStatement() =
@@ -70,7 +70,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadAddressStatement.setInt(16, 0)
     roadAddressStatement.setLong(17, roadAddress.roadType)
     roadAddressStatement.setLong(18, roadAddress.ely)
-    roadAddressStatement.setLong(19, roadAddress.commonHistoryId)
+    roadAddressStatement.setLong(19, roadAddress.roadwayId)
     roadAddressStatement.setLong(20, roadAddress.calibrationCode.value)
     roadAddressStatement.setLong(21, lrmPosition.linkId)
     roadAddressStatement.setLong(22, lrmPosition.sideCode.value)
@@ -178,17 +178,17 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
 
     val mappedConversionRoadAddress = conversionRoadAddress.
-      groupBy(ra => (ra.linkId, ra.commonHistoryId))
+      groupBy(ra => (ra.linkId, ra.roadwayId))
 
     val incomingLrmPositions = mappedConversionRoadAddress.map(ra => ra._2.maxBy(_.startDate.get.getMillis)).flatMap {
       case(ra) =>
         mappedRoadLinks.getOrElse(ra.linkId, Seq()).headOption match {
           case Some(rl) =>
-            Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, rl.linkSource, ra.commonHistoryId))
+            Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, rl.linkSource, ra.roadwayId))
           case _ =>
             mappedHistoryRoadLinks.get(ra.linkId) match {
               case Some(rl) =>
-                Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, LinkGeomSource.HistoryLinkInterface, ra.commonHistoryId))
+                Some(IncomingLrmPosition(ra.lrmId, ra.linkId, ra.startM, ra.endM, ra.sideCode, LinkGeomSource.HistoryLinkInterface, ra.roadwayId))
               case _ => None
             }
         }
@@ -201,13 +201,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val lrmPositions = allLinkGeomLength.flatMap {
       case (linkId, geomLength) =>
         adjustLrmPosition(incomingLrmPositions.filter(lrm => lrm.linkId == linkId).toSeq, geomLength)
-    }.groupBy(lrm => (lrm.linkId, lrm.commonHistoryId))
+    }.groupBy(lrm => (lrm.linkId, lrm.roadwayId))
 
     val roadAddressPs = roadAddressStatement()
 
     conversionRoadAddress.foreach {
       case (roadAddress) =>
-        lrmPositions.getOrElse((roadAddress.linkId, roadAddress.commonHistoryId), Seq()).headOption.foreach {
+        lrmPositions.getOrElse((roadAddress.linkId, roadAddress.roadwayId), Seq()).headOption.foreach {
           case lrmPosition =>
             if (roadAddress.directionFlag == 1) {
               val reversedLRM = lrmPosition.copy(sideCode = SideCode.switch(lrmPosition.sideCode))
@@ -246,7 +246,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val x2 = r.nextDouble()
       val y2 = r.nextDouble()
       val lrmId = r.nextLong()
-      val commonHistoryId = r.nextLong()
+      val roadwayId = r.nextLong()
       val directionFlag = r.nextLong()
       val startCalibrationPoint = r.nextLong()
       val endCalibrationPoint = r.nextLong()
@@ -266,11 +266,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
       if (startAddrM < endAddrM) {
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, commonHistoryId, SideCode.TowardsDigitizing, calibrationCode, directionFlag)
+          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), lrmId, roadwayId, SideCode.TowardsDigitizing, calibrationCode, directionFlag)
       } else {
         //switch startAddrM, endAddrM, the geometry and set the side code to AgainstDigitizing
         ConversionRoadAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, commonHistoryId, SideCode.AgainstDigitizing, calibrationCode, directionFlag)
+          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), lrmId, roadwayId, SideCode.AgainstDigitizing, calibrationCode, directionFlag)
       }
     }
   }
