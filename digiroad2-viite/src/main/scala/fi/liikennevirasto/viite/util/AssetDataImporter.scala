@@ -179,8 +179,8 @@ class AssetDataImporter {
     val sequenceResetter = new SequenceResetterDAO()
     sql"""select MAX(common_history_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
       case Some(roadwayId) =>
-        sequenceResetter.resetSequenceToNumber("common_history_seq", roadwayId + 1)
-      case _ => sequenceResetter.resetSequenceToNumber("common_history_seq", 1)
+        sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", roadwayId + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
     }
   }
 
