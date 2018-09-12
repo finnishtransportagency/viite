@@ -14,7 +14,7 @@ case class RoadNetworkError(id: Long, roadAddressId: Long, error: AddressError, 
 object RoadNetworkDAO {
 
   def createPublishedRoadNetwork: Unit = {
-    sqlu"""INSERT INTO published_road_network (id, created) VALUES (published_road_network_key_seq.NEXTVAL, sysdate)""".execute
+    sqlu"""INSERT INTO published_road_network (id, created) VALUES (PUBLISHED_ROAD_NETWORK_SEQ.NEXTVAL, sysdate)""".execute
   }
 
   def expireRoadNetwork: Unit = {
