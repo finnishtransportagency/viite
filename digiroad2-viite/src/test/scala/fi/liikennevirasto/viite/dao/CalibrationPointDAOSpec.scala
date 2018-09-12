@@ -54,7 +54,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       addProjectRoads()
       CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
       CalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(viite.newCalibrationPointId, 2, 2, 1.1, 20))
-      val calibrationPointsAmmount = sql""" Select count(*) from CALIBRATION_POINT""".as[Long].first
+      val calibrationPointsAmmount = sql""" Select count(*) from PROJECT_CALIBRATION_POINT""".as[Long].first
       calibrationPointsAmmount should be (2)
     }
   }
