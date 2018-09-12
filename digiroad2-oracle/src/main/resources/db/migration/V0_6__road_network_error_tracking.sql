@@ -1,2 +1,0 @@
-Alter Table Road_Network_Errors Add (Error_Timestamp Number(38,0) Default 0, Road_Network_Version Number(38,0));
-Alter Table Road_Network_Errors Add Constraint Road_Network_FK Foreign Key (Road_Network_Version) References Published_Road_Network (Id) On delete Cascade;
