@@ -226,7 +226,7 @@ object ProjectDAO {
   PROJECT_LINK.CALIBRATION_POINTS_SOURCE
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
     LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)
-    LEFT JOIN road_names rn ON (rn.road_number = project_link.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
+    LEFT JOIN ROAD_NAME rn ON (rn.road_number = project_link.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
 	  LEFT JOIN project_link_name pln ON (pln.road_number = project_link.road_number AND pln.project_id = project_link.project_id)  """
 
   private val projectLinkHistoryQueryBase =
@@ -255,7 +255,7 @@ object ProjectDAO {
           plh.CALIBRATION_POINTS_SOURCE
           from PROJECT prj JOIN PROJECT_LINK_HISTORY plh ON (prj.id = plh.PROJECT_ID)
             LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = plh.ROAD_ADDRESS_ID)
-            LEFT JOIN road_names rn ON (rn.road_number = plh.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
+            LEFT JOIN ROAD_NAME rn ON (rn.road_number = plh.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
         	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """.stripMargin
 
