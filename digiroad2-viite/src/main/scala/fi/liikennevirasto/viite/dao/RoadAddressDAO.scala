@@ -818,7 +818,7 @@ object RoadAddressDAO {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
       val query =
         s"""
-        select ra.id, ra.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join road_network_errors re on re.road_address_id = ra.id $history
+        select ra.id, ra.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join road_network_error re on re.road_address_id = ra.id $history
         order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
       """
       Q.queryNA[(Long, Long, Long, Long, Int, Long)](query).list.map {
