@@ -1094,7 +1094,8 @@ object ProjectDAO {
     } else {
       s"AND LINK_ID IN (${linkIds.mkString(",")})"
     }
-    val query = s"""SELECT pl.id FROM PROJECT_LINK pl WHERE
+    val query =
+      s"""SELECT pl.id FROM PROJECT_LINK pl WHERE
         project_id = $projectId $roadFilter $roadPartFilter $linkIdFilter"""
     val ids = Q.queryNA[Long](query).iterator.toSet
     if (ids.nonEmpty)

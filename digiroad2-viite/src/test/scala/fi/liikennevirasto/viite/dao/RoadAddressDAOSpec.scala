@@ -40,8 +40,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("insert road address duplicate info check") {
       runWithRollback {
         val error = intercept[SQLException] {
-        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
-        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
+          sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
+          sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
         }
         error.getErrorCode should be (1)
       }
@@ -309,7 +309,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Roadnumber and roadpart not available because start date equals project date (2b)") {
+  test("Roadnumber and roadpart available because start date equals project date (2b)") {
+    // Update: after VIITE-1411 we can have start date equal to project date
     runWithRollback {
       val id3 = Sequences.nextViitePrimaryKeySeqValue
       val rap3 = RoadAddressProject(id3, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1962-11-01"),
@@ -318,7 +319,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       // Check that the DB contains the start date
       RoadAddressDAO.fetchByRoadPart(5, 207).flatMap(_.startDate.map(_.toDate)).min should be (DateTime.parse("1962-11-01").toDate)
       val reserved3 = RoadAddressDAO.isNotAvailableForProject(5,207,id3)
-      reserved3 should be (true)
+      reserved3 should be (false)
     }
   }
 
@@ -379,7 +380,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("New roadnumber and roadpart number not reservable if it's going to exist in the future (5b)") {
+  test("New roadnumber and roadpart number reservable if it's going to exist in the future (5b)") {
     runWithRollback {
       createRoadAddress8888(Option.apply(DateTime.parse("1975-01-01")))
       val id9 = Sequences.nextViitePrimaryKeySeqValue
@@ -387,7 +388,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
         "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap9)
       val reserved9 = RoadAddressDAO.isNotAvailableForProject(8888, 1, id9)
-      reserved9 should be(true)
+      reserved9 should be(false)
     }
   }
 
