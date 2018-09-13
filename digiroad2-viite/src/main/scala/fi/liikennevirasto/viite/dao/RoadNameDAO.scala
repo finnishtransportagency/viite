@@ -182,7 +182,7 @@ object RoadNameDAO {
 
     val namesPS = dynamicSession.prepareStatement(query)
 
-    roadNames.foreach(roadName =>{
+    roadNames.foreach(roadName => {
       val nextId = Sequences.nextViitePrimaryKeySeqValue
       namesPS.setLong(1, nextId)
       namesPS.setLong(2, roadName.roadNumber)
@@ -193,8 +193,7 @@ object RoadNameDAO {
       namesPS.setString(7, roadName.createdBy)
       if (roadName.endDate.nonEmpty) {
         namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
-      }
-      else{
+      } else {
         namesPS.setString(8, "")
       }
       namesPS.addBatch()
