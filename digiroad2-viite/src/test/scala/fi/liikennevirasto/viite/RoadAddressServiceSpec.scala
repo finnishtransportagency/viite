@@ -195,7 +195,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val raLink = RoadAddressLink(0, 1611616, geom, 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType,
         InUse, NormalLinkInterface, RoadType.PrivateRoadType, Some("Vt5"), None, BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
                     Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown,
-                    None, None, Anomaly.None)
+        None, None, Anomaly.None)
 
       RoadAddressDAO.createMissingRoadAddress(
       MissingRoadAddress(raLink.linkId, Some(raLink.startAddressM), Some(raLink.endAddressM), RoadType.PublicRoad,
@@ -265,7 +265,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     changeSet.adjustedMValues.map(_.linkId) should be (Seq(l4, l5))
   }
 
-  test("Linear location modifications are published"){
+  test("Linear location modifications are published") {
     val localMockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
@@ -274,7 +274,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback {
       val modificationDate = "1455274504000l"
       val modificationUser = "testUser"
-      val query = s"""select ra.LINK_ID, ra.end_measure
+      val query =
+        s"""select ra.LINK_ID, ra.end_measure
         from ROAD_ADDRESS ra
         where $filter and ra.valid_to is null order by ra.id asc"""
       val (linkId, endM) = StaticQuery.queryNA[(Long, Double)](query).firstOption.get
@@ -296,7 +297,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       missing.size should be (0)
       adjusting.size should be (1)
       floating.size should be (0)
-      adjusting.head.asInstanceOf[LinearLocationAdjustment].endMeasure should be (Some(endM+.5))
+      adjusting.head.asInstanceOf[LinearLocationAdjustment].endMeasure should be(Some(endM + .5))
     }
   }
 
@@ -1067,9 +1068,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
 
       val newLinks = Seq(
-        createRoadAddressLink(0, 1, o1Geom, 100,1, 1, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
+        createRoadAddressLink(0, 1, o1Geom, 100, 1, 1, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
         createRoadAddressLink(0, 499914628, n499914628Geom, 100, 1, 0, 2, 3, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-        createRoadAddressLink(0, 499914643, n499914643Geom, 100, 1,0, 3, 4, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
+        createRoadAddressLink(0, 499914643, n499914643Geom, 100, 1, 0, 3, 4, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
         createRoadAddressLink(0, 5622931, n5622931Geom, 100, 1, 4, 4, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
         createRoadAddressLink(0, 5622953, n5622953Geom, 100, 1, 5, 5, 6, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
       ).map(roadAddressLinkToRoadLink)

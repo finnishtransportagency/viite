@@ -53,7 +53,46 @@
   };
 
   var generateSaveRoadAddressProject = function(){
-    return {"project":{"name":"Project Two","dateModified":"01.06.2017","id":454604,"status":{},"createdBy":"silari","additionalInfo":"","startDate":"01.06.2017","modifiedBy":"-"},"projectAddresses":{"id":454605,"roadNumber":1130,"roadPartNumber":4,"track":{},"discontinuity":"Jatkuva","startAddrMValue":0,"endAddrMValue":17,"linkId":1717275,"startMValue":0.0,"endMValue":16.0,"sideCode":{},"calibrationPoints":{},"floating":false,"geom":[],"projectId":454604,"status":{}},"formInfo":[{"startingLinkId":1717275,"projectId":454604,"roadNumber":1130,"roadPartNumber":4,"roadLength":6362,"ely":1,"discontinuity":"Jatkuva"}],"success":"ok"};
+      return {
+          "project": {
+              "name": "Project Two",
+              "dateModified": "01.06.2017",
+              "id": 454604,
+              "status": {},
+              "createdBy": "silari",
+              "additionalInfo": "",
+              "startDate": "01.06.2017",
+              "modifiedBy": "-"
+          },
+          "projectAddresses": {
+              "id": 454605,
+              "roadNumber": 1130,
+              "roadPartNumber": 4,
+              "track": {},
+              "discontinuity": "Jatkuva",
+              "startAddrMValue": 0,
+              "endAddrMValue": 17,
+              "linkId": 1717275,
+              "startMValue": 0.0,
+              "endMValue": 16.0,
+              "sideCode": {},
+              "calibrationPoints": {},
+              "floating": false,
+              "geom": [],
+              "projectId": 454604,
+              "status": {}
+          },
+          "formInfo": [{
+              "startingLinkId": 1717275,
+              "projectId": 454604,
+              "roadNumber": 1130,
+              "roadPartNumber": 4,
+              "roadLength": 6362,
+              "ely": 1,
+              "discontinuity": "Jatkuva"
+          }],
+          "success": "ok"
+      };
   };
 
   var generateRoadLinkByLinkId = function(){
@@ -61,7 +100,46 @@
   };
 
   var generateCreateRoadAddressProject = function(){
-    return {"project":{"name":"Project Two","dateModified":"01.06.2017","id":454756,"status":{},"createdBy":"silari","additionalInfo":"","startDate":"01.06.2017","modifiedBy":"-"},"projectAddresses":{"id":454757,"roadNumber":1130,"roadPartNumber":4,"track":{},"discontinuity":"Jatkuva","startAddrMValue":0,"endAddrMValue":17,"linkId":1717275,"startMValue":0.0,"endMValue":16.0,"sideCode":{},"calibrationPoints":{},"floating":false,"geom":[],"projectId":454756,"status":{}},"formInfo":[{"startingLinkId":1718137,"projectId":454756,"roadNumber":1130,"roadPartNumber":4,"roadLength":6362,"ely":1,"discontinuity":"Jatkuva"}],"success":"ok"};
+      return {
+          "project": {
+              "name": "Project Two",
+              "dateModified": "01.06.2017",
+              "id": 454756,
+              "status": {},
+              "createdBy": "silari",
+              "additionalInfo": "",
+              "startDate": "01.06.2017",
+              "modifiedBy": "-"
+          },
+          "projectAddresses": {
+              "id": 454757,
+              "roadNumber": 1130,
+              "roadPartNumber": 4,
+              "track": {},
+              "discontinuity": "Jatkuva",
+              "startAddrMValue": 0,
+              "endAddrMValue": 17,
+              "linkId": 1717275,
+              "startMValue": 0.0,
+              "endMValue": 16.0,
+              "sideCode": {},
+              "calibrationPoints": {},
+              "floating": false,
+              "geom": [],
+              "projectId": 454756,
+              "status": {}
+          },
+          "formInfo": [{
+              "startingLinkId": 1718137,
+              "projectId": 454756,
+              "roadNumber": 1130,
+              "roadPartNumber": 4,
+              "roadLength": 6362,
+              "ely": 1,
+              "discontinuity": "Jatkuva"
+          }],
+          "success": "ok"
+      };
   };
 
   root.RoadAddressProjectTestData = {
