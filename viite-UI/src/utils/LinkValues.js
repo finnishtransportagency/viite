@@ -66,7 +66,7 @@
         BothDirections:             {value: 2, description: "Molempiin suuntiin"},
         AgainstDigitizing:          {value: 3, description: "Digitointisuuntaa vastaan"},
         TowardsDigitizing:          {value: 4, description: "Digitointisuuntaan"},
-        UnknownDirection:           {value: 99, description: "Unknown Direction"}
+        UnknownDirection:           {value: 99, description: "Tuntemattomaan suuntaan"}
     };
 
     root.SideCode = {
