@@ -372,50 +372,51 @@ object ProjectDAO {
   }
 
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
-    time(logger, "Update project links") {
-      val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
-      val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
-      val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
-      val links = projectLinks.map { pl =>
-        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId) && !maxInEachTracks.contains(pl.id)) {
-          val ra = addresses(pl.roadAddressId)
-          // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
-          pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
-            startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
-            reversed = false)
-        } else
-          pl
-      }
-      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
-        "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
-        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
-
-      for (projectLink <- links) {
-        projectLinkPS.setLong(1, projectLink.roadNumber)
-        projectLinkPS.setLong(2, projectLink.roadPartNumber)
-        projectLinkPS.setInt(3, projectLink.track.value)
-        projectLinkPS.setInt(4, projectLink.discontinuity.value)
-        projectLinkPS.setLong(5, projectLink.startAddrMValue)
-        projectLinkPS.setLong(6, projectLink.endAddrMValue)
-        projectLinkPS.setDate(7, new java.sql.Date(new Date().getTime))
-        projectLinkPS.setString(8, modifier)
-        projectLinkPS.setLong(9, projectLink.projectId)
-        projectLinkPS.setInt(10, CalibrationCode.getFromAddress(projectLink).value)
-        projectLinkPS.setInt(11, projectLink.status.value)
-        projectLinkPS.setInt(12, projectLink.roadType.value)
-        projectLinkPS.setInt(13, if (projectLink.reversed) 1 else 0)
-        projectLinkPS.setString(14, toGeomString(projectLink.geometry))
-        projectLinkPS.setInt(15, projectLink.sideCode.value)
-        projectLinkPS.setDouble(16, projectLink.startMValue)
-        projectLinkPS.setDouble(17, projectLink.endMValue)
-        projectLinkPS.setLong(18, projectLink.calibrationPointsSourcesToDB().value)
-        projectLinkPS.setLong(19, projectLink.id)
-        projectLinkPS.addBatch()
-      }
-      projectLinkPS.executeBatch()
-      projectLinkPS.close()
-    }
+    throw new NotImplementedError("Will be implemented at VIITE-1540")
+//    time(logger, "Update project links") {
+//      val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
+//      val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+//      val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
+//      val links = projectLinks.map { pl =>
+//        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId) && !maxInEachTracks.contains(pl.id)) {
+//          val ra = addresses(pl.roadAddressId)
+//          // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
+//          pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
+//            startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
+//            reversed = false)
+//        } else
+//          pl
+//      }
+//      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
+//        "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
+//        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
+//        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
+//
+//      for (projectLink <- links) {
+//        projectLinkPS.setLong(1, projectLink.roadNumber)
+//        projectLinkPS.setLong(2, projectLink.roadPartNumber)
+//        projectLinkPS.setInt(3, projectLink.track.value)
+//        projectLinkPS.setInt(4, projectLink.discontinuity.value)
+//        projectLinkPS.setLong(5, projectLink.startAddrMValue)
+//        projectLinkPS.setLong(6, projectLink.endAddrMValue)
+//        projectLinkPS.setDate(7, new java.sql.Date(new Date().getTime))
+//        projectLinkPS.setString(8, modifier)
+//        projectLinkPS.setLong(9, projectLink.projectId)
+//        projectLinkPS.setInt(10, CalibrationCode.getFromAddress(projectLink).value)
+//        projectLinkPS.setInt(11, projectLink.status.value)
+//        projectLinkPS.setInt(12, projectLink.roadType.value)
+//        projectLinkPS.setInt(13, if (projectLink.reversed) 1 else 0)
+//        projectLinkPS.setString(14, toGeomString(projectLink.geometry))
+//        projectLinkPS.setInt(15, projectLink.sideCode.value)
+//        projectLinkPS.setDouble(16, projectLink.startMValue)
+//        projectLinkPS.setDouble(17, projectLink.endMValue)
+//        projectLinkPS.setLong(18, projectLink.calibrationPointsSourcesToDB().value)
+//        projectLinkPS.setLong(19, projectLink.id)
+//        projectLinkPS.addBatch()
+//      }
+//      projectLinkPS.executeBatch()
+//      projectLinkPS.close()
+//    }
   }
 
 
