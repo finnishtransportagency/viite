@@ -41,13 +41,13 @@
 
     var actionButtons = function () {
       var html = '<div class="project-form form-controls" id="actionButtons">';
-        if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
-          html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-                  'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
-        }
-        html += '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>' +
-                '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
-                '</div>';
+      if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
+        html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
+          'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
+      }
+      html += '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>' +
+        '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
+        '</div>';
       return html;
     };
 
@@ -145,12 +145,12 @@
         '<footer>' + showProjectChangeButton() + '</footer>');
     };
 
-    var errorsList = function(){
-      if (projectCollection.getProjectErrors().length > 0){
+    var errorsList = function () {
+      if (projectCollection.getProjectErrors().length > 0) {
         return '<label>TARKASTUSILMOITUKSET:</label>' +
           '<div id ="projectErrors">' +
-          formCommon.getProjectErrors(projectCollection.getProjectErrors(),projectCollection.getAll(), projectCollection) +
-          '</div>' ;
+          formCommon.getProjectErrors(projectCollection.getProjectErrors(), projectCollection.getAll(), projectCollection) +
+          '</div>';
       }
       else
         return '';
@@ -234,8 +234,8 @@
 
       var toggleAdditionalControls = function () {
         rootElement.find('header').replaceWith('<header>' +
-        formCommon.titleWithEditingTool(currentProject) +
-        '</header>');
+          formCommon.titleWithEditingTool(currentProject) +
+          '</header>');
       };
 
       var createOrSaveProject = function () {
@@ -248,8 +248,8 @@
         }
       };
 
-      var deleteProject = function() {
-        if(!_.isUndefined(currentProject) && currentProject.id !== 0){
+      var deleteProject = function () {
+        if (!_.isUndefined(currentProject) && currentProject.id !== 0) {
           projectCollection.deleteProject(currentProject.id);
         }
       };
@@ -427,11 +427,11 @@
         $('#activeButtons').empty();
         var html = "";
         if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
-          html +=  '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-                  'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
+          html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
+            'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
         }
         html += '<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
-                '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
+          '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
         $('#actionButtons').html(html);
         eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
       };
@@ -574,8 +574,8 @@
       var displayDeleteConfirmMessage = function (popupMessage) {
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
-              deleteProject();
-              closeProjectMode(true);
+            deleteProject();
+            closeProjectMode(true);
           },
           closeCallback: function () {
             closeProjectMode(true);
@@ -583,15 +583,15 @@
         });
       };
 
-      var cancelChanges = function() {
-          projectCollection.revertLinkStatus();
-          projectCollection.setDirty([]);
-          projectCollection.setTmpDirty([]);
-          projectLinkLayer.clearHighlights();
-          $('.wrapper').remove();
-          eventbus.trigger('roadAddress:projectLinksEdited');
-          eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
-          eventbus.trigger('roadAddressProject:reOpenCurrent');
+      var cancelChanges = function () {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        projectCollection.setTmpDirty([]);
+        projectLinkLayer.clearHighlights();
+        $('.wrapper').remove();
+        eventbus.trigger('roadAddress:projectLinksEdited');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+        eventbus.trigger('roadAddressProject:reOpenCurrent');
       };
 
       var reOpenCurrent = function () {

@@ -221,8 +221,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
 
     val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(4, 1), Point(2, 1)), projectLinks)
 
-    rightOrdered.map(_.linkId) should be (List(6L, 4L, 7L, 5L))
-    leftOrdered.map(_.linkId) should be (List(1L, 2L, 3L))
+    rightOrdered.map(_.linkId) should be(List(6L, 4L, 7L, 5L))
+    leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
   }
 
   test("Pick the once connected when there is any with the same track code on orderProjectLinksTopologyByGeometry") {
@@ -243,8 +243,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
 
     val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(3, 1), Point(1, 1)), projectLinks)
 
-    rightOrdered.map(_.linkId) should be (List(2L, 3L, 4L))
-    leftOrdered.map(_.linkId) should be (List(1L, 3L, 4L))
+    rightOrdered.map(_.linkId) should be(List(2L, 3L, 4L))
+    leftOrdered.map(_.linkId) should be(List(1L, 3L, 4L))
   }
 
   test("Pick the same track when there is 2 connected links with only one with same track code on orderProjectLinksTopologyByGeometry") {
@@ -265,8 +265,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
 
     val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(1, 1), Point(1, 1)), projectLinks)
 
-    rightOrdered.map(_.linkId) should be (List(1L, 2L, 4L))
-    leftOrdered.map(_.linkId) should be (List(1L, 2L, 3L))
+    rightOrdered.map(_.linkId) should be(List(1L, 2L, 4L))
+    leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
   }
 
 }

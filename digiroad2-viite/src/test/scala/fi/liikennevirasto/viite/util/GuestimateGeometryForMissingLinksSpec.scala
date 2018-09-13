@@ -36,7 +36,6 @@ class GuestimateGeometryForMissingLinksSpec extends FunSuite with Matchers {
   private val roadA5=RoadAddress(5, 19438455, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 40L, 50L, Some(DateTime.parse("1901-01-01")),
     None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0,40),Point(0,50)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
-
   test("Missing one link midle") {
     val missingGeom = Seq(roadA2).map(x=>x.copy(geometry=Seq.empty[Point]))
     val addressWithGeom = Seq(roadA1,roadA3)

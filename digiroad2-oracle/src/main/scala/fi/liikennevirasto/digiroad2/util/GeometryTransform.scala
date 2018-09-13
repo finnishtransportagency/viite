@@ -28,8 +28,8 @@ object Track {
   }
 
   def isTrackContinuous(prev: Track, next: Track): Boolean = {
-      prev == next || prev == Track.Combined || next == Track.Combined
-    }
+    prev == next || prev == Track.Combined || next == Track.Combined
+  }
 
   case object Combined extends Track { def value = 0 }
   case object RightSide extends Track { def value = 1 }

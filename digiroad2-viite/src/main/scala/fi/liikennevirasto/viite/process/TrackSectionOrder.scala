@@ -161,19 +161,19 @@ object TrackSectionOrder {
       candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
     }
 
-    def getConnectionPoint(lastLink: ProjectLink, projectLinks: Seq[ProjectLink]) : Point =
+    def getConnectionPoint(lastLink: ProjectLink, projectLinks: Seq[ProjectLink]): Point =
       GeometryUtils.connectionPoint(projectLinks.map(_.geometry) :+ lastLink.geometry, MaxDistanceForConnectedLinks).getOrElse(throw new Exception("Candidates should have at least one connection point"))
 
-    def getGeometryFirstSegmentVector(connectionPoint: Point, projectLink: ProjectLink) : (ProjectLink, Vector3d) =
+    def getGeometryFirstSegmentVector(connectionPoint: Point, projectLink: ProjectLink): (ProjectLink, Vector3d) =
       (projectLink, GeometryUtils.firstSegmentDirection(if (GeometryUtils.areAdjacent(projectLink.geometry.head, connectionPoint)) projectLink.geometry else projectLink.geometry.reverse))
 
-    def getGeometryFirstSegmentVectors(connectionPoint: Point, projectLinks: Seq[ProjectLink]) : Seq[(ProjectLink, Vector3d)] =
+    def getGeometryFirstSegmentVectors(connectionPoint: Point, projectLinks: Seq[ProjectLink]): Seq[(ProjectLink, Vector3d)] =
       projectLinks.map(pl => getGeometryFirstSegmentVector(connectionPoint, pl))
 
-    def getGeometryLastSegmentVector(connectionPoint: Point, projectLink: ProjectLink) : (ProjectLink, Vector3d) =
+    def getGeometryLastSegmentVector(connectionPoint: Point, projectLink: ProjectLink): (ProjectLink, Vector3d) =
       (projectLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(projectLink.geometry.last, connectionPoint)) projectLink.geometry else projectLink.geometry.reverse))
 
-    def getGeometryLastSegmentVectors(connectionPoint: Point, projectLinks: Seq[ProjectLink]) : Seq[(ProjectLink, Vector3d)] =
+    def getGeometryLastSegmentVectors(connectionPoint: Point, projectLinks: Seq[ProjectLink]): Seq[(ProjectLink, Vector3d)] =
       projectLinks.map(pl => getGeometryLastSegmentVector(connectionPoint, pl))
 
     def pickRightMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
@@ -188,7 +188,7 @@ object TrackSectionOrder {
       val cPoint = getConnectionPoint(lastLink, candidates)
       val candidateVectors = getGeometryFirstSegmentVectors(cPoint, candidates)
       val (_, lastLinkVector) = getGeometryLastSegmentVector(cPoint, lastLink)
-      val (candidate, _) = candidateVectors.minBy{ case (_, vector) => Math.abs(lastLinkVector.angleXYWithNegativeValues(vector)) }
+      val (candidate, _) = candidateVectors.minBy { case (_, vector) => Math.abs(lastLinkVector.angleXYWithNegativeValues(vector)) }
       candidate
     }
 
@@ -196,7 +196,7 @@ object TrackSectionOrder {
       pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), ForwardVector, candidates)
     }
 
-    def pickSameTrack(lastLinkOption: Option[ProjectLink], candidates: Seq[ProjectLink]) : Option[ProjectLink] = {
+    def pickSameTrack(lastLinkOption: Option[ProjectLink], candidates: Seq[ProjectLink]): Option[ProjectLink] = {
       val lastTrack = lastLinkOption.map(_.track)
       val connectedLinks = candidates.filter(link => lastTrack.contains(link.track))
       connectedLinks.size match {

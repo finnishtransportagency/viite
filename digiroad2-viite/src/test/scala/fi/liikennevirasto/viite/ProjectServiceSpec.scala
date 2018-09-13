@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
@@ -178,6 +179,39 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
         roadLink, palinks.asInstanceOf[Seq[ProjectAddressLink]].map(toRoadLink)
       ))
+  }
+
+  private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
+                                    roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadAddressId: Long = 0L, startDate: Option[DateTime] = None) = {
+    val id = Sequences.nextViitePrimaryKeySeqValue
+
+    def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
+                    roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadAddressId: Long = 0L, startDate: Option[DateTime] = None) = {
+      ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startDate, None,
+        Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
+        floating = FloatingReason.NoFloating, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
+        LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadAddressId, ely, reversed = false, None, 0L)
+    }
+
+    def withTrack(t: Track): Seq[ProjectLink] = {
+      addrM.init.zip(addrM.tail).map { case (st, en) =>
+        projectLink(st, en, t, id, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, roadAddressId = roadAddressId, startDate = startDate)
+      }
+    }
+
+    val projectStartDate = if (startDate.isEmpty) DateTime.now() else startDate.get
+    val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", projectStartDate, "", projectStartDate, projectStartDate,
+      "", Seq(), None, Some(8), None)
+    ProjectDAO.createRoadAddressProject(project)
+    val links =
+      if (changeTrack) {
+        withTrack(RightSide) ++ withTrack(LeftSide)
+      } else {
+        withTrack(Combined)
+      }
+    ProjectDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
+    ProjectDAO.create(links)
+    project
   }
 
   test("create road link project without road parts") {
@@ -2315,7 +2349,29 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.isWritableState(erroredInTRProject.id) should be(true)
     }
   }
-
+  
+  test("RoadAddressHistoryCorrections should return the projectLinks that share the same start date (days, months and year) of the existing road_addresses") {
+    runWithRollback {
+      val roadNumber = 9999L
+      val roadPartNumber = 9999L
+      val linkId = 123456789L
+      val nextRoadAddressId = RoadAddressDAO.getNextRoadAddressId
+      val startDate = Some(DateTime.parse("2018-07-04"))
+      val ra = Seq(RoadAddress(nextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L,
+        startDate, None, Option("TR"), linkId, 0.0, 10.0, SideCode.TowardsDigitizing, 1476392565000L, (None, None), floating = FloatingReason.NoFloating,
+        Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, TerminationCode.NoTermination, 0))
+      RoadAddressDAO.create(ra)
+      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L), roadNumber = roadNumber, roadPartNumber = roadPartNumber, roadAddressId = nextRoadAddressId, startDate = startDate)
+      val links = projectService.getProjectLinks(project.id)
+      val mappedLinks = projectService.roadAddressHistoryCorrections(links)
+      mappedLinks.size should be(links.size)
+      mappedLinks.head._1 should be(ra.head.id)
+      mappedLinks.head._1 should be(links.head.roadAddressId)
+      mappedLinks.head._2.roadNumber should be(roadNumber)
+      mappedLinks.head._2.roadPartNumber should be(roadPartNumber)
+      mappedLinks.head._2.startDate.get should be(links.head.startDate.get)
+    }
+  }
   test("Check the correct creation of road project history") {
     runWithRollback {
       val id = 0
