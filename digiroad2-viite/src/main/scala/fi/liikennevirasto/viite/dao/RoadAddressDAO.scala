@@ -171,57 +171,57 @@ trait BaseRoadAddress {
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-//case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
-//                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
-//                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
-//                       linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-//                       adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
-//                       floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-//                       terminated: TerminationCode = NoTermination, roadwayId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
-//                       blackUnderline: Boolean = false, roadName: Option[String] = None) extends BaseRoadAddress {
-//
-//  val endCalibrationPoint = calibrationPoints._2
-//  val startCalibrationPoint = calibrationPoints._1
-//
-//  def reversed: Boolean = false
-//
-//  def addressBetween(a: Double, b: Double): (Long, Long) = {
-//    val (addrA, addrB) = (addrAt(a), addrAt(b))
-//    (Math.min(addrA,addrB), Math.max(addrA,addrB))
-//  }
-//
-//  def isExpire(): Boolean = {
-//    validFrom.getOrElse(throw new IllegalStateException("The valid from should be set before call isExpire method")).isAfterNow ||
-//    validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
-//  }
-//
-//  private def addrAt(a: Double) = {
-//    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
-//    sideCode match {
-//      case SideCode.AgainstDigitizing =>
-//        endAddrMValue - Math.round((a-startMValue) * coefficient)
-//      case SideCode.TowardsDigitizing =>
-//        startAddrMValue + Math.round((a-startMValue) * coefficient)
-//      case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on road address $id (link $linkId)")
-//    }
-//  }
-//
-//  def copyWithGeometry(newGeometry: Seq[Point]) = {
-//    this.copy(geometry = newGeometry)
-//  }
-//
-//  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-//    val calibrationPointSource = if (id == noRoadAddressId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
-//    calibrationPoints match {
-//      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-//      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
-//      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)) , Option.empty[ProjectLinkCalibrationPoint])
-//      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
-//    }
-//  }
-//}
+case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
+                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
+                       linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
+                       floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
+                       terminated: TerminationCode = NoTermination, roadwayId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
+                       blackUnderline: Boolean = false, roadName: Option[String] = None) extends BaseRoadAddress {
 
-case class RoadAddress(id: Long, roadwayId: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
+  val endCalibrationPoint = calibrationPoints._2
+  val startCalibrationPoint = calibrationPoints._1
+
+  def reversed: Boolean = false
+
+  def addressBetween(a: Double, b: Double): (Long, Long) = {
+    val (addrA, addrB) = (addrAt(a), addrAt(b))
+    (Math.min(addrA,addrB), Math.max(addrA,addrB))
+  }
+
+  def isExpire(): Boolean = {
+    validFrom.getOrElse(throw new IllegalStateException("The valid from should be set before call isExpire method")).isAfterNow ||
+    validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
+  }
+
+  private def addrAt(a: Double) = {
+    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
+    sideCode match {
+      case SideCode.AgainstDigitizing =>
+        endAddrMValue - Math.round((a-startMValue) * coefficient)
+      case SideCode.TowardsDigitizing =>
+        startAddrMValue + Math.round((a-startMValue) * coefficient)
+      case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on road address $id (link $linkId)")
+    }
+  }
+
+  def copyWithGeometry(newGeometry: Seq[Point]) = {
+    this.copy(geometry = newGeometry)
+  }
+
+  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+    val calibrationPointSource = if (id == noRoadAddressId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
+    calibrationPoints match {
+      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
+      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)) , Option.empty[ProjectLinkCalibrationPoint])
+      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
+    }
+  }
+}
+
+case class RoadwayAddress(id: Long, roadwayId: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reverted: Boolean,
                        startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String],
                        ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime, validTo: Option[DateTime] = None)
@@ -247,7 +247,7 @@ object RoadAddressDAO {
     }
   }
 
-  private def fetch(queryFilter: String => String): Seq[RoadAddress] = {
+  private def fetch(queryFilter: String => String): Seq[RoadwayAddress] = {
     val query = """
         select
           a.id, a.roadway_id, a.road_number, a.road_part_number, a.track_code, a.start_addr_m, a.end_addr_m
@@ -256,14 +256,14 @@ object RoadAddressDAO {
           (select rn.road_name from road_name rn where rn.road_number = ra.road_number and rn.end_date is null and rn.valid_to is null) as road_name
         from road_address a
       """
-    Q.queryNA[RoadAddress](query).iterator.toSeq
+    Q.queryNA[RoadwayAddress](query).iterator.toSeq
   }
 
   private def withRoadWayAndNotEnded(roadwayId: Long)(query: String) = {
     s"""$query where end_date is null and roadway_id = $roadwayId"""
   }
 
-  implicit val getRoadAddress: GetResult[RoadAddress] = new GetResult[RoadAddress]{
+  implicit val getRoadAddress: GetResult[RoadwayAddress] = new GetResult[RoadwayAddress]{
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()
@@ -285,7 +285,7 @@ object RoadAddressDAO {
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      RoadAddress(id, roadwayId, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
+      RoadwayAddress(id, roadwayId, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo )
     }
   }
