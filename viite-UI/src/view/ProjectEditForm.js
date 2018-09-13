@@ -399,13 +399,21 @@
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
+            return {
+              'linkId': link.linkId,
+              'status': LinkStatus.Terminated.value,
+              'roadLinkSource': link.roadLinkSource,
+              'points': link.points,
+              'id': link.id
+            };
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
-        else if(this.value == LinkStatus.New.description){
-          projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) { return l.status !== LinkStatus.Terminated.value;}).concat(selectedProjectLink));
+        else if (this.value == LinkStatus.New.description) {
+          projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) {
+            return l.status !== LinkStatus.Terminated.value;
+          }).concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0) {
             fillDistanceValues(selectedProjectLink);
@@ -413,7 +421,7 @@
             rootElement.find('#distanceValue').prop("hidden", false);
           }
         }
-        else if(this.value == LinkStatus.Unchanged.description){
+        else if (this.value == LinkStatus.Unchanged.description) {
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled',true);
@@ -422,32 +430,52 @@
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
+            return {
+              'linkId': link.linkId,
+              'status': LinkStatus.Unchanged.value,
+              'roadLinkSource': link.roadLinkSource,
+              'points': link.points,
+              'id': link.id
+            };
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
-        else if(this.value == LinkStatus.Transfer.description) {
-          projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status === LinkStatus.Transfer.value;}).concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
+        else if (this.value == LinkStatus.Transfer.description) {
+          projectCollection.setDirty(_.filter(projectCollection.getDirty(), function (dirty) {
+            return dirty.status === LinkStatus.Transfer.value;
+          }).concat(_.map(selectedProjectLink, function (link) {
+            return {
+              'linkId': link.linkId,
+              'status': LinkStatus.Transfer.value,
+              'roadLinkSource': link.roadLinkSource,
+              'points': link.points,
+              'id': link.id
+            };
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           canChangeDirection();
         }
-        else if(this.value == LinkStatus.Numbering.description) {
+        else if (this.value == LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points, 'id': link.id};
+            return {
+              'linkId': link.linkId,
+              'status': LinkStatus.Numbering.value,
+              'roadLinkSource': link.roadLinkSource,
+              'points': link.points,
+              'id': link.id
+            };
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.project-form button.update').prop("disabled", false);
           canChangeDirection();
         }
-        else if(this.value == LinkStatus.Revert.description) {
+        else if (this.value == LinkStatus.Revert.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);

@@ -612,9 +612,9 @@
       }), function (target){
         return !_.isUndefined(target);
       }));
-      var sourceDataIds = _.map(getSources(), function (source) {
+      var sourceDataIds = _.chain(getSources()).map(function (source) {
         return source.linkId;
-      });
+      }).uniq().value();
 
       var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds};
 
