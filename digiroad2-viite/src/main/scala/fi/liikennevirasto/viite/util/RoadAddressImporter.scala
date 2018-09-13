@@ -50,6 +50,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         case None => ""
       }
     }
+
     roadAddressStatement.setLong(1, roadAddress.roadNumber)
     roadAddressStatement.setLong(2, roadAddress.roadPartNumber)
     roadAddressStatement.setLong(3, roadAddress.trackCode)

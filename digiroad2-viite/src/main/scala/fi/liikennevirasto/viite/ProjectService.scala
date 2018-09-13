@@ -179,9 +179,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         filterNot(_._2.isEmpty).foreach {
         case ((roadNumber, roadPartNumber), value) =>
           val (startDate, endDate) = value.map(v => (v._6, v._7)).get
-          if (startDate.nonEmpty && startDate.get.isEqual(date) && endDate.isEmpty)
-            return Option(s"TIE $roadNumber OSA $roadPartNumber ei ole vapaana projektin alkupäivämääränä. " +
-              s"Tieosoitteen alkupäivämäärä on sama kuin projektin alkupäivämäärä.")
           if (startDate.nonEmpty && startDate.get.isAfter(date))
             return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
               s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
@@ -1704,6 +1701,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.create(roadsToCreate)
   }
 
+  /**
+    * Will check the road addresses for any whose startDate is the same as the startDates on the projectLinks, if any are found, then their ID's are returned to be expired
+    *
+    * @param projectLinks
+    * @return
+    */
+  def roadAddressHistoryCorrections(projectLinks: Seq[ProjectLink]): Map[Long, RoadAddress] = {
+    val roadAddresses = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet, rejectInvalids = false)
+    val startDates = projectLinks.filter(_.startDate.isDefined).map(_.startDate.get)
+    roadAddresses.filter(ra => {
+      ra.startDate.isDefined && startDates.exists(startDate => {
+        startDate.getDayOfMonth() == ra.startDate.get.getDayOfMonth && startDate.getMonthOfYear() == ra.startDate.get.getMonthOfYear() && startDate.getYear() == ra.startDate.get.getYear()
+      })
+    }).map(ra => ra.id -> ra).toMap
+  }
+
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
@@ -1717,8 +1730,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
     logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
-    val expiringRoadAddresses = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet, rejectInvalids = false).map(ra => ra.id -> ra).toMap
-    if (expiringRoadAddresses.size != replacements.map(_.roadAddressId).toSet.size) {
+    val expiringRoadAddressesFromReplacements = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet, rejectInvalids = false).map(ra => ra.id -> ra).toMap
+    val expiringRoadAddresses = roadAddressHistoryCorrections(projectLinks) ++ expiringRoadAddressesFromReplacements
+    if (expiringRoadAddressesFromReplacements.size != replacements.map(_.roadAddressId).toSet.size) {
       logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
       throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
     }
@@ -1779,7 +1793,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pureReplacements.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.roadAddressId))) ++
       additions.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.roadAddressId))) ++
       pureReplacements.flatMap(pl =>
-        setEndDate(roadAddresses(pl.roadAddressId), pl, None))
+        setEndDate(roadAddresses(pl.roadAddressId), pl, None, project))
   }
 
   private def convertProjectLinkToRoadAddress(pl: ProjectLink, project: RoadAddressProject,
@@ -1800,7 +1814,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.roadwayId).getOrElse(0))
     pl.status match {
       case UnChanged =>
-        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
+        if (source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely) {
+          roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
+        } else {
+          roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
+        }
       case Transfer | Numbering =>
         roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
       case New =>
@@ -1821,11 +1839,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param vvhLink
     * @return
     */
-  private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink]): Option[RoadAddress] = {
+  private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink], project: RoadAddressProject): Option[RoadAddress] = {
     pl.status match {
-      // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
-      case UnChanged | Terminated =>
+      // terminated is created from the project link in convertProjectLinkToRoadAddress
+      case Terminated =>
         None
+      // unchanged will get end_date if the road_type, discontinuity or ely code changes, otherwise we keep the same end_date
+      case UnChanged =>
+        if (roadAddress.roadType == pl.roadType && roadAddress.ely == pl.ely && roadAddress.discontinuity == pl.discontinuity) {
+          None
+        } else {
+          Some(roadAddress.copy(endDate = Some(project.startDate)))
+        }
       case Transfer | Numbering =>
         Some(roadAddress.copy(endDate = pl.startDate))
       case _ =>

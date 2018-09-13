@@ -112,7 +112,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     build(roadLink, 0L, geom, length, roadLinkRoadNumber, roadLinkRoadPartNumber, roadLinkTrackCode, Some(roadName), municipalityCode,
       linkType, UnknownRoadLinkType, getRoadType(roadLink.administrativeClass, linkType), Discontinuity.Continuous, missingAddress.startAddrMValue.getOrElse(0), missingAddress.endAddrMValue.getOrElse(0),
       missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(0.0),SideCode.Unknown,
-      None, None, Anomaly.None, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), reversed= false, None, None)
+      None, None, Anomaly.None, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), reversed = false, None, None)
   }
 
   def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
@@ -130,7 +130,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
                     roadType: RoadType, discontinuity: Discontinuity,
                     startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
                     sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                    anomaly: Anomaly, status: LinkStatus, roadAddressId: Long, ely:Long, reversed:Boolean, connectedLinkId: Option[Long],
+                    anomaly: Anomaly, status: LinkStatus, roadAddressId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long],
                     originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
 
     val linkId =

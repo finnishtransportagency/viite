@@ -593,7 +593,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with 2 tracks (Left and Right)") {
-    runWithRollback{
+    runWithRollback {
       // Left track = 85.308 meters
       val idRoad0 = 0L //   L>
       val idRoad1 = 1L //   L>
@@ -629,7 +629,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("validate if there is a calibration point when has MinorDiscontinuity at end of address and start of next one with track Combined") {
-    runWithRollback{
+    runWithRollback {
       // Combined track = 85.308 meters with MinorDiscontinuity
       val idRoad0 = 0L //   C>
       val idRoad1 = 1L //   C>
@@ -655,7 +655,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with track Combined") {
-    runWithRollback{
+    runWithRollback {
       // Combined track = 85.308 meters with Discontinuous
       val idRoad0 = 0L //   C>
       val idRoad1 = 1L //   C>
