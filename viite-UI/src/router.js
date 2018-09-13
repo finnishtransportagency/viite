@@ -31,7 +31,7 @@
 
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
-        backend.getRoadLinkByLinkId(linkId, function (response) {
+        backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
             eventbus.once('roadLinks:afterDraw', function () {
               models.selectedLinkProperty.open(response.linkId, response.id, true);
@@ -121,7 +121,7 @@
           map.getView().setZoom(project.zoomLevel);
         } else if (typeof linkId !== 'undefined') {
           applicationModel.selectLayer('linkProperty', false);
-          backend.getRoadLinkByLinkId(linkId, function (response) {
+          backend.getProjectLinkByLinkId(linkId, function (response) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           });
         }
