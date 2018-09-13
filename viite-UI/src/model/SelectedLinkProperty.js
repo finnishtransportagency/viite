@@ -511,13 +511,13 @@
     };
 
     var fetchRoadLinkDataByLinkId = function(existingSources, additionalSourceLinkId, sources) {
-      backend.getRoadLinkByLinkId(parseInt(additionalSourceLinkId), function (response) {
+      backend.getRoadAddressByLinkId(parseInt(additionalSourceLinkId), function (response) {
         processReturnedRoadLinkData(additionalSourceLinkId, existingSources, sources, response);
       });
     };
 
     var fetchRoadLinkDataById = function(floatingsToAdd, additionalSourceId, sources) {
-     backend.getRoadLinkById(parseInt(additionalSourceId), function(response) {
+     backend.getRoadAddressById(parseInt(additionalSourceId), function(response) {
        processReturnedRoadLinkData(additionalSourceId, floatingsToAdd, sources, response);
      });
     };
@@ -630,7 +630,7 @@
     };
 
     var addTargets = function(target, adjacents){
-      backend.getRoadLinkByLinkId(parseInt(target), function (response) {
+      backend.getRoadAddressByLinkId(parseInt(target), function (response) {
           var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
 
           if (!_.contains(targets, target))
