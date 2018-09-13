@@ -176,30 +176,30 @@ object RoadNameDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadName: RoadName): Long = {
-    val (endDateDefString, endDateValString) = if (roadName.endDate.nonEmpty) {
-      (s", end_date", s", ?")
-    } else ("", "")
-
-    val query = s"insert into ROAD_NAMES (id, road_number, road_name, start_date, valid_from, valid_to, created_by $endDateDefString) values " +
-      s"(?, ?, ?, ?, ?, ?, ? $endDateValString)"
+  def create(roadNames: Seq[RoadName]): Unit = {
+    val query = s"insert into ROAD_NAMES (id, road_number, road_name, start_date, valid_from, valid_to, created_by, end_date) values " +
+      s"(?, ?, ?, ?, ?, ?, ? ,?)"
 
     val namesPS = dynamicSession.prepareStatement(query)
-    val nextId = Sequences.nextViitePrimaryKeySeqValue
-    namesPS.setLong(1, nextId)
-    namesPS.setLong(2, roadName.roadNumber)
-    namesPS.setString(3, roadName.roadName)
-    namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
-    namesPS.setDate(5, new Date(roadName.startDate.get.getMillis))
-    namesPS.setString(6, "")
-    namesPS.setString(7, roadName.createdBy)
-    if (roadName.endDate.nonEmpty) {
-      namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
-    }
-    namesPS.addBatch()
+
+    roadNames.foreach(roadName => {
+      val nextId = Sequences.nextViitePrimaryKeySeqValue
+      namesPS.setLong(1, nextId)
+      namesPS.setLong(2, roadName.roadNumber)
+      namesPS.setString(3, roadName.roadName)
+      namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
+      namesPS.setDate(5, new Date(roadName.startDate.get.getMillis))
+      namesPS.setString(6, "")
+      namesPS.setString(7, roadName.createdBy)
+      if (roadName.endDate.nonEmpty) {
+        namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
+      } else {
+        namesPS.setString(8, "")
+      }
+      namesPS.addBatch()
+    })
     namesPS.executeBatch()
     namesPS.close()
-    nextId
   }
 
   /**

@@ -840,6 +840,29 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("road name is saved on TR success response - multiple names") {
+    runWithRollback {
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 1, 533406.572, 6994060.048, 12)""".execute
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 55555, 1, $projectId, '-')""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533399.731,6994038.906,126.260],[533390.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170979, 1500079296000, 1, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 55555, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, '[533352.731,6994031.906,126.260],[533323.742,6994052.408,126.093],[533387.649,6994056.057,126.047],[533348.256,6994107.273,125.782]', 2, 0, 85.617, 5170980, 1500079296000, 1, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
+      sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 55555, 'road name test2')""".execute
+      RoadNameDAO.getLatestRoadName(55555).isEmpty should be (true)
+      RoadNameDAO.getLatestRoadName(66666).isEmpty should be (true)
+      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
+
+      val project = projectService.getRoadAddressSingleProject(projectId)
+      val namesAfterUpdate55555 = RoadNameDAO.getLatestRoadName(55555)
+      val namesAfterUpdate66666 = RoadNameDAO.getLatestRoadName(66666)
+      project.get.statusInfo should be(None)
+      namesAfterUpdate55555.get.roadName should be("road name test2")
+      namesAfterUpdate66666.get.roadName should be("road name test")
+    }
+  }
+
   test("verify existence of roadAddressNumbersAndSEParts") {
     val roadNumber = 1943845
     val roadStartPart = 1

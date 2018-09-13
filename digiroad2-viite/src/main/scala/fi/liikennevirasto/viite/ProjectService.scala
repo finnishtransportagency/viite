@@ -1765,16 +1765,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject) = {
+  def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject): Unit = {
     val projectLinkNames = ProjectLinkNameDAO.get(projectLinks.map(_.roadNumber).toSet, project.id).filterNot(p => {
       p.roadNumber >= maxRoadNumberDemandingRoadName && p.roadName == null
     })
-    val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber).toSet
+    val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber)
     val (existingLinkNames, newLinkNames) = projectLinkNames.partition(pln => existingInRoadNames.contains(pln.roadNumber))
     val newNames = newLinkNames.map {
-      ln => ln.roadNumber -> RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
+      ln => RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
     }
-    newNames.map(n => RoadNameDAO.create(n._2))
+    RoadNameDAO.create(newNames)
     projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
     if (newNames.nonEmpty) {
       logger.info(s"Found ${newNames.size} names in project that differ from road address name")
