@@ -104,31 +104,6 @@ object TerminationCode {
   case object Subsequent extends TerminationCode { def value = 2 }
 }
 
-
-sealed trait FloatingReason {
-  def value: Int
-
-  def isFloating: Boolean = value != 0
-}
-
-object FloatingReason {
-  val values = Set(NoFloating, ApplyChanges,GeometryChanged, NewAddressGiven, GapInGeometry, ManualFloating)
-
-  def apply(intValue: Long): FloatingReason = {
-    values.find(_.value == intValue).getOrElse(NoFloating)
-  }
-
-  case object NoFloating extends FloatingReason { def value = 0}
-  case object ApplyChanges extends FloatingReason { def value = 1}
-  case object GeometryChanged extends FloatingReason { def value = 2}
-  case object NewAddressGiven extends FloatingReason { def value = 3}
-  case object GapInGeometry extends FloatingReason {def value = 4}
-  case object ManualFloating extends FloatingReason { def value = 5}
-  case object SplittingTool extends FloatingReason { def value = 6}
-  case object ProjectToRoadAddress extends FloatingReason { def value = 7}
-
-}
-
 trait BaseRoadAddress {
   def id: Long
   def roadNumber: Long
@@ -347,6 +322,7 @@ object RoadAddressDAO {
     }
   }
 
+  // TODO Not in use - remove?
   implicit val getRoadAddress: GetResult[RoadAddress] = new GetResult[RoadAddress]{
     def apply(r: PositionedResult) = {
 
