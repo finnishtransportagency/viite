@@ -203,6 +203,13 @@ object LinearLocationDAO {
     }
   }
 
+  def fetchLinkIdsInChunk(min: Long, max: Long): List[Long] = {
+    sql"""
+         select distinct(lrm.link_id)
+        from linear_location lrm where lrm.link_id between $min and $max order by lrm.link_id asc
+      """.as[Long].list
+  }
+
   def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id") {
       if (linkIds.isEmpty) {
@@ -339,12 +346,12 @@ object LinearLocationDAO {
            Update road_address Set floating = ${floatingReason.value},
                   geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
                   $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-             Where id = $roadAddressId
+             Where id = $id
       """.execute
     } else {
       sqlu"""
            Update road_address Set floating = ${floatingReason.value}
-             Where id = $roadAddressId
+             Where id = $id
       """.execute
     }
 
@@ -414,6 +421,26 @@ object LinearLocationDAO {
            UPDATE LINEAR_LOCATION SET link_source = ${linkSource.value} WHERE id = $id
       """.execute
     true
+  }
+
+  def updateGeometry(lrmId: Long, geometry: Seq[Point]): Unit = {
+    if (geometry.nonEmpty) {
+      val first = geometry.head
+      val last = geometry.last
+      val (x1, y1, z1, x2, y2, z2) = (
+        GeometryUtils.scaleToThreeDigits(first.x),
+        GeometryUtils.scaleToThreeDigits(first.y),
+        GeometryUtils.scaleToThreeDigits(first.z),
+        GeometryUtils.scaleToThreeDigits(last.x),
+        GeometryUtils.scaleToThreeDigits(last.y),
+        GeometryUtils.scaleToThreeDigits(last.z)
+      )
+      val length = GeometryUtils.geometryLength(geometry)
+      sqlu"""UPDATE Linear_location
+        SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+             MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
+        WHERE id = ${lrmId}""".execute
+    }
   }
 
   /**
