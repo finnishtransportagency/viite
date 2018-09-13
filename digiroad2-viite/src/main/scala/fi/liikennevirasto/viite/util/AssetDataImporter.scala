@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.util
 
 import java.util.Properties
-import javax.sql.DataSource
 
+import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{LinearLocationDAO, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite._
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
@@ -297,27 +297,47 @@ class AssetDataImporter {
       })
   }
 
-  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean, customFilter: String = "") = {
+  private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+    val (chunks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
+      case ((fchunks, index), linkId) =>
+        if (index > 0 && index % chunkNumber == 0) {
+          (fchunks ++ Seq(linkId), index + 1)
+        } else {
+          (fchunks, index + 1)
+        }
+    }
+    val result = if (chunks.last == linkIds.last) {
+      chunks
+    } else {
+      chunks ++ Seq(linkIds.last)
+    }
+
+    result.zip(result.tail)
+  }
+
+  protected def fetchChunkLinkIds(): Seq[(Long, Long)] = {
+      val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[Long].list
+      generateChunks(linkIds, 25000l)
+    }
+
+  def updateRoadAddressesGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    var counter = 0
     var changed = 0
     withDynTransaction {
-      val roadNumbers = RoadAddressDAO.getAllValidRoadNumbers(if (filterRoadAddresses)
-        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else customFilter)
-      roadNumbers.foreach(roadNumber => {
-        counter += 1
-        println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
-        val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
+        val chunks = fetchChunkLinkIds()
+        chunks.foreach {
+        case (min, max) =>
+        val linkIds = LinearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-        val unGroupedAddresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true)
-        val addresses = unGroupedAddresses.groupBy(_.linkId)
-        val isLoopOrEmptyGeom = if (unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry).equals(Nil)) {
+        val unGroupedTopology = LinearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
+        val topologyLocation = unGroupedTopology.groupBy(_.linkId)
+        val isLoopOrEmptyGeom = if (unGroupedTopology.sortBy(_.orderNumber).flatMap(_.geometry).equals(Nil)) {
           true
-        } else GeometryUtils.isLoopGeometry(unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry))
+        } else GeometryUtils.isLoopGeometry(unGroupedTopology.sortBy(_.orderNumber).flatMap(_.geometry))
 
         roadLinksFromVVH.foreach(roadLink => {
-          val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
+          val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
           segmentsOnViiteDatabase.foreach(segment => {
             val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
             if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
@@ -329,8 +349,8 @@ class AssetDataImporter {
                 (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
-                (isLoopOrEmptyGeom)) {
-                RoadAddressDAO.updateGeometry(segment.id, newGeom)
+                isLoopOrEmptyGeom) {
+                LinearLocationDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId =" + segment.linkId)
                 changed += 1
               } else {
@@ -339,12 +359,8 @@ class AssetDataImporter {
             }
           })
         })
-
-        println("RoadNumber:  %d: %d roadAddresses updated at time: %s".format(roadNumber, addresses.size, DateTime.now().toString))
-
-      })
+      }
       println(s"Geometries changed count: $changed")
-
     }
   }
 

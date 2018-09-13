@@ -901,26 +901,6 @@ object RoadAddressDAO {
     }
   }
 
-  def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
-    if (geometry.nonEmpty) {
-      val first = geometry.head
-      val last = geometry.last
-      val (x1, y1, z1, x2, y2, z2) = (
-        GeometryUtils.scaleToThreeDigits(first.x),
-        GeometryUtils.scaleToThreeDigits(first.y),
-        GeometryUtils.scaleToThreeDigits(first.z),
-        GeometryUtils.scaleToThreeDigits(last.x),
-        GeometryUtils.scaleToThreeDigits(last.y),
-        GeometryUtils.scaleToThreeDigits(last.z)
-      )
-      val length = GeometryUtils.geometryLength(geometry)
-      sqlu"""UPDATE ROAD_ADDRESS
-        SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-             MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
-        WHERE id = ${roadAddressId}""".execute
-    }
-  }
-
   private def updateWithoutGeometry(roadAddress: RoadAddress): Unit = {
     val startTS = toTimeStamp(roadAddress.startDate)
     val endTS = toTimeStamp(roadAddress.endDate)
@@ -1097,10 +1077,6 @@ object RoadAddressDAO {
               $filter
               order by road_number
       """).list
-  }
-
-  def getValidRoadNumbersWithFilterToTestAndDevEnv: List[Long] = {
-    getAllValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
   def getValidRoadParts(roadNumber: Long): List[Long] = {
