@@ -12,11 +12,11 @@
       var year = params.year;
       if (!withHistory)
         return {
-          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
         };
       else
         return {
-          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
         };
     });
 
@@ -53,14 +53,20 @@
       });
     }, 1000);
 
-    this.getRoadLinkByLinkId = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
+    this.getProjectLinkByLinkId = _.throttle(function (linkId, callback) {
+        return $.getJSON('api/viite/project/roadaddress/linkid/' + linkId, function (data) {
+            return _.isFunction(callback) && callback(data);
+        });
     }, 1000);
 
-    this.getRoadLinkById = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/id/' + linkId, function (data) {
+    this.getRoadAddressByLinkId = _.throttle(function (linkId, callback) {
+        return $.getJSON('api/viite/roadaddress/linkid/' + linkId, function (data) {
+            return _.isFunction(callback) && callback(data);
+        });
+    }, 1000);
+
+    this.getRoadAddressById = _.throttle(function (id, callback) {
+      return $.getJSON('api/viite/roadaddress/' + id, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -105,7 +111,7 @@
     }, 1000);
 
     this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/multiSourceAdjacents?roadData=' + JSON.stringify(roadData), function (data) {
+      return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -352,11 +358,11 @@
     }, 1000);
 
     this.getFloatingRoadAddresses = function () {
-      return $.getJSON('api/viite/floatingRoadAddresses');
+      return $.getJSON('api/viite/roadaddress/floatings');
     };
 
     this.getRoadAddressErrors = function () {
-      return $.getJSON('api/viite/roadAddressErrors');
+      return $.getJSON('api/viite/roadaddress/errors');
     };
 
     function createCallbackRequestor(getParameters) {
@@ -562,14 +568,21 @@
       return self;
     };
 
-    this.withGetRoadLinkByLinkId = function (returnData) {
-      self.getRoadLinkByLinkId = function (linkId, callback) {
-        callback(returnData);
-        return returnData;
-      };
-      return self;
+    this.withGetProjectLinkByLinkId = function (returnData) {
+        self.getProjectLinkByLinkId = function (linkId, callback) {
+            callback(returnData);
+            return returnData;
+        };
+        return self;
     };
 
+    this.withGetRoadAddressByLinkId = function (returnData) {
+        self.getRoadAddressByLinkId = function (linkId, callback) {
+            callback(returnData);
+            return returnData;
+        };
+        return self;
+    };
 
     this.withGetTargetAdjacent = function (returnData) {
       self.getTargetAdjacent = function (linkId, callback) {

@@ -117,7 +117,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks") {
+  get("/roadaddress") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
     time(logger, s"GET request for /roadlinks (zoom: $zoom)") {
@@ -127,8 +127,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/floatingRoadAddresses") {
-    time(logger, "GET request for /floatingRoadAddresses") {
+  get("/roadaddress/floatings") {
+    time(logger, "GET request for /roadAddress/floatings") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
         g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.startAddrMValue))
@@ -136,8 +136,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadAddressErrors") {
-    time(logger, "GET request for /roadAddressErrors") {
+  get("/roadaddress/errors") {
+    time(logger, "GET request for /roadAddress/errors") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getRoadAddressErrors().groupBy(_.ely).map(
         g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber))
@@ -145,36 +145,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/:linkId") {
+  get("/roadaddress/linkid/:linkId") {
     val linkId = params("linkId").toLong
-    time(logger, s"GET request for /roadlinks/$linkId") {
+    time(logger, s"GET request for /roadAddress/linkid/$linkId") {
+      //TODO This process can be improved
       val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
-      val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
       foldSegments(roadLinks)
-        .orElse(foldSegments(projectLinks))
         .map(midPoint)
         .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
   }
 
-  get("/roadlinks/id/:id") {
+  get("/roadaddress/:id") {
     val id = params("id").toLong
-    time(logger, s"GET request for /roalinks/$id") {
+    time(logger, s"GET request for /roadAddress/$id") {
+      //TODO BUG: suravage links should be included here
       val roadLinks = roadAddressService.getRoadAddressLinkById(id)
         foldSegments(roadLinks)
           .map(midPoint)
           .getOrElse(Map("success" -> false, "reason" -> ("ID:" + id + " not found")))
-    }
-
-  }
-
-  get("/roadlinks/project/prefillfromvvh/:linkId") {
-    val linkId = params("linkId").toLong
-    time(logger, s"GET request for /roadlinks/project/prefillfromvvh/$linkId") {
-      projectService.fetchPreFillFromVVH(linkId) match {
-        case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName)
-        case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
-      }
     }
   }
 
@@ -228,8 +217,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/multiSourceAdjacents") {
-    time(logger, "GET request for /roadlinks/multiSourceAdjacents") {
+  get("/roadlinks/adjacent/multiSource") {
+    time(logger, "GET request for /roadlinks/adjacent/multiSource") {
       val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String, Any]]]
       if (roadData.isEmpty) {
         Set.empty
@@ -283,6 +272,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case e: Exception =>
           logger.warn(e.getMessage, e)
           InternalServerError("An unexpected error occurred while processing this action.")
+      }
+    }
+  }
+
+  get("/project/roadaddress/linkid/:linkId") {
+    val linkId = params("linkId").toLong
+    time(logger, s"GET request for /project/roadAddress/linkid/$linkId") {
+      //TODO This process can be improved and also it seems to have a bug when the project link is on top of a suravage
+      val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
+      foldSegments(projectLinks)
+        .map(midPoint)
+        .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
+    }
+  }
+
+  //TODO this is a project entry point
+  get("/roadlinks/project/prefillfromvvh/:linkId") {
+    val linkId = params("linkId").toLong
+    time(logger, s"GET request for /roadlinks/project/prefillfromvvh/$linkId") {
+      projectService.fetchPreFillFromVVH(linkId) match {
+        case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName)
+        case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
       }
     }
   }
