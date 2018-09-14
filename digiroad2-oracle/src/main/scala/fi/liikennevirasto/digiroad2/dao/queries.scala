@@ -25,6 +25,10 @@ object Queries {
     sql"""select ROAD_ADDRESS_SEQ.nextval from dual connect by level <= $len""".as[Long].list
   }
 
+  def fetchLinearLocationIds(len: Int) = {
+    sql"""select LINEAR_LOCATION_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+  }
+
   def getMunicipalities: Seq[Int] = {
     sql"""
       select id from municipality

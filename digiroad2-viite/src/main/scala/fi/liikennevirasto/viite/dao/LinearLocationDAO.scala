@@ -595,82 +595,74 @@ object LinearLocationDAO {
     val idString = roadAddresses.map(_.id).mkString(",")
     val query =
       s"""
-          UPDATE ROAD_ADDRESS SET VALID_TO = sysdate WHERE id IN ($idString)
+          UPDATE LINEAR_LOCATION SET VALID_TO = sysdate WHERE id IN ($idString)
         """
     Q.updateNA(query).first
   }
- /*
+
   def create(linearLocations: Iterable[LinearLocation], createdBy: String): Seq[Long] = {
-    val addressPS = dynamicSession.prepareStatement(
+    val ps = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code,
-        cal_start_m, cal_end_m, link_source, adjusted_timestamp, created_by, floating, geometry, valid_from, valid_to)
-        values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'),
-        TO_DATE(?, 'YYYY-MM-DD'), ?, ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-        "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
-        ?, ?, ?, ?, ?, ?)""")
-    val (ready, idLess) = linearLocations.partition(_.id != NewRoadAddress)
-    val plIds = Sequences.fetchRoadAddressIds(idLess.size)
-    val createAddresses = ready ++ idLess.zip(plIds).map(x =>
+        cal_start_m, cal_end_m, link_source, adjusted_timestamp, floating, geometry, valid_from, valid_to, created_by)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)),
+        TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""")
+    val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
+    val plIds = Sequences.fetchLinearLocationIds(idLess.size)
+    val createLinearLocations = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
-    val savedIds = createAddresses.foreach { case (address) =>
-      val nextId = if (address.id == NewRoadAddress) {
-        Sequences.nextRoadAddressId
+    val savedIds = createLinearLocations.foreach { case (location) =>
+      val id = if (location.id == NewLinearLocation) {
+        Sequences.nextLinearLocationId
       } else {
-        address.id
+        location.id
       }
-      val nextRoadwayId = if (address.roadwayId == NewRoadwayId) {
+      val roadwayId = if (location.roadwayId == NewRoadwayId) {
         Sequences.nextRoadwaySeqValue
       } else {
-        address.roadwayId
+        location.roadwayId
       }
-      addressPS.setLong(1, nextId)
-      addressPS.setLong(2, address.roadNumber)
-      addressPS.setLong(3, address.roadPartNumber)
-      addressPS.setLong(4, address.track.value)
-      addressPS.setLong(5, address.discontinuity.value)
-      addressPS.setLong(6, address.startAddrMValue)
-      addressPS.setLong(7, address.endAddrMValue)
-      addressPS.setString(8, address.startDate match {
+      ps.setLong(1, id)
+      ps.setLong(2, roadwayId)
+      ps.setLong(3, location.orderNumber)
+      ps.setLong(4, location.linkId)
+      ps.setDouble(5, location.startMValue)
+      ps.setDouble(6, location.endMValue)
+      ps.setInt(7, location.sideCode.value)
+      ps.setLong(8, location.startCalibrationPoint match {
+        case Some(value) => value
+        case None => null
+      })
+      ps.setLong(9, location.endCalibrationPoint match {
+        case Some(value) => value
+        case None => null
+      })
+      ps.setInt(10, location.linkGeomSource.value)
+      ps.setLong(11, location.adjustedTimestamp)
+      ps.setInt(12, location.floating.value)
+      val (p1, p2) = (location.geometry.head, location.geometry.last)
+      ps.setDouble(13, p1.x)
+      ps.setDouble(14, p1.y)
+      ps.setDouble(15, location.startMValue)
+      ps.setDouble(16, p2.x)
+      ps.setDouble(17, p2.y)
+      ps.setDouble(18, location.endMValue)
+      ps.setString(19, location.validFrom match {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(9, address.endDate match {
+      ps.setString(20, location.validTo match {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
-      addressPS.setString(10, if (newCreatedBy == null) "-" else newCreatedBy)
-      addressPS.setString(11, modifiedBy match {
-        case Some(creator) => creator
-        case None => ""
-      })
-      val (p1, p2) = (address.geometry.head, address.geometry.last)
-      addressPS.setDouble(12, p1.x)
-      addressPS.setDouble(13, p1.y)
-      addressPS.setDouble(14, address.startAddrMValue)
-      addressPS.setDouble(15, p2.x)
-      addressPS.setDouble(16, p2.y)
-      addressPS.setDouble(17, address.endAddrMValue)
-      addressPS.setInt(18, address.floating.value)
-      addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
-      addressPS.setLong(20, address.ely)
-      addressPS.setInt(21, address.roadType.value)
-      addressPS.setInt(22, address.terminated.value)
-      addressPS.setLong(23, nextRoadwayId)
-      addressPS.setLong(24, address.linkId)
-      addressPS.setLong(25, address.sideCode.value)
-      addressPS.setDouble(26, address.startMValue)
-      addressPS.setDouble(27, address.endMValue)
-      addressPS.setDouble(28, address.adjustedTimestamp)
-      addressPS.setInt(29, address.linkGeomSource.value)
-      addressPS.addBatch()
+      ps.setString(21, if (createdBy == null) "-" else createdBy)
+      ps.addBatch()
     }
-    addressPS.executeBatch()
-    addressPS.close()
-    createAddresses.map(_.id).toSeq
+    ps.executeBatch()
+    ps.close()
+    createLinearLocations.map(_.id).toSeq
   }
-   */
 
   def lockLinearLocationWriting: Unit = {
     sqlu"""LOCK TABLE linear_location IN SHARE MODE""".execute

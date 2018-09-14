@@ -26,6 +26,10 @@ object Sequences {
     Queries.fetchRoadAddressIds(len)
   }
 
+  def fetchLinearLocationIds(len: Int): List[Long] = {
+    Queries.fetchLinearLocationIds(len)
+  }
+
   def nextRoadwaySeqValue: Long = {
     nextRoadwayId.as[Long].first
   }
