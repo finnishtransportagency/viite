@@ -41,6 +41,8 @@ package object viite {
 
   val NewRoadAddress: Long = -1000L
 
+  val NewLinearLocation: Long = -1000L
+
   val noRoadAddressId: Long = 0L
 
   val noReservedPartId: Long = 0L
