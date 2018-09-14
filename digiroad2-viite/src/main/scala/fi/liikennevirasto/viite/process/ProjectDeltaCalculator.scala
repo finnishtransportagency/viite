@@ -20,17 +20,18 @@ object ProjectDeltaCalculator {
   lazy private val logger = LoggerFactory.getLogger(getClass)
 
   def delta(project: RoadAddressProject): Delta = {
-    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
-    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
-    val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadAddressId).toSet,
-      includeFloating = true).map(ra => ra.id -> ra).toMap
-    val terminations = findTerminations(projectLinks, currentAddresses)
-    val newCreations = findNewCreations(projectLinks)
-    val unChanged = Unchanged(findUnChanged(projectLinksFetched, currentAddresses))
-    val transferred = Transferred(findTransfers(projectLinksFetched, currentAddresses))
-    val numbering = ReNumeration(findNumbering(projectLinksFetched, currentAddresses))
-
-    Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
+    throw new NotImplementedError("Will be implemented at VIITE-1539")
+//    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
+//    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
+//    val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadAddressId).toSet,
+//      includeFloating = true).map(ra => ra.id -> ra).toMap
+//    val terminations = findTerminations(projectLinks, currentAddresses)
+//    val newCreations = findNewCreations(projectLinks)
+//    val unChanged = Unchanged(findUnChanged(projectLinksFetched, currentAddresses))
+//    val transferred = Transferred(findTransfers(projectLinksFetched, currentAddresses))
+//    val numbering = ReNumeration(findNumbering(projectLinksFetched, currentAddresses))
+//
+//    Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
   private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress], connectedLink: Option[ProjectLink] = None) = {
