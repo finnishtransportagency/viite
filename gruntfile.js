@@ -99,6 +99,14 @@ module.exports = function(grunt) {
             headers: {referer: 'https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=jsapi'}
           },
           {
+            context: '/rasteripalvelu',
+            host: 'oag.liikennevirasto.fi',
+            port: '80',
+            https: false,
+            changeOrigin: true,
+            xforward: false
+          },
+          {
             context: '/wmts',
             host: 'oag.liikennevirasto.fi',
             port: '80',
