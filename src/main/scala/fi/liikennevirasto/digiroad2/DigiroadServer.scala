@@ -41,7 +41,7 @@ trait DigiroadServer {
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     appContext.addServlet(classOf[OAGProxyServlet], "/wmts/*")
-    appContext.addServlet(classOf[ArcGisProxyServlet], "/rasteripalvelu/*")
+    appContext.addServlet(classOf[OAGRasterServiceProxyServlet], "/rasteripalvelu/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
