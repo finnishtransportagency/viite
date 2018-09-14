@@ -190,4 +190,73 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       )
     }
   }
+
+  test("No updated road names from /roadnames/changes, Content-Type should be application/json and response should be empty array") {
+    when(mockRoadNameService.getUpdatedRoadNamesBetween(Matchers.any(), Matchers.any())).thenReturn(Right(Seq()))
+    getWithBasicUserAuth("/roadnames/changes?since=9999-01-01&until=9999-01-01", "kalpa", "kalpa") {
+      status should equal(200)
+      response.getHeader("Content-Type") should equal("application/json; charset=UTF-8")
+      response.body should equal("[]")
+    }
+  }
+
+  test("One update (new road), response should contain one road name from /roadnames/changes") {
+    when(mockRoadNameService.getUpdatedRoadNamesBetween(Matchers.any(), Matchers.any())).thenReturn(
+      Right(Seq(
+        RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
+      ))
+    )
+    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
+      status should equal(200)
+      response.body should equal(
+        "[{\"tie\":2,\"tienimet\":[{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MYROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}]}]"
+      )
+    }
+  }
+
+  test("Road name change between from /roadnames/changes") {
+    when(mockRoadNameService.getUpdatedRoadNamesBetween(Matchers.any(), Matchers.any())).thenReturn(
+      Right(Seq(
+        RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
+      ))
+    )
+    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
+      status should equal(200)
+      response.body should equal(
+        "[{\"tie\":2,\"tienimet\":[" +
+          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
+          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
+          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
+          "]}]"
+      )
+    }
+  }
+
+  test("Road name change for two roads from /roadnames/changes") {
+    when(mockRoadNameService.getUpdatedRoadNamesBetween(Matchers.any(), Matchers.any())).thenReturn(
+      Right(Seq(
+        RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
+        RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2017, 12, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
+      ))
+    )
+    getWithBasicUserAuth("/roadnames/changes?since=2017-12-01&until=2018-12-03", "kalpa", "kalpa") {
+      status should equal(200)
+      response.body should equal(
+        "[" +
+          "{\"tie\":2,\"tienimet\":[" +
+          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
+          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
+          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
+          "]}," +
+          "{\"tie\":3,\"tienimet\":[" +
+          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"ANOTHER ROAD\",\"voimassaolo_alku\":\"2017-12-12\",\"voimassaolo_loppu\":null}" +
+          "]}" +
+          "]"
+      )
+    }
+  }
 }
