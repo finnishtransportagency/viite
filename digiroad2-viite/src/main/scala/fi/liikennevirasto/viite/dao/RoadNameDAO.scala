@@ -150,9 +150,10 @@ object RoadNameDAO {
   }
 
   /**
-    * Fetches road names that are updated after the given date.
+    * Fetches road names that are updated after the given date but before the second date.
     *
     * @param since
+    * @param until
     * @return
     */
   def getUpdatedRoadNamesBetween(since: DateTime, until: DateTime): Seq[RoadName] = {
