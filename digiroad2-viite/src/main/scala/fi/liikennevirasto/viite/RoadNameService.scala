@@ -107,6 +107,29 @@ class RoadNameService() {
     }
   }
 
+  /**
+    * Fetches road names that are updated after the first supplied date but before the last supplied date.
+    *
+    * @param since tells from which date roads are wanted
+    * @param until limits the date roads are wanted
+    * @return Returns error message as left and seq of road names as right
+    */
+  def getUpdatedRoadNamesBetween(since: DateTime, until: DateTime): Either[String, Seq[RoadName]] = {
+    withDynTransaction {
+      getUpdatedRoadNamesBetweenInTX(since, until)
+    }
+  }
+
+  def getUpdatedRoadNamesBetweenInTX(since: DateTime, until: DateTime): Either[String, Seq[RoadName]] = {
+    try {
+      Right(RoadNameDAO.getUpdatedRoadNamesBetween(since, until))
+    } catch {
+      case e if NonFatal(e) =>
+        logger.error("Failed to fetch updated road names.", e)
+        Left(e.getMessage)
+    }
+  }
+
   def getRoadNameByNumber(roadNumber: Long, projectID: Long): Option[Map[String, Any]] = {
     try {
       withDynSession {

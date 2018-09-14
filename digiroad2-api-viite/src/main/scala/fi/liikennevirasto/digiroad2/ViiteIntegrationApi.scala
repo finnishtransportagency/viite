@@ -46,6 +46,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
+  //ISO8601 time format
   val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   def clearCache() = {
@@ -112,6 +113,38 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
     )
   }
 
+    private def fetchUpdatedRoadNames(since: DateTime, untilUnformatted: Option[String] = Option.empty[String]) = {
+      val result = untilUnformatted match {
+        case Some(until) => roadNameService.getUpdatedRoadNamesBetween(since, DateTime.parse(until, dateFormat))
+        case _ => roadNameService.getUpdatedRoadNames(since)
+      }
+    if (result.isLeft) {
+      BadRequest(result.left)
+    } else if (result.isRight) {
+      result.right.get.groupBy(_.roadNumber).values.map(
+        names => Map(
+          "tie" -> names.head.roadNumber,
+          "tienimet" -> names.map(
+            name => Map(
+              "muutospvm" -> {
+                if (name.validFrom.isDefined) name.validFrom.get.toString("yyyy-MM-dd") else null
+              },
+              "tienimi" -> name.roadName,
+              "voimassaolo_alku" -> {
+                if (name.startDate.isDefined) name.startDate.get.toString("yyyy-MM-dd") else null
+              },
+              "voimassaolo_loppu" -> {
+                if (name.endDate.isDefined) name.endDate.get.toString("yyyy-MM-dd") else null
+              }
+            )
+          ))
+      )
+    } else {
+      Seq.empty[Any]
+    }
+  }
+
+
   get("/road_address") {
     time(logger, "GET request for /road_address") {
       contentType = formats("json")
@@ -172,31 +205,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
       } else {
         try {
           val changesSince = DateTime.parse(muutospvm.get, dateFormat)
-          val result = roadNameService.getUpdatedRoadNames(changesSince)
-          if (result.isLeft) {
-            BadRequest(result.left)
-          } else if (result.isRight) {
-            result.right.get.groupBy(_.roadNumber).values.map(
-              names => Map(
-                "tie" -> names.head.roadNumber,
-                "tienimet" -> names.map(
-                  name => Map(
-                    "muutospvm" -> {
-                      if (name.validFrom.isDefined) name.validFrom.get.toString("yyyy-MM-dd") else null
-                    },
-                    "tienimi" -> name.roadName,
-                    "voimassaolo_alku" -> {
-                      if (name.startDate.isDefined) name.startDate.get.toString("yyyy-MM-dd") else null
-                    },
-                    "voimassaolo_loppu" -> {
-                      if (name.endDate.isDefined) name.endDate.get.toString("yyyy-MM-dd") else null
-                    }
-                  )
-                ))
-            )
-          } else {
-            Seq.empty[Any]
-          }
+          fetchUpdatedRoadNames(changesSince)
         } catch {
           case e: IllegalArgumentException =>
             val message = "Palvelun '/tienimi/paivitetyt' parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
@@ -206,6 +215,26 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
             logger.warn(e.getMessage, e)
             BadRequest(e.getMessage)
         }
+      }
+    }
+  }
+
+  get("/roadnames/changes") {
+    contentType = formats("json")
+    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+    val untilUnformatted = params.get("until")
+    time(logger, s"GET request for /roadnames/changes (since: $sinceUnformatted; until: $untilUnformatted)") {
+      val since = DateTime.parse(sinceUnformatted, dateFormat)
+      try {
+        fetchUpdatedRoadNames(since, untilUnformatted)
+      } catch {
+        case e: IllegalArgumentException =>
+          val message = "Palvelun '/tienimi/paivitetyt' parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
+          logger.warn(message)
+          BadRequest(message)
+        case e if NonFatal(e) =>
+          logger.warn(e.getMessage, e)
+          BadRequest(e.getMessage)
       }
     }
   }
