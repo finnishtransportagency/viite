@@ -84,14 +84,14 @@
         }).uniq().join(", ").value()
       };
       if (isMultiSelect) {
-          var endRoadOnSelection = _.chain(selectedData)
-              .sortBy(function (sd) {
-                  return sd.endAddressM;
-              }).last().value();
-          var startRoadOnSelection = _.chain(selectedData)
-              .sortBy(function (sd) {
-                  return sd.endAddressM;
-              }).first().value();
+        var endRoadOnSelection = _.chain(selectedData)
+            .sortBy(function (sd) {
+                return sd.endAddressM;
+            }).last().value();
+        var startRoadOnSelection = _.chain(selectedData)
+            .sortBy(function (sd) {
+                return sd.endAddressM;
+            }).first().value();
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate', 'discontinuity', 'startAddressM', 'endAddressM'];
