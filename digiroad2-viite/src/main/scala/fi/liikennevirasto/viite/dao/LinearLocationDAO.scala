@@ -321,6 +321,7 @@ object LinearLocationDAO {
       Q.updateNA(query).first
   }
 
+  /*
   def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
 
     // Expire old row
@@ -348,7 +349,7 @@ object LinearLocationDAO {
       """.execute
     }
 
-  }
+  }*/
 
   /**
     * Marks the road address identified by the supplied Id as eiher floating or not and also updates the history of
@@ -453,7 +454,7 @@ object LinearLocationDAO {
   def getNextLinearLocationId: Long = {
     Queries.nextLinearLocationId.as[Long].first
   }
-
+ /*
   def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[RoadAddress] = {
     time(logger, "Fetch floating road addresses by link id - mass query") {
       MassQuery.withIds(linkIds) {
@@ -476,6 +477,7 @@ object LinearLocationDAO {
       }
     }
   }
+
 
   def queryFloatingByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
     time(logger, "Fetch floating road addresses by link ids") {
@@ -505,12 +507,6 @@ object LinearLocationDAO {
     }
   }
 
-  /**
-    * Return road address table rows that are valid by their ids
-    *
-    * @param ids
-    * @return
-    */
   def queryById(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false, rejectInvalids: Boolean = true): List[RoadAddress] = {
     time(logger, "Fetch road addresses by ids") {
       if (ids.size > 1000) {
@@ -588,6 +584,7 @@ object LinearLocationDAO {
     }
   }
 
+*/
   /**
     * Remove Road Addresses (mark them as removed). Don't use more than 1000 road addresses at once.
     *
@@ -602,7 +599,7 @@ object LinearLocationDAO {
         """
     Q.updateNA(query).first
   }
-
+ /*
   def create(linearLocations: Iterable[LinearLocation], createdBy: String): Seq[Long] = {
     val addressPS = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code,
@@ -673,6 +670,7 @@ object LinearLocationDAO {
     addressPS.close()
     createAddresses.map(_.id).toSeq
   }
+   */
 
   def lockLinearLocationWriting: Unit = {
     sqlu"""LOCK TABLE linear_location IN SHARE MODE""".execute
