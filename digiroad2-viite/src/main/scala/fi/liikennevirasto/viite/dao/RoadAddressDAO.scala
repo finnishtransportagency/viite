@@ -171,7 +171,7 @@ trait BaseRoadAddress {
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
+case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
                        startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
                        linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
@@ -230,6 +230,7 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly,geom: Seq[Point])
 
+//TODO change the roadAddressDAO to be a class to simplify the tests
 object RoadAddressDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
@@ -241,9 +242,9 @@ object RoadAddressDAO {
     * @param roadwayId Roadway identifier
     * @return Current road address at given roadway
     */
-  def fetchByRoadwayId(roadwayId: Long) = {
+  def fetchByRoadwayId(roadwayId: Long) : Option[RoadwayAddress] = {
     time(logger, "Fetch all current road addresses by roadway") {
-      fetch(withRoadWayAndNotEnded(roadwayId))
+      fetch(withRoadWayAndNotEnded(roadwayId)).headOption
     }
   }
 
