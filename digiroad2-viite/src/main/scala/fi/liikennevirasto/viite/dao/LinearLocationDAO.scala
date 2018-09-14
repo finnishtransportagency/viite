@@ -2,30 +2,21 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
@@ -331,20 +322,22 @@ object LinearLocationDAO {
 
     // Create new row
     if (geometry.nonEmpty) {
+      create()
+
       val first = geometry.get.head
       val last = geometry.get.last
       val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
       val length = GeometryUtils.geometryLength(geometry.get)
       sqlu"""
            Update road_address Set floating = ${floatingReason.value},
-                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+                  geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
                   $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-             Where id = $roadAddressId
+             Where id = $id
       """.execute
     } else {
       sqlu"""
            Update road_address Set floating = ${floatingReason.value}
-             Where id = $roadAddressId
+             Where id = $id
       """.execute
     }
 
@@ -582,15 +575,15 @@ object LinearLocationDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
-    val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, road_number, road_part_number, " +
-      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, modified_by, " +
-      "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, common_history_id," +
-      "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
-      "TO_DATE(?, 'YYYY-MM-DD'), ?, ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-      "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
-      "?, ?, ?, ?, ?, ?)")
-    val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
+  def create(linearLocations: Iterable[LinearLocation], createdBy: String): Seq[Long] = {
+    val addressPS = dynamicSession.prepareStatement(
+      """insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code,
+        cal_start_m, cal_end_m, link_source, adjusted_timestamp, created_by, floating, geometry, valid_from, valid_to)
+        values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'),
+        TO_DATE(?, 'YYYY-MM-DD'), ?, ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+        "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
+        ?, ?, ?, ?, ?, ?)""")
+    val (ready, idLess) = linearLocations.partition(_.id != NewRoadAddress)
     val plIds = Sequences.fetchRoadAddressIds(idLess.size)
     val createAddresses = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
@@ -687,19 +680,6 @@ object LinearLocationDAO {
     query + s" WHERE loc.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidityCheck
   }
 
-  /**
-    * Used in RoadAddressDAO.getRoadAddressByFilter and ChangeApi
-    *
-    * @param sinceDate
-    * @param untilDate
-    * @param query
-    * @return
-    */
-  def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
-    query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
-      s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
-  }
-
   def withRoadwayIds(fromRoadwayId: Long, toRoadwayId: Long)(query: String): String = {
     query + s" WHERE loc.roadway_id >= $fromRoadwayId AND loc.roadway_id <= $toRoadwayId"
   }
@@ -708,106 +688,4 @@ object LinearLocationDAO {
     s" AND loc.valid_to IS NULL "
   }
 
-  def getRoadNumbers(): Seq[Long] = {
-    sql"""
-			select distinct (ra.road_number)
-      from road_address ra
-      where ra.valid_to is null
-		  """.as[Long].list
-  }
-
-  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Double], endAddrM: Option[Double]): Seq[RoadAddress] = {
-    time(logger, "Get filtered road addresses") {
-      val startEndFilter =
-        if (startAddrM.nonEmpty && endAddrM.nonEmpty)
-          s"""(( ra.start_addr_m >= ${startAddrM.get} and ra.end_addr_m <= ${endAddrM.get} ) or ( ${startAddrM.get} >= ra.start_addr_m and ${startAddrM.get} < ra.end_addr_m) or
-         ( ${endAddrM.get} > ra.start_addr_m and ${endAddrM.get} <= ra.end_addr_m)) and"""
-        else ""
-
-      val where =
-        s""" where $startEndFilter ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
-         and ra.floating = 0 """ + withValidityCheck
-
-      val query =
-        s"""
-         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-          ra.side_code, ra.adjusted_timestamp,
-          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
-          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
-          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
-          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
-          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-          ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to
-        from ROAD_ADDRESS ra
-        $where
-      """
-      queryList(query)
-    }
-  }
-
-  def getRoadAddressByEly(ely: Long, onlyCurrent: Boolean = false): List[RoadAddress] = {
-    time(logger, "Get road addresses by ELY") {
-
-      val current = if (onlyCurrent) {
-        " and ra.end_date IS NULL "
-      } else {
-        ""
-      }
-
-      val query =
-        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-       ra.side_code, ra.adjusted_timestamp,
-       ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-       (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-        from ROAD_ADDRESS ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        where t.id < t2.id and
-          ra.floating = 0 and valid_to is null and ra.ely = $ely $current"""
-      queryList(query)
-    }
-  }
-
-  /*
-   * Get the calibration code of the given road address.
-   *
-   * @param roadAddressId id of the road link in ROAD_ADDRESS table
-   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
-   *
-   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
-   */
-  def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
-    val query =
-      s"""SELECT ra.calibration_points
-                    FROM road_address ra
-                    WHERE ra.id=$roadAddressId"""
-    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
-  }
-
-
-  /*
-   * Get the calibration code of the given road addresses.
-   *
-   * @param roadAddressId id of the road link in ROAD_ADDRESS table
-   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
-   *
-   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
-   */
-  def getRoadAddressCalibrationCode(roadAddressIds: Seq[Long]): Map[Long, CalibrationCode] = {
-    if (roadAddressIds.isEmpty) {
-      Map()
-    } else {
-      val query =
-        s"""SELECT ra.id, ra.calibration_points
-                    FROM road_address ra
-                    WHERE ra.id in (${roadAddressIds.mkString(",")})"""
-      Q.queryNA[(Long, Int)](query).list.map {
-        case (id, code) => id -> CalibrationCode(code)
-      }.toMap
-    }
-
-
-  }
 }
