@@ -416,6 +416,7 @@ object LinearLocationDAO {
     true
   }
 
+  // TODO Expire current row and add new row. Update should be used only in setting the valid_to -date.
   def updateGeometry(lrmId: Long, geometry: Seq[Point]): Unit = {
     if (geometry.nonEmpty) {
       val first = geometry.head
