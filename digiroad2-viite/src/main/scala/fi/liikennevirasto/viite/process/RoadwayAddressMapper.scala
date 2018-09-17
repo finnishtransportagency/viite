@@ -96,7 +96,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
   private def recursiveMapRoadAddresses(roadwayAddress: RoadwayAddress, linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
 
     def getUntilCalibrationPoint(seq: Seq[LinearLocation]): (Seq[LinearLocation], Seq[LinearLocation]) = {
-      val linearLocationsUntilCp = seq.takeWhile(l => l.calibrationPoints._2.isEmpty)
+      val linearLocationsUntilCp = seq.head +: seq.tail.takeWhile(l => l.calibrationPoints._2.isEmpty)
       (linearLocationsUntilCp, seq.drop(linearLocationsUntilCp.size))
     }
 
@@ -106,7 +106,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
     val (toProcess, others) =  getUntilCalibrationPoint(linearLocations)
 
     val startAddrMValue = if(toProcess.head.calibrationPoints._1.isDefined) toProcess.head.calibrationPoints._1.get else roadwayAddress.startAddrMValue
-    val endAddrMValue = if(toProcess.last.calibrationPoints._2.isDefined) toProcess.last.calibrationPoints._1.get else roadwayAddress.endAddrMValue
+    val endAddrMValue = if(toProcess.last.calibrationPoints._2.isDefined) toProcess.last.calibrationPoints._2.get else roadwayAddress.endAddrMValue
 
     boundaryAddressMap(roadwayAddress, toProcess, startAddrMValue, endAddrMValue) ++ recursiveMapRoadAddresses(roadwayAddress, others)
   }
