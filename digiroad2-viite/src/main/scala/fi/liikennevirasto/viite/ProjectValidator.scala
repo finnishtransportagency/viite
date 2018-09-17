@@ -538,13 +538,13 @@ object ProjectValidator {
       */
     def evaluateBorderCheck(startRoad: ProjectLink, endRoad: ProjectLink, secondCheck: Boolean): Option[Seq[ProjectLink]] = {
       throw new NotImplementedError("Will be implemented at VIITE-1540")
-      /**
-        * Helper method, will find ALL the road addresses in a bounding box whose center is the edge road
-        *
-        * @param headRoad A project link, at the start of it (lowest endAddressMValue)
-        * @param tailRoad A project link, at the end of it(highest endAddressMValue)
-        * @return Road addresses contained in a small bounding box
-        */
+//      /**
+//        * Helper method, will find ALL the road addresses in a bounding box whose center is the edge road
+//        *
+//        * @param headRoad A project link, at the start of it (lowest endAddressMValue)
+//        * @param tailRoad A project link, at the end of it(highest endAddressMValue)
+//        * @return Road addresses contained in a small bounding box
+//        */
 //      def findRoads(headRoad: ProjectLink, tailRoad: ProjectLink) = {
 //        val sp = startPoint(headRoad)
 //        val ep = endPoint(tailRoad)
@@ -562,13 +562,15 @@ object ProjectValidator {
 //        }
 //        connectingAtStart ++ connectingAtEnd
 //      }
-
+//
 //      val roadAddresses = findRoads(startRoad, endRoad)
 //      if (roadAddresses.nonEmpty) {
 //        val filtered = roadAddresses.filterNot(ra => ra.roadNumber == startRoad.roadNumber && ra.roadPartNumber == startRoad.roadPartNumber &&
 //          !GeometryUtils.areAdjacent(ra.geometry, startRoad.geometry) && !GeometryUtils.areAdjacent(ra.geometry, endRoad.geometry))
-//        val diffEly = filtered.find(ra => ra.ely != startRoad.ely && (ra.roadNumber == startRoad.roadNumber || !secondCheck))
-//        if ((!secondCheck && diffEly.isEmpty) || (secondCheck && diffEly.nonEmpty)) {
+//        val diffEly = filtered.find(_.ely != startRoad.ely)
+//        if (!secondCheck && diffEly.isEmpty) {
+//          Option(Seq(endRoad))
+//        } else if (secondCheck && diffEly.isDefined) {
 //          Option(Seq(endRoad))
 //        } else Option.empty[Seq[ProjectLink]]
 //      } else Option.empty[Seq[ProjectLink]]
