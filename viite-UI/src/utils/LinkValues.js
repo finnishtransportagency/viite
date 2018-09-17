@@ -146,7 +146,7 @@
 
     root.NewRoadId = -1000;
 
-    root.BlackUnderlineRoadTyes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
+    root.BlackUnderlineRoadTypes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
 
 })(window.LinkValues = window.LinkValues || {});
 
