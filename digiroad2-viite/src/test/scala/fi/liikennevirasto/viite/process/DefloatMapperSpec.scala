@@ -386,14 +386,16 @@ class DefloatMapperSpec extends FunSuite with Matchers{
   }
 
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
-    RoadAddress(l.id, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
+    //TODO road address now have the linear location check this value here
+    RoadAddress(l.id, 1L, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, l.linkId, l.startMValue, l.endMValue, l.sideCode, l.attributes.getOrElse("ADJUSTED_TIMESTAMP", 0L).asInstanceOf[Long],
       (l.startCalibrationPoint, l.endCalibrationPoint), if (floating) FloatingReason.ApplyChanges else NoFloating, l.geometry, l.roadLinkSource, l.elyCode, NoTermination, 0)
   }
 
   private def dummyRoadAddress(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, floating: FloatingReason) = {
-    RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.apply(trackCode.toInt), Discontinuity.Continuous,
+    //TODO road address now have the linear location check this value here
+    RoadAddress(id, 1L, roadNumber, roadPartNumber, RoadType.Unknown, Track.apply(trackCode.toInt), Discontinuity.Continuous,
       startAddressM, endAddressM, Option(new DateTime(new Date())), None, None, linkId, 0, GeometryUtils.geometryLength(geom), sideCode, 0L,
       (None, None), floating, geom, LinkGeomSource.NormalLinkInterface, 1, NoTermination, 0)
   }
