@@ -554,9 +554,13 @@
         }
       });
 
-      rootElement.on('keyup', '#roadName', function () {
-          checkInputs('.project-');
-      });
+        rootElement.on('keyup', '#roadName', function () {
+            checkInputs('.project-');
+        });
+
+        rootElement.bind("input", '#roadName', function () {
+            checkInputs('.project-');
+        });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
         eventbus.trigger('projectCollection:clickCoordinates', event, map);
