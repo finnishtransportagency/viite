@@ -37,6 +37,23 @@ class RoadwayAddressMapperSpec extends FunSuite with Matchers{
     val roadAddresses = roadwayAddressMapper.mapRoadAddresses(roadwayAddress, linearLocations)
 
     roadAddresses.size should be (3)
+
+    val roadAddress1 = roadAddresses.find(_.linkId == 125).get
+    roadAddress1.startAddrMValue should be (140)
+    roadAddress1.calibrationPoints should be (None, None)
+    roadAddress1.discontinuity should be (Discontinuity.Continuous)
+
+    val roadAddress2 = roadAddresses.find(_.linkId == 123).get
+    roadAddress2.startAddrMValue should be (roadAddress1.endAddrMValue)
+    roadAddress2.endAddrMValue should be (250)
+    roadAddress2.calibrationPoints should be (None, Some(CalibrationPoint(123, 49.0, 250)))
+    roadAddress2.discontinuity should be (Discontinuity.Continuous)
+
+    val roadAddress3 = roadAddresses.find(_.linkId == 124).get
+    roadAddress3.startAddrMValue should be (250)
+    roadAddress3.endAddrMValue should be (300)
+    roadAddress3.calibrationPoints should be (Some(CalibrationPoint(124, 0.0, 250)), Some(CalibrationPoint(124, 51.0, 300)))
+    roadAddress3.discontinuity should be (Discontinuity.Discontinuous)
   }
 
   test("Should map history roadway linear location into road addresses"){
@@ -60,5 +77,22 @@ class RoadwayAddressMapperSpec extends FunSuite with Matchers{
     val roadAddresses = roadwayAddressMapper.mapRoadAddresses(historyRoadwayAddress, linearLocations)
 
     roadAddresses.size should be (3)
+
+    val roadAddress1 = roadAddresses.find(_.linkId == 125).get
+    roadAddress1.startAddrMValue should be (240)
+    roadAddress1.calibrationPoints should be (None, None)
+    roadAddress1.discontinuity should be (Discontinuity.Continuous)
+
+    val roadAddress2 = roadAddresses.find(_.linkId == 123).get
+    roadAddress2.startAddrMValue should be (roadAddress1.endAddrMValue)
+    roadAddress2.endAddrMValue should be (350)
+    roadAddress2.calibrationPoints should be (None, Some(CalibrationPoint(123, 49.0, 350)))
+    roadAddress2.discontinuity should be (Discontinuity.Continuous)
+
+    val roadAddress3 = roadAddresses.find(_.linkId == 124).get
+    roadAddress3.startAddrMValue should be (350)
+    roadAddress3.endAddrMValue should be (400)
+    roadAddress3.calibrationPoints should be (Some(CalibrationPoint(124, 0.0, 350)), Some(CalibrationPoint(124, 51.0, 400)))
+    roadAddress3.discontinuity should be (Discontinuity.Discontinuous)
   }
 }
