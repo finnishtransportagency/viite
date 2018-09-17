@@ -127,7 +127,7 @@
         PublicUnderConstructionRoad:    {value:4, description:"Yleisen tien työmaa"},
         PrivateRoadType:                {value:5, description:"Yksityistie"},
         UnknownOwnerRoad:               {value:9, description:"Omistaja selvittämättä"},
-        Unknown:                        {value:99, description:"OEi määritelty"}
+        Unknown:                        {value:99, description:"Ei määritelty"}
     };
 
     /*
