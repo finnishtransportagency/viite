@@ -47,7 +47,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
   //ISO8601 time format
-  val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+  val dateFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
   def clearCache() = {
     roadLinkService.clearCache()
@@ -115,26 +115,26 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
 
     private def fetchUpdatedRoadNames(since: DateTime, untilUnformatted: Option[String] = Option.empty[String]) = {
       val result = untilUnformatted match {
-        case Some(until) => roadNameService.getUpdatedRoadNamesBetween(since, DateTime.parse(until, dateFormat))
-        case _ => roadNameService.getUpdatedRoadNames(since)
+        case Some(until) => roadNameService.getUpdatedRoadNames(since, Some(DateTime.parse(until)))
+        case _ => roadNameService.getUpdatedRoadNames(since, None)
       }
     if (result.isLeft) {
       BadRequest(result.left)
     } else if (result.isRight) {
       result.right.get.groupBy(_.roadNumber).values.map(
         names => Map(
-          "tie" -> names.head.roadNumber,
-          "tienimet" -> names.map(
+          "road_number" -> names.head.roadNumber,
+          "names" -> names.map(
             name => Map(
-              "muutospvm" -> {
-                if (name.validFrom.isDefined) name.validFrom.get.toString("yyyy-MM-dd") else null
+              "change_date" -> {
+                if (name.validFrom.isDefined)  name.validFrom.get.toString(dateFormat) else null
               },
-              "tienimi" -> name.roadName,
-              "voimassaolo_alku" -> {
-                if (name.startDate.isDefined) name.startDate.get.toString("yyyy-MM-dd") else null
+              "road_name" -> name.roadName,
+              "start_date" -> {
+                if (name.startDate.isDefined) name.startDate.get.toString(dateFormat) else null
               },
-              "voimassaolo_loppu" -> {
-                if (name.endDate.isDefined) name.endDate.get.toString("yyyy-MM-dd") else null
+              "end_date" -> {
+                if (name.endDate.isDefined) name.endDate.get.toString(dateFormat) else null
               }
             )
           ))
@@ -194,6 +194,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
    * ]
    *
    */
+  // TODO - Deprecated method - This method should be removed once TR changes to the new endpoint
   get("/tienimi/paivitetyt") {
     contentType = formats("json")
     val muutospvm = params.get("muutospvm")
@@ -204,8 +205,32 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
         BadRequest(message)
       } else {
         try {
-          val changesSince = DateTime.parse(muutospvm.get, dateFormat)
-          fetchUpdatedRoadNames(changesSince)
+          val changesSince = DateTime.parse(muutospvm.get)
+          val result = roadNameService.getUpdatedRoadNames(changesSince, None)
+          if (result.isLeft) {
+            BadRequest(result.left)
+          } else if (result.isRight) {
+            result.right.get.groupBy(_.roadNumber).values.map(
+              names => Map(
+                "tie" -> names.head.roadNumber,
+                "tienimet" -> names.map(
+                  name => Map(
+                    "muutospvm" -> {
+                      if (name.validFrom.isDefined) name.validFrom.get.toString("yyyy-MM-dd") else null
+                    },
+                    "tienimi" -> name.roadName,
+                    "voimassaolo_alku" -> {
+                      if (name.startDate.isDefined) name.startDate.get.toString("yyyy-MM-dd") else null
+                    },
+                    "voimassaolo_loppu" -> {
+                      if (name.endDate.isDefined) name.endDate.get.toString("yyyy-MM-dd") else null
+                    }
+                  )
+                ))
+            )
+          } else {
+            Seq.empty[Any]
+          }
         } catch {
           case e: IllegalArgumentException =>
             val message = "Palvelun '/tienimi/paivitetyt' parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
@@ -224,12 +249,12 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     val untilUnformatted = params.get("until")
     time(logger, s"GET request for /roadnames/changes (since: $sinceUnformatted; until: $untilUnformatted)") {
-      val since = DateTime.parse(sinceUnformatted, dateFormat)
+      val since = DateTime.parse(sinceUnformatted)
       try {
         fetchUpdatedRoadNames(since, untilUnformatted)
       } catch {
         case e: IllegalArgumentException =>
-          val message = "Palvelun '/tienimi/paivitetyt' parametri 'muutospvm' tulee olla muodossa: 'yyyy-MM-dd'."
+          val message = "The since /until parameter of the service should be in the form yyyy-MM-ddTHH:mm:ss."
           logger.warn(message)
           BadRequest(message)
         case e if NonFatal(e) =>

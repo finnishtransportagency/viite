@@ -45,6 +45,18 @@ object RoadNameDAO {
     }
   }
 
+  def dateParserISO8601(oDate: Option[DateTime]): String = {
+    oDate match {
+      case Some(date) => {
+        val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("yyyy.MM.dd HH:mm:ss")
+        dtfOut.print(date)
+      }
+      case _=>
+        logger.error("Failed to parse date in RoadName search ")
+        "01.01.1900"
+    }
+  }
+
   /**
     * For checking date validity we convert string datre to datetime options
     *
@@ -132,47 +144,17 @@ object RoadNameDAO {
     * @param since
     * @return
     */
-  def getUpdatedRoadNames(since: DateTime): Seq[RoadName] = {
-    if (since != null) {
-      val sinceString = since.toString("yyyy-MM-dd")
+  def getUpdatedRoadNames(since: DateTime, until: Option[DateTime]): Seq[RoadName] = {
+      val untilString = if (until.nonEmpty) s"AND CREATED_TIME <= TO_DATE('${dateParserISO8601(until)}', 'RRRR.MM.dd HH24:mi:ss')" else ""
       val query =
         s"""
         SELECT * FROM road_names
         WHERE road_number IN (
             SELECT DISTINCT road_number FROM road_names
-            WHERE valid_to IS NULL AND CREATED_TIME >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
+            WHERE valid_to IS NULL AND CREATED_TIME >= TO_DATE('${dateParserISO8601(Some(since))}', 'RRRR.MM.dd HH24:mi:ss') $untilString
           ) AND valid_to IS NULL
         ORDER BY road_number, start_date desc"""
       queryList(query)
-    } else {
-      Seq.empty[RoadName]
-    }
-  }
-
-  /**
-    * Fetches road names that are updated after the given date but before the second date.
-    *
-    * @param since
-    * @param until
-    * @return
-    */
-  def getUpdatedRoadNamesBetween(since: DateTime, until: DateTime): Seq[RoadName] = {
-    if (since != null) {
-      val sinceString = since.toString("yyyy-MM-dd")
-      val untilString = until.toString("yyyy-MM-dd")
-      val query =
-        s"""
-        SELECT * FROM road_names
-        WHERE road_number IN (
-            SELECT DISTINCT road_number FROM road_names
-            WHERE valid_to IS NULL AND CREATED_TIME >= TO_DATE('${sinceString}', 'RRRR-MM-dd') AND
-            valid_to IS NULL AND CREATED_TIME <= TO_DATE('${untilString}', 'RRRR-MM-dd')
-          ) AND valid_to IS NULL
-        ORDER BY road_number, start_date desc"""
-      queryList(query)
-    } else {
-      Seq.empty[RoadName]
-    }
   }
 
   def getRoadNamesById(id: Long): Option[RoadName] = {
