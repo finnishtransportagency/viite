@@ -489,86 +489,46 @@ object LinearLocationDAO {
     }
   }
 
-  /*
+  def queryById(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by ids") {
+      if (ids.isEmpty) {
+        return List()
+      }
+      if (ids.size > 1000) {
+        return queryByIdMassQuery(ids)
+      }
+      val idString = ids.mkString(", ")
+      val where = s""" where loc.id in ($idString)"""
 
-      def queryById(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false, rejectInvalids: Boolean = true): List[RoadAddress] = {
-        time(logger, "Fetch road addresses by ids") {
-          if (ids.size > 1000) {
-            return queryByIdMassQuery(ids)
-          }
-          val idString = ids.mkString(",")
-          val where = if (ids.isEmpty) {
-            return List()
-          } else {
-            s""" where ra.id in ($idString)"""
-          }
-          val terminatedFilter = if (!includeTerminated) {
-            "AND ra.terminated = 0"
-          } else {
-            ""
-          }
+      val validToFilter = if (rejectInvalids)
+        " and loc.valid_to is null"
+      else
+        ""
 
-          val historyFilter = if (includeHistory)
-            "AND ra.end_date is null"
-          else
-            ""
+      val query =
+        s"""
+          $selectFromLinearLocation
+          $where and t.id < t2.id $validToFilter
+        """
+      queryList(query)
+    }
+  }
 
-          val validToFilter = if (rejectInvalids)
-            " and ra.valid_to is null"
-          else
-            ""
-
+  def queryByIdMassQuery(ids: Set[Long]): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by ids - mass query") {
+      MassQuery.withIds(ids) {
+        idTableName =>
           val query =
             s"""
-            select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-            ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-            ra.side_code, ra.adjusted_timestamp,
-            ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-            (SELECT road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL and rn.VALID_TO IS NULL)
-            from road_address ra cross join
-            TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-            TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-            $where $historyFilter $terminatedFilter and t.id < t2.id $validToFilter
-          """
+              $selectFromLinearLocation
+              join $idTableName i on i.id = loc.id
+              where t.id < t2.id and loc.valid_to is null
+            """
           queryList(query)
-        }
       }
+    }
+  }
 
-      def queryByIdMassQuery(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
-        time(logger, "Fetch road addresses by ids - mass query") {
-          val terminatedFilter = if (!includeTerminated) {
-            "AND ra.terminated = 0"
-          } else {
-            ""
-          }
-
-          val historyFilter = if (includeHistory)
-            "AND ra.end_date is null"
-          else
-            ""
-
-          MassQuery.withIds(ids) {
-            idTableName =>
-              val query =
-                s"""
-            select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-            ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-            ra.side_code, ra.adjusted_timestamp,
-            ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-            (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-            from ROAD_ADDRESS ra cross join
-            TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-            TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-            join $idTableName i on i.id = ra.id
-            where t.id < t2.id $historyFilter $terminatedFilter and
-              valid_to is null
-          """
-              queryList(query)
-          }
-        }
-      }
-
-    */
   /**
     * Remove Road Addresses (mark them as removed). Don't use more than 1000 road addresses at once.
     *
