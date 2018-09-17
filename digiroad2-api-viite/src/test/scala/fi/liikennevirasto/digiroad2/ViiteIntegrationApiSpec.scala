@@ -166,7 +166,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("Road name change for two roads") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), None)).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
