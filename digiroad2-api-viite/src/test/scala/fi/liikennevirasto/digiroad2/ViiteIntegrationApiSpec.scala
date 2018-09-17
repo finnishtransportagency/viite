@@ -209,7 +209,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"tie\":2,\"tienimet\":[{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MYROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}]}]"
+        "[{\"road_number\":2,\"names\":[{\"change_date\":\"2018-01-01\",\"road_name\":\"MYROAD\",\"start_date\":\"2018-02-02\",\"end_date\":null}]}]"
       )
     }
   }
@@ -225,10 +225,10 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
+        "[{\"road_number\":2,\"names\":[" +
+          "{\"change_date\":\"2018-01-01\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02\",\"end_date\":null}," +
+          "{\"change_date\":\"2018-01-01\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02\",\"end_date\":\"2018-02-02\"}," +
+          "{\"change_date\":\"1900-01-01\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02\",\"end_date\":\"2000-02-02\"}" +
           "]}]"
       )
     }
@@ -247,13 +247,13 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       status should equal(200)
       response.body should equal(
         "[" +
-          "{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
+          "{\"road_number\":2,\"names\":[" +
+          "{\"change_date\":\"2017-12-01\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02\",\"end_date\":null}," +
+          "{\"change_date\":\"2017-12-01\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02\",\"end_date\":\"2018-02-02\"}," +
+          "{\"change_date\":\"1900-01-01\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02\",\"end_date\":\"2000-02-02\"}" +
           "]}," +
-          "{\"tie\":3,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"ANOTHER ROAD\",\"voimassaolo_alku\":\"2017-12-12\",\"voimassaolo_loppu\":null}" +
+          "{\"road_number\":3,\"names\":[" +
+          "{\"change_date\":\"2017-12-01\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"2017-12-12\",\"end_date\":null}" +
           "]}" +
           "]"
       )
