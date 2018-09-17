@@ -23,6 +23,7 @@ import fi.liikennevirasto.viite.MaxSuravageToleranceToGeometry
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
@@ -37,8 +38,9 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   val mockProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

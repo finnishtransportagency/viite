@@ -15,6 +15,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{TerminationCode, _}
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.toProjectLink
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
@@ -35,8 +36,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
