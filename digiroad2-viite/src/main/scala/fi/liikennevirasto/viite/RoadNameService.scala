@@ -50,7 +50,7 @@ class RoadNameService() {
               RoadName(NewRoadNameId, roadNumber, roadNameRow.name, Some(startDate), endDate, createdBy = user.username)
           }
 
-          RoadNameDAO.create(newRoadName)
+          RoadNameDAO.create(Seq(newRoadName))
       }
       None
     } catch {
