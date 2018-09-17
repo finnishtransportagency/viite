@@ -16,7 +16,8 @@ import org.scalatest.{FunSuite, Matchers}
 
 class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
 
-  val roadAddr = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
+  //TODO the road address now have the linear location id and as been setted to 1L
+  val roadAddr = RoadAddress(1, 1L, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
     None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
     LinkGeomSource.NormalLinkInterface, 8, NoTermination, 123456)
 
