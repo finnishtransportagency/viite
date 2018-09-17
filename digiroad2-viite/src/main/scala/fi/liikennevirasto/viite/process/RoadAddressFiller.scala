@@ -15,7 +15,7 @@ object RoadAddressFiller {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  case class LinearLocationAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
+  case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class AddressChangeSet(
                                toFloatingAddressIds: Set[Long],
                                adjustedMValues: Seq[LinearLocationAdjustment],

@@ -321,93 +321,41 @@ object LinearLocationDAO {
       Q.updateNA(query).first
   }
 
-  /*
-  def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
+  def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason, createdBy: String = "-"): Unit = {
 
     // Expire old row
-    val expired = fetchById(id).getOrElse(throw new IllegalStateException(s"""Failed to set linear location $id floating reason. Linear location not found."""))
+    val expired: LinearLocation = fetchById(id).getOrElse(
+      throw new IllegalStateException(s"""Failed to set linear location $id floating reason. Linear location not found."""))
     expireById(Set(id))
 
     // Create new row
-    if (geometry.nonEmpty) {
-      create()
-
-      val first = geometry.get.head
-      val last = geometry.get.last
-      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
-      val length = GeometryUtils.geometryLength(geometry.get)
-      sqlu"""
-           Update road_address Set floating = ${floatingReason.value},
-                  geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-             Where id = $id
-      """.execute
+    create(Seq(if (geometry.nonEmpty) {
+      expired.copy(id = NewLinearLocation, geometry = geometry.get, floating = floatingReason)
     } else {
-      sqlu"""
-           Update road_address Set floating = ${floatingReason.value}
-             Where id = $id
-      """.execute
-    }
+      expired.copy(id = NewLinearLocation, floating = floatingReason)
+    }), createdBy)
 
-  }*/
-
-  /**
-    * Marks the road address identified by the supplied Id as eiher floating or not and also updates the history of
-    * those who shares the same link_id and common_history_id
-    *
-    * @param roadAddressId The Id of a road addresss
-    */
-  def changeRoadAddressFloatingWithHistory(roadAddressId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
-    if (geometry.nonEmpty) {
-      val first = geometry.get.head
-      val last = geometry.get.last
-      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
-      val length = GeometryUtils.geometryLength(geometry.get)
-      sqlu"""
-           Update road_address Set floating = ${floatingReason.value},
-                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-             Where id = $roadAddressId
-      """.execute
-    }
-    sqlu"""
-       update road_address set floating = ${floatingReason.value} where id in(
-       select road_address.id from road_address where link_id =
-       (select link_id from road_address where road_address.id = $roadAddressId))
-        """.execute
   }
 
-  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment): Unit = {
+  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment, createdBy: String = "-"): Unit = {
+
+    // Expire old row
+    val expired: LinearLocation = fetchById(linearLocationAdjustment.linearLocationId).getOrElse(
+      throw new IllegalStateException(s"""Failed to update linear location ${linearLocationAdjustment.linearLocationId}. Linear location not found."""))
+    expireById(Set(linearLocationAdjustment.linearLocationId))
+
+    // Create new row
     val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
     (startM, endM) match {
       case (Some(s), Some(e)) =>
-        sqlu"""
-           UPDATE ROAD_ADDRESS
-           SET start_measure = $s,
-             end_measure = $e,
-             link_id = ${linearLocationAdjustment.linkId},
-             modified_date = sysdate
-           WHERE id = ${linearLocationAdjustment.addressId}
-      """.execute
+        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, startMValue = s, endMValue = e)), createdBy)
       case (_, Some(e)) =>
-        sqlu"""
-           UPDATE ROAD_ADDRESS
-           SET
-             end_measure = ${linearLocationAdjustment.endMeasure.get},
-             link_id = ${linearLocationAdjustment.linkId},
-             modified_date = sysdate
-           WHERE id = ${linearLocationAdjustment.addressId}
-      """.execute
+        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, endMValue = e)), createdBy)
       case (Some(s), _) =>
-        sqlu"""
-           UPDATE ROAD_ADDRESS
-           SET start_measure = ${linearLocationAdjustment.startMeasure.get},
-             link_id = ${linearLocationAdjustment.linkId},
-             modified_date = sysdate
-           WHERE id = ${linearLocationAdjustment.addressId}
-      """.execute
+        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, startMValue = s)), createdBy)
       case _ =>
     }
+
   }
 
   def updateLinkSource(id: Long, linkSource: LinkGeomSource): Boolean = {
