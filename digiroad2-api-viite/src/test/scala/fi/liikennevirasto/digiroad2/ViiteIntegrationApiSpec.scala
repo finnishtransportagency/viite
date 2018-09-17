@@ -17,7 +17,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 
 
-class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
+class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
@@ -209,7 +209,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"road_number\":2,\"names\":[{\"change_date\":\"2018-01-01\",\"road_name\":\"MYROAD\",\"start_date\":\"2018-02-02\",\"end_date\":null}]}]"
+        "[{\"road_number\":2,\"names\":[{\"change_date\":\"2018-01-01T00:00:00\",\"road_name\":\"MYROAD\",\"start_date\":\"2018-02-02T00:00:00\",\"end_date\":null}]}]"
       )
     }
   }
@@ -226,9 +226,9 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"2018-01-01\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02\",\"end_date\":null}," +
-          "{\"change_date\":\"2018-01-01\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02\",\"end_date\":\"2018-02-02\"}," +
-          "{\"change_date\":\"1900-01-01\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02\",\"end_date\":\"2000-02-02\"}" +
+          "{\"change_date\":\"2018-01-01T00:00:00\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02T00:00:00\",\"end_date\":null}," +
+          "{\"change_date\":\"2018-01-01T00:00:00\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02T00:00:00\",\"end_date\":\"2018-02-02T00:00:00\"}," +
+          "{\"change_date\":\"1900-01-01T00:00:00\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02T00:00:00\",\"end_date\":\"2000-02-02T00:00:00\"}" +
           "]}]"
       )
     }
@@ -248,12 +248,12 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       response.body should equal(
         "[" +
           "{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"2017-12-01\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02\",\"end_date\":null}," +
-          "{\"change_date\":\"2017-12-01\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02\",\"end_date\":\"2018-02-02\"}," +
-          "{\"change_date\":\"1900-01-01\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02\",\"end_date\":\"2000-02-02\"}" +
+          "{\"change_date\":\"2017-12-01T00:00:00\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02T00:00:00\",\"end_date\":null}," +
+          "{\"change_date\":\"2017-12-01T00:00:00\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02T00:00:00\",\"end_date\":\"2018-02-02T00:00:00\"}," +
+          "{\"change_date\":\"1900-01-01T00:00:00\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02T00:00:00\",\"end_date\":\"2000-02-02T00:00:00\"}" +
           "]}," +
           "{\"road_number\":3,\"names\":[" +
-          "{\"change_date\":\"2017-12-01\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"2017-12-12\",\"end_date\":null}" +
+          "{\"change_date\":\"2017-12-01T00:00:00\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"2017-12-12T00:00:00\",\"end_date\":null}" +
           "]}" +
           "]"
       )
