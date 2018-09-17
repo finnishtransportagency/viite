@@ -46,9 +46,6 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-  //ISO8601 time format
-  val dateFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
-
   def clearCache() = {
     roadLinkService.clearCache()
   }
@@ -127,14 +124,14 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
           "names" -> names.map(
             name => Map(
               "change_date" -> {
-                if (name.validFrom.isDefined)  name.validFrom.get.toString(dateFormat) else null
+                if (name.validFrom.isDefined)  name.validFrom.get.toString else null
               },
               "road_name" -> name.roadName,
               "start_date" -> {
-                if (name.startDate.isDefined) name.startDate.get.toString(dateFormat) else null
+                if (name.startDate.isDefined) name.startDate.get.toString else null
               },
               "end_date" -> {
-                if (name.endDate.isDefined) name.endDate.get.toString(dateFormat) else null
+                if (name.endDate.isDefined) name.endDate.get.toString else null
               }
             )
           ))
