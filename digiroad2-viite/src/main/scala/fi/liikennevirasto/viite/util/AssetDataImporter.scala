@@ -126,6 +126,7 @@ class AssetDataImporter {
       sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM LINEAR_LOCATION""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
       println(s"${DateTime.now()} - Old address data removed")
 
@@ -187,68 +188,6 @@ class AssetDataImporter {
   protected def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
     new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
-
-  //TODO Check if this will continue to be needed
-//  def updateRoadAddressesValues(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
-//    val eventBus = new DummyEventBus
-//    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-//
-//    val roadsWithMultipleValues = conversionDatabase.withDynSession {
-//      sql"""SELECT t.tie, t.aosa, ajr, greatest(aet,let) as addrM, tietyyppi as type_before, (SELECT tietyyppi FROM VVH_TIEOSOITE_NYKY u WHERE u.tie = t.tie AND u.aosa=t.aosa AND (u.ajr = t.ajr OR u.ajr=0 OR t.ajr=0)
-//            AND ((u.aet = t.let and t.aet < t.let) or (u.let = t.aet and t.aet > t.let) ) AND ROWNUM < 2) type_after, ely FROM VVH_TIEOSOITE_NYKY t
-//            JOIN (SELECT gr.TIE, gr.AOSA, count(distinct TIETYYPPI) FROM VVH_TIEOSOITE_NYKY gr group by gr.tie, gr.aosa having count(distinct TIETYYPPI) > 1) foo ON
-//            (foo.tie = t.tie AND foo.aosa = t.aosa)
-//            WHERE (  EXISTS (SELECT 1 FROM VVH_TIEOSOITE_NYKY chg WHERE chg.tie = t.tie and chg.aosa=t.aosa and
-//            (chg.ajr = t.ajr OR chg.ajr=0 OR t.ajr=0) AND  ((chg.aet = t.let and t.aet < t.let) or (chg.let = t.aet and t.aet > t.let) )
-//            AND chg.tietyyppi != t.tietyyppi)) order by tie, aosa, addrM, ajr
-//         """.as[(Long, Long, Long, Long, Int, Int, Int)].list.map {
-//        case (roadNumber, roadPartNumber, trackCode, addressMChangeRoadType, roadTypeBefore, roadTypeAfter, ely) =>
-//          RoadTypeChangePoints(roadNumber, roadPartNumber, addressMChangeRoadType, RoadType.apply(roadTypeBefore), RoadType.apply(roadTypeAfter), ely)
-//      }
-//    }
-//
-//    val roadsWithSingleRoadType = conversionDatabase.withDynSession {
-//      sql""" select distinct tie, aosa, tietyyppi, ely from VVH_TIEOSOITE_NYKY
-//             where (tie, aosa) in(
-//             SELECT gr.TIE, gr.AOSA FROM VVH_TIEOSOITE_NYKY gr  group by gr.tie, gr.aosa  having count(distinct gr.TIETYYPPI) = 1)
-//              union
-//            select distinct tie, aosa, tietyyppi, ely from vvh_tieosoite_taydentava
-//            where (tie, aosa) in(
-//            SELECT t.TIE, t.AOSA FROM vvh_tieosoite_taydentava t  group by t.tie, t.aosa  having count(distinct t.TIETYYPPI) = 1)
-//            order by tie, aosa
-//        """.as[(Long, Long, Long, Long)].list
-//    }
-//
-//    withDynTransaction{
-//      roadsWithSingleRoadType.foreach(road => {
-//        updateRoadWithSingleRoadType(road._1, road._2, road._3, road._4)
-//      })
-//
-//      roadsWithMultipleValues.groupBy(m => (m.roadNumber, m.roadPartNumber)).foreach{ case ((roadNumber, roadPartNumber), roadMaps) => {
-//        val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true, true)
-//        println(s"updating tie = $roadNumber, aosa = $roadPartNumber: (${addresses.size} rows)")
-//        addresses.foreach(address => {
-//          val ely = roadMaps.head.elyCode
-//          roadType(roadMaps, address) match {
-//            case Left(roadType) =>
-//              sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType.value}, ELY= $ely where ID = ${address.id}""".execute
-//            case Right((addrM, roadTypeBefore, roadTypeAfter)) =>
-//              val roadLinkFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(Set(address.linkId))
-//              if (roadLinkFromVVH.isEmpty)
-//                println(s"WARNING! LinkId ${address.linkId} not found in current, complementary or suravage links list, using address geometry")
-//              val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.headOption.map(_.geometry).getOrElse(address.geometry)), addrM, roadTypeBefore, roadTypeAfter, ely)
-//              println(s"Split ${address.id} ${address.startMValue}-${address.endMValue} (${address.startAddrMValue}-${address.endAddrMValue}) into")
-//              println(s"  ${splittedRoadAddresses.head.startMValue}-${splittedRoadAddresses.head.endMValue} (${splittedRoadAddresses.head.startAddrMValue}-${splittedRoadAddresses.head.endAddrMValue}) and")
-//              println(s"  ${splittedRoadAddresses.last.startMValue}-${splittedRoadAddresses.last.endMValue} (${splittedRoadAddresses.last.startAddrMValue}-${splittedRoadAddresses.last.endAddrMValue})")
-//              RoadAddressDAO.expireById(Set(address.id))
-//              sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = 99, ELY= $ely where ID = ${address.id}""".execute
-//              RoadAddressDAO.create(splittedRoadAddresses)
-//          }
-//        })
-//      }}
-//    }
-//
-//  }
 
   def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
