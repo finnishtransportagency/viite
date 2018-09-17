@@ -3,9 +3,9 @@ package fi.liikennevirasto.viite.dao
 import java.sql.PreparedStatement
 
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.RoadAddressDAO.formatter
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressSection}
 import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -65,6 +65,7 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      rotatingTRId: Option[Long], reversed: Boolean)
 
 object RoadAddressChangesDAO {
+  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 

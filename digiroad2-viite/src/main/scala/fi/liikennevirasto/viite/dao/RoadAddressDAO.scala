@@ -231,11 +231,13 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly,geom: Seq[Point])
 
 //TODO change the roadAddressDAO to be a class to simplify the tests
-object RoadAddressDAO {
-
-  private def logger = LoggerFactory.getLogger(getClass)
+class BaseDAO {
+  protected def logger = LoggerFactory.getLogger(getClass)
 
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+}
+
+class RoadAddressDAO extends BaseDAO {
 
   /**
     * Fetch all the current road address by roadway id
