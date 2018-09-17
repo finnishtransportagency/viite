@@ -487,23 +487,6 @@ object DataFixture {
 //        checkLinearLocation()
 //      case Some("fuse_road_address_with_history") =>
 //        fuseRoadAddressWithHistory()
-      case Some("revert_overlapped_road_addresses") =>
-        val options = args.tail
-        val save = options.contains("save")
-        val fixAddressValues = options.contains("fix-address-values")
-        val withPartialOverlap = options.contains("with-partial-overlap")
-        val fetchAllChangesFromVVH = options.contains("fetch-all-changes-from-vvh")
-        val addressThreshold = options.find(_.startsWith("address-threshold=")).map(_.replace("address-threshold=", "").toInt).getOrElse(6)
-        OracleDatabase.withDynTransaction {
-          val overlapDataFixture = new OverlapDataFixture(vvhClient)
-          overlapDataFixture.fixOverlapRoadAddresses(dryRun = !save, fixAddressValues, withPartialOverlap, fetchAllChangesFromVVH, addressThreshold)
-        }
-      case Some("revert_overlapped_road_addresses_by_date") =>
-        val options = args.tail
-        val save = options.contains("save")
-        val addressSectionThreshold = options.find(_.startsWith("address-section-threshold=")).map(_.replace("address-section-threshold=", "").toInt).getOrElse(10)
-          val overlapDataFixture = new OverlapDataFixture(vvhClient)
-          overlapDataFixture.fixOverlapRoadAddressesByDates(dryRun = !save, addressSectionThreshold)
       case Some("test") =>
         tearDown()
         setUpTest()
