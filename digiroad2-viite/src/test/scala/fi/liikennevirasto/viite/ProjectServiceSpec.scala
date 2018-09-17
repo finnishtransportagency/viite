@@ -23,7 +23,7 @@ import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao.{LinkStatus, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
+import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwayAddressMapper}
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito.{when, _}
@@ -49,7 +49,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
   val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+  val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

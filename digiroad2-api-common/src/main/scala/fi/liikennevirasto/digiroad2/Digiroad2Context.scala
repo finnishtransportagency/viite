@@ -9,9 +9,10 @@ import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
-import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.FiniteDuration
@@ -103,7 +104,7 @@ object Digiroad2Context {
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new RoadAddressService(roadLinkService, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {
@@ -140,6 +141,10 @@ object Digiroad2Context {
 
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
+  }
+
+  lazy val roadwayAddressMapper: RoadwayAddressMapper = {
+    new RoadwayAddressMapper(new RoadAddressDAO)
   }
 
   lazy val revision: String = {

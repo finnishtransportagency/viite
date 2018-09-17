@@ -18,7 +18,7 @@ import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.InvalidAddressDataException
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadwayAddressMapper}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import slick.jdbc.StaticQuery.interpolation
@@ -241,13 +241,14 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  val projectService = new ProjectService(roadAddressService,  mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
