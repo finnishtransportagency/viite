@@ -321,93 +321,41 @@ object LinearLocationDAO {
       Q.updateNA(query).first
   }
 
-  /*
-  def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
+  def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason, createdBy: String = "-"): Unit = {
 
     // Expire old row
-    val expired = fetchById(id).getOrElse(throw new IllegalStateException(s"""Failed to set linear location $id floating reason. Linear location not found."""))
+    val expired: LinearLocation = fetchById(id).getOrElse(
+      throw new IllegalStateException(s"""Failed to set linear location $id floating reason. Linear location not found."""))
     expireById(Set(id))
 
     // Create new row
-    if (geometry.nonEmpty) {
-      create()
-
-      val first = geometry.get.head
-      val last = geometry.get.last
-      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
-      val length = GeometryUtils.geometryLength(geometry.get)
-      sqlu"""
-           Update road_address Set floating = ${floatingReason.value},
-                  geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-             Where id = $id
-      """.execute
+    create(Seq(if (geometry.nonEmpty) {
+      expired.copy(id = NewLinearLocation, geometry = geometry.get, floating = floatingReason)
     } else {
-      sqlu"""
-           Update road_address Set floating = ${floatingReason.value}
-             Where id = $id
-      """.execute
-    }
+      expired.copy(id = NewLinearLocation, floating = floatingReason)
+    }), createdBy)
 
-  }*/
-
-  /**
-    * Marks the road address identified by the supplied Id as eiher floating or not and also updates the history of
-    * those who shares the same link_id and common_history_id
-    *
-    * @param roadAddressId The Id of a road addresss
-    */
-  def changeRoadAddressFloatingWithHistory(roadAddressId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
-    if (geometry.nonEmpty) {
-      val first = geometry.get.head
-      val last = geometry.get.last
-      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
-      val length = GeometryUtils.geometryLength(geometry.get)
-      sqlu"""
-           Update road_address Set floating = ${floatingReason.value},
-                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
-                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-             Where id = $roadAddressId
-      """.execute
-    }
-    sqlu"""
-       update road_address set floating = ${floatingReason.value} where id in(
-       select road_address.id from road_address where link_id =
-       (select link_id from road_address where road_address.id = $roadAddressId))
-        """.execute
   }
 
-  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment): Unit = {
+  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment, createdBy: String = "-"): Unit = {
+
+    // Expire old row
+    val expired: LinearLocation = fetchById(linearLocationAdjustment.linearLocationId).getOrElse(
+      throw new IllegalStateException(s"""Failed to update linear location ${linearLocationAdjustment.linearLocationId}. Linear location not found."""))
+    expireById(Set(linearLocationAdjustment.linearLocationId))
+
+    // Create new row
     val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
     (startM, endM) match {
       case (Some(s), Some(e)) =>
-        sqlu"""
-           UPDATE ROAD_ADDRESS
-           SET start_measure = $s,
-             end_measure = $e,
-             link_id = ${linearLocationAdjustment.linkId},
-             modified_date = sysdate
-           WHERE id = ${linearLocationAdjustment.addressId}
-      """.execute
+        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, startMValue = s, endMValue = e)), createdBy)
       case (_, Some(e)) =>
-        sqlu"""
-           UPDATE ROAD_ADDRESS
-           SET
-             end_measure = ${linearLocationAdjustment.endMeasure.get},
-             link_id = ${linearLocationAdjustment.linkId},
-             modified_date = sysdate
-           WHERE id = ${linearLocationAdjustment.addressId}
-      """.execute
+        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, endMValue = e)), createdBy)
       case (Some(s), _) =>
-        sqlu"""
-           UPDATE ROAD_ADDRESS
-           SET start_measure = ${linearLocationAdjustment.startMeasure.get},
-             link_id = ${linearLocationAdjustment.linkId},
-             modified_date = sysdate
-           WHERE id = ${linearLocationAdjustment.addressId}
-      """.execute
+        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, startMValue = s)), createdBy)
       case _ =>
     }
+
   }
 
   def updateLinkSource(id: Long, linkSource: LinkGeomSource): Boolean = {
@@ -454,137 +402,81 @@ object LinearLocationDAO {
   def getNextLinearLocationId: Long = {
     Queries.nextLinearLocationId.as[Long].first
   }
- /*
-  def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[RoadAddress] = {
-    time(logger, "Fetch floating road addresses by link id - mass query") {
+
+  def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
+    time(logger, "Fetch floating linear locations by link id - mass query") {
       MassQuery.withIds(linkIds) {
         idTableName =>
           val query =
             s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-        ra.side_code, ra.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-        from ROAD_ADDRESS ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join $idTableName i on i.id = ra.link_id
-        where ra.floating > 0 and t.id < t2.id and
-          valid_to is null
-      """
+              $selectFromLinearLocation
+              join $idTableName i on i.id = loc.link_id
+              where loc.floating > 0 and t.id < t2.id and loc.valid_to is null
+            """
           queryList(query)
       }
     }
   }
 
-
-  def queryFloatingByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
-    time(logger, "Fetch floating road addresses by link ids") {
+  def queryFloatingByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
+    time(logger, "Fetch floating linear locations by link ids") {
+      if (linkIds.isEmpty) {
+        return List()
+      }
       if (linkIds.size > 1000) {
         return queryFloatingByLinkIdMassQuery(linkIds)
       }
-      val linkIdString = linkIds.mkString(",")
-      val where = if (linkIds.isEmpty) {
-        return List()
-      } else {
-        s""" where ra.link_id in ($linkIdString)"""
-      }
+      val linkIdString = linkIds.mkString(", ")
+      val where = s""" where loc.link_id in ($linkIdString)"""
       val query =
         s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-        ra.side_code, ra.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-        from ROAD_ADDRESS ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        $where AND ra.floating > 0 and t.id < t2.id and
-          valid_to is null
-      """
+          $selectFromLinearLocation
+          $where AND loc.floating > 0 and t.id < t2.id and loc.valid_to is null
+        """
       queryList(query)
     }
   }
 
-  def queryById(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false, rejectInvalids: Boolean = true): List[RoadAddress] = {
-    time(logger, "Fetch road addresses by ids") {
+  def queryById(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by ids") {
+      if (ids.isEmpty) {
+        return List()
+      }
       if (ids.size > 1000) {
         return queryByIdMassQuery(ids)
       }
-      val idString = ids.mkString(",")
-      val where = if (ids.isEmpty) {
-        return List()
-      } else {
-        s""" where ra.id in ($idString)"""
-      }
-      val terminatedFilter = if (!includeTerminated) {
-        "AND ra.terminated = 0"
-      } else {
-        ""
-      }
-
-      val historyFilter = if (includeHistory)
-        "AND ra.end_date is null"
-      else
-        ""
+      val idString = ids.mkString(", ")
+      val where = s""" where loc.id in ($idString)"""
 
       val validToFilter = if (rejectInvalids)
-        " and ra.valid_to is null"
+        " and loc.valid_to is null"
       else
         ""
 
       val query =
         s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-        ra.side_code, ra.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-        (SELECT road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL and rn.VALID_TO IS NULL)
-        from road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        $where $historyFilter $terminatedFilter and t.id < t2.id $validToFilter
-      """
+          $selectFromLinearLocation
+          $where and t.id < t2.id $validToFilter
+        """
       queryList(query)
     }
   }
 
-  def queryByIdMassQuery(ids: Set[Long], includeHistory: Boolean = false, includeTerminated: Boolean = false): List[RoadAddress] = {
-    time(logger, "Fetch road addresses by ids - mass query") {
-      val terminatedFilter = if (!includeTerminated) {
-        "AND ra.terminated = 0"
-      } else {
-        ""
-      }
-
-      val historyFilter = if (includeHistory)
-        "AND ra.end_date is null"
-      else
-        ""
-
+  def queryByIdMassQuery(ids: Set[Long]): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by ids - mass query") {
       MassQuery.withIds(ids) {
         idTableName =>
           val query =
             s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-        ra.side_code, ra.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-        from ROAD_ADDRESS ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join $idTableName i on i.id = ra.id
-        where t.id < t2.id $historyFilter $terminatedFilter and
-          valid_to is null
-      """
+              $selectFromLinearLocation
+              join $idTableName i on i.id = loc.id
+              where t.id < t2.id and loc.valid_to is null
+            """
           queryList(query)
       }
     }
   }
 
-*/
   /**
     * Remove Road Addresses (mark them as removed). Don't use more than 1000 road addresses at once.
     *

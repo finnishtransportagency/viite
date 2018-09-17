@@ -28,108 +28,115 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
-  test("Fuse road address should accept single road address") {
-    val roadAddress = Seq(RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, None, None, Option("tester"),
-      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should be(roadAddress)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should accept single road address") {
+//    val roadAddress = Seq(RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, None, None, Option("tester"),
+//      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should be(roadAddress)
+//  }
 
-  test("Fuse road address with calibration point in between when one of the road addresses have the same start and end address") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Continuous, 0L, 10L, None, None, Option("tester"),
-      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 10L, None, None, Option("tester"),
-        12345L, 9.8, 11, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), FloatingReason.NoFloating, Seq(Point(0.0, 9.8), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address with calibration point in between when one of the road addresses have the same start and end address") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Continuous, 0L, 10L, None, None, Option("tester"),
+//      12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 10L, None, None, Option("tester"),
+//        12345L, 9.8, 11, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), FloatingReason.NoFloating, Seq(Point(0.0, 9.8), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//
+//    val resultRoadAddress = Seq(RoadAddress(-1000, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, None, None, Option("tester"),
+//      12345L, 0.0, 11, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 11, 10L))), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+//
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should be(resultRoadAddress)
+//  }
 
-    val resultRoadAddress = Seq(RoadAddress(-1000, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, None, None, Option("tester"),
-      12345L, 0.0, 11, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 11, 10L))), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 11)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should merge consecutive road addresses even if floating") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (1)
+//  }
 
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should be(resultRoadAddress)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should not merge consecutive road addresses with differing start dates") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1902-02-02")), None, Option("tester"), 12345L, 9.8, 20.2, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 20.2, 30.2, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 20.2), Point(0.0, 30.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    val fused = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
+//    fused should have size (3)
+//    val ids = roadAddress.map(_.id).toSet
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress).map(_.id).toSet should be(ids)
+//  }
 
-  test("Fuse road address should merge consecutive road addresses even if floating") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (1)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should not merge consecutive road addresses with differing link ids") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
+//    val ids = roadAddress.map(_.id).toSet
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress).map(_.id).toSet should be(ids)
+//  }
 
-  test("Fuse road address should not merge consecutive road addresses with differing start dates") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1902-02-02")), None, Option("tester"), 12345L, 9.8, 20.2, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 20.2, 30.2, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 20.2), Point(0.0, 30.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    val fused = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
-    fused should have size (3)
-    val ids = roadAddress.map(_.id).toSet
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress).map(_.id).toSet should be(ids)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should not merge consecutive road addresses if side code differs") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    intercept[InvalidAddressDataException] {
+//      RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
+//    }
+//  }
 
-  test("Fuse road address should not merge consecutive road addresses with differing link ids") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
-    val ids = roadAddress.map(_.id).toSet
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress).map(_.id).toSet should be(ids)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should merge multiple road addresses with random ordering") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (1)
+//  }
 
-  test("Fuse road address should not merge consecutive road addresses if side code differs") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    intercept[InvalidAddressDataException] {
-      RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
-    }
-  }
-
-
-  test("Fuse road address should merge multiple road addresses with random ordering") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (1)
-  }
-
-  test("Fuse road address should not merge consecutive road addresses with calibration point in between") {
-    // TODO: Or do we throw an exception then?
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), NoFloating, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-
-      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0,
-        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-
-      RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8,
-        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    //Changed fuseRoadAddressWithTransaction size from 3 to 2 the reasoning behind it is that although we cannot fuse  1 and 2, there is nothing stopping us from fusing 2,3 and 4
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should not merge consecutive road addresses with calibration point in between") {
+//    // TODO: Or do we throw an exception then?
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
+//        SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(12345L, 9.8, 10L))), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//
+//      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
+//        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(12345L, 9.8, 10L)), None), NoFloating, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//
+//      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0,
+//        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 20.2), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//
+//      RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8,
+//        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 30.0), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    //Changed fuseRoadAddressWithTransaction size from 3 to 2 the reasoning behind it is that although we cannot fuse  1 and 2, there is nothing stopping us from fusing 2,3 and 4
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
+//  }
 
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -273,73 +280,75 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     }
   }
 
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {
+//    val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))
+//    val roadAddress = Seq(
+//      RoadAddress(3767413, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")), None, Option("tester"), 138834, 0.0, 21.0,
+//        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(138834, 0.0, 679L)), None), NoFloating, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//
+//      RoadAddress(3767414, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")), None, Option("tester"), 138834, 21.0, 230.776,
+//        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    val fusedList = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
+//    fusedList should have size (1)
+//    val fused = fusedList.head
+//    fused.startMValue should be(0.0)
+//    fused.endMValue should be(230.776)
+//    fused.geometry.last should be(Point(379556.289, 6673054.073))
+//    fused.geometry should have size (2)
+//    fused.startAddrMValue should be(679L)
+//    fused.endAddrMValue should be(923L)
+//    fused.track should be(Track.RightSide)
+//    fused.calibrationPoints._1.isEmpty should be(false)
+//    fused.calibrationPoints._2.isEmpty should be(true)
+//
+//  }
 
-  test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {
-    val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))
-    val roadAddress = Seq(
-      RoadAddress(3767413, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")), None, Option("tester"), 138834, 0.0, 21.0,
-        SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(138834, 0.0, 679L)), None), NoFloating, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should use single calibration point for both") {
+//    val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))
+//    val roadAddress = Seq(
+//      RoadAddress(3767413, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")),
+//        None, Option("tester"), 138834, 0.0, 21.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(138834, 0.0, 679L)),
+//          Some(CalibrationPoint(138834, 21.0, 920L))), NoFloating, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//
+//      RoadAddress(3767414, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")),
+//        None, Option("tester"), 138834, 21.0, 230.776, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+//        GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    )
+//    val fusedList = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
+//    fusedList should have size (1)
+//    val fused = fusedList.head
+//    fused.startMValue should be(0.0)
+//    fused.endMValue should be(230.776)
+//    fused.geometry.last should be(Point(379556.289, 6673054.073))
+//    fused.geometry should have size (2)
+//    fused.startAddrMValue should be(679L)
+//    fused.endAddrMValue should be(920L)
+//    fused.track should be(Track.RightSide)
+//    fused.calibrationPoints._1.isEmpty should be(false)
+//    fused.calibrationPoints._2.isEmpty should be(false)
+//    fused.calibrationPoints._2.get.addressMValue should be(920L)
+//    fused.calibrationPoints._2.get.segmentMValue should be(230.776)
+//  }
 
-      RoadAddress(3767414, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")), None, Option("tester"), 138834, 21.0, 230.776,
-        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    val fusedList = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
-    fusedList should have size (1)
-    val fused = fusedList.head
-    fused.startMValue should be(0.0)
-    fused.endMValue should be(230.776)
-    fused.geometry.last should be(Point(379556.289, 6673054.073))
-    fused.geometry should have size (2)
-    fused.startAddrMValue should be(679L)
-    fused.endAddrMValue should be(923L)
-    fused.track should be(Track.RightSide)
-    fused.calibrationPoints._1.isEmpty should be(false)
-    fused.calibrationPoints._2.isEmpty should be(true)
-
-  }
-
-  test("Fuse road address should use single calibration point for both") {
-    val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))
-    val roadAddress = Seq(
-      RoadAddress(3767413, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")),
-        None, Option("tester"), 138834, 0.0, 21.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(138834, 0.0, 679L)),
-          Some(CalibrationPoint(138834, 21.0, 920L))), NoFloating, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-
-      RoadAddress(3767414, 101, 1, RoadType.Unknown, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")),
-        None, Option("tester"), 138834, 21.0, 230.776, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-    )
-    val fusedList = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress)
-    fusedList should have size (1)
-    val fused = fusedList.head
-    fused.startMValue should be(0.0)
-    fused.endMValue should be(230.776)
-    fused.geometry.last should be(Point(379556.289, 6673054.073))
-    fused.geometry should have size (2)
-    fused.startAddrMValue should be(679L)
-    fused.endAddrMValue should be(920L)
-    fused.track should be(Track.RightSide)
-    fused.calibrationPoints._1.isEmpty should be(false)
-    fused.calibrationPoints._2.isEmpty should be(false)
-    fused.calibrationPoints._2.get.addressMValue should be(920L)
-    fused.calibrationPoints._2.get.segmentMValue should be(230.776)
-  }
-
-  test("Fuse road address should fuse against digitization road addresses properly") {
-    OracleDatabase.withDynSession {
-      val roadAddress = Seq(
-        RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
-          Seq(Point(0.0, 9.8), Point(0.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-        RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
-          Seq(Point(0.0, 39.8), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-        RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
-          Seq(Point(0.0, 30.0), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-        RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
-          Seq(Point(0.0, 20.2), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-      )
-      RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (1)
-    }
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should fuse against digitization road addresses properly") {
+//    OracleDatabase.withDynSession {
+//      val roadAddress = Seq(
+//        RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
+//          Seq(Point(0.0, 9.8), Point(0.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//        RoadAddress(4, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 30L, 40L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 30.0, 39.8, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
+//          Seq(Point(0.0, 39.8), Point(0.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//        RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 10.4, 30.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
+//          Seq(Point(0.0, 30.0), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//        RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
+//          Seq(Point(0.0, 20.2), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//      )
+//      RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (1)
+//    }
+//  }
 
   test("Building ProjectAddressLink partitioner") {
     val unknownProjectLink = ProjectLink(0, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0.0, 0.0,
@@ -379,63 +388,67 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     pal2.municipalityCode should be(BigInt(0))
   }
 
-  test("Fuse road address should not merge different termination status") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, Termination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 20.2), Point(0.0, 40.2)), LinkGeomSource.NormalLinkInterface, 8, Subsequent, 0)
-    )
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (3)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should not merge different termination status") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, Termination, 0),
+//      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(3, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 20.2), Point(0.0, 40.2)), LinkGeomSource.NormalLinkInterface, 8, Subsequent, 0)
+//    )
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (3)
+//  }
 
-  test("Fuse road address should not merge different ely code") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
-    )
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should not merge different ely code") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(2, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
+//    )
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
+//  }
 
-  test("Fuse road address should not merge different road type") {
-    val roadAddress = Seq(
-      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2, 1, 1, RoadType.FerryRoad, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
-        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
-    )
-    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("Fuse road address should not merge different road type") {
+//    val roadAddress = Seq(
+//      RoadAddress(1, 1, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+//      RoadAddress(2, 1, 1, RoadType.FerryRoad, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.4,
+//        SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface, 9, NoTermination, 0)
+//    )
+//    RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddress) should have size (2)
+//  }
 
-  test("RoadAddressBuilder should correctly build a road address from a suravage road link source") {
-    val roadLinkGeom = List(Point(642357.37, 6946486.267, 0.0), Point(642416.887, 6946751.966, 0.0),
-      Point(642439.702, 6946868.15, 0.0), Point(642441.166, 6946878.412, 0.0), Point(642442.096, 6946888.737, 0.0),
-      Point(642442.49, 6946899.096, 0.0), Point(642442.347, 6946909.461, 0.0), Point(642439.463, 6946981.961, 0.0),
-      Point(642438.564, 6946997.224, 0.0), Point(642437.082, 6947012.441, 0.0), Point(642435.019, 6947027.591, 0.0),
-      Point(642432.378, 6947042.65, 0.0), Point(642429.165, 6947057.598, 0.0), Point(642425.382, 6947072.411, 0.0),
-      Point(642423.045, 6947082.137, 0.0), Point(642421.362, 6947091.997, 0.0), Point(642420.432, 6947101.047, 0.0))
-
-    val roadLink = VVHRoadlink(7519921, 167, roadLinkGeom, State, TrafficDirection.UnknownDirection,
-      FeatureClass.CycleOrPedestrianPath, None,
-      Map.empty[String, Any], ConstructionType.Planned, SuravageLinkInterface, 625.547)
-
-    val roadAddress = RoadAddress(411482, 70006, 561, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 626,
-      Some(DateTime.parse("2018-01-16T00:00:00.000+02:00")), None, Some("silari"), 7519921, 0.0, 625.547, SideCode.TowardsDigitizing,
-      1515766393000L, (Some(CalibrationPoint(7519921, 0.0, 0)), Some(CalibrationPoint(7519921, 625.547, 626))), NoFloating,
-      List(Point(642357.37, 6946486.267, 0.0), Point(642420.432, 6947101.047, 0.0)), SuravageLinkInterface, 8, NoTermination, 0)
-
-    val supposedRoadAddressGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
-    val buildRoadAddressLink = RoadAddressLinkBuilder.build(roadLink, roadAddress)
-    buildRoadAddressLink.geometry should be(supposedRoadAddressGeom)
-    buildRoadAddressLink.linkId should be(roadLink.linkId)
-    buildRoadAddressLink.municipalityCode should be(roadLink.municipalityCode)
-    buildRoadAddressLink.trackCode should be(roadAddress.track.value)
-    buildRoadAddressLink.roadNumber should be(roadAddress.roadNumber)
-    buildRoadAddressLink.roadPartNumber should be(roadAddress.roadPartNumber)
-  }
+  //TODO Probably this will be not needed anymore
+//  test("RoadAddressBuilder should correctly build a road address from a suravage road link source") {
+//    val roadLinkGeom = List(Point(642357.37, 6946486.267, 0.0), Point(642416.887, 6946751.966, 0.0),
+//      Point(642439.702, 6946868.15, 0.0), Point(642441.166, 6946878.412, 0.0), Point(642442.096, 6946888.737, 0.0),
+//      Point(642442.49, 6946899.096, 0.0), Point(642442.347, 6946909.461, 0.0), Point(642439.463, 6946981.961, 0.0),
+//      Point(642438.564, 6946997.224, 0.0), Point(642437.082, 6947012.441, 0.0), Point(642435.019, 6947027.591, 0.0),
+//      Point(642432.378, 6947042.65, 0.0), Point(642429.165, 6947057.598, 0.0), Point(642425.382, 6947072.411, 0.0),
+//      Point(642423.045, 6947082.137, 0.0), Point(642421.362, 6947091.997, 0.0), Point(642420.432, 6947101.047, 0.0))
+//
+//    val roadLink = VVHRoadlink(7519921, 167, roadLinkGeom, State, TrafficDirection.UnknownDirection,
+//      FeatureClass.CycleOrPedestrianPath, None,
+//      Map.empty[String, Any], ConstructionType.Planned, SuravageLinkInterface, 625.547)
+//
+//    val roadAddress = RoadAddress(411482, 70006, 561, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 626,
+//      Some(DateTime.parse("2018-01-16T00:00:00.000+02:00")), None, Some("silari"), 7519921, 0.0, 625.547, SideCode.TowardsDigitizing,
+//      1515766393000L, (Some(CalibrationPoint(7519921, 0.0, 0)), Some(CalibrationPoint(7519921, 625.547, 626))), NoFloating,
+//      List(Point(642357.37, 6946486.267, 0.0), Point(642420.432, 6947101.047, 0.0)), SuravageLinkInterface, 8, NoTermination, 0)
+//
+//    val supposedRoadAddressGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+//    val buildRoadAddressLink = RoadAddressLinkBuilder.build(roadLink, roadAddress)
+//    buildRoadAddressLink.geometry should be(supposedRoadAddressGeom)
+//    buildRoadAddressLink.linkId should be(roadLink.linkId)
+//    buildRoadAddressLink.municipalityCode should be(roadLink.municipalityCode)
+//    buildRoadAddressLink.trackCode should be(roadAddress.track.value)
+//    buildRoadAddressLink.roadNumber should be(roadAddress.roadNumber)
+//    buildRoadAddressLink.roadPartNumber should be(roadAddress.roadPartNumber)
+//  }
 
 }
