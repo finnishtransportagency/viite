@@ -1385,7 +1385,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink2, roadLink3), Seq.empty[ChangeInfo]))
 //
 //    val returnedAdjacents = runWithRollback {
-//      RoadAddressDAO.create(Seq(ra,ra2))
+//      RoadAddressDAO.create(Seq(ra))
 //      RoadAddressDAO.createMissingRoadAddress(
 //        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
 //      )
@@ -1398,8 +1398,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    returnedAdjacents.size should be (2)
 //    returnedAdjacents.map(_.linkId) should contain allOf (baseLinkId+1L, baseLinkId+2L)
 //  }
-
-  //TODO this will be implemented at VIITE-1538
+//
 //  test("getAdjacents should return correct adjacents in chain geometry (each one adjacent to next one) based on the existing of missing") {
 //    val baseLinkId = 12345L
 //    val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus)
@@ -1427,14 +1426,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink1, roadLink2), Seq.empty[ChangeInfo]))
 //
 //    runWithRollback {
-//      RoadAddressDAO.create(Seq(ra,ra2))
+//      RoadAddressDAO.create(Seq(ra))
 //      RoadAddressDAO.createMissingRoadAddress(
 //        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
 //      )
 //      RoadAddressDAO.createMissingRoadAddress(
 //        MissingRoadAddress(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.GeometryChanged, Seq(Point(10.0, 10.0, 0.0), Point(15.0, 15.0, 0.0)))
 //      )
-//    val returnedAdjacents1 = roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
+//      val returnedAdjacents1 = roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
 //      returnedAdjacents1.size should be (1)
 //      returnedAdjacents1.map(_.linkId).head should be (baseLinkId+1L)
 //      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink2))
@@ -1493,50 +1492,142 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1538
-//  test("getFloatingAdjacents should return adjacent floatings based on the adjacency of it's history links") {
+//  test("getAdjacents should return correct adjacents in chain geometry (each one adjacent to next one) based on the existing of missing") {
 //    val baseLinkId = 12345L
-//    val roadNumber = 9999L
-//    val roadPartNumber = 1L
+//    val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus)
 //
-//    val geom1 = Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
-//    val geom2 = Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0))
-//    val geom3 = Seq(Point(25.0, 25.0, 0.0), Point(30.0, 30.0, 0.0))
+//    val ra = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, Some(DateTime.now.minusDays(5)), None, Some("tr"),
+//      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 //
-//    val ra1 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-//      baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-//    val ra2 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 5, 10, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-//      baseLinkId+1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-//    val ra3 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 25, 30, Some(DateTime.now.minusDays(5)), None, Some("tr"),
-//      baseLinkId+2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//    val ra2 = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3533, 3599, Some(DateTime.now.minusDays(2)), None, Some("tr"),
+//      baseLinkId+2L, 0.0, 60.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 25.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 //
-//    val roadLink1 = RoadLink(baseLinkId, geom1, 540.3960283713503,
-//      State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//    val roadLink1 = RoadLink(baseLinkId, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
+//      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
 //      InUse, NormalLinkInterface)
 //
-//    val roadLink2 = RoadLink(baseLinkId+1, geom2, 540.3960283713503,
-//      State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//    val roadLink2 = RoadLink(baseLinkId + 1L, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0))
+//      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
 //      InUse, NormalLinkInterface)
 //
-//    val roadLink3 = RoadLink(baseLinkId+2, geom3, 540.3960283713503,
-//      State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//    val roadLink3 = RoadLink(baseLinkId + 2L, Seq(Point(10, 10, 0.0), Point(15.0, 15.0, 0.0))
+//      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
 //      InUse, NormalLinkInterface)
 //
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(
-//      (Seq(roadLink1, roadLink2, roadLink3).map(toHistoryLink))
-//    )
-//    runWithRollback{
-//      RoadAddressDAO.create(Seq(ra1, ra2, ra3))
-//      val created = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true)
-//      val mySelected = created.find(_.linkId == baseLinkId+1).get
-//      val result = roadAddressService.getFloatingAdjacent(Set(mySelected.linkId), Set(mySelected.id), mySelected.linkId, mySelected.id, roadNumber, roadPartNumber, Track.Combined.value)
-//      result.size should be (1)
-//      result.head.linkId should be(baseLinkId)
-//      result.head.geometry should be (geom1)
-//      GeometryUtils.areAdjacent(mySelected.geometry, result.head.geometry) should be (true)
 //
+//    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
+//    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink1, roadLink2), Seq.empty[ChangeInfo]))
+//
+//    runWithRollback {
+//      RoadAddressDAO.create(Seq(ra,ra2))
+//      RoadAddressDAO.createMissingRoadAddress(
+//        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
+//      )
+//      RoadAddressDAO.createMissingRoadAddress(
+//        MissingRoadAddress(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.GeometryChanged, Seq(Point(10.0, 10.0, 0.0), Point(15.0, 15.0, 0.0)))
+//      )
+//    val returnedAdjacents1 = roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
+//      returnedAdjacents1.size should be (1)
+//      returnedAdjacents1.map(_.linkId).head should be (baseLinkId+1L)
+//      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink2))
+//      when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink2, roadLink3), Seq.empty[ChangeInfo]))
+//      val returnedAdjacents2 = roadAddressService.getAdjacent(Set(baseLinkId+1), baseLinkId+1, false)
+//      returnedAdjacents2.size should be (1)
+//      returnedAdjacents2.map(_.linkId).head should be (baseLinkId+2L)
 //    }
+//
 //  }
+//
+//  test("getAdjacentAddressesWithoutTX should not return addresses that are already selected by ") {
+//  val selectedId = 741L
+//  val selectedLinkId = 852L
+//  val selectedGeom = List(Point(10.0, 10.0, 0.0), Point(10.0, 10.0, 0.0))
+//  val (id1, id2) = (456L, 789L)
+//  val (linkId1, linkId2) = (987L, 654L)
+//  val (geom1, geom2) = (List(Point(0.0, 0.0, 0.0), Point(10.0, 10.0, 0.0)), List(Point(10.0, 10.0, 0.0), Point(20.0, 20.0, 0.0)))
+//  val (roadNumber, roadPartNumber) = (99, 1)
+//
+//  val selectedRoadAddress = RoadAddress(selectedId, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 10, 20, Some(DateTime.now()), None, Some("tr"),
+//  selectedLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, selectedGeom, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//
+//  val roadAddress1 = RoadAddress(id1, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.now()), None, Some("tr"),
+//  linkId1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//
+//  val roadAddress2 = RoadAddress(id2, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 20, 30, Some(DateTime.now()), None, Some("tr"),
+//  linkId2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//
+//  runWithRollback{
+//  RoadAddressDAO.create(Seq(selectedRoadAddress, roadAddress1, roadAddress2))
+//  val returnedAdjacents = roadAddressService.getAdjacentAddressesInTX(Set.empty[Long], Set(selectedId, id1), selectedLinkId, selectedId, roadNumber, roadPartNumber, Track.Combined)
+//  returnedAdjacents.size should be (1)
+//  returnedAdjacents.map(ra => (ra.id, ra.linkId, ra.roadNumber, ra.roadPartNumber)).head should be (Seq(roadAddress2).map(ra => (ra.id, ra.linkId, ra.roadNumber, ra.roadPartNumber)).head)
+//}
+//}
+//
+//  test("check correct fetching of road address via ID") {
+//  val baseLinkId = 12345L
+//  val ra = RoadAddress(-1000, 75, 2, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 3532, 3598, Some(DateTime.now.minusDays(5)), None, Some("tr"),
+//  baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//
+//  val roadLink1 = RoadLink(baseLinkId, Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
+//  , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//  InUse, NormalLinkInterface)
+//
+//  when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((Seq(roadLink1), Seq(toHistoryLink(ra))))
+//
+//  runWithRollback {
+//  val createdId =  RoadAddressDAO.create(Seq(ra)).head
+//  val returnedAddresses = roadAddressService.getRoadAddressLinkById(createdId)
+//  returnedAddresses.size should be (1)
+//  returnedAddresses.head.id should be (createdId)
+//  returnedAddresses.head.linkId should be (baseLinkId)
+//}
+//}
+
+//  TODO this will be implemented at VIITE-1538
+//  test("getFloatingAdjacents should return adjacent floatings based on the adjacency of it's history links") {
+//  val baseLinkId = 12345L
+//  val roadNumber = 9999L
+//  val roadPartNumber = 1L
+//
+//  val geom1 = Seq(Point(0.0, 0.0, 0.0), Point(5.0, 5.0, 0.0))
+//  val geom2 = Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0))
+//  val geom3 = Seq(Point(25.0, 25.0, 0.0), Point(30.0, 30.0, 0.0))
+//
+//  val ra1 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now.minusDays(5)), None, Some("tr"),
+//  baseLinkId, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//  val ra2 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 5, 10, Some(DateTime.now.minusDays(5)), None, Some("tr"),
+//  baseLinkId+1, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//  val ra3 = RoadAddress(-1000, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 25, 30, Some(DateTime.now.minusDays(5)), None, Some("tr"),
+//  baseLinkId+2, 0.0, 65.259, SideCode.TowardsDigitizing, 0, (None, None), FloatingReason.ApplyChanges, geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+//
+//  val roadLink1 = RoadLink(baseLinkId, geom1, 540.3960283713503,
+//  State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//  InUse, NormalLinkInterface)
+//
+//  val roadLink2 = RoadLink(baseLinkId+1, geom2, 540.3960283713503,
+//  State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//  InUse, NormalLinkInterface)
+//
+//  val roadLink3 = RoadLink(baseLinkId+2, geom3, 540.3960283713503,
+//  State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//  InUse, NormalLinkInterface)
+//
+//  when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(
+//  (Seq(roadLink1, roadLink2, roadLink3).map(toHistoryLink))
+//  )
+//  runWithRollback{
+//  RoadAddressDAO.create(Seq(ra1, ra2, ra3))
+//  val created = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true)
+//  val mySelected = created.find(_.linkId == baseLinkId+1).get
+//  val result = roadAddressService.getFloatingAdjacent(Set(mySelected.linkId), Set(mySelected.id), mySelected.linkId, mySelected.id, roadNumber, roadPartNumber, Track.Combined.value)
+//  result.size should be (1)
+//  result.head.linkId should be(baseLinkId)
+//  result.head.geometry should be (geom1)
+//  GeometryUtils.areAdjacent(mySelected.geometry, result.head.geometry) should be (true)
+//
+//}
+//}
 
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,

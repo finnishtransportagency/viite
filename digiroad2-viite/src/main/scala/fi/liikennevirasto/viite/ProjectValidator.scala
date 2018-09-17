@@ -438,7 +438,7 @@ object ProjectValidator {
   def checkProjectElyCodes(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     /**
-      * Check the project links edges for adjacent road addresses that must have a different ely then a adjacent one
+      * Check the project links edges for adjacent road addresses that must have a different ely than a adjacent one
       *
       * @param project             - the current project
       * @param groupedProjectLinks - project links, grouped by road number and road part number
@@ -464,13 +464,7 @@ object ProjectValidator {
       groupedProjectLinks.flatMap(group => {
         val projectLinks = group._2.filter(_.discontinuity == Discontinuity.ChangingELYCode)
         val problemRoads = if (projectLinks.nonEmpty) {
-          val (startRoad, endRoad) = if (projectLinks.size == 1) {
-            (projectLinks.head, projectLinks.head)
-          } else {
-            (projectLinks.head, projectLinks.last)
-          }
-
-          val roadsValidation = evaluateBorderCheck(startRoad, endRoad, secondCheck = false)
+          val roadsValidation = evaluateBorderCheck(projectLinks.head, projectLinks.last, secondCheck = false)
           roadsValidation.filterNot(_.isEmpty).getOrElse(Seq())
         } else {
           Seq.empty[BaseRoadAddress]
@@ -497,8 +491,8 @@ object ProjectValidator {
         * @return An optional value with eventual Validation error details
         */
       def error(validationError: ValidationError)(pl: Seq[BaseRoadAddress]): Option[ValidationErrorDetails] = {
-        val grouppedByDiscontinuity = pl.groupBy(_.discontinuity)
-        val (gLinkIds, gPoints, gDiscontinuity) = grouppedByDiscontinuity.flatMap(g => {
+        val groupedByDiscontinuity = pl.groupBy(_.discontinuity)
+        val (gLinkIds, gPoints, gDiscontinuity) = groupedByDiscontinuity.flatMap(g => {
           val links = g._2
           val zoomPoint = GeometryUtils.midPointGeometry(links.minBy(_.endAddrMValue).geometry)
           links.map(l => (l.id, zoomPoint, l.discontinuity))
@@ -518,11 +512,7 @@ object ProjectValidator {
       val validationProblems = groupedProjectLinks.flatMap(group => {
         val projectLinks = group._2
         val problemRoads = if (projectLinks.nonEmpty) {
-          val (startRoad, endRoad) = if (projectLinks.size == 1) {
-            (projectLinks.head, projectLinks.head)
-          } else {
-            (projectLinks.head, projectLinks.last)
-          }
+          val (startRoad, endRoad) = (projectLinks.head, projectLinks.last)
           val validationResult = if (startRoad.discontinuity.value != Discontinuity.ChangingELYCode.value) evaluateBorderCheck(startRoad, endRoad, secondCheck = true) else Option.empty[Seq[ProjectLink]]
           validationResult.filterNot(_.isEmpty).getOrElse(Seq())
 
@@ -548,13 +538,13 @@ object ProjectValidator {
       */
     def evaluateBorderCheck(startRoad: ProjectLink, endRoad: ProjectLink, secondCheck: Boolean): Option[Seq[ProjectLink]] = {
       throw new NotImplementedError("Will be implemented at VIITE-1540")
-//      /**
-//        * Helper method, will find ALL the road addresses in a bounding box whose center is the edge road
-//        *
-//        * @param headRoad A project link, at the start of it (lowest endAddressMValue)
-//        * @param tailRoad A project link, at the end of it(highest endAddressMValue)
-//        * @return Road addresses contained in a small bounding box
-//        */
+      /**
+        * Helper method, will find ALL the road addresses in a bounding box whose center is the edge road
+        *
+        * @param headRoad A project link, at the start of it (lowest endAddressMValue)
+        * @param tailRoad A project link, at the end of it(highest endAddressMValue)
+        * @return Road addresses contained in a small bounding box
+        */
 //      def findRoads(headRoad: ProjectLink, tailRoad: ProjectLink) = {
 //        val sp = startPoint(headRoad)
 //        val ep = endPoint(tailRoad)
@@ -572,15 +562,13 @@ object ProjectValidator {
 //        }
 //        connectingAtStart ++ connectingAtEnd
 //      }
-//
+
 //      val roadAddresses = findRoads(startRoad, endRoad)
 //      if (roadAddresses.nonEmpty) {
 //        val filtered = roadAddresses.filterNot(ra => ra.roadNumber == startRoad.roadNumber && ra.roadPartNumber == startRoad.roadPartNumber &&
 //          !GeometryUtils.areAdjacent(ra.geometry, startRoad.geometry) && !GeometryUtils.areAdjacent(ra.geometry, endRoad.geometry))
-//        val diffEly = filtered.find(_.ely != startRoad.ely)
-//        if (!secondCheck && diffEly.isEmpty) {
-//          Option(Seq(endRoad))
-//        } else if (secondCheck && diffEly.isDefined) {
+//        val diffEly = filtered.find(ra => ra.ely != startRoad.ely && (ra.roadNumber == startRoad.roadNumber || !secondCheck))
+//        if ((!secondCheck && diffEly.isEmpty) || (secondCheck && diffEly.nonEmpty)) {
 //          Option(Seq(endRoad))
 //        } else Option.empty[Seq[ProjectLink]]
 //      } else Option.empty[Seq[ProjectLink]]

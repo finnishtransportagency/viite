@@ -120,6 +120,16 @@
         IndicatorLayer:             {value: 99}
     };
 
+    root.RoadType = {
+        PublicRoad:                     {value:1, description:"Yleinen tie"},
+        FerryRoad:                      {value:2, description:"Lauttaväylä yleisellä tiellä"},
+        MunicipalityStreetRoad:         {value:3, description:"Kunnan katuosuus"},
+        PublicUnderConstructionRoad:    {value:4, description:"Yleisen tien työmaa"},
+        PrivateRoadType:                {value:5, description:"Yksityistie"},
+        UnknownOwnerRoad:               {value:9, description:"Omistaja selvittämättä"},
+        Unknown:                        {value:99, description:"Ei määritelty"}
+    };
+
     /*
     The meta key codes are browser dependant, in proper:
         Firefox: 224
@@ -135,6 +145,8 @@
     root.UnknownRoadId = 0;
 
     root.NewRoadId = -1000;
+
+    root.BlackUnderlineRoadTypes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
 
 })(window.LinkValues = window.LinkValues || {});
 
