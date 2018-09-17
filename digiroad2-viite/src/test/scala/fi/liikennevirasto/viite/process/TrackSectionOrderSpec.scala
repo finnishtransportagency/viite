@@ -20,7 +20,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     List.empty[ReservedRoadPart], None)
 
   private def dummyProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
-    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, track, Continuous,
+    //TODO the road address now have the linear location id and as been setted to 1L
+    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, track, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
       geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
