@@ -17,7 +17,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Create new linear location") {
+  test("Create new linear location and read it from the database") {
     runWithRollback {
       val id = LinearLocationDAO.getNextLinearLocationId
       val orderNumber = 1
