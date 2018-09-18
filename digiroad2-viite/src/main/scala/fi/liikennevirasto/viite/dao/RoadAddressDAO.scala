@@ -248,6 +248,12 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  def fetchByRoadNumbersInterval(roadNumbers: (Int, Int)) : Option[RoadwayAddress] = {
+    time(logger, "Fetch all current road addresses by given road numbers") {
+      fetch(withRoadNumbersBetweenFilter(roadNumbers)).headOption
+    }
+  }
+
   private def fetch(queryFilter: String => String): Seq[RoadwayAddress] = {
     val query = """
         select
@@ -260,8 +266,31 @@ class RoadAddressDAO extends BaseDAO {
     Q.queryNA[RoadwayAddress](query).iterator.toSeq
   }
 
+    private def fetchByAddress(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long])(query: String) = {
+      val startFilter = startAddrM.map(s => s" AND start_addr_m = $s").getOrElse("")
+      val endFilter = endAddrM.map(e => s" AND end_addr_m = $e").getOrElse("")
+        s"""$query where road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+           track_code = ${track.value} and valid_to is null $startFilter $endFilter
+        """
+    }
+
+  def fetchByAddressStart(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Long): Option[RoadwayAddress] = {
+    time(logger, "Fetch road address by address start") {
+      fetch(fetchByAddress(roadNumber, roadPartNumber, track, Some(startAddrM), None)).headOption
+    }
+  }
+  def fetchByAddressEnd(roadNumber: Long, roadPartNumber: Long, track: Track, endAddrM: Long): Option[RoadwayAddress] = {
+    time(logger, "Fetch road address by address end") {
+      fetch(fetchByAddress(roadNumber, roadPartNumber, track, None, Some(endAddrM))).headOption
+    }
+  }
+
   private def withRoadWayAndNotEnded(roadwayId: Long)(query: String) = {
     s"""$query where end_date is null and roadway_id = $roadwayId"""
+  }
+
+  protected def withRoadNumbersBetweenFilter(roadNumbers: (Int, Int))(query: String): String = {
+    s"""$query where road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}"""
   }
 
   implicit val getRoadAddress: GetResult[RoadwayAddress] = new GetResult[RoadwayAddress]{
@@ -291,17 +320,7 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
-//  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], filter: String = ""): String = {
-//    if (roadNumbers.isEmpty)
-//      return s" and  ($filter)"
-//
-//    val limit = roadNumbers.head
-//    val filterAdd = s"""(ra.road_number >= ${limit._1} and ra.road_number <= ${limit._2})"""
-//    if (filter == "")
-//      withRoadNumbersFilter(roadNumbers.tail,  filterAdd)
-//    else
-//      withRoadNumbersFilter(roadNumbers.tail,  s"""$filter OR $filterAdd""")
-//  }
+
 //
 //  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
 //    time(logger, "Fetch road addresses by bounding box") {
@@ -632,36 +651,7 @@ class RoadAddressDAO extends BaseDAO {
 //    }
 //  }
 //
-//  private def fetchByAddress(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long]) = {
-//    val startFilter = startAddrM.map(s => s" AND ra.start_addr_m = $s").getOrElse("")
-//    val endFilter = endAddrM.map(e => s" AND ra.end_addr_m = $e").getOrElse("")
-//    val query =
-//      s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-//        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-//        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
-//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-//        where t.id < t2.id AND ra.road_number = $roadNumber AND ra.road_part_number = $roadPartNumber AND
-//         ra.track_code = ${track.value} and
-//          valid_to is null $startFilter $endFilter
-//      """
-//    queryList(query).headOption
-//  }
-//
-//  def fetchByAddressStart(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Long): Option[RoadAddress] = {
-//    time(logger, "Fetch road address by address start") {
-//      fetchByAddress(roadNumber, roadPartNumber, track, Some(startAddrM), None)
-//    }
-//  }
-//  def fetchByAddressEnd(roadNumber: Long, roadPartNumber: Long, track: Track, endAddrM: Long): Option[RoadAddress] = {
-//    time(logger, "Fetch road address by address end") {
-//      fetchByAddress(roadNumber, roadPartNumber, track, None, Some(endAddrM))
-//    }
-//  }
+
 //
 //  def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false, includeExpired: Boolean = false,
 //                      includeHistory: Boolean = false, includeSuravage: Boolean = true, fetchOnlyEnd: Boolean = false, fetchOnlyStart: Boolean = false): List[RoadAddress] = {
