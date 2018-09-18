@@ -16,7 +16,7 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
@@ -256,6 +256,33 @@ object LinearLocationDAO {
 
   def lockLinearLocationWriting: Unit = {
     sqlu"""LOCK TABLE linear_location IN SHARE MODE""".execute
+  }
+
+  implicit val getLinearLocation: GetResult[LinearLocation] = new GetResult[LinearLocation] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val roadwayId = r.nextLong()
+      val orderNumber = r.nextLong()
+      val linkId = r.nextLong()
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val sideCode = r.nextInt()
+      val calStartM = r.nextLong()
+      val calEndM = r.nextLong()
+      val linkSource = r.nextInt()
+      val adjustedTimestamp = r.nextLong()
+      val floating = r.nextInt()
+      val x1 = r.nextDouble()
+      val y1 = r.nextDouble()
+      val x2 = r.nextDouble()
+      val y2 = r.nextDouble()
+      val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+
+      LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
+        (Option(calStartM), Option(calEndM)), FloatingReason.apply(floating), Seq(Point(x1, y1), Point(x2, y2)),
+        LinkGeomSource.apply(linkSource), roadwayId, validFrom, validTo)
+    }
   }
 
   def fetchLinkIdsInChunk(min: Long, max: Long): List[Long] = {
