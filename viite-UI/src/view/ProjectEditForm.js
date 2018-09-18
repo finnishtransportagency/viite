@@ -554,11 +554,7 @@
         }
       });
 
-        rootElement.on('keyup', '#roadName', function () {
-            checkInputs('.project-');
-        });
-
-        rootElement.bind("input", '#roadName', function () {
+        rootElement.on('keyup, input', '#roadName', function () {
             checkInputs('.project-');
         });
 
