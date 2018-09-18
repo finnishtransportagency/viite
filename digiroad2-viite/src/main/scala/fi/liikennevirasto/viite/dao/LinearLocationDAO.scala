@@ -134,8 +134,7 @@ trait BaseLinearLocation {
 case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                           adjustedTimestamp: Long, calibrationPoints: (Option[Long], Option[Long]) = (None, None),
                           floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource,
-                          roadwayId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
-                          blackUnderline: Boolean = false) extends BaseLinearLocation {
+                          roadwayId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
 
   val startCalibrationPoint: Option[Long] = calibrationPoints._1
   val endCalibrationPoint: Option[Long] = calibrationPoints._2
@@ -176,7 +175,7 @@ object LinearLocationDAO {
   val selectFromLinearLocation =
     """
     select loc.id, loc.roadway_id, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.side_code,
-      loc.cal_start_m, loc.cal_end_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
+      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
       loc.valid_from, loc.valid_to
     from LINEAR_LOCATION loc cross join
       TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t cross join
@@ -201,7 +200,7 @@ object LinearLocationDAO {
   def create(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Seq[Long] = {
     val ps = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code,
-        cal_start_m, cal_end_m, link_source, adjusted_timestamp, floating, geometry, created_by)
+        cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
