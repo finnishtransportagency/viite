@@ -83,7 +83,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
         RoadAddress(roadwayAddress.id, linearLocation.id, roadwayAddress.roadNumber, roadwayAddress.roadPartNumber, roadwayAddress.roadType, roadwayAddress.track, Discontinuity.Continuous, st, en,
           Some(roadwayAddress.startDate), roadwayAddress.endDate, Some(roadwayAddress.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, sideCode,
           linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.floating, linearLocation.geometry, linearLocation.linkGeomSource, roadwayAddress.ely, roadwayAddress.terminated,
-          roadwayAddress.roadwayId, linearLocation.validFrom, linearLocation.validTo, blackUnderline = false, roadwayAddress.roadName)
+          roadwayAddress.roadwayId, linearLocation.validFrom, linearLocation.validTo, roadwayAddress.roadName)
     }
   }
 
