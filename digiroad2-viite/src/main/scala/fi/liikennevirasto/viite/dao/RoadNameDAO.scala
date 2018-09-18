@@ -188,7 +188,7 @@ object RoadNameDAO {
       namesPS.setLong(2, roadName.roadNumber)
       namesPS.setString(3, roadName.roadName)
       namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
-      namesPS.setDate(5, new Date(new java.util.Date().getTime))
+      namesPS.setDate(5, new Date(roadName.validFrom.get.getMillis))
       namesPS.setString(6, "")
       namesPS.setString(7, roadName.createdBy)
       if (roadName.endDate.nonEmpty) {
