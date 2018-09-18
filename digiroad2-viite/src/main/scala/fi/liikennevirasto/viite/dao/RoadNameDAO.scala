@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Date
+import java.sql.{Date, Timestamp}
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
@@ -9,7 +10,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
+import slick.jdbc.StaticQuery.interpolation
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
                     validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
 
@@ -37,18 +38,6 @@ object RoadNameDAO {
     oDate match {
       case Some(date) => {
         val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-        dtfOut.print(date)
-      }
-      case _=>
-        logger.error("Failed to parse date in RoadName search ")
-        "01.01.1900"
-    }
-  }
-
-  def dateParserISO8601(oDate: Option[DateTime]): String = {
-    oDate match {
-      case Some(date) => {
-        val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("yyyy.MM.dd HH:mm:ss")
         dtfOut.print(date)
       }
       case _=>
@@ -145,16 +134,15 @@ object RoadNameDAO {
     * @return
     */
   def getUpdatedRoadNames(since: DateTime, until: Option[DateTime]): Seq[RoadName] = {
-      val untilString = if (until.nonEmpty) s"AND CREATED_TIME <= TO_DATE('${dateParserISO8601(until)}', 'RRRR.MM.dd HH24:mi:ss')" else ""
-      val query =
-        s"""
+    val untilString = if (until.nonEmpty) s"AND CREATED_TIME <= to_timestamp('${new Timestamp(until.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+        sql"""
         SELECT * FROM road_names
         WHERE road_number IN (
             SELECT DISTINCT road_number FROM road_names
-            WHERE valid_to IS NULL AND CREATED_TIME >= TO_DATE('${dateParserISO8601(Some(since))}', 'RRRR.MM.dd HH24:mi:ss') $untilString
+            WHERE valid_to IS NULL AND CREATED_TIME >= $since #$untilString
           ) AND valid_to IS NULL
-        ORDER BY road_number, start_date desc"""
-      queryList(query)
+        ORDER BY road_number, start_date desc
+      """.as[RoadName].list
   }
 
   def getRoadNamesById(id: Long): Option[RoadName] = {
