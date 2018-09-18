@@ -266,8 +266,8 @@ object LinearLocationDAO {
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val sideCode = r.nextInt()
-      val calStartM = r.nextLong()
-      val calEndM = r.nextLong()
+      val calStartM = r.nextLongOption()
+      val calEndM = r.nextLongOption()
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
       val floating = r.nextInt()
@@ -279,7 +279,7 @@ object LinearLocationDAO {
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (Option(calStartM), Option(calEndM)), FloatingReason.apply(floating), Seq(Point(x1, y1), Point(x2, y2)),
+        (calStartM, calEndM), FloatingReason.apply(floating), Seq(Point(x1, y1), Point(x2, y2)),
         LinkGeomSource.apply(linkSource), roadwayId, validFrom, validTo)
     }
   }
