@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
+import java.sql.{Timestamp, Types}
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
@@ -228,14 +228,14 @@ object LinearLocationDAO {
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
-        ps.setLong(8, location.startCalibrationPoint match {
-          case Some(value) => value
-          case None => null
-        })
-        ps.setLong(9, location.endCalibrationPoint match {
-          case Some(value) => value
-          case None => null
-        })
+        location.startCalibrationPoint match {
+          case Some(value) => ps.setLong(8, value)
+          case None => ps.setNull(8, Types.BIGINT)
+        }
+        location.endCalibrationPoint match {
+          case Some(value) => ps.setLong(9, value)
+          case None => ps.setNull(9, Types.BIGINT)
+        }
         ps.setInt(10, location.linkGeomSource.value)
         ps.setLong(11, location.adjustedTimestamp)
         ps.setInt(12, location.floating.value)
