@@ -246,17 +246,23 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     val untilUnformatted = params.get("until")
     time(logger, s"GET request for /roadnames/changes (since: $sinceUnformatted; until: $untilUnformatted)") {
-      val since = DateTime.parse(sinceUnformatted)
-      try {
-        fetchUpdatedRoadNames(since, untilUnformatted)
-      } catch {
-        case e: IllegalArgumentException =>
-          val message = "The since /until parameter of the service should be in the form yyyy-MM-ddTHH:mm:ss."
-          logger.warn(message)
-          BadRequest(message)
-        case e if NonFatal(e) =>
-          logger.warn(e.getMessage, e)
-          BadRequest(e.getMessage)
+      if (sinceUnformatted == "") {
+        val message = "Since parameter is empty"
+        logger.warn(message)
+        BadRequest(message)
+      } else {
+        try {
+          val since = DateTime.parse(sinceUnformatted)
+          fetchUpdatedRoadNames(since, untilUnformatted)
+        } catch {
+          case e: IllegalArgumentException =>
+            val message = "The since /until parameter of the service should be in the form ISO8601"
+            logger.warn(message)
+            BadRequest(message)
+          case e if NonFatal(e) =>
+            logger.warn(e.getMessage, e)
+            BadRequest(e.getMessage)
+        }
       }
     }
   }

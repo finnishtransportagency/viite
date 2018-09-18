@@ -98,33 +98,33 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     Option(new DateTime(year, month, day, 0, 0, 0))
   }
 
-  test("Missing muutospvm parameter should return error") {
-    getWithBasicUserAuth("/tienimi/paivitetyt", "kalpa", "kalpa") {
+  test("Missing since parameter should return error") {
+    getWithBasicUserAuth("/roadnames/changes", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
-  test("Empty muutospvm parameter should return error") {
-    getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=", "kalpa", "kalpa") {
+  test("Empty since parameter should return error") {
+    getWithBasicUserAuth("/roadnames/changes?since=", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
-  test("Incorrect muutospvm parameter should return error") {
-    getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=abc", "kalpa", "kalpa") {
+  test("Incorrect since parameter should return error") {
+    getWithBasicUserAuth("/roadnames/changes?since=abc", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
-  test("Incorrect date format in muutospvm parameter should return error") {
-    getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=1.1.2018", "kalpa", "kalpa") {
+  test("Incorrect date format in since parameter should return error") {
+    getWithBasicUserAuth("/roadnames/changes?since=1.1.2018", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
   test("No updated road names, Content-Type should be application/json and response should be empty array") {
     when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(Right(Seq()))
-    getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=9999-01-01", "kalpa", "kalpa") {
+    getWithBasicUserAuth("/roadnames/changes?since=9999-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.getHeader("Content-Type") should equal("application/json; charset=UTF-8")
       response.body should equal("[]")
@@ -137,10 +137,10 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2018-01-01", "kalpa", "kalpa") {
+    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"tie\":2,\"tienimet\":[{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MYROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}]}]"
+        "[{\"road_number\":2,\"names\":[{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MYROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}]}]"
       )
     }
   }
@@ -153,13 +153,13 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
         RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2018-01-01", "kalpa", "kalpa") {
+    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2018-01-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
+        "[{\"road_number\":2,\"names\":[" +
+          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
+          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
           "]}]"
       )
     }
@@ -174,17 +174,17 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
         RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/tienimi/paivitetyt?muutospvm=2017-12-01", "kalpa", "kalpa") {
+    getWithBasicUserAuth("/roadnames/changes?since=2017-12-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
         "[" +
-          "{\"tie\":2,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"MY ROAD\",\"voimassaolo_alku\":\"2018-02-02\",\"voimassaolo_loppu\":null}," +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"THEROAD\",\"voimassaolo_alku\":\"2000-02-02\",\"voimassaolo_loppu\":\"2018-02-02\"}," +
-          "{\"muutospvm\":\"1900-01-01\",\"tienimi\":\"OLDROAD\",\"voimassaolo_alku\":\"1900-02-02\",\"voimassaolo_loppu\":\"2000-02-02\"}" +
+          "{\"road_number\":2,\"names\":[" +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
           "]}," +
-          "{\"tie\":3,\"tienimet\":[" +
-          "{\"muutospvm\":\"2017-12-01\",\"tienimi\":\"ANOTHER ROAD\",\"voimassaolo_alku\":\"2017-12-12\",\"voimassaolo_loppu\":null}" +
+          "{\"road_number\":3,\"names\":[" +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"end_date\":null}" +
           "]}" +
           "]"
       )
@@ -209,7 +209,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"road_number\":2,\"names\":[{\"change_date\":\"2018-01-01T00:00:00\",\"road_name\":\"MYROAD\",\"start_date\":\"2018-02-02T00:00:00\",\"end_date\":null}]}]"
+        "[{\"road_number\":2,\"names\":[{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MYROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}]}]"
       )
     }
   }
@@ -226,9 +226,9 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"2018-01-01T00:00:00\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02T00:00:00\",\"end_date\":null}," +
-          "{\"change_date\":\"2018-01-01T00:00:00\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02T00:00:00\",\"end_date\":\"2018-02-02T00:00:00\"}," +
-          "{\"change_date\":\"1900-01-01T00:00:00\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02T00:00:00\",\"end_date\":\"2000-02-02T00:00:00\"}" +
+          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
+          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
           "]}]"
       )
     }
@@ -248,12 +248,12 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       response.body should equal(
         "[" +
           "{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"2017-12-01T00:00:00\",\"road_name\":\"MY ROAD\",\"start_date\":\"2018-02-02T00:00:00\",\"end_date\":null}," +
-          "{\"change_date\":\"2017-12-01T00:00:00\",\"road_name\":\"THEROAD\",\"start_date\":\"2000-02-02T00:00:00\",\"end_date\":\"2018-02-02T00:00:00\"}," +
-          "{\"change_date\":\"1900-01-01T00:00:00\",\"road_name\":\"OLDROAD\",\"start_date\":\"1900-02-02T00:00:00\",\"end_date\":\"2000-02-02T00:00:00\"}" +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
           "]}," +
           "{\"road_number\":3,\"names\":[" +
-          "{\"change_date\":\"2017-12-01T00:00:00\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"2017-12-12T00:00:00\",\"end_date\":null}" +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"end_date\":null}" +
           "]}" +
           "]"
       )
