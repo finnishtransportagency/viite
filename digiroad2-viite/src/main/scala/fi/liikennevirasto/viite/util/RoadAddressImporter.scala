@@ -153,9 +153,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      //val linkIds = sql"""select distinct linkid from #$tableName where linkid is not null order by linkid""".as[Long].list
-      //generateChunks(linkIds, 25000l)
-      Seq((1, 3000))
+      val linkIds = sql"""select distinct linkid from #$tableName where linkid is not null order by linkid""".as[Long].list
+      generateChunks(linkIds, 25000l)
     }
   }
 
