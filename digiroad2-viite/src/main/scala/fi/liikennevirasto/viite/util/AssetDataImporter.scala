@@ -135,12 +135,12 @@ class AssetDataImporter {
       roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE ROAD_ADDRESS
+      sqlu"""UPDATE LINEAR_LOCATION
         SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
-      sqlu"""UPDATE ROAD_ADDRESS
+      /*sqlu"""UPDATE ROAD_ADDRESS
         SET CALIBRATION_POINTS = CASE
                                     WHEN CALIBRATION_POINTS = 2 THEN 3
                                     WHEN CALIBRATION_POINTS = 3 THEN 3
@@ -171,7 +171,7 @@ class AssetDataImporter {
               (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
                 NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
               )
-            )""".execute
+            )""".execute*/
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
       roadwayResetter()
     }
@@ -179,7 +179,7 @@ class AssetDataImporter {
 
   def roadwayResetter(): Unit = {
     val sequenceResetter = new SequenceResetterDAO()
-    sql"""select MAX(common_history_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
+    sql"""select MAX(roadway_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
       case Some(roadwayId) =>
         sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", roadwayId + 1)
       case _ => sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
