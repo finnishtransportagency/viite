@@ -194,11 +194,75 @@ object LinearLocationDAO {
     }
   }
 
+  def getNextLinearLocationId: Long = {
+    Queries.nextLinearLocationId.as[Long].first
+  }
+
+  def create(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Seq[Long] = {
+    val ps = dynamicSession.prepareStatement(
+      """insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code,
+        cal_start_m, cal_end_m, link_source, adjusted_timestamp, floating, geometry, created_by)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
+    val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
+    val plIds = Sequences.fetchLinearLocationIds(idLess.size)
+    val createLinearLocations = ready ++ idLess.zip(plIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+    val savedIds = createLinearLocations.foreach {
+      case (location) =>
+        val id = if (location.id == NewLinearLocation) {
+          getNextLinearLocationId
+        } else {
+          location.id
+        }
+        val roadwayId = if (location.roadwayId == NewRoadwayId) {
+          Sequences.nextRoadwaySeqValue
+        } else {
+          location.roadwayId
+        }
+        ps.setLong(1, id)
+        ps.setLong(2, roadwayId)
+        ps.setLong(3, location.orderNumber)
+        ps.setLong(4, location.linkId)
+        ps.setDouble(5, location.startMValue)
+        ps.setDouble(6, location.endMValue)
+        ps.setInt(7, location.sideCode.value)
+        ps.setLong(8, location.startCalibrationPoint match {
+          case Some(value) => value
+          case None => null
+        })
+        ps.setLong(9, location.endCalibrationPoint match {
+          case Some(value) => value
+          case None => null
+        })
+        ps.setInt(10, location.linkGeomSource.value)
+        ps.setLong(11, location.adjustedTimestamp)
+        ps.setInt(12, location.floating.value)
+        val (p1, p2) = (location.geometry.head, location.geometry.last)
+        ps.setDouble(13, p1.x)
+        ps.setDouble(14, p1.y)
+        ps.setDouble(15, location.startMValue)
+        ps.setDouble(16, p2.x)
+        ps.setDouble(17, p2.y)
+        ps.setDouble(18, location.endMValue)
+        ps.setString(19, if (createdBy == null) "-" else createdBy)
+        ps.addBatch()
+    }
+    ps.executeBatch()
+    ps.close()
+    createLinearLocations.map(_.id).toSeq
+  }
+
+  def lockLinearLocationWriting: Unit = {
+    sqlu"""LOCK TABLE linear_location IN SHARE MODE""".execute
+  }
+
   def fetchLinkIdsInChunk(min: Long, max: Long): List[Long] = {
     sql"""
-         select distinct(lrm.link_id)
-        from linear_location lrm where lrm.link_id between $min and $max order by lrm.link_id asc
-      """.as[Long].list
+      select distinct(loc.link_id)
+      from linear_location loc where loc.link_id between $min and $max order by loc.link_id asc
+    """.as[Long].list
   }
 
   def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
@@ -220,8 +284,8 @@ object LinearLocationDAO {
         ""
       val query =
         s"""
-        $selectFromLinearLocation
-        where loc.link_id in ($linkIdsString) $floating $idFilter and t.id < t2.id and loc.valid_to is null
+          $selectFromLinearLocation
+          where loc.link_id in ($linkIdsString) $floating $idFilter and t.id < t2.id and loc.valid_to is null
         """
       queryList(query)
     }
@@ -299,10 +363,25 @@ object LinearLocationDAO {
     dateTime.map(dt => new Timestamp(dt.getMillis))
   }
 
+  /**
+    * Remove Linear Locations (expire them). Don't use more than 1000 linear locations at once.
+    *
+    * @param roadAddresses Seq[RoadAddress]
+    * @return Number of updated rows
+    */
+  def remove(roadAddresses: Seq[RoadAddress]): Int = {
+    expireById(roadAddresses.map(_.id).toSet)
+  }
+
+  /**
+    * Expire Linear Locations. Don't use more than 1000 linear locations at once.
+    *
+    * @return Number of updated rows
+    */
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
-        Update LINEAR_LOCATION Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
+        Update LINEAR_LOCATION Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
       """
     if (ids.isEmpty)
       0
@@ -313,7 +392,7 @@ object LinearLocationDAO {
   def expireByLinkId(linkIds: Set[Long]): Int = {
     val query =
       s"""
-        Update LINEAR_LOCATION Set valid_to = sysdate Where valid_to IS NULL and link_id in (${linkIds.mkString(", ")})
+        Update LINEAR_LOCATION Set valid_to = sysdate Where valid_to IS NULL and link_id in (${linkIds.mkString(",")})
       """
     if (linkIds.isEmpty)
       0
@@ -321,7 +400,8 @@ object LinearLocationDAO {
       Q.updateNA(query).first
   }
 
-  def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason, createdBy: String = "-"): Unit = {
+  def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason,
+                                      createdBy: String = "setLinearLocationFloatingReason"): Unit = {
 
     // Expire old row
     val expired: LinearLocation = fetchById(id).getOrElse(
@@ -337,7 +417,8 @@ object LinearLocationDAO {
 
   }
 
-  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment, createdBy: String = "-"): Unit = {
+  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment,
+                           createdBy: String = "updateLinearLocation"): Unit = {
 
     // Expire old row
     val expired: LinearLocation = fetchById(linearLocationAdjustment.linearLocationId).getOrElse(
@@ -358,49 +439,28 @@ object LinearLocationDAO {
 
   }
 
+  // Use this only in the initial import
   def updateLinkSource(id: Long, linkSource: LinkGeomSource): Boolean = {
     sqlu"""
-           UPDATE LINEAR_LOCATION SET link_source = ${linkSource.value} WHERE id = $id
-      """.execute
+      UPDATE LINEAR_LOCATION SET link_source = ${linkSource.value} WHERE id = $id
+    """.execute
     true
   }
 
-  // TODO Expire current row and add new row. Update should be used only in setting the valid_to -date.
-  def updateGeometry(lrmId: Long, geometry: Seq[Point]): Unit = {
-    if (geometry.nonEmpty) {
-      val first = geometry.head
-      val last = geometry.last
-      val (x1, y1, z1, x2, y2, z2) = (
-        GeometryUtils.scaleToThreeDigits(first.x),
-        GeometryUtils.scaleToThreeDigits(first.y),
-        GeometryUtils.scaleToThreeDigits(first.z),
-        GeometryUtils.scaleToThreeDigits(last.x),
-        GeometryUtils.scaleToThreeDigits(last.y),
-        GeometryUtils.scaleToThreeDigits(last.z)
-      )
-      val length = GeometryUtils.geometryLength(geometry)
-      sqlu"""UPDATE Linear_location
-        SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-             MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
-        WHERE id = ${lrmId}""".execute
-    }
-  }
-
   /**
-    * Create the value for geometry field, using the updateSQL above.
+    * Updates the geometry of a linear location by expiring the current one and inserting a new one.
     *
-    * @param geometry Geometry, if available
-    * @return
+    * @param linearLocationId
+    * @param geometry
+    * @param createdBy
     */
-  private def geometryToSQL(geometry: Option[Seq[Point]]) = {
-    geometry match {
-      case Some(geom) if geom.nonEmpty =>
-      case _ => ""
+  def updateGeometry(linearLocationId: Long, geometry: Seq[Point], createdBy: String = "updateGeometry"): Unit = {
+    if (geometry.nonEmpty) {
+      val expired = fetchById(linearLocationId).getOrElse(
+        throw new IllegalStateException(s"""Failed to update linear location $linearLocationId geometry. Linear location not found."""))
+      expireById(Set(linearLocationId))
+      create(Seq(expired.copy(id = NewLinearLocation, geometry = geometry)), createdBy)
     }
-  }
-
-  def getNextLinearLocationId: Long = {
-    Queries.nextLinearLocationId.as[Long].first
   }
 
   def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
@@ -477,103 +537,16 @@ object LinearLocationDAO {
     }
   }
 
-  /**
-    * Remove Road Addresses (mark them as removed). Don't use more than 1000 road addresses at once.
-    *
-    * @param roadAddresses Seq[RoadAddress]
-    * @return Number of updated rows
-    */
-  def remove(roadAddresses: Seq[RoadAddress]): Int = {
-    val idString = roadAddresses.map(_.id).mkString(",")
-    val query =
-      s"""
-          UPDATE LINEAR_LOCATION SET VALID_TO = sysdate WHERE id IN ($idString)
-        """
-    Q.updateNA(query).first
-  }
-
-  def create(linearLocations: Iterable[LinearLocation], createdBy: String): Seq[Long] = {
-    val ps = dynamicSession.prepareStatement(
-      """insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code,
-        cal_start_m, cal_end_m, link_source, adjusted_timestamp, floating, geometry, valid_from, valid_to, created_by)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)),
-        TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""")
-    val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
-    val plIds = Sequences.fetchLinearLocationIds(idLess.size)
-    val createLinearLocations = ready ++ idLess.zip(plIds).map(x =>
-      x._1.copy(id = x._2)
-    )
-    val savedIds = createLinearLocations.foreach { case (location) =>
-      val id = if (location.id == NewLinearLocation) {
-        Sequences.nextLinearLocationId
-      } else {
-        location.id
-      }
-      val roadwayId = if (location.roadwayId == NewRoadwayId) {
-        Sequences.nextRoadwaySeqValue
-      } else {
-        location.roadwayId
-      }
-      ps.setLong(1, id)
-      ps.setLong(2, roadwayId)
-      ps.setLong(3, location.orderNumber)
-      ps.setLong(4, location.linkId)
-      ps.setDouble(5, location.startMValue)
-      ps.setDouble(6, location.endMValue)
-      ps.setInt(7, location.sideCode.value)
-      ps.setLong(8, location.startCalibrationPoint match {
-        case Some(value) => value
-        case None => null
-      })
-      ps.setLong(9, location.endCalibrationPoint match {
-        case Some(value) => value
-        case None => null
-      })
-      ps.setInt(10, location.linkGeomSource.value)
-      ps.setLong(11, location.adjustedTimestamp)
-      ps.setInt(12, location.floating.value)
-      val (p1, p2) = (location.geometry.head, location.geometry.last)
-      ps.setDouble(13, p1.x)
-      ps.setDouble(14, p1.y)
-      ps.setDouble(15, location.startMValue)
-      ps.setDouble(16, p2.x)
-      ps.setDouble(17, p2.y)
-      ps.setDouble(18, location.endMValue)
-      ps.setString(19, location.validFrom match {
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      ps.setString(20, location.validTo match {
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      ps.setString(21, if (createdBy == null) "-" else createdBy)
-      ps.addBatch()
-    }
-    ps.executeBatch()
-    ps.close()
-    createLinearLocations.map(_.id).toSeq
-  }
-
-  def lockLinearLocationWriting: Unit = {
-    sqlu"""LOCK TABLE linear_location IN SHARE MODE""".execute
-  }
-
   def getRoadwayIdsFromLinearLocation: Seq[Long] = {
     sql"""
-         select distinct(loc.roadway_id)
-        from linear_location loc order by loc.roadway_id asc
-      """.as[Long].list
+      select distinct(loc.roadway_id)
+      from linear_location loc order by loc.roadway_id asc
+    """.as[Long].list
   }
 
   def getLinearLocationsByFilter(queryFilter: String => String): Seq[LinearLocation] = {
     time(logger, "Get linear_locations by filter") {
-      val query =
-        s"""
-          $selectFromLinearLocation
-        """
-      queryList(queryFilter(query))
+      queryList(queryFilter(s"$selectFromLinearLocation"))
     }
   }
 
