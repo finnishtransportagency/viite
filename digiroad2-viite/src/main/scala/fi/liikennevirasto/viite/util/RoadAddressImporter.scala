@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.{PreparedStatement, Timestamp}
+import java.sql.{PreparedStatement, Timestamp, Types}
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
@@ -10,6 +10,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.{CalibrationCode, FloatingReason}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
@@ -74,15 +75,21 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadAddressStatement.addBatch()
   }
 
-  private def insertLinearLocation(linearLocationStatement: PreparedStatement, linearLocation: IncomingLinearLocation) = {
+  private def insertLinearLocation(linearLocationStatement: PreparedStatement, linearLocation: IncomingLinearLocation): Unit = {
     linearLocationStatement.setLong(1, linearLocation.roadwayId)
     linearLocationStatement.setLong(2, linearLocation.orderNumber)
     linearLocationStatement.setLong(3, linearLocation.linkId)
     linearLocationStatement.setDouble(4, linearLocation.startMeasure)
     linearLocationStatement.setDouble(5, linearLocation.endMeasure)
     linearLocationStatement.setLong(6, linearLocation.sideCode.value)
-    linearLocationStatement.setLong(7, 0)
-    linearLocationStatement.setLong(8, 0)
+    linearLocation.calStartM match {
+      case Some(value) => linearLocationStatement.setLong(7, value)
+      case None => linearLocationStatement.setNull(7, Types.BIGINT)
+    }
+    linearLocation.calEndM match {
+      case Some(value) => linearLocationStatement.setLong(8, value)
+      case None => linearLocationStatement.setNull(8, Types.BIGINT)
+    }
     linearLocationStatement.setLong(9, linearLocation.linkGeomSource.value)
     linearLocationStatement.setLong(10, 0)
     linearLocationStatement.setTimestamp(11, new Timestamp(System.currentTimeMillis()))
@@ -211,8 +218,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             val converted = add._1
             val roadLink = mappedRoadLinks.get(converted.linkId).head
 
-            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayId, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, None, None,  roadLink.head.linkSource, FloatingReason.NoFloating,
-              createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), GeometryUtils.geometryLength(roadLink.head.geometry))
+            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayId, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, getStartCalibrationPointValue(converted), getEndCalibrationPointValue(converted),
+              roadLink.head.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), GeometryUtils.geometryLength(roadLink.head.geometry))
             if(add._1.directionFlag == 1){
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)
@@ -254,6 +261,20 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadAddressPs.close()
   }
 
+  private def getStartCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
+    convertedAddress.calibrationCode match {
+      case AtBeginning | AtBoth => Some(convertedAddress.startAddressM)
+      case _ => None
+    }
+  }
+
+  private def getEndCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
+    convertedAddress.calibrationCode match {
+      case AtEnd | AtBoth => Some(convertedAddress.endAddressM)
+      case _ => None
+    }
+  }
+
   implicit val getConversionAddress: GetResult[ConversionAddress] = new GetResult[ConversionAddress] {
     def apply(r: PositionedResult) = {
       val roadNumber = r.nextLong()
@@ -281,11 +302,23 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val endCalibrationPoint = r.nextLong()
 
 
-      val calibrationCode = (startCalibrationPoint, endCalibrationPoint) match {
-        case (1, 1) => CalibrationCode.AtBoth
-        case (1, 0) => CalibrationCode.AtBeginning
-        case (0, 1) => CalibrationCode.AtEnd
-        case _ => CalibrationCode.No
+      def getCalibrationCode (startCalibrationPoint: Long, endCalibrationPoint: Long, startAddrM: Long, endAddrM: Long): CalibrationCode = {
+        if(startAddrM < endAddrM){
+          (startCalibrationPoint, endCalibrationPoint) match {
+            case (1, 1) => CalibrationCode.AtBoth
+            case (1, 0) => CalibrationCode.AtBeginning
+            case (0, 1) => CalibrationCode.AtEnd
+            case _ => CalibrationCode.No
+          }
+        }
+        else{
+          (startCalibrationPoint, endCalibrationPoint) match {
+            case (1, 1) => CalibrationCode.AtBoth
+            case (1, 0) => CalibrationCode.AtEnd
+            case (0, 1) => CalibrationCode.AtBeginning
+            case _ => CalibrationCode.No
+          }
+        }
       }
 
       val viiteEndDate = endDateOption match {
@@ -295,11 +328,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
       if (startAddrM < endAddrM) {
         ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayId, SideCode.TowardsDigitizing, calibrationCode, directionFlag)
+          linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayId, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       } else {
         //switch startAddrM, endAddrM, the geometry and set the side code to AgainstDigitizing
         ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, None, ely, roadType, 0,
-          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), roadwayId, SideCode.AgainstDigitizing, calibrationCode, directionFlag)
+          linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), roadwayId, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       }
     }
   }
