@@ -755,15 +755,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
-    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
-    val suravageList = withDynSession {
-      Await.result(fetch.suravageF, Duration.Inf)
-    .map(x => (x, Some(projectId))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-    }
-    val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, useFrozenVVHLinks, fetch)
-    val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
-    keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
-      projectLinks
+    throw new NotImplementedError("Will be implemented at VIITE-1540")
+//    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
+//    val suravageList = withDynSession {
+//      Await.result(fetch.suravageF, Duration.Inf)
+//    .map(x => (x, Some(projectId))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
+//    }
+//    val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, useFrozenVVHLinks, fetch)
+//    val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
+//    keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
+//      projectLinks
   }
 
   def getProjectLinksLinear(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,

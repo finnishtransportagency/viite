@@ -1,7 +1,11 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao._
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
 
@@ -107,7 +111,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
     if(linearLocations.isEmpty)
       return Seq()
 
-    val (toProcess, others) =  getUntilCalibrationPoint(linearLocations)
+    val (toProcess, others) =  getUntilCalibrationPoint(linearLocations.sortBy(_.orderNumber))
 
     val startAddrMValue = if(toProcess.head.calibrationPoints._1.isDefined) toProcess.head.calibrationPoints._1.get else roadwayAddress.startAddrMValue
     val endAddrMValue = if(toProcess.last.calibrationPoints._2.isDefined) toProcess.last.calibrationPoints._2.get else roadwayAddress.endAddrMValue
@@ -124,13 +128,30 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
   def mapRoadAddresses(roadwayAddress: RoadwayAddress, linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
 
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayId)
-    val roadwayLinearLocations = groupedLinearLocations.getOrElse(roadwayAddress.roadwayId, throw new IllegalArgumentException("Any linear locations found that belongs to the given roadway address"))
+    val roadwayLinearLocations = groupedLinearLocations.
+      getOrElse(roadwayAddress.roadwayId, throw new IllegalArgumentException("Any linear locations found that belongs to the given roadway address"))
 
     //If is a roadway address history should recalculate all the calibration points
     val roadAddresses = recursiveMapRoadAddresses(roadwayAddress, if(roadwayAddress.endDate.nonEmpty) recalculateHistoryCalibrationPoints(roadwayAddress, linearLocations) else roadwayLinearLocations)
 
     //Set the discontinuity to the last road address
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadwayAddress.discontinuity)
+  }
+
+  def getRoadAddresses(linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
+//TODO check if this can be a improvement
+//    val roadwayAddressesF = Future(roadAddressDAO.fetchByRoadwayIds(linearLocations.map(_.roadwayId).toSet))
+//
+//    val groupedLinearLocations = linearLocations.groupBy(_.roadwayId)
+//
+//    val roadwayAddresses = Await.result(roadwayAddressesF, Duration.Inf)
+
+    val groupedLinearLocations = linearLocations.groupBy(_.roadwayId)
+    val roadwayAddresses = OracleDatabase.withDynSession {
+      roadAddressDAO.fetchByRoadwayIds(linearLocations.map(_.roadwayId).toSet)
+    }
+
+    roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayId)))
   }
 
 }

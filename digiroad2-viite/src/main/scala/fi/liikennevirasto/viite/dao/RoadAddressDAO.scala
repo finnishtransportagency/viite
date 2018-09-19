@@ -15,6 +15,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
+import fi.liikennevirasto.viite.dao.LinearLocationDAO.formatter
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
@@ -231,7 +232,28 @@ case class RoadwayAddress(id: Long, roadwayId: Long, roadNumber: Long, roadPartN
 class BaseDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
 
-  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+  protected val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+
+  val basicDateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
+
+  protected def dateTimeParse(string: String): DateTime = {
+    formatter.parseDateTime(string)
+  }
+
+  protected def optDateTimeParse(string: String): Option[DateTime] = {
+    try {
+      if (string == null || string == "")
+        None
+      else
+        Some(DateTime.parse(string, formatter))
+    } catch {
+      case ex: Exception => None
+    }
+  }
+
+  protected def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
+    dateTime.map(dt => new Timestamp(dt.getMillis))
+  }
 }
 
 class RoadAddressDAO extends BaseDAO {
@@ -242,8 +264,17 @@ class RoadAddressDAO extends BaseDAO {
     * @return Current road address at given roadway
     */
   def fetchByRoadwayId(roadwayId: Long) : Option[RoadwayAddress] = {
-    time(logger, "Fetch all current road addresses by roadway") {
-      fetch(withRoadWayAndNotEnded(roadwayId)).headOption
+    time(logger, "Fetch current road addresses by roadway id") {
+      fetch(withRoadwayIdAndNotEnded(roadwayId)).headOption
+    }
+  }
+
+  def fetchByRoadwayIds(roadwayIds: Set[Long]): Seq[RoadwayAddress] = {
+    time(logger, "Fetch all current road addresses by roadway ids") {
+      if(roadwayIds.isEmpty)
+        Seq()
+      else
+        fetch(withRoadwayIdsAndNotEnded(roadwayIds))
     }
   }
 
@@ -268,13 +299,13 @@ class RoadAddressDAO extends BaseDAO {
   private def fetch(queryFilter: String => String): Seq[RoadwayAddress] = {
     val query = """
         select
-          a.id, a.roadway_id, a.road_number, a.road_part_number, a.track_code, a.start_addr_m, a.end_addr_m
+          a.id, a.roadway_id, a.road_number, a.road_part_number, a.track_code, a.start_addr_m, a.end_addr_m,
           a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.road_type, a.ely, a.terminated,
           a.valid_from, a.valid_to,
           (select rn.road_name from road_name rn where rn.road_number = a.road_number and rn.end_date is null and rn.valid_to is null) as road_name
         from road_address a
       """
-    Q.queryNA[RoadwayAddress](query).iterator.toSeq
+    Q.queryNA[RoadwayAddress](queryFilter(query)).iterator.toSeq
   }
 
   private def withRoadNumberRoadPartAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long])(query: String): String = {
@@ -285,11 +316,15 @@ class RoadAddressDAO extends BaseDAO {
       """
   }
 
-  private def withRoadWayAndNotEnded(roadwayId: Long)(query: String): String = {
-    s"""$query where end_date is null and roadway_id = $roadwayId"""
+  private def withRoadwayIdAndNotEnded(roadwayId: Long)(query: String): String = {
+    s"""$query where a.end_date is null and a.roadway_id = $roadwayId"""
   }
 
-  protected def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
+  private def withRoadwayIdsAndNotEnded(roadwayIds: Set[Long])(query: String): String = {
+    s"""$query where a.end_date is null and a.roadway_id in (${roadwayIds.mkString(",")})"""
+  }
+
+  private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
     s"""$query where road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}"""
   }
 
