@@ -9,6 +9,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.{CalibrationCode, FloatingReason}
@@ -107,14 +108,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   }
 
-  private def fetchRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, Seq[VVHRoadlink]] = {
+  private def fetchRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, RoadLinkLike] = {
     val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
     linkIds.grouped(4000).flatMap(group =>
       vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group) ++ vvhClient.suravageData.fetchSuravageByLinkIds(group)
-    ).toSeq.groupBy(_.linkId)
+    ).toSeq.groupBy(_.linkId).mapValues(_.head)
   }
 
-  private def fetchHistoryRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, VVHHistoryRoadLink] =
+  private def fetchHistoryRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, RoadLinkLike] =
     vvhClient.historyData.fetchVVHRoadLinkByLinkIds(linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
 
 
@@ -216,10 +217,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
           //add current linear locations
           add =>
             val converted = add._1
-            val roadLink = mappedRoadLinks.get(converted.linkId).head
+            val roadLink = mappedRoadLinks.getOrElse(converted.linkId, mappedHistoryRoadLinks(converted.linkId))
 
             val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayId, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, getStartCalibrationPointValue(converted), getEndCalibrationPointValue(converted),
-              roadLink.head.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), GeometryUtils.geometryLength(roadLink.head.geometry))
+              roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), GeometryUtils.geometryLength(roadLink.geometry))
             if(add._1.directionFlag == 1){
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)
