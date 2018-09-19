@@ -667,7 +667,14 @@
     });
 
     me.redraw = function () {
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility(), true);
+      var checkedBoxLayers = _.filter(layers, function(layer){
+          if((layer.get('name') === 'suravageRoadProjectLayer' || layer.get('name') === 'suravageProjectDirectionMarkerLayer') &&
+              (!suravageRoadProjectLayer.getVisible() || !suravageProjectDirectionMarkerLayer.getVisible())){
+            return false;
+          } else
+            return true;
+      });
+      me.toggleLayersVisibility(checkedBoxLayers, applicationModel.getRoadVisibility(), true);
       var marker;
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
