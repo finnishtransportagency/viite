@@ -156,11 +156,11 @@
       }
     };
 
-    var changeDirection = function (selected, enabled) {
+    var changeDirection = function (selected) {
       var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
       var isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="' + prefix + 'form-group changeDirection btn btn-primary"' + (enabled ? '' : 'disabled') +'>Käännä tieosan kasvusuunta</button>' +
+        '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
         directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
