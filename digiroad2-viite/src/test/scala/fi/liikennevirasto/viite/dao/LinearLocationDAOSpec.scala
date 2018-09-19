@@ -343,4 +343,23 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Get linear locations by filter: withLinkIdAndMeasure") {
+    runWithRollback {
+      val id1 = LinearLocationDAO.getNextLinearLocationId
+      val id2 = LinearLocationDAO.getNextLinearLocationId
+      val id3 = LinearLocationDAO.getNextLinearLocationId
+      val linkId = 111111111l
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId, startMValue = 0.0, endMValue = 100.0)))
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId, startMValue = 100.0, endMValue = 200.0)))
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333l)))
+
+      val locations1 = LinearLocationDAO.getLinearLocationsByFilter(LinearLocationDAO.withLinkIdAndMeasure(linkId, Some(0.0), Some(100.0)))
+      locations1.size should be(1)
+      locations1.filter(l => l.id == id1).size should be(1)
+      val locations2 = LinearLocationDAO.getLinearLocationsByFilter(LinearLocationDAO.withLinkIdAndMeasure(linkId, Some(100.0), Some(200.0)))
+      locations2.size should be(1)
+      locations2.filter(l => l.id == id2).size should be(1)
+    }
+  }
+
 }
