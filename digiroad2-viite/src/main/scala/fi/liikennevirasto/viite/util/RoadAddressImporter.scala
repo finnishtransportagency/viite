@@ -103,7 +103,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setDouble(18, linearLocation.endMeasure)
     linearLocationStatement.setString(19, datePrinter(linearLocation.validFrom))
     linearLocationStatement.setString(20, datePrinter(linearLocation.validTo))
-    println(s"s: ${linearLocation.startMeasure}, e: ${linearLocation.endMeasure}, linkId: ${linearLocation.linkId}, roadwayID: ${linearLocation.roadwayId}")
     linearLocationStatement.addBatch()
 
   }
@@ -119,12 +118,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     vvhClient.historyData.fetchVVHRoadLinkByLinkIds(linkIds).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
 
 
-  private def adjustLinearLocation(linearLocation: IncomingLinearLocation, length: Double): IncomingLinearLocation = {
-    val coefficient: Double = length / (linearLocation.endMeasure - linearLocation.startMeasure)
-    if(coefficient < 0){
-      println(s"Negative: ${linearLocation.linkId}, $length, ${linearLocation.startMeasure}, ${linearLocation.endMeasure}")
-    }
-    println(s" linkid: ${linearLocation.linkId}, (${linearLocation.startMeasure * coefficient}),(${linearLocation.endMeasure * coefficient})")
+  private def adjustLinearLocation(linearLocation: IncomingLinearLocation, coefficient: Double): IncomingLinearLocation = {
+    //val coefficient: Double = length / (linearLocation.endMeasure - linearLocation.startMeasure)
+    //println(s" linkid: ${linearLocation.linkId}, (${linearLocation.startMeasure * coefficient}),(${linearLocation.endMeasure * coefficient})")
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 
@@ -161,8 +157,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      val linkIds = sql"""select distinct linkid from #$tableName where linkid is not null order by linkid""".as[Long].list
-      generateChunks(linkIds, 25000l)
+      //val linkIds = sql"""select distinct linkid from #$tableName where linkid is not null order by linkid""".as[Long].list
+      //generateChunks(linkIds, 25000l)
+      Seq((360236,360237))
     }
   }
 
@@ -201,6 +198,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
     val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.partition(_.validTo.isEmpty)
+    val groupedLinkCoeffs = validConversionAddresses.groupBy(_.linkId).mapValues{
+      addresses =>
+        val minM = addresses.map(_.startM).min
+        val maxM = addresses.map(_.endM).max
+        val roadLink = mappedRoadLinks.getOrElse(addresses.head.linkId, mappedHistoryRoadLinks(addresses.head.linkId))
+        GeometryUtils.geometryLength(roadLink.geometry) / (maxM - minM)
+    }
     val (currentConversionAddresses, historyConversionAddresses) = validConversionAddresses.partition(_.endDate.isEmpty)
 
     val currentMappedConversionAddresses = currentConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
@@ -220,7 +224,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             val roadLink = mappedRoadLinks.getOrElse(converted.linkId, mappedHistoryRoadLinks(converted.linkId))
 
             val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayId, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, getStartCalibrationPointValue(converted), getEndCalibrationPointValue(converted),
-              roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), GeometryUtils.geometryLength(roadLink.geometry))
+              roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
             if(add._1.directionFlag == 1){
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)
