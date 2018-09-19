@@ -116,7 +116,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
 
   test("Fetch updated road names, no updates") {
     runWithRollback {
-      val result = roadNameService.getUpdatedRoadNames(DateTime.parse("3001-01-01"), None)
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), None)
       result.isRight should be(true)
       result.right.get.size should be(0)
     }
