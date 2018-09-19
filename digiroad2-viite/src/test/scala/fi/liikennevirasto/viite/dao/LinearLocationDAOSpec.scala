@@ -9,6 +9,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
@@ -237,6 +238,39 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocations.size should be(1)
       val floatingLocation = linearLocations.head
       floatingLocation.floating should be(floating)
+    }
+  }
+
+  test("Update linear location") {
+    runWithRollback {
+      val id1 = LinearLocationDAO.getNextLinearLocationId
+      val id2 = LinearLocationDAO.getNextLinearLocationId
+      val linkId1 = 111111111l
+      val linkId2 = 222222222l
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+
+      val startM = 1.1
+      val endM = 2.2
+      LinearLocationDAO.updateLinearLocation(LinearLocationAdjustment(id2, linkId2, Some(startM), Some(endM)), createdBy = "test")
+
+      // Original linear location should be expired
+      val expired = LinearLocationDAO.fetchById(id2).getOrElse(fail())
+      expired.validTo.nonEmpty should be(true)
+      val unChanged = LinearLocationDAO.fetchById(id1).getOrElse(fail())
+      unChanged.validTo.isEmpty should be(true)
+
+      // New linear location should have new startM and endM
+      val locations = LinearLocationDAO.fetchByLinkId(Set(linkId2))
+      val updated = locations.head
+      updated.startMValue should be(startM +- 0.001)
+      updated.endMValue should be(endM +- 0.001)
+
+      // Update linkId and endM
+      LinearLocationDAO.updateLinearLocation(LinearLocationAdjustment(updated.id, 999999999l, None, Some(9999.9)), createdBy = "test")
+      val locations2 = LinearLocationDAO.fetchByLinkId(Set(updated.linkId))
+      locations2.size should be(0)
+
     }
   }
 
