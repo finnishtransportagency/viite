@@ -132,7 +132,7 @@
       var ctrlPressed = event.mapBrowserEvent !== undefined ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
       var rawSelection = map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function(feature) {
-        return feature
+        return feature;
       });
       var selection = _.find(ctrlPressed ? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         if (!_.isUndefined(selectionTarget))
