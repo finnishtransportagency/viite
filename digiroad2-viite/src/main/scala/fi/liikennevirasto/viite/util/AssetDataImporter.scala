@@ -140,38 +140,6 @@ class AssetDataImporter {
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
-      /*sqlu"""UPDATE ROAD_ADDRESS
-        SET CALIBRATION_POINTS = CASE
-                                    WHEN CALIBRATION_POINTS = 2 THEN 3
-                                    WHEN CALIBRATION_POINTS = 3 THEN 3
-                                    ELSE 1
-                                  END
-        WHERE NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
-        RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
-        RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
-        RA2.START_ADDR_M = ROAD_ADDRESS.END_ADDR_M AND
-        RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
-        RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
-        (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
-        NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
-      sqlu"""UPDATE ROAD_ADDRESS
-        SET CALIBRATION_POINTS = CASE
-                                    WHEN CALIBRATION_POINTS = 2 THEN 2
-                                    WHEN CALIBRATION_POINTS = 3 THEN 3
-                                    ELSE CALIBRATION_POINTS + 2
-                                  END
-          WHERE
-            START_ADDR_M = 0 OR
-            NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
-              RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
-              RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
-              RA2.END_ADDR_M = ROAD_ADDRESS.START_ADDR_M AND
-              RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
-              RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
-              (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
-                NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
-              )
-            )""".execute*/
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
       roadwayResetter()
     }
