@@ -529,7 +529,7 @@ object LinearLocationDAO {
         return List()
       }
       if (ids.size > 1000) {
-        return queryByIdMassQuery(ids)
+        return queryByIdMassQuery(ids, rejectInvalids)
       }
       val idString = ids.mkString(", ")
       val where = s""" where loc.id in ($idString)"""
@@ -548,15 +548,21 @@ object LinearLocationDAO {
     }
   }
 
-  def queryByIdMassQuery(ids: Set[Long]): List[LinearLocation] = {
+  def queryByIdMassQuery(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
     time(logger, "Fetch linear locations by ids - mass query") {
       MassQuery.withIds(ids) {
         idTableName =>
+
+          val validToFilter = if (rejectInvalids)
+            " and loc.valid_to is null"
+          else
+            ""
+
           val query =
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.id
-              where t.id < t2.id and loc.valid_to is null
+              where t.id < t2.id $validToFilter
             """
           queryList(query)
       }
