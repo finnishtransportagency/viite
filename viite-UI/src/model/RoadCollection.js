@@ -73,6 +73,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
     var LinkType = LinkValues.RoadLinkType;
+    var Anomaly = LinkValues.Anomaly;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -80,7 +81,7 @@
 
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks().concat(suravageRoadLinks()), function(roadLink) {
-        return roadLink.isSelected() && roadLink.getData().anomaly === 0;
+        return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
       });
     };
 
