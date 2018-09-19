@@ -147,7 +147,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Fetch by id mass query") {
+  test("Fetch by id") {
     runWithRollback {
       val id1 = LinearLocationDAO.getNextLinearLocationId
       val id2 = LinearLocationDAO.getNextLinearLocationId
@@ -156,10 +156,14 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 222222222l)))
       LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333l)))
 
-      val locations = LinearLocationDAO.fetchByIdMassQuery(Set(id1, -101l, -102l, -103l, id2))
-      locations.size should be(2)
+      val locations = LinearLocationDAO.fetchById(id1)
+      locations.size should be(1)
       locations.filter(l => l.id == id1).size should be(1)
-      locations.filter(l => l.id == id2).size should be(1)
+
+      val massQueryLocations = LinearLocationDAO.fetchByIdMassQuery(Set(id1, -101l, -102l, -103l, id2))
+      massQueryLocations.size should be(2)
+      massQueryLocations.filter(l => l.id == id1).size should be(1)
+      massQueryLocations.filter(l => l.id == id2).size should be(1)
     }
   }
 
@@ -178,25 +182,12 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       locations.size should be(2)
       locations.filter(l => l.id == id1).size should be(1)
       locations.filter(l => l.id == id2).size should be(1)
-    }
-  }
 
-  test("Fetch by link id mass query") {
-    runWithRollback {
-      val id1 = LinearLocationDAO.getNextLinearLocationId
-      val id2 = LinearLocationDAO.getNextLinearLocationId
-      val id3 = LinearLocationDAO.getNextLinearLocationId
-      val linkId1 = 111111111l
-      val linkId2 = 222222222l
-      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
-      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
-      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2)))
-
-      val locations = LinearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2))
-      locations.size should be(3)
-      locations.filter(l => l.id == id1).size should be(1)
-      locations.filter(l => l.id == id2).size should be(1)
-      locations.filter(l => l.id == id3).size should be(1)
+      val massQueryLocations = LinearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2))
+      massQueryLocations.size should be(3)
+      massQueryLocations.filter(l => l.id == id1).size should be(1)
+      massQueryLocations.filter(l => l.id == id2).size should be(1)
+      massQueryLocations.filter(l => l.id == id3).size should be(1)
     }
   }
 
@@ -271,6 +262,64 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val locations2 = LinearLocationDAO.fetchByLinkId(Set(updated.linkId))
       locations2.size should be(0)
 
+    }
+  }
+
+  test("Update geometry") {
+    runWithRollback {
+      val id1 = LinearLocationDAO.getNextLinearLocationId
+      val id2 = LinearLocationDAO.getNextLinearLocationId
+      val linkId1 = 111111111l
+      val linkId2 = 222222222l
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0)))))
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+
+      LinearLocationDAO.fetchById(id1)
+
+      // Update geometry so that the direction of digitization changes
+      val newStart = Point(0.0, 100.0)
+      val newEnd = Point(0.0, 0.0)
+      LinearLocationDAO.updateGeometry(id1, Seq(newStart, newEnd), "test")
+
+      // Original linear location should be expired
+      val expired = LinearLocationDAO.fetchById(id1).getOrElse(fail())
+      expired.validTo.nonEmpty should be(true)
+      val unChanged = LinearLocationDAO.fetchById(id2).getOrElse(fail())
+      unChanged.validTo.isEmpty should be(true)
+
+      // New linear location should have new geometry and side code
+      val locations = LinearLocationDAO.fetchByLinkId(Set(linkId1))
+      val updated = locations.head
+      updated.id should not be (id1)
+      updated.geometry.head.x should be(newStart.x +- 0.001)
+      updated.geometry.head.y should be(newStart.y +- 0.001)
+      updated.geometry.last.x should be(newEnd.x +- 0.001)
+      updated.geometry.last.y should be(newEnd.y +- 0.001)
+
+    }
+  }
+
+  test("Query floating by link id") {
+    runWithRollback {
+      val id1 = LinearLocationDAO.getNextLinearLocationId
+      val id2 = LinearLocationDAO.getNextLinearLocationId
+      val id3 = LinearLocationDAO.getNextLinearLocationId
+      val linkId1 = 1111111111l
+      val linkId2 = 2222222222l
+      val linkId3 = 3333333333l
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, floating = FloatingReason.ManualFloating)))
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, floating = FloatingReason.NewAddressGiven)))
+
+      val locations = LinearLocationDAO.queryFloatingByLinkId(Set(linkId1, linkId2, linkId3))
+      locations.filter(l => l.id == id1).size should be(0)
+      locations.filter(l => l.id == id2).size should be(1)
+      locations.filter(l => l.id == id3).size should be(1)
+
+      val massQueryLocations = LinearLocationDAO.queryFloatingByLinkIdMassQuery(Set(linkId1, linkId2, linkId3))
+      massQueryLocations.filter(l => l.id == id1).size should be(0)
+      massQueryLocations.filter(l => l.id == id2).size should be(1)
+      massQueryLocations.filter(l => l.id == id3).size should be(1)
     }
   }
 
