@@ -3,9 +3,9 @@ package fi.liikennevirasto.viite.dao
 import java.sql.{Timestamp, Types}
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
@@ -603,4 +603,19 @@ object LinearLocationDAO {
     s" AND loc.valid_to IS NULL "
   }
 
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
+    time(logger, "Fetch road addresses by bounding box") {
+      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+
+      val query =
+        s"""
+        $selectFromLinearLocation
+        where $boundingBoxFilter and valid_to is null
+        """
+      queryList(query)
+    }
+  }
 }
