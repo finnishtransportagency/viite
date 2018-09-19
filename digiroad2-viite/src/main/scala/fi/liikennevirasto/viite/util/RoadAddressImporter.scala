@@ -103,7 +103,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setDouble(18, linearLocation.endMeasure)
     linearLocationStatement.setString(19, datePrinter(linearLocation.validFrom))
     linearLocationStatement.setString(20, datePrinter(linearLocation.validTo))
-    println(s"s: ${linearLocation.startMeasure}, e: ${linearLocation.endMeasure}, linkId: ${linearLocation.linkId}, roadwayID: ${linearLocation.roadwayId}")
     linearLocationStatement.addBatch()
 
   }
@@ -121,10 +120,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def adjustLinearLocation(linearLocation: IncomingLinearLocation, length: Double): IncomingLinearLocation = {
     val coefficient: Double = length / (linearLocation.endMeasure - linearLocation.startMeasure)
-    if(coefficient < 0){
-      println(s"Negative: ${linearLocation.linkId}, $length, ${linearLocation.startMeasure}, ${linearLocation.endMeasure}")
-    }
-    println(s" linkid: ${linearLocation.linkId}, (${linearLocation.startMeasure * coefficient}),(${linearLocation.endMeasure * coefficient})")
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 
