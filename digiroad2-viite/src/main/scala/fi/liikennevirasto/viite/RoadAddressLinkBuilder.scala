@@ -20,6 +20,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val roadLinkType = (floating, roadLink.linkSource) match {
       case (true, _) => FloatingRoadLinkType
       case (false, LinkGeomSource.ComplimentaryLinkInterface) => ComplementaryRoadLinkType
+      case (false, LinkGeomSource.SuravageLinkInterface) => SuravageRoadLinkType
       case (false, _) => NormalRoadLinkType
     }
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
@@ -104,9 +105,9 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, newGeometry = Some(roadLink.geometry), floating = false)
   }
 
-
-  def buildSuravageRoadAddressLink(roadLinkProjectidTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
-    throw new NotImplementedError("Will be implemented at VIITE-1550")
+//TODO delete this method
+//  def buildSuravageRoadAddressLink(roadLinkProjectidTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
+////    throw new NotImplementedError("Will be implemented at VIITE-1550")
 //    val roadLink = roadLinkProjectidTuple._1
 //    val roadAddresses = roadLinkProjectidTuple._2 match { //Check if project attribute has been initialized
 //      case (Some(projectId)) =>
@@ -161,7 +162,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 //      VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
 //      roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
 //      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, floating = false)
-  }
+//  }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
     val roadLinkType = FloatingRoadLinkType
@@ -183,37 +184,37 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayId, floating = roadAddress.isFloating)
   }
 
-  def capToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => x.endMValue - MaxAllowedMValueError > geomLength)
-    val cappedSegments = overflowingSegments.map { s => s.copy(endMValue = geomLength) }
-    passThroughSegments ++ cappedSegments
-  }
+//  def capToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+//    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => x.endMValue - MaxAllowedMValueError > geomLength)
+//    val cappedSegments = overflowingSegments.map { s => s.copy(endMValue = geomLength) }
+//    passThroughSegments ++ cappedSegments
+//  }
 
-  def extendToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    if (sourceSegments.isEmpty)
-      return sourceSegments
-    val sorted = sourceSegments.sortBy(_.endMValue)(Ordering[Double].reverse)
-    val lastSegment = sorted.head
-    val restSegments = sorted.tail
-    val adjustments = if (lastSegment.endMValue < geomLength - MaxAllowedMValueError) {
-      restSegments ++ Seq(lastSegment.copy(endMValue = geomLength))
-    } else {
-      sourceSegments
-    }
-    adjustments
-  }
+//  def extendToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+//    if (sourceSegments.isEmpty)
+//      return sourceSegments
+//    val sorted = sourceSegments.sortBy(_.endMValue)(Ordering[Double].reverse)
+//    val lastSegment = sorted.head
+//    val restSegments = sorted.tail
+//    val adjustments = if (lastSegment.endMValue < geomLength - MaxAllowedMValueError) {
+//      restSegments ++ Seq(lastSegment.copy(endMValue = geomLength))
+//    } else {
+//      sourceSegments
+//    }
+//    adjustments
+//  }
 
-  def dropShort(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    if (sourceSegments.size < 2)
-      return sourceSegments
-    val passThroughSegments = sourceSegments.partition(s => s.length >= MinAllowedRoadAddressLength)._1
-    passThroughSegments
-  }
+//  def dropShort(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+//    if (sourceSegments.size < 2)
+//      return sourceSegments
+//    val passThroughSegments = sourceSegments.partition(s => s.length >= MinAllowedRoadAddressLength)._1
+//    passThroughSegments
+//  }
 
-  def dropSegmentsOutsideGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    val passThroughSegments = sourceSegments.partition(x => x.startMValue + Epsilon <= geomLength)._1
-    passThroughSegments
-  }
+//  def dropSegmentsOutsideGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+//    val passThroughSegments = sourceSegments.partition(x => x.startMValue + Epsilon <= geomLength)._1
+//    passThroughSegments
+//  }
 
   private def getVVHRoadName(link: Map[String, Any]): Option[String] = {
     Some(link.getOrElse(FinnishRoadName, link.getOrElse(SwedishRoadName, "none")).toString)
