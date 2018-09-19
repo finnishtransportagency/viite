@@ -392,11 +392,11 @@ object LinearLocationDAO {
   /**
     * Remove Linear Locations (expire them). Don't use more than 1000 linear locations at once.
     *
-    * @param roadAddresses Seq[RoadAddress]
+    * @param linearLocations Seq[LinearLocation]
     * @return Number of updated rows
     */
-  def remove(roadAddresses: Seq[RoadAddress]): Int = {
-    expireById(roadAddresses.map(_.id).toSet)
+  def remove(linearLocations: Seq[LinearLocation]): Int = {
+    expireById(linearLocations.map(_.id).toSet)
   }
 
   /**
