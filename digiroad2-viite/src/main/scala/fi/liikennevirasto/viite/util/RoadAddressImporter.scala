@@ -45,9 +45,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                                           "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
   private def linearLocationStatement() =
-    dynamicSession.prepareStatement("insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code, cal_start_m, cal_end_m, link_source, adjusted_timestamp, " +
+    dynamicSession.prepareStatement("insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code, cal_start_addr_m, cal_end_addr_m, link_source, " +
       "created_by, floating, geometry, valid_from, valid_to) " +
-      "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+      "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
 
   def datePrinter(date: Option[DateTime]): String = {
     date match {
@@ -92,16 +92,15 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case None => linearLocationStatement.setNull(8, Types.BIGINT)
     }
     linearLocationStatement.setLong(9, linearLocation.linkGeomSource.value)
-    linearLocationStatement.setLong(10, 0)
-    linearLocationStatement.setString(11, linearLocation.createdBy)
-    linearLocationStatement.setLong(12, linearLocation.floating.value)
-    linearLocationStatement.setDouble(13, linearLocation.x1.get)
-    linearLocationStatement.setDouble(14, linearLocation.y1.get)
-    linearLocationStatement.setDouble(15, linearLocation.x2.get)
-    linearLocationStatement.setDouble(16, linearLocation.y2.get)
-    linearLocationStatement.setDouble(17, linearLocation.endMeasure)
-    linearLocationStatement.setString(18, datePrinter(linearLocation.validFrom))
-    linearLocationStatement.setString(19, datePrinter(linearLocation.validTo))
+    linearLocationStatement.setString(10, linearLocation.createdBy)
+    linearLocationStatement.setLong(11, linearLocation.floating.value)
+    linearLocationStatement.setDouble(12, linearLocation.x1.get)
+    linearLocationStatement.setDouble(13, linearLocation.y1.get)
+    linearLocationStatement.setDouble(14, linearLocation.x2.get)
+    linearLocationStatement.setDouble(15, linearLocation.y2.get)
+    linearLocationStatement.setDouble(16, linearLocation.endMeasure)
+    linearLocationStatement.setString(17, datePrinter(linearLocation.validFrom))
+    linearLocationStatement.setString(18, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
 
   }
