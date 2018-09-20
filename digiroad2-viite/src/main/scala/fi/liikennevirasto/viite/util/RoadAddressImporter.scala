@@ -118,7 +118,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def adjustLinearLocation(linearLocation: IncomingLinearLocation, coefficient: Double): IncomingLinearLocation = {
     //val coefficient: Double = length / (linearLocation.endMeasure - linearLocation.startMeasure)
-    //println(s" linkid: ${linearLocation.linkId}, (${linearLocation.startMeasure * coefficient}),(${linearLocation.endMeasure * coefficient})")
+    println(s" linkid: ${linearLocation.linkId}, (${linearLocation.startMeasure * coefficient}),(${linearLocation.endMeasure * coefficient})")
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 
