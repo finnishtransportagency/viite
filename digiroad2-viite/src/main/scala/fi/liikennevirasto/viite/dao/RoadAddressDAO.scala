@@ -296,6 +296,16 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  def fetchAllCurrentRoadNumbers(): Seq[Long] = {
+    time(logger, "Fetch all the road numbers") {
+      sql"""
+			select distinct (ra.road_number)
+      from road_address ra
+      where ra.valid_to is null and end_date is null
+		  """.as[Long].list
+    }
+  }
+
   private def fetch(queryFilter: String => String): Seq[RoadwayAddress] = {
     val query = """
         select

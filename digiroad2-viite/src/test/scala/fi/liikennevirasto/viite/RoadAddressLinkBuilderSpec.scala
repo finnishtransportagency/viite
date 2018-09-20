@@ -250,39 +250,39 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-/*
-  test("Suravage link builder when link is in DB project-link table") {
-    runWithRollback {
-      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
-      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None)
-      val project = projectService.createRoadLinkProject(rap)
-      val newLink = Seq(ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-        None, 7096025L, 0.0, 43.1, SideCode.AgainstDigitizing, (None, None), NoFloating,
-        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), project.id, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
-        None, 86400L))
+//TODO Will be implemented at VIITE-1539
+//  test("Suravage link builder when link is in DB project-link table") {
+//    runWithRollback {
+//      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
+//      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+//        Seq(), None)
+//      val project = projectService.createRoadLinkProject(rap)
+//      val newLink = Seq(ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
+//        None, 7096025L, 0.0, 43.1, SideCode.AgainstDigitizing, (None, None), NoFloating,
+//        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), project.id, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
+//        None, 86400L))
+//
+//      projectService.addNewLinksToProject(newLink, project.id, "U", 7096025, false)
+//
+//      val suravageLinkId1 = 7096025
+//      val municipalityCode = 564
+//      val administrativeClass = Municipality
+//      val trafficDirection = TrafficDirection.TowardsDigitizing
+//      val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
+//      val suravageAddress = RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(suravageLinkId1, municipalityCode,
+//        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
+//        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30), Some(project.id))
+//      suravageAddress.sideCode should be(SideCode.AgainstDigitizing)
+//    }
+//  }
 
-      projectService.addNewLinksToProject(newLink, project.id, "U", 7096025, false)
-
-      val suravageLinkId1 = 7096025
-      val municipalityCode = 564
-      val administrativeClass = Municipality
-      val trafficDirection = TrafficDirection.TowardsDigitizing
-      val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
-      val suravageAddress = RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(suravageLinkId1, municipalityCode,
-        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
-        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30), Some(project.id))
-      suravageAddress.sideCode should be(SideCode.AgainstDigitizing)
-    }
-  }
-*/
   //TODO Probably this will be not needed anymore
 //  test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {
 //    val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))

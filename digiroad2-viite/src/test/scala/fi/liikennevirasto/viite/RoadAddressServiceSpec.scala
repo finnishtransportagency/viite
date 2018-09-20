@@ -46,7 +46,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -272,7 +272,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val localMockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-    val localRoadAddressService = new RoadAddressService(localMockRoadLinkService, mockRoadwayAddressMapper,localMockEventBus)
+    val localRoadAddressService = new RoadAddressService(localMockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper,localMockEventBus)
     val boundingRectangle = BoundingRectangle(Point(533341.472,6988382.846), Point(533333.28,6988419.385))
     val filter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
     runWithRollback {
@@ -451,7 +451,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("Defloating road links on road 1130 part 4") {
     val links = StaticTestData.road1130Links.filter(_.roadNumber.getOrElse("") == "1130").filter(_.attributes("ROADPARTNUMBER").asInstanceOf[BigInt].intValue == 4)
     val history = StaticTestData.road1130HistoryLinks
-    val roadAddressService = new RoadAddressService(mockRoadLinkService,mockRoadwayAddressMapper,mockEventBus)
+    val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper,mockEventBus)
     when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn((StaticTestData.road1130Links, StaticTestData.road1130HistoryLinks))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(351714,6674367),Point(361946,6681967)), Seq((1,50000)), Set(), false, true, false)).thenReturn(links)
     when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq())
