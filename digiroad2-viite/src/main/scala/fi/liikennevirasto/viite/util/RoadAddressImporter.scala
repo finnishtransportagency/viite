@@ -156,7 +156,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       val roadwayIds = sql"""select distinct ajorataid from #$tableName where ajorataid is not null order by ajorataid""".as[Long].list
-      generateChunks(roadwayIds, 25000l)
+      generateChunks(roadwayIds, 1000)
     }
   }
 
@@ -189,12 +189,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
 
     val suppressedRoadLinks = conversionAddress.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
-    suppressedRoadLinks.foreach {
-      ra => println("Suppressed row linkID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(ra.linkId, printConversionAddress(ra)))
+    suppressedRoadLinks.map(_.roadwayId).distinct.foreach {
+      roadwayId => /*println("Suppressed row linkID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(ra.linkId, printConversionAddress(ra)))*/
+        println(s"Suppressed roadway_id $roadwayId because it contains NULL LINKID values ")
     }
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
-    val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.partition(_.validTo.isEmpty)
+    val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.filterNot(ca => suppressedRoadLinks.map(_.roadwayId).distinct.contains(ca.roadwayId)).partition(_.validTo.isEmpty)
     val groupedLinkCoeffs = validConversionAddresses.groupBy(_.linkId).mapValues{
       addresses =>
         val minM = addresses.map(_.startM).min
