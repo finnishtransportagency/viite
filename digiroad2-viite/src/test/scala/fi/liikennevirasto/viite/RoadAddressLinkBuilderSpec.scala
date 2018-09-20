@@ -149,95 +149,97 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Saved Suravage Link gets roadaddress from DB if exists") {
-    runWithRollback {
-      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
-      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,
-          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID,
-          SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('9124288','62555','2','0','1','0','68',
-          to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022',
-          '2','0','67,768','7096025','1516719259000',to_timestamp('23.04.2018 16:26:44,137893000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
-      val suravageAddress =
-        RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(7096025, 167,
-          List(Point(642581.506, 6947078.918, 0.0),
-            Point(642582.157, 6947074.293, 0.0), Point(642582.541, 6947069.504, 0.0), Point(642582.348, 6947064.703, 0.0), Point(642581.58, 6947059.961, 0.0),
-            Point(642580.249, 6947055.344, 0.0), Point(642578.375, 6947050.92, 0.0), Point(642576.423, 6947047.7, 0.0), Point(642573.963, 6947044.85, 0.0),
-            Point(642571.061, 6947042.451, 0.0), Point(642567.8, 6947040.569, 0.0), Point(642564.27, 6947039.257, 0.0), Point(642560.572, 6947038.553, 0.0),
-            Point(642556.807, 6947038.475, 0.0), Point(642553.082, 6947039.026, 0.0), Point(642549.502, 6947040.19, 0.0), Point(642544.72, 6947042.202, 0.0)),
-          Municipality, BothDirections, FeatureClass.CycleOrPedestrianPath, None,
-          Map("LAST_EDITED_DATE" -> BigInt(1516719259000L), "CONSTRUCTIONTYPE" -> 1, "MTKCLASS" -> 12314, "Points" -> List(Map("x" -> 642581.506, "y" -> 6947078.918, "z" -> 0, "m" -> 0),
-            Map("x" -> 642582.157, "y" -> 6947074.293, "z" -> 0, "m" -> 4.669999999998254), Map("x" -> 642582.541, "y" -> 6947069.504, "z" -> 0, "m" -> 9.474600000001374),
-            Map("x" -> 642582.348, "y" -> 6947064.703, "z" -> 0, "m" -> 14.279200000004494), Map("x" -> 642581.58, "y" -> 6947059.961, "z" -> 0, "m" -> 19.08379999999306),
-            Map("x" -> 642580.249, "y" -> 6947055.344, "z" -> 0, "m" -> 23.88839999999618), Map("x" -> 642578.375, "y" -> 6947050.92, "z" -> 0, "m" -> 28.6929999999993),
-            Map("x" -> 642576.423, "y" -> 6947047.7, "z" -> 0, "m" -> 32.45819999999367), Map("x" -> 642573.963, "y" -> 6947044.85, "z" -> 0, "m" -> 36.22349999999278),
-            Map("x" -> 642571.061, "y" -> 6947042.451, "z" -> 0, "m" -> 39.9887000000017), Map("x" -> 642567.8, "y" -> 6947040.569, "z" -> 0, "m" -> 43.754000000000815),
-            Map("x" -> 642564.27, "y" -> 6947039.257, "z" -> 0, "m" -> 47.51910000000498), Map("x" -> 642560.572, "y" -> 6947038.553, "z" -> 0, "m" -> 51.284499999994296),
-            Map("x" -> 642556.807, "y" -> 6947038.475, "z" -> 0, "m" -> 55.04970000000321), Map("x" -> 642553.082, "y" -> 6947039.026, "z" -> 0, "m" -> 58.81489999999758),
-            Map("x" -> 642549.502, "y" -> 6947040.19, "z" -> 0, "m" -> 62.580100000006496), Map("x" -> 642544.72, "y" -> 6947042.202, "z" -> 0, "m" -> 67.76810000000114)),
-            "OBJECTID" -> 14132, "SUBTYPE" -> 2, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 167, "CREATED_DATE" -> BigInt(1490794018000L)), ConstructionType.UnderConstruction,
-          SuravageLinkInterface, 67.768), None
-        )
-      suravageAddress.trackCode should be(Track.Combined.value)
-      suravageAddress.startAddressM should be(0)
-      suravageAddress.endAddressM should be(68)
-    }
-  }
+  //TODO will be implemented at VIITE-1550
+//  test("Saved Suravage Link gets roadaddress from DB if exists") {
+//    runWithRollback {
+//      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
+//      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,
+//          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID,
+//          SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('9124288','62555','2','0','1','0','68',
+//          to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+//          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022',
+//          '2','0','67,768','7096025','1516719259000',to_timestamp('23.04.2018 16:26:44,137893000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
+//      val suravageAddress =
+//        RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(7096025, 167,
+//          List(Point(642581.506, 6947078.918, 0.0),
+//            Point(642582.157, 6947074.293, 0.0), Point(642582.541, 6947069.504, 0.0), Point(642582.348, 6947064.703, 0.0), Point(642581.58, 6947059.961, 0.0),
+//            Point(642580.249, 6947055.344, 0.0), Point(642578.375, 6947050.92, 0.0), Point(642576.423, 6947047.7, 0.0), Point(642573.963, 6947044.85, 0.0),
+//            Point(642571.061, 6947042.451, 0.0), Point(642567.8, 6947040.569, 0.0), Point(642564.27, 6947039.257, 0.0), Point(642560.572, 6947038.553, 0.0),
+//            Point(642556.807, 6947038.475, 0.0), Point(642553.082, 6947039.026, 0.0), Point(642549.502, 6947040.19, 0.0), Point(642544.72, 6947042.202, 0.0)),
+//          Municipality, BothDirections, FeatureClass.CycleOrPedestrianPath, None,
+//          Map("LAST_EDITED_DATE" -> BigInt(1516719259000L), "CONSTRUCTIONTYPE" -> 1, "MTKCLASS" -> 12314, "Points" -> List(Map("x" -> 642581.506, "y" -> 6947078.918, "z" -> 0, "m" -> 0),
+//            Map("x" -> 642582.157, "y" -> 6947074.293, "z" -> 0, "m" -> 4.669999999998254), Map("x" -> 642582.541, "y" -> 6947069.504, "z" -> 0, "m" -> 9.474600000001374),
+//            Map("x" -> 642582.348, "y" -> 6947064.703, "z" -> 0, "m" -> 14.279200000004494), Map("x" -> 642581.58, "y" -> 6947059.961, "z" -> 0, "m" -> 19.08379999999306),
+//            Map("x" -> 642580.249, "y" -> 6947055.344, "z" -> 0, "m" -> 23.88839999999618), Map("x" -> 642578.375, "y" -> 6947050.92, "z" -> 0, "m" -> 28.6929999999993),
+//            Map("x" -> 642576.423, "y" -> 6947047.7, "z" -> 0, "m" -> 32.45819999999367), Map("x" -> 642573.963, "y" -> 6947044.85, "z" -> 0, "m" -> 36.22349999999278),
+//            Map("x" -> 642571.061, "y" -> 6947042.451, "z" -> 0, "m" -> 39.9887000000017), Map("x" -> 642567.8, "y" -> 6947040.569, "z" -> 0, "m" -> 43.754000000000815),
+//            Map("x" -> 642564.27, "y" -> 6947039.257, "z" -> 0, "m" -> 47.51910000000498), Map("x" -> 642560.572, "y" -> 6947038.553, "z" -> 0, "m" -> 51.284499999994296),
+//            Map("x" -> 642556.807, "y" -> 6947038.475, "z" -> 0, "m" -> 55.04970000000321), Map("x" -> 642553.082, "y" -> 6947039.026, "z" -> 0, "m" -> 58.81489999999758),
+//            Map("x" -> 642549.502, "y" -> 6947040.19, "z" -> 0, "m" -> 62.580100000006496), Map("x" -> 642544.72, "y" -> 6947042.202, "z" -> 0, "m" -> 67.76810000000114)),
+//            "OBJECTID" -> 14132, "SUBTYPE" -> 2, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 167, "CREATED_DATE" -> BigInt(1490794018000L)), ConstructionType.UnderConstruction,
+//          SuravageLinkInterface, 67.768), None
+//        )
+//      suravageAddress.trackCode should be(Track.Combined.value)
+//      suravageAddress.startAddressM should be(0)
+//      suravageAddress.endAddressM should be(68)
+//    }
+//  }
 
-  test("Suravage link builder when link is not in DB") {
-    val newLinkId1 = 5000
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.TowardsDigitizing
-    val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
-    val suravageAddress = OracleDatabase.withDynSession {
-      RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(newLinkId1, municipalityCode,
-        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
-        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30), None)
-    }
+  //TODO will be implemented at VIITE-1550
+//  test("Suravage link builder when link is not in DB") {
+//    val newLinkId1 = 5000
+//    val municipalityCode = 564
+//    val administrativeClass = Municipality
+//    val trafficDirection = TrafficDirection.TowardsDigitizing
+//    val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
+//    val suravageAddress = OracleDatabase.withDynSession {
+//      RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(newLinkId1, municipalityCode,
+//        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
+//        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30), None)
+//    }
+//
+//    suravageAddress.linkId should be(newLinkId1)
+//    suravageAddress.administrativeClass should be(administrativeClass)
+//    suravageAddress.constructionType should be(ConstructionType.UnderConstruction)
+//    suravageAddress.sideCode should be(SideCode.Unknown)
+//    suravageAddress.roadNumber should be(99)
+//    suravageAddress.roadPartNumber should be(24)
+//    suravageAddress.startMValue should be(0)
+//    suravageAddress.endMValue should be(19.026297590440446)
+//    suravageAddress.roadLinkSource should be(LinkGeomSource.SuravageLinkInterface)
+//    suravageAddress.elyCode should be(12)
+//    suravageAddress.municipalityCode should be(municipalityCode)
+//    suravageAddress.geometry.size should be(2)
+//  }
 
-    suravageAddress.linkId should be(newLinkId1)
-    suravageAddress.administrativeClass should be(administrativeClass)
-    suravageAddress.constructionType should be(ConstructionType.UnderConstruction)
-    suravageAddress.sideCode should be(SideCode.Unknown)
-    suravageAddress.roadNumber should be(99)
-    suravageAddress.roadPartNumber should be(24)
-    suravageAddress.startMValue should be(0)
-    suravageAddress.endMValue should be(19.026297590440446)
-    suravageAddress.roadLinkSource should be(LinkGeomSource.SuravageLinkInterface)
-    suravageAddress.elyCode should be(12)
-    suravageAddress.municipalityCode should be(municipalityCode)
-    suravageAddress.geometry.size should be(2)
-  }
-
-
-  test("Suravage link builder when link is in DB roadaddress table") {
-    runWithRollback {
-      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
-      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,
-          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID,
-          SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('9124288','62555','2','0','1','0','68',
-          to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022',
-          '2','0','67,768','7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
-      val suravageLinkId1 = 7096025
-      val municipalityCode = 564
-      val administrativeClass = Municipality
-      val trafficDirection = TrafficDirection.TowardsDigitizing
-      val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
-      val suravageAddress = RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(suravageLinkId1, municipalityCode,
-        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
-        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30), None)
-
-      suravageAddress.sideCode should be(SideCode.TowardsDigitizing)
-      suravageAddress.endAddressM should be(68)
-      suravageAddress.startAddressM should be(0)
-      suravageAddress.elyCode should be(8)
-      suravageAddress.trackCode should be(0)
-      suravageAddress.roadNumber should be(62555)
-      suravageAddress.roadPartNumber should be(2)
-    }
-  }
+//TODO will be implemented at VIITE-1550
+//  test("Suravage link builder when link is in DB roadaddress table") {
+//    runWithRollback {
+//      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
+//      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,
+//          VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,ELY,ROAD_TYPE,TERMINATED,COMMON_HISTORY_ID,
+//          SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values ('9124288','62555','2','0','1','0','68',
+//          to_date('23.04.2018','DD.MM.RRRR'),null,'k189826',to_date('23.04.2018','DD.MM.RRRR'),'3','0',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+//          MDSYS.SDO_ORDINATE_ARRAY(642581.506, 6947078.918, 0, 0, 642544.7200222166, 6947042.201990652, 0, 68)),null,'8','3','0','191816022',
+//          '2','0','67,768','7096025','1516719259000',to_timestamp('23.04.2018 00:00:00,000000000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
+//      val suravageLinkId1 = 7096025
+//      val municipalityCode = 564
+//      val administrativeClass = Municipality
+//      val trafficDirection = TrafficDirection.TowardsDigitizing
+//      val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
+//      val suravageAddress = RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(suravageLinkId1, municipalityCode,
+//        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
+//        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30), None)
+//
+//      suravageAddress.sideCode should be(SideCode.TowardsDigitizing)
+//      suravageAddress.endAddressM should be(68)
+//      suravageAddress.startAddressM should be(0)
+//      suravageAddress.elyCode should be(8)
+//      suravageAddress.trackCode should be(0)
+//      suravageAddress.roadNumber should be(62555)
+//      suravageAddress.roadPartNumber should be(2)
+//    }
+//  }
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
