@@ -617,7 +617,7 @@ object LinearLocationDAO {
       val query =
         s"""
         $selectFromLinearLocation
-        where $boundingBoxFilter and valid_to is null
+        where valid_to is null and roadway_id in (select roadway_id from valid_to is null and linear_location where $boundingBoxFilter)
         """
       queryList(query)
     }

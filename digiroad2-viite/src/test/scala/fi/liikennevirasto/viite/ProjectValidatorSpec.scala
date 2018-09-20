@@ -38,7 +38,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
