@@ -31,8 +31,10 @@
         var titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
-      var lon = _.get(roadData, 'geometry[0].x');
-      var lat = _.get(roadData, 'geometry[0].y');
+      var lonPoint = (roadData.sideCode === LinkValues.SideCode.AgainstDigitizing.value ? 'geometry[1].x' : 'geometry[0].x' );
+      var latPoint = (roadData.sideCode === LinkValues.SideCode.AgainstDigitizing.value ? 'geometry[1].y' : 'geometry[0].y' );
+      var lon = _.get(roadData, lonPoint);
+      var lat = _.get(roadData, latPoint);
       var title = constructTitle(roadData);
       if (lon && lat) {
         return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
@@ -50,7 +52,8 @@
      */
     var getCoordinatesFromRoadAddress = function(road) {
       return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section).then(function(roadData) {
-        var searchResult = roadLocationAPIResultParser(_.sortBy(roadData, ['roadPartNumber', 'startAddrMValue'])[0]);
+        var sortedRoad = _.sortBy(_.sortBy(roadData, function(addr){ return addr.startAddrMValue;} ), function(road){ return road.roadPartNumber; });
+        var searchResult = roadLocationAPIResultParser(sortedRoad[0]);
         if (searchResult.length === 0) {
           return $.Deferred().reject('Tuntematon tieosoite');
         } else {
