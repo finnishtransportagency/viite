@@ -291,6 +291,79 @@ object LinearLocationDAO {
     """.as[Long].list
   }
 
+  private def queryList(query: String): List[LinearLocation] = {
+    Q.queryNA[LinearLocation](query).list.groupBy(_.id).map {
+      case (_, list) =>
+        list.head
+    }.toList
+  }
+
+  def fetchById(id: Long): Option[LinearLocation] = {
+    time(logger, "Fetch linear location by id") {
+      val query =
+        s"""
+          $selectFromLinearLocation
+          where loc.id = $id and t.id < t2.id
+        """
+      Q.queryNA[LinearLocation](query).firstOption
+    }
+  }
+
+  def queryById(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by ids") {
+      if (ids.isEmpty) {
+        return List()
+      }
+      if (ids.size > 1000) {
+        return queryByIdMassQuery(ids, rejectInvalids)
+      }
+      val idString = ids.mkString(", ")
+      val where = s""" where loc.id in ($idString)"""
+
+      val validToFilter = if (rejectInvalids)
+        " and loc.valid_to is null"
+      else
+        ""
+
+      val query =
+        s"""
+          $selectFromLinearLocation
+          $where and t.id < t2.id $validToFilter
+        """
+      queryList(query)
+    }
+  }
+
+  def fetchByIdMassQuery(ids: Set[Long], includeFloating: Boolean = false, rejectInvalids: Boolean = true): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by id - mass query") {
+      MassQuery.withIds(ids) {
+        idTableName =>
+
+          val floating = if (!includeFloating)
+            "AND loc.floating = 0"
+          else
+            ""
+
+          val validToFilter = if (rejectInvalids)
+            " and loc.valid_to is null"
+          else
+            ""
+
+          val query =
+            s"""
+              $selectFromLinearLocation
+              join $idTableName i on i.id = loc.id
+              where t.id < t2.id $floating $validToFilter
+            """
+          queryList(query)
+      }
+    }
+  }
+
+  def queryByIdMassQuery(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
+    fetchByIdMassQuery(ids, includeFloating = true, rejectInvalids)
+  }
+
   def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id") {
       if (linkIds.isEmpty) {
@@ -317,13 +390,6 @@ object LinearLocationDAO {
     }
   }
 
-  private def queryList(query: String): List[LinearLocation] = {
-    Q.queryNA[LinearLocation](query).list.groupBy(_.id).map {
-      case (_, list) =>
-        list.head
-    }.toList
-  }
-
   def fetchByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id - mass query") {
       MassQuery.withIds(linkIds) {
@@ -343,30 +409,34 @@ object LinearLocationDAO {
     }
   }
 
-  def fetchById(id: Long): Option[LinearLocation] = {
-    time(logger, "Fetch linear location by id") {
+  def queryFloatingByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
+    time(logger, "Fetch floating linear locations by link ids") {
+      if (linkIds.isEmpty) {
+        return List()
+      }
+      if (linkIds.size > 1000) {
+        return queryFloatingByLinkIdMassQuery(linkIds)
+      }
+      val linkIdString = linkIds.mkString(", ")
+      val where = s""" where loc.link_id in ($linkIdString)"""
       val query =
         s"""
           $selectFromLinearLocation
-          where loc.id = $id and t.id < t2.id
+          $where AND loc.floating > 0 and t.id < t2.id and loc.valid_to is null
         """
-      Q.queryNA[LinearLocation](query).firstOption
+      queryList(query)
     }
   }
 
-  def fetchByIdMassQuery(ids: Set[Long], includeFloating: Boolean = false): List[LinearLocation] = {
-    time(logger, "Fetch linear locations by id - mass query") {
-      MassQuery.withIds(ids) {
+  def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
+    time(logger, "Fetch floating linear locations by link ids - mass query") {
+      MassQuery.withIds(linkIds) {
         idTableName =>
-          val floating = if (!includeFloating)
-            "AND loc.floating = 0"
-          else
-            ""
           val query =
             s"""
               $selectFromLinearLocation
-              join $idTableName i on i.id = loc.id
-              where t.id < t2.id $floating and loc.valid_to is null
+              join $idTableName i on i.id = loc.link_id
+              where loc.floating > 0 and t.id < t2.id and loc.valid_to is null
             """
           queryList(query)
       }
@@ -402,6 +472,7 @@ object LinearLocationDAO {
   /**
     * Expire Linear Locations. Don't use more than 1000 linear locations at once.
     *
+    * @param ids
     * @return Number of updated rows
     */
   def expireById(ids: Set[Long]): Int = {
@@ -485,87 +556,19 @@ object LinearLocationDAO {
       val expired = fetchById(linearLocationId).getOrElse(
         throw new IllegalStateException(s"""Failed to update linear location $linearLocationId geometry. Linear location not found."""))
       expireById(Set(linearLocationId))
-      create(Seq(expired.copy(id = NewLinearLocation, geometry = geometry)), createdBy)
-    }
-  }
 
-  def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
-    time(logger, "Fetch floating linear locations by link id - mass query") {
-      MassQuery.withIds(linkIds) {
-        idTableName =>
-          val query =
-            s"""
-              $selectFromLinearLocation
-              join $idTableName i on i.id = loc.link_id
-              where loc.floating > 0 and t.id < t2.id and loc.valid_to is null
-            """
-          queryList(query)
+      // Check if the side code should be flipped
+      val oldDirectionTowardsDigitization = GeometryUtils.isTowardsDigitisation(expired.geometry)
+      val newDirectionTowardsDigitization = GeometryUtils.isTowardsDigitisation(geometry)
+      val flipSideCode = oldDirectionTowardsDigitization != newDirectionTowardsDigitization
+
+      val sideCode = if (flipSideCode) {
+        SideCode.switch(expired.sideCode)
+      } else {
+        expired.sideCode
       }
-    }
-  }
 
-  def queryFloatingByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
-    time(logger, "Fetch floating linear locations by link ids") {
-      if (linkIds.isEmpty) {
-        return List()
-      }
-      if (linkIds.size > 1000) {
-        return queryFloatingByLinkIdMassQuery(linkIds)
-      }
-      val linkIdString = linkIds.mkString(", ")
-      val where = s""" where loc.link_id in ($linkIdString)"""
-      val query =
-        s"""
-          $selectFromLinearLocation
-          $where AND loc.floating > 0 and t.id < t2.id and loc.valid_to is null
-        """
-      queryList(query)
-    }
-  }
-
-  def queryById(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
-    time(logger, "Fetch linear locations by ids") {
-      if (ids.isEmpty) {
-        return List()
-      }
-      if (ids.size > 1000) {
-        return queryByIdMassQuery(ids, rejectInvalids)
-      }
-      val idString = ids.mkString(", ")
-      val where = s""" where loc.id in ($idString)"""
-
-      val validToFilter = if (rejectInvalids)
-        " and loc.valid_to is null"
-      else
-        ""
-
-      val query =
-        s"""
-          $selectFromLinearLocation
-          $where and t.id < t2.id $validToFilter
-        """
-      queryList(query)
-    }
-  }
-
-  def queryByIdMassQuery(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
-    time(logger, "Fetch linear locations by ids - mass query") {
-      MassQuery.withIds(ids) {
-        idTableName =>
-
-          val validToFilter = if (rejectInvalids)
-            " and loc.valid_to is null"
-          else
-            ""
-
-          val query =
-            s"""
-              $selectFromLinearLocation
-              join $idTableName i on i.id = loc.id
-              where t.id < t2.id $validToFilter
-            """
-          queryList(query)
-      }
+      create(Seq(expired.copy(id = NewLinearLocation, geometry = geometry, sideCode = sideCode)), createdBy)
     }
   }
 

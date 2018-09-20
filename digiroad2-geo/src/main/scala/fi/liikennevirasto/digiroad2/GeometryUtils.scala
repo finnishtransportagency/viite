@@ -427,4 +427,24 @@ object GeometryUtils {
     val sourcePoint = geom.minBy(p => p.distance2DTo(referencePoint))
     geom.map(p => p.minus(sourcePoint))
   }
+
+  /**
+    * Check if geometry is towards digitisation.
+    *
+    * - Starting point is south from the ending point
+    * - In case of exactly horizontal starting and end points check if the starting point is to the east of the ending
+    *
+    * @param geometry
+    * @return
+    */
+  def isTowardsDigitisation(geometry: Seq[Point]): Boolean = {
+    if (geometry.head.y < geometry.last.y) {
+      true
+    } else if (geometry.head.y == geometry.last.y && geometry.head.x < geometry.last.x) {
+      true
+    } else {
+      false
+    }
+  }
+
 }
