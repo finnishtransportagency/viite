@@ -45,9 +45,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                                           "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
   private def linearLocationStatement() =
-    dynamicSession.prepareStatement("insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code, cal_start_m, cal_end_m, link_source, adjusted_timestamp, " +
-      "modified_date, modified_by, floating, geometry, valid_from, valid_to) " +
-      "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?,? , ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+    dynamicSession.prepareStatement("insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code, cal_start_addr_m, cal_end_addr_m, link_source, " +
+      "created_by, floating, geometry, valid_from, valid_to) " +
+      "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
 
   def datePrinter(date: Option[DateTime]): String = {
     date match {
@@ -92,17 +92,15 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case None => linearLocationStatement.setNull(8, Types.BIGINT)
     }
     linearLocationStatement.setLong(9, linearLocation.linkGeomSource.value)
-    linearLocationStatement.setLong(10, 0)
-    linearLocationStatement.setTimestamp(11, new Timestamp(System.currentTimeMillis()))
-    linearLocationStatement.setString(12, linearLocation.createdBy)
-    linearLocationStatement.setLong(13, linearLocation.floating.value)
-    linearLocationStatement.setDouble(14, linearLocation.x1.get)
-    linearLocationStatement.setDouble(15, linearLocation.y1.get)
-    linearLocationStatement.setDouble(16, linearLocation.x2.get)
-    linearLocationStatement.setDouble(17, linearLocation.y2.get)
-    linearLocationStatement.setDouble(18, linearLocation.endMeasure)
-    linearLocationStatement.setString(19, datePrinter(linearLocation.validFrom))
-    linearLocationStatement.setString(20, datePrinter(linearLocation.validTo))
+    linearLocationStatement.setString(10, linearLocation.createdBy)
+    linearLocationStatement.setLong(11, linearLocation.floating.value)
+    linearLocationStatement.setDouble(12, linearLocation.x1.get)
+    linearLocationStatement.setDouble(13, linearLocation.y1.get)
+    linearLocationStatement.setDouble(14, linearLocation.x2.get)
+    linearLocationStatement.setDouble(15, linearLocation.y2.get)
+    linearLocationStatement.setDouble(16, linearLocation.endMeasure)
+    linearLocationStatement.setString(17, datePrinter(linearLocation.validFrom))
+    linearLocationStatement.setString(18, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
 
   }
@@ -124,30 +122,30 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 
-  protected def fetchAddressesFromConversionTable(minLinkId: Long, maxLinkId: Long, filter: String): Seq[ConversionAddress] = {
+  protected def fetchAddressesFromConversionTable(minRoadwayId: Long, maxRoadwayId: Long, filter: String): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
                TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
                loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-               WHERE linkid > $minLinkId AND linkid <= $maxLinkId AND  aet >= 0 AND let >= 0 #$filter """
+               WHERE ajorataid > $minRoadwayId AND ajorataid <= $maxRoadwayId AND  aet >= 0 AND let >= 0 #$filter """
         .as[ConversionAddress].list
     }
   }
 
-  private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
-    val (chunks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
-      case ((fchunks, index), linkId) =>
+  private def generateChunks(roadwayIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+    val (chunks, _) = roadwayIds.foldLeft((Seq[Long](0), 0)) {
+      case ((fchunks, index), roadwayId) =>
         if (index > 0 && index % chunkNumber == 0) {
-          (fchunks ++ Seq(linkId), index + 1)
+          (fchunks ++ Seq(roadwayId), index + 1)
         } else {
           (fchunks, index + 1)
         }
     }
-    val result = if (chunks.last == linkIds.last) {
+    val result = if (chunks.last == roadwayIds.last) {
       chunks
     } else {
-      chunks ++ Seq(linkIds.last)
+      chunks ++ Seq(roadwayIds.last)
     }
 
     result.zip(result.tail)
@@ -157,8 +155,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      val linkIds = sql"""select distinct linkid from #$tableName where linkid is not null order by linkid""".as[Long].list
-      generateChunks(linkIds, 25000l)
+      val roadwayIds = sql"""select distinct ajorataid from #$tableName where ajorataid is not null order by ajorataid""".as[Long].list
+      generateChunks(roadwayIds, 25000l)
     }
   }
 
