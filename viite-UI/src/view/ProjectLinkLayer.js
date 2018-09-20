@@ -129,11 +129,11 @@
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-      var ctrlPressed = event.mapBrowserEvent !== undefined ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
+      var ctrlPressed = !_.isUndefined(event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
-      var rawSelection = map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function(feature) {
+      var rawSelection = !_.isUndefined(event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function(feature) {
         return feature;
-      });
+      }) : event.selected;
       var selection = _.find(ctrlPressed ? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         if (!_.isUndefined(selectionTarget))
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
