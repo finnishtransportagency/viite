@@ -117,8 +117,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
 
   private def adjustLinearLocation(linearLocation: IncomingLinearLocation, coefficient: Double): IncomingLinearLocation = {
-    //val coefficient: Double = length / (linearLocation.endMeasure - linearLocation.startMeasure)
-    println(s" linkid: ${linearLocation.linkId}, (${linearLocation.startMeasure * coefficient}),(${linearLocation.endMeasure * coefficient})")
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 
@@ -191,8 +189,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
     val suppressedRoadLinks = conversionAddress.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
     suppressedRoadLinks.map(_.roadwayId).distinct.foreach {
-      roadwayId => /*println("Suppressed row linkID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(ra.linkId, printConversionAddress(ra)))*/
-        println(s"Suppressed roadway_id $roadwayId because it contains NULL LINKID values ")
+      roadwayId => println(s"Suppressed roadway_id $roadwayId because it contains NULL LINKID values ")
     }
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
