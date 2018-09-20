@@ -155,7 +155,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val tableName = importOptions.conversionTable
       //val roadwayIds = sql"""select distinct ajorataid from #$tableName where ajorataid is not null order by ajorataid""".as[Long].list
       //generateChunks(roadwayIds, 1000)
-      Seq((76637, 77924))
+      Seq((75394, 76637), (76637, 77924), (77924, 78000))
     }
   }
 
