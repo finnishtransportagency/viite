@@ -170,7 +170,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val conversionAddresses = fetchAddressesFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
-        val (conversionAddressesFromChunk, complementaryAddresses) = conversionAddresses.partition(address => (min+1 to max).contains(address.roadwayId))
+        val (conversionAddressesFromChunk, complementaryAddresses) = conversionAddresses.partition(address => (min to max).contains(address.roadwayId))
         importAddresses(conversionAddressesFromChunk, complementaryAddresses)
     }
   }
