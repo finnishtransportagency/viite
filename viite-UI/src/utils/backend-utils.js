@@ -300,7 +300,7 @@
     };
 
     this.getCoordinatesFromRoadAddress = function (roadNumber, part, distance, lane) {
-      // TODO: find coordinates of the fetcehed road address and move map location.
+      // TODO: find coordinates of the fetched road address and move map location.
       return $.getJSON("roadlinks/roadaddress/" + roadNumber + "/" + part, {tie: roadNumber, osa: part, etaisyys: distance, ajorata: lane})
         .then(function (x) {
           return JSON.parse(x);
