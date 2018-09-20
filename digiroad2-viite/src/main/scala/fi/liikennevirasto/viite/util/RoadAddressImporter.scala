@@ -170,7 +170,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val conversionAddresses = fetchAddressesFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
-        val (conversionAddressesFromChunk, complementaryAddresses) = conversionAddresses.partition(address => (min to max).contains(address.roadwayId))
+        val (conversionAddressesFromChunk, complementaryAddresses) = conversionAddresses.partition(address => (min+1 to max).contains(address.roadwayId))
         importAddresses(conversionAddressesFromChunk, complementaryAddresses)
     }
   }
@@ -194,7 +194,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
     val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.filterNot(ca => suppressedRoadLinks.map(_.roadwayId).distinct.contains(ca.roadwayId)).partition(_.validTo.isEmpty)
-    val groupedLinkCoeffs = (validConversionAddresses ++ complementaryAddresses).groupBy(_.linkId).mapValues{
+    val validComplementaryAddresses = complementaryAddresses.filterNot(_.validTo.isEmpty)
+    val groupedLinkCoeffs = (validConversionAddresses ++ validComplementaryAddresses).groupBy(_.linkId).mapValues{
       addresses =>
         val minM = addresses.map(_.startM).min
         val maxM = addresses.map(_.endM).max
