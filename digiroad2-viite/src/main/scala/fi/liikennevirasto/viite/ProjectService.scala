@@ -1788,7 +1788,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val existingInRoadNames = projectLinkNames.flatMap(n => RoadNameDAO.getCurrentRoadNamesByRoadNumber(n.roadNumber)).map(_.roadNumber)
     val (existingLinkNames, newLinkNames) = projectLinkNames.partition(pln => existingInRoadNames.contains(pln.roadNumber))
     val newNames = newLinkNames.map {
-      ln => RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, Some(DateTime.now()), validFrom = Some(project.startDate), createdBy = project.createdBy)
+      ln => RoadName(NewRoadNameId, ln.roadNumber, ln.roadName, startDate = Some(project.startDate) , validFrom = Some(DateTime.now()), createdBy = project.createdBy)
     }
     RoadNameDAO.create(newNames)
     projectLinkNames.foreach(en => ProjectLinkNameDAO.removeProjectLinkName(en.roadNumber, project.id))
