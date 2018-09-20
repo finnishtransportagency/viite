@@ -166,6 +166,7 @@ object LinearLocationDAO {
 
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
+  // TODO If not used, remove
   def dateTimeParse(string: String): DateTime = {
     formatter.parseDateTime(string)
   }
@@ -182,6 +183,7 @@ object LinearLocationDAO {
       TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t2
     """
 
+  // TODO If not used, remove
   def optDateTimeParse(string: String): Option[DateTime] = {
     try {
       if (string == null || string == "")
@@ -203,24 +205,22 @@ object LinearLocationDAO {
         cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
+
+    // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
-    val plIds = Sequences.fetchLinearLocationIds(idLess.size)
-    val createLinearLocations = ready ++ idLess.zip(plIds).map(x =>
+    val newIds = Sequences.fetchLinearLocationIds(idLess.size)
+    val createLinearLocations = ready ++ idLess.zip(newIds).map(x =>
       x._1.copy(id = x._2)
     )
-    val savedIds = createLinearLocations.foreach {
+
+    createLinearLocations.foreach {
       case (location) =>
-        val id = if (location.id == NewLinearLocation) {
-          getNextLinearLocationId
-        } else {
-          location.id
-        }
         val roadwayId = if (location.roadwayId == NewRoadwayId) {
           Sequences.nextRoadwaySeqValue
         } else {
           location.roadwayId
         }
-        ps.setLong(1, id)
+        ps.setLong(1, location.id)
         ps.setLong(2, roadwayId)
         ps.setLong(3, location.orderNumber)
         ps.setLong(4, location.linkId)
@@ -455,6 +455,7 @@ object LinearLocationDAO {
     }
   }
 
+  // TODO If not used, should be removed
   def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
     dateTime.map(dt => new Timestamp(dt.getMillis))
   }
