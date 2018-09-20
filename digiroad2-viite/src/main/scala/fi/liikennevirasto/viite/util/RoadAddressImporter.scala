@@ -126,9 +126,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
-               TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
-               loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-               WHERE ajorataid > $minRoadwayId AND ajorataid <= $maxRoadwayId AND  aet >= 0 AND let >= 0 #$filter """
+           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+           loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
+           WHERE aet >= 0 AND let >= 0 #$filter AND linkid IN (SELECT linkid FROM  #$tableName where ajorataid > $minRoadwayId AND ajorataid <= $maxRoadwayId AND  aet >= 0 AND let >= 0 #$filter) """
         .as[ConversionAddress].list
     }
   }
@@ -169,14 +169,15 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case (min, max) =>
         print(s"${DateTime.now()} - ")
         println(s"Processing chunk ($min, $max)")
-        val conversionAddress = fetchAddressesFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
+        val conversionAddresses = fetchAddressesFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
         print(s"\n${DateTime.now()} - ")
-        println("Read %d rows from conversion database".format(conversionAddress.size))
-        importAddresses(conversionAddress)
+        println("Read %d rows from conversion database".format(conversionAddresses.size))
+        val (conversionAddressesFromChunk, complementaryAddresses) = conversionAddresses.partition(address => (min to max).contains(address.roadwayId))
+        importAddresses(conversionAddressesFromChunk, complementaryAddresses)
     }
   }
 
-  private def importAddresses(conversionAddress: Seq[ConversionAddress]): Unit = {
+  private def importAddresses(conversionAddress: Seq[ConversionAddress], complementaryAddresses: Seq[ConversionAddress]): Unit = {
 
     val linkIds = conversionAddress.map(_.linkId)
     print(s"${DateTime.now()} - ")
@@ -196,7 +197,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
     val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.filterNot(ca => suppressedRoadLinks.map(_.roadwayId).distinct.contains(ca.roadwayId)).partition(_.validTo.isEmpty)
-    val groupedLinkCoeffs = validConversionAddresses.groupBy(_.linkId).mapValues{
+    val groupedLinkCoeffs = (validConversionAddresses ++ complementaryAddresses).groupBy(_.linkId).mapValues{
       addresses =>
         val minM = addresses.map(_.startM).min
         val maxM = addresses.map(_.endM).max
