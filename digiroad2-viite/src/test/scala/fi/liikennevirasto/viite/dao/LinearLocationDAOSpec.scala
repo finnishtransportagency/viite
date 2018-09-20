@@ -2,15 +2,14 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.BatchUpdateException
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.{Point, asset}
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
@@ -279,7 +278,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
 
       val before = LinearLocationDAO.fetchById(id1).getOrElse(fail())
-      before.sideCode should be (asset.SideCode.TowardsDigitizing)
+      before.sideCode should be(asset.SideCode.TowardsDigitizing)
 
       // Update geometry so that the direction of digitization changes
       val newStart = Point(0.0, 0.0)
@@ -300,7 +299,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
       updated.geometry.last.y should be(newEnd.y +- 0.001)
-      updated.sideCode should be (asset.SideCode.TowardsDigitizing)
+      updated.sideCode should be(asset.SideCode.TowardsDigitizing)
 
     }
   }
@@ -313,7 +312,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
 
       val before = LinearLocationDAO.fetchById(id1).getOrElse(fail())
-      before.sideCode should be (asset.SideCode.TowardsDigitizing)
+      before.sideCode should be(asset.SideCode.TowardsDigitizing)
 
       // Update geometry so that the direction of digitization changes
       val newStart = Point(0.0, 100.0)
@@ -334,7 +333,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
       updated.geometry.last.y should be(newEnd.y +- 0.001)
-      updated.sideCode should be (asset.SideCode.AgainstDigitizing)
+      updated.sideCode should be(asset.SideCode.AgainstDigitizing)
 
     }
   }
@@ -347,7 +346,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
 
       val before = LinearLocationDAO.fetchById(id1).getOrElse(fail())
-      before.sideCode should be (asset.SideCode.TowardsDigitizing)
+      before.sideCode should be(asset.SideCode.TowardsDigitizing)
 
       // Update geometry so that the direction of digitization changes
       val newStart = Point(100.0, 0.0)
@@ -368,7 +367,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
       updated.geometry.last.y should be(newEnd.y +- 0.001)
-      updated.sideCode should be (asset.SideCode.AgainstDigitizing)
+      updated.sideCode should be(asset.SideCode.AgainstDigitizing)
 
     }
   }
@@ -459,6 +458,19 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       locations2.filter(l => l.id == id1).size should be(1)
       locations2.filter(l => l.id == id2).size should be(1)
       locations2.filter(l => l.id == id3).size should be(1)
+    }
+  }
+
+  test("Fetch by bounding box") {
+    runWithRollback {
+      val (id1, id2, id3) = (LinearLocationDAO.getNextLinearLocationId, LinearLocationDAO.getNextLinearLocationId, LinearLocationDAO.getNextLinearLocationId)
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = 111111111l)))
+      val linkId = 222222222l
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+      LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333l)))
+      val locations = LinearLocationDAO.fetchByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)))
+      locations.size should be(1)
+      locations.filter(l => l.linkId == linkId).size should be(1)
     }
   }
 
