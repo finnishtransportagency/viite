@@ -193,7 +193,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
-    val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.filterNot(ca => suppressedRoadLinks.map(_.roadwayId).distinct.contains(ca.roadwayId)).partition(_.validTo.isEmpty)
+    val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.partition(_.validTo.isEmpty)
     val validComplementaryAddresses = complementaryAddresses.filterNot(_.validTo.isEmpty)
     val groupedLinkCoeffs = (validConversionAddresses ++ validComplementaryAddresses).groupBy(_.linkId).mapValues{
       addresses =>
@@ -202,7 +202,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val roadLink = mappedRoadLinks.getOrElse(addresses.head.linkId, mappedHistoryRoadLinks(addresses.head.linkId))
         GeometryUtils.geometryLength(roadLink.geometry) / (maxM - minM)
     }
-    val (currentConversionAddresses, historyConversionAddresses) = validConversionAddresses.partition(_.endDate.isEmpty)
+    val (currentConversionAddresses, historyConversionAddresses) = validConversionAddresses.filterNot(ca => suppressedRoadLinks.map(_.roadwayId).distinct.contains(ca.roadwayId)).partition(_.endDate.isEmpty)
 
     val currentMappedConversionAddresses = currentConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val historyMappedConversionAddresses = historyConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
