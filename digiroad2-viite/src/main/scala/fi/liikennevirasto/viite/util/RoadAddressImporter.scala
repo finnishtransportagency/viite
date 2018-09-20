@@ -170,14 +170,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val conversionAddresses = fetchAddressesFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
-        val (conversionAddressesFromChunk, complementaryAddresses) = conversionAddresses.partition(address => (min to max).contains(address.roadwayId))
-        importAddresses(conversionAddressesFromChunk, complementaryAddresses)
+        val (conversionAddressesFromChunk, complementaryAddresses) = conversionAddresses.filter(address => (min to max).contains(address.roadwayId))
+        importAddresses(conversionAddressesFromChunk, conversionAddresses)
     }
   }
 
-  private def importAddresses(conversionAddress: Seq[ConversionAddress], complementaryAddresses: Seq[ConversionAddress]): Unit = {
+  private def importAddresses(conversionAddressFromChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress]): Unit = {
 
-    val linkIds = conversionAddress.map(_.linkId)
+    val linkIds = conversionAddressFromChunk.map(_.linkId)
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(linkIds.size))
     val mappedRoadLinks = fetchRoadLinksFromVVH(linkIds.toSet)
@@ -187,15 +187,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     print(s"${DateTime.now()} - ")
     println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
 
-    val suppressedRoadLinks = conversionAddress.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
+    val suppressedRoadLinks = conversionAddressFromChunk.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
     suppressedRoadLinks.map(_.roadwayId).distinct.foreach {
       roadwayId => println(s"Suppressed roadway_id $roadwayId because it contains NULL LINKID values ")
     }
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
-    val (validConversionAddresses, expiredConversionAddresses) = conversionAddress.partition(_.validTo.isEmpty)
-    val validComplementaryAddresses = complementaryAddresses.filterNot(_.validTo.isEmpty)
-    val groupedLinkCoeffs = (validConversionAddresses ++ validComplementaryAddresses).groupBy(_.linkId).mapValues{
+    val (validConversionAddresses, expiredConversionAddresses) = conversionAddressFromChunk.partition(_.validTo.isEmpty)
+    val groupedLinkCoeffs = allConversionAddresses.filter(_.validTo.isEmpty).groupBy(_.linkId).mapValues{
       addresses =>
         val minM = addresses.map(_.startM).min
         val maxM = addresses.map(_.endM).max
