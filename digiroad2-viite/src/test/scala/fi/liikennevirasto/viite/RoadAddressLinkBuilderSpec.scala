@@ -256,7 +256,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-
+/*
   test("Suravage link builder when link is in DB project-link table") {
     runWithRollback {
       sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
@@ -282,7 +282,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
       suravageAddress.sideCode should be(SideCode.AgainstDigitizing)
     }
   }
-
+*/
   //TODO Probably this will be not needed anymore
 //  test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {
 //    val geom = Seq(Point(379483.273, 6672835.486), Point(379556.289, 6673054.073))
