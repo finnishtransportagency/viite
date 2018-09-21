@@ -182,6 +182,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/midpoint/:linkId") {
+    val linkId = params("linkId").toLong
+    time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
+      roadAddressService.
+    }
+  }
+
   get("/roadlinks/adjacent/target") {
     val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String, Any]]
     val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet

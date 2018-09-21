@@ -526,10 +526,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     * @return Seq[RoadAddress]
     */
   def getRoadAddressErrors(includesHistory: Boolean = false): List[AddressConsistencyValidator.AddressErrorDetails] = {
-    throw new NotImplementedError("Will be implementd at VIITE-1550")
-    //    withDynSession {
-    //      RoadAddressDAO.fetchAllRoadAddressErrors(includesHistory)
-    //    }
+    withDynSession {
+      roadAddressDAO.fetchAllRoadAddressErrors(includesHistory)
+    }
   }
 
 //  //Only used outside the class for test propose
