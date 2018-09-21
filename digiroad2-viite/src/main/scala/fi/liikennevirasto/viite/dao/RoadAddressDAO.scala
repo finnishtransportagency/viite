@@ -1545,17 +1545,12 @@ object RoadAddressDAO {
     query + s" WHERE ra.road_number = $road $trackFilter AND ra.floating = 0 " + withValidityCheck
   }
 
-  def withRoadNumberAddress(road: Long, trackCodes: Seq[Int], addrMValue: Option[Long])(query: String): String = {
-    val trackFilter = if(trackCodes.nonEmpty) {
-      s" AND ra.TRACK_CODE in (${trackCodes.mkString(",")})"
-    } else {
-      ""
-    }
+  def withRoadNumberAddress(road: Long, addrMValue: Option[Long])(query: String): String = {
     val addrMValueFilter = addrMValue match {
       case Some(v) => s" AND ra.start_addr_M <= $v AND ra.end_addr_M > $v"
       case None => ""
     }
-    query + s" WHERE ra.road_number = $road $trackFilter $addrMValueFilter " + withValidityCheck
+    query + s" WHERE ra.road_number = $road $addrMValueFilter " + withValidityCheck
   }
 
   def withRoadNumberParts(road: Long, roadParts: Seq[Long], trackCodes: Seq[Int])(query: String): String = {

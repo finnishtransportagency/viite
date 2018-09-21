@@ -940,9 +940,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getRoadAddressWithRoadNumberAddress(road: Long, tracks: Seq[Int], addrMValue: Option[Long]): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
     withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumberAddress(road, tracks, addrMValue))
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumberAddress(road, addrMValue))
     }
   }
 
