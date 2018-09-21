@@ -301,7 +301,7 @@
 
     this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, callback) {
 
-      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber}, callback);
+      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: 0}, callback);
     };
 
     this.removeProjectLinkSplit = function (data, success, errorCallback) {
