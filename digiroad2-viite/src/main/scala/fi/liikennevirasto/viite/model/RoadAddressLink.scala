@@ -41,7 +41,7 @@ trait RoadAddressLinkLike extends PolyLine {
   def blackUnderline: Boolean
 }
 
-case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
+case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geometry: Seq[Point],
                            length: Double, administrativeClass: AdministrativeClass,
                            linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,

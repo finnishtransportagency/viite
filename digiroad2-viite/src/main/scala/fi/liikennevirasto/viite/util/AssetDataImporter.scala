@@ -189,7 +189,8 @@ class AssetDataImporter {
     val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val service = new RoadAddressService(linkService, new RoadwayAddressMapper(new RoadAddressDAO()), eventBus)
+    val roadAddressDAO = new RoadAddressDAO
+    val service = new RoadAddressService(linkService, roadAddressDAO, new RoadwayAddressMapper(roadAddressDAO), eventBus)
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     val municipalities = OracleDatabase.withDynTransaction {

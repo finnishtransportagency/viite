@@ -138,7 +138,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadwayAddress.discontinuity)
   }
 
-  def getRoadAddresses(linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
+  def getRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
 //TODO check if this can be a improvement
 //    val roadwayAddressesF = Future(roadAddressDAO.fetchByRoadwayIds(linearLocations.map(_.roadwayId).toSet))
 //
@@ -148,8 +148,17 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
 
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayId)
     val roadwayAddresses = OracleDatabase.withDynSession {
-      roadAddressDAO.fetchByRoadwayIds(linearLocations.map(_.roadwayId).toSet)
+      roadAddressDAO.fetchAllByRoadwayIds(linearLocations.map(_.roadwayId).toSet)
     }
+
+    roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayId)))
+  }
+
+  def getRoadAddressesByRoadway(roadwayAddresses: Seq[RoadwayAddress]) : Seq[RoadAddress] = {
+
+    val linearLocations = LinearLocationDAO.fetchByRoadways(roadwayAddresses.map(_.roadwayId).toSet)
+
+    val groupedLinearLocations = linearLocations.groupBy(_.roadwayId)
 
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayId)))
   }
