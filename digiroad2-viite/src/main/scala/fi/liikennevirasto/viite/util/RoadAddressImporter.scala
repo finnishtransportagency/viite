@@ -120,13 +120,24 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 
-  protected def fetchAddressesFromConversionTable(minRoadwayId: Long, maxRoadwayId: Long, filter: String): Seq[ConversionAddress] = {
+  protected def fetchValidAddressesFromConversionTable(minRoadwayId: Long, maxRoadwayId: Long): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
            TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL #$filter AND linkid IN (SELECT linkid FROM  #$tableName where ajorataid > $minRoadwayId AND ajorataid <= $maxRoadwayId AND  aet >= 0 AND let >= 0 #$filter) """
+           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL AND linkid IN (SELECT linkid FROM  #$tableName where ajorataid > $minRoadwayId AND ajorataid <= $maxRoadwayId AND  aet >= 0 AND let >= 0) """
+        .as[ConversionAddress].list
+    }
+  }
+
+  protected def fetchExpiredAddressesFromConversionTable(minRoadwayId: Long, maxRoadwayId: Long): Seq[ConversionAddress] = {
+    conversionDatabase.withDynSession {
+      val tableName = importOptions.conversionTable
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
+           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+           loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
+           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm is not null and ajorataid > $minRoadwayId AND ajorataid <= $maxRoadwayId """
         .as[ConversionAddress].list
     }
   }
@@ -155,10 +166,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val tableName = importOptions.conversionTable
       val roadwayIds = sql"""select distinct ajorataid from #$tableName where ajorataid is not null order by ajorataid""".as[Long].list
       generateChunks(roadwayIds, 1000)
+      //Seq((76638, 76641))
     }
   }
-
-  private val withCurrentAndHistoryRoadAddress: String = ""
 
   def importRoadAddress(): Unit = {
     val chunks = fetchChunkLinkIdsFromConversionTable()
@@ -167,17 +177,18 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case (min, max) =>
         print(s"${DateTime.now()} - ")
         println(s"Processing chunk ($min, $max)")
-        val conversionAddresses = fetchAddressesFromConversionTable(min, max, withCurrentAndHistoryRoadAddress)
+        val conversionAddresses = fetchValidAddressesFromConversionTable(min, max)
+        val expiredAddresses = fetchExpiredAddressesFromConversionTable(min, max)
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
         val conversionAddressesFromChunk = conversionAddresses.filter(address => (min+1 to max).contains(address.roadwayId))
-        importAddresses(conversionAddressesFromChunk, conversionAddresses)
+        importAddresses(conversionAddressesFromChunk, conversionAddresses, expiredAddresses)
     }
   }
 
-  private def importAddresses(conversionAddressFromChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress]): Unit = {
+  private def importAddresses(validConversionAddressesInChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress], expiredConversionAddresses: Seq[ConversionAddress]): Unit = {
 
-    val linkIds = conversionAddressFromChunk.map(_.linkId)
+    val linkIds = validConversionAddressesInChunk.map(_.linkId)
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(linkIds.size))
     val mappedRoadLinks = fetchRoadLinksFromVVH(linkIds.toSet)
@@ -187,13 +198,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     print(s"${DateTime.now()} - ")
     println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
 
-    val suppressedRoadLinks = conversionAddressFromChunk.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
+    val suppressedRoadLinks = validConversionAddressesInChunk.filter(ra => ra.linkId == 0 || (mappedRoadLinks.get(ra.linkId).isEmpty && mappedHistoryRoadLinks.get(ra.linkId).isEmpty))
     suppressedRoadLinks.map(_.roadwayId).distinct.foreach {
       roadwayId => println(s"Suppressed roadway_id $roadwayId because it contains NULL LINKID values ")
     }
 
     //TODO - insert expiredConversionAddresses and historyConversionAddresses
-    val (validConversionAddresses, expiredConversionAddresses) = conversionAddressFromChunk.partition(_.validTo.isEmpty)
     val groupedLinkCoeffs = allConversionAddresses.filter(_.validTo.isEmpty).groupBy(_.linkId).mapValues{
       addresses =>
         val minM = addresses.map(_.startM).min
@@ -201,10 +211,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val roadLink = mappedRoadLinks.getOrElse(addresses.head.linkId, mappedHistoryRoadLinks(addresses.head.linkId))
         GeometryUtils.geometryLength(roadLink.geometry) / (maxM - minM)
     }
-    val (currentConversionAddresses, historyConversionAddresses) = validConversionAddresses.filterNot(ca => suppressedRoadLinks.map(_.roadwayId).distinct.contains(ca.roadwayId)).partition(_.endDate.isEmpty)
+    val (currentConversionAddresses, historyConversionAddresses) = validConversionAddressesInChunk.filterNot(ca => suppressedRoadLinks.map(_.roadwayId).distinct.contains(ca.roadwayId)).partition(_.endDate.isEmpty)
 
     val currentMappedConversionAddresses = currentConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val historyMappedConversionAddresses = historyConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
+    val expiredMappedConversionAddresses = expiredConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadAddressPs = roadAddressStatement()
     val linearLocationPs = linearLocationStatement()
 
@@ -251,7 +262,21 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val isReversed = if(currentAddresses.head.linkId == minAddress.linkId && currentAddresses.head.startM == minAddress.startM) 1 else 0
 
         val roadAddress = IncomingRoadAddress(minAddress.roadwayId, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, isReversed, minAddress.startDate,
-          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = 0)
+          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, if(minAddress.endDate.isDefined) 1 else 0)
+
+        insertRoadAddress(roadAddressPs, roadAddress)
+    }
+
+    expiredMappedConversionAddresses.mapValues{
+      case address =>
+        address.sortBy(_.startAddressM).zip(1 to address.size)
+    }.foreach{
+      case (key, addresses) =>
+        val minAddress = addresses.head._1
+        val maxAddress = addresses.last._1
+
+        val roadAddress = IncomingRoadAddress(minAddress.roadwayId, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
+          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, minAddress.validTo, maxAddress.discontinuity, if(minAddress.endDate.isDefined) 1 else 0)
 
         insertRoadAddress(roadAddressPs, roadAddress)
     }
