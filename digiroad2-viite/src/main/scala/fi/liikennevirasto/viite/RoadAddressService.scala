@@ -497,7 +497,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     */
   def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
     //TODO Should work also for suravage complementary links
-    throw new NotImplementedError("Will be implementd at VIITE-1550")
+
+    val (roadlinks, historyRoadlinks) = roadLinkService.getAllRoadLinksFromVVH(Set(linkId))
+
+    val linearLocations = LinearLocationDAO.fetchByLinkId(Set(linkId))
+
+    val (floatingRoadAddress, roadAddresses) = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
+
+    //TODO this will need to be improved
+    floatingRoadAddress.flatMap{ra =>
+      historyRoadlinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
+    } ++
+    roadAddresses.flatMap{ra =>
+      val roadLink = roadlinks.find(rl => rl.linkId == ra.linkId)
+      roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
+    }
+
     //    val (addresses, missedRL) = withDynTransaction {
     //      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
     //        RoadAddressDAO.getMissingRoadAddresses(Set(linkId)))
