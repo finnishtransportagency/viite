@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
@@ -268,6 +269,20 @@ class RoadAddressDAO extends BaseDAO {
       fetch(withRoadwayIdAndNotEnded(roadwayId)).headOption
     }
   }
+
+  def fetchBySection(roadNumber: Long, RoadPartNumber: Long): Seq[RoadwayAddress] = {
+    throw new NotImplementedError("VIITE-1554")
+  }
+
+  def fetchBySectionsAndTracks(roadNumber: Long, RoadPartNumber: Seq[Long], tracks: Seq[Int]): Seq[RoadwayAddress] = {
+    throw new NotImplementedError("VIITE-1554")
+  }
+
+  def fetchByRoadAndTracks(roadNumber: Long, tracks: Seq[Int]): Seq[RoadwayAddress] = {
+    throw new NotImplementedError("VIITE-1554")
+  }
+
+
 
   def fetchByRoadwayIds(roadwayIds: Set[Long]): Seq[RoadwayAddress] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
