@@ -104,7 +104,7 @@ object Digiroad2Context {
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new RoadAddressService(roadLinkService, new RoadAddressDAO, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {

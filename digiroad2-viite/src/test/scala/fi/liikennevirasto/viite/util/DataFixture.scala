@@ -140,7 +140,8 @@ object DataFixture {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val username = properties.getProperty("bonecp.username")
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, new RoadwayAddressMapper(new RoadAddressDAO()), new DummyEventBus)
+    val roadAddressDAO = new RoadAddressDAO
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, new RoadwayAddressMapper(roadAddressDAO), new DummyEventBus)
     OracleDatabase.withDynTransaction {
       val checker = new FloatingChecker(roadLinkService)
       val roads = checker.checkRoadNetwork(username)
@@ -251,7 +252,8 @@ object DataFixture {
 
   private def updateProjectLinkGeom(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, new RoadwayAddressMapper(new RoadAddressDAO()), new DummyEventBus)
+    val roadAddressDAO = new RoadAddressDAO
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, new RoadwayAddressMapper(roadAddressDAO), new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
     val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
     val projectCount=projectsIDs.size
@@ -267,7 +269,8 @@ object DataFixture {
 
   private def correctNullElyCodeProjects(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, new RoadwayAddressMapper(new RoadAddressDAO()), new DummyEventBus)
+    val roadAddressDAO = new RoadAddressDAO
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, new RoadwayAddressMapper(roadAddressDAO), new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
     val startTime = DateTime.now()
     println(s"Starting project Ely code correct now")

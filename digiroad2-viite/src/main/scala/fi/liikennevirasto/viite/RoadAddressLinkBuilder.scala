@@ -32,7 +32,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case RoadType.Unknown => getRoadType(roadLink.administrativeClass, roadLink.linkType)
       case _ => roadAddress.roadType
     }
-    RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
@@ -55,7 +55,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case _ => roadAddress.roadType
     }
 
-    RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom,
       length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
@@ -70,7 +70,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = 0
     val roadType = roadAddress.roadType
-    RoadAddressLink(roadAddress.id, roadAddress.linkId, geom,
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadAddress.linkId, geom,
       length, AdministrativeClass.apply(1), LinkType.apply(99), roadLinkType, ConstructionType.apply(0), LinkGeomSource.apply(1), roadType, Some(""), roadAddress.roadName, municipalityCode, Some(""), Some("vvh_modified"),
       Map(), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, 0, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
@@ -97,7 +97,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case RoadType.Unknown => getRoadType(roadLink.administrativeClass, roadLink.linkType)
       case _ => missingAddress.roadType
     }
-    RoadAddressLink(0, roadLink.linkId, geom,
+    RoadAddressLink(0, 0, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, roadLink.constructionType, roadLink.linkSource, roadType,
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
@@ -175,7 +175,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case RoadType.Unknown => getRoadType(historyRoadLink.administrativeClass, UnknownLinkType)
       case _ => roadAddress.roadType
     }
-    RoadAddressLink(roadAddress.id, historyRoadLink.linkId, geom,
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, historyRoadLink.linkId, geom,
       length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
       historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,

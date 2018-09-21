@@ -617,7 +617,20 @@ object LinearLocationDAO {
       val query =
         s"""
         $selectFromLinearLocation
-        where $boundingBoxFilter and valid_to is null
+        where valid_to is null and roadway_id in (select roadway_id from linear_location where $boundingBoxFilter and valid_to is null)
+        """
+      queryList(query)
+    }
+  }
+
+  def fetchByRoadways(roadwayIds: Set[Long]): Seq[LinearLocation] = {
+    if(roadwayIds.isEmpty){
+      Seq()
+    } else {
+      val query =
+        s"""
+        $selectFromLinearLocation
+        where valid_to is null and roadway_id in (${roadwayIds.mkString(",")})
         """
       queryList(query)
     }
