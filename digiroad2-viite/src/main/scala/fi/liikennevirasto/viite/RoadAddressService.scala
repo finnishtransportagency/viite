@@ -928,15 +928,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
+  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], addrMValue: Option[Long]): Seq[RoadAddress] = {
     withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, addrMValue))
     }
   }
 
   def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
     withDynSession {
       RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumber(road, tracks))
+    }
+  }
+
+  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumberAddress(road, addrMValue))
     }
   }
 
