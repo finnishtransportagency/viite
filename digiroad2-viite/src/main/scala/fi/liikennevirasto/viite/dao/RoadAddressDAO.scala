@@ -359,6 +359,25 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  def fetchAllRoadAddressErrors(includesHistory: Boolean = false) = {
+    time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
+      val history = if (!includesHistory) s" where ra.end_date is null " else ""
+      val query =
+        s"""
+        select
+        	ra.id, ll.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely
+        from road_address ra
+        join linear_location ll on ll.roadway_id = ra.roadway_id
+        join road_network_error re on re.road_address_id = ra.id and re.linear_location_id = ll.id $history
+        order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
+      """
+      Q.queryNA[(Long, Long, Long, Long, Int, Long)](query).list.map {
+        case (id, linkId, roadNumber, roadPartNumber, errorCode, ely) =>
+          AddressErrorDetails(id, linkId, roadNumber, roadPartNumber, AddressError.apply(errorCode), ely)
+      }
+    }
+  }
+
   private def fetch(queryFilter: String => String): Seq[RoadwayAddress] = {
     val query = """
         select
