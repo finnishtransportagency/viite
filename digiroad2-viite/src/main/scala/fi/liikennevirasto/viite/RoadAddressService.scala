@@ -209,7 +209,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   }
 
   private def processRoadAddresses(addresses: Seq[RoadAddress], missedRL: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implementd at VIITE-1550")
+    throw new NotImplementedError("Will be implementd at VIITE-1537")
     //    val linkIds = addresses.map(_.linkId).toSet
     //    val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
     //    val (roadLinks, vvhHistoryLinks) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(linkIds, frozenTimeVVHAPIServiceEnabled)
@@ -224,10 +224,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   }
 
   def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
-    //throw new NotImplementedError("Will be implemented at VIITE-1550")
 
     //TODO fetch by bounding box with with floatings and only normal roads nad roadNumberLimits
-
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
         //TODO filtering by roadNumberLimits
@@ -386,11 +384,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     }
   }
 
-  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], addressM: Option[Double]): Seq[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1550")
-    //    withDynSession {
-    //      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
-    //    }
+  def getRoadAddress(road: Long, roadPart: Long, addressM: Long, trackOption: Option[Int]): Seq[RoadAddress] = {
+    withDynSession {
+      val roadwayAddresses = trackOption match {
+        case Some(track) =>
+          roadAddressDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
+        case _ =>
+          roadAddressDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
+      }
+
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+      roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+    }
   }
 
   def getRoadAddressWithRoadNumber(road: Long, tracks: Set[Int]): Seq[RoadAddress] = {
@@ -407,11 +412,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     }
   }
 
-  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1550")
-    //    withDynSession {
-    //      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
-    //    }
+  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startMOption: Option[Double], endMOption: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      val linearLocations = LinearLocationDAO.fetchByLinkId(Set(linkId))
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
+
+      (startMOption, endMOption) match {
+        case (Some(startM), Some(endM)) =>
+          roadAddresses.filter(ra => ra.linkId == linkId && ra.isBetweenMeasures(startM, endM))
+        case (Some(startM), _) =>
+          roadAddresses.filter(ra => ra.linkId == linkId && ra.startMValue >= startM)
+        case (_, Some(endM)) =>
+          roadAddresses.filter(ra => ra.linkId == linkId && ra.endMValue <= endM)
+        case _ =>
+          roadAddresses.filter(ra => ra.linkId == linkId)
+      }
+    }
   }
 
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long): Seq[RoadAddress] = {
@@ -425,15 +441,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     withDynSession {
       val roadwayAddresses = roadAddressDAO.fetchAllBySectionAndAddresses(roadNumber, roadPartNumber, Some(startAddrM), Some(endAddrM))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
-      roadAddresses.filter(ra => ra.isBetween(startAddrM, endAddrM))
+      roadAddresses.filter(ra => ra.isBetweenAddresses(startAddrM, endAddrM))
     }
   }
 
   def getRoadAddressByLinkIds(linkIds: Set[Long]): Seq[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1550")
-    //    withDynTransaction {
-    //      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, includeHistory = false, includeTerminated = false)
-    //    }
+    withDynTransaction {
+      val linearLocations = LinearLocationDAO.fetchByLinkId(linkIds)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
+      roadAddresses.filterNot(_.isFloating)
+    }
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
@@ -463,7 +480,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     * @return roadaddress[]
     */
   def getRoadAddressLinkById(id: Long): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implementd at VIITE-1550")
+    throw new NotImplementedError("Will be implementd at VIITE-1537")
     //    val (addresses, missedRL) = withDynTransaction {
     //      val addr = RoadAddressDAO.fetchByIdMassQuery(Set(id), includeFloating = true, includeHistory = false)
     //      (addr, RoadAddressDAO.getMissingRoadAddresses(addr.map(_.linkId).toSet))
@@ -478,12 +495,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     * @return roadaddress[]
     */
   def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
+    //TODO Should work also for suravage complementary links
     throw new NotImplementedError("Will be implementd at VIITE-1550")
     //    val (addresses, missedRL) = withDynTransaction {
     //      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
     //        RoadAddressDAO.getMissingRoadAddresses(Set(linkId)))
     //    }
     //    processRoadAddresses(addresses, missedRL)
+
   }
 
   /**
@@ -493,7 +512,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     * @return Seq[RoadAddress]
     */
   def getFloatingAdresses(includesHistory: Boolean = false): List[RoadAddress] = {
-    throw new NotImplementedError("Will be implementd at VIITE-1550")
+    throw new NotImplementedError("Will be implementd at VIITE-1537")
     //    withDynSession {
     //      RoadAddressDAO.fetchAllFloatingRoadAddresses(includesHistory)
     //    }
@@ -512,15 +531,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     //    }
   }
 
-  //Only used outside the class for test propose
-  def buildFloatingAddresses(allRoadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], floating: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1550")
-    //    val combinedRoadLinks = (allRoadLinks ++ suravageLinks).filter(crl => floating.map(_.linkId).contains(crl.linkId))
-    //    combinedRoadLinks.flatMap(fh => {
-    //      val actualFloatings = floating.filter(_.linkId == fh.linkId)
-    //      buildFloatingRoadAddressLink(toHistoryRoadLink(fh), actualFloatings)
-    //    })
-  }
+//  //Only used outside the class for test propose
+//  def buildFloatingAddresses(allRoadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], floating: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+//    //    val combinedRoadLinks = (allRoadLinks ++ suravageLinks).filter(crl => floating.map(_.linkId).contains(crl.linkId))
+//    //    combinedRoadLinks.flatMap(fh => {
+//    //      val actualFloatings = floating.filter(_.linkId == fh.linkId)
+//    //      buildFloatingRoadAddressLink(toHistoryRoadLink(fh), actualFloatings)
+//    //    })
+//  }
 
   private def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
@@ -539,14 +557,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   }
 
 //  private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
-//    throw new NotImplementedError("Will be implemented at VIITE-1550")
+//    throw new NotImplementedError("Will be implemented at VIITE-1540")
 ////    withDynSession {
 ////      Await.result(boundingBoxResult.suravageF, Duration.Inf).map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
 ////    }
 //  }
 
   def getSuravageRoadLinkAddressesByLinkIds(linkIdsToGet: Set[Long]): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1550")
+    throw new NotImplementedError("Will be implemented at VIITE-1540")
 //    val suravageLinks = roadLinkService.getSuravageRoadLinksFromVVH(linkIdsToGet)
 //    withDynSession {
 //      suravageLinks.map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
@@ -580,9 +598,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   private def publishChangeSet(changeSet: AddressChangeSet): Unit = {
     time(logger, "Publish change set") {
       //Temporary filter for missing road addresses QA
-      if (!frozenTimeVVHAPIServiceEnabled) {
-        eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-      }
+//      if (!frozenTimeVVHAPIServiceEnabled) {
+//
+//      }
+      eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
       eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
       eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
     }
@@ -623,10 +642,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     val difference = Math.abs(change.oldEndMeasure.getOrElse(0D) - change.oldStartMeasure.getOrElse(0D)) -
       Math.abs(change.newEndMeasure.getOrElse(0D) - change.newStartMeasure.getOrElse(0D))
     if (difference.abs < Epsilon) {
-      return true
-    } else
+      true
+    } else {
       logger.error("Change message for change " + change.toString + "failed due to length not being same before and after change")
-    false
+      false
+    }
   }
 
   /**
