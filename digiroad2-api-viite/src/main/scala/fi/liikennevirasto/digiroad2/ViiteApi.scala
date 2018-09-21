@@ -793,7 +793,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case (Some(road), Some(part)) =>
           roadAddressService.getRoadAddress(road, part, None, addrMValue)
         case (Some(road), _) =>
-          roadAddressService.getRoadAddressWithRoadNumberAddress(road, Seq(0, 1, 2), addrMValue)
+          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue)
         case _ => BadRequest("Missing road number from URL")
       }
     }
