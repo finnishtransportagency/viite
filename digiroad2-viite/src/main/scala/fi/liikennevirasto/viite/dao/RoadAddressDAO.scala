@@ -270,19 +270,29 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
-  def fetchBySection(roadNumber: Long, RoadPartNumber: Long): Seq[RoadwayAddress] = {
-    throw new NotImplementedError("VIITE-1554")
+  def fetchBySection(roadNumber: Long, roadPartNumber: Long): Seq[RoadwayAddress] = {
+    time(logger, "Fetch road address by road number and road part number") {
+      fetch(withSection(roadNumber, roadPartNumber))
+    }
   }
 
-  def fetchBySectionsAndTracks(roadNumber: Long, RoadPartNumber: Seq[Long], tracks: Seq[Int]): Seq[RoadwayAddress] = {
-    throw new NotImplementedError("VIITE-1554")
+  def fetchBySectionsAndTracks(roadNumber: Long, roadPartNumber: Seq[Long], tracks: Set[Int]): Seq[RoadwayAddress] = {
+    time(logger, "Fetch road address by road number, road part number and tracks") {
+      if(tracks.isEmpty)
+        Seq()
+      else
+        fetch(withSectionAndTracks(roadNumber, roadPartNumber, tracks))
+    }
   }
 
-  def fetchByRoadAndTracks(roadNumber: Long, tracks: Seq[Int]): Seq[RoadwayAddress] = {
-    throw new NotImplementedError("VIITE-1554")
+  def fetchByRoadAndTracks(roadNumber: Long, tracks: Set[Int]): Seq[RoadwayAddress] = {
+    time(logger, "Fetch road address by road number and tracks") {
+      if(tracks.isEmpty)
+        Seq()
+      else
+        fetch(withRoadAndTracks(roadNumber, tracks))
+    }
   }
-
-
 
   def fetchByRoadwayIds(roadwayIds: Set[Long]): Seq[RoadwayAddress] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
@@ -331,6 +341,18 @@ class RoadAddressDAO extends BaseDAO {
         from road_address a
       """
     Q.queryNA[RoadwayAddress](queryFilter(query)).iterator.toSeq
+  }
+
+  private def withSection(roadNumber: Long, roadPartNumber: Long)(query: String): String = {
+    s"""$query where road_number = $roadNumber and road_part_number = $roadPartNumber"""
+  }
+
+  private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Seq[Long], tracks: Set[Int])(query: String): String = {
+    s"""$query where road_number = $roadNumber and road_part_number = $roadPartNumber and tracks in (${tracks.mkString(",")})"""
+  }
+
+  private def withRoadAndTracks(roadNumber: Long, tracks: Set[Int])(query: String): String = {
+    s"""$query where road_number = $roadNumber and tracks in (${tracks.mkString(",")})"""
   }
 
   private def withRoadNumberRoadPartAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long])(query: String): String = {
