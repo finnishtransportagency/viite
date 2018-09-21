@@ -241,7 +241,6 @@ case class RoadwayAddress(id: Long, roadwayId: Long, roadNumber: Long, roadPartN
                        ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime, validTo: Option[DateTime] = None)
 
 
-//TODO change the roadAddressDAO to be a class to simplify the tests
 class BaseDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
 
