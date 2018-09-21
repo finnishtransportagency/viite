@@ -149,7 +149,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadAddress/linkid/$linkId") {
       //TODO This process can be improved
-      val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
+      val roadLinks = roadAddressService.getRoadAddressLink(linkId)
       foldSegments(roadLinks)
         .map(midPoint)
         .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
