@@ -446,7 +446,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   }
 
   def getRoadAddressByLinkIds(linkIds: Set[Long]): Seq[RoadAddress] = {
-    withDynTransaction {
+    withDynSession {
       val linearLocations = LinearLocationDAO.fetchByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filterNot(_.isFloating)
@@ -454,23 +454,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1550")
-    //    val roadAddresses =
-    //      withDynTransaction {
-    //        RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
-    //      }
-    //
-    //    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
-    //    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-    //
-    //    roadAddresses.flatMap { roadAddress =>
-    //      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
-    //        ChangedRoadAddress(
-    //          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
-    //          link = roadLink
-    //        )
-    //      }
-    //    }
+    val roadwayAddresses =
+      withDynSession {
+        roadAddressDAO.fetchAllByBetweenDates(sinceDate, untilDate)
+      }
+
+    val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+
+    roadAddresses.flatMap { roadAddress =>
+      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+        ChangedRoadAddress(
+          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
+          link = roadLink
+        )
+      }
+    }
   }
 
   /**
