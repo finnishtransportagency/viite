@@ -226,6 +226,20 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     (enrichRoadLinksFromVVH(currentData ++ complementaryData), uniqueHistoryData)
   }
 
+  def getAllRoadLinksFromVVH(linkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
+    val fut = for {
+      f1Result <- vvhClient.historyData.fetchVVHRoadLinkByLinkIdsF(linkIds)
+      f2Result <- vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)
+      f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
+      f4Result <- vvhClient.suravageData.fetchByLinkIdsF(linkIds)
+    } yield (f1Result, f2Result, f3Result, f4Result)
+
+    val (historyData, currentData, complementaryData, suravageData) = Await.result(fut, Duration.Inf)
+    val uniqueHistoryData = historyData.groupBy(_.linkId).mapValues(_.maxBy(_.endDate)).values.toSeq
+
+    (enrichRoadLinksFromVVH(currentData ++ complementaryData ++ suravageData), uniqueHistoryData)
+  }
+
   /**
     * Returns road links without change data from VVH by bounding box and road numbers and municipalities.
     */

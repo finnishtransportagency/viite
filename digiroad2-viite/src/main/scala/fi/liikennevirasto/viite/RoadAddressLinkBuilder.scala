@@ -107,7 +107,6 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
 //TODO delete this method
 //  def buildSuravageRoadAddressLink(roadLinkProjectidTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
-////    throw new NotImplementedError("Will be implemented at VIITE-1550")
 //    val roadLink = roadLinkProjectidTuple._1
 //    val roadAddresses = roadLinkProjectidTuple._2 match { //Check if project attribute has been initialized
 //      case (Some(projectId)) =>
