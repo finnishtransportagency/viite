@@ -46,7 +46,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     val roadNumber = params("road").toLong
     time(logger, s"GET request for /road_address/$roadNumber/?") {
       val trackCodes = multiParams.getOrElse("tracks", Seq()).map(_.toInt)
-      roadAddressService.getRoadAddressWithRoadNumber(roadNumber, trackCodes).map(roadAddressMapper)
+      roadAddressService.getRoadAddressWithRoadNumber(roadNumber, trackCodes.toSet).map(roadAddressMapper)
     }
   }
 
@@ -54,7 +54,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/?") {
-      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, None, None).map(roadAddressMapper)
+      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart).map(roadAddressMapper)
     }
   }
 
@@ -72,18 +72,18 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
   get("/road_address/:road/:roadPart/:startAddress/:endAddress/?") {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
-    val startAddress = params("startAddress").toDouble
-    val endAddress = params("endAddress").toDouble
+    val startAddress = params("startAddress").toLong
+    val endAddress = params("endAddress").toLong
 
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/$startAddress/$endAddress/?") {
-      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, Some(startAddress), Some(endAddress)).map(roadAddressMapper)
+      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, startAddress, endAddress).map(roadAddressMapper)
     }
   }
 
   post("/road_address/?") {
     time(logger, s"POST request for /road_address/?") {
       val linkIds = (parsedBody).extract[Set[Long]]
-      roadAddressService.getRoadAddressByLinkIds(linkIds, false).map(roadAddressMapper)
+      roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
   }
 
@@ -92,7 +92,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
       val roadNumber = params("road").toLong
       val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
       val tracks = (parsedBody \ "tracks").extract[Seq[Int]]
-      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts, tracks).map(roadAddressMapper)
+      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts.toSet, tracks.toSet).map(roadAddressMapper)
     }
   }
 
