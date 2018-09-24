@@ -377,7 +377,7 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
-  def fetchAllRoadAddressErrors(includesHistory: Boolean = false) = {
+  def fetchAllRoadAddressErrors(includesHistory: Boolean = false): List[AddressErrorDetails] = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
       val query =
@@ -461,7 +461,7 @@ class RoadAddressDAO extends BaseDAO {
           AND start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"""
   }
 
-  implicit val getRoadAddress: GetResult[RoadwayAddress] = new GetResult[RoadwayAddress]{
+  private implicit val getRoadAddress: GetResult[RoadwayAddress] = new GetResult[RoadwayAddress]{
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()

@@ -409,6 +409,10 @@ class LinearLocationDAO {
     }
   }
 
+  def fetchRoadwayByLinkId(linkIds: Set[Long], roadVersion: Option[Long], atDate: DateTime) = {
+    throw new NotImplementedError("Should do the same as OLD method at RoadAddressDAO def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now.toString): List[RoadAddress]")
+  }
+
   def fetchRoadwayByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch all linear locations of a roadway by link id") {
       if (linkIds.isEmpty) {
