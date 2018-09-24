@@ -637,7 +637,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val linkId = 222222222l
       LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayId = roadwayId, linkId = linkId, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
       LinearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayId = 2222l, linkId = 333333333l)))
-      val locations = LinearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)))
+      val locations = LinearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), Seq())
       locations.size should be(2)
       locations.filter(l => l.id == id1).size should be(1)
       locations.filter(l => l.id == id2).size should be(1)
