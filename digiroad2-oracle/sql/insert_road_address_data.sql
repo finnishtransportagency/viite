@@ -8,10 +8,7 @@
 -- To: values (viite_general_seq.nextval
 -- Also replaced ';' with '; insert into PUBLISHED_ROAD_ADDRESS values ((select max(id) from PUBLISHED_ROAD_NETWORK), viite_general_seq.currval);'
 --------------------------------------------------------
-alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', ';
-
 insert into PUBLISHED_ROAD_NETWORK values (PUBLISHED_ROAD_NETWORK_SEQ.nextval, sysdate,sysdate);
-
 
 Insert into ROAD_ADDRESS (ID,ROADWAY_ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATE_TIME,ROAD_TYPE,ELY,TERMINATED,VALID_FROM,VALID_TO) values (ROAD_ADDRESS_SEQ.nextval,39477,1130,4,0,0,6362,0,5,to_date('01-JAN-96','DD-MON-RR'),null,'import',to_timestamp('21-SEP-18 12.03.19.999393000','DD-MON-RR HH24.MI.SSXFF'),1,1,0,to_date('16-MAY-16','DD-MON-RR'),null); insert into PUBLISHED_ROAD_ADDRESS values ((select max(id) from PUBLISHED_ROAD_NETWORK), ROAD_ADDRESS_SEQ.currval);
 Insert into ROAD_ADDRESS (ID,ROADWAY_ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,END_DATE,CREATED_BY,CREATE_TIME,ROAD_TYPE,ELY,TERMINATED,VALID_FROM,VALID_TO) values (ROAD_ADDRESS_SEQ.nextval,44463,259,1,0,3750,6321,0,5,to_date('01-JAN-21','DD-MON-RR'),null,'import',to_timestamp('21-SEP-18 12.05.00.104290000','DD-MON-RR HH24.MI.SSXFF'),1,4,0,to_date('16-OCT-98','DD-MON-RR'),null); insert into PUBLISHED_ROAD_ADDRESS values ((select max(id) from PUBLISHED_ROAD_NETWORK), ROAD_ADDRESS_SEQ.currval);
