@@ -88,7 +88,7 @@ trait BaseLinearLocation {
 
   def linkGeomSource: LinkGeomSource
 
-  def roadwayId: Long
+  def roadwayNumber: Long
 
   def validFrom: Option[DateTime]
 
@@ -134,7 +134,7 @@ trait BaseLinearLocation {
 case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                           adjustedTimestamp: Long, calibrationPoints: (Option[Long], Option[Long]) = (None, None),
                           floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource,
-                          roadwayId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
+                          roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
 
   val startCalibrationPoint: Option[Long] = calibrationPoints._1
   val endCalibrationPoint: Option[Long] = calibrationPoints._2
@@ -175,7 +175,7 @@ object LinearLocationDAO {
 
   val selectFromLinearLocation =
     """
-    select loc.id, loc.roadway_id, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.side_code,
+    select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.side_code,
       loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
       loc.valid_from, loc.valid_to
     from LINEAR_LOCATION loc cross join
@@ -201,7 +201,7 @@ object LinearLocationDAO {
 
   def create(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Seq[Long] = {
     val ps = dynamicSession.prepareStatement(
-      """insert into LINEAR_LOCATION (id, roadway_id, order_number, link_id, start_measure, end_measure, side_code,
+      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, side_code,
         cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
@@ -215,13 +215,13 @@ object LinearLocationDAO {
 
     createLinearLocations.foreach {
       case (location) =>
-        val roadwayId = if (location.roadwayId == NewRoadwayId) {
+        val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
           Sequences.nextRoadwaySeqValue
         } else {
-          location.roadwayId
+          location.roadwayNumber
         }
         ps.setLong(1, location.id)
-        ps.setLong(2, roadwayId)
+        ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber)
         ps.setLong(4, location.linkId)
         ps.setDouble(5, location.startMValue)
@@ -260,7 +260,7 @@ object LinearLocationDAO {
   implicit val getLinearLocation: GetResult[LinearLocation] = new GetResult[LinearLocation] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val roadwayId = r.nextLong()
+      val roadwayNumber = r.nextLong()
       val orderNumber = r.nextLong()
       val linkId = r.nextLong()
       val startMeasure = r.nextDouble()
@@ -280,7 +280,7 @@ object LinearLocationDAO {
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
         (calStartM, calEndM), FloatingReason.apply(floating), Seq(Point(x1, y1), Point(x2, y2)),
-        LinkGeomSource.apply(linkSource), roadwayId, validFrom, validTo)
+        LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
 
@@ -429,7 +429,7 @@ object LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where t.id < t2.id $floating $idFilter and loc.roadway_id in (select roadway_id from linear_location
+          where t.id < t2.id $floating $idFilter and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
             where link_id in ($linkIdsString) and valid_to is null) and valid_to is null
         """
       queryList(query)
@@ -448,8 +448,8 @@ object LinearLocationDAO {
             s"""
               $selectFromLinearLocation
 
-              where t.id < t2.id $floating and loc.valid_to is null and loc.roadway_id in (
-                select roadway_id from linear_location
+              where t.id < t2.id $floating and loc.valid_to is null and loc.ROADWAY_NUMBER in (
+                select ROADWAY_NUMBER from linear_location
                 join $idTableName i on i.id = link_id
                 where valid_to is null)
             """
@@ -498,7 +498,7 @@ object LinearLocationDAO {
         s"""
           $selectFromLinearLocation
           where t.id < t2.id and loc.floating > 0 and loc.valid_to is null
-          order by loc.roadway_id, loc.order_number
+          order by loc.ROADWAY_NUMBER, loc.order_number
         """
       queryList(query)
     }
@@ -622,10 +622,10 @@ object LinearLocationDAO {
     }
   }
 
-  def getRoadwayIdsFromLinearLocation: Seq[Long] = {
+  def getRoadwayNumbersFromLinearLocation: Seq[Long] = {
     sql"""
-      select distinct(loc.roadway_id)
-      from linear_location loc order by loc.roadway_id asc
+      select distinct(loc.ROADWAY_NUMBER)
+      from linear_location loc order by loc.ROADWAY_NUMBER asc
     """.as[Long].list
   }
 
@@ -648,8 +648,8 @@ object LinearLocationDAO {
     query + s" WHERE loc.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidityCheck
   }
 
-  def withRoadwayIds(fromRoadwayId: Long, toRoadwayId: Long)(query: String): String = {
-    query + s" WHERE loc.roadway_id >= $fromRoadwayId AND loc.roadway_id <= $toRoadwayId"
+  def withRoadwayNumbers(fromRoadwayNumber: Long, toRoadwayNumber: Long)(query: String): String = {
+    query + s" WHERE loc.ROADWAY_NUMBER >= $fromRoadwayNumber AND loc.ROADWAY_NUMBER <= $toRoadwayNumber"
   }
 
   def withValidityCheck(): String = {
@@ -680,33 +680,33 @@ object LinearLocationDAO {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "iloc.geometry")
 
       val boundingBoxQuery = if(roadNumberLimits.isEmpty) {
-        s"""select roadway_id from linear_location iloc
+        s"""select ROADWAY_NUMBER from linear_location iloc
            where iloc.valid_to is null and $boundingBoxFilter"""
       } else {
         val roadNumberLimitsFilter = withRoadNumbersFilter(roadNumberLimits, alias = "ra")
-        s"""select iloc.roadway_id
+        s"""select iloc.ROADWAY_NUMBER
             from linear_location iloc
-            inner join road_address ra on ra.roadway_id = iloc.roadway_id
+            inner join ROADWAY ra on ra.ROADWAY_NUMBER = iloc.ROADWAY_NUMBER
             where $roadNumberLimitsFilter and iloc.valid_to is null and $boundingBoxFilter"""
       }
 
       val query =
         s"""
         $selectFromLinearLocation
-        where valid_to is null and roadway_id in ($boundingBoxQuery)
+        where valid_to is null and ROADWAY_NUMBER in ($boundingBoxQuery)
         """
       queryList(query)
     }
   }
 
-  def fetchByRoadways(roadwayIds: Set[Long]): Seq[LinearLocation] = {
-    if (roadwayIds.isEmpty) {
+  def fetchByRoadways(roadwayNumbers: Set[Long]): Seq[LinearLocation] = {
+    if (roadwayNumbers.isEmpty) {
       Seq()
     } else {
       val query =
         s"""
           $selectFromLinearLocation
-          where valid_to is null and roadway_id in (${roadwayIds.mkString(", ")})
+          where valid_to is null and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
         """
       queryList(query)
     }

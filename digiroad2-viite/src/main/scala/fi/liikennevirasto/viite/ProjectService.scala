@@ -1462,7 +1462,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    val linkIds = links.map(_.linkId).distinct
 //    val existingRoadAddresses = RoadAddressDAO.queryById(links.map(_.roadAddressId).toSet)
 //    val groupedRoadAddresses = existingRoadAddresses.groupBy(record =>
-//      (record.roadwayId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+//      (record.roadwayNumber, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
 //
 //    if (groupedRoadAddresses.size > 1) {
 //      return links
@@ -1644,7 +1644,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //          Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
 //            pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), pl.linkId,
 //            pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating,
-//            pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewRoadwayId))
+//            pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewRoadwayNumber))
 //        case Transfer => // TODO if the whole roadway -segment is transferred, keep the original common_history_id, otherwise generate new ids for the different segments
 //          val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
 //          Seq(
@@ -1749,8 +1749,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    val expiringRoadAddressesFromReplacements = RoadAddressDAO.queryById(replacements.map(_.roadAddressId).toSet, rejectInvalids = false).map(ra => ra.id -> ra).toMap
 //    val expiringRoadAddresses = roadAddressHistoryCorrections(projectLinks) ++ expiringRoadAddressesFromReplacements
 //    if (expiringRoadAddressesFromReplacements.size != replacements.map(_.roadAddressId).toSet.size) {
-//      logger.error(s" The number of road_addresses to expire does not match the project_links to insert")
-//      throw new InvalidAddressDataException(s"The number of road_addresses to expire does not match the project_links to insert")
+//      logger.error(s" The number of roadways to expire does not match the project_links to insert")
+//      throw new InvalidAddressDataException(s"The number of roadways to expire does not match the project_links to insert")
 //    }
 //    logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
 //    ProjectDAO.moveProjectLinksToHistory(projectID)
@@ -1828,7 +1828,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    val floatingReason = if (source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow) FloatingReason.ProjectToRoadAddress else NoFloating
 //    val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewRoadAddress), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
 //      pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-//      pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.roadwayId).getOrElse(0))
+//      pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.roadwayNumber).getOrElse(0))
 //    pl.status match {
 //      case UnChanged =>
 //        if (source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely) {

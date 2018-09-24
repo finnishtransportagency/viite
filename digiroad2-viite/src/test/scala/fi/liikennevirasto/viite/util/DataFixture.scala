@@ -318,14 +318,14 @@ object DataFixture {
   //TODO check if this will continue to be needed
 //  def checkLinearLocation(): Unit = {
 //    OracleDatabase.withDynTransaction {
-//      val roadwayIds = RoadAddressDAO.getRoadwayIdsFromRoadAddress
-//      println(s"Found a total of ${roadwayIds.size} roadway ids")
-//      val chunks = generateCommonIdChunks(roadwayIds, 1000)
+//      val roadwayNumbers = RoadAddressDAO.getRoadwayNumbersFromRoadAddress
+//      println(s"Found a total of ${roadwayNumbers.size} roadway ids")
+//      val chunks = generateCommonIdChunks(roadwayNumbers, 1000)
 //      chunks.par.foreach {
 //        case (min, max) =>
 //          println(s"Processing roadway ids from $min to $max")
-//          val roads = RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadwayIds(min, max))
-//          roads.groupBy(_.roadwayId).foreach { group =>
+//          val roads = RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadwayNumbers(min, max))
+//          roads.groupBy(_.roadwayNumber).foreach { group =>
 //            val dateTimeLines = group._2.map(_.startDate).distinct
 //
 //            val mappedTimeLines: Seq[TimeLine] = dateTimeLines.flatMap {
@@ -352,7 +352,7 @@ object DataFixture {
 //            } else {
 //              Set.empty[RoadAddress]
 //            }
-//            println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.roadwayId}")
+//            println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.roadwayNumber}")
 //            val lastVersion = getLatestRoadNetworkVersionId
 //
 //            roadErrors.filter { road =>

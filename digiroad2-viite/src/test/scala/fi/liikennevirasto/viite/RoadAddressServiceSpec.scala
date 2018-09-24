@@ -99,7 +99,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       "endAddressM" -> roadLink.endAddressM,
       "discontinuity" -> roadLink.discontinuity,
       "endDate" -> roadLink.endDate,
-      "roadwayId" -> roadLink.roadwayId)
+      "roadwayId" -> roadLink.roadwayNumber) // TODO Rename roadwayId to roadwayNumber
   }
 
   test("test getRoadLinkFromVVH should have specific fields (still to be defined) not empty") {
@@ -119,14 +119,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val trackCode = partitionedRoadLinks.head.head.trackCode
       val segmentId = partitionedRoadLinks.head.head.id
       val constructionType = partitionedRoadLinks.head.head.constructionType.value
-      val roadwayId = partitionedRoadLinks.head.head.roadwayId
+      val roadwayNumber = partitionedRoadLinks.head.head.roadwayNumber
 
       segmentId should not be None
       roadNumber should be(5)
       roadPartNumber should be(205)
       trackCode should be(1)
       constructionType should be(0)
-      roadwayId should be(123)
+      roadwayNumber should be(123)
     }
   }
 
@@ -162,7 +162,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def getFloatingCount(): Long = {
     sql"""
        select count(*)
-       from ROAD_ADDRESS where floating > 0
+       from ROADWAY where floating > 0
        and valid_to is null and END_DATE is null
     """.as[Long].first
   }
@@ -174,7 +174,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val modificationUser = "testUser"
     runWithRollback {
       val (linkId) = sql""" Select ra.LINK_ID
-                                From ROAD_ADDRESS ra
+                                From ROADWAY ra
                                 Order By ra.id asc""".as[Long].firstOption.get
       val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
@@ -281,7 +281,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val modificationUser = "testUser"
       val query =
         s"""select ra.LINK_ID, ra.end_measure
-        from ROAD_ADDRESS ra
+        from ROADWAY ra
         where $filter and ra.valid_to is null order by ra.id asc"""
       val (linkId, endM) = StaticQuery.queryNA[(Long, Double)](query).firstOption.get
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 1, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -324,7 +324,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      addressUpdated.geometry shouldNot be (address.geometry)
 //      addressUpdated.geometry should be(roadLink.geometry)
 //      addressUpdated.isFloating should be (true)
-//      addressUpdated.roadwayId should be (addressList.head.roadwayId)
+//      addressUpdated.roadwayNumber should be (addressList.head.roadwayNumber)
 //    }
 //  }
 
@@ -342,7 +342,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
 //      addressUpdated.geometry should be (address.geometry)
 //      addressUpdated.isFloating should be (true)
-//      addressUpdated.roadwayId should be (addressList.head.roadwayId)
+//      addressUpdated.roadwayNumber should be (addressList.head.roadwayNumber)
 //    }
 //  }
 
@@ -354,7 +354,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    runWithRollback {
 //      val addressList = RoadAddressDAO.fetchByLinkId(Set(linkId1, linkId2, linkId3))
 //      addressList should have size (3)
-//      addressList.forall(_.roadwayId == addressList.head.roadwayId) should be (true)
+//      addressList.forall(_.roadwayNumber == addressList.head.roadwayNumber) should be (true)
 //      val address = addressList.head
 //      val newAddr = address.copy(id = NewRoadAddress, startAddrMValue = addressList.map(_.startAddrMValue).min,
 //        endAddrMValue = addressList.map(_.endAddrMValue).max)
@@ -363,7 +363,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      val addressListMerged = RoadAddressDAO.fetchByLinkId(Set(linkId1, linkId2, linkId3))
 //      addressListMerged should have size (1)
 //      addressListMerged.head.linkId should be (address.linkId)
-//      addressListMerged.head.roadwayId should be (addressList.head.roadwayId)
+//      addressListMerged.head.roadwayNumber should be (addressList.head.roadwayNumber)
 //    }
 //    runWithRollback {
 //      RoadAddressDAO.fetchByLinkId(Set(linkId1, linkId2, linkId3)) should have size (3)
@@ -376,7 +376,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val linkId2 = 15171209
 //    val segmentId1 = 63298
 //    val segmentId2 = 63299
-//    val roadwayId = 1015171208
+//    val roadwayNumber = 1015171208
 //    runWithRollback {
 //      val floatGeom = Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834))
 //      val floatGeomLength = GeometryUtils.geometryLength(floatGeom)
@@ -384,7 +384,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //        RoadAddressLink(linkId1, linkId1, floatGeom, floatGeomLength, Municipality, SingleCarriageway,
 //          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
 //          None, None, Map("linkId" -> linkId1, "segmentId" -> segmentId1), 5, 205, 1, 0, 0, 0, 500, "01.01.2015", "", 0.0, floatGeomLength,
-//          SideCode.TowardsDigitizing, Option(CalibrationPoint(linkId1, 0.0, 0)), Option(CalibrationPoint(linkId1, floatGeomLength, 500)), Anomaly.None, roadwayId))
+//          SideCode.TowardsDigitizing, Option(CalibrationPoint(linkId1, 0.0, 0)), Option(CalibrationPoint(linkId1, floatGeomLength, 500)), Anomaly.None, roadwayNumber))
 //      RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(FloatingReason.NewAddressGiven)))
 //
 //      val cutPoint = GeometryUtils.calculatePointFromLinearReference(floatGeom, 230.0).get
@@ -394,11 +394,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //        RoadAddressLink(0, linkId1, geom1, GeometryUtils.geometryLength(geom1), Municipality, SingleCarriageway,
 //          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
 //          None, None, Map("linkId" -> linkId1, "segmentId" -> segmentId1), 5, 205, 1, 0, 0, 0, 1, "01.01.2015", "", 0.0, GeometryUtils.geometryLength(geom1),
-//          SideCode.Unknown, None, None, Anomaly.None, roadwayId),
+//          SideCode.Unknown, None, None, Anomaly.None, roadwayNumber),
 //        RoadAddressLink(0, linkId2, geom2, GeometryUtils.geometryLength(geom2), Municipality, SingleCarriageway,
 //          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
 //          None, None, Map("linkId" -> linkId2, "segmentId" -> segmentId2), 5, 205, 1, 0, 0, 1, 2, "01.01.2015", "", 0.0, GeometryUtils.geometryLength(geom2),
-//          SideCode.Unknown, None, None, Anomaly.None, roadwayId))
+//          SideCode.Unknown, None, None, Anomaly.None, roadwayNumber))
 //      when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((targetLinks.map(roadAddressLinkToRoadLink), floatingLinks.map(roadAddressLinkToHistoryLink)))
 //      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(floatingLinks.map(roadAddressLinkToHistoryLink))
 //      val newLinks = roadAddressService.transferRoadAddress(floatingLinks, targetLinks, User(1L, "foo", new Configuration()))
@@ -407,8 +407,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      newLinks.filter(_.linkId == linkId2).head.startCalibrationPoint should be(None)
 //      newLinks.filter(_.linkId == linkId1).head.startCalibrationPoint.isEmpty should be(false)
 //      newLinks.filter(_.linkId == linkId2).head.endCalibrationPoint.isEmpty should be(false)
-//      newLinks.filter(_.linkId == linkId1).head.roadwayId should be(roadwayId)
-//      newLinks.filter(_.linkId == linkId2).head.roadwayId should be(roadwayId)
+//      newLinks.filter(_.linkId == linkId1).head.roadwayNumber should be(roadwayNumber)
+//      newLinks.filter(_.linkId == linkId2).head.roadwayNumber should be(roadwayNumber)
 //      val startCP = newLinks.filter(_.linkId == linkId1).head.startCalibrationPoint.get
 //      val endCP = newLinks.filter(_.linkId == linkId2).head.endCalibrationPoint.get
 //      startCP.segmentMValue should be(0.0)
@@ -435,7 +435,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    RoadAddress(l.id, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
 //      l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, l.linkId, l.startMValue, l.endMValue, l.sideCode, 0,
 //      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, LinkGeomSource.NormalLinkInterface, l.elyCode, NoTermination,
-//      l.roadwayId)
+//      l.roadwayNumber)
   }
 
   //TODO probably this can be deleted because there is no need to recalculate
@@ -506,15 +506,15 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   //TODO this will be implemented at VIITE-1537
 //  test("Defloating road links from three links to two links") {
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //    val sources = Seq(
-//      createRoadAddressLink(8000001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 114, SideCode.TowardsDigitizing, Anomaly.None, roadwayId = roadwayId),
-//      createRoadAddressLink(8000002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 114, 128, SideCode.TowardsDigitizing, Anomaly.None, roadwayId = roadwayId),
-//      createRoadAddressLink(8000003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 128, 142, SideCode.TowardsDigitizing, Anomaly.None, roadwayId = roadwayId)
+//      createRoadAddressLink(8000001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 114, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(8000002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 114, 128, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(8000003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 128, 142, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber)
 //    )
 //    val targets = Seq(
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayId = roadwayId),
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayId = roadwayId)
+//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
 //    )
 //    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
 //      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
@@ -535,20 +535,20 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    link456.get.endAddressM should be(121)
 //    link457.get.endAddressM should be(142)
 //    result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be(true)
-//    result.forall(l => l.roadwayId == roadwayId) should be(true)
+//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
 //  }
 
   //TODO this will be implemented at VIITE-1537
 //  test("Defloating road links from three links to two links with against digitizing direction") {
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 128, 142, SideCode.AgainstDigitizing, Anomaly.None, roadwayId = roadwayId),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 114, 128, SideCode.AgainstDigitizing, Anomaly.None, roadwayId = roadwayId),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 100, 114, SideCode.AgainstDigitizing, Anomaly.None, roadwayId = roadwayId)
+//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 128, 142, SideCode.AgainstDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 114, 128, SideCode.AgainstDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 100, 114, SideCode.AgainstDigitizing, Anomaly.None, roadwayNumber = roadwayNumber)
 //    )
 //    val targets = Seq(
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayId = roadwayId),
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayId = roadwayId)
+//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
 //    )
 //    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
 //      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
@@ -568,20 +568,20 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    link457.get.endAddrMValue should be(121)
 //    result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be(true)
 //    result.forall(l => l.sideCode == SideCode.AgainstDigitizing) should be(true)
-//    result.forall(l => l.roadwayId == roadwayId) should be(true)
+//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
 //  }
 
   //TODO this will be implemented at VIITE-1537
 //  test("Defloating road links from three links to two links with one calibration point in beginning") {
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = true, endCalibrationPoint = false, roadwayId = roadwayId),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = false, endCalibrationPoint = false, roadwayId = roadwayId),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = false, endCalibrationPoint = false, roadwayId = roadwayId)
+//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = true, endCalibrationPoint = false, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber)
 //    )
 //    val targets = Seq(
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, startCalibrationPoint = false, endCalibrationPoint = false, roadwayId = roadwayId),
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, startCalibrationPoint = false, endCalibrationPoint = false, roadwayId = roadwayId)
+//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber)
 //    )
 //    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
 //      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
@@ -602,20 +602,20 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    result.forall(l => l.endCalibrationPoint.isEmpty) should be(true)
 //    link456.get.startCalibrationPoint.nonEmpty should be(true)
 //    link457.get.startCalibrationPoint.nonEmpty should be(false)
-//    result.forall(l => l.roadwayId == roadwayId) should be(true)
+//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
 //  }
 
   //TODO this will be implemented at VIITE-1537
 //  test("Defloating road links from three links to two links with one calibration point in the end") {
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None, roadwayId = roadwayId),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0,20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None, endCalibrationPoint = true, roadwayId = roadwayId),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0,10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, roadwayId = roadwayId)
+//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0,20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None, endCalibrationPoint = true, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0,10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber)
 //    )
 //    val targets = Seq(
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0,0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayId = roadwayId),
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0,15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayId = roadwayId)
+//      createRoadAddressLink(0L, 456L, Seq(Point(0.0,0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber),
+//      createRoadAddressLink(0L, 457L, Seq(Point(15.0,15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
 //    )
 //    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn(
 //      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
@@ -636,7 +636,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    result.forall(l => l.startCalibrationPoint.isEmpty) should be (true)
 //    link456.get.endCalibrationPoint.isEmpty should be (true)
 //    link457.get.endCalibrationPoint.isEmpty should be (false)
-//    result.forall(l => l.roadwayId == roadwayId) should be(true)
+//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
 //  }
 
   //TODO this will be implemented at VIITE-1537
@@ -659,15 +659,15 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //
 //     */
 //
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(5.0, 5.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 107, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 0.0), Point(30.0, 10.0)), 1L, 1L, 0, 121, 135, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(20.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 107, 121, SideCode.AgainstDigitizing, Anomaly.None, false, false, roadwayId)
+//      createRoadAddressLink(800001L, 123L, Seq(Point(5.0, 5.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 107, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 0.0), Point(30.0, 10.0)), 1L, 1L, 0, 121, 135, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//      createRoadAddressLink(800002L, 124L, Seq(Point(20.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 107, 121, SideCode.AgainstDigitizing, Anomaly.None, false, false, roadwayNumber)
 //    )
 //    val targets = Seq(
-//      createRoadAddressLink(0L, 456L, Seq(Point(19.0, 1.0), Point(10.0, 10.0), Point(5.0, 5.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, false, false, roadwayId),
-//      createRoadAddressLink(0L, 457L, Seq(Point(19.0, 1.0), Point(20.0, 0.0), Point(30.0, 10.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, false, false, roadwayId)
+//      createRoadAddressLink(0L, 456L, Seq(Point(19.0, 1.0), Point(10.0, 10.0), Point(5.0, 5.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, false, false, roadwayNumber),
+//      createRoadAddressLink(0L, 457L, Seq(Point(19.0, 1.0), Point(20.0, 0.0), Point(30.0, 10.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, false, false, roadwayNumber)
 //    )
 //    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
 //      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
@@ -691,24 +691,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    link457.get.startCalibrationPoint.nonEmpty should be(false)
 //    link457.get.endCalibrationPoint.nonEmpty should be(false)
 //    link456.get.endCalibrationPoint.nonEmpty should be(false)
-//    result.forall(l => l.roadwayId == roadwayId) should be(true)
+//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
 //  }
 
   //TODO this will be implemented at VIITE-1536
 //  test("Kokkolantie 2 + 1 segments to 2 segments mapping (2 links to 1 link)") {
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //    runWithRollback {
 //      val targetLinkData = createRoadAddressLink(0L, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336994.491, 7108726.504)), 0, 0, 0, 0, 0, SideCode.Unknown,
-//        Anomaly.NoAddressGiven, roadwayId = roadwayId)
+//        Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
 //      val geom = Seq(Point(336991.162, 7108706.098), Point(336994.491, 7108726.504))
 //      val sourceLinkData0 = createRoadAddressLink(Sequences.nextRoadAddressId, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336991.633, 7108709.155)), 8, 412, 2, 3045, 3148, SideCode.TowardsDigitizing,
-//        Anomaly.GeometryChanged, true, false, roadwayId)
+//        Anomaly.GeometryChanged, true, false, roadwayNumber)
 //      val sourceLinkData1 = createRoadAddressLink(Sequences.nextRoadAddressId, 1392326L, GeometryUtils.truncateGeometry2D(geom, 0.0, 15.753), 8, 412, 2, 3148, 3164, SideCode.TowardsDigitizing,
-//        Anomaly.None, roadwayId = roadwayId)
+//        Anomaly.None, roadwayNumber = roadwayNumber)
 //      val sourceLinkData2 = createRoadAddressLink(Sequences.nextRoadAddressId, 1392326L, GeometryUtils.truncateGeometry2D(geom, 15.753, 20.676), 8, 412, 2, 3164, 3169, SideCode.TowardsDigitizing,
-//        Anomaly.None, false, true, roadwayId)
+//        Anomaly.None, false, true, roadwayNumber)
 //      val sourceLinkDataC = createRoadAddressLink(Sequences.nextRoadAddressId, 1392326L, geom, 0, 0, 0, 0, 0, SideCode.Unknown,
-//        Anomaly.NoAddressGiven, roadwayId = roadwayId)
+//        Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
 //      val sourceLinks = Seq(sourceLinkData0, sourceLinkData1, sourceLinkData2).map(_.copy(roadLinkType = FloatingRoadLinkType))
 //      val historyLinks = Seq(sourceLinkData0, sourceLinkDataC).map(roadAddressLinkToHistoryLink)
 //      val targetLinks = Seq(targetLinkData)
@@ -743,7 +743,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      transferred.head.startAddrMValue should be(3045)
 //      transferred.head.endAddrMValue should be(3169)
 //      GeometryUtils.areAdjacent(transferred.head.geometry, Seq(targetLinkData.geometry.head, targetLinkData.geometry.last)) should be(true)
-//      transferred.forall(l => l.roadwayId == roadwayId) should be(true)
+//      transferred.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
 //    }
 //  }
 
@@ -807,24 +807,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val linkId6 = 499914628
 //    val linkId7 = 499914643
 //
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //
 //    runWithRollback {
 //      val oldAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId1, geom1, 2825, 3, 0, 0, 101, SideCode.TowardsDigitizing, Anomaly.None, true, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId2, geom2, 2825, 3, 0, 101, 103, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId3, geom3, 2825, 3, 0, 103, 113, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId4, geom4, 2825, 3, 0, 113, 279, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId5, geom5, 2825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true, roadwayId) // end calibration point for testing
+//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId1, geom1, 2825, 3, 0, 0, 101, SideCode.TowardsDigitizing, Anomaly.None, true, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId2, geom2, 2825, 3, 0, 101, 103, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId3, geom3, 2825, 3, 0, 103, 113, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId4, geom4, 2825, 3, 0, 113, 279, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, linkId5, geom5, 2825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true, roadwayNumber) // end calibration point for testing
 //      )
 //
 //      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
 //
 //      val newLinks = Seq(
-//        createRoadAddressLink(NewRoadAddress, linkId6, geom6, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(NewRoadAddress, linkId7, geom7, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(NewRoadAddress, linkId2, geom8, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(NewRoadAddress, linkId5, geom9, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(NewRoadAddress, linkId6, geom6, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(NewRoadAddress, linkId7, geom7, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(NewRoadAddress, linkId2, geom8, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(NewRoadAddress, linkId5, geom9, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      ).map(roadAddressLinkToRoadLink)
 //      val changeTable = Seq(
 //        createChangeTable(linkId2, linkId2, ChangeType.ReplacedCommonPart, 0, 2.21200769, 19.59840118, 20.49478145, 1476478965000L),
@@ -841,8 +841,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      // Test that this is not accepted as 101-103 is moved to locate after 103-113
 //      newAddresses.flatMap(_.allSegments).map(_.id).toSet should be (addresses.map(_.id).toSet)
 //
-//      newAddresses.flatMap(_.allSegments).map(_.roadwayId).toSet.size should be (1)
-//      newAddresses.flatMap(_.allSegments).map(_.roadwayId).toSet.head should be (roadwayId)
+//      newAddresses.flatMap(_.allSegments).map(_.roadwayNumber).toSet.size should be (1)
+//      newAddresses.flatMap(_.allSegments).map(_.roadwayNumber).toSet.head should be (roadwayNumber)
 //    }
 //  }
 
@@ -878,24 +878,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val o5622950Geom = GeometryUtils.truncateGeometry3D(n499914643Geom, 1.31962463, 157.72241408)
 //    val o5622953Geom = n5622953Geom
 //
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //
 //    runWithRollback {
 //      val oldAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622927, o5622927Geom, 92825, 3, 0, 0, 101, SideCode.TowardsDigitizing, Anomaly.None, true, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622931, o5622931Geom, 92825, 3, 0, 101, 103, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622932, o5622932Geom, 92825, 3, 0, 103, 113, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622950, o5622950Geom, 92825, 3, 0, 113, 279, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622953, o5622953Geom, 92825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true, roadwayId) // end calibration point for testing
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622927, o5622927Geom, 92825, 3, 0, 0, 101, SideCode.TowardsDigitizing, Anomaly.None, true, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622931, o5622931Geom, 92825, 3, 0, 101, 103, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622932, o5622932Geom, 92825, 3, 0, 103, 113, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622950, o5622950Geom, 92825, 3, 0, 113, 279, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622953, o5622953Geom, 92825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true, roadwayNumber) // end calibration point for testing
 //      )
 //
 //      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
 //
 //      val newLinks = Seq(
-//        createRoadAddressLink(0, 499914628, n499914628Geom, 15, 1, 0, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(0, 499914643, n499914643Geom, 15, 1, 0, 2, 3, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(0, 5622931, n5622931Geom, 15, 1, 0, 3, 4, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(0, 5622953, n5622953Geom, 15, 1, 0, 5, 6, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(0, 499914628, n499914628Geom, 15, 1, 0, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(0, 499914643, n499914643Geom, 15, 1, 0, 2, 3, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(0, 5622931, n5622931Geom, 15, 1, 0, 3, 4, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(0, 5622953, n5622953Geom, 15, 1, 0, 5, 6, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      ).map(roadAddressLinkToRoadLink)
 //      val changeTable = Seq(
 //        createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 93.93784134, 1476478965000L),
@@ -909,8 +909,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      // should contain just the 5622953
 //      newAddresses.flatMap(_.allSegments).map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size 1
 //      newAddresses.flatMap(_.allSegments).exists(_.linkId == 5622953) should be (true)
-//      newAddresses.flatMap(_.allSegments).map(_.roadwayId).toSet.size should be (1)
-//      newAddresses.flatMap(_.allSegments).forall(_.roadwayId == roadwayId) should be (true)
+//      newAddresses.flatMap(_.allSegments).map(_.roadwayNumber).toSet.size should be (1)
+//      newAddresses.flatMap(_.allSegments).forall(_.roadwayNumber == roadwayNumber) should be (true)
 //    }
 //  }
 
@@ -922,18 +922,18 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val address2Geom = GeometryUtils.truncateGeometry3D(linkGeom, 0.0, 10.0)
 //    val address3Geom = GeometryUtils.truncateGeometry3D(linkGeom, 0.0, 15.0)
 //
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //
 //    runWithRollback {
 //      val currentAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //        )
 //      val historyAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      )
 //
 //      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
@@ -968,18 +968,18 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val address2Geom = GeometryUtils.truncateGeometry3D(linkGeom, 0.0, 10.0)
 //    val address3Geom = GeometryUtils.truncateGeometry3D(linkGeom, 0.0, 15.0)
 //
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //
 //    runWithRollback {
 //      val currentAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      )
 //      val historyAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      )
 //
 //      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
@@ -1014,18 +1014,18 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val address2Geom = GeometryUtils.truncateGeometry3D(linkGeom, 0.0, 10.0)
 //    val address3Geom = GeometryUtils.truncateGeometry3D(linkGeom, 0.0, 15.0)
 //
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //
 //    runWithRollback {
 //      val currentAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      )
 //      val historyAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11111, address1Geom, 12345, 1, 0, 0, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11112, address2Geom, 12345, 1, 0, 5, 15, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 11113, address3Geom, 12345, 1, 0, 15, 30, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      )
 //
 //      val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(validTo = Option(new DateTime(new Date()))))
@@ -1062,22 +1062,22 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val o5622931Geom = n499914628Geom  ++ n5622931Geom ++ n499914643Geom ++ n5622953Geom
 //    val o1Geom = Seq(Point(6734173, 332309-1984), Point(6734173,332309))
 //
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //
 //    runWithRollback {
 //      val oldAddressLinks = Seq(
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622931, o5622931Geom, 92826, 3, 0, 1984, 2304, SideCode.AgainstDigitizing, Anomaly.None, false, true, roadwayId),
-//        createRoadAddressLink(Sequences.nextRoadAddressId, 1, o1Geom, 92826, 3, 0, 0, 1984, SideCode.TowardsDigitizing, Anomaly.None, true, false, roadwayId)
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 5622931, o5622931Geom, 92826, 3, 0, 1984, 2304, SideCode.AgainstDigitizing, Anomaly.None, false, true, roadwayNumber),
+//        createRoadAddressLink(Sequences.nextRoadAddressId, 1, o1Geom, 92826, 3, 0, 0, 1984, SideCode.TowardsDigitizing, Anomaly.None, true, false, roadwayNumber)
 //      )
 //
 //      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
 //
 //      val newLinks = Seq(
-//        createRoadAddressLink(0, 1, o1Geom, 100, 1, 1, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(0, 499914628, n499914628Geom, 100, 1, 0, 2, 3, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(0, 499914643, n499914643Geom, 100, 1, 0, 3, 4, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(0, 5622931, n5622931Geom, 100, 1, 4, 4, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId),
-//        createRoadAddressLink(0, 5622953, n5622953Geom, 100, 1, 5, 5, 6, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayId)
+//        createRoadAddressLink(0, 1, o1Geom, 100, 1, 1, 1, 2, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(0, 499914628, n499914628Geom, 100, 1, 0, 2, 3, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(0, 499914643, n499914643Geom, 100, 1, 0, 3, 4, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(0, 5622931, n5622931Geom, 100, 1, 4, 4, 5, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
+//        createRoadAddressLink(0, 5622953, n5622953Geom, 100, 1, 5, 5, 6, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber)
 //      ).map(roadAddressLinkToRoadLink)
 //      val changeTable = Seq(
 //        createChangeTable(5622931, 5622931, ChangeType.DividedModifiedPart, 195.170, 216.710, 0.0, 21.541, 1476478965000L),
@@ -1102,7 +1102,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //        .values.forall(_.size == 2) should be (true)
 //
 //      // Test that the common_history_id is inherited correctly in split
-//      flatList.forall(_.roadwayId == roadwayId) should be (true)
+//      flatList.forall(_.roadwayNumber == roadwayNumber) should be (true)
 //    }
 //  }
 
@@ -1122,7 +1122,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //       Test that road address history is placed on links properly: history is moved, terminated address is not
 //       Current address checks calculation isn't affected by historic. Now we need to also recalculate for floating history
 //     */
-//    val roadwayId = 123
+//    val roadwayNumber = 123
 //    runWithRollback {
 //      val linkGeom1 = Seq(Point(0, 0), Point(1.0, 4.5))
 //      val linkGeom2 = Seq(Point(1.0, 4.5), Point(12.5, 7.15))
@@ -1130,26 +1130,26 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //
 //      val history1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 100L, 105L,
 //        Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 123L, 0.0, 4.61, TowardsDigitizing,
-//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, NoTermination, roadwayId)
+//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, NoTermination, roadwayNumber)
 //      val history2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 105L, 116L,
 //        Some(DateTime.now().minusYears(15)), Some(DateTime.now().minusYears(10)), None, 124L, 0.0, 11.801, TowardsDigitizing,
-//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom2, NormalLinkInterface, 20L, NoTermination, roadwayId)
+//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom2, NormalLinkInterface, 20L, NoTermination, roadwayNumber)
 //      val current1Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 15L, 21L,
 //        Some(DateTime.now().minusYears(10)), None, None, 123L, 0.0, 4.61, TowardsDigitizing,
-//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, NoTermination, roadwayId)
+//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, NoTermination, roadwayNumber)
 //      val current2Address = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 21L, 35L,
 //        Some(DateTime.now().minusYears(10)), None, None, 124L, 0.0, 11.801, TowardsDigitizing,
-//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom2, NormalLinkInterface, 20L, NoTermination, roadwayId)
+//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom2, NormalLinkInterface, 20L, NoTermination, roadwayNumber)
 //      val terminatedAddress = RoadAddress(NewRoadAddress, 198, 201, PublicRoad, Track.Combined, Continuous, 10L, 15L,
 //        Some(DateTime.now().minusYears(20)), Some(DateTime.now().minusYears(17)), None, 123L, 0.0, 4.61, AgainstDigitizing,
-//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, Termination, roadwayId)
+//        84600L, (None, None), FloatingReason.ApplyChanges, linkGeom1, NormalLinkInterface, 20L, Termination, roadwayNumber)
 //
 //      val surrounding1 = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 0L, 15L,
 //        Some(DateTime.now().minusYears(10)), None, None, 121L, 0.0, 15.0, AgainstDigitizing,
-//        84600L, (Some(CalibrationPoint(121L, 15.0, 0L)), None), NoFloating, Seq(Point(0, 0), Point(-14, 5.385)), NormalLinkInterface, 20L, NoTermination, roadwayId)
+//        84600L, (Some(CalibrationPoint(121L, 15.0, 0L)), None), NoFloating, Seq(Point(0, 0), Point(-14, 5.385)), NormalLinkInterface, 20L, NoTermination, roadwayNumber)
 //      val surrounding2 = RoadAddress(NewRoadAddress, 199, 199, PublicRoad, Track.Combined, Continuous, 35L, 50L,
 //        Some(DateTime.now().minusYears(10)), None, None, 125L, 0.0, 15.0, TowardsDigitizing,
-//        84600L, (None, Some(CalibrationPoint(125L, 15.0, 50L))), NoFloating, Seq(Point(13.0, 7.0), Point(13.0, 22.0)), NormalLinkInterface, 20L, NoTermination, roadwayId)
+//        84600L, (None, Some(CalibrationPoint(125L, 15.0, 50L))), NoFloating, Seq(Point(13.0, 7.0), Point(13.0, 22.0)), NormalLinkInterface, 20L, NoTermination, roadwayNumber)
 //      RoadAddressDAO.create(Seq(history1Address, history2Address, current1Address, current2Address, terminatedAddress)) should have size (5)
 //
 //      val roadLinksSeq = Seq(RoadLink(123L, linkGeom1, 4.61, State, 99, BothDirections, UnknownLinkType,
@@ -1174,7 +1174,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      }
 //      postTransfer.count(_.endDate.isEmpty) should be(1)
 //      postTransfer.exists(ra => ra.startAddrMValue == 15L && ra.endAddrMValue == 35 && ra.endDate.isEmpty) should be(true)
-//      postTransfer.forall(_.roadwayId == roadwayId) should be (true)
+//      postTransfer.forall(_.roadwayNumber == roadwayNumber) should be (true)
 //      RoadAddressDAO.create(Seq(surrounding1, surrounding2)) should have size (2)
 //      roadAddressService.transferFloatingToGap(Set(123L, 124L), Set(456L), postTransfer, "-")
 //      val termRA = RoadAddressDAO.fetchByLinkId(Set(123L, 124L), true, true, true)
@@ -1183,14 +1183,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      val current = RoadAddressDAO.fetchByLinkId(Set(456L), true, true, true)
 //      current should have size (2)
 //      current.exists(ra => ra.startAddrMValue == 16L && ra.endAddrMValue == 34 && ra.endDate.isEmpty) should be(true)
-//      current.forall(_.roadwayId == roadwayId) should be (true)
+//      current.forall(_.roadwayNumber == roadwayNumber) should be (true)
 //    }
 //  }
 
   //TODO this will be implemented at VIITE-1551
 //  test("check if the integration api is returning history") {
 //    runWithRollback {
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', TIMESTAMP '2013-01-23 00:00:00.000000',
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', TIMESTAMP '2013-01-23 00:00:00.000000',
 //            'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
 //            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)),
 //            NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
@@ -1209,7 +1209,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   //TODO this will be implemented at VIITE-1551
 //  test("check if the integration api returns expired addresses") {
 //    runWithRollback {
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
 //            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), TIMESTAMP '2013-01-23 00:00:00.000000',
 //             1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
 //      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
@@ -1231,19 +1231,19 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      //Regular
 //      val regularAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockRegularRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, regularAttributesMap)
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
 //      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      //Complementary
 //      val complementaryAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockComplementaryRoadLink = RoadLink(99989, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, complementaryAttributesMap)
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 62888, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99989, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 62888, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99989, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
 //      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      //Suravage
 //      val suravageAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockSuravageRoadLink = RoadLink(99988, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, suravageAttributesMap, linkSource = LinkGeomSource.SuravageLinkInterface)
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 787878, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99988, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 787878, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99988, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
 //      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRegularRoadLink), Seq.empty[ChangeInfo]))
@@ -1259,25 +1259,25 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       //12316 -> FeatureClass.TractorRoad
       val attributesMap1 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))
       val mockRoadLink1 = RoadLink(11111, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap1)
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99999, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99999, 3, 0, 16.576, 11111, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
+      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99999, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99999, 3, 0, 16.576, 11111, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
       sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       //12141 -> FeatureClass.DrivePath
       val attributesMap2 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))
       val mockRoadLink2 = RoadLink(22222, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap2)
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99998, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99998, 3, 0, 16.576, 22222, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99998, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99998, 3, 0, 16.576, 22222, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
       sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       //12314 -> FeatureClass.CycleOrPedestrianPath
       val attributesMap3 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))
       val mockRoadLink3 = RoadLink(33333, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap3)
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99997, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99997, 3, 0, 16.576, 33333, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
+      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99997, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99997, 3, 0, 16.576, 33333, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
       sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       //12312 -> FeatureClass.WinterRoads
       val attributesMap4 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312))
       val mockRoadLink4 = RoadLink(44444, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap4)
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 99996, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99990, 3, 0, 16.576, 44444, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
+      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99996, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99990, 3, 0, 16.576, 44444, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
       sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink1, mockRoadLink2, mockRoadLink3, mockRoadLink4), Seq.empty[ChangeInfo]))
@@ -1293,7 +1293,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    runWithRollback {
 //      val addressList = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L)).map(_.copy(endDate = Some(DateTime.parse("2015-01-01"))))
 //      val idsString = s" (${addressList.map(_.id).mkString(",")})"
-//      sqlu"""UPDATE ROAD_ADDRESS SET END_DATE = TO_DATE('2015-01-01', 'YYYY-MM-DD') WHERE ID IN #$idsString""".execute
+//      sqlu"""UPDATE ROADWAY SET END_DATE = TO_DATE('2015-01-01', 'YYYY-MM-DD') WHERE ID IN #$idsString""".execute
 //      addressList should have size (3)
 //      val address = addressList.head
 //      val newAddr = address.copy(id = -1000L, startAddrMValue = addressList.map(_.startAddrMValue).min,
@@ -1316,10 +1316,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      sqlu"""INSERT INTO MISSING_ROAD_ADDRESS VALUES(10473190, NULL, NULL, NULL, NULL, 1, 0, 24.50478592842528, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482194.821,6748025.538,0,0,482173.031,6748029.022,0,0)))""".execute
 //
 //      //Create of existing roundabout
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 24962, 1, 0, 5, 23, 50, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 0, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482194.039,6748026.255,0,0,482201.757,6748049.556,0,27)), NULL, 3, 3, 0, 190864630, 2, 0, 27.748, 10455861, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1, NULL)""".execute
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 24962, 1, 0, 5, 0, 23, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 2, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482172.597,6748028.685,0,0,482194.039,6748026.255,0,23)), NULL, 3, 3, 0, 190864630, 3, 0, 22.525, 10455862, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1, NULL)""".execute
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 24962, 1, 0, 1, 81, 107, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 1, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482174.312,6748050.985,0,0,482172.597,6748028.685,0,26)), NULL, 3, 3, 0, 190864630, 3, 0, 25.257, 10455860, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1,NULL)""".execute
-//      sqlu"""INSERT INTO ROAD_ADDRESS VALUES(viite_general_seq.nextval, 24962, 1, 0, 5, 50, 81, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 0, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482201.757,6748049.556,0,0,482174.312,6748050.985,0,31)), NULL, 3, 3, 0, 190864630, 2, 0, 31.002, 10455853, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1,NULL)""".execute
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 24962, 1, 0, 5, 23, 50, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 0, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482194.039,6748026.255,0,0,482201.757,6748049.556,0,27)), NULL, 3, 3, 0, 190864630, 2, 0, 27.748, 10455861, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1, NULL)""".execute
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 24962, 1, 0, 5, 0, 23, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 2, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482172.597,6748028.685,0,0,482194.039,6748026.255,0,23)), NULL, 3, 3, 0, 190864630, 3, 0, 22.525, 10455862, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1, NULL)""".execute
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 24962, 1, 0, 1, 81, 107, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 1, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482174.312,6748050.985,0,0,482172.597,6748028.685,0,26)), NULL, 3, 3, 0, 190864630, 3, 0, 25.257, 10455860, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1,NULL)""".execute
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 24962, 1, 0, 5, 50, 81, TIMESTAMP '2017-10-01 00:00:00.000000', NULL, 'u001498', TIMESTAMP '2018-01-05 00:00:00.000000', 0, '1', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(482201.757,6748049.556,0,0,482174.312,6748050.985,0,31)), NULL, 3, 3, 0, 190864630, 2, 0, 31.002, 10455853, 1514851200000, TIMESTAMP '2018-03-27 14:30:01.244275', 1,NULL)""".execute
 //
 //      val sources = Seq(
 //        RoadAddressLink(9033715, 10455853, Seq(Point(482201.757, 6748049.556, 71.82000000000698), Point(482197.326, 6748053.701, 71.80999999999767), Point(482188.388, 6748056.716, 71.5570000000007), Point(482178.981, 6748054.482, 71.3859999999986), Point(482174.3122952117, 6748050.985221108, 71.4389966489121)), 31.00200000023773, AdministrativeClass.apply(2), LinkType.apply(99), RoadLinkType.FloatingRoadLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, MunicipalityStreetRoad, Some("Test"), Some("Test"), BigInt.apply(286), Some("10.04.2018"), Some("test"), Map(), 24962, 1, 0, 3, 5, 50, 81, "01.10.2017", "", 0.0, 31.002, SideCode.TowardsDigitizing, None, None, Anomaly.None, 190864630, None, false, floating = true),
@@ -1634,14 +1634,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   private def createRoadAddressLink(roadAddressId: Long, linearLocationId: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
-                                    endCalibrationPoint: Boolean = false, roadwayId: Long = 0) = {
+                                    endCalibrationPoint: Boolean = false, roadwayNumber: Long = 0) = {
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddressId, linearLocationId, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
       ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
       trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
       if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,
       if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
-      anomaly, roadwayId)
+      anomaly, roadwayNumber)
 
   }
 

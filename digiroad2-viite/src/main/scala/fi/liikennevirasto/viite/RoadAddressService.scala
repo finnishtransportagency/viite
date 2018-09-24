@@ -522,7 +522,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   }
 
   /**
-    * Returns all floating road addresses that are represented on ROAD_ADDRESS table and are valid (excluding history)
+    * Returns all floating road addresses that are represented on ROADWAY table and are valid (excluding history)
     *
     * @param includesHistory - default value = false to exclude history values
     * @return Seq[RoadAddress]
@@ -535,7 +535,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   }
 
   /**
-    * Returns all road address errors that are represented on ROAD_ADDRESS table and are valid (excluding history)
+    * Returns all road address errors that are represented on ROADWAY table and are valid (excluding history)
     *
     * @param includesHistory - default value = false to exclude history values
     * @return Seq[RoadAddress]
@@ -688,7 +688,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   def applyChanges(roadLinks: Seq[RoadLink], allChanges: Seq[ChangeInfo], roadAddresses: Seq[RoadAddress]): Seq[LinkRoadAddressHistory] = {
     throw new NotImplementedError("Will be implemented at VIITE-1569")
 //    time(logger, "Apply changes") {
-//      val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.roadwayId)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
+//      val addresses = roadAddresses.groupBy(ad => (ad.linkId, ad.roadwayNumber)).mapValues(v => LinkRoadAddressHistory(v.partition(_.endDate.isEmpty)))
 //      val changes = filterRelevantChanges(roadAddresses, allChanges)
 //      val changedRoadLinks = changesSanityCheck(changes)
 //      if (changedRoadLinks.isEmpty) {
@@ -722,7 +722,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 //          val adjustedAddresses = adjustedRoadParts.flatMap { case (road, part) => RoadAddressDAO.fetchByRoadPart(road, part) }
 //
 //          val changedRoadAddresses = adjustedAddresses ++ RoadAddressDAO.fetchByIdMassQuery(ids -- adjustedAddresses.map(_.id), includeFloating = true)
-//          changedRoadAddresses.groupBy(cra => (cra.linkId, cra.roadwayId)).map(s => LinkRoadAddressHistory(s._2.toSeq.partition(_.endDate.isEmpty))).toSeq
+//          changedRoadAddresses.groupBy(cra => (cra.linkId, cra.roadwayNumber)).map(s => LinkRoadAddressHistory(s._2.toSeq.partition(_.endDate.isEmpty))).toSeq
 //        }
 //      }
 //    }

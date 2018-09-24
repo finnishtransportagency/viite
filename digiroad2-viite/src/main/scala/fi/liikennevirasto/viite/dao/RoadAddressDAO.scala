@@ -129,7 +129,7 @@ trait BaseRoadAddress {
   def ely: Long
   def linkGeomSource: LinkGeomSource
   def reversed: Boolean
-  def roadwayId: Long
+  def roadwayNumber: Long
 
   def isFloating: Boolean = floating.isFloating
 
@@ -179,7 +179,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
                        linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, roadwayId: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
+                       terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
                        roadName: Option[String] = None) extends BaseRoadAddress {
 
   val endCalibrationPoint = calibrationPoints._2
@@ -235,7 +235,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   }
 }
 
-case class RoadwayAddress(id: Long, roadwayId: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
+case class RoadwayAddress(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reverted: Boolean,
                        startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String],
                        ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime, validTo: Option[DateTime] = None)
@@ -272,12 +272,12 @@ class RoadAddressDAO extends BaseDAO {
 
   /**
     * Fetch all the current road address by roadway id
-    * @param roadwayId Roadway identifier
+    * @param roadwayNumber Roadway identifier
     * @return Current road address at given roadway
     */
-  def fetchByRoadwayId(roadwayId: Long) : Option[RoadwayAddress] = {
+  def fetchByRoadwayNumber(roadwayNumber: Long) : Option[RoadwayAddress] = {
     time(logger, "Fetch current road addresses by roadway id") {
-      fetch(withRoadwayIdAndNotEnded(roadwayId)).headOption
+      fetch(withRoadwayNumberAndNotEnded(roadwayNumber)).headOption
     }
   }
 
@@ -315,12 +315,12 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadwayIds(roadwayIds: Set[Long]): Seq[RoadwayAddress] = {
+  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long]): Seq[RoadwayAddress] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
-      if(roadwayIds.isEmpty)
+      if(roadwayNumbers.isEmpty)
         Seq()
       else
-        fetch(withRoadwayIdsAndNotEnded(roadwayIds))
+        fetch(withRoadwayNumbersAndNotEnded(roadwayNumbers))
     }
   }
 
@@ -352,7 +352,7 @@ class RoadAddressDAO extends BaseDAO {
     time(logger, "Fetch all the road numbers") {
       sql"""
 			select distinct (ra.road_number)
-      from road_address ra
+      from ROADWAY ra
       where ra.valid_to is null and end_date is null
 		  """.as[Long].list
     }
@@ -365,8 +365,8 @@ class RoadAddressDAO extends BaseDAO {
         s"""
         select
         	ra.id, ll.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely
-        from road_address ra
-        join linear_location ll on ll.roadway_id = ra.roadway_id
+        from ROADWAY ra
+        join linear_location ll on ll.ROADWAY_NUMBER = ra.ROADWAY_NUMBER
         join road_network_error re on re.road_address_id = ra.id and re.linear_location_id = ll.id $history
         order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
       """
@@ -380,11 +380,11 @@ class RoadAddressDAO extends BaseDAO {
   private def fetch(queryFilter: String => String): Seq[RoadwayAddress] = {
     val query = """
         select
-          a.id, a.roadway_id, a.road_number, a.road_part_number, a.track_code, a.start_addr_m, a.end_addr_m,
+          a.id, a.ROADWAY_NUMBER, a.road_number, a.road_part_number, a.track_code, a.start_addr_m, a.end_addr_m,
           a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.road_type, a.ely, a.terminated,
           a.valid_from, a.valid_to,
           (select rn.road_name from road_name rn where rn.road_number = a.road_number and rn.end_date is null and rn.valid_to is null) as road_name
-        from road_address a
+        from ROADWAY a
       """
     Q.queryNA[RoadwayAddress](queryFilter(query)).iterator.toSeq
   }
@@ -425,12 +425,12 @@ class RoadAddressDAO extends BaseDAO {
     s"""$query where road_number = $roadNumber and road_part_number = $roadPartNumber and track = $track and $addressFilter"""
   }
 
-  private def withRoadwayIdAndNotEnded(roadwayId: Long)(query: String): String = {
-    s"""$query where a.end_date is null and a.roadway_id = $roadwayId"""
+  private def withRoadwayNumberAndNotEnded(roadwayNumber: Long)(query: String): String = {
+    s"""$query where a.end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
-  private def withRoadwayIdsAndNotEnded(roadwayIds: Set[Long])(query: String): String = {
-    s"""$query where a.end_date is null and a.roadway_id in (${roadwayIds.mkString(",")})"""
+  private def withRoadwayNumbersAndNotEnded(roadwayNumbers: Set[Long])(query: String): String = {
+    s"""$query where a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
@@ -446,7 +446,7 @@ class RoadAddressDAO extends BaseDAO {
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()
-      val roadwayId = r.nextLong()
+      val roadwayNumber = r.nextLong()
       val roadNumber = r.nextLong()
       val roadPartNumber = r.nextLong()
       val trackCode = r.nextInt()
@@ -464,7 +464,7 @@ class RoadAddressDAO extends BaseDAO {
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      RoadwayAddress(id, roadwayId, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
+      RoadwayAddress(id, roadwayNumber, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo )
     }
   }
@@ -474,7 +474,7 @@ class RoadAddressDAO extends BaseDAO {
 //      s"""
 //          SELECT * FROM (
 //            SELECT ra.road_number
-//            FROM road_address ra
+//            FROM ROADWAY ra
 //            WHERE road_number > $current AND valid_to IS NULL
 //            ORDER BY road_number ASC
 //          ) WHERE ROWNUM < 2
@@ -487,7 +487,7 @@ class RoadAddressDAO extends BaseDAO {
 //      s"""
 //          SELECT * FROM (
 //            SELECT ra.road_part_number
-//            FROM road_address ra
+//            FROM ROADWAY ra
 //            WHERE road_number = $roadNumber AND road_part_number > $current AND valid_to IS NULL
 //            ORDER BY road_part_number ASC
 //          ) WHERE ROWNUM < 2
@@ -500,7 +500,7 @@ class RoadAddressDAO extends BaseDAO {
 //      s"""
 //          SELECT * FROM (
 //            SELECT ra.road_part_number
-//            FROM road_address ra
+//            FROM ROADWAY ra
 //            WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
 //            ORDER BY road_part_number DESC
 //          ) WHERE ROWNUM < 2
@@ -524,11 +524,11 @@ class RoadAddressDAO extends BaseDAO {
 //        s"""
 //      SELECT 1 FROM dual WHERE EXISTS(select 1
 //         from project pro,
-//         road_address ra
+//         ROADWAY ra
 //         where  pro.id = $projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
 //         (ra.START_DATE > pro.START_DATE or ra.END_DATE > pro.START_DATE) AND
 //         ra.VALID_TO is null) OR EXISTS (
-//         SELECT 1 FROM project_reserved_road_part pro, road_address ra
+//         SELECT 1 FROM project_reserved_road_part pro, ROADWAY ra
 //          WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number
 //           AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)"""
 //      Q.queryNA[Int](query).firstOption.nonEmpty
@@ -567,7 +567,7 @@ class RoadAddressDAO extends BaseDAO {
 //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
 //        ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
-//        from ROAD_ADDRESS ra
+//        from ROADWAY ra
 //        where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
 //          ra.terminated = 0 and
 //          ra.valid_to is null and
@@ -624,14 +624,14 @@ class RoadAddressDAO extends BaseDAO {
 //      val geomSource = LinkGeomSource.apply(r.nextInt)
 //      val ely = r.nextLong()
 //      val terminated = TerminationCode.apply(r.nextInt())
-//      val roadwayId = r.nextLong()
+//      val roadwayNumber = r.nextLong()
 //      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 //      val roadName = r.nextStringOption()
 //      RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
 //        startAddrMValue, endAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
 //        SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode),
 //          linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)), FloatingReason.apply(floatingReason),
-//        Seq(Point(x, y), Point(x2, y2)), geomSource, ely, terminated, roadwayId, validFrom, validTo, blackUnderline = false, roadName)
+//        Seq(Point(x, y), Point(x2, y2)), geomSource, ely, terminated, roadwayNumber, validFrom, validTo, blackUnderline = false, roadName)
 //    }
 //  }
 //
@@ -677,7 +677,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        $where $floating $history $current $valid $idFilter and t.id < t2.id and
@@ -713,7 +713,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL and ${dateFilter(table = "rn")})
 //        $networkData
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        $networkWhere
@@ -757,7 +757,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        $where AND $geomFilter $coarseWhere AND ra.floating=0 and t.id < t2.id and
@@ -786,7 +786,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        join $idTableName i on i.id = ra.link_id
@@ -819,7 +819,7 @@ class RoadAddressDAO extends BaseDAO {
 //              ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //              (SELECT max(rn.road_name) FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL AND ${dateFilter(table = "rn")})
 //              $networkData
-//              from ROAD_ADDRESS ra cross join
+//              from ROADWAY ra cross join
 //              TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //              TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //              join $idTableName i on i.id = ra.link_id
@@ -852,7 +852,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        join $idTableName i on i.id = ra.id
@@ -875,9 +875,9 @@ class RoadAddressDAO extends BaseDAO {
 //    time(logger, s"Sanity check for the history of the road number $roadNumber") {
 //      val query =
 //        s"""
-//    SELECT r.ROAD_NUMBER, r.ROAD_PART_NUMBER, r.START_ADDR_M FROM ROAD_ADDRESS r
+//    SELECT r.ROAD_NUMBER, r.ROAD_PART_NUMBER, r.START_ADDR_M FROM ROADWAY r
 //      WHERE  EXISTS(
-//      SELECT 1 FROM ROAD_ADDRESS r2 WHERE
+//      SELECT 1 FROM ROADWAY r2 WHERE
 //    r2.id != r.id AND r.ROAD_NUMBER =$roadNumber AND r.ROAD_PART_NUMBER in ( ${roadPartNumbers.mkString(",")}) AND
 //      ((r2.valid_to is null AND (r.valid_to is null OR r2.valid_from < r.valid_to)) OR
 //        (r2.valid_to is not null AND NOT (r.valid_to <= r2.valid_from OR r.valid_from >= r2.valid_to))) AND
@@ -908,7 +908,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        where $floating ra.road_number = $roadNumber AND t.id < t2.id and
@@ -929,7 +929,7 @@ class RoadAddressDAO extends BaseDAO {
 //          ra.side_code, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//          from ROAD_ADDRESS ra cross join
+//          from ROADWAY ra cross join
 //          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //          where t.id < t2.id and ra.floating > 0 $history and
@@ -950,7 +950,7 @@ class RoadAddressDAO extends BaseDAO {
 //          ra.side_code, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//          from ROAD_ADDRESS ra cross join
+//          from ROADWAY ra cross join
 //          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //          where t.id < t2.id and ra.floating > 0 $history and road_number = $roadNumber and road_part_number = $roadPartNumber and
@@ -966,7 +966,7 @@ class RoadAddressDAO extends BaseDAO {
 //      val history = if (!includesHistory) s" where ra.end_date is null " else ""
 //      val query =
 //        s"""
-//        select ra.id, ra.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from road_address ra join road_network_error re on re.road_address_id = ra.id $history
+//        select ra.id, ra.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from ROADWAY ra join road_network_error re on re.road_address_id = ra.id $history
 //        order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
 //      """
 //      Q.queryNA[(Long, Long, Long, Long, Int, Long)](query).list.map {
@@ -985,12 +985,12 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        where ra.link_id in (
 //          select link_id
-//          from ROAD_ADDRESS
+//          from ROADWAY
 //          where road_number = $roadNumber and
 //          valid_to is null
 //          GROUP BY link_id
@@ -1021,7 +1021,7 @@ class RoadAddressDAO extends BaseDAO {
 //      val last = geometry.get.last
 //      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
 //      val length = GeometryUtils.geometryLength(geometry.get)
-//      sqlu"""UPDATE ROAD_ADDRESS
+//      sqlu"""UPDATE ROADWAY
 //        SET road_number = ${roadAddress.roadNumber},
 //           road_part_number= ${roadAddress.roadPartNumber},
 //           track_code = ${roadAddress.track.value},
@@ -1049,7 +1049,7 @@ class RoadAddressDAO extends BaseDAO {
 //        GeometryUtils.scaleToThreeDigits(last.z)
 //      )
 //      val length = GeometryUtils.geometryLength(geometry)
-//      sqlu"""UPDATE ROAD_ADDRESS
+//      sqlu"""UPDATE ROADWAY
 //        SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
 //             MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
 //        WHERE id = ${roadAddressId}""".execute
@@ -1059,7 +1059,7 @@ class RoadAddressDAO extends BaseDAO {
 //  private def updateWithoutGeometry(roadAddress: RoadAddress): Unit = {
 //    val startTS = toTimeStamp(roadAddress.startDate)
 //    val endTS = toTimeStamp(roadAddress.endDate)
-//    sqlu"""UPDATE ROAD_ADDRESS
+//    sqlu"""UPDATE ROADWAY
 //        SET road_number = ${roadAddress.roadNumber},
 //           road_part_number= ${roadAddress.roadPartNumber},
 //           track_code = ${roadAddress.track.value},
@@ -1075,7 +1075,7 @@ class RoadAddressDAO extends BaseDAO {
 //  def expireById(ids: Set[Long]): Int = {
 //    val query =
 //      s"""
-//          Update ROAD_ADDRESS Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
+//          Update ROADWAY Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
 //        """
 //    if (ids.isEmpty)
 //      0
@@ -1087,7 +1087,7 @@ class RoadAddressDAO extends BaseDAO {
 //    if (!sourceLinkIds.isEmpty) {
 //      val query =
 //        s"""
-//          Update road_address Set valid_to = sysdate Where valid_to IS NULL and link_id in (${sourceLinkIds.mkString(",")})
+//          Update ROADWAY Set valid_to = sysdate Where valid_to IS NULL and link_id in (${sourceLinkIds.mkString(",")})
 //        """
 //      Q.updateNA(query).first
 //    }
@@ -1107,14 +1107,14 @@ class RoadAddressDAO extends BaseDAO {
 //      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
 //      val length = GeometryUtils.geometryLength(geometry.get)
 //      sqlu"""
-//           Update road_address Set floating = ${floatingReason.value},
+//           Update ROADWAY Set floating = ${floatingReason.value},
 //                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
 //                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
 //             Where id = $roadAddressId
 //      """.execute
 //    } else {
 //      sqlu"""
-//           Update road_address Set floating = ${floatingReason.value}
+//           Update ROADWAY Set floating = ${floatingReason.value}
 //             Where id = $roadAddressId
 //      """.execute
 //    }
@@ -1133,23 +1133,23 @@ class RoadAddressDAO extends BaseDAO {
 //      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
 //      val length = GeometryUtils.geometryLength(geometry.get)
 //      sqlu"""
-//           Update road_address Set floating = ${floatingReason.value},
+//           Update ROADWAY Set floating = ${floatingReason.value},
 //                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
 //                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
 //             Where id = $roadAddressId
 //      """.execute
 //    }
 //    sqlu"""
-//       update road_address set floating = ${floatingReason.value} where id in(
-//       select road_address.id from road_address where link_id =
-//       (select link_id from road_address where road_address.id = $roadAddressId))
+//       update ROADWAY set floating = ${floatingReason.value} where id in(
+//       select ROADWAY.id from ROADWAY where link_id =
+//       (select link_id from ROADWAY where ROADWAY.id = $roadAddressId))
 //        """.execute
 //  }
 //
 //  def getAllValidRoadNumbers(filter: String = ""): List[Long] = {
 //    Q.queryNA[Long](s"""
 //       select distinct road_number
-//              from road_address ra
+//              from ROADWAY ra
 //              where ra.floating = 0 AND valid_to IS NULL
 //              $filter
 //              order by road_number
@@ -1163,7 +1163,7 @@ class RoadAddressDAO extends BaseDAO {
 //  def getValidRoadParts(roadNumber: Long): List[Long] = {
 //    sql"""
 //       select distinct road_part_number
-//              from road_address ra
+//              from ROADWAY ra
 //              where road_number = $roadNumber AND valid_to IS NULL
 //              AND END_DATE IS NULL order by road_part_number
 //      """.as[Long].list
@@ -1180,7 +1180,7 @@ class RoadAddressDAO extends BaseDAO {
 //  def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
 //    sql"""
 //       select distinct ra.road_part_number
-//              from road_address ra
+//              from ROADWAY ra
 //              where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
 //              AND END_DATE IS NULL
 //              AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
@@ -1193,7 +1193,7 @@ class RoadAddressDAO extends BaseDAO {
 //    (startM, endM) match {
 //      case (Some(s), Some(e)) =>
 //        sqlu"""
-//           UPDATE ROAD_ADDRESS
+//           UPDATE ROADWAY
 //           SET start_measure = $s,
 //             end_measure = $e,
 //             link_id = ${linearLocationAdjustment.linkId},
@@ -1202,7 +1202,7 @@ class RoadAddressDAO extends BaseDAO {
 //      """.execute
 //      case (_, Some(e)) =>
 //        sqlu"""
-//           UPDATE ROAD_ADDRESS
+//           UPDATE ROADWAY
 //           SET
 //             end_measure = ${linearLocationAdjustment.endMeasure.get},
 //             link_id = ${linearLocationAdjustment.linkId},
@@ -1211,7 +1211,7 @@ class RoadAddressDAO extends BaseDAO {
 //      """.execute
 //      case (Some(s), _) =>
 //        sqlu"""
-//           UPDATE ROAD_ADDRESS
+//           UPDATE ROADWAY
 //           SET start_measure = ${linearLocationAdjustment.startMeasure.get},
 //             link_id = ${linearLocationAdjustment.linkId},
 //             modified_date = sysdate
@@ -1223,7 +1223,7 @@ class RoadAddressDAO extends BaseDAO {
 //
 //  def updateLinkSource(id: Long, linkSource: LinkGeomSource): Boolean = {
 //    sqlu"""
-//           UPDATE ROAD_ADDRESS SET link_source = ${linkSource.value} WHERE id = $id
+//           UPDATE ROADWAY SET link_source = ${linkSource.value} WHERE id = $id
 //      """.execute
 //    true
 //  }
@@ -1261,7 +1261,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        join $idTableName i on i.id = ra.link_id
@@ -1291,7 +1291,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        $where AND ra.floating > 0 and t.id < t2.id and
@@ -1341,7 +1341,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL and rn.VALID_TO IS NULL)
-//        from road_address ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        $where $historyFilter $terminatedFilter and t.id < t2.id $validToFilter
@@ -1372,7 +1372,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        join $idTableName i on i.id = ra.id
@@ -1394,13 +1394,13 @@ class RoadAddressDAO extends BaseDAO {
 //    val idString = roadAddresses.map(_.id).mkString(",")
 //    val query =
 //      s"""
-//          UPDATE ROAD_ADDRESS SET VALID_TO = sysdate WHERE id IN ($idString)
+//          UPDATE ROADWAY SET VALID_TO = sysdate WHERE id IN ($idString)
 //        """
 //    Q.updateNA(query).first
 //  }
 //
 //  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
-//    val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, road_number, road_part_number, " +
+//    val addressPS = dynamicSession.prepareStatement("insert into ROADWAY (id, road_number, road_part_number, " +
 //      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, modified_by, " +
 //      "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, common_history_id," +
 //      "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
@@ -1418,10 +1418,10 @@ class RoadAddressDAO extends BaseDAO {
 //      } else {
 //        address.id
 //      }
-//      val nextRoadwayId = if (address.roadwayId == NewRoadwayId) {
+//      val nextRoadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
 //        Sequences.nextRoadwaySeqValue
 //      } else {
-//        address.roadwayId
+//        address.roadwayNumber
 //      }
 //      addressPS.setLong(1, nextId)
 //      addressPS.setLong(2, address.roadNumber)
@@ -1456,7 +1456,7 @@ class RoadAddressDAO extends BaseDAO {
 //      addressPS.setLong(20, address.ely)
 //      addressPS.setInt(21, address.roadType.value)
 //      addressPS.setInt(22, address.terminated.value)
-//      addressPS.setLong(23, nextRoadwayId)
+//      addressPS.setLong(23, nextRoadwayNumber)
 //      addressPS.setLong(24, address.linkId)
 //      addressPS.setLong(25, address.sideCode.value)
 //      addressPS.setDouble(26, address.startMValue)
@@ -1472,14 +1472,14 @@ class RoadAddressDAO extends BaseDAO {
 //
 //  def roadPartExists(roadNumber:Long, roadPart:Long) :Boolean = {
 //    val query = s"""SELECT COUNT(1)
-//            FROM road_address
+//            FROM ROADWAY
 //             WHERE road_number=$roadNumber AND road_part_number=$roadPart AND ROWNUM < 2"""
 //    if (Q.queryNA[Int](query).first>0) true else false
 //  }
 //
 //  def roadNumberExists(roadNumber:Long) :Boolean = {
 //    val query = s"""SELECT COUNT(1)
-//            FROM road_address
+//            FROM ROADWAY
 //             WHERE road_number=$roadNumber AND ROWNUM < 2"""
 //    if (Q.queryNA[Int](query).first>0) true else false
 //  }
@@ -1488,10 +1488,10 @@ class RoadAddressDAO extends BaseDAO {
 //  {
 //    val query =
 //      s"""SELECT r.id, r.link_id, r.end_addr_M, r.discontinuity, r.ely,
-//                (Select Max(ra.start_date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
-//                (Select Max(ra.end_Date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
-//                FROM road_address r
-//             INNER JOIN (Select  MAX(start_addr_m) as lol FROM road_address rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
+//                (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
+//                (Select Max(ra.end_Date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
+//                FROM ROADWAY r
+//             INNER JOIN (Select  MAX(start_addr_m) as lol FROM ROADWAY rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
 //             rm.valid_to is null AND rm.end_date is null AND track_code in (0,1)) ra
 //             on r.START_ADDR_M=ra.lol
 //             WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
@@ -1517,7 +1517,7 @@ class RoadAddressDAO extends BaseDAO {
 //        ra.side_code, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        where t.id < t2.id and
@@ -1527,13 +1527,13 @@ class RoadAddressDAO extends BaseDAO {
 //  }
 //
 //  def lockRoadAddressWriting: Unit = {
-//    sqlu"""LOCK TABLE road_address IN SHARE MODE""".execute
+//    sqlu"""LOCK TABLE ROADWAY IN SHARE MODE""".execute
 //  }
 //
-//  def getRoadwayIdsFromRoadAddress: Seq[Long] = {
+//  def getRoadwayNumbersFromRoadAddress: Seq[Long] = {
 //        sql"""
 //         select distinct(ra.common_history_id)
-//        from road_address ra order by ra.common_history_id asc
+//        from ROADWAY ra order by ra.common_history_id asc
 //      """.as[Long].list
 //  }
 //
@@ -1550,7 +1550,7 @@ class RoadAddressDAO extends BaseDAO {
 //          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
 //          link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to, null as road_name
-//        from road_address ra
+//        from ROADWAY ra
 //      """
 //      queryList(queryFilter(query))
 //    }
@@ -1651,7 +1651,7 @@ class RoadAddressDAO extends BaseDAO {
 //  def getRoadNumbers(): Seq[Long] = {
 //    sql"""
 //			select distinct (ra.road_number)
-//      from road_address ra
+//      from ROADWAY ra
 //      where ra.valid_to is null
 //		  """.as[Long].list
 //  }
@@ -1679,7 +1679,7 @@ class RoadAddressDAO extends BaseDAO {
 //          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
 //          ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to
-//        from ROAD_ADDRESS ra
+//        from ROADWAY ra
 //        $where
 //      """
 //      queryList(query)
@@ -1701,7 +1701,7 @@ class RoadAddressDAO extends BaseDAO {
 //       ra.side_code, ra.adjusted_timestamp,
 //       ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
 //       (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
+//        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        where t.id < t2.id and
@@ -1713,7 +1713,7 @@ class RoadAddressDAO extends BaseDAO {
 //  /*
 //   * Get the calibration code of the given road address.
 //   *
-//   * @param roadAddressId id of the road link in ROAD_ADDRESS table
+//   * @param roadAddressId id of the road link in ROADWAY table
 //   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
 //   *
 //   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
@@ -1721,7 +1721,7 @@ class RoadAddressDAO extends BaseDAO {
 //  def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
 //    val query =
 //      s"""SELECT ra.calibration_points
-//                    FROM road_address ra
+//                    FROM ROADWAY ra
 //                    WHERE ra.id=$roadAddressId"""
 //    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
 //  }
@@ -1730,7 +1730,7 @@ class RoadAddressDAO extends BaseDAO {
 //  /*
 //   * Get the calibration code of the given road addresses.
 //   *
-//   * @param roadAddressId id of the road link in ROAD_ADDRESS table
+//   * @param roadAddressId id of the road link in ROADWAY table
 //   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
 //   *
 //   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
@@ -1741,7 +1741,7 @@ class RoadAddressDAO extends BaseDAO {
 //    } else {
 //      val query =
 //        s"""SELECT ra.id, ra.calibration_points
-//                    FROM road_address ra
+//                    FROM ROADWAY ra
 //                    WHERE ra.id in (${roadAddressIds.mkString(",")})"""
 //      Q.queryNA[(Long, Int)](query).list.map {
 //        case (id, code) => id -> CalibrationCode(code)

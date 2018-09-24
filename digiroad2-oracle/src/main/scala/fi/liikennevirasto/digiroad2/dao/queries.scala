@@ -9,11 +9,11 @@ object Queries {
 
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
-  def nextRoadAddressId = sql"select ROAD_ADDRESS_SEQ.nextval from dual"
+  def nextRoadAddressId = sql"select ROADWAY_SEQ.nextval from dual"
 
   def nextLinearLocationId = sql"select LINEAR_LOCATION_SEQ.nextval from dual"
 
-  def nextRoadwayId = sql"select ROADWAY_SEQ.nextval from dual"
+  def nextRoadwayNumber = sql"select ROADWAY_NUMBER_SEQ.nextval from dual"
 
   def nextRoadNetworkErrorId = sql"select ROAD_NETWORK_ERROR_SEQ.nextval from dual"
 
@@ -22,7 +22,7 @@ object Queries {
   }
 
   def fetchRoadAddressIds(len: Int) = {
-    sql"""select ROAD_ADDRESS_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select ROADWAY_SEQ.nextval from dual connect by level <= $len""".as[Long].list
   }
 
   def fetchLinearLocationIds(len: Int) = {

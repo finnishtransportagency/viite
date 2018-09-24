@@ -24,15 +24,15 @@ object RoadwayFiller {
           && (groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue)) {
           roadAddressesToReturn
         } else {
-          roadAddressesToReturn.groupBy(_.roadwayId).values.toSeq.foldLeft(Seq.empty[RoadAddress]) { case (seqComplete, addresses) =>
+          roadAddressesToReturn.groupBy(_.roadwayNumber).values.toSeq.foldLeft(Seq.empty[RoadAddress]) { case (seqComplete, addresses) =>
             val currentsInsideGroup = roadAddressesToCompare.filter(ra => addresses.exists(_.id == ra.id))
-            val groupWithSameRoadway = roadAddressesToCompare.filter(_.roadwayId == addresses.head.roadwayId)
+            val groupWithSameRoadway = roadAddressesToCompare.filter(_.roadwayNumber == addresses.head.roadwayNumber)
             if (currentsInsideGroup.nonEmpty && groupWithSameRoadway.nonEmpty && currentsInsideGroup.lengthCompare(groupWithSameRoadway.length) == 0
               && (currentsInsideGroup.last.endAddrMValue - currentsInsideGroup.head.startAddrMValue == groupWithSameRoadway.last.endAddrMValue - groupWithSameRoadway.head.startAddrMValue)) {
               seqComplete ++ addresses
             } else {
               val changedAddresses = addresses.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) { case (seq, address) =>
-                seq ++ Seq(fillRoadwayId(seq, address))
+                seq ++ Seq(fillRoadwayNumber(seq, address))
               }
               seqComplete ++ changedAddresses
             }
@@ -52,17 +52,17 @@ object RoadwayFiller {
           && (groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue)) {
           roadAddressesToReturn
         } else {
-          roadAddressesToReturn.groupBy(_.roadwayId).values.toSeq.foldLeft(Seq.empty[RoadAddress]) {
+          roadAddressesToReturn.groupBy(_.roadwayNumber).values.toSeq.foldLeft(Seq.empty[RoadAddress]) {
             case (seqComplete, addresses) =>
               val currentsInsideGroup = roadAddressesToCompare.filter(ra => addresses.exists(_.id == ra.id))
-              val groupWithSameRoadway = roadAddressesToCompare.filter(_.roadwayId == addresses.head.roadwayId)
+              val groupWithSameRoadway = roadAddressesToCompare.filter(_.roadwayNumber == addresses.head.roadwayNumber)
               if (currentsInsideGroup.nonEmpty && groupWithSameRoadway.nonEmpty && currentsInsideGroup.lengthCompare(groupWithSameRoadway.length) == 0
                 && (currentsInsideGroup.last.endAddrMValue - currentsInsideGroup.head.startAddrMValue == groupWithSameRoadway.last.endAddrMValue - groupWithSameRoadway.head.startAddrMValue)) {
                 seqComplete ++ addresses
               } else {
                 val changedAddresses = addresses.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) {
                   case (seq, address) =>
-                    seq ++ Seq(fillRoadwayId(seq, address))
+                    seq ++ Seq(fillRoadwayNumber(seq, address))
                 }
                 seqComplete ++ changedAddresses
               }
@@ -76,7 +76,7 @@ object RoadwayFiller {
     addressesGroups.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType)).flatMap { group =>
       val addressesInGroup = group._2
       addressesInGroup.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) { case (seq, address) =>
-        val changedAddress = fillRoadwayId(seq, address)
+        val changedAddress = fillRoadwayNumber(seq, address)
         seq ++ Seq(changedAddress)
       }
     }.toSeq ++ newRoadAddresses.filterNot(_.id == NewRoadAddress)
@@ -108,7 +108,7 @@ object RoadwayFiller {
         transferredOption match {
           case Some(transferred) =>
             newRoadAddresses.find(cra => cra.id == transferred.roadAddressId) match {
-              case Some(roadAddress) => ra.copy(roadwayId = roadAddress.roadwayId)
+              case Some(roadAddress) => ra.copy(roadwayNumber = roadAddress.roadwayNumber)
               case _ => ra
             }
 
@@ -132,10 +132,10 @@ object RoadwayFiller {
           if (allExistingAddresses.nonEmpty && allExistingAddresses.lengthCompare(roadAddressesToCompare.length) == 0) {
             roadAddressesToReturn
           } else {
-            assignNewRoadwayIds(roadAddressesToReturn)
+            assignNewRoadwayNumbers(roadAddressesToReturn)
           }
         } else {
-          assignNewRoadwayIds(roadAddressesToReturn)
+          assignNewRoadwayNumbers(roadAddressesToReturn)
         }
     }.toSeq
   }
@@ -151,7 +151,7 @@ object RoadwayFiller {
           && groupedLinks.last.endAddrMValue - groupedLinks.head.startAddrMValue == roadAddressesToCompare.last.endAddrMValue - roadAddressesToCompare.head.startAddrMValue) {
           roadAddressesToReturn
         } else {
-          assignNewRoadwayIds(roadAddressesToReturn)
+          assignNewRoadwayNumbers(roadAddressesToReturn)
         }
     }.toSeq ++ newRoadAddresses.filterNot(ra => renumberedLinks.exists(_.roadAddressId == ra.id))
   }
@@ -170,16 +170,16 @@ object RoadwayFiller {
       case (pNewRoadAddresses, operation) =>
         operation(projectLinks, pNewRoadAddresses)
     }
-    processedAddresses.groupBy(_.roadwayId).mapValues(addresses => {
-      logger.info(s"Processing calibration points for roadway id ${addresses.head.roadwayId}")
+    processedAddresses.groupBy(_.roadwayNumber).mapValues(addresses => {
+      logger.info(s"Processing calibration points for roadway id ${addresses.head.roadwayNumber}")
       setCalibrationPoints(addresses.sortBy(_.startAddrMValue))
     }).values.flatten.toSeq
   }
 
-  private def assignNewRoadwayIds(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    roadAddresses.groupBy(_.roadwayId).mapValues { addresses =>
+  private def assignNewRoadwayNumbers(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+    roadAddresses.groupBy(_.roadwayNumber).mapValues { addresses =>
       val changedAddresses = addresses.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) { case (seq, address) =>
-        seq ++ Seq(fillRoadwayId(seq, address))
+        seq ++ Seq(fillRoadwayNumber(seq, address))
       }
       changedAddresses
     }.values.flatten.toSeq
@@ -205,16 +205,16 @@ object RoadwayFiller {
   }
 
 
-  private def fillRoadwayId(seq: Seq[RoadAddress], address: RoadAddress): RoadAddress = {
+  private def fillRoadwayNumber(seq: Seq[RoadAddress], address: RoadAddress): RoadAddress = {
     if (seq.isEmpty) {
       val nextId = Sequences.nextRoadwaySeqValue
-      address.copy(roadwayId = nextId)
+      address.copy(roadwayNumber = nextId)
     } else {
       if (address.startAddrMValue != seq.last.endAddrMValue) {
         val nextId = Sequences.nextRoadwaySeqValue
-        address.copy(roadwayId = nextId)
+        address.copy(roadwayNumber = nextId)
       } else
-        address.copy(roadwayId = seq.last.roadwayId)
+        address.copy(roadwayNumber = seq.last.roadwayNumber)
     }
   }
 }

@@ -32,12 +32,12 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     }
   }
 
-  private def createRoadAddress(start: Long, distance: Long, roadwayId: Long = 0L) = {
+  private def createRoadAddress(start: Long, distance: Long, roadwayNumber: Long = 0L) = {
     //TODO the road address now have the linear location id and as been setted to 1L
     RoadAddress(id = start, linearLocationId = 1L, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
       discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, linkId = start,
       startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
-      geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayId = roadwayId)
+      geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayNumber = roadwayNumber)
   }
 
   private val project: RoadAddressProject = RoadAddressProject(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
@@ -138,7 +138,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     })
   }
 
-  test("unchanged + 2 track termination + different roadwayIds, roadwayIds should not be considered on partition") {
+  test("unchanged + 2 track termination + different roadwayNumbers, roadwayNumbers should not be considered on partition") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
     val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
@@ -277,7 +277,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             values ($reservationId, 6591, 1, ${project.id}, '-')
           """.execute
 
-      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
+      sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
             START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
             ($roadAddressId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',

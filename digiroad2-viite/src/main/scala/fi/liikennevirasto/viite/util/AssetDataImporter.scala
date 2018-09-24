@@ -117,7 +117,7 @@ class AssetDataImporter {
                             importOptions: ImportOptions): Unit = {
 
     withDynTransaction {
-      sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
+      sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
@@ -126,7 +126,7 @@ class AssetDataImporter {
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
-      sqlu"""DELETE FROM ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM ROADWAY""".execute
       sqlu"""DELETE FROM LINEAR_LOCATION""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
       println(s"${DateTime.now()} - Old address data removed")
@@ -140,17 +140,17 @@ class AssetDataImporter {
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
-      sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+      sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
       roadwayResetter()
     }
   }
 
   def roadwayResetter(): Unit = {
     val sequenceResetter = new SequenceResetterDAO()
-    sql"""select MAX(roadway_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
-      case Some(roadwayId) =>
-        sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", roadwayId + 1)
-      case _ => sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
+    sql"""select MAX(ROADWAY_NUMBER) FROM ROADWAY""".as[Long].firstOption match {
+      case Some(roadwayNumber) =>
+        sequenceResetter.resetSequenceToNumber("ROADWAY_NUMBER_SEQ", roadwayNumber + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("ROADWAY_NUMBER_SEQ", 1)
     }
   }
 
@@ -182,7 +182,7 @@ class AssetDataImporter {
 
   def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
     println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
-    sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
+    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
   }
 
   def updateMissingRoadAddresses(vvhClient: VVHClient) = {

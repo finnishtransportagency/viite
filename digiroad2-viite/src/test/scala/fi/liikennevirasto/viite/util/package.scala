@@ -121,10 +121,10 @@ package object util {
     val projectId = Sequences.nextViitePrimaryKeySeqValue
 
     def createRoadAddresses(roadNumber: Long, roadPartNumber: Long, track: Long, start: Long, end: Long): (Long, Long) = {
-      val nextLinkId = sql"""SELECT MAX(LINK_ID) FROM ROAD_ADDRESS""".as[Long].first + 1
+      val nextLinkId = sql"""SELECT MAX(LINK_ID) FROM ROADWAY""".as[Long].first + 1
       val roadAddressId = Sequences.nextRoadAddressId
       val endMeasure = end - start
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES ($roadAddressId, $roadNumber, $roadPartNumber, $track, ${discontinuity.value}, $start, $end,
+      sqlu"""INSERT INTO ROADWAY VALUES ($roadAddressId, $roadNumber, $roadPartNumber, $track, ${discontinuity.value}, $start, $end,
             sysdate, NULL, 'test user', sysdate, 0, 0,
             MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY($start, 0, 0, 0, $end, 0, 0, $endMeasure)),
             NULL, $ely, 1, 0, NULL, 1, 0, $endMeasure, $nextLinkId, 0, sysdate, 1, NULL)""".execute
