@@ -61,7 +61,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
   get("/road_address/:road/:roadPart/:address/?") {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
-    val address = params("address").toDouble
+    val address = params("address").toLong
     val track = params.get("track").map(_.toInt)
 
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/$address/? (track: $track)") {

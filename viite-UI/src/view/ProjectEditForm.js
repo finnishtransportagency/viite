@@ -72,7 +72,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         selectionForm(selection, selected, road) +
-        formCommon.changeDirection(selected, projectCollection.isDirty()) +
+        formCommon.changeDirection(selected) +
         formCommon.actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -554,9 +554,9 @@
         }
       });
 
-      rootElement.on('keyup', '#roadName', function () {
-          checkInputs('.project-');
-      });
+        rootElement.on('keyup, input', '#roadName', function () {
+            checkInputs('.project-');
+        });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
         eventbus.trigger('projectCollection:clickCoordinates', event, map);
