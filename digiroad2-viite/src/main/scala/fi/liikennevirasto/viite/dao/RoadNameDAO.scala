@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Date
+import java.sql.{Date, Timestamp}
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
@@ -9,7 +10,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
+import slick.jdbc.StaticQuery.interpolation
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
                     validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
 
@@ -132,21 +133,16 @@ object RoadNameDAO {
     * @param since
     * @return
     */
-  def getUpdatedRoadNames(since: DateTime): Seq[RoadName] = {
-    if (since != null) {
-      val sinceString = since.toString("yyyy-MM-dd")
-      val query =
-        s"""
+  def getUpdatedRoadNames(since: DateTime, until: Option[DateTime]): Seq[RoadName] = {
+    val untilString = if (until.nonEmpty) s"AND CREATED_TIME <= to_timestamp('${new Timestamp(until.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+        sql"""
         SELECT * FROM road_names
         WHERE road_number IN (
             SELECT DISTINCT road_number FROM road_names
-            WHERE valid_to IS NULL AND CREATED_TIME >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
+            WHERE valid_to IS NULL AND CREATED_TIME >= $since #$untilString
           ) AND valid_to IS NULL
-        ORDER BY road_number, start_date desc"""
-      queryList(query)
-    } else {
-      Seq.empty[RoadName]
-    }
+        ORDER BY road_number, start_date desc
+      """.as[RoadName].list
   }
 
   def getRoadNamesById(id: Long): Option[RoadName] = {
@@ -188,7 +184,7 @@ object RoadNameDAO {
       namesPS.setLong(2, roadName.roadNumber)
       namesPS.setString(3, roadName.roadName)
       namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
-      namesPS.setDate(5, new Date(roadName.startDate.get.getMillis))
+      namesPS.setDate(5, new Date(new java.util.Date().getTime))
       namesPS.setString(6, "")
       namesPS.setString(7, roadName.createdBy)
       if (roadName.endDate.nonEmpty) {

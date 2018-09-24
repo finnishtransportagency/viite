@@ -784,6 +784,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/roadaddress") {
+    val roadNumber = params.get("road").map(_.toLong)
+    val roadPartNumber = params.get("part").map(_.toLong)
+    val addrMValue = params.get("addrMValue").map(_.toLong)
+    time(logger, s"GET request for api/viite/roadlinks/roadaddress/$roadNumber/$roadPartNumber") {
+      (roadNumber, roadPartNumber) match {
+        case (Some(road), Some(part)) =>
+          roadAddressService.getRoadAddress(road, part, None, addrMValue)
+        case (Some(road), _) =>
+          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue)
+        case _ => BadRequest("Missing road number from URL")
+      }
+    }
+  }
+
   delete("/project/split") {
     time(logger, "DELETE request for /project/split") {
       val user = userProvider.getCurrentUser()

@@ -129,16 +129,23 @@
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-      var ctrlPressed = event.mapBrowserEvent !== undefined ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
+      var ctrlPressed = !_.isUndefined(event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
-      var selection = _.find(event.selected.concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
+      var rawSelection = !_.isUndefined(event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function(feature) {
+        return feature;
+      }) : event.selected;
+      var selection = _.find(ctrlPressed ? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
+        if (!_.isUndefined(selectionTarget))
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
                   projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
                   (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value) ||
-                  selectionTarget.linkData.roadClass === RoadClass.NoClass.value || selectionTarget.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value)
-        );
+                  selectionTarget.linkData.roadClass === RoadClass.NoClass.value || selectionTarget.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value || (selectionTarget.getProperties().type && selectionTarget.getProperties().type === "marker"))
+          );
+        else return false;
       });
-      if (isNotEditingData) {
+      if (ctrlPressed) {
+        showDoubleClickChanges(ctrlPressed, selection);
+      } else if (isNotEditingData) {
         showSingleClickChanges(ctrlPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
@@ -152,18 +159,18 @@
     var showSingleClickChanges = function (ctrlPressed, selection) {
       if (applicationModel.getSelectedTool() === 'Cut')
         return;
-      if (ctrlPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
-        if (!_.isUndefined(selection) && canBeAddedToSelection(selection.linkData)) {
+      if (ctrlPressed && !_.isUndefined(selection) && !_.isUndefined(selectedProjectLinkProperty.get())) {
+        if (canBeAddedToSelection(selection.linkData)) {
           var clickedIds = projectCollection.getMultiProjectLinks(getSelectedId(selection.linkData));
-          var previouslySelectedIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
-            return selected.linkId;
+          var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
+            return getSelectedId(selected);
           });
-          if (_.contains(previouslySelectedIds, getSelectedId(selection.linkData))) {
-            previouslySelectedIds = _.without(previouslySelectedIds, clickedIds);
+          if (_.contains(selectedLinkIds, getSelectedId(selection.linkData))) {
+            selectedLinkIds = _.without(selectedLinkIds, clickedIds);
           } else {
-            previouslySelectedIds = _.union(previouslySelectedIds, clickedIds);
+            selectedLinkIds = _.union(selectedLinkIds, clickedIds);
           }
-          selectedProjectLinkProperty.openShift(previouslySelectedIds);
+          selectedProjectLinkProperty.openShift(selectedLinkIds);
         }
         highlightFeatures();
       } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
@@ -193,7 +200,7 @@
     selectDoubleClick.set('name', 'selectDoubleClickInteractionPLL');
 
     selectDoubleClick.on('select', function (event) {
-        var ctrlPressed = event.mapBrowserEvent.originalEvent.ctrlKey;
+      var ctrlPressed = event.mapBrowserEvent.originalEvent.ctrlKey;
       var selection = _.find(event.selected, function (selectionTarget) {
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
                   projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
@@ -209,11 +216,11 @@
         addFeaturesToSelection(selectedFeatures);
         fireDeselectionConfirmation(ctrlPressed, selection, 'double');
       }
-        highlightFeatures();
+      highlightFeatures();
     });
 
-    var showDoubleClickChanges = function (shiftPressed, selection) {
-      if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
+    var showDoubleClickChanges = function (ctrlPressed, selection) {
+      if (ctrlPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (!_.isUndefined(selection) && canBeAddedToSelection(selection.linkData)) {
           var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
             return getSelectedId(selected);
@@ -667,7 +674,14 @@
     });
 
     me.redraw = function () {
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility(), true);
+      var checkedBoxLayers = _.filter(layers, function(layer){
+          if((layer.get('name') === 'suravageRoadProjectLayer' || layer.get('name') === 'suravageProjectDirectionMarkerLayer') &&
+              (!suravageRoadProjectLayer.getVisible() || !suravageProjectDirectionMarkerLayer.getVisible())){
+            return false;
+          } else
+            return true;
+      });
+      me.toggleLayersVisibility(checkedBoxLayers, applicationModel.getRoadVisibility(), true);
       var marker;
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 

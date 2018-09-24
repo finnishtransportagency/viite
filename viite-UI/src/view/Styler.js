@@ -97,7 +97,7 @@
     };
 
       var generateUnderLineColor = function (linkData, opacityMultiplier, middleLineWidth) {
-        if (linkData.blackUnderline)
+        if (_.contains(LinkValues.BlackUnderlineRoadTypes,linkData.roadTypeId))
           return {color: 'rgba(30, 30, 30,' + opacityMultiplier + ')', width: middleLineWidth + 7};
         else
           return {color: undefined, width: undefined};
@@ -326,7 +326,7 @@
       lineStyle.setZIndex(zIndex + 2);
       roadTypeStyle.setZIndex(zIndex - 2);
       var style = [borderStyle, middleLineStyle, lineStyle];
-      if (linkData.blackUnderline)
+      if (_.contains(LinkValues.BlackUnderlineRoadTypes,linkData.roadTypeId))
         style.push(roadTypeStyle);
       return style;
     };
