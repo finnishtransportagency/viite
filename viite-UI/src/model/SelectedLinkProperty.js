@@ -59,8 +59,8 @@
 
     var extractDataForDisplay = function (selectedData) {
 
-      var extractUniqueValues = function (selectedData, property) {
-        return _.chain(selectedData)
+      var extractUniqueValues = function (dataToExtract, property) {
+        return _.chain(dataToExtract)
           .pluck(property)
           .uniq()
           .value()
@@ -84,13 +84,17 @@
         }).uniq().join(", ").value()
       };
       if (isMultiSelect) {
-        var filteredData = _.chain(selectedData)
-          .sortBy(function (sd) {
-            return sd.endAddressM;
-          }).last().value();
+        var endRoadOnSelection = _.chain(selectedData)
+            .sortBy(function (sd) {
+                return sd.endAddressM;
+            }).last().value();
+        var startRoadOnSelection = _.chain(selectedData)
+            .sortBy(function (sd) {
+                return sd.endAddressM;
+            }).first().value();
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
-          'endDate'];
+          'endDate', 'discontinuity', 'startAddressM', 'endAddressM'];
         properties = _.omit(properties, ambiguousFields);
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
@@ -98,16 +102,16 @@
         var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
         var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
         var trackCode = {trackCode: extractUniqueValues(selectedData, 'trackCode')};
-        var discontinuity = {discontinuity: extractUniqueValues(filteredData, 'discontinuity')};
-        var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
-        var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
+        var discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
+        var startAddressM = {startAddressM: parseInt(extractUniqueValues([startRoadOnSelection], 'startAddressM'))};
+        var endAddressM =   {endAddressM:  parseInt(extractUniqueValues([endRoadOnSelection], 'endAddressM'))};
 
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
+        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM, discontinuity);
       }
       properties = _.merge(properties, roadLinkSource);
       return properties;
