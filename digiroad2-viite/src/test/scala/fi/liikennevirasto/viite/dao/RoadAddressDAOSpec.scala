@@ -40,8 +40,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("insert road address duplicate info check") {
       runWithRollback {
         val error = intercept[SQLException] {
-          sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
-          sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
+          sqlu""" Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
+          sqlu""" Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021, 1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
         }
         error.getErrorCode should be (1)
       }
@@ -51,8 +51,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("insert road address m-values overlap") {
     runWithRollback {
       val error = intercept[SQLException] {
-        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021,1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
-        sqlu""" Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4012,3057,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021,1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
+        sqlu""" Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021,1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
+        sqlu""" Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ROAD_TYPE, ELY, SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values (viite_general_seq.nextval,1010,1,0,5,627,648,to_date('63.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4012,3057,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(288781.428,6825565.909,0,0,288763.118,6825576.235,0,21)),null, 1, 4,2,0,21.021,1111102483,1476392565000,to_timestamp('17.09.15 19:39:30','RR.MM.DD HH24:MI:SS,FF'),1)""".execute
       }
       error.getErrorCode should be(29875)
     }
@@ -199,7 +199,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //      val returning = RoadAddressDAO.create(ra)
 //      returning.nonEmpty should be (true)
 //      returning.head should be (id)
-//      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+//      val fetch = sql"""select calibration_points from ROADWAY where id = $id""".as[Int].list
 //      fetch.head should be (2)
 //    }
 //    runWithRollback {
@@ -210,7 +210,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //      val returning = RoadAddressDAO.create(ra)
 //      returning.nonEmpty should be (true)
 //      returning.head should be (id)
-//      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+//      val fetch = sql"""select calibration_points from ROADWAY where id = $id""".as[Int].list
 //      fetch.head should be (3)
 //    }
 //  }
@@ -225,7 +225,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //      val returning = RoadAddressDAO.create(ra)
 //      returning.nonEmpty should be (true)
 //      returning.head should be (id)
-//      sql"""SELECT link_source FROM ROAD_ADDRESS ra WHERE ra.id = $id"""
+//      sql"""SELECT link_source FROM ROADWAY ra WHERE ra.id = $id"""
 //        .as[Int].first should be (ComplimentaryLinkInterface.value)
 //    }
 //  }
@@ -237,7 +237,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 206)
 //      addresses.nonEmpty should be (true)
 //      RoadAddressDAO.remove(addresses) should be (addresses.size)
-//      sql"""SELECT COUNT(*) FROM ROAD_ADDRESS WHERE ROAD_NUMBER = 5 AND ROAD_PART_NUMBER = 206 AND VALID_TO IS NULL""".as[Long].first should be (0L)
+//      sql"""SELECT COUNT(*) FROM ROADWAY WHERE ROAD_NUMBER = 5 AND ROAD_PART_NUMBER = 206 AND VALID_TO IS NULL""".as[Long].first should be (0L)
 //    }
 //  }
 
@@ -269,7 +269,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //    runWithRollback {
 //      val linkIds: Set[Long] = Set(4147081)
 //      RoadAddressDAO.expireRoadAddresses(linkIds)
-//      val dbResult = sql"""select valid_to FROM road_address where link_id in (4147081)""".as[DateTime].list
+//      val dbResult = sql"""select valid_to FROM ROADWAY where link_id in (4147081)""".as[DateTime].list
 //      dbResult.size should be (1)
 //      dbResult.foreach{ date =>
 //        date.getMillis should be >= beforeCallMethodDatetime.getMillis
@@ -438,7 +438,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //        "TestUser", DateTime.parse("1997-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
 //      ProjectDAO.createRoadAddressProject(rap)
 //      RoadAddressDAO.isNotAvailableForProject(8888,1,id) should be (true)
-//      sqlu"""update ROAD_ADDRESS set valid_to = sysdate WHERE road_number = 8888""".execute
+//      sqlu"""update ROADWAY set valid_to = sysdate WHERE road_number = 8888""".execute
 //      createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), None)
 //      RoadAddressDAO.isNotAvailableForProject(8888,1,id) should be (false)
 //    }
@@ -584,7 +584,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //          Discontinuity.Continuous, 0, 35, startDate, Option.apply(DateTime.parse("2000-01-01")),
 //          Option("TestUser"), 7777777, 0, 35, SideCode.TowardsDigitizing,
 //          0, (None, None), NoFloating, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8, NoTermination, 0)))
-//    sqlu"""UPDATE ROAD_ADDRESS SET Terminated = 1 Where ID = ${roadAddressId}""".execute
+//    sqlu"""UPDATE ROADWAY SET Terminated = 1 Where ID = ${roadAddressId}""".execute
 //  }
 
 }

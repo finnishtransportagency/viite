@@ -51,7 +51,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   /**
     * TODO Fix this so that it will roll back the changes made in database.
-    * Now Road_Address table is cleared and populated with the test data.
+    * Now ROADWAY table is cleared and populated with the test data.
     *//*
   ignore("Should not have missing road addresses") {
     val vvhRoadLinks = List(
@@ -222,7 +222,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       insertedRoadAddresses.size should be(16)
 
       val roadAddressIds = insertedRoadAddresses.map(_.id).mkString(", ")
-      val calibrationPoints = sql"""select start_addr_m, calibration_points from road_address where id in (#${roadAddressIds}) order by start_addr_m""".as[(Long, Long)].list
+      val calibrationPoints = sql"""select start_addr_m, calibration_points from ROADWAY where id in (#${roadAddressIds}) order by start_addr_m""".as[(Long, Long)].list
       calibrationPoints should equal(expectedCalibrationPointValuesForAET)
 
       // TODO Make own test for these
@@ -235,7 +235,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadNumber = 9999999
     val roadPartNumber = 1
     val linkId = 12345L
-    val roadwayId = 123
+    val roadwayNumber = 123
     val geom1 = Seq(Point(9.9, 10.1), Point(20.0, 20.0))
     val geom2 = Seq(Point(20.1, 20.1), Point(9.9, 10.1))
     val vvhGeom = Seq(Point(40.0, 40.0, 40.0), Point(60.0, 60.0, 60.0))
@@ -246,10 +246,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       //Road Objects
       val ra = Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayId),
+        geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber),
         RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 10L, 20L,
           Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-          geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayId))
+          geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber))
       val vvhRoadLinks = List(
         VVHRoadlink(linkId, 91, vvhGeom, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
       )

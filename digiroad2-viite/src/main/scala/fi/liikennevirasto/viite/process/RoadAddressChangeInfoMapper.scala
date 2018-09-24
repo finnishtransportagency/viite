@@ -108,7 +108,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     else {
       val mapping = createAddressMap(changes)
       val mapped = roadAddresses.mapValues(_.flatMap(mapAddress(mapping, roadAddresses.values.flatten.toSeq)))
-      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayId))
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayNumber))
     }
   }
 
@@ -124,7 +124,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         } else
           mapAddress(mapping, roadAddresses.values.flatten.toSeq)(ra)
       ))
-      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayId))
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayNumber))
     }
   }
 
@@ -138,7 +138,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         } else
           ra
       ))
-      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayId))
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayNumber))
     }
   }
 
