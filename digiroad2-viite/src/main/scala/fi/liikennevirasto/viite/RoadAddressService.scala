@@ -90,8 +90,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 //    val (floatingAddresses, nonFloatingAddresses) =
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
-        //TODO filtering by roadNumberLimits
-        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle)
+        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
 
@@ -229,7 +228,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
         //TODO filtering by roadNumberLimits
-        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle)
+        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
 
@@ -299,7 +298,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   //TODO this will return all the road addresses without vvh geometry (this method should be renamed)
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
-    val linearLocations = LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle)
+    val linearLocations = LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
 
     val nonFloatingRoadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
 
@@ -334,8 +333,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
-        //TODO The query is not correct because it should return alwasy all the link inside a roadway
-        LinearLocationDAO.fetchByLinkId(allRoadLinks.map(_.linkId).toSet)
+        LinearLocationDAO.fetchRoadwayByLinkId(allRoadLinks.map(_.linkId).toSet)
       }
     }
 
@@ -414,7 +412,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
   def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startMOption: Option[Double], endMOption: Option[Double]): Seq[RoadAddress] = {
     withDynSession {
-      val linearLocations = LinearLocationDAO.fetchByLinkId(Set(linkId))
+      val linearLocations = LinearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
 
       (startMOption, endMOption) match {
@@ -447,7 +445,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
   def getRoadAddressByLinkIds(linkIds: Set[Long]): Seq[RoadAddress] = {
     withDynSession {
-      val linearLocations = LinearLocationDAO.fetchByLinkId(linkIds)
+      val linearLocations = LinearLocationDAO.fetchRoadwayByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filterNot(_.isFloating)
     }
@@ -500,18 +498,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
     val (roadlinks, historyRoadlinks) = roadLinkService.getAllRoadLinksFromVVH(Set(linkId))
 
-    val linearLocations = LinearLocationDAO.fetchByLinkId(Set(linkId))
+    val linearLocations = LinearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
 
     val (floatingRoadAddress, roadAddresses) = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
 
     //TODO this will need to be improved
-    floatingRoadAddress.flatMap{ra =>
+    val result = floatingRoadAddress.flatMap{ra =>
       historyRoadlinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
     } ++
     roadAddresses.flatMap{ra =>
       val roadLink = roadlinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
     }
+
+    result.filter(_.linkId == linkId)
 
     //    val (addresses, missedRL) = withDynTransaction {
     //      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry

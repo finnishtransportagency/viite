@@ -656,33 +656,44 @@ object LinearLocationDAO {
     s" AND loc.valid_to IS NULL "
   }
 
-  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
+//  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
+//    time(logger, "Fetch road addresses by bounding box") {
+//      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+//        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+//
+//      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+//
+//      val query =
+//        s"""
+//          $selectFromLinearLocation
+//          where $boundingBoxFilter and valid_to is null
+//        """
+//      queryList(query)
+//    }
+//  }
+
+  def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
     time(logger, "Fetch road addresses by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "iloc.geometry")
+
+      val boundingBoxQuery = if(roadNumberLimits.isEmpty) {
+        s"""select roadway_id from linear_location iloc
+           where iloc.valid_to is null and $boundingBoxFilter"""
+      } else {
+        val roadNumberLimitsFilter = withRoadNumbersFilter(roadNumberLimits, alias = "ra")
+        s"""select iloc.roadway_id
+            from linear_location iloc
+            inner join road_address ra on ra.roadway_id = iloc.roadway_id
+            where $roadNumberLimitsFilter and iloc.valid_to is null and $boundingBoxFilter"""
+      }
 
       val query =
         s"""
-          $selectFromLinearLocation
-          where $boundingBoxFilter and valid_to is null
-        """
-      queryList(query)
-    }
-  }
-
-  def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
-    time(logger, "Fetch road addresses by bounding box") {
-      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
-        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
-
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
-
-      val query =
-        s"""
-          $selectFromLinearLocation
-          where valid_to is null and roadway_id in (select roadway_id from linear_location where $boundingBoxFilter and valid_to is null)
+        $selectFromLinearLocation
+        where valid_to is null and roadway_id in ($boundingBoxQuery)
         """
       queryList(query)
     }
@@ -699,5 +710,17 @@ object LinearLocationDAO {
         """
       queryList(query)
     }
+  }
+
+  private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
+    if (roadNumbers.isEmpty)
+      return s"""($filter)"""
+
+    val limit = roadNumbers.head
+    val filterAdd = s"""($alias.road_number >= ${limit._1} and $alias.road_number <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail, alias, filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
 }
