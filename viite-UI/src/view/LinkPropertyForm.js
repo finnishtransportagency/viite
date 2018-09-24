@@ -269,8 +269,8 @@
 
     var template = function(firstSelectedLinkProperty, linkProperties) {
       var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
-      var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
-      var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
+      var startAddress = staticField('ALKUETÄISYYS', linkProperties.startAddressM);
+      var endAddress = staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
       return _.template('' +
         '<header>' +
           title() +
