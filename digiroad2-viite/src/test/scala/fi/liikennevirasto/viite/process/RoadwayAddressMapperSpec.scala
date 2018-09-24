@@ -20,9 +20,10 @@ import org.scalatest.{FunSuite, Matchers}
 class RoadwayAddressMapperSpec extends FunSuite with Matchers{
 
   val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
+  val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
 
   test("Should map current roadway linear location into road addresses"){
-    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadAddressDAO)
+    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadAddressDAO, mockLinearLocationDAO)
 
     val roadwayId = 12L
     val startDate = new DateTime(2007, 1, 1, 0, 0)
@@ -57,7 +58,7 @@ class RoadwayAddressMapperSpec extends FunSuite with Matchers{
   }
 
   test("Should map history roadway linear location into road addresses"){
-    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadAddressDAO)
+    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadAddressDAO, mockLinearLocationDAO)
 
     val roadwayId = 12L
     val currentStartDate = new DateTime(2007, 1, 1, 0, 0)
