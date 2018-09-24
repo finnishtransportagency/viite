@@ -116,7 +116,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
 
   test("Fetch updated road names, no updates") {
     runWithRollback {
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"))
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), None)
       result.isRight should be(true)
       result.right.get.size should be(0)
     }
@@ -125,7 +125,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
   test("Fetch updated road names, one new without history") {
     runWithRollback {
       sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.RRRR'),null,to_date('01.01.3001','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"))
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), None)
       result.isRight should be(true)
       result.right.get.size should be(1)
     }
@@ -135,7 +135,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.RRRR'),null,to_date('01.01.3001','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
       sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OLD NAME',to_date('02.02.2901','DD.MM.RRRR'),to_date('01.01.3001','DD.MM.RRRR'),to_date('01.01.2901','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.2901 12:00:00','DD.MM.RRRR HH24:MI:SS'))""".execute
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"))
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), None)
       result.isRight should be(true)
       result.right.get.size should be(2)
     }
@@ -173,6 +173,42 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       val latestAfterInsert = RoadNameDAO.getLatestRoadName(roadNumber)
       latestAfterInsert.size should be(1)
       latestAfterInsert.get.roadName should be("Victory Road")
+    }
+  }
+
+  test("Fetch updated road names, no updates between dates") {
+    runWithRollback {
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-01")))
+      result.isRight should be(true)
+      result.right.get.size should be(0)
+    }
+  }
+
+  test("Fetch updated road names, one new without history between dates") {
+    runWithRollback {
+      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.RRRR'),null,to_date('01.01.3001','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-02")))
+      result.isRight should be(true)
+      result.right.get.size should be(1)
+    }
+  }
+
+  test(" Try to Fetch updated road names, one new without history but it will be filtered out because of the until parameter") {
+    runWithRollback {
+      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.RRRR'),null,to_date('01.01.3001','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-01")))
+      result.isRight should be(true)
+      result.right.get.size should be(0)
+    }
+  }
+
+  test("Fetch updated road names, one update with history between given dates") {
+    runWithRollback {
+      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.RRRR'),null,to_date('01.01.3001','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OLD NAME',to_date('02.02.2901','DD.MM.RRRR'),to_date('01.01.3001','DD.MM.RRRR'),to_date('01.01.2901','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.2901 12:00:00','DD.MM.RRRR HH24:MI:SS'))""".execute
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-02")))
+      result.isRight should be(true)
+      result.right.get.size should be(2)
     }
   }
 
