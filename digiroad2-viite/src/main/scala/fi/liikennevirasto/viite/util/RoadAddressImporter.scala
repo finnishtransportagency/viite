@@ -262,7 +262,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val isReversed = if(currentAddresses.head.linkId == minAddress.linkId && currentAddresses.head.startM == minAddress.startM) 1 else 0
 
         val roadAddress = IncomingRoadAddress(minAddress.roadwayId, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, isReversed, minAddress.startDate,
-          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, if(minAddress.endDate.isDefined) 1 else 0)
+          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, if(minAddress.endDate.isDefined) 2 else 0)
 
         insertRoadAddress(roadAddressPs, roadAddress)
     }
@@ -276,7 +276,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val maxAddress = addresses.last._1
 
         val roadAddress = IncomingRoadAddress(minAddress.roadwayId, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, minAddress.validTo, maxAddress.discontinuity, if(minAddress.endDate.isDefined) 1 else 0)
+          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = 1)
 
         insertRoadAddress(roadAddressPs, roadAddress)
     }
