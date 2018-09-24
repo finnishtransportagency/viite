@@ -217,15 +217,18 @@
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
-        var selection = _.find(event.selected, function(selectionTarget){
-            return !_.isUndefined(selectionTarget.linkData);
-        }).linkData;
-        if (selection.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
-          (applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) && !applicationModel.isReadOnly()) {
-            selectedLinkProperty.openFloating(selection, true, visibleFeatures);
-            floatingMarkerLayer.setOpacity(1);
-        } else {
-          selectedLinkProperty.open(selection, false, visibleFeatures);
+        var selectedF =  _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.linkData);
+        });
+        if (!_.isUndefined(selectedF)) {
+          var selection = selectedF.linkData;
+          if (selection.roadLinkType === RoadLinkType.FloatingRoadLinkType.value &&
+            (applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) && !applicationModel.isReadOnly()) {
+              selectedLinkProperty.openFloating(selection, true, visibleFeatures);
+              floatingMarkerLayer.setOpacity(1);
+          } else {
+            selectedLinkProperty.open(selection, false, visibleFeatures);
+          }
         }
       }
     });

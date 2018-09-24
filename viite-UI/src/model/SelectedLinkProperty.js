@@ -110,14 +110,6 @@
       return !_.isUndefined(data) && !_.isUndefined(data.linearLocationId);
     };
 
-    var canBeSelected = function(data) {
-      if (isOnLinearLocation(data)) {
-        return !isSelectedByLinearLocationId(data.linearLocationId);
-      } else {
-        return !isSelectedByLinkId(data.linkId);
-      }
-    };
-
     var openSingleClick = function (data) {
       if (isOnLinearLocation(data)) {
         setCurrent(roadCollection.getGroupByLinearLocationId(data.linearLocationId));
@@ -135,7 +127,6 @@
     };
 
     var open = function(data, isSingleClick, visibleFeatures) {
-      if (canBeSelected(data)) {
         if (isSingleClick) {
           openSingleClick(data);
         } else {
@@ -150,11 +141,6 @@
         });
         processOl3Features(visibleFeatures);
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
-      } else {
-        _.defer(function(){
-          processOl3Features(visibleFeatures);
-          });
-      }
     };
 
     var openFloating = function (data, isSingleClick, visibleFeatures) {
