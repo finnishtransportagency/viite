@@ -114,7 +114,8 @@
       var field = "";
       var linkCounter = 0;
       field = floatingListField('VALITUT LINKIT (IRTI GEOMETRIASTA OLEVAT):');
-      _.each(sources, function(slp) {
+      _.each(sources, function(src) {
+        var slp = src.getData();
         var divId = "VALITUTLINKIT" + linkCounter;
         var linkId = slp.linkId;
         var id = _.isUndefined(slp.id) ? -1: slp.id;
