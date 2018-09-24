@@ -280,13 +280,26 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Fetch all the current road addresses by road number and road part
+    * @param roadNumber The road number
+    * @param roadPartNumber The road part number
+    * @return Current road addresses at road address section
+    */
   def fetchAllBySection(roadNumber: Long, roadPartNumber: Long): Seq[RoadwayAddress] = {
     time(logger, "Fetch road address by road number and road part number") {
       fetch(withSection(roadNumber, roadPartNumber))
     }
   }
 
-  def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Int]) = {
+  /**
+    * Fetch all the current road addresses by road number, road part number and track codes
+    * @param roadNumber The road number
+    * @param roadPartNumber The road part number
+    * @param tracks The set of track codes
+    * @return Current road addresses at specified section
+    */
+  def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Int]): Seq[RoadwayAddress] = {
     time(logger, "Fetch road address by road number, road part number and tracks") {
       if(tracks.isEmpty) {
         Seq()
@@ -296,8 +309,15 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Fetch all the current road addresses by road number, set of road parts number and a set track codes
+    * @param roadNumber The road number
+    * @param roadPartNumbers The set of road part number
+    * @param tracks The set of track codes
+    * @return Current road addresses at specified sections
+    */
   def fetchAllBySectionsAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Int]): Seq[RoadwayAddress] = {
-    time(logger, "Fetch road address by road number, road part number and tracks") {
+    time(logger, "Fetch road address by road number, road part numbers and tracks") {
       if(tracks.isEmpty || roadPartNumbers.isEmpty)
         Seq()
       else
@@ -341,7 +361,7 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByBetweenDates(sinceDate: DateTime, untilDate: DateTime) = {
+  def fetchAllByBetweenDates(sinceDate: DateTime, untilDate: DateTime): Seq[RoadwayAddress] = {
     time(logger, "Fetch road address by dates") {
       fetch(withBetweenDates(sinceDate, untilDate))
     }
