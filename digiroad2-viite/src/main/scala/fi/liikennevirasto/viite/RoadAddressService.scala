@@ -91,7 +91,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
         //TODO filtering by roadNumberLimits
-        LinearLocationDAO.fetchByBoundingBox(boundingRectangle)
+        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle)
       }
     }
 
@@ -229,7 +229,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
         //TODO filtering by roadNumberLimits
-        LinearLocationDAO.fetchByBoundingBox(boundingRectangle)
+        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle)
       }
     }
 
@@ -299,7 +299,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   //TODO this will return all the road addresses without vvh geometry (this method should be renamed)
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
-    val linearLocations =  LinearLocationDAO.fetchByBoundingBox(boundingRectangle)
+    val linearLocations = LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle)
 
     val nonFloatingRoadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
 

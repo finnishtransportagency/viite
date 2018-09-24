@@ -409,6 +409,55 @@ object LinearLocationDAO {
     }
   }
 
+  def fetchRoadwayByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
+    time(logger, "Fetch all linear locations of a roadway by link id") {
+      if (linkIds.isEmpty) {
+        return List()
+      }
+      if (linkIds.size > 1000 || filterIds.size > 1000) {
+        return fetchRoadwayByLinkIdMassQuery(linkIds, includeFloating).filterNot(ra => filterIds.contains(ra.id))
+      }
+      val linkIdsString = linkIds.mkString(", ")
+      val floating = if (!includeFloating)
+        "AND loc.floating = 0"
+      else
+        ""
+      val idFilter = if (filterIds.nonEmpty)
+        s"AND loc.id not in ${filterIds.mkString("(", ", ", ")")}"
+      else
+        ""
+      val query =
+        s"""
+          $selectFromLinearLocation
+          where t.id < t2.id $floating $idFilter and loc.roadway_id in (select roadway_id from linear_location
+            where link_id in ($linkIdsString) and valid_to is null) and valid_to is null
+        """
+      queryList(query)
+    }
+  }
+
+  def fetchRoadwayByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false): List[LinearLocation] = {
+    time(logger, "Fetch all linear locations of a roadway by link id - mass query") {
+      MassQuery.withIds(linkIds) {
+        idTableName =>
+          val floating = if (!includeFloating)
+            "AND loc.floating = 0"
+          else
+            ""
+          val query =
+            s"""
+              $selectFromLinearLocation
+
+              where t.id < t2.id $floating and loc.valid_to is null and loc.roadway_id in (
+                select roadway_id from linear_location
+                join $idTableName i on i.id = link_id
+                where valid_to is null)
+            """
+          queryList(query)
+      }
+    }
+  }
+
   def queryFloatingByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
     time(logger, "Fetch floating linear locations by link ids") {
       if (linkIds.isEmpty) {
@@ -616,21 +665,37 @@ object LinearLocationDAO {
 
       val query =
         s"""
-        $selectFromLinearLocation
-        where valid_to is null and roadway_id in (select roadway_id from linear_location where $boundingBoxFilter and valid_to is null)
+          $selectFromLinearLocation
+          where $boundingBoxFilter and valid_to is null
+        """
+      queryList(query)
+    }
+  }
+
+  def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
+    time(logger, "Fetch road addresses by bounding box") {
+      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+
+      val query =
+        s"""
+          $selectFromLinearLocation
+          where valid_to is null and roadway_id in (select roadway_id from linear_location where $boundingBoxFilter and valid_to is null)
         """
       queryList(query)
     }
   }
 
   def fetchByRoadways(roadwayIds: Set[Long]): Seq[LinearLocation] = {
-    if(roadwayIds.isEmpty){
+    if (roadwayIds.isEmpty) {
       Seq()
     } else {
       val query =
         s"""
-        $selectFromLinearLocation
-        where valid_to is null and roadway_id in (${roadwayIds.mkString(",")})
+          $selectFromLinearLocation
+          where valid_to is null and roadway_id in (${roadwayIds.mkString(", ")})
         """
       queryList(query)
     }
