@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadAddressDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
+class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadAddressDAO, linearLocationDAO: LinearLocationDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -43,7 +43,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
-        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
+        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
 
@@ -115,7 +115,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     //TODO fetch by bounding box with with floatings and only normal roads nad roadNumberLimits
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
-        LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
+        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
 
@@ -144,7 +144,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
-    val linearLocations = LinearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
+    val linearLocations = linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
 
     val nonFloatingRoadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
 
@@ -166,7 +166,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
-        LinearLocationDAO.fetchRoadwayByLinkId(allRoadLinks.map(_.linkId).toSet)
+        linearLocationDAO.fetchRoadwayByLinkId(allRoadLinks.map(_.linkId).toSet)
       }
     }
 
@@ -281,7 +281,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     */
   def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startMOption: Option[Double], endMOption: Option[Double]): Seq[RoadAddress] = {
     withDynSession {
-      val linearLocations = LinearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
+      val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
 
       (startMOption, endMOption) match {
@@ -314,7 +314,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
   def getRoadAddressByLinkIds(linkIds: Set[Long]): Seq[RoadAddress] = {
     withDynSession {
-      val linearLocations = LinearLocationDAO.fetchRoadwayByLinkId(linkIds)
+      val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filterNot(_.isFloating)
     }
@@ -363,7 +363,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
     val (roadlinks, historyRoadlinks) = roadLinkService.getAllRoadLinksFromVVH(Set(linkId))
 
-    val linearLocations = LinearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
+    val linearLocations = withDynSession {
+      linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
+    }
 
     val (floatingRoadAddress, roadAddresses) = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
 

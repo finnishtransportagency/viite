@@ -160,7 +160,7 @@ case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue
     }*/
 }
 
-object LinearLocationDAO {
+class LinearLocationDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
 
