@@ -14,7 +14,7 @@
     var RoadLinkType = LinkValues.RoadLinkType;
     var Anomaly = LinkValues.Anomaly;
     var LinkSource = LinkValues.LinkGeomSource;
-    var selectionType = LinkValues.SelectionType;
+    var SelectionType = LinkValues.SelectionType;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -144,19 +144,9 @@
     };
 
     var openFloating = function (data, isSingleClick, visibleFeatures) {
-            if (isSingleClick) {
-                openSingleClick(data);
-            } else {
-                openDoubleClick(data);
-            }
-            var currentFloatings = getCurrentFloatings();
-            if (!_.isEmpty(currentFloatings)) {
-                setSources(currentFloatings);
-            }
-            //Segment to construct adjacency
+            open(data, isSingleClick, visibleFeatures);
             getGroupAdjacents(data.linkId);
-
-            var data4Display = _.map(get(), function (feature) {
+            /*var data4Display = _.map(get(), function (feature) {
                 return extractDataForDisplay([feature]);
             });
 
@@ -165,11 +155,9 @@
             }
             if (!_.isEmpty(getFeaturesToKeep()) && !isLinkIdInFeaturesToKeep(data.linkId)) {
                 addToFeaturesToKeep(data4Display);
-            }
+            }*/
             processOl3Features(visibleFeatures);
             eventbus.trigger('adjacents:startedFloatingTransfer');
-            if (!_.isEmpty(data4Display))
-                eventbus.trigger('linkProperties:selected', data4Display);
             eventbus.trigger('linkProperties:deactivateInteractions');
     };
 
@@ -213,7 +201,7 @@
         });
 
         var currentFloatings = _.filter(current, function(curr){
-          return curr.getData().roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+          return curr.getData().floating === SelectionType.Floating.value;
         });
         if(!_.isEmpty(currentFloatings)){
           setSources(currentFloatings);
@@ -317,7 +305,7 @@
         "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
       };
 
-      if (!applicationModel.isReadOnly() && !applicationModel.selectionTypeIs(selectionType.All)){
+      if (!applicationModel.isReadOnly() && !applicationModel.selectionTypeIs(SelectionType.All)){
         applicationModel.addSpinner();
         backend.getTargetAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
@@ -352,7 +340,7 @@
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
-            if(applicationModel.selectionTypeIs(selectionType.Floating)) {
+            if(applicationModel.selectionTypeIs(SelectionType.Floating)) {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
               if(_.isEmpty(markedRoads.adjacents)){
                 applicationModel.setContinueButton(true);
@@ -361,7 +349,7 @@
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
             }
-            if(!applicationModel.selectionTypeIs(selectionType.Unknown)){
+            if(!applicationModel.selectionTypeIs(SelectionType.Unknown)){
               eventbus.trigger('adjacents:startedFloatingTransfer');
             }
           }
@@ -388,7 +376,7 @@
         "roadPartNumber": parseInt(selectedLink.roadPartNumber), "trackCode": parseInt(selectedLink.trackCode)
       };
 
-      if (!applicationModel.isReadOnly() && !applicationModel.selectionTypeIs(selectionType.All)){
+      if (!applicationModel.isReadOnly() && !applicationModel.selectionTypeIs(SelectionType.All)){
         applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
@@ -411,13 +399,13 @@
             });
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
-              "adjacents": _.map(applicationModel.selectionTypeIs(selectionType.Floating) ? _.reject(filteredAdjacents, function(t){
-                return t.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value;
+              "adjacents": _.map(applicationModel.selectionTypeIs(SelectionType.Floating) ? _.reject(filteredAdjacents, function(t){
+                return t.floating !== SelectionType.Floating.value;
               }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": selectedLink
             };
-            if(applicationModel.selectionTypeIs(selectionType.Floating)) {
+            if(applicationModel.selectionTypeIs(SelectionType.Floating)) {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
               if(_.isEmpty(markedRoads.adjacents)){
                 applicationModel.setContinueButton(true);
@@ -426,7 +414,7 @@
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
             }
-            if(!applicationModel.selectionTypeIs(selectionType.Unknown)){
+            if(!applicationModel.selectionTypeIs(SelectionType.Unknown)){
               eventbus.trigger('adjacents:startedFloatingTransfer');
             }
           }
@@ -521,7 +509,7 @@
 
     eventbus.on('linkProperties:closed', function(){
       eventbus.trigger('layer:enableButtons', true);
-      applicationModel.setSelectionType(selectionType.All);
+      applicationModel.setSelectionType(SelectionType.All);
       clearFeaturesToKeep();
     });
 
@@ -533,16 +521,16 @@
       return dirty;
     };
 
-    var isSelectedByLinearLocationId = function (linearLocationId) {
+    /*var isSelectedByLinearLocationId = function (linearLocationId) {
       return _.some(current, function (selected) {
         return selected.getData().linearLocationId === linearLocationId;
       });
-    };
+    };*/
 
-    var isSelectedByLinkId = function(linkId) {
+    /*var isSelectedByLinkId = function(linkId) {
       return _.some(current, function(selected) {
         return selected.getData().linkId === linkId; });
-    };
+    };*/
 
     var transferringCalculation = function(){
       var targetsData = _.map(targets,function (t){
@@ -552,7 +540,7 @@
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(getFeaturesToKeep()), function(feature){
-        if(feature.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && feature.anomaly === Anomaly.NoAddressGiven.value){
+        if(feature.floating !== SelectionType.Floating.value && feature.anomaly === Anomaly.NoAddressGiven.value){
           return feature.linkId.toString();
         }
       }), function (target){
@@ -771,13 +759,13 @@
 
     var getCurrentFloatings = function(){
       return _.filter(current, function(curr){
-        return curr.getData().roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+        return curr.getData().floating === SelectionType.Floating.value;
       });
     };
 
     var getFeaturesToKeepFloatings = function() {
       return _.filter(getFeaturesToKeep(), function (fk) {
-        return fk.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+        return fk.floating === SelectionType.Floating.value;
       });
     };
 
@@ -811,9 +799,9 @@
     };
 
     var clearFeaturesToKeep = function() {
-      if(applicationModel.selectionTypeIs(selectionType.Floating) || applicationModel.selectionTypeIs(selectionType.Unknown)){
+      if(applicationModel.selectionTypeIs(SelectionType.Floating) || applicationModel.selectionTypeIs(SelectionType.Unknown)){
         featuresToKeep = _.filter(featuresToKeep, function(feature){
-          return feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
+          return feature.floating === SelectionType.Floating.value;
         });
       } else {
         featuresToKeep = [];
