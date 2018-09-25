@@ -1194,7 +1194,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //            'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
 //            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)),
 //            NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
@@ -1212,7 +1212,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
 //            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), TIMESTAMP '2013-01-23 00:00:00.000000',
 //             1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
@@ -1232,19 +1232,19 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      val regularAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockRegularRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, regularAttributesMap)
 //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      //Complementary
 //      val complementaryAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockComplementaryRoadLink = RoadLink(99989, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, complementaryAttributesMap)
 //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 62888, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99989, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      //Suravage
 //      val suravageAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
 //      val mockSuravageRoadLink = RoadLink(99988, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, suravageAttributesMap, linkSource = LinkGeomSource.SuravageLinkInterface)
 //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 787878, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99988, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 //
 //      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRegularRoadLink), Seq.empty[ChangeInfo]))
 //      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq(mockSuravageRoadLink))
@@ -1260,25 +1260,25 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val attributesMap1 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))
       val mockRoadLink1 = RoadLink(11111, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap1)
       sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99999, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99999, 3, 0, 16.576, 11111, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       //12141 -> FeatureClass.DrivePath
       val attributesMap2 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))
       val mockRoadLink2 = RoadLink(22222, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap2)
       sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99998, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99998, 3, 0, 16.576, 22222, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       //12314 -> FeatureClass.CycleOrPedestrianPath
       val attributesMap3 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))
       val mockRoadLink3 = RoadLink(33333, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap3)
       sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99997, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99997, 3, 0, 16.576, 33333, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       //12312 -> FeatureClass.WinterRoads
       val attributesMap4 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312))
       val mockRoadLink4 = RoadLink(44444, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap4)
       sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99996, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99990, 3, 0, 16.576, 44444, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROAD_ADDRESS VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink1, mockRoadLink2, mockRoadLink3, mockRoadLink4), Seq.empty[ChangeInfo]))
       when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())

@@ -702,7 +702,7 @@ class RoadAddressDAO extends BaseDAO {
 //        val (networkData, networkWhere) =
 //          if (useLatestNetwork) {
 //            (", net.id as road_version, net.created as version_date ",
-//              "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = ROADWAY_ID)")
+//              "join published_road_network net on net.id = (select MAX(network_id) from PUBLISHED_ROADWAY where ra.id = ROADWAY_ID)")
 //          } else ("", "")
 //
 //        val query =
@@ -807,7 +807,7 @@ class RoadAddressDAO extends BaseDAO {
 //      val (networkData, networkWhere) =
 //        if (useLatestNetwork) {
 //          (", net.id as road_version, net.created as version_date ",
-//            "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = ROADWAY_ID)")
+//            "join published_road_network net on net.id = (select MAX(network_id) from PUBLISHED_ROADWAY where ra.id = ROADWAY_ID)")
 //        } else ("", "")
 //      MassQuery.withIds(linkIds) {
 //        idTableName =>

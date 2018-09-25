@@ -124,7 +124,7 @@ class AssetDataImporter {
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
       sqlu"""DELETE FROM PROJECT""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
-      sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
       sqlu"""DELETE FROM ROADWAY""".execute
       sqlu"""DELETE FROM LINEAR_LOCATION""".execute
