@@ -122,6 +122,7 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue
   }
 }
 
+//TODO VIITE-1539 blackUnderline should be removed
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
