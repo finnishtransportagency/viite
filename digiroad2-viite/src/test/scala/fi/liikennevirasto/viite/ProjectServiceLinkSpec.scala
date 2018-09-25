@@ -298,7 +298,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
            0,87,1,2)""".execute
     ProjectDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
     sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROAD_ADDRESS_ID, GEOMETRY,
+          START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROADWAY_ID, GEOMETRY,
           link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES
           (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',
           TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0, $raId,

@@ -22,13 +22,13 @@ object RoadNetworkDAO {
   }
 
   def createPublishedRoadAddress(networkVersion: Long, roadAddressId: Long): Unit = {
-    sqlu"""INSERT INTO published_road_address (network_id, road_address_id) VALUES ($networkVersion, $roadAddressId)""".execute
+    sqlu"""INSERT INTO published_road_address (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadAddressId)""".execute
   }
 
 def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
   val timestamp = System.currentTimeMillis()
   val lastVersion = getLatestRoadNetworkVersionId
-      val networkErrorPS = dynamicSession.prepareStatement("INSERT INTO road_network_error (id, road_address_id, error_code, error_timestamp, road_network_version)" +
+      val networkErrorPS = dynamicSession.prepareStatement("INSERT INTO road_network_error (id, ROADWAY_ID, error_code, error_timestamp, road_network_version)" +
         " values (?, ?, ?, ?, ?)")
       val nextId =  Sequences.nextRoadNetworkErrorSeqValue
       networkErrorPS.setLong(1, nextId)
@@ -66,7 +66,7 @@ def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
 
   def getRoadNetworkError(addressId: Long, error: AddressError): Option[RoadNetworkError] = {
 
-    val query = s"""SELECT * FROM road_network_error where road_address_id = $addressId and error_code = ${error.value} order by road_network_version desc"""
+    val query = s"""SELECT * FROM road_network_error where ROADWAY_ID = $addressId and error_code = ${error.value} order by road_network_version desc"""
 
     Q.queryNA[(Long, Long, Int, Long, Option[Long])](query).list.headOption.map {
       case (id, roadAddressId, errorCode, timestamp, version) =>

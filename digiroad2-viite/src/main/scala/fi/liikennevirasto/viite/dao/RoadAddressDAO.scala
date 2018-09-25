@@ -367,7 +367,7 @@ class RoadAddressDAO extends BaseDAO {
         	ra.id, ll.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely
         from ROADWAY ra
         join linear_location ll on ll.ROADWAY_NUMBER = ra.ROADWAY_NUMBER
-        join road_network_error re on re.road_address_id = ra.id and re.linear_location_id = ll.id $history
+        join road_network_error re on re.ROADWAY_ID = ra.id and re.linear_location_id = ll.id $history
         order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
       """
       Q.queryNA[(Long, Long, Long, Long, Int, Long)](query).list.map {
@@ -702,7 +702,7 @@ class RoadAddressDAO extends BaseDAO {
 //        val (networkData, networkWhere) =
 //          if (useLatestNetwork) {
 //            (", net.id as road_version, net.created as version_date ",
-//              "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)")
+//              "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = ROADWAY_ID)")
 //          } else ("", "")
 //
 //        val query =
@@ -807,7 +807,7 @@ class RoadAddressDAO extends BaseDAO {
 //      val (networkData, networkWhere) =
 //        if (useLatestNetwork) {
 //          (", net.id as road_version, net.created as version_date ",
-//            "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = road_address_id)")
+//            "join published_road_network net on net.id = (select MAX(network_id) from published_road_address where ra.id = ROADWAY_ID)")
 //        } else ("", "")
 //      MassQuery.withIds(linkIds) {
 //        idTableName =>
@@ -966,7 +966,7 @@ class RoadAddressDAO extends BaseDAO {
 //      val history = if (!includesHistory) s" where ra.end_date is null " else ""
 //      val query =
 //        s"""
-//        select ra.id, ra.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from ROADWAY ra join road_network_error re on re.road_address_id = ra.id $history
+//        select ra.id, ra.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely from ROADWAY ra join road_network_error re on re.ROADWAY_ID = ra.id $history
 //        order by ra.ely, ra.road_number, ra.road_part_number, re.error_code
 //      """
 //      Q.queryNA[(Long, Long, Long, Long, Int, Long)](query).list.map {

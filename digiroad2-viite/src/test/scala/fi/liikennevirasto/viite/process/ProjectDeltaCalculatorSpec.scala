@@ -287,7 +287,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
             START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
-            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
+            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(1)},${project.id},'0','5','6591','1','0','62','silari',null,
             to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.UnChanged.value},'0','1',${ids(0)},'6550673','',
@@ -295,7 +295,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
             START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
-            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
+            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(2)},${project.id},'0','5','6591','1','62','85','silari',null,
             to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.New.value},'0','1',${ids(0)},'6550673','',
@@ -303,7 +303,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
             START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
-            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID, GEOMETRY,
+            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
             values (${ids(3)},${project.id},'0','5','6591','1','62','85','silari',null,
             to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.Terminated.value},'2','9',${ids(0)},'499972936','',
