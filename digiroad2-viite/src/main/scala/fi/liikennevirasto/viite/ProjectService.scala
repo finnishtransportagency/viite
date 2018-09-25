@@ -783,8 +783,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getChangeProjectInTX(projectId: Long): Option[ChangeProject] = {
     try {
       if (recalculateChangeTable(projectId)) {
-        val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-        Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
+        val roadwayChanges = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+        Some(ViiteTierekisteriClient.convertToChangeProject(roadwayChanges))
       } else {
         None
       }
@@ -795,8 +795,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def prettyPrintLog(roadAddressChanges: List[ProjectRoadAddressChange]) = {
-    roadAddressChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
+  def prettyPrintLog(roadwayChanges: List[ProjectRoadwayChange]) = {
+    roadwayChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
       val (projectId, projectName, projectStartDate, projectEly) = g._1
       val changes = g._2
       logger.info(s"Changes for project [ID: $projectId; Name: ${projectName.getOrElse("")}; StartDate: $projectStartDate; Ely: $projectEly]:")
@@ -806,12 +806,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     })
   }
 
-  def getRoadAddressChangesAndSendToTR(projectId: Set[Long]): ProjectChangeStatus = {
+  def getRoadwayChangesAndSendToTR(projectId: Set[Long]): ProjectChangeStatus = {
     logger.info(s"Fetching all road address changes for projects: ${projectId.toString()}")
-    val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(projectId)
-    prettyPrintLog(roadAddressChanges)
+    val roadwayChanges = RoadwayChangesDAO.fetchRoadwayChanges(projectId)
+    prettyPrintLog(roadwayChanges)
     logger.info(s"Sending changes to TR")
-    val sentObj = ViiteTierekisteriClient.sendChanges(roadAddressChanges)
+    val sentObj = ViiteTierekisteriClient.sendChanges(roadwayChanges)
     logger.info(s"Changes Sent to TR")
     sentObj
   }
@@ -1387,7 +1387,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
         }
         ProjectDAO.addRotatingTRProjectId(projectId) //Generate new TR_ID
-        val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
+        val trProjectStateMessage = getRoadwayChangesAndSendToTR(Set(projectId))
         if (trProjectStateMessage.status == ProjectState.Failed2GenerateTRIdInViite.value) {
           return PublishResult(validationSuccess = false, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
@@ -1418,8 +1418,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def setProjectDeltaToDB(projectDelta: Delta, projectId: Long): Boolean = {
-    RoadAddressChangesDAO.clearRoadChangeTable(projectId)
-    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
+    RoadwayChangesDAO.clearRoadChangeTable(projectId)
+    RoadwayChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
   }
 
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: RoadAddressProject): ProjectLink = {
@@ -1435,7 +1435,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, roadNumber: Long,
                              roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, roadType: RoadType,
                              ely: Long, roadName: String = ""): ProjectLink = {
-    ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, trackCode, discontinuity,
+    ProjectLink(NewRoadway, roadNumber, roadPartNumber, trackCode, discontinuity,
       0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
       SideCode.Unknown, (None, None), floating = NoFloating, rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,

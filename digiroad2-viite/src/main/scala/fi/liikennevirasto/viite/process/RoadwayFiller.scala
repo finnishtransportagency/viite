@@ -4,7 +4,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.viite.NewRoadAddress
+import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, RoadAddress}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils.fillCPs
 import org.slf4j.LoggerFactory
@@ -72,14 +72,14 @@ object RoadwayFiller {
   }
 
   private def applyNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    val addressesGroups = newRoadAddresses.filter(_.id == NewRoadAddress)
+    val addressesGroups = newRoadAddresses.filter(_.id == NewRoadway)
     addressesGroups.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType)).flatMap { group =>
       val addressesInGroup = group._2
       addressesInGroup.sortBy(_.startAddrMValue).foldLeft(Seq.empty[RoadAddress]) { case (seq, address) =>
         val changedAddress = fillRoadwayNumber(seq, address)
         seq ++ Seq(changedAddress)
       }
-    }.toSeq ++ newRoadAddresses.filterNot(_.id == NewRoadAddress)
+    }.toSeq ++ newRoadAddresses.filterNot(_.id == NewRoadway)
   }
 
   private def applyTransfer(currentRoadAddresses: Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
@@ -101,7 +101,7 @@ object RoadwayFiller {
     */
   private def applyTransferToNew(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val transferredLinks = projectLinks.filter(pl => pl.status == LinkStatus.Transfer && (pl.track == Track.RightSide || pl.track == Track.LeftSide))
-    val (newerRoadAddresses, rest) = newRoadAddresses.partition(ra => ra.id == NewRoadAddress && (ra.track == Track.RightSide || ra.track == Track.LeftSide))
+    val (newerRoadAddresses, rest) = newRoadAddresses.partition(ra => ra.id == NewRoadway && (ra.track == Track.RightSide || ra.track == Track.LeftSide))
     newerRoadAddresses.map {
       ra =>
         val transferredOption = transferredLinks.find(pl => pl.track == Track.switch(ra.track) && pl.liesInBetween(ra))

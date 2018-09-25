@@ -327,7 +327,7 @@ object ProjectDAO {
         "calibration_points, status, road_type, ROADWAY_ID, connected_link_id, ely, reversed, geometry, " +
         "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
         "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-      val (ready, idLess) = links.partition(_.id != NewRoadAddress)
+      val (ready, idLess) = links.partition(_.id != NewRoadway)
       val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
         x._1.copy(id = x._2)
