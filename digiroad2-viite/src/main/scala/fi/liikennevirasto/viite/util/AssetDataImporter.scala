@@ -168,7 +168,7 @@ class AssetDataImporter {
             0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue
           else
-            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check common_history_id
+            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
 
     val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             0.0
@@ -176,7 +176,7 @@ class AssetDataImporter {
             splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue - splitMValue
           else
-            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check common_history_id
+            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check roadway_number
     Seq(roadAddressA, roadAddressB)
   }
 

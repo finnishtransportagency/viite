@@ -1159,7 +1159,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      flatList.flatMap(r => Seq(r.startAddrMValue, r.endAddrMValue)).filterNot(l => l == 0 || l == 2304).groupBy(l => l)
 //        .values.forall(_.size == 2) should be (true)
 //
-//      // Test that the common_history_id is inherited correctly in split
+//      // Test that the roadway_number is inherited correctly in split
 //      flatList.forall(_.roadwayNumber == roadwayNumber) should be (true)
 //    }
 //  }

@@ -355,7 +355,7 @@ object DataFixture {
 //            } else {
 //              Set.empty[RoadAddress]
 //            }
-//            println(s"Found ${roadErrors.size} errors for common_history_id ${group._2.head.roadwayNumber}")
+//            println(s"Found ${roadErrors.size} errors for roadway_number ${group._2.head.roadwayNumber}")
 //            val lastVersion = getLatestRoadNetworkVersionId
 //
 //            roadErrors.filter { road =>

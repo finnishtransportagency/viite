@@ -584,7 +584,7 @@ class RoadAddressDAO extends BaseDAO {
 //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
 //        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
 //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-//        ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
 //        from ROADWAY ra
 //        where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
@@ -694,7 +694,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -729,7 +729,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL and ${dateFilter(table = "rn")})
 //        $networkData
 //        from ROADWAY ra cross join
@@ -774,7 +774,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -803,7 +803,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -835,7 +835,7 @@ class RoadAddressDAO extends BaseDAO {
 //              select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //              ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //              ra.side_code, ra.adjusted_timestamp,
-//              ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//              ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //              (SELECT max(rn.road_name) FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL AND ${dateFilter(table = "rn")})
 //              $networkData
 //              from ROADWAY ra cross join
@@ -869,7 +869,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -925,7 +925,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -946,7 +946,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //          ra.side_code, ra.adjusted_timestamp,
-//          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //          from ROADWAY ra cross join
 //          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -967,7 +967,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //          ra.side_code, ra.adjusted_timestamp,
-//          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //          from ROADWAY ra cross join
 //          TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -1002,7 +1002,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -1141,7 +1141,7 @@ class RoadAddressDAO extends BaseDAO {
 //
 //  /**
 //    * Marks the road address identified by the supplied Id as eiher floating or not and also updates the history of
-//    * those who shares the same link_id and common_history_id
+//    * those who shares the same link_id and roadway_number
 //    *
 //    * @param roadAddressId The Id of a road addresss
 //    */
@@ -1278,7 +1278,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -1308,7 +1308,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -1358,7 +1358,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL and rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -1389,7 +1389,7 @@ class RoadAddressDAO extends BaseDAO {
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -1421,7 +1421,7 @@ class RoadAddressDAO extends BaseDAO {
 //  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
 //    val addressPS = dynamicSession.prepareStatement("insert into ROADWAY (id, road_number, road_part_number, " +
 //      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, modified_by, " +
-//      "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, common_history_id," +
+//      "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, roadway_number," +
 //      "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
 //      "TO_DATE(?, 'YYYY-MM-DD'), ?, ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
 //      "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
@@ -1534,7 +1534,7 @@ class RoadAddressDAO extends BaseDAO {
 //        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -1551,8 +1551,8 @@ class RoadAddressDAO extends BaseDAO {
 //
 //  def getRoadwayNumbersFromRoadAddress: Seq[Long] = {
 //        sql"""
-//         select distinct(ra.common_history_id)
-//        from ROADWAY ra order by ra.common_history_id asc
+//         select distinct(ra.roadway_number)
+//        from ROADWAY ra order by ra.roadway_number asc
 //      """.as[Long].list
 //  }
 //
@@ -1568,7 +1568,7 @@ class RoadAddressDAO extends BaseDAO {
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
 //          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-//          link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to, null as road_name
+//          link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to, null as road_name
 //        from ROADWAY ra
 //      """
 //      queryList(queryFilter(query))
@@ -1655,7 +1655,7 @@ class RoadAddressDAO extends BaseDAO {
 //  }
 //
 //  def withRoadwayNumbers(fromCommonId: Long, toCommonId: Long)(query: String): String = {
-//    query + s" WHERE ra.common_history_id >= $fromCommonId AND ra.common_history_id <= $toCommonId"
+//    query + s" WHERE ra.roadway_number >= $fromCommonId AND ra.roadway_number <= $toCommonId"
 //  }
 //
 //  /**
@@ -1697,7 +1697,7 @@ class RoadAddressDAO extends BaseDAO {
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
 //          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-//          ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to
+//          ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to
 //        from ROADWAY ra
 //        $where
 //      """
@@ -1718,7 +1718,7 @@ class RoadAddressDAO extends BaseDAO {
 //        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //       ra.side_code, ra.adjusted_timestamp,
-//       ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//       ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //       (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
