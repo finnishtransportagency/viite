@@ -173,7 +173,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   def importRoadAddress(): Unit = {
     val chunks = fetchChunkLinkIdsFromConversionTable()
-    chunks.foreach {
+    /*chunks.foreach {
       case (min, max) =>
         print(s"${DateTime.now()} - ")
         println(s"Processing chunk ($min, $max)")
@@ -183,7 +183,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         println("Read %d rows from conversion database".format(conversionAddresses.size))
         val conversionAddressesFromChunk = conversionAddresses.filter(address => (min+1 to max).contains(address.roadwayNumber))
         importAddresses(conversionAddressesFromChunk, conversionAddresses)
-    }
+    }*/
 
     val expiredAddresses = fetchAllExpiredAddressesFromConversionTable()
     importExpiredAddresses(expiredAddresses)
@@ -277,7 +277,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def importExpiredAddresses(expiredConversionAddresses: Seq[ConversionAddress]): Unit = {
     val (expiredOldConversionAddresses, validExpiredConversionAddresses) = expiredConversionAddresses.partition(_.expirationDate.isEmpty)
-    val validExpiredMappedConversionAddresses = validExpiredConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
+    val validExpiredMappedConversionAddresses = validExpiredConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate))
     val expiredOldMappedConversionAddresses = expiredOldConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
 
@@ -340,7 +340,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val endDateOption = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val validTo = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expirationDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val ely = r.nextLong()
       val roadType = r.nextLong()
       val linkId = r.nextLong()
@@ -380,11 +380,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       }
 
       if (startAddrM < endAddrM) {
-        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, validTo, ely, roadType, 0,
+        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, expirationDate, ely, roadType, 0,
           linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       } else {
         //switch startAddrM, endAddrM, the geometry and set the side code to AgainstDigitizing
-        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, validTo, ely, roadType, 0,
+        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, expirationDate, ely, roadType, 0,
           linkId, userId, Option(x2), Option(y2), Option(x1), Option(y1), roadwayNumber, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       }
     }
