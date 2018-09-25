@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LinearLocationAdjustment}
+import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -82,26 +82,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
         Await.result(boundingBoxResultF, Duration.Inf)
       }
 
-    //TODO Will be implemented at VIITE-1551
+    val allRoadLinks = roadlinks ++ complementaryRoadlinks ++ suravageRoadlinks
+
+    //TODO Will be implemented at VIITE-1536
     // val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, changedRoadLinks, addresses)
 
     //TODO Will be implemented at VIITE-1542
     //RoadAddressDAO.getMissingRoadAddresses(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
 
-    //TODO Will be implemented at VIITE-1536
-    //val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks ++ inUseSuravageLinks, roadAddressLinkMap)
+    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
 
-    //TODO Will be implemented at VIITE-1551
-    //publishChangeSet(changeSet)
+    eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    val (floatingRoadAddress, roadAddresses) = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
+    val (floatingRoadAddress, roadAddresses) = roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations).partition(_.isFloating)
 
     //TODO this will need to be improved after filltopology task
     floatingRoadAddress.flatMap{ra =>
       historyRoadlinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
     } ++
     roadAddresses.flatMap{ra =>
-      val roadLink = roadlinks.find(rl => rl.linkId == ra.linkId).orElse(complementaryRoadlinks.find(rl => rl.linkId == ra.linkId).orElse(suravageRoadlinks.find(rl => rl.linkId == ra.linkId)))
+      val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
     }
   }
@@ -154,59 +154,32 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     * @return Returns all the filtered road addresses
     */
   def getAllByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
+
     val suravageRoadLinksF = Future(roadLinkService.getSuravageRoadLinks(municipality))
 
     val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
 
     val allRoadLinks = roadLinks ++ Await.result(suravageRoadLinksF, atMost = Duration.create(1, TimeUnit.HOURS))
 
+    //TODO Road network error RoadNetworkDAO.getLatestRoadNetworkVersion.nonEmpty or use current date
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
         linearLocationDAO.fetchRoadwayByLinkId(allRoadLinks.map(_.linkId).toSet)
       }
     }
 
-    //TODO Road network error  RoadNetworkDAO.getLatestRoadNetworkVersion.nonEmpty
+    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
 
-    //TODO Will be implemented at VIITE-1536
-    //val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks, viiteRoadLinks)
     //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
-    //publishChangeSet(changeSet)
+    eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    //TODO Should give the road network version or the date of the fetch
-    val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
+    val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
 
     roadAddresses.flatMap{ra =>
-      val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
+      //TODO check if the floating are needed
+    val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
     }
-//TODO waiting for documentation, to check what was expected
-//        val (roadLinksWithComplementary, _) = {
-//          val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-//          (roadLinks.filterNot(r => r.linkSource == LinkGeomSource.ComplimentaryLinkInterface) ++ roadLinkService.getComplementaryRoadLinksFromVVH(municipality), changes)
-//        }
-//
-//        val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality)
-//        val allRoadLinks: Seq[RoadLink] = roadLinksWithComplementary ++ suravageLinks
-//
-//        val addresses =
-//          withDynTransaction {
-//            RoadAddressDAO.fetchByLinkIdToApi(allRoadLinks.map(_.linkId).toSet, RoadNetworkDAO.getLatestRoadNetworkVersion.nonEmpty).groupBy(_.linkId)
-//          }
-//        // In order to avoid sending roadAddressLinks that have no road address
-//        // we remove the road links that have no known address
-//        val knownRoadLinks = allRoadLinks.filter(rl => {
-//          addresses.contains(rl.linkId)
-//        })
-//
-//        val viiteRoadLinks = knownRoadLinks.map { rl =>
-//          val ra = addresses.getOrElse(rl.linkId, Seq())
-//          rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
-//        }.toMap
-//
-//        val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks, viiteRoadLinks)
-//        publishChangeSet(changeSet)
-//        filledTopology
   }
 
   /**
@@ -385,6 +358,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
   }
 
+  //TODO Will be implemented at VIITE-1551
+  def updateChangeSet(changeSet: ChangeSet): Unit = {
+  }
+
   /**
     * Returns all floating road addresses that are represented on ROADWAY table and are valid (excluding history)
     *
@@ -492,17 +469,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 //      roadLinkLike.vvhTimeStamp, roadLinkLike.vvhTimeStamp, roadLinkLike.attributes, roadLinkLike.constructionType, roadLinkLike.linkSource, roadLinkLike.length)
 //  }
 
-  private def publishChangeSet(changeSet: AddressChangeSet): Unit = {
-    time(logger, "Publish change set") {
-      //Temporary filter for missing road addresses QA
-//      if (!frozenTimeVVHAPIServiceEnabled) {
-//
-//      }
-      eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-      eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
-      eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
-    }
-  }
+//  private def publishChangeSet(changeSet: ChangeSet): Unit = {
+//    time(logger, "Publish change set") {
+//      //Temporary filter for missing road addresses QA
+////      if (!frozenTimeVVHAPIServiceEnabled) {
+////
+////      }
+//      eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+//      eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
+//      eventbus.publish("roadAddress:floatRoadAddress", changeSet.floatingLinearLocationIds)
+//    }
+//  }
 
   private def createRoadAddressLinkMap(roadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], toFloating: Seq[RoadAddressLink],
                                        addresses: Seq[RoadAddress],
@@ -749,16 +726,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     //expiredIds.grouped(500).map(group => RoadAddressDAO.expireById(group)).sum
   }
 
-  /**
-    * Checks that if the geometry is found and updates the geometry to match or sets it floating if not found
-    *
-    * @param ids
-    */
-  def checkRoadAddressFloating(ids: Set[Long]): Unit = {
-    withDynTransaction {
-      checkRoadAddressFloatingWithoutTX(ids)
-    }
-  }
+  //TODO check if this is needed in VIITE-1538
+//  /**
+//    * Checks that if the geometry is found and updates the geometry to match or sets it floating if not found
+//    *
+//    * @param ids
+//    */
+//  def checkRoadAddressFloating(ids: Set[Long]): Unit = {
+//    withDynTransaction {
+//      checkRoadAddressFloatingWithoutTX(ids)
+//    }
+//  }
 
   /**
     * For easier unit testing and use
