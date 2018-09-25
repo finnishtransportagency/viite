@@ -116,7 +116,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //    runWithRollback {
 //      val boundingBox = BoundingRectangle(Point(6699381, 396898), Point(6699382, 396898))
 //      sqlu"""
-//           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m, geometry)
+//           insert into UNADDRESSED_ROAD_LINK (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m, geometry)
 //           values (1943845, 0, 1, 1, 0, 34.944, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(6699381,396898,0,0.0,6699382,396898,0,2)))
 //           """.execute
 //
@@ -157,15 +157,15 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //    runWithRollback {
 //      val id = 1943845
 //      sqlu"""
-//           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m)
+//           insert into UNADDRESSED_ROAD_LINK (link_id, start_addr_m, end_addr_m,anomaly_code, start_m)
 //           values ($id, 0, 1, 1, 1)
 //           """.execute
-//      sqlu"""UPDATE MISSING_ROAD_ADDRESS
+//      sqlu"""UPDATE UNADDRESSED_ROAD_LINK
 //        SET geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
 //             6699381,396898,0,0.0,6699382,396898,0,2))
 //        WHERE link_id = ${id}""".execute
 //      val query= s"""select Count(geometry)
-//                 from missing_road_address ra
+//                 from UNADDRESSED_ROAD_LINK ra
 //                 WHERE ra.link_id=$id AND geometry IS NOT NULL
 //      """
 //      Q.queryNA[Int](query).firstOption should be (Some(1))
