@@ -130,7 +130,7 @@ trait AddressLinkBuilder {
 //      roadAddresses
 //    } else {
 //      val groupedRoadAddresses = roadAddresses.groupBy(record =>
-//        (record.roadwayId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+//        (record.roadwayNumber, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
 //
 //      groupedRoadAddresses.flatMap { case (_, record) =>
 //        fuseRoadAddressInGroup(record.sortBy(_.startAddrMValue))
@@ -247,7 +247,7 @@ trait AddressLinkBuilder {
 //        discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.createdBy,
 //        nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
 //        calibrationPoints, floating = nextSegment.floating, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
-//        nextSegment.roadwayId))
+//        nextSegment.roadwayNumber))
 //
 //    } else Seq(nextSegment, previousSegment)
 

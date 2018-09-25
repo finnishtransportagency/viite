@@ -265,19 +265,6 @@
       return segments;
     };
 
-    this.getSuravageByLinkId = function(ids) {
-      var segments = _.filter(suravageRoadLinks(), function (road){
-        return road.getData().linkId == ids;
-      });
-      return segments;
-    };
-
-    this.getSuravageByLinearLocationId = function(ids) {
-      return _.map(ids, function(id) {
-        return _.find(suravageRoadLinks(), function(road) { return road.getData().linearLocationId === id; });
-      });
-    };
-
     this.getGroupByLinkId = function (linkId) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
@@ -286,35 +273,10 @@
       });
     };
 
-    this.getSuravageGroupByLinearLocationId = function (id) {
-      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
-        return _.some(roadLinkGroup, function(roadLink) {
-          return roadLink.getData().linearLocationId === id;
-        });
-      });
-    };
-
-      this.getSuravageGroupByLinkId = function (id) {
-          return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
-              return _.some(roadLinkGroup, function(roadLink) {
-                  return roadLink.getData().linkId === id;
-              });
-          });
-      };
-
-
     this.getGroupByLinearLocationId = function (linearLocationId) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getData().linearLocationId === linearLocationId;
-        });
-      });
-    };
-
-    this.getSuravageGroupById = function (id) {
-      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
-        return _.some(roadLinkGroup, function(roadLink) {
-          return roadLink.getData().id === id;
         });
       });
     };

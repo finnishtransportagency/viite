@@ -122,13 +122,14 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue
   }
 }
 
+//TODO VIITE-1539 blackUnderline should be removed
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None), floating: FloatingReason = NoFloating,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
-                       linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayId: Long = NewRoadwayId, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
+                       linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long,
+                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewRoadwayNumber, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
@@ -207,10 +208,10 @@ object ProjectDAO {
   PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE_CODE,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.link_id, PROJECT_LINK.GEOMETRY,
   (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-  PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
+  PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROADWAY_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
     WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
-    WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROAD_ADDRESS.START_DATE
+    WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
     ELSE PRJ.START_DATE END as start_date,
   CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
   PROJECT_LINK.ADJUSTED_TIMESTAMP,
@@ -218,14 +219,14 @@ object ProjectDAO {
     WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
     WHEN rn.road_name IS NULL AND pln.road_name IS NOT NULL THEN pln.road_name
     END AS road_name_pl,
-  ROAD_ADDRESS.START_ADDR_M as RA_START_ADDR_M,
-  ROAD_ADDRESS.END_ADDR_M as RA_END_ADDR_M,
-  ROAD_ADDRESS.TRACK_CODE as TRACK_CODE,
-  ROAD_ADDRESS.ROAD_NUMBER as ROAD_NUMBER,
-  ROAD_ADDRESS.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
+  ROADWAY.START_ADDR_M as RA_START_ADDR_M,
+  ROADWAY.END_ADDR_M as RA_END_ADDR_M,
+  ROADWAY.TRACK_CODE as TRACK_CODE,
+  ROADWAY.ROAD_NUMBER as ROAD_NUMBER,
+  ROADWAY.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
   PROJECT_LINK.CALIBRATION_POINTS_SOURCE
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
-    LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)
+    LEFT JOIN ROADWAY ON (ROADWAY.ID = PROJECT_LINK.ROADWAY_ID)
     LEFT JOIN ROAD_NAME rn ON (rn.road_number = project_link.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
 	  LEFT JOIN project_link_name pln ON (pln.road_number = project_link.road_number AND pln.project_id = project_link.project_id)  """
 
@@ -236,10 +237,10 @@ object ProjectDAO {
           plh.START_MEASURE, plh.END_MEASURE, plh.SIDE_CODE,
           plh.CREATED_BY, plh.MODIFIED_BY, plh.link_id, plh.GEOMETRY,
           (plh.END_MEASURE - plh.START_MEASURE) as length, plh.CALIBRATION_POINTS, plh.STATUS,
-          plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROAD_ADDRESS_ID, plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
+          plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROADWAY_ID, plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
           CASE
             WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
-            WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROAD_ADDRESS.START_DATE
+            WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
             ELSE PRJ.START_DATE END as start_date,
           CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
           plh.ADJUSTED_TIMESTAMP,
@@ -247,14 +248,14 @@ object ProjectDAO {
             WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
             WHEN rn.road_name IS NULL AND pln.road_name IS NOT NULL THEN pln.road_name
             END AS road_name_pl,
-          ROAD_ADDRESS.START_ADDR_M as RA_START_ADDR_M,
-          ROAD_ADDRESS.END_ADDR_M as RA_END_ADDR_M,
-          ROAD_ADDRESS.TRACK_CODE as TRACK_CODE,
-          ROAD_ADDRESS.ROAD_NUMBER as ROAD_NUMBER,
-          ROAD_ADDRESS.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
+          ROADWAY.START_ADDR_M as RA_START_ADDR_M,
+          ROADWAY.END_ADDR_M as RA_END_ADDR_M,
+          ROADWAY.TRACK_CODE as TRACK_CODE,
+          ROADWAY.ROAD_NUMBER as ROAD_NUMBER,
+          ROADWAY.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
           plh.CALIBRATION_POINTS_SOURCE
           from PROJECT prj JOIN PROJECT_LINK_HISTORY plh ON (prj.id = plh.PROJECT_ID)
-            LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = plh.ROAD_ADDRESS_ID)
+            LEFT JOIN ROADWAY ON (ROADWAY.ID = plh.ROADWAY_ID)
             LEFT JOIN ROAD_NAME rn ON (rn.road_number = plh.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
         	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """.stripMargin
@@ -283,7 +284,7 @@ object ProjectDAO {
       val status = LinkStatus.apply(r.nextInt())
       val roadType = RoadType.apply(r.nextInt())
       val source = LinkGeomSource.apply(r.nextInt())
-      val roadAddressId = r.nextLong()
+      val roadwayId = r.nextLong()
       val ely = r.nextLong()
       val reversed = r.nextBoolean()
       val connectedLinkId = r.nextLongOption()
@@ -300,7 +301,7 @@ object ProjectDAO {
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, parseStringGeometry(geom.getOrElse("")), projectId,
-        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
+        status, roadType, source, length, roadwayId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
         roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM = roadAddressStartAddrM, roadAddressEndAddrM = roadAddressEndAddrM, roadAddressTrack = roadAddressTrack,
         roadAddressRoadNumber = roadAddressRoadNumber, roadAddressRoadPart = roadAddressRoadPart)
@@ -324,7 +325,7 @@ object ProjectDAO {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
         "road_number, road_part_number, " +
         "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-        "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry, " +
+        "calibration_points, status, road_type, ROADWAY_ID, connected_link_id, ely, reversed, geometry, " +
         "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
         "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewRoadAddress)
@@ -345,10 +346,10 @@ object ProjectDAO {
         addressPS.setDouble(10, CalibrationCode.getFromAddress(pl).value)
         addressPS.setLong(11, pl.status.value)
         addressPS.setLong(12, pl.roadType.value)
-        if (pl.roadAddressId == 0)
+        if (pl.roadwayId == 0)
           addressPS.setString(13, null)
         else
-          addressPS.setLong(13, pl.roadAddressId)
+          addressPS.setLong(13, pl.roadwayId)
         if (pl.connectedLinkId.isDefined)
           addressPS.setLong(14, pl.connectedLinkId.get)
         else
@@ -375,11 +376,11 @@ object ProjectDAO {
     throw new NotImplementedError("Will be implemented at VIITE-1540")
 //    time(logger, "Update project links") {
 //      val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
-//      val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+//      val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadwayId).toSet).map(ra => ra.id -> ra).toMap
 //      val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
 //      val links = projectLinks.map { pl =>
-//        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId) && !maxInEachTracks.contains(pl.id)) {
-//          val ra = addresses(pl.roadAddressId)
+//        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadwayId) && !maxInEachTracks.contains(pl.id)) {
+//          val ra = addresses(pl.roadwayId)
 //          // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
 //          pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
 //            startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
@@ -507,7 +508,7 @@ object ProjectDAO {
 
   def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
-      val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.ROAD_ADDRESS_ID in (${ids.mkString(",")})""" else ""
+      val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.ROADWAY_ID in (${ids.mkString(",")})""" else ""
       val query =
 
         s"""$projectLinkQueryBase
@@ -611,7 +612,7 @@ object ProjectDAO {
     time(logger, "Remove reserved road part") {
       sqlu"""
            DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
-           (EXISTS (SELECT 1 FROM ROAD_ADDRESS RA WHERE RA.ID = ROAD_ADDRESS_ID AND
+           (EXISTS (SELECT 1 FROM ROADWAY RA WHERE RA.ID = ROADWAY_ID AND
            RA.ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND RA.ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}))
            OR (ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
            AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
@@ -700,7 +701,7 @@ object ProjectDAO {
         s"""
         SELECT id, road_number, road_part_number, length, length_new,
           ely, ely_new,
-          (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
+          (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
             ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
             AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
@@ -722,7 +723,7 @@ object ProjectDAO {
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
               pl.road_part_number = rp.road_part_number AND pl.status != 5)
               LEFT JOIN
-              ROAD_ADDRESS ra ON (ra.id = pl.ROAD_ADDRESS_ID OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
+              ROADWAY ra ON (ra.id = pl.ROADWAY_ID OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
               WHERE
                 rp.project_id = $projectId
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
@@ -743,7 +744,7 @@ object ProjectDAO {
         s"""
         SELECT id, road_number, road_part_number, length, length_new,
           ely, ely_new,
-          (SELECT DISCONTINUITY FROM ROAD_ADDRESS ra WHERE ra.road_number = gr.road_number AND
+          (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
           ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
           AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
@@ -765,7 +766,7 @@ object ProjectDAO {
               LEFT JOIN
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
               LEFT JOIN
-              ROAD_ADDRESS ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROAD_ADDRESS_ID)
+              ROADWAY ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROADWAY_ID)
               WHERE
                 rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
@@ -952,7 +953,7 @@ object ProjectDAO {
         s" CALIBRATION_POINTS_SOURCE = ${CalibrationPointSource.RoadAddressSource.value}, " +
         s" SIDE_CODE = ${roadAddress.sideCode.value}, " +
         s" start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry" +
-        s" WHERE ROAD_ADDRESS_ID = ${roadAddress.id} AND PROJECT_ID = $projectId"
+        s" WHERE ROADWAY_ID = ${roadAddress.id} AND PROJECT_ID = $projectId"
       Q.updateNA(updateProjectLink).execute
     }
   }
@@ -1052,8 +1053,8 @@ object ProjectDAO {
     where PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber AND
     PROJECT_LINK.START_ADDR_M = (SELECT MIN(PROJECT_LINK.START_ADDR_M) FROM PROJECT_LINK
       LEFT JOIN
-      ROAD_ADDRESS ON ((ROAD_ADDRESS.road_number = PROJECT_LINK.road_number AND ROAD_ADDRESS.road_part_number = PROJECT_LINK.road_part_number) OR ROAD_ADDRESS.id = PROJECT_LINK.ROAD_ADDRESS_ID)
-      WHERE PROJECT_LINK.PROJECT_ID = $projectId AND ((PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber) OR PROJECT_LINK.ROAD_ADDRESS_ID = ROAD_ADDRESS.ID))
+      ROADWAY ON ((ROADWAY.road_number = PROJECT_LINK.road_number AND ROADWAY.road_part_number = PROJECT_LINK.road_part_number) OR ROADWAY.id = PROJECT_LINK.ROADWAY_ID)
+      WHERE PROJECT_LINK.PROJECT_ID = $projectId AND ((PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber) OR PROJECT_LINK.ROADWAY_ID = ROADWAY.ID))
     order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.TRACK_CODE """
     listQuery(query).headOption
   }
@@ -1108,7 +1109,7 @@ object ProjectDAO {
   def moveProjectLinksToHistory(projectId: Long): Unit = {
       sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE,
               ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
-               MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROAD_ADDRESS_ID, CONNECTED_LINK_ID, ELY,
+               MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROADWAY_ID, CONNECTED_LINK_ID, ELY,
                 REVERSED, GEOMETRY, SIDE_CODE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
                  LINK_SOURCE, CALIBRATION_POINTS_SOURCE
           FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
