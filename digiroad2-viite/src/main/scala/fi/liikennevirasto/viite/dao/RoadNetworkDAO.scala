@@ -22,7 +22,7 @@ object RoadNetworkDAO {
   }
 
   def createPublishedRoadAddress(networkVersion: Long, roadAddressId: Long): Unit = {
-    sqlu"""INSERT INTO published_road_address (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadAddressId)""".execute
+    sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadAddressId)""".execute
   }
 
 def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
