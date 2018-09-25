@@ -224,7 +224,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   }
 
   def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val calibrationPointSource = if (id == noRoadAddressId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
+    val calibrationPointSource = if (id == noRoadwayId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
     calibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
       case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
@@ -1055,7 +1055,7 @@ class RoadAddressDAO extends BaseDAO {
 //    }
 //  }
 //
-//  def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
+//  def updateGeometry(roadwayId: Long, geometry: Seq[Point]): Unit = {
 //    if (geometry.nonEmpty) {
 //      val first = geometry.head
 //      val last = geometry.last
@@ -1071,7 +1071,7 @@ class RoadAddressDAO extends BaseDAO {
 //      sqlu"""UPDATE ROADWAY
 //        SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
 //             MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
-//        WHERE id = ${roadAddressId}""".execute
+//        WHERE id = ${roadwayId}""".execute
 //    }
 //  }
 //
@@ -1117,9 +1117,9 @@ class RoadAddressDAO extends BaseDAO {
 //  /**
 //    * Marks the road address identified by the supplied Id as eiher floating or not
 //    *
-//    * @param roadAddressId The Id of a road addresss
+//    * @param roadwayId The Id of a road addresss
 //    */
-//  def changeRoadAddressFloating(roadAddressId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
+//  def changeRoadAddressFloating(roadwayId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
 //    if (geometry.nonEmpty) {
 //      val first = geometry.get.head
 //      val last = geometry.get.last
@@ -1129,12 +1129,12 @@ class RoadAddressDAO extends BaseDAO {
 //           Update ROADWAY Set floating = ${floatingReason.value},
 //                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
 //                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-//             Where id = $roadAddressId
+//             Where id = $roadwayId
 //      """.execute
 //    } else {
 //      sqlu"""
 //           Update ROADWAY Set floating = ${floatingReason.value}
-//             Where id = $roadAddressId
+//             Where id = $roadwayId
 //      """.execute
 //    }
 //  }
@@ -1143,9 +1143,9 @@ class RoadAddressDAO extends BaseDAO {
 //    * Marks the road address identified by the supplied Id as eiher floating or not and also updates the history of
 //    * those who shares the same link_id and roadway_number
 //    *
-//    * @param roadAddressId The Id of a road addresss
+//    * @param roadwayId The Id of a road addresss
 //    */
-//  def changeRoadAddressFloatingWithHistory(roadAddressId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
+//  def changeRoadAddressFloatingWithHistory(roadwayId: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason): Unit = {
 //    if (geometry.nonEmpty) {
 //      val first = geometry.get.head
 //      val last = geometry.get.last
@@ -1155,13 +1155,13 @@ class RoadAddressDAO extends BaseDAO {
 //           Update ROADWAY Set floating = ${floatingReason.value},
 //                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
 //                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
-//             Where id = $roadAddressId
+//             Where id = $roadwayId
 //      """.execute
 //    }
 //    sqlu"""
 //       update ROADWAY set floating = ${floatingReason.value} where id in(
 //       select ROADWAY.id from ROADWAY where link_id =
-//       (select link_id from ROADWAY where ROADWAY.id = $roadAddressId))
+//       (select link_id from ROADWAY where ROADWAY.id = $roadwayId))
 //        """.execute
 //  }
 //
@@ -1259,8 +1259,8 @@ class RoadAddressDAO extends BaseDAO {
 //    }
 //  }
 //
-//  def getNextRoadAddressId: Long = {
-//    Queries.nextRoadAddressId.as[Long].first
+//  def getNextRoadwayId: Long = {
+//    Queries.nextRoadwayId.as[Long].first
 //  }
 //
 //  implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
@@ -1427,13 +1427,13 @@ class RoadAddressDAO extends BaseDAO {
 //      "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
 //      "?, ?, ?, ?, ?, ?)")
 //    val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
-//    val plIds = Sequences.fetchRoadAddressIds(idLess.size)
+//    val plIds = Sequences.fetchRoadwayIds(idLess.size)
 //    val createAddresses = ready ++ idLess.zip(plIds).map(x =>
 //      x._1.copy(id = x._2)
 //    )
 //    val savedIds = createAddresses.foreach { case (address) =>
 //      val nextId = if (address.id == NewRoadAddress) {
-//        Sequences.nextRoadAddressId
+//        Sequences.nextRoadwayId
 //      } else {
 //        address.id
 //      }
@@ -1732,16 +1732,16 @@ class RoadAddressDAO extends BaseDAO {
 //  /*
 //   * Get the calibration code of the given road address.
 //   *
-//   * @param roadAddressId id of the road link in ROADWAY table
+//   * @param roadwayId id of the road link in ROADWAY table
 //   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
 //   *
-//   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
+//   * Note that function returns CalibrationCode.No (0) if no road address was found with roadwayId.
 //   */
-//  def getRoadAddressCalibrationCode(roadAddressId: Long): CalibrationCode = {
+//  def getRoadAddressCalibrationCode(roadwayId: Long): CalibrationCode = {
 //    val query =
 //      s"""SELECT ra.calibration_points
 //                    FROM ROADWAY ra
-//                    WHERE ra.id=$roadAddressId"""
+//                    WHERE ra.id=$roadwayId"""
 //    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
 //  }
 //
@@ -1749,19 +1749,19 @@ class RoadAddressDAO extends BaseDAO {
 //  /*
 //   * Get the calibration code of the given road addresses.
 //   *
-//   * @param roadAddressId id of the road link in ROADWAY table
+//   * @param roadwayId id of the road link in ROADWAY table
 //   * @return CalibrationCode of the road address (No = 0, AtEnd = 1, AtBeginning = 2, AtBoth = 3).
 //   *
-//   * Note that function returns CalibrationCode.No (0) if no road address was found with roadAddressId.
+//   * Note that function returns CalibrationCode.No (0) if no road address was found with roadwayId.
 //   */
-//  def getRoadAddressCalibrationCode(roadAddressIds: Seq[Long]): Map[Long, CalibrationCode] = {
-//    if (roadAddressIds.isEmpty) {
+//  def getRoadAddressCalibrationCode(roadwayIds: Seq[Long]): Map[Long, CalibrationCode] = {
+//    if (roadwayIds.isEmpty) {
 //      Map()
 //    } else {
 //      val query =
 //        s"""SELECT ra.id, ra.calibration_points
 //                    FROM ROADWAY ra
-//                    WHERE ra.id in (${roadAddressIds.mkString(",")})"""
+//                    WHERE ra.id in (${roadwayIds.mkString(",")})"""
 //      Q.queryNA[(Long, Int)](query).list.map {
 //        case (id, code) => id -> CalibrationCode(code)
 //      }.toMap

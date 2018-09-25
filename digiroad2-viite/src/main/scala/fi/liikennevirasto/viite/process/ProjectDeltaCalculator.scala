@@ -23,7 +23,7 @@ object ProjectDeltaCalculator {
     throw new NotImplementedError("Will be implemented at VIITE-1539")
 //    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
 //    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
-//    val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadAddressId).toSet,
+//    val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadwayId).toSet,
 //      includeFloating = true).map(ra => ra.id -> ra).toMap
 //    val terminations = findTerminations(projectLinks, currentAddresses)
 //    val newCreations = findNewCreations(projectLinks)
@@ -74,20 +74,20 @@ object ProjectDeltaCalculator {
 
   private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
     projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl =>
-      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
+      adjustIfSplit(pl, currentAddresses.get(pl.roadwayId)).get -> pl)
   }
 
   private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
     val (split, nonSplit) = projectLinks.filter(_.status == LinkStatus.Transfer).partition(_.isSplit)
     split.map(pl =>
-      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId),
+      adjustIfSplit(pl, currentAddresses.get(pl.roadwayId),
         projectLinks.sortBy(_.endAddrMValue).reverse.find(_.linkId == pl.connectedLinkId.get)).get -> pl) ++
       nonSplit.map(pl =>
-        adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
+        adjustIfSplit(pl, currentAddresses.get(pl.roadwayId)).get -> pl)
   }
 
   private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.filter(_.status == LinkStatus.Numbering).map(pl => currentAddresses(pl.roadAddressId) -> pl)
+    projectLinks.filter(_.status == LinkStatus.Numbering).map(pl => currentAddresses(pl.roadwayId) -> pl)
   }
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
@@ -134,8 +134,8 @@ object ProjectDeltaCalculator {
         },
         pl1 match {
           case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
-          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl1.calibrationPoints, x.roadAddressId)).asInstanceOf[P]
-          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl2.calibrationPoints, x.roadAddressId)).asInstanceOf[P]
+          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl1.calibrationPoints, x.roadwayId)).asInstanceOf[P]
+          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl2.calibrationPoints, x.roadwayId)).asInstanceOf[P]
         }))
     else {
       Seq(tr2, tr1)

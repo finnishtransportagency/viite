@@ -127,7 +127,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None), floating: FloatingReason = NoFloating,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
-                       linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
+                       linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long,
                        ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewRoadwayNumber, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
@@ -283,7 +283,7 @@ object ProjectDAO {
       val status = LinkStatus.apply(r.nextInt())
       val roadType = RoadType.apply(r.nextInt())
       val source = LinkGeomSource.apply(r.nextInt())
-      val roadAddressId = r.nextLong()
+      val roadwayId = r.nextLong()
       val ely = r.nextLong()
       val reversed = r.nextBoolean()
       val connectedLinkId = r.nextLongOption()
@@ -300,7 +300,7 @@ object ProjectDAO {
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, parseStringGeometry(geom.getOrElse("")), projectId,
-        status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
+        status, roadType, source, length, roadwayId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
         roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM = roadAddressStartAddrM, roadAddressEndAddrM = roadAddressEndAddrM, roadAddressTrack = roadAddressTrack,
         roadAddressRoadNumber = roadAddressRoadNumber, roadAddressRoadPart = roadAddressRoadPart)
@@ -345,10 +345,10 @@ object ProjectDAO {
         addressPS.setDouble(10, CalibrationCode.getFromAddress(pl).value)
         addressPS.setLong(11, pl.status.value)
         addressPS.setLong(12, pl.roadType.value)
-        if (pl.roadAddressId == 0)
+        if (pl.roadwayId == 0)
           addressPS.setString(13, null)
         else
-          addressPS.setLong(13, pl.roadAddressId)
+          addressPS.setLong(13, pl.roadwayId)
         if (pl.connectedLinkId.isDefined)
           addressPS.setLong(14, pl.connectedLinkId.get)
         else
@@ -375,11 +375,11 @@ object ProjectDAO {
     throw new NotImplementedError("Will be implemented at VIITE-1540")
 //    time(logger, "Update project links") {
 //      val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
-//      val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet).map(ra => ra.id -> ra).toMap
+//      val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadwayId).toSet).map(ra => ra.id -> ra).toMap
 //      val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
 //      val links = projectLinks.map { pl =>
-//        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadAddressId) && !maxInEachTracks.contains(pl.id)) {
-//          val ra = addresses(pl.roadAddressId)
+//        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadwayId) && !maxInEachTracks.contains(pl.id)) {
+//          val ra = addresses(pl.roadwayId)
 //          // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
 //          pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
 //            startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,

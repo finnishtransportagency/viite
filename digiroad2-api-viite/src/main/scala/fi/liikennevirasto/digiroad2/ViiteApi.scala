@@ -948,7 +948,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
     Map(
       "success" -> true,
-      "roadAddressId" -> roadAddressLink.id,
+      "roadAddressId" -> roadAddressLink.id, // TODO Should this be renamed to roadwayId?
       //"linearLocationId" -> roadAddressLink.linearLocationId, //TODO uncoment this and remove this one from the call to this
       "linkId" -> roadAddressLink.linkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),

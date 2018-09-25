@@ -140,7 +140,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-153
 //  test("Create Road Address") {
 //    runWithRollback {
-//      val id = RoadAddressDAO.getNextRoadAddressId
+//      val id = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(RoadAddress(id, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 //      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
@@ -176,7 +176,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //  test("Create Road Address with username") {
 //    runWithRollback {
 //      val username = "testUser"
-//      val id = RoadAddressDAO.getNextRoadAddressId
+//      val id = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(RoadAddress(id, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 //      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
@@ -193,7 +193,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-1552
 //  test("Create Road Address With Calibration Point") {
 //    runWithRollback {
-//      val id = RoadAddressDAO.getNextRoadAddressId
+//      val id = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(RoadAddress(id, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0,
 //        (Some(CalibrationPoint(12345L, 0.0, 0L)), None), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
@@ -204,7 +204,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //      fetch.head should be (2)
 //    }
 //    runWithRollback {
-//      val id = RoadAddressDAO.getNextRoadAddressId
+//      val id = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(RoadAddress(id, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0,
 //        (Some(CalibrationPoint(12345L, 0.0, 0L)), Some(CalibrationPoint(12345L, 9.8, 10L))), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
@@ -219,7 +219,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-1552
 //  test("Create Road Address with complementary source") {
 //    runWithRollback {
-//      val id = RoadAddressDAO.getNextRoadAddressId
+//      val id = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(RoadAddress(id, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),
 //        None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, 0))
@@ -248,11 +248,11 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //    val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
 //    val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
 //    runWithRollback {
-//      val id1 = RoadAddressDAO.getNextRoadAddressId
+//      val id1 = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(RoadAddress(id1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 //      RoadAddressDAO.create(ra, Some("user"))
-//      val id = RoadAddressDAO.getNextRoadAddressId
+//      val id = RoadAddressDAO.getNextRoadwayId
 //      val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 //      localRoadAddressService.mergeRoadAddressInTX(RoadAddressMerge(Set(id1), toBeMergedRoadAddresses))
@@ -459,7 +459,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-1539
 //  test("Terminated road reservation") {
 //    runWithRollback {
-//      val idr = RoadAddressDAO.getNextRoadAddressId
+//      val idr = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
 //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 //      RoadAddressDAO.create(ra)
@@ -484,7 +484,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-1550
 //  test("Fetching road addresses by bounding box should ignore start dates") {
 //    runWithRollback {
-//      val addressId = RoadAddressDAO.getNextRoadAddressId
+//      val addressId = RoadAddressDAO.getNextRoadwayId
 //      val futureDate = DateTime.now.plusDays(5)
 //      val ra = Seq(RoadAddress(addressId, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(futureDate), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
 //        Seq(Point(1.0, 1.0), Point(1.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
@@ -500,8 +500,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-1550
 //  test("Fetching road addresses by bounding box should get only the latest ones (end_date is null)") {
 //    runWithRollback {
-//      val addressId1 = RoadAddressDAO.getNextRoadAddressId
-//      val addressId2 = RoadAddressDAO.getNextRoadAddressId
+//      val addressId1 = RoadAddressDAO.getNextRoadwayId
+//      val addressId2 = RoadAddressDAO.getNextRoadwayId
 //      val startDate1 = Some(DateTime.now.minusDays(5))
 //      val startDate2 = Some(DateTime.now.plusDays(5))
 //      val EndDate1 = startDate2
@@ -521,8 +521,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-1550
 //  test("Bounding box search should return the latest road address even if it's start date is in the future.") {
 //    runWithRollback {
-//      val id1 = RoadAddressDAO.getNextRoadAddressId
-//      val id2 = RoadAddressDAO.getNextRoadAddressId
+//      val id1 = RoadAddressDAO.getNextRoadwayId
+//      val id2 = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(
 //
 //        RoadAddress(id1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
@@ -546,8 +546,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   //TODO will be implemented at VIITE-1550
 //  test("Bounding box search should not return the road address even if it is currently not terminated but in the future.") {
 //    runWithRollback {
-//      val id1 = RoadAddressDAO.getNextRoadAddressId
-//      val id2 = RoadAddressDAO.getNextRoadAddressId
+//      val id1 = RoadAddressDAO.getNextRoadwayId
+//      val id2 = RoadAddressDAO.getNextRoadwayId
 //      val ra = Seq(
 //
 //        RoadAddress(id1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
@@ -571,21 +571,21 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //  private def createRoadAddress8888(startDate: Option[DateTime], endDate: Option[DateTime] = None): Unit = {
 //    RoadAddressDAO.create(
 //      Seq(
-//        RoadAddress(Sequences.nextRoadAddressId, 8888, 1, RoadType.PublicRoad, Track.Combined,
+//        RoadAddress(Sequences.nextRoadwayId, 8888, 1, RoadType.PublicRoad, Track.Combined,
 //          Discontinuity.Continuous, 0, 35, startDate, endDate,
 //          Option("TestUser"), 8888888, 0, 35, SideCode.TowardsDigitizing,
 //          0, (None, None), NoFloating, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8, NoTermination, 0)))
 //  }
 //
 //  private def createTerminatedRoadAddress7777(startDate: Option[DateTime]): Unit = {
-//    val roadAddressId = Sequences.nextRoadAddressId
+//    val roadwayId = Sequences.nextRoadwayId
 //    RoadAddressDAO.create(
 //      Seq(
-//        RoadAddress(roadAddressId, 7777, 1, RoadType.PublicRoad, Track.Combined,
+//        RoadAddress(roadwayId, 7777, 1, RoadType.PublicRoad, Track.Combined,
 //          Discontinuity.Continuous, 0, 35, startDate, Option.apply(DateTime.parse("2000-01-01")),
 //          Option("TestUser"), 7777777, 0, 35, SideCode.TowardsDigitizing,
 //          0, (None, None), NoFloating, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8, NoTermination, 0)))
-//    sqlu"""UPDATE ROADWAY SET Terminated = 1 Where ID = ${roadAddressId}""".execute
+//    sqlu"""UPDATE ROADWAY SET Terminated = 1 Where ID = ${roadwayId}""".execute
 //  }
 
 }

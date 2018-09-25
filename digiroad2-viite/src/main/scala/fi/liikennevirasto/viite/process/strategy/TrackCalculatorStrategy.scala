@@ -175,7 +175,7 @@ trait TrackCalculatorStrategy {
       case _ =>
         val pls = projectlinks.map {
           pl =>
-            val raCalibrationCode = raCalibrationPoints.get(pl.roadAddressId).getOrElse(CalibrationCode.No)
+            val raCalibrationCode = raCalibrationPoints.get(pl.roadwayId).getOrElse(CalibrationCode.No)
             val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
             val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
             setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
@@ -211,7 +211,7 @@ trait TrackCalculatorStrategy {
     throw new NotImplementedError("Will be implemented at VIITE-1540")
 //    val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
 //
-//    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadAddressId).filter(_ > 0).distinct)
+//    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadwayId).filter(_ > 0).distinct)
 //
 //    (
 //      setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),

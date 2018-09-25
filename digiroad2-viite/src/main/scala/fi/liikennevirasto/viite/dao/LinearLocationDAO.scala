@@ -150,7 +150,7 @@ case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue
 
   // TODO
   /*  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-      val calibrationPointSource = if (id == noRoadAddressId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
+      val calibrationPointSource = if (id == noRoadwayId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
       calibrationPoints match {
         case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
         case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))

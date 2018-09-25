@@ -398,7 +398,7 @@
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
             var rejectedRoads = _.reject(get().concat(getFeaturesToKeep()), function(link){
-              return link.roadAddressId === "" || link.anomaly === Anomaly.GeometryChanged.value;
+              return link.roadwayId === "" || link.anomaly === Anomaly.GeometryChanged.value;
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;

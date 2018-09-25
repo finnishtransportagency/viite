@@ -341,7 +341,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     GeometryUtils.areAdjacent(terminatedLink.geometry, splitA.geometry) should be (true)
     GeometryUtils.areAdjacent(terminatedLink.geometry, template.geometry) should be (true)
     Seq(splitA, splitB).foreach { l =>
-      l.roadAddressId should be (template.roadAddressId)
+      l.roadwayId should be (template.roadwayId)
       GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
       l.roadNumber should be (template.roadNumber)
       l.roadPartNumber should be (template.roadPartNumber)

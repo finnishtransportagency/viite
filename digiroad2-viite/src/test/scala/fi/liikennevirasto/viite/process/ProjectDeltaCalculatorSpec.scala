@@ -268,7 +268,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
   test("Calculate delta for split suravage link") {
     runWithRollback {
       val reservationId = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressId = Sequences.nextRoadAddressId
+      val roadwayId = Sequences.nextRoadwayId
       val ids = (1 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue).sorted
       val project = RoadAddressProject(Sequences.nextViitePrimaryKeySeqValue, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(), None , None)
       ProjectDAO.createRoadAddressProject(project)
@@ -280,7 +280,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
             START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
             SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
-            ($roadAddressId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            ($roadwayId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
             MDSYS.SDO_ORDINATE_ARRAY(445889.442,7004298.67,0,0,445956.884,7004244.253,0,85)),null,
             '3','0',86.818,'6550673','1476392565000',sysdate,'1')""".execute
@@ -320,7 +320,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       val (uncSource, uncTarget) = delta.unChanged.mapping.head
       uncSource.startAddrMValue should be (0)
       uncSource.endAddrMValue should be (62)
-      uncSource.id should be (roadAddressId)
+      uncSource.id should be (roadwayId)
       uncTarget.startAddrMValue should be (0)
       uncTarget.endAddrMValue should be (62)
       uncTarget.id should be (ids(1))
@@ -398,7 +398,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     partitionCp.size should be(2)
     val firstSection = partitionCp.head
     val secondSection = partitionCp.last
-    val cutPoint = projectLinksWithCp.find(_._2.roadAddressId == 10L).get._2
+    val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
     firstSection._1.startMAddr should be (projectLinksWithCp.head._2.startAddrMValue)
     firstSection._1.endMAddr should be (cutPoint.endAddrMValue)
     secondSection._1.startMAddr should be (cutPoint.endAddrMValue)
