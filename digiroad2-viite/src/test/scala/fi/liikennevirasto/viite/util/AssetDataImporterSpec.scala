@@ -221,8 +221,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
       insertedRoadAddresses.size should be(16)
 
-      val roadAddressIds = insertedRoadAddresses.map(_.id).mkString(", ")
-      val calibrationPoints = sql"""select start_addr_m, calibration_points from ROADWAY where id in (#${roadAddressIds}) order by start_addr_m""".as[(Long, Long)].list
+      val roadwayIds = insertedRoadAddresses.map(_.id).mkString(", ")
+      val calibrationPoints = sql"""select start_addr_m, calibration_points from ROADWAY where id in (#${roadwayIds}) order by start_addr_m""".as[(Long, Long)].list
       calibrationPoints should equal(expectedCalibrationPointValuesForAET)
 
       // TODO Make own test for these
@@ -244,10 +244,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     runWithRollback {
       //Road Objects
-      val ra = Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
+      val ra = Seq(RoadAddress(RoadAddressDAO.getNextRoadwayId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
         geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber),
-        RoadAddress(RoadAddressDAO.getNextRoadAddressId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 10L, 20L,
+        RoadAddress(RoadAddressDAO.getNextRoadwayId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 10L, 20L,
           Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
           geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber))
       val vvhRoadLinks = List(

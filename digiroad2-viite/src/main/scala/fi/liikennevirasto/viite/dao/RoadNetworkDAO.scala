@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-case class RoadNetworkError(id: Long, roadAddressId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
+case class RoadNetworkError(id: Long, roadwayId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
 
 object RoadNetworkDAO {
 
@@ -21,18 +21,18 @@ object RoadNetworkDAO {
     sqlu"""UPDATE published_road_network SET valid_to = sysdate WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
   }
 
-  def createPublishedRoadAddress(networkVersion: Long, roadAddressId: Long): Unit = {
-    sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadAddressId)""".execute
+  def createPublishedRoadAddress(networkVersion: Long, roadwayId: Long): Unit = {
+    sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
 
-def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
+def addRoadNetworkError(roadwayId: Long, errorCode: Long): Unit = {
   val timestamp = System.currentTimeMillis()
   val lastVersion = getLatestRoadNetworkVersionId
       val networkErrorPS = dynamicSession.prepareStatement("INSERT INTO road_network_error (id, ROADWAY_ID, error_code, error_timestamp, road_network_version)" +
         " values (?, ?, ?, ?, ?)")
       val nextId =  Sequences.nextRoadNetworkErrorSeqValue
       networkErrorPS.setLong(1, nextId)
-      networkErrorPS.setLong(2, roadAddressId)
+      networkErrorPS.setLong(2, roadwayId)
       networkErrorPS.setLong(3, errorCode)
       networkErrorPS.setDouble(4, timestamp)
   lastVersion match {
@@ -69,8 +69,8 @@ def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
     val query = s"""SELECT * FROM road_network_error where ROADWAY_ID = $addressId and error_code = ${error.value} order by road_network_version desc"""
 
     Q.queryNA[(Long, Long, Int, Long, Option[Long])](query).list.headOption.map {
-      case (id, roadAddressId, errorCode, timestamp, version) =>
-        RoadNetworkError(id, roadAddressId, AddressError.apply(errorCode), timestamp, version)
+      case (id, roadwayId, errorCode, timestamp, version) =>
+        RoadNetworkError(id, roadwayId, AddressError.apply(errorCode), timestamp, version)
     }
   }
 
