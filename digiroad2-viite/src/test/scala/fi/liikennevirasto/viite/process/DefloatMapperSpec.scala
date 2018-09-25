@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite.process
 
 import java.util.Date
 
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
@@ -14,7 +13,6 @@ import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, FloatingRe
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.viite.util._
 
 class DefloatMapperSpec extends FunSuite with Matchers{
   val sources = Seq(
@@ -380,7 +378,7 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     } else {
       None
     }
-    RoadAddressLink(id, id, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
+    RoadAddressLink(id, id, linkId, geom, length, State, LinkType.apply(1),
       ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
       trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, length, sideCode, startCP, endCP, anomaly)
   }
