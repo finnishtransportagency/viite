@@ -171,7 +171,7 @@ object RoadAddressChangesDAO {
                 rac.new_road_part_number, rac.new_road_part_number,
                 rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, rac.old_road_type,
                 rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed
-                From Road_Address_Changes rac Inner Join Project p on rac.project_id = p.id
+                From ROADWAY_CHANGES rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
                 ORDER BY COALESCE(rac.new_road_number, rac.old_road_number), COALESCE(rac.new_road_part_number, rac.old_road_part_number),
                   COALESCE(rac.new_start_addr_m, rac.old_start_addr_m), COALESCE(rac.new_track_code, rac.old_track_code),
@@ -180,7 +180,7 @@ object RoadAddressChangesDAO {
   }
 
   def clearRoadChangeTable(projectId: Long): Unit = {
-    sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES WHERE project_id = $projectId""".execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id = $projectId""".execute
   }
 
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean = {
@@ -263,7 +263,7 @@ object RoadAddressChangesDAO {
       case Some(project) =>
         project.ely match {
           case Some(ely) =>
-            val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
+            val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES " +
               "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
               "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
