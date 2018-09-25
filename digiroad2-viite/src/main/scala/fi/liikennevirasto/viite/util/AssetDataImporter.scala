@@ -24,7 +24,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
-
+// TODO This could be renamed to something else than asset...
 object AssetDataImporter {
   sealed trait ImportDataSet {
     def database(): DatabaseDef
@@ -195,7 +195,7 @@ class AssetDataImporter {
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     val municipalities = OracleDatabase.withDynTransaction {
-      sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM UNADDRESSED_ROAD_LINK""".execute
       println("Old address data cleared")
       Queries.getMunicipalitiesWithoutAhvenanmaa
     }
