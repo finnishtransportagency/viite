@@ -343,6 +343,24 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], searchDate: DateTime): Seq[RoadwayAddress] = {
+    time(logger, "Fetch all current road addresses by roadway ids and startDate") {
+      if(roadwayNumbers.isEmpty)
+        Seq()
+      else
+        fetch(withLRoadwayNumbersAndDate(roadwayNumbers, searchDate))
+    }
+  }
+
+  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], roadNetworkId: Long): Seq[RoadwayAddress] = {
+    time(logger, "Fetch all current road addresses by roadway ids and road network id") {
+      if(roadwayNumbers.isEmpty)
+        Seq()
+      else
+        fetch(withLRoadwayNumbersAndRoadNetwork(roadwayNumbers, roadNetworkId))
+    }
+  }
+
   def fetchAllByBetweenRoadNumbers(roadNumbers: (Int, Int)) : Seq[RoadwayAddress] = {
     time(logger, "Fetch all current road addresses by given road numbers") {
       fetch(betweenRoadNumbers(roadNumbers))
@@ -409,19 +427,34 @@ class RoadAddressDAO extends BaseDAO {
   }
 
   private def withSection(roadNumber: Long, roadPartNumber: Long)(query: String): String = {
-    s"""$query where road_number = $roadNumber and road_part_number = $roadPartNumber"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Int])(query: String): String = {
-    s"""$query where road_number = $roadNumber and road_part_number = $roadPartNumber and tracks in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and tracks in (${tracks.mkString(",")})"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Int])(query: String): String = {
-    s"""$query where road_number = $roadNumber and road_part_number = ${roadPartNumbers.mkString(",")} and tracks in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = ${roadPartNumbers.mkString(",")} and tracks in (${tracks.mkString(",")})"""
   }
 
   private def withRoadAndTracks(roadNumber: Long, tracks: Set[Int])(query: String): String = {
-    s"""$query where road_number = $roadNumber and tracks in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and tracks in (${tracks.mkString(",")})"""
+  }
+
+  private def withLRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
+
+    s"""$query
+       join published_roadway net on net.network_id = $roadNetworkId
+       where a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+  }
+
+  private def withLRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
+    def dateFilter(table: String): String = {
+      s" ($table.start_date <= to_date('$searchDate', 'yyyy-mm-dd') and (to_date('$searchDate', 'yyyy-mm-dd') < $table.end_date or $table.end_date is null))"
+    }
+
+    s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
@@ -431,7 +464,7 @@ class RoadAddressDAO extends BaseDAO {
         case (_, Some(endAddrM)) => s"""and start_addr_m < $endAddrM"""
         case _ => s""""""
       }
-      s"""$query where road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
+      s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
   }
 
   private def withSectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Int, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
@@ -441,23 +474,23 @@ class RoadAddressDAO extends BaseDAO {
       case (_, Some(endAddrM)) => s"""and start_addr_m < $endAddrM"""
       case _ => s""""""
     }
-    s"""$query where road_number = $roadNumber and road_part_number = $roadPartNumber and track = $track and $addressFilter"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and track = $track and $addressFilter"""
   }
 
   private def withRoadwayNumberAndNotEnded(roadwayNumber: Long)(query: String): String = {
-    s"""$query where a.end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
+    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
   private def withRoadwayNumbersAndNotEnded(roadwayNumbers: Set[Long])(query: String): String = {
-    s"""$query where a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
+    s"""$query where a.valid_to is null and  a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
-    s"""$query where road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}"""
+    s"""$query where valid_to is null and road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}"""
   }
 
   private def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
-      s"""$query start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)
+      s"""$query valid_to is null and start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)
           AND start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"""
   }
 
