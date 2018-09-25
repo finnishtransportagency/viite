@@ -14,8 +14,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.{FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
-import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType._
@@ -107,7 +106,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     OracleDatabase.withDynTransaction {
 
       val roadLinks = Seq(RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834, 0.0), Point(533388.14110884, 6994014.1296834, 0.0)),
-        0.0, Municipality, UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,
+        0.0, Municipality, UnknownLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,
         Some("Vt5"), None, BigInt(0), None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01",
         0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123))
       val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(roadLinks)
@@ -1639,7 +1638,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false, roadwayNumber: Long = 0) = {
     val length = GeometryUtils.geometryLength(geom)
-    RoadAddressLink(roadwayId, linearLocationId, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
+    RoadAddressLink(roadwayId, linearLocationId, linkId, geom, length, State, LinkType.apply(1),
       ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
       trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
       if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,

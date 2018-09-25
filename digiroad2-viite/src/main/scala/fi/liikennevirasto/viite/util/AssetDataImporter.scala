@@ -138,8 +138,19 @@ class AssetDataImporter {
       sqlu"""UPDATE LINEAR_LOCATION
         SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
 
-      println(s"${DateTime.now()} - Updating calibration point information")
-      // both dates are open-ended or there is overlap (checked with inverse logic)
+      println(s"${DateTime.now()} - Updating terminated roadways information")
+
+      sqlu"""UPDATE ROADWAY SET TERMINATED = 2
+            WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
+            	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
+            	AND ROADWAY.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+            	AND ROADWAY.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
+            	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
+            	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
+            	AND ROADWAY.TRACK_CODE = rw.TRACK_CODE
+            	AND ROADWAY.ENd_date = rw.start_date
+            	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
+
       sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
       roadwayResetter()
     }

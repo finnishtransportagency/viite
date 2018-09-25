@@ -30,7 +30,6 @@
         UnknownRoadLinkType:        {value: 0, description: "UnknownRoadLinkType"},
         NormalRoadLinkType:         {value: 1, description: "NormalRoadLinkType"},
         ComplementaryRoadLinkType:  {value: 3, description: "ComplementaryRoadLinkType"},
-        FloatingRoadLinkType:       {value: -1, description: "FloatingRoadLinkType"},
         SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
     };
 

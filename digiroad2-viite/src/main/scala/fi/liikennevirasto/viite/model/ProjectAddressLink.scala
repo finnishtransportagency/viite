@@ -2,8 +2,6 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
 
@@ -13,7 +11,6 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def length: Double
   def administrativeClass: AdministrativeClass
   def linkType: LinkType
-  def roadLinkType: RoadLinkType
   def constructionType: ConstructionType
   def roadLinkSource: LinkGeomSource
   def roadType: RoadType
@@ -47,7 +44,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
 //TODO VIITE-1539 OR VIITE-1540 blackUnderline should be removed
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
-                              linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType,
+                              linkType: LinkType, constructionType: ConstructionType,
                               roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,

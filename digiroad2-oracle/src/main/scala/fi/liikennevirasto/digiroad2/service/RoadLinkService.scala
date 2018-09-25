@@ -23,24 +23,6 @@ case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeCla
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 
-sealed trait RoadLinkType {
-  def value: Int
-}
-
-object RoadLinkType{
-  val values = Set(NormalRoadLinkType, ComplementaryRoadLinkType, UnknownRoadLinkType, FloatingRoadLinkType)
-
-  def apply(intValue: Int): RoadLinkType = {
-    values.find(_.value == intValue).getOrElse(UnknownRoadLinkType)
-  }
-
-  case object UnknownRoadLinkType extends RoadLinkType { def value = 0 }
-  case object NormalRoadLinkType extends RoadLinkType { def value = 1 }
-  case object ComplementaryRoadLinkType extends RoadLinkType { def value = 3 }
-  case object FloatingRoadLinkType extends RoadLinkType { def value = -1 }
-  case object SuravageRoadLinkType extends RoadLinkType { def value = 4}
-}
-
 /**
   * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
   *

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
@@ -942,10 +942,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
-    val roadLinkTypeValue = roadAddressLink match {
-      case ra: RoadAddressLink => if (ra.floating) RoadLinkType.FloatingRoadLinkType.value else roadAddressLink.roadLinkType.value
-      case _ => roadAddressLink.roadLinkType.value
-    }
     Map(
       "success" -> true,
       "roadAddressId" -> roadAddressLink.id, // TODO Should this be renamed to roadwayId?
@@ -958,8 +954,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         calibrationPoint(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
       "administrativeClass" -> roadAddressLink.administrativeClass.toString,
       "roadClass" -> RoadClass.get(roadAddressLink.roadNumber.toInt),
-      "roadTypeId" -> roadAddressLink.roadType.value,
-      "roadType" -> roadAddressLink.roadType.displayValue,
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,
       "municipalityCode" -> roadAddressLink.attributes.get("MUNICIPALITYCODE"),
@@ -974,7 +968,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
       "anomaly" -> roadAddressLink.anomaly.value,
-      "roadLinkType" -> roadLinkTypeValue,
       "constructionType" -> roadAddressLink.constructionType.value,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,
@@ -1017,7 +1010,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "startDate" -> roadAddressLink.startDate,
         "endDate" -> roadAddressLink.endDate,
         "newGeometry" -> roadAddressLink.newGeometry,
-        "linearLocationId" -> roadAddressLink.linearLocationId //TODO This needs to be made inside the roadAddressLinkLikeToApi once the project links have the new structure
+        "linearLocationId" -> roadAddressLink.linearLocationId, //TODO This needs to be made inside the roadAddressLinkLikeToApi once the project links have the new structure
+        "floating" -> roadAddressLink.floating
       )
   }
 

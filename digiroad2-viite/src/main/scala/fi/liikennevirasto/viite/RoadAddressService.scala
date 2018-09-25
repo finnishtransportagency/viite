@@ -5,23 +5,19 @@ import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LinearLocationAdjustment}
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable.SortedMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -177,6 +173,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
     //publishChangeSet(changeSet)
 
+    //TODO Should give the road network version or the date of the fetch
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
 
     roadAddresses.flatMap{ra =>

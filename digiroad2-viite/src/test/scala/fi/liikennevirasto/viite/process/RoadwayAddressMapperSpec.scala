@@ -1,17 +1,12 @@
 package fi.liikennevirasto.viite.process
 
-import java.util.Date
-
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
