@@ -172,7 +172,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      sqlu""" update project_link set road_type=3 WHERE ROADWAY_ID in #$filter2""".execute
 //
 //      val nextCommonId = Sequences.nextRoadwaySeqValue
-//      sqlu""" update ROADWAY set common_history_id= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
+//      sqlu""" update ROADWAY set roadway_number= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
 //      val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
 //      afterAddressUpdates.groupBy(_.roadwayNumber).size should be (2)
 //      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
@@ -330,7 +330,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      val filter2 = s" (${ids.mkString(",")}) "
 //      sqlu""" update project_link set road_type=3 WHERE ROADWAY_ID in #$filter2""".execute
 //      val nextCommonId = Sequences.nextRoadwaySeqValue
-//      sqlu""" update ROADWAY set common_history_id= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
+//      sqlu""" update ROADWAY set roadway_number= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
 //      val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
 //      afterAddressUpdates.groupBy(_.roadwayNumber).size should be(2)
 //      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
