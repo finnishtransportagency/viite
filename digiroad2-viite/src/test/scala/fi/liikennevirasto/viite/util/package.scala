@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -41,11 +40,6 @@ package object util {
        |${
       if (l.anomaly != Anomaly.None) {
         " " + l.anomaly
-      } else ""
-    }
-       |${
-      if (l.roadLinkType != RoadLinkType.NormalRoadLinkType) {
-        " " + l.roadLinkType
       } else ""
     }
      """.stripMargin.replace("\n", "")
@@ -216,7 +210,7 @@ package object util {
   }
 
   def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
-    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
+    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
       ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
