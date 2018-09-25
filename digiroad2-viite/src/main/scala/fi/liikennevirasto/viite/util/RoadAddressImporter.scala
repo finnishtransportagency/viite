@@ -13,8 +13,8 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, FloatingReason}
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, FloatingReason, TerminationCode}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -173,7 +173,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   def importRoadAddress(): Unit = {
     val chunks = fetchChunkLinkIdsFromConversionTable()
-    /*chunks.foreach {
+    chunks.foreach {
       case (min, max) =>
         print(s"${DateTime.now()} - ")
         println(s"Processing chunk ($min, $max)")
@@ -183,7 +183,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         println("Read %d rows from conversion database".format(conversionAddresses.size))
         val conversionAddressesFromChunk = conversionAddresses.filter(address => (min+1 to max).contains(address.roadwayNumber))
         importAddresses(conversionAddressesFromChunk, conversionAddresses)
-    }*/
+    }
 
     val expiredAddresses = fetchAllExpiredAddressesFromConversionTable()
     importExpiredAddresses(expiredAddresses)
@@ -290,7 +290,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val maxAddress = addresses.last._1
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity,  terminated = Terminated.value)
+          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity,  terminated = Termination.value)
 
         insertRoadway(roadwayPs, roadAddress)
     }
