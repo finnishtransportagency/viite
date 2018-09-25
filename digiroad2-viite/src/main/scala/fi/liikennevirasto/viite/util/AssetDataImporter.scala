@@ -190,7 +190,8 @@ class AssetDataImporter {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     val roadAddressDAO = new RoadAddressDAO
-    val service = new RoadAddressService(linkService, roadAddressDAO, new RoadwayAddressMapper(roadAddressDAO), eventBus)
+    val linearLocationDAO = new LinearLocationDAO
+    val service = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     val municipalities = OracleDatabase.withDynTransaction {
@@ -232,15 +233,16 @@ class AssetDataImporter {
 
   def updateRoadAddressesGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
+    val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var changed = 0
     withDynTransaction {
         val chunks = fetchChunkLinkIds()
         chunks.foreach {
         case (min, max) =>
-        val linkIds = LinearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
+        val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-        val unGroupedTopology = LinearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
+        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
         val topologyLocation = unGroupedTopology.groupBy(_.linkId)
         val isLoopOrEmptyGeom = if (unGroupedTopology.sortBy(_.orderNumber).flatMap(_.geometry).equals(Nil)) {
           true
@@ -260,7 +262,7 @@ class AssetDataImporter {
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
                 isLoopOrEmptyGeom) {
-                LinearLocationDAO.updateGeometry(segment.id, newGeom)
+                linearLocationDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId =" + segment.linkId)
                 changed += 1
               } else {

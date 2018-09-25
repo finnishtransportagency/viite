@@ -15,7 +15,6 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
-import fi.liikennevirasto.viite.dao.LinearLocationDAO.formatter
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
@@ -281,13 +280,26 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Fetch all the current road addresses by road number and road part
+    * @param roadNumber The road number
+    * @param roadPartNumber The road part number
+    * @return Current road addresses at road address section
+    */
   def fetchAllBySection(roadNumber: Long, roadPartNumber: Long): Seq[RoadwayAddress] = {
     time(logger, "Fetch road address by road number and road part number") {
       fetch(withSection(roadNumber, roadPartNumber))
     }
   }
 
-  def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Int]) = {
+  /**
+    * Fetch all the current road addresses by road number, road part number and track codes
+    * @param roadNumber The road number
+    * @param roadPartNumber The road part number
+    * @param tracks The set of track codes
+    * @return Current road addresses at specified section
+    */
+  def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Int]): Seq[RoadwayAddress] = {
     time(logger, "Fetch road address by road number, road part number and tracks") {
       if(tracks.isEmpty) {
         Seq()
@@ -297,8 +309,15 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Fetch all the current road addresses by road number, set of road parts number and a set track codes
+    * @param roadNumber The road number
+    * @param roadPartNumbers The set of road part number
+    * @param tracks The set of track codes
+    * @return Current road addresses at specified sections
+    */
   def fetchAllBySectionsAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Int]): Seq[RoadwayAddress] = {
-    time(logger, "Fetch road address by road number, road part number and tracks") {
+    time(logger, "Fetch road address by road number, road part numbers and tracks") {
       if(tracks.isEmpty || roadPartNumbers.isEmpty)
         Seq()
       else
@@ -342,7 +361,7 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByBetweenDates(sinceDate: DateTime, untilDate: DateTime) = {
+  def fetchAllByBetweenDates(sinceDate: DateTime, untilDate: DateTime): Seq[RoadwayAddress] = {
     time(logger, "Fetch road address by dates") {
       fetch(withBetweenDates(sinceDate, untilDate))
     }
@@ -358,7 +377,7 @@ class RoadAddressDAO extends BaseDAO {
     }
   }
 
-  def fetchAllRoadAddressErrors(includesHistory: Boolean = false) = {
+  def fetchAllRoadAddressErrors(includesHistory: Boolean = false): List[AddressErrorDetails] = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
       val query =
@@ -442,7 +461,7 @@ class RoadAddressDAO extends BaseDAO {
           AND start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"""
   }
 
-  implicit val getRoadAddress: GetResult[RoadwayAddress] = new GetResult[RoadwayAddress]{
+  private implicit val getRoadAddress: GetResult[RoadwayAddress] = new GetResult[RoadwayAddress]{
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()

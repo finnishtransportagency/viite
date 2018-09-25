@@ -21,7 +21,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  when(mockRoadAddressService.getRoadAddressesLinkByMunicipality(235)).thenReturn(Seq())
+  when(mockRoadAddressService.getAllByMunicipality(235)).thenReturn(Seq())
 
   val mockRoadNameService = MockitoSugar.mock[RoadNameService]
 

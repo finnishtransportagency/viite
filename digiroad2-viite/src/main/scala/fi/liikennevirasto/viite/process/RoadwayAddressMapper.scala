@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
+class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: LinearLocationDAO) {
 
   /**
     * Recalculate address value of all the history road address calibration points
@@ -138,6 +138,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadwayAddress.discontinuity)
   }
 
+  //TODO may be a good idea mode this method to road address service
   def getRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
 //TODO check if this can be a improvement
 //    val roadwayAddressesF = Future(roadAddressDAO.fetchByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet))
@@ -154,9 +155,10 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO) {
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 
+  //TODO may be a good idea mode this method to road address service
   def getRoadAddressesByRoadway(roadwayAddresses: Seq[RoadwayAddress]) : Seq[RoadAddress] = {
 
-    val linearLocations = LinearLocationDAO.fetchByRoadways(roadwayAddresses.map(_.roadwayNumber).toSet)
+    val linearLocations = linearLocationDAO.fetchByRoadways(roadwayAddresses.map(_.roadwayNumber).toSet)
 
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
 

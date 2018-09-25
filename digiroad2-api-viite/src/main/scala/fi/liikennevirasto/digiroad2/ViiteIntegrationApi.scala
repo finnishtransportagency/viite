@@ -117,7 +117,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
       contentType = formats("json")
       params.get("municipality").map { municipality =>
         val municipalityCode = municipality.toInt
-        val knownAddressLinks = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode)
+        val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode)
           .filter(ral => ral.roadNumber > 0)
         roadAddressLinksToApi(knownAddressLinks)
       } getOrElse {
