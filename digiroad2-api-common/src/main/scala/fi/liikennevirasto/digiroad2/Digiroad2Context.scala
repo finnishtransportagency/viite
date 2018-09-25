@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
-import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{LinearLocationDAO, MissingRoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -104,7 +104,7 @@ object Digiroad2Context {
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, new RoadAddressDAO, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new RoadAddressService(roadLinkService, new RoadAddressDAO, new LinearLocationDAO, roadwayAddressMapper, eventbus)
   }
 
   lazy val projectService: ProjectService = {
@@ -144,7 +144,7 @@ object Digiroad2Context {
   }
 
   lazy val roadwayAddressMapper: RoadwayAddressMapper = {
-    new RoadwayAddressMapper(new RoadAddressDAO)
+    new RoadwayAddressMapper(new RoadAddressDAO, new LinearLocationDAO)
   }
 
   lazy val revision: String = {

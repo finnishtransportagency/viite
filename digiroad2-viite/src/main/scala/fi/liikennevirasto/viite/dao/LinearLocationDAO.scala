@@ -160,7 +160,7 @@ case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue
     }*/
 }
 
-object LinearLocationDAO {
+class LinearLocationDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
 
@@ -407,6 +407,10 @@ object LinearLocationDAO {
           queryList(query)
       }
     }
+  }
+
+  def fetchRoadwayByLinkId(linkIds: Set[Long], roadVersion: Option[Long], atDate: DateTime) = {
+    throw new NotImplementedError("Should do the same as OLD method at RoadAddressDAO def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now.toString): List[RoadAddress]")
   }
 
   def fetchRoadwayByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
@@ -656,21 +660,21 @@ object LinearLocationDAO {
     s" AND loc.valid_to IS NULL "
   }
 
-//  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
-//    time(logger, "Fetch road addresses by bounding box") {
-//      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
-//        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
-//
-//      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
-//
-//      val query =
-//        s"""
-//          $selectFromLinearLocation
-//          where $boundingBoxFilter and valid_to is null
-//        """
-//      queryList(query)
-//    }
-//  }
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
+    time(logger, "Fetch road addresses by bounding box") {
+      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+
+      val query =
+        s"""
+          $selectFromLinearLocation
+          where $boundingBoxFilter and valid_to is null
+        """
+      queryList(query)
+    }
+  }
 
   def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
     time(logger, "Fetch road addresses by bounding box") {

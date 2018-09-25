@@ -253,22 +253,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   private def getRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                      municipalities: Set[Int] = Set(),
-                                     publicRoads: Boolean, frozenTimeVVHAPIServiceEnabled: Boolean): Seq[RoadLink] = {
-    val links = Await.result(
+                                     publicRoads: Boolean): Seq[RoadLink] = {
 
-      if (frozenTimeVVHAPIServiceEnabled)
-        vvhClient.frozenTimeRoadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads)
-      else
-        vvhClient.roadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads),
+    val links = Await.result(vvhClient.roadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads),
       atMost = Duration.Inf)
-
     (enrichRoadLinksFromVVH(links), Seq())._1
   }
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int],
-                          everything: Boolean, publicRoads: Boolean, frozenTimeVVHAPIServiceEnabled: Boolean): Seq[RoadLink] =
-    if (bounds.area >= 1E6 || frozenTimeVVHAPIServiceEnabled)
-      getRoadLinksFromVVH(bounds, roadNumbers, municipalities, publicRoads, frozenTimeVVHAPIServiceEnabled)
+                          everything: Boolean, publicRoads: Boolean): Seq[RoadLink] =
+    if (bounds.area >= 1E6)
+      getRoadLinksFromVVH(bounds, roadNumbers, municipalities, publicRoads)
     else
       getRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)._1
 

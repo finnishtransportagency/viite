@@ -71,6 +71,12 @@
       });
     }, 1000);
 
+    this.getRoadAddressMiddlePoint = _.throttle(function (linkId, callback) {
+      return $.getJSON('api/viite/roadlinks/midpoint/' + linkId, function (data) {
+        return _.isFunction(callback) && callback(data);
+        });
+    }, 1000);
+
     this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function (data) {
         return _.isFunction(callback) && callback(data);
@@ -449,10 +455,6 @@
 
     var afterSave = false;
 
-    var resetAfterSave = function () {
-      afterSave = false;
-    };
-
     this.withRoadAddressProjects = function (returnData) {
       self.getRoadAddressProjects = function () {
         return returnData;
@@ -553,13 +555,6 @@
       return self;
     };
 
-    this.withSaveRoadAddressProject = function (returnData) {
-      self.saveRoadAddressProject = function () {
-        return returnData;
-      };
-      return self;
-    };
-
     this.withCreateRoadAddressProject = function (returnData) {
       self.createRoadAddressProject = function (data, successCallback) {
         successCallback(returnData);
@@ -598,30 +593,6 @@
         return returnData;
       };
       return self;
-    };
-
-    this.getDummyRoadAddressesByRoadNumber = function (roadNumber, callback) {
-      //add API call here
-      var dummyReturnObject = [{
-        id: 0,
-        roadNumber: 12345,
-        roadNameFi: "AAAAAAA",
-        startDate: "22-06-2018",
-        endDate: "11-02-2000"
-      }, {
-        id: 1,
-        roadNumber: 12345,
-        roadNameFi: "AAAAAAA",
-        startDate: "22-06-2018",
-        endDate: ""
-      }, {
-        id: 2,
-        roadNumber: 123456,
-        roadNameFi: "BBBBBBBB",
-        startDate: "22-06-2018",
-        endDate: ""
-      }];
-      return callback(dummyReturnObject);
     };
 
     this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {

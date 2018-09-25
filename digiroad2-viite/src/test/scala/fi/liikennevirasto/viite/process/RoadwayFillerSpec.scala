@@ -57,7 +57,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadAddressDAO, new LinearLocationDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

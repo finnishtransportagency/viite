@@ -948,8 +948,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
     Map(
       "success" -> true,
-      "segmentId" -> roadAddressLink.id,
-      "id" -> roadAddressLink.id,
+      "roadAddressId" -> roadAddressLink.id,
+      //"linearLocationId" -> roadAddressLink.linearLocationId, //TODO uncoment this and remove this one from the call to this
       "linkId" -> roadAddressLink.linkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
       "points" -> roadAddressLink.geometry,
@@ -957,7 +957,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "calibrationPoints" -> Seq(calibrationPoint(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
         calibrationPoint(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
       "administrativeClass" -> roadAddressLink.administrativeClass.toString,
-      "roadClass" -> roadAddressService.RoadClass.get(roadAddressLink.roadNumber.toInt),
+      "roadClass" -> RoadClass.get(roadAddressLink.roadNumber.toInt),
       "roadTypeId" -> roadAddressLink.roadType.value,
       "roadType" -> roadAddressLink.roadType.displayValue,
       "modifiedAt" -> roadAddressLink.modifiedAt,
@@ -1017,7 +1017,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map(
         "startDate" -> roadAddressLink.startDate,
         "endDate" -> roadAddressLink.endDate,
-        "newGeometry" -> roadAddressLink.newGeometry
+        "newGeometry" -> roadAddressLink.newGeometry,
+        "linearLocationId" -> roadAddressLink.linearLocationId //TODO This needs to be made inside the roadAddressLinkLikeToApi once the project links have the new structure
       )
   }
 

@@ -979,8 +979,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                         everything: Boolean = false, publicRoads: Boolean = false): ProjectBoundingBoxResult = {
     ProjectBoundingBoxResult(
       Future(withDynSession(ProjectDAO.getProjectLinks(projectId))),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything,
-        publicRoads, useFrozenVVHLinks)),
+      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)),
       Future(
         if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
         else Seq()),
