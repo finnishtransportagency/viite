@@ -818,24 +818,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   // TODO REMOVE newTransaction
   def getProjectRoadLinksByLinkIds(linkIdsToGet: Set[Long], newTransaction: Boolean = true): Seq[ProjectAddressLink] = {
-
-    if (linkIdsToGet.isEmpty)
-      return Seq()
-
-    val complementedRoadLinks = time(logger, "Fetch VVH road links") {
-      roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, useFrozenVVHLinks)
-    }
-
-    val projectRoadLinks = complementedRoadLinks
-      .map { rl =>
-        val ra = Seq()
-        val missed = Seq()
-        rl.linkId -> roadAddressService.buildRoadAddressLink(rl, ra, missed)
-      }.toMap
-
-    val filledProjectLinks = RoadAddressFiller.fillTopology(complementedRoadLinks, projectRoadLinks)
-
-    filledProjectLinks._1.map(ProjectAddressLinkBuilder.build)
+    throw new NotImplementedError("Will be implemented at VIITE-1539")
+//    if (linkIdsToGet.isEmpty)
+//      return Seq()
+//
+//    val complementedRoadLinks = time(logger, "Fetch VVH road links") {
+//      roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, useFrozenVVHLinks)
+//    }
+//
+//    val projectRoadLinks = complementedRoadLinks
+//      .map { rl =>
+//        val ra = Seq()
+//        val missed = Seq()
+//        rl.linkId -> roadAddressService.buildRoadAddressLink(rl, ra, missed)
+//      }.toMap
+//
+//    val filledProjectLinks = RoadAddressFiller.fillTopology(complementedRoadLinks, projectRoadLinks)
+//
+//    filledProjectLinks._1.map(ProjectAddressLinkBuilder.build)
   }
 
   def getProjectSuravageRoadLinksByLinkIds(linkIdsToGet: Set[Long]): Seq[ProjectAddressLink] = {

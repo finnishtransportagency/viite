@@ -173,38 +173,6 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayNumber, floating = roadAddress.isFloating)
   }
 
-//  def capToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-//    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => x.endMValue - MaxAllowedMValueError > geomLength)
-//    val cappedSegments = overflowingSegments.map { s => s.copy(endMValue = geomLength) }
-//    passThroughSegments ++ cappedSegments
-//  }
-
-//  def extendToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-//    if (sourceSegments.isEmpty)
-//      return sourceSegments
-//    val sorted = sourceSegments.sortBy(_.endMValue)(Ordering[Double].reverse)
-//    val lastSegment = sorted.head
-//    val restSegments = sorted.tail
-//    val adjustments = if (lastSegment.endMValue < geomLength - MaxAllowedMValueError) {
-//      restSegments ++ Seq(lastSegment.copy(endMValue = geomLength))
-//    } else {
-//      sourceSegments
-//    }
-//    adjustments
-//  }
-
-//  def dropShort(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-//    if (sourceSegments.size < 2)
-//      return sourceSegments
-//    val passThroughSegments = sourceSegments.partition(s => s.length >= MinAllowedRoadAddressLength)._1
-//    passThroughSegments
-//  }
-
-//  def dropSegmentsOutsideGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-//    val passThroughSegments = sourceSegments.partition(x => x.startMValue + Epsilon <= geomLength)._1
-//    passThroughSegments
-//  }
-
   private def getVVHRoadName(link: Map[String, Any]): Option[String] = {
     Some(link.getOrElse(FinnishRoadName, link.getOrElse(SwedishRoadName, "none")).toString)
   }
