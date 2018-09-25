@@ -43,11 +43,11 @@ package object viite {
 
   val NewLinearLocation: Long = -1000L
 
-  val noRoadAddressId: Long = 0L
+  val noRoadwayId: Long = 0L
 
   val noReservedPartId: Long = 0L
 
-  val NewRoadwayId: Long = -1000L
+  val NewRoadwayNumber: Long = -1000L
 
   val newCalibrationPointId: Long = -1000L
 

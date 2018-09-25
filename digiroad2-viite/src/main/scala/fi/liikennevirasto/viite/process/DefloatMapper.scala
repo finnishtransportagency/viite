@@ -89,7 +89,7 @@ object DefloatMapper extends RoadAddressMapper {
     }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
-    // VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple road_addresses as target
+    // VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple roadways as target
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
 
     /**

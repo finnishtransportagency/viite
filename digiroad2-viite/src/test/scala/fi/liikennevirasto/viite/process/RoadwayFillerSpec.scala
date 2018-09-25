@@ -137,7 +137,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   //TODO will be implement at VIITE-1541
-//  test("RoadwayIds: Unchanged addresses with new Road Type between different roadwayId groups") {
+//  test("roadwayNumbers: Unchanged addresses with new Road Type between different roadwayNumber groups") {
 //    val roadLinks = Seq(
 //      RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
 //        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -161,34 +161,34 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207)).thenReturn(
 //        partitioned._1.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
 //
-//      val addressIds207 = partitioned._1.map(_.roadAddressId).toSet
+//      val addressIds207 = partitioned._1.map(_.roadwayId).toSet
 //      val filter = s" (${addressIds207.mkString(",")}) "
-//      sqlu""" update project_link set status=1 WHERE road_address_id in #$filter""".execute
+//      sqlu""" update project_link set status=1 WHERE ROADWAY_ID in #$filter""".execute
 //      val linksAfterUpdate = ProjectDAO.getProjectLinks(saved.id)
 //      linksAfterUpdate.foreach(l=> l.status should be (LinkStatus.UnChanged))
 //      //second and last but one from linkIds
-//      val ids = Seq(projectLinks(1),projectLinks(projectLinks.size - 2)).map(_.roadAddressId).toSet
+//      val ids = Seq(projectLinks(1),projectLinks(projectLinks.size - 2)).map(_.roadwayId).toSet
 //      val filter2 = s" (${ids.mkString(",")}) "
-//      sqlu""" update project_link set road_type=3 WHERE road_address_id in #$filter2""".execute
+//      sqlu""" update project_link set road_type=3 WHERE ROADWAY_ID in #$filter2""".execute
 //
 //      val nextCommonId = Sequences.nextRoadwaySeqValue
-//      sqlu""" update road_address set common_history_id= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
+//      sqlu""" update ROADWAY set roadway_number= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
 //      val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
-//      afterAddressUpdates.groupBy(_.roadwayId).size should be (2)
+//      afterAddressUpdates.groupBy(_.roadwayNumber).size should be (2)
 //      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
 //      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
 //      ProjectDAO.getProjectLinks(saved.id).size should be (0)
 //
 //      val roadAddresses = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
-//      roadAddresses.groupBy(_.roadwayId).size should be (6)
+//      roadAddresses.groupBy(_.roadwayNumber).size should be (6)
 //    }
 //  }
 
   //TODO will be implement at VIITE-1541
-//  test("RoadwayIds: New addresses with new Road Type between") {
+//  test("roadwayNumbers: New addresses with new Road Type between") {
 //    runWithRollback {
-//      sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
+//      sqlu"DELETE FROM ROADWAY WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
 //      val id = Sequences.nextViitePrimaryKeySeqValue
 //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
 //      ProjectDAO.createRoadAddressProject(rap)
@@ -241,12 +241,12 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      ProjectDAO.getProjectLinks(id).size should be (0)
 //
 //      val roadAddresses = RoadAddressDAO.fetchByRoadPart(addresses.head.roadNumber, addresses.head.roadPartNumber)
-//      roadAddresses.groupBy(_.roadwayId).size should be (5)
+//      roadAddresses.groupBy(_.roadwayNumber).size should be (5)
 //    }
 //  }
 
   //TODO will be implement at VIITE-1541
-//  test("RoadwayIds: New addresses at the beginning and at the end of Transfer ones") {
+//  test("roadwayNumbers: New addresses at the beginning and at the end of Transfer ones") {
 //    val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 10.0))
 //    val geom2 = Seq(Point(0.0, 10.0), Point(0.0, 0.0))
 //    val geom3 = Seq(Point(4286.0, 0.0), Point(4296.0, 0.0))
@@ -272,9 +272,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
 //      projectLinks.isEmpty should be(false)
 //      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
-//      val addressIds207 = filteredLinks.map(_.roadAddressId).toSet
+//      val addressIds207 = filteredLinks.map(_.roadwayId).toSet
 //      val filter = s" (${addressIds207.mkString(",")}) "
-//      sqlu""" update project_link set status=3 WHERE road_address_id in #$filter""".execute
+//      sqlu""" update project_link set status=3 WHERE ROADWAY_ID in #$filter""".execute
 //
 //      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
 //
@@ -294,7 +294,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
 //      ProjectDAO.getProjectLinks(saved.id).size should be(0)
 //      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
-//      roadAddresses.groupBy(_.roadwayId).size should be(3)
+//      roadAddresses.groupBy(_.roadwayNumber).size should be(3)
 //    }
 //  }
 
@@ -320,27 +320,27 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      val sortedLinks = projectLinks.sortBy(_.startAddrMValue)
 //      val linkIds207 = sortedLinks.map(_.linkId).toSet
 //      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207)).thenReturn(sortedLinks.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
-//      val addressIds207 = sortedLinks.map(_.roadAddressId).toSet
+//      val addressIds207 = sortedLinks.map(_.roadwayId).toSet
 //      val filter = s" (${addressIds207.mkString(",")}) "
-//      sqlu""" update project_link set status=1 WHERE road_address_id in #$filter""".execute
+//      sqlu""" update project_link set status=1 WHERE ROADWAY_ID in #$filter""".execute
 //      val linksAfterUpdate = ProjectDAO.getProjectLinks(saved.id)
 //      linksAfterUpdate.foreach(l => l.status should be(LinkStatus.UnChanged))
 //      //second and last but one from linkIds
-//      val ids = Seq(projectLinks(1), projectLinks(projectLinks.size - 2)).map(_.roadAddressId).toSet
+//      val ids = Seq(projectLinks(1), projectLinks(projectLinks.size - 2)).map(_.roadwayId).toSet
 //      val filter2 = s" (${ids.mkString(",")}) "
-//      sqlu""" update project_link set road_type=3 WHERE road_address_id in #$filter2""".execute
+//      sqlu""" update project_link set road_type=3 WHERE ROADWAY_ID in #$filter2""".execute
 //      val nextCommonId = Sequences.nextRoadwaySeqValue
-//      sqlu""" update road_address set common_history_id= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
+//      sqlu""" update ROADWAY set roadway_number= $nextCommonId WHERE road_number = 5 and road_part_number = 207 and end_date is null and start_addr_m > 1000""".execute
 //      val afterAddressUpdates = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
-//      afterAddressUpdates.groupBy(_.roadwayId).size should be(2)
+//      afterAddressUpdates.groupBy(_.roadwayNumber).size should be(2)
 //      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
 //      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
 //      ProjectDAO.getProjectLinks(saved.id).size should be(0)
 //      val roadAddresses = RoadAddressDAO.fetchByRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber)
-//      roadAddresses.groupBy(_.roadwayId).size should be(6)
+//      roadAddresses.groupBy(_.roadwayNumber).size should be(6)
 //      //      Evaluate that EVERY single start and end of the roadway id groups have a start and end calibration point
-//      roadAddresses.groupBy(_.roadwayId).forall(group => {
+//      roadAddresses.groupBy(_.roadwayNumber).forall(group => {
 //        val sorted = group._2.sortBy(_.startAddrMValue)
 //        val cpStart = sorted.head.calibrationPoints
 //        val cpEnd = sorted.last.calibrationPoints
@@ -353,7 +353,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //  }
 
   //TODO will be implement at VIITE-1541
-//  test("RoadwayIds: Terminating the first link and transferring the others") {
+//  test("roadwayNumbers: Terminating the first link and transferring the others") {
 //    val roadNumber = 5
 //    val roadPartNumber = 207
 //    runWithRollback {
@@ -369,10 +369,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
 //      projectLinks.isEmpty should be(false)
 //      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
-//      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadAddressId)
+//      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadwayId)
 //      val filter = s"(${addressIds207.mkString(",")}) "
-//      sqlu""" update project_link set status = 3 WHERE road_address_id in #$filter """.execute
-//      sqlu""" update project_link set status = 5 WHERE road_address_id = ${addressIds207.head}""".execute
+//      sqlu""" update project_link set status = 3 WHERE ROADWAY_ID in #$filter """.execute
+//      sqlu""" update project_link set status = 5 WHERE ROADWAY_ID = ${addressIds207.head}""".execute
 //
 //      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
 //      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
@@ -380,13 +380,13 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
 //      ProjectDAO.getProjectLinks(saved.id).size should be(0)
 //      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
-//      roadAddresses.groupBy(_.roadwayId).size should be > 2
-//      roadAddresses.head.roadwayId should not be roadAddresses.tail.head.roadwayId
+//      roadAddresses.groupBy(_.roadwayNumber).size should be > 2
+//      roadAddresses.head.roadwayNumber should not be roadAddresses.tail.head.roadwayNumber
 //    }
 //  }
 
   //TODO will be implement at VIITE-1541
-//  test("RoadwayIds: Terminating the last link and unchanging the others") {
+//  test("roadwayNumbers: Terminating the last link and unchanging the others") {
 //    val roadNumber = 5
 //    val roadPartNumber = 207
 //
@@ -403,23 +403,23 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
 //      projectLinks.isEmpty should be(false)
 //      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
-//      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadAddressId)
+//      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadwayId)
 //      val filter = s"(${addressIds207.mkString(",")}) "
-//      sqlu""" update project_link set status = 1 WHERE road_address_id in #$filter """.execute
-//      sqlu""" update project_link set status = 5 WHERE road_address_id = ${addressIds207.last}""".execute
+//      sqlu""" update project_link set status = 1 WHERE ROADWAY_ID in #$filter """.execute
+//      sqlu""" update project_link set status = 5 WHERE ROADWAY_ID = ${addressIds207.last}""".execute
 //      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
 //      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
 //      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
 //      ProjectDAO.getProjectLinks(saved.id).size should be(0)
 //      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
-//      roadAddresses.groupBy(_.roadwayId).size should be(2)
-//      roadAddresses.last.roadwayId should not be roadAddresses.head.roadwayId
+//      roadAddresses.groupBy(_.roadwayNumber).size should be(2)
+//      roadAddresses.last.roadwayNumber should not be roadAddresses.head.roadwayNumber
 //    }
 //  }
 
   //TODO will be implement at VIITE-1541
-//  test("RoadwayIds: Unchange to all road, just changing the roadType, the roadway should keep the same") {
+//  test("roadwayNumbers: Unchange to all road, just changing the roadType, the roadway should keep the same") {
 //    val roadNumber = 5
 //    val roadPartNumber = 207
 //
@@ -437,17 +437,17 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 //      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
 //      projectLinks.isEmpty should be(false)
 //      val filteredLinks = projectLinks.filter(_.roadPartNumber == roadPartNumber)
-//      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadAddressId)
+//      val addressIds207 = filteredLinks.sortBy(_.startAddrMValue).map(_.roadwayId)
 //      val filter = s"(${addressIds207.mkString(",")}) "
-//      sqlu""" update project_link set status = 1, road_type = 5 WHERE road_address_id in #$filter """.execute
+//      sqlu""" update project_link set status = 1, road_type = 5 WHERE ROADWAY_ID in #$filter """.execute
 //      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
 //      sqlu""" update project set state=5, tr_id = 1 WHERE id=${saved.id}""".execute
 //      ProjectDAO.getProjectStatus(saved.id) should be(Some(ProjectState.Saved2TR))
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, saved.id)
 //      ProjectDAO.getProjectLinks(saved.id).size should be(0)
 //      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeHistory = true).sortBy(_.startAddrMValue)
-//      roadAddresses.groupBy(_.roadwayId).size should be(1)
-//      roadAddressesBeforeUpdate.head.roadwayId should be (roadAddresses.head.roadwayId)
+//      roadAddresses.groupBy(_.roadwayNumber).size should be(1)
+//      roadAddressesBeforeUpdate.head.roadwayNumber should be (roadAddresses.head.roadwayNumber)
 //    }
 //  }
 }

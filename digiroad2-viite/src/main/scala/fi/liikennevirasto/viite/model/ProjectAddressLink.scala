@@ -37,13 +37,14 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
   def status: LinkStatus
-  def roadAddressId: Long
+  def roadwayId: Long
   def connectedLinkId: Option[Long]
   def partitioningName: String
   def isSplit: Boolean
   def originalGeometry: Option[Seq[Point]]
 }
 
+//TODO VIITE-1539 OR VIITE-1540 blackUnderline should be removed
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
                               linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType,
@@ -51,7 +52,7 @@ case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                               startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                              anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadAddressId: Long, reversed: Boolean = false,
+                              anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, reversed: Boolean = false,
                               connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None, blackUnderline: Boolean = false) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadNumber > 0)

@@ -10,8 +10,8 @@ object Sequences {
     nextViitePrimaryKeyId.as[Long].first
   }
 
-  def nextRoadAddressId: Long = {
-    Queries.nextRoadAddressId.as[Long].first
+  def nextRoadwayId: Long = {
+    Queries.nextRoadwayId.as[Long].first
   }
 
   def nextLinearLocationId: Long = {
@@ -22,8 +22,8 @@ object Sequences {
     fetchViitePrimaryKeyId(len)
   }
 
-  def fetchRoadAddressIds(len: Int): List[Long] = {
-    Queries.fetchRoadAddressIds(len)
+  def fetchRoadwayIds(len: Int): List[Long] = {
+    Queries.fetchRoadwayIds(len)
   }
 
   def fetchLinearLocationIds(len: Int): List[Long] = {
@@ -31,7 +31,7 @@ object Sequences {
   }
 
   def nextRoadwaySeqValue: Long = {
-    nextRoadwayId.as[Long].first
+    nextRoadwayNumber.as[Long].first
   }
 
   def nextRoadNetworkErrorSeqValue: Long = {

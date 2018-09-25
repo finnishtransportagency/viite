@@ -40,7 +40,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, None, Some("vvh_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
       pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1,
-      calibrationPoints._2, Anomaly.None, pl.status, pl.roadAddressId,
+      calibrationPoints._2, Anomaly.None, pl.status, pl.roadwayId,
       pl.reversed, pl.connectedLinkId, originalGeometry)
   }
 
@@ -92,7 +92,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       linkType, roadLinkType, projectLink.roadType,  projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
       calibrationPoints._1, calibrationPoints._2,
-      Anomaly.None, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
+      Anomaly.None, projectLink.status, projectLink.roadwayId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
       originalGeometry
     )
   }
@@ -130,7 +130,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
                     roadType: RoadType, discontinuity: Discontinuity,
                     startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
                     sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                    anomaly: Anomaly, status: LinkStatus, roadAddressId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long],
+                    anomaly: Anomaly, status: LinkStatus, roadwayId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long],
                     originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
 
     val linkId =
@@ -142,7 +142,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource,
       roadType, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
-      startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadAddressId,
+      startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId,
       reversed, connectedLinkId, originalGeometry)
   }
 

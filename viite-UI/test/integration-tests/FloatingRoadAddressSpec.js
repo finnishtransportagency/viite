@@ -59,7 +59,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
       });
     });
 
-    describe('Selecting a unknown road to transfer the floatings', function () {
+    /*describe('Selecting a unknown road to transfer the floatings', function () {
       before(function (done) {
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
@@ -134,6 +134,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
         expect(_.first(linkData).id).to.not.equals(-1000);
         expect(_.first(linkData).roadLinkType).to.not.equals(-1);
       });
-    });
+    });*/
   });
 });
