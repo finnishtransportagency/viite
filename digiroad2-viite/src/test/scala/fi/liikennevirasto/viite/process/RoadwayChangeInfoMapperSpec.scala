@@ -8,15 +8,15 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewRoadAddress, RoadType}
+import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewRoadway, RoadType}
 import fi.liikennevirasto.viite.dao.{Discontinuity, FloatingReason, RoadAddress}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
 
-class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
+class RoadwayChangeInfoMapperSpec extends FunSuite with Matchers {
 
-  //TODO the road address now have the linear location id and as been setted to 1L
+  //TODO the road address now have the linear location id and has been set to 1L
   val roadAddr = RoadAddress(1, 1L, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
     None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
     LinkGeomSource.NormalLinkInterface, 8, NoTermination, 123456)
@@ -136,7 +136,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     results.get(roadLinkId2).isEmpty should be (true)
     results.get(roadLinkId3).isEmpty should be (true)
     results(roadLinkId1).size should be (3)
-    results(roadLinkId1).forall(_.id == NewRoadAddress) should be (true)
+    results(roadLinkId1).forall(_.id == NewRoadway) should be (true)
     val addr1 = results(roadLinkId1).head
     addr1.startMValue should be (0)
     addr1.endMValue should be (399.648)
@@ -369,7 +369,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr2.adjustedTimestamp should be (changesVVHTimestamp)
     addr2.sideCode should be (AgainstDigitizing)
     val addr3 = results(roadLinkId3).head
-    addr3.id shouldNot be (NewRoadAddress)
+    addr3.id shouldNot be (NewRoadway)
     addr3.startMValue should be (0.0)
     addr3.endMValue should be (31.001)
     addr3.startAddrMValue should be (1600)
@@ -436,7 +436,7 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.adjustedTimestamp should be (changesVVHTimestamp)
     addr3.sideCode should be (AgainstDigitizing)
     val addr4 = results(roadLinkId3).head
-    addr4.id shouldNot be (NewRoadAddress)
+    addr4.id shouldNot be (NewRoadway)
     addr4.startMValue should be (0.0)
     addr4.endMValue should be (31.001)
     addr4.startAddrMValue should be (1600)

@@ -161,8 +161,8 @@ class AssetDataImporter {
   def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
-    println(s"Splitting road address id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    println(s"Splitting roadway id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
+    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadway, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue - splitMValue
           else
             0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
@@ -170,7 +170,7 @@ class AssetDataImporter {
           else
             splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
 
-    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadway, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             0.0
           else
             splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
@@ -263,10 +263,10 @@ class AssetDataImporter {
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
                 isLoopOrEmptyGeom) {
                 linearLocationDAO.updateGeometry(segment.id, newGeom)
-                println("Changed geometry on roadAddress id " + segment.id + " and linkId =" + segment.linkId)
+                println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
                 changed += 1
               } else {
-                println(s"Skipped geometry update on Road Address ID : ${segment.id} and linkId: ${segment.linkId}")
+                println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
               }
             }
           })

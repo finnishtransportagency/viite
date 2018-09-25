@@ -39,7 +39,7 @@ package object viite {
 
   val MaxAdjustmentRange = 10L
 
-  val NewRoadAddress: Long = -1000L
+  val NewRoadway: Long = -1000L
 
   val NewLinearLocation: Long = -1000L
 

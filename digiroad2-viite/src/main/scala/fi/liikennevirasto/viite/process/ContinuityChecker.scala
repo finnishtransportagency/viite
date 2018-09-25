@@ -25,9 +25,9 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
 
   def checkRoadPart(roadNumber: Int, roadPartNumber: Int, checkMissingLinks: Boolean = false) = {
     throw new NotImplementedError("Will be implemented at VIITE-1538")
-//    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
-//    assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
-//    val missingSegments = checkAddressesHaveNoGaps(roadAddressList)
+//    val roadwayList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
+//    assert(roadwayList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
+//    val missingSegments = checkAddressesHaveNoGaps(roadwayList)
 //    // TODO: Combine these checks, maybe?
 //    if (checkMissingLinks)
 //      new FloatingChecker(roadLinkService).checkRoadNetwork().map(ra =>
