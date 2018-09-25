@@ -37,7 +37,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO test the constraints ROAD_ADDRESS_HISTORY_UK and TERMINATION_END_DATE_CHK
+  //TODO test the constraints ROADWAY_HISTORY_UK and TERMINATION_END_DATE_CHK
   test("insert road address duplicate info check") {
       runWithRollback {
         val error = intercept[SQLException] {
