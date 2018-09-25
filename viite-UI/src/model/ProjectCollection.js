@@ -125,6 +125,7 @@
 
     this.clearRoadAddressProjects = function () {
       roadAddressProjects = [];
+      fetchedProjectLinks = [];
       currentReservedParts = [];
       newReservedParts = [];
       dirtyProjectLinkIds = [];
