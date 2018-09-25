@@ -1654,7 +1654,7 @@ class RoadAddressDAO extends BaseDAO {
 //      s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
 //  }
 //
-//  def withRoadwayIds(fromCommonId: Long, toCommonId: Long)(query: String): String = {
+//  def withRoadwayNumbers(fromCommonId: Long, toCommonId: Long)(query: String): String = {
 //    query + s" WHERE ra.common_history_id >= $fromCommonId AND ra.common_history_id <= $toCommonId"
 //  }
 //
