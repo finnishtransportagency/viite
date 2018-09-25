@@ -77,7 +77,7 @@ class RoadNetworkService {
 //        if (!RoadNetworkDAO.hasRoadNetworkErrors) {
 //          RoadNetworkDAO.expireRoadNetwork
 //          RoadNetworkDAO.createPublishedRoadNetwork
-//          allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadAddress(RoadNetworkDAO.getLatestRoadNetworkVersion.get, p.id)))
+//          allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadway(RoadNetworkDAO.getLatestRoadNetworkVersion.get, p.id)))
 //        }
 //        ExportLockDAO.delete
 //      } catch {

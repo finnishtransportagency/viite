@@ -21,7 +21,7 @@ object RoadNetworkDAO {
     sqlu"""UPDATE published_road_network SET valid_to = sysdate WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
   }
 
-  def createPublishedRoadAddress(networkVersion: Long, roadwayId: Long): Unit = {
+  def createPublishedRoadway(networkVersion: Long, roadwayId: Long): Unit = {
     sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
 
