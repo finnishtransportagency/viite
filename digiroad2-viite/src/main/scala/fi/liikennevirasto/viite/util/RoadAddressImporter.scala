@@ -132,13 +132,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
   }
 
-  protected def fetchExpiredAddressesFromConversionTable(minRoadwayId: Long, maxRoadwayId: Long): Seq[ConversionAddress] = {
+  protected def fetchAllExpiredAddressesFromConversionTable(): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
            TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm is not null and ajorataid > $minRoadwayId AND ajorataid <= $maxRoadwayId """
+           WHERE aet >= 0 AND let >= 0 AND (lakkautuspvm is not null or linkid is null)  """
         .as[ConversionAddress].list
     }
   }
@@ -172,21 +172,23 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   def importRoadAddress(): Unit = {
     val chunks = fetchChunkLinkIdsFromConversionTable()
-
     chunks.foreach {
       case (min, max) =>
         print(s"${DateTime.now()} - ")
         println(s"Processing chunk ($min, $max)")
         val conversionAddresses = fetchValidAddressesFromConversionTable(min, max)
-        val expiredAddresses = fetchExpiredAddressesFromConversionTable(min, max)
+
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
         val conversionAddressesFromChunk = conversionAddresses.filter(address => (min+1 to max).contains(address.roadwayId))
-        importAddresses(conversionAddressesFromChunk, conversionAddresses, expiredAddresses)
+        importAddresses(conversionAddressesFromChunk, conversionAddresses)
     }
+
+    val expiredAddresses = fetchAllExpiredAddressesFromConversionTable()
+    importExpiredAddresses(expiredAddresses)
   }
 
-  private def importAddresses(validConversionAddressesInChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress], expiredConversionAddresses: Seq[ConversionAddress]): Unit = {
+  private def importAddresses(validConversionAddressesInChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress]): Unit = {
 
     val linkIds = validConversionAddressesInChunk.map(_.linkId)
     print(s"${DateTime.now()} - ")
@@ -215,7 +217,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
     val currentMappedConversionAddresses = currentConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val historyMappedConversionAddresses = historyConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
-    val expiredMappedConversionAddresses = expiredConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadAddressPs = roadAddressStatement()
     val linearLocationPs = linearLocationStatement()
 
@@ -267,7 +268,19 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         insertRoadAddress(roadAddressPs, roadAddress)
     }
 
-    expiredMappedConversionAddresses.mapValues{
+    linearLocationPs.executeBatch()
+    roadAddressPs.executeBatch()
+    println(s"${DateTime.now()} - Road addresses saved")
+    roadAddressPs.close()
+  }
+
+  private def importExpiredAddresses(expiredConversionAddresses: Seq[ConversionAddress]): Unit = {
+    val (validExpiredConversionAddresses, expiredOldConversionAddresses) = expiredConversionAddresses.partition(_.validTo.isEmpty)
+    val validExpiredMappedConversionAddresses = validExpiredConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
+    val expiredOldMappedConversionAddresses = expiredOldConversionAddresses.groupBy(ra => (ra.roadwayId, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
+    val roadAddressPs = roadAddressStatement()
+
+    validExpiredMappedConversionAddresses.mapValues{
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
     }.foreach{
@@ -276,18 +289,30 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val maxAddress = addresses.last._1
 
         val roadAddress = IncomingRoadAddress(minAddress.roadwayId, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = Subsequent.value)
+          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated =  NoTermination.value)
 
         insertRoadAddress(roadAddressPs, roadAddress)
     }
 
-    linearLocationPs.executeBatch()
+    expiredOldMappedConversionAddresses.mapValues{
+      case address =>
+        address.sortBy(_.startAddressM).zip(1 to address.size)
+    }.foreach{
+      case (key, addresses) =>
+        val minAddress = addresses.head._1
+        val maxAddress = addresses.last._1
+
+        val roadAddress = IncomingRoadAddress(minAddress.roadwayId, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
+          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, minAddress.validTo, maxAddress.discontinuity, terminated = NoTermination.value)
+
+        insertRoadAddress(roadAddressPs, roadAddress)
+    }
     roadAddressPs.executeBatch()
-    println(s"${DateTime.now()} - Road addresses saved")
     roadAddressPs.close()
   }
 
-  private def getStartCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
+
+    private def getStartCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
     convertedAddress.calibrationCode match {
       case AtBeginning | AtBoth => Some(convertedAddress.startAddressM)
       case _ => None
