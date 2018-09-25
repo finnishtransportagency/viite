@@ -409,50 +409,34 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchRoadwayByLinkId(linkIds: Set[Long], roadVersion: Option[Long], atDate: DateTime) = {
-    throw new NotImplementedError("Should do the same as OLD method at RoadAddressDAO def fetchByLinkIdToApi(linkIds: Set[Long], useLatestNetwork: Boolean = true, searchDate: String = LocalDate.now.toString): List[RoadAddress]")
-  }
-
-  def fetchRoadwayByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
+  def fetchRoadwayByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
     time(logger, "Fetch all linear locations of a roadway by link id") {
       if (linkIds.isEmpty) {
         return List()
       }
-      if (linkIds.size > 1000 || filterIds.size > 1000) {
-        return fetchRoadwayByLinkIdMassQuery(linkIds, includeFloating).filterNot(ra => filterIds.contains(ra.id))
+      if (linkIds.size > 1000) {
+        return fetchRoadwayByLinkIdMassQuery(linkIds)
       }
       val linkIdsString = linkIds.mkString(", ")
-      val floating = if (!includeFloating)
-        "AND loc.floating = 0"
-      else
-        ""
-      val idFilter = if (filterIds.nonEmpty)
-        s"AND loc.id not in ${filterIds.mkString("(", ", ", ")")}"
-      else
-        ""
       val query =
         s"""
           $selectFromLinearLocation
-          where t.id < t2.id $floating $idFilter and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
-            where link_id in ($linkIdsString) and valid_to is null) and valid_to is null
+          where t.id < t2.id and valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
+            where valid_to is null and link_id in ($linkIdsString))
         """
       queryList(query)
     }
   }
 
-  def fetchRoadwayByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false): List[LinearLocation] = {
+  def fetchRoadwayByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
     time(logger, "Fetch all linear locations of a roadway by link id - mass query") {
       MassQuery.withIds(linkIds) {
         idTableName =>
-          val floating = if (!includeFloating)
-            "AND loc.floating = 0"
-          else
-            ""
           val query =
             s"""
               $selectFromLinearLocation
 
-              where t.id < t2.id $floating and loc.valid_to is null and loc.ROADWAY_NUMBER in (
+              where t.id < t2.id and loc.valid_to is null and loc.ROADWAY_NUMBER in (
                 select ROADWAY_NUMBER from linear_location
                 join $idTableName i on i.id = link_id
                 where valid_to is null)
