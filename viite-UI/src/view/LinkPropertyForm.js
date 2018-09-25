@@ -432,7 +432,7 @@
         toggleMode(readOnly, linkProperties);
         var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
         var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature) {
-          return feature.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
+          return feature.floating === LinkValues.SelectionType.Floating.value;
         }));
         //checks if previousSelected road was not unknown and current select road IS unknown
         var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].anomaly !== LinkValues.Anomaly.NoAddressGiven.value;
@@ -452,15 +452,15 @@
           var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
           if (!_.isEmpty(uniqFeaturesToKeep)) {
             if (readOnly) {
-              if (lastFeatureToKeep.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (lastFeatureToKeep.floating === LinkValues.SelectionType.Floating.value) {
                 rootElement.html(templateFloating(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
             } else {
-              if (lastFeatureToKeep.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (lastFeatureToKeep.floating === LinkValues.SelectionType.Floating.value) {
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
-                if (applicationModel.selectionTypeIs(selectionType.Floating) && firstSelectedLinkProperty.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+                if (applicationModel.selectionTypeIs(selectionType.Floating) && firstSelectedLinkProperty.floating === LinkValues.SelectionType.Floating.value) {
                   selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
@@ -475,13 +475,13 @@
             }
           } else if (!_.isEmpty(selectedLinkProperty.get())) {
             if (readOnly) {
-              if (firstSelectedLinkProperty.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (firstSelectedLinkProperty.floating === LinkValues.SelectionType.Floating.value) {
                 rootElement.html(templateFloating(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
             } else {
-              if (_.last(selectedLinkProperty.get()).roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (_.last(selectedLinkProperty.get()).floating === LinkValues.SelectionType.Floating.value) {
                 applicationModel.setSelectionType(selectionType.Floating);
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
                 selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
@@ -502,7 +502,7 @@
         rootElement.empty();
         if (!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(props)) {
 
-          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value || selectedLinkProperty.getFeaturesToKeep().length >= 1);
+          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].floating === LinkValues.SelectionType.Floating.value || selectedLinkProperty.getFeaturesToKeep().length >= 1);
           props.modifiedBy = props.modifiedBy || '-';
           props.modifiedAt = props.modifiedAt || '';
           props.roadNameFi = props.roadNameFi || '';
@@ -547,7 +547,7 @@
 
       var processFloatingAdjacents = function (sources, targets, additionalSourceLinkId) {
         var adjacents = _.reject(targets, function(t) {
-          return t.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
+          return t.floating === LinkValues.SelectionType.Floating.value;
         });
 
         if (!_.isUndefined(additionalSourceLinkId)) {

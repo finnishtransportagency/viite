@@ -72,7 +72,7 @@
     var changedIds = [];
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
-    var LinkType = LinkValues.RoadLinkType;
+    var SelectionType = LinkValues.SelectionType;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -143,11 +143,11 @@
           }
 
           historicRoadLinks = _.filter(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, SelectionType.Floating.value);
           });
 
           floatingRoadLinks = _.filter(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, SelectionType.Floating.value);
           });
 
           roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group) {
