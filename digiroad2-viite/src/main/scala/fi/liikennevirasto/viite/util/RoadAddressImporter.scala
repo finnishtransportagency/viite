@@ -275,7 +275,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def importExpiredAddresses(expiredConversionAddresses: Seq[ConversionAddress]): Unit = {
-    val (validExpiredConversionAddresses, expiredOldConversionAddresses) = expiredConversionAddresses.partition(_.validTo.isEmpty)
+    val (expiredOldConversionAddresses, validExpiredConversionAddresses) = expiredConversionAddresses.partition(_.validTo.isEmpty)
     val validExpiredMappedConversionAddresses = validExpiredConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val expiredOldMappedConversionAddresses = expiredOldConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
@@ -289,7 +289,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val maxAddress = addresses.last._1
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated =  NoTermination.value)
+          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity,  terminated = Subsequent.value)
 
         insertRoadway(roadwayPs, roadAddress)
     }
@@ -303,7 +303,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val maxAddress = addresses.last._1
 
         val roadway = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, minAddress.validTo, maxAddress.discontinuity, terminated = Subsequent.value)
+          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, minAddress.validTo, maxAddress.discontinuity, terminated = NoTermination.value)
 
         insertRoadway(roadwayPs, roadway)
     }
