@@ -38,7 +38,6 @@ trait RoadAddressLinkLike extends PolyLine {
   def startCalibrationPoint: Option[CalibrationPoint]
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
-  def blackUnderline: Boolean
 }
 
 case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geometry: Seq[Point],
@@ -47,7 +46,7 @@ case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geome
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, blackUnderline: Boolean = false, floating: Boolean = false) extends RoadAddressLinkLike {
+                           anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, floating: Boolean = false) extends RoadAddressLinkLike {
 }
 
 sealed trait Anomaly {
