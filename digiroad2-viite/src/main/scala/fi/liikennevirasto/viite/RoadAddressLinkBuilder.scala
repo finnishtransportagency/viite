@@ -11,44 +11,18 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
 object RoadAddressLinkBuilder extends AddressLinkBuilder {
 
-  /* Temporary restriction from PO: Filler limit on modifications
-   * (linear location adjustments) is limited to 1 meter. If there is a need to fill /
-   * cut more than that then nothing is done to the road address linear location data.
-   */
-  def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false, newGeometry: Option[Seq[Point]] = None): RoadAddressLink = {
+  def build(roadLink: RoadLinkLike, roadAddress: RoadAddress): RoadAddressLink = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val roadName = roadAddress.roadName
-    val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE", 0).asInstanceOf[Number].intValue()
+    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[Number].intValue()
     val roadType = roadAddress.roadType match {
-      case RoadType.Unknown => getRoadType(roadLink.administrativeClass, roadLink.linkType)
+      case RoadType.Unknown => getRoadType(roadLink.administrativeClass, UnknownLinkType)
       case _ => roadAddress.roadType
     }
     RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, roadLink.constructionType, roadLink.linkSource, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
-      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode,
-      roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayNumber, floating = roadAddress.isFloating)
-
-  }
-
-  def build(roadLink: VVHRoadlink, roadAddress: RoadAddress): RoadAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
-    val length = GeometryUtils.geometryLength(geom)
-    val VVHRoadName = getVVHRoadName(roadLink.attributes)
-    val roadName = roadAddress.roadName
-    val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE", roadLink.municipalityCode).asInstanceOf[Number].intValue()
-    val linkType = getLinkType(roadLink)
-    val roadType = roadAddress.roadType match {
-      case RoadType.Unknown => getRoadType(roadLink.administrativeClass, linkType)
-      case _ => roadAddress.roadType
-    }
-
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, linkType, roadLink.constructionType, roadLink.linkSource, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, UnknownLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
@@ -96,7 +70,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, newGeometry = Some(roadLink.geometry), floating = false)
   }
 
-//TODO delete this method
+//TODO Check if this is needed at project creation
 //  def buildSuravageRoadAddressLink(roadLinkProjectidTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
 //    val roadLink = roadLinkProjectidTuple._1
 //    val roadAddresses = roadLinkProjectidTuple._2 match { //Check if project attribute has been initialized
@@ -153,25 +127,6 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 //      roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
 //      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, floating = false)
 //  }
-
-  def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(historyRoadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
-    val length = GeometryUtils.geometryLength(geom)
-    val VVHRoadName = getVVHRoadName(historyRoadLink.attributes)
-    val roadName = roadAddress.roadName
-    val municipalityCode = historyRoadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[Number].intValue()
-    val roadType = roadAddress.roadType match {
-      case RoadType.Unknown => getRoadType(historyRoadLink.administrativeClass, UnknownLinkType)
-      case _ => roadAddress.roadType
-    }
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, historyRoadLink.linkId, geom,
-      length, historyRoadLink.administrativeClass, UnknownLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
-      historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
-      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode,
-      roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayNumber, floating = roadAddress.isFloating)
-  }
 
   private def getVVHRoadName(link: Map[String, Any]): Option[String] = {
     Some(link.getOrElse(FinnishRoadName, link.getOrElse(SwedishRoadName, "none")).toString)
