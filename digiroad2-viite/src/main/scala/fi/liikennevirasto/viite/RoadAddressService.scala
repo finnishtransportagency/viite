@@ -177,6 +177,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
     //publishChangeSet(changeSet)
 
+    //TODO Should give the road network version or the date of the fetch
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
 
     roadAddresses.flatMap{ra =>
