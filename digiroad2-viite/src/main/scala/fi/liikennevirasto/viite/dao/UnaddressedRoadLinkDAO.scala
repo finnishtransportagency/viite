@@ -10,13 +10,13 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
-                              roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
-                              startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly, geom: Seq[Point])
+case class UnaddressedRoadLink(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
+                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
+                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly, geom: Seq[Point])
 
-class MissingAddressDAO extends BaseDAO {
+class UnaddressedRoadLinkDAO extends BaseDAO {
 
-  implicit val getMissingRoadAddress: GetResult[MissingRoadAddress] = new GetResult[MissingRoadAddress]{
+  implicit val getUnaddressedRoadLink: GetResult[UnaddressedRoadLink] = new GetResult[UnaddressedRoadLink]{
     def apply(r: PositionedResult) = {
 
       val linkId = r.nextLong()
@@ -33,11 +33,11 @@ class MissingAddressDAO extends BaseDAO {
       val x2 = r.nextDouble()
       val y2 = r.nextDouble()
 
-      MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, roadNumber, roadPartNumber, startMValue, endMValue, Anomaly.apply(anomaly), Seq(Point(x, y), Point(x2, y2)))
+      UnaddressedRoadLink(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, roadNumber, roadPartNumber, startMValue, endMValue, Anomaly.apply(anomaly), Seq(Point(x, y), Point(x2, y2)))
     }
   }
 
-  def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[MissingRoadAddress] = {
+  def fetchUnaddressedRoadLinkByBoundingBox(boundingRectangle: BoundingRectangle): Seq[UnaddressedRoadLink] = {
     val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
@@ -55,11 +55,11 @@ class MissingAddressDAO extends BaseDAO {
 
     Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Int, Option[Double], Option[Double], Double, Double, Double, Double)](query).list.map {
       case (linkId, startAddrM, endAddrM, road, roadPart, anomaly, startM, endM, x, y, x2, y2) =>
-        MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x, y), Point(x2, y2)))
+        UnaddressedRoadLink(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x, y), Point(x2, y2)))
     }
   }
 
-    def createMissingRoadAddress (mra: MissingRoadAddress): Unit = {
+    def createUnaddressedRoadLink(mra: UnaddressedRoadLink): Unit = {
       val (p1, p2) = (mra.geom.head, mra.geom.last)
 
       sqlu"""
@@ -75,21 +75,21 @@ class MissingAddressDAO extends BaseDAO {
              """.execute
     }
 
-    def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int): Unit = {
+    def createUnaddressedRoadLink(linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int): Unit = {
       sqlu"""
              insert into UNADDRESSED_ROAD_LINK (link_id, start_addr_m, end_addr_m,anomaly_code)
              values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code)
              """.execute
     }
 
-    def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int, start_m : Double, end_m : Double): Unit = {
+    def createUnaddressedRoadLink(linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int, start_m : Double, end_m : Double): Unit = {
       sqlu"""
              insert into UNADDRESSED_ROAD_LINK (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m)
              values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code, $start_m, $end_m)
              """.execute
     }
 
-    def expireMissingRoadAddresses (targetLinkIds: Set[Long]): AnyVal = {
+    def expireUnaddressedRoadLinks(targetLinkIds: Set[Long]): AnyVal = {
 
       if (targetLinkIds.nonEmpty) {
         val query =
@@ -100,9 +100,9 @@ class MissingAddressDAO extends BaseDAO {
       }
     }
 
-    def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {
+    def getUnaddressedRoadLinks(linkIds: Set[Long]): List[UnaddressedRoadLink] = {
       if (linkIds.size > 500) {
-        getMissingByLinkIdMassQuery(linkIds)
+        getUnaddressedByLinkIdMassQuery(linkIds)
       } else {
         val where = if (linkIds.isEmpty)
           return List()
@@ -118,12 +118,12 @@ class MissingAddressDAO extends BaseDAO {
               FROM UNADDRESSED_ROAD_LINK $where"""
         Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int, Double, Double, Double, Double)](query).list.map {
           case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly, x1, y1, x2, y2) =>
-            MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x1, y1),Point(x2, y2)))
+            UnaddressedRoadLink(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x1, y1),Point(x2, y2)))
         }
       }
     }
 
-    def getMissingByLinkIdMassQuery(linkIds: Set[Long]): List[MissingRoadAddress] = {
+    def getUnaddressedByLinkIdMassQuery(linkIds: Set[Long]): List[UnaddressedRoadLink] = {
       MassQuery.withIds(linkIds) {
         idTableName =>
           val query =
@@ -135,7 +135,7 @@ class MissingAddressDAO extends BaseDAO {
               FROM UNADDRESSED_ROAD_LINK mra join $idTableName i on i.id = mra.link_id"""
           Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int, Double, Double, Double, Double)](query).list.map {
             case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly, x1, y1, x2, y2) =>
-              MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x1, y1),Point(x2, y2)))
+              UnaddressedRoadLink(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x1, y1),Point(x2, y2)))
           }
       }
     }

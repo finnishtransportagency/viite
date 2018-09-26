@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.{LinearLocation, MissingRoadAddress}
+import fi.liikennevirasto.viite.dao.{LinearLocation, UnaddressedRoadLink}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import org.slf4j.LoggerFactory
@@ -17,10 +17,10 @@ object RoadAddressFiller {
 
   case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class ChangeSet(
-                      droppedSegmentIds: Set[Long],
-                      floatingSegmentIds: Set[Long],
-                      adjustedMValues: Seq[LinearLocationAdjustment],
-                      missingRoadAddresses: Seq[MissingRoadAddress])
+                        droppedSegmentIds: Set[Long],
+                        floatingSegmentIds: Set[Long],
+                        adjustedMValues: Seq[LinearLocationAdjustment],
+                        unaddressedRoadLink: Seq[UnaddressedRoadLink])
 
 
 
@@ -40,7 +40,7 @@ object RoadAddressFiller {
     adjustments
   }
 
-  def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLinkLike, adjustedSegments: Seq[RoadAddressLink]): Seq[MissingRoadAddress] = {
+  def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLinkLike, adjustedSegments: Seq[RoadAddressLink]): Seq[UnaddressedRoadLink] = {
     if (adjustedSegments.isEmpty)
       generateUnknownLink(roadLink)
     else
@@ -53,14 +53,14 @@ object RoadAddressFiller {
 
   private def generateUnknownLink(roadLink: RoadLinkLike) = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
+    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
       case true => Anomaly.NoAddressGiven
       case false => Anomaly.None
     }, geom))
   }
 
   //TODO will be implemented at VIITE-1542
-  private def buildMissingRoadAddress(rl: RoadLinkLike, roadAddrSeq: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
+  private def buildUnaddressedRoadLink(rl: RoadLinkLike, roadAddrSeq: Seq[UnaddressedRoadLink]): Seq[RoadAddressLink] = {
     roadAddrSeq.map(mra => RoadAddressLinkBuilder.build(rl, mra))
   }
 
@@ -83,9 +83,9 @@ object RoadAddressFiller {
 //          operation(roadLink, currentSegments, currentAdjustments)
 //        }
 //        val generatedRoadAddresses = generateUnknownRoadAddressesForRoadLink(roadLink, adjustedSegments)
-//        val generatedLinks = buildMissingRoadAddress(roadLink, generatedRoadAddresses)
+//        val generatedLinks = buildUnaddressedRoadLink(roadLink, generatedRoadAddresses)
 //        (existingSegments ++ adjustedSegments ++ generatedLinks,
-//          segmentAdjustments.copy(missingRoadAddresses = segmentAdjustments.missingRoadAddresses ++
+//          segmentAdjustments.copy(unaddressedRoadLinks = segmentAdjustments.unaddressedRoadLinks ++
 //            generatedRoadAddresses.filterNot(_.anomaly == Anomaly.None)))
 //      }
 //    }

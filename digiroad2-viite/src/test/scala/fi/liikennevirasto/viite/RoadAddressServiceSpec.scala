@@ -225,7 +225,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  private def getSpecificMissingRoadAddresses(linkId :Long): List[(Long, Long, Long, Long, Long, Int)] = {
+  private def getSpecificUnaddressedRoadLinks(linkId :Long): List[(Long, Long, Long, Long, Long, Int)] = {
     sql"""
           select link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code
             from UNADDRESSED_ROAD_LINK where link_id = $linkId
@@ -301,19 +301,19 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //  }
 
 //TODO this test should not be here, we are testing the DAO here not the service
-//  test("test createMissingRoadAddress should not add two equal roadAddresses"){
+//  test("test createUnaddressedRoadLink should not add two equal roadAddresses"){
 //    runWithRollback {
 //      val roadAddressLinks = Seq(
 //        RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PrivateRoadType, Some("Vt5"), None, BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 0)
 //      )
-//      val oldMissingRA = RoadAddressDAO.getMissingRoadAddresses(Set()).size
+//      val oldUnaddressedRL = RoadAddressDAO.getUnaddressedRoadLinks(Set()).size
 //      roadAddressLinks.foreach { links =>
-//        RoadAddressDAO.createMissingRoadAddress(
-//          MissingRoadAddress(links.linkId, Some(links.startAddressM), Some(links.endAddressM), RoadType.PublicRoad, Some(links.roadNumber),
+//        RoadAddressDAO.createUnaddressedRoadLink(
+//          UnaddressedRoadLink(links.linkId, Some(links.startAddressM), Some(links.endAddressM), RoadType.PublicRoad, Some(links.roadNumber),
 //            Some(links.roadPartNumber), None, None, Anomaly.NoAddressGiven, Seq(Point(374668.195, 6676884.282, 24.48399999999674),Point(374643.384, 6676882.176, 24.42399999999907))))
 //      }
-//      val linksFromDB = getSpecificMissingRoadAddresses(roadAddressLinks(0).linkId)
-//      RoadAddressDAO.getMissingRoadAddresses(Set()) should have size(oldMissingRA)
+//      val linksFromDB = getSpecificUnaddressedRoadLinks(roadAddressLinks(0).linkId)
+//      RoadAddressDAO.getUnaddressedRoadLinks(Set()) should have size(oldUnaddressedRL)
 //      linksFromDB(0)._2 should be(0)
 //      linksFromDB(0)._3 should be(0)
 //      linksFromDB(0)._4 should be(1)
@@ -323,7 +323,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //  }
 
   //TODO this test should not be here, we are testing the DAO here not the service
-//  test("check MissingRoadAddres geometry is created correctly") {
+//  test("check UnaddressedRoadLink geometry is created correctly") {
 //    runWithRollback {
 //      val geom = Seq(Point(374668.195, 6676884.282, 0.0),Point(374643.384, 6676882.176, 0.0))
 //      val raLink = RoadAddressLink(0, 1611616, geom, 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType,
@@ -331,11 +331,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //                    Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown,
 //        None, None, Anomaly.None)
 //
-//      RoadAddressDAO.createMissingRoadAddress(
-//      MissingRoadAddress(raLink.linkId, Some(raLink.startAddressM), Some(raLink.endAddressM), RoadType.PublicRoad,
+//      RoadAddressDAO.createUnaddressedRoadLink(
+//      UnaddressedRoadLink(raLink.linkId, Some(raLink.startAddressM), Some(raLink.endAddressM), RoadType.PublicRoad,
 //        Some(raLink.roadNumber), Some(raLink.roadPartNumber), None, None, Anomaly.NoAddressGiven, geom))
 //
-//      RoadAddressDAO.getMissingRoadAddresses(Set(raLink.linkId)).foreach { mra =>
+//      RoadAddressDAO.getUnaddressedRoadLinks(Set(raLink.linkId)).foreach { mra =>
 //        mra.geom should be(geom)
 //      }
 //    }
@@ -777,7 +777,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //          ra
 //      }
 //      RoadAddressDAO.create(roadAddressSeq)
-//      RoadAddressDAO.createMissingRoadAddress(1392315, 0, 0, 2)
+//      RoadAddressDAO.createUnaddressedRoadLink(1392315, 0, 0, 2)
 //      // pre-checks
 //      RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true) should have size (3)
 //      val mapping = DefloatMapper.createAddressMap(sourceLinks, targetLinks)
@@ -1412,11 +1412,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //
 //    val returnedAdjacents = runWithRollback {
 //      RoadAddressDAO.create(Seq(ra))
-//      RoadAddressDAO.createMissingRoadAddress(
-//        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
+//      RoadAddressDAO.createUnaddressedRoadLink(
+//        UnaddressedRoadLink(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
 //      )
-//      RoadAddressDAO.createMissingRoadAddress(
-//        MissingRoadAddress(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(10.0), Anomaly.GeometryChanged, Seq(Point(5.0, 5.0, 0.0), Point(5.0, 15.0, 0.0)))
+//      RoadAddressDAO.createUnaddressedRoadLink(
+//        UnaddressedRoadLink(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(10.0), Anomaly.GeometryChanged, Seq(Point(5.0, 5.0, 0.0), Point(5.0, 15.0, 0.0)))
 //      )
 //
 //      roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
@@ -1453,11 +1453,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //
 //    runWithRollback {
 //      RoadAddressDAO.create(Seq(ra))
-//      RoadAddressDAO.createMissingRoadAddress(
-//        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
+//      RoadAddressDAO.createUnaddressedRoadLink(
+//        UnaddressedRoadLink(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
 //      )
-//      RoadAddressDAO.createMissingRoadAddress(
-//        MissingRoadAddress(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.GeometryChanged, Seq(Point(10.0, 10.0, 0.0), Point(15.0, 15.0, 0.0)))
+//      RoadAddressDAO.createUnaddressedRoadLink(
+//        UnaddressedRoadLink(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.GeometryChanged, Seq(Point(10.0, 10.0, 0.0), Point(15.0, 15.0, 0.0)))
 //      )
 //      val returnedAdjacents1 = roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
 //      returnedAdjacents1.size should be (1)
@@ -1525,11 +1525,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //
 //    runWithRollback {
 //      RoadAddressDAO.create(Seq(ra,ra2))
-//      RoadAddressDAO.createMissingRoadAddress(
-//        MissingRoadAddress(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
+//      RoadAddressDAO.createUnaddressedRoadLink(
+//        UnaddressedRoadLink(baseLinkId+1L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.NoAddressGiven, Seq(Point(5.0, 5.0, 0.0), Point(10.0, 10.0, 0.0)))
 //      )
-//      RoadAddressDAO.createMissingRoadAddress(
-//        MissingRoadAddress(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.GeometryChanged, Seq(Point(10.0, 10.0, 0.0), Point(15.0, 15.0, 0.0)))
+//      RoadAddressDAO.createUnaddressedRoadLink(
+//        UnaddressedRoadLink(baseLinkId+2L, None, None, RoadType.PublicRoad, None, None, None, Some(7.1), Anomaly.GeometryChanged, Seq(Point(10.0, 10.0, 0.0), Point(15.0, 15.0, 0.0)))
 //      )
 //    val returnedAdjacents1 = roadAddressService.getAdjacent(Set(baseLinkId), baseLinkId, false)
 //      returnedAdjacents1.size should be (1)
