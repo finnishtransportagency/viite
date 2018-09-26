@@ -535,8 +535,8 @@ class LinearLocationDAO {
       Q.updateNA(query).first
   }
 
-  def setLinearLocationFloatingReason(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason,
-                                      createdBy: String = "setLinearLocationFloatingReason"): Unit = {
+  def updateToFloating(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason,
+                       createdBy: String = "setLinearLocationFloatingReason"): Unit = {
 
     // Expire old row
     val expired: LinearLocation = fetchById(id).getOrElse(
