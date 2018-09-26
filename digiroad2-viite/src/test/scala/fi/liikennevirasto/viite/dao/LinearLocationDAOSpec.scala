@@ -285,7 +285,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Fetch roadways by link id - floatings and filter ids") {
+  test("Fetch roadways by link id - floatings should be included") {
     runWithRollback {
       val (id1, id2, id3, id4) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2) = (111111111l, 222222222l)
@@ -295,20 +295,18 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber, linkId = linkId2)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2)))
 
-      val locations0 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1, linkId2))
-      locations0.filter(l => l.id == id4).size should be(1)
-      locations0.size should be(1)
-
-      val locations1 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1, linkId2))
+      val locations1 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1))
       locations1.filter(l => l.id == id1).size should be(1)
-      locations1.filter(l => l.id == id4).size should be(1)
-      locations1.size should be(2)
+      locations1.filter(l => l.id == id2).size should be(1)
+      locations1.filter(l => l.id == id3).size should be(1)
+      locations1.size should be(3)
 
-      val locations2 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1, linkId2))
+      val locations2 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId2))
       locations2.filter(l => l.id == id1).size should be(1)
+      locations2.filter(l => l.id == id2).size should be(1)
       locations2.filter(l => l.id == id3).size should be(1)
       locations2.filter(l => l.id == id4).size should be(1)
-      locations2.size should be(3)
+      locations2.size should be(4)
 
       val massQueryLocations = linearLocationDAO.fetchRoadwayByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2))
       massQueryLocations.filter(l => l.id == id1).size should be(1)
@@ -617,7 +615,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       locations2.filter(l => l.id == id3).size should be(1)
     }
   }
-/* TODO Fix tests
+
   test("Fetch by bounding box") {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
@@ -645,7 +643,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       locations.filter(l => l.id == id2).size should be(1)
     }
   }
-*/
+
   test("Fetch by roadways") {
     runWithRollback {
       val roadwayNumber = 11111111111l
