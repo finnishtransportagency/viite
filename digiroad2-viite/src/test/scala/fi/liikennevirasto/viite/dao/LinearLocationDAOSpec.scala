@@ -384,7 +384,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val startM = 1.1
       val endM = 2.2
-      linearLocationDAO.updateLinearLocation(LinearLocationAdjustment(id2, linkId2, Some(startM), Some(endM)), createdBy = "test")
+      linearLocationDAO.update(LinearLocationAdjustment(id2, linkId2, Some(startM), Some(endM)), createdBy = "test")
 
       // Original linear location should be expired
       val expired = linearLocationDAO.fetchById(id2).getOrElse(fail())
@@ -399,13 +399,13 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated.endMValue should be(endM +- 0.001)
 
       // Update only startM
-      linearLocationDAO.updateLinearLocation(LinearLocationAdjustment(updated.id, linkId2, Some(startM - 1), None), createdBy = "test")
+      linearLocationDAO.update(LinearLocationAdjustment(updated.id, linkId2, Some(startM - 1), None), createdBy = "test")
       val updated2 = linearLocationDAO.fetchByLinkId(Set(updated.linkId)).head
       updated2.startMValue should be(startM - 1 +- 0.001)
       updated2.endMValue should be(endM +- 0.001)
 
       // Update linkId and endM
-      linearLocationDAO.updateLinearLocation(LinearLocationAdjustment(updated2.id, 999999999l, None, Some(9999.9)), createdBy = "test")
+      linearLocationDAO.update(LinearLocationAdjustment(updated2.id, 999999999l, None, Some(9999.9)), createdBy = "test")
       val locations3 = linearLocationDAO.fetchByLinkId(Set(updated2.linkId))
       locations3.size should be(0)
 
