@@ -114,7 +114,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       loc2.validTo.isEmpty should be(true)
 
       // After expiration valid_to date should be set for the first
-      linearLocationDAO.remove(Seq(loc1))
+      linearLocationDAO.expire(Seq(loc1))
       val expired = linearLocationDAO.fetchById(id1).getOrElse(fail())
       expired.validTo.nonEmpty should be(true)
       val nonExpired = linearLocationDAO.fetchById(id2).getOrElse(fail())
@@ -135,10 +135,10 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val loc2 = linearLocationDAO.fetchById(id2).getOrElse(fail())
       loc2.validTo.isEmpty should be(true)
 
-      linearLocationDAO.expireById(Set()) should be(0)
+      linearLocationDAO.expireByIds(Set()) should be(0)
 
       // After expiration valid_to date should be set for the first
-      linearLocationDAO.expireById(Set(id1))
+      linearLocationDAO.expireByIds(Set(id1))
       val expired = linearLocationDAO.fetchById(id1).getOrElse(fail())
       expired.validTo.nonEmpty should be(true)
       val nonExpired = linearLocationDAO.fetchById(id2).getOrElse(fail())
@@ -554,7 +554,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id1 = linearLocationDAO.getNextLinearLocationId
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
-      linearLocationDAO.expireById(Set(id1))
+      linearLocationDAO.expireByIds(Set(id1))
 
       val noLocations = linearLocationDAO.queryById(Set(id1))
       noLocations.size should be(0)
