@@ -4,9 +4,11 @@ import java.sql.BatchUpdateException
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
+import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -14,6 +16,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   val linearLocationDAO = new LinearLocationDAO
+  val roadAddressDAO = new RoadAddressDAO
 
   val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
@@ -638,6 +641,38 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = 2222l, linkId = 333333333l)))
       val locations = linearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), Seq())
+      locations.size should be(2)
+      locations.filter(l => l.id == id1).size should be(1)
+      locations.filter(l => l.id == id2).size should be(1)
+    }
+  }
+
+  test("Fetch roadway by bounding box - with road number filter") {
+    runWithRollback {
+      val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val roadwayNumber1 = 11111l
+      val roadwayNumber2 = 22222l
+      val linkId1 = 111111111l
+      val linkId2 = 222222222l
+      val linkId3 = 333333333l
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber2, linkId = linkId3)))
+
+      // TODO RoadAddressDAO should be renamed to RoadwayDAO and it should take in Roadway object
+      roadAddressDAO.create(Seq(RoadAddress(NewRoadway, id1, 100, 1, RoadType.PublicRoad, Combined, Discontinuity.Continuous, 0, 200,
+        Some(DateTime.parse("2000-01-01")), None, Some("test"), linkId1, testLinearLocation.startMValue, testLinearLocation.endMValue,
+        testLinearLocation.sideCode, testLinearLocation.adjustedTimestamp, (None, None), testLinearLocation.floating,
+        testLinearLocation.geometry, testLinearLocation.linkGeomSource, 1, TerminationCode.NoTermination, roadwayNumber1)))
+
+      // TODO RoadAddressDAO should be renamed to RoadwayDAO and it should take in Roadway object
+      roadAddressDAO.create(Seq(RoadAddress(NewRoadway, id2, 101, 1, RoadType.PublicRoad, Combined, Discontinuity.Continuous, 0, 100,
+        Some(DateTime.parse("2000-01-01")), None, Some("test"), linkId3, testLinearLocation.startMValue, testLinearLocation.endMValue,
+        testLinearLocation.sideCode, testLinearLocation.adjustedTimestamp, (None, None), testLinearLocation.floating,
+        testLinearLocation.geometry, testLinearLocation.linkGeomSource, 1, TerminationCode.NoTermination, roadwayNumber2)))
+
+      val roadNumberFilter = Seq((100, 100))
+      val locations = linearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), roadNumberFilter)
       locations.size should be(2)
       locations.filter(l => l.id == id1).size should be(1)
       locations.filter(l => l.id == id2).size should be(1)

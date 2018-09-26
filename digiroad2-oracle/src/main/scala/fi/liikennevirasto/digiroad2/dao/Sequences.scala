@@ -30,11 +30,11 @@ object Sequences {
     Queries.fetchLinearLocationIds(len)
   }
 
-  def nextRoadwaySeqValue: Long = {
-    nextRoadwayNumber.as[Long].first
+  def nextRoadwayNumber: Long = {
+    Queries.nextRoadwayNumber.as[Long].first
   }
 
   def nextRoadNetworkErrorSeqValue: Long = {
-    nextRoadNetworkErrorId.as[Long].first
+    Queries.nextRoadNetworkErrorId.as[Long].first
   }
 }

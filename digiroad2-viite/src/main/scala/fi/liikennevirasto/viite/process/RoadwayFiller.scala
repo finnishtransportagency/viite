@@ -207,11 +207,11 @@ object RoadwayFiller {
 
   private def fillRoadwayNumber(seq: Seq[RoadAddress], address: RoadAddress): RoadAddress = {
     if (seq.isEmpty) {
-      val nextId = Sequences.nextRoadwaySeqValue
+      val nextId = Sequences.nextRoadwayNumber
       address.copy(roadwayNumber = nextId)
     } else {
       if (address.startAddrMValue != seq.last.endAddrMValue) {
-        val nextId = Sequences.nextRoadwaySeqValue
+        val nextId = Sequences.nextRoadwayNumber
         address.copy(roadwayNumber = nextId)
       } else
         address.copy(roadwayNumber = seq.last.roadwayNumber)
