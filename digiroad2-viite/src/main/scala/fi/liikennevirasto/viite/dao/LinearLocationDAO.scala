@@ -552,8 +552,8 @@ class LinearLocationDAO {
 
   }
 
-  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment,
-                           createdBy: String = "updateLinearLocation"): Unit = {
+  def update(linearLocationAdjustment: LinearLocationAdjustment,
+             createdBy: String = "updateLinearLocation"): Unit = {
 
     // Expire old row
     val expired: LinearLocation = fetchById(linearLocationAdjustment.linearLocationId).getOrElse(
@@ -572,6 +572,11 @@ class LinearLocationDAO {
       case _ =>
     }
 
+  }
+
+  def update(linearLocationAdjustments: List[LinearLocationAdjustment],
+             createdBy: String = "updateLinearLocation"): Unit = {
+    for (adjustment <- linearLocationAdjustments) update(adjustment, createdBy)
   }
 
   // Use this only in the initial import
