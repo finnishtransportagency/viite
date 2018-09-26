@@ -503,8 +503,8 @@ class LinearLocationDAO {
     * @param linearLocations Seq[LinearLocation]
     * @return Number of updated rows
     */
-  def remove(linearLocations: Seq[LinearLocation]): Int = {
-    expireById(linearLocations.map(_.id).toSet)
+  def expire(linearLocations: Seq[LinearLocation]): Int = {
+    expireByIds(linearLocations.map(_.id).toSet)
   }
 
   /**
@@ -513,7 +513,7 @@ class LinearLocationDAO {
     * @param ids
     * @return Number of updated rows
     */
-  def expireById(ids: Set[Long]): Int = {
+  def expireByIds(ids: Set[Long]): Int = {
     val query =
       s"""
         Update LINEAR_LOCATION Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
@@ -541,7 +541,7 @@ class LinearLocationDAO {
     // Expire old row
     val expired: LinearLocation = fetchById(id).getOrElse(
       throw new IllegalStateException(s"""Failed to set linear location $id floating reason. Linear location not found."""))
-    expireById(Set(id))
+    expireByIds(Set(id))
 
     // Create new row
     create(Seq(if (geometry.nonEmpty) {
@@ -558,7 +558,7 @@ class LinearLocationDAO {
     // Expire old row
     val expired: LinearLocation = fetchById(linearLocationAdjustment.linearLocationId).getOrElse(
       throw new IllegalStateException(s"""Failed to update linear location ${linearLocationAdjustment.linearLocationId}. Linear location not found."""))
-    expireById(Set(linearLocationAdjustment.linearLocationId))
+    expireByIds(Set(linearLocationAdjustment.linearLocationId))
 
     // Create new row
     val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
@@ -574,8 +574,8 @@ class LinearLocationDAO {
 
   }
 
-  def update(linearLocationAdjustments: List[LinearLocationAdjustment],
-             createdBy: String = "updateLinearLocation"): Unit = {
+  def updateAll(linearLocationAdjustments: List[LinearLocationAdjustment],
+                createdBy: String = "updateLinearLocation"): Unit = {
     for (adjustment <- linearLocationAdjustments) update(adjustment, createdBy)
   }
 
@@ -598,7 +598,7 @@ class LinearLocationDAO {
     if (geometry.nonEmpty) {
       val expired = fetchById(linearLocationId).getOrElse(
         throw new IllegalStateException(s"""Failed to update linear location $linearLocationId geometry. Linear location not found."""))
-      expireById(Set(linearLocationId))
+      expireByIds(Set(linearLocationId))
 
       // Check if the side code should be flipped
       val oldDirectionTowardsDigitization = GeometryUtils.isTowardsDigitisation(expired.geometry)
