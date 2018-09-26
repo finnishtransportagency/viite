@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: LinearLocationDAO) {
+class RoadwayAddressMapper(roadAddressDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) {
 
   /**
     * Recalculate address value of all the history road address calibration points
@@ -15,7 +15,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: Li
     * @param linearLocations The current linear locations
     * @return The linear location with recalculated calibration points
     */
-  private def recalculateHistoryCalibrationPoints(historyRoadwayAddress: RoadwayAddress, linearLocations: Seq[LinearLocation]): Seq[LinearLocation] = {
+  private def recalculateHistoryCalibrationPoints(historyRoadwayAddress: Roadway, linearLocations: Seq[LinearLocation]): Seq[LinearLocation] = {
     val currentRoadwayAddress = roadAddressDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber).
       getOrElse(throw new NoSuchElementException(s"Could not find any current road address for roadway ${historyRoadwayAddress.roadwayNumber}"))
 
@@ -46,7 +46,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: Li
     * @param currentCalibrationAddress The calibration point address of the current to be calculated in the history
     * @return The address of the history calibration point
     */
-  private def calculateAddressHistoryCalibrationPoint(currentRoadwayAddress: RoadwayAddress, historyRoadwayAddress: RoadwayAddress)(currentCalibrationAddress: Long): Long = {
+  private def calculateAddressHistoryCalibrationPoint(currentRoadwayAddress: Roadway, historyRoadwayAddress: Roadway)(currentCalibrationAddress: Long): Long = {
     val currentAddressLength = currentRoadwayAddress.endAddrMValue - currentRoadwayAddress.startAddrMValue
     val historyAddressLength = historyRoadwayAddress.endAddrMValue - historyRoadwayAddress.startAddrMValue
     val calibrationLength = currentCalibrationAddress - currentRoadwayAddress.startAddrMValue
@@ -62,7 +62,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: Li
     * @param endAddress The boundary end address value
     * @return Returns the mapped road addresses
     */
-  private def boundaryAddressMap(roadwayAddress: RoadwayAddress, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long) : Seq[RoadAddress] = {
+  private def boundaryAddressMap(roadwayAddress: Roadway, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long) : Seq[RoadAddress] = {
 
     val coef = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
 
@@ -97,7 +97,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: Li
     * @param linearLocations The linear location in between the calibration points
     * @return Returns the mapped road addresses in between the calibration points
     */
-  private def recursiveMapRoadAddresses(roadwayAddress: RoadwayAddress, linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
+  private def recursiveMapRoadAddresses(roadwayAddress: Roadway, linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
 
     def getUntilCalibrationPoint(seq: Seq[LinearLocation]): (Seq[LinearLocation], Seq[LinearLocation]) = {
       val linearLocationsUntilCp = seq.takeWhile(l => l.calibrationPoints._2.isEmpty)
@@ -125,7 +125,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: Li
     * @param linearLocations The roadway linear locations
     * @return Returns the mapped road addresses
     */
-  def mapRoadAddresses(roadwayAddress: RoadwayAddress, linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
+  def mapRoadAddresses(roadwayAddress: Roadway, linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
 
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
     val roadwayLinearLocations = groupedLinearLocations.
@@ -156,7 +156,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadAddressDAO, linearLocationDAO: Li
   }
 
   //TODO may be a good idea mode this method to road address service
-  def getRoadAddressesByRoadway(roadwayAddresses: Seq[RoadwayAddress]) : Seq[RoadAddress] = {
+  def getRoadAddressesByRoadway(roadwayAddresses: Seq[Roadway]) : Seq[RoadAddress] = {
 
     val linearLocations = linearLocationDAO.fetchByRoadways(roadwayAddresses.map(_.roadwayNumber).toSet)
 

@@ -2,10 +2,11 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.State
+import fi.liikennevirasto.digiroad2.client.vvh.VVHHistoryRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.{LinearLocation, UnaddressedRoadLink}
+import fi.liikennevirasto.viite.dao.{LinearLocation, RoadAddress, UnaddressedRoadLink}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import org.slf4j.LoggerFactory
@@ -180,22 +181,76 @@ object RoadAddressFiller {
         dropShort
       )
 
+      val topologyMap = topology.groupBy(_.linkId)
       val linearLocationMap = linearLocations.groupBy(_.linkId)
-
       val initialChangeSet = ChangeSet(Set.empty, Set.empty, Seq.empty, Seq.empty)
-      topology.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
-        case (acc, roadLink) =>
-          val (existingSegments, changeSet) = acc
-          val segments = linearLocationMap.getOrElse(roadLink.linkId, Nil)
-          //TODO exclude floating from this process
 
-          val (ajustedSegments, adjustments) = adjustOperations.foldLeft(segments, changeSet) {
-            case ((currentSegments, currentAdjustments), operation) =>
-              operation(roadLink, currentSegments, currentAdjustments)
+      linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
+        case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
+          val roadLinkOption = topologyMap(linkId).headOption
+          //If there is on segment floating any adjustment should be done for the road link
+          if(roadLinkOption.isEmpty || roadLinkSegments.exists(_.isFloating)){
+            (existingSegments ++ roadLinkSegments, changeSet)
+          } else {
+            val (ajustedSegments, adjustments) = adjustOperations.foldLeft(roadLinkSegments, changeSet) {
+              case ((currentSegments, currentAdjustments), operation) =>
+                operation(roadLinkOption.get, currentSegments, currentAdjustments)
+            }
+            (existingSegments ++ ajustedSegments, adjustments)
           }
-
-          (existingSegments ++ ajustedSegments, adjustments)
       }
+    }
+  }
+
+  /**
+    * Generate unaddressed road address links only for the all road link, missing unaddressed parts of the road link are generated
+    * by batch process
+    * ATTENTION: We can in the future also crete here unaddressed parts if needed.
+    * @param roadLink
+    * @param roadAddresses
+    * @return
+    */
+  private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
+    //TODO check if its needed to create unaddressed road link for part after VIITE-1536
+    if (roadAddresses.isEmpty) {
+      val anomaly = isPublicRoad(roadLink) match {
+        case true => Anomaly.NoAddressGiven
+        case false => Anomaly.None
+      }
+      val unaddressedRoadLink =
+        UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), anomaly,
+          GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
+
+      Seq(RoadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))
+    } else {
+      Seq()
+    }
+  }
+
+  private def generateFloatingSegments(historyTopology: Seq[VVHHistoryRoadLink])(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
+    Seq()
+  }
+
+  private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
+    roadAddresses.map(ra => RoadAddressLinkBuilder.build(topology, ra))
+  }
+
+
+
+  def fillTopology(topology: Seq[RoadLinkLike], historyTopology: Seq[VVHHistoryRoadLink], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+    val fillOperations: Seq[(RoadLinkLike, Seq[RoadAddress]) => Seq[RoadAddressLink]] = Seq(
+      generateUnaddressedSegments,
+      //generateFloatingSegments(historyTopology),
+      generateSegments
+    )
+
+    val roadAddressesMap = roadAddresses.groupBy(_.linkId)
+
+    topology.flatMap {
+      roadLink =>
+        val segments = roadAddressesMap(roadLink.linkId)
+
+        None
     }
   }
 }
