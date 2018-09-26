@@ -401,7 +401,8 @@
     };
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
-
+    if (window.getSelection) {window.getSelection().removeAllRanges();} //removes selection from forms
+    else if (document.selection) {document.selection.empty();}
     /**
      * This will add all the following interactions from the map:
      * -selectDoubleClick
