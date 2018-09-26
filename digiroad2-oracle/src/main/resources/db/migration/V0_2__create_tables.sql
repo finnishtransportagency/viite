@@ -108,6 +108,7 @@ CREATE TABLE PROJECT_RESERVED_ROAD_PART (
 );
 
 -- TODO Why we have Project_link_history and not just have here valid_from and valid_to -fields?
+-- TODO Geometry column should be of type SDO_GEOMETRY! (Check VIITE-1591)
 CREATE TABLE PROJECT_LINK (
   ID NUMBER(38,0) NOT NULL, 
   PROJECT_ID NUMBER(38,0) NOT NULL, 
