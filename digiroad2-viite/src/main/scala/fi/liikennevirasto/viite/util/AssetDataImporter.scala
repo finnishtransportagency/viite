@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
-import fi.liikennevirasto.viite.dao.{LinearLocationDAO, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{LinearLocationDAO, RoadAddress, RoadwayDAO}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.{DateTime, _}
@@ -200,7 +200,7 @@ class AssetDataImporter {
     val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val roadAddressDAO = new RoadAddressDAO
+    val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val service = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX

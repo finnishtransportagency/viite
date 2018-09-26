@@ -30,7 +30,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayNumber, floating = roadAddress.isFloating)
   }
 
-  def buildSimpleLink(roadAddress: RoadAddress): RoadAddressLink = {
+  def build(roadAddress: RoadAddress): RoadAddressLink = {
     val geom = roadAddress.geometry
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = 0

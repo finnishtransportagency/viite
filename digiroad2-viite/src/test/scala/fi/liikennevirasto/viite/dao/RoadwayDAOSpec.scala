@@ -28,7 +28,7 @@ import scala.util.control.NonFatal
 /**
   * Created by venholat on 12.9.2016.
   */
-class RoadAddressDAOSpec extends FunSuite with Matchers {
+class RoadwayDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {

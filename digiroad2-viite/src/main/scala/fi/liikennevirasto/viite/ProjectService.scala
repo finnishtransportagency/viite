@@ -21,7 +21,7 @@ import fi.liikennevirasto.viite.dao.FloatingReason.{NewAddressGiven, NoFloating}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.{CalibrationPointsUtils, ProjectLinkSplitter, SplitOptions, SplitResult}

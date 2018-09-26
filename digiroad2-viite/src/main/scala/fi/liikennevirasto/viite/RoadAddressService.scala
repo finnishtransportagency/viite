@@ -22,7 +22,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadAddressDAO, linearLocationDAO: LinearLocationDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
+class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -70,19 +70,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
     val boundingBoxResultF =
       for {
-        changeInfosF <- boundingBoxResult.changeInfoF
-        roadlinksF <- boundingBoxResult.roadLinkF
-        complementaryRoadlinksF <- boundingBoxResult.complementaryF
-        linearLocationsAndHistoryRoadlinksF <- boundingBoxResult.roadAddressResultF
-        suravageRoadlinksF <- boundingBoxResult.suravageF
-      } yield (changeInfosF, roadlinksF, complementaryRoadlinksF, linearLocationsAndHistoryRoadlinksF, suravageRoadlinksF)
+        changeInfoF <- boundingBoxResult.changeInfoF
+        roadLinksF <- boundingBoxResult.roadLinkF
+        complementaryRoadLinksF <- boundingBoxResult.complementaryF
+        linearLocationsAndHistoryRoadLinksF <- boundingBoxResult.roadAddressResultF
+        suravageRoadLinksF <- boundingBoxResult.suravageF
+      } yield (changeInfoF, roadLinksF, complementaryRoadLinksF, linearLocationsAndHistoryRoadLinksF, suravageRoadLinksF)
 
-    val (changeInfos, roadlinks, complementaryRoadlinks, (linearLocations, historyRoadlinks), suravageRoadlinks) =
+    val (changeInfos, roadLinks, complementaryRoadLinks, (linearLocations, historyRoadLinks), suravageRoadLinks) =
       time(logger, "Fetch VVH bounding box data") {
         Await.result(boundingBoxResultF, Duration.Inf)
       }
 
-    val allRoadLinks = roadlinks ++ complementaryRoadlinks ++ suravageRoadlinks
+    val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageRoadLinks
 
     //TODO Will be implemented at VIITE-1536
     // val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, changedRoadLinks, addresses)
@@ -98,12 +98,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
     //TODO this will need to be improved after filltopology task
     floatingRoadAddress.flatMap{ra =>
-      historyRoadlinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
+      historyRoadLinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
     } ++
     roadAddresses.flatMap{ra =>
       val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
     }
+
+//    RoadAddressFiller.fillTopology()
   }
 
   def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
@@ -144,8 +146,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
     val nonFloatingRoadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
 
-    //TODO buildSimpleLink can be clean up (maybe we can have only one build with roadlink as a optional parameter)
-    nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.buildSimpleLink)
+    nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
   }
 
   /**
@@ -329,7 +330,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
     * @return roadaddress[]
     */
   def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
-    //TODO Should work also for suravage complementary links
 
     val (roadlinks, historyRoadlinks) = roadLinkService.getAllRoadLinksFromVVH(Set(linkId))
 
@@ -360,6 +360,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
   //TODO Will be implemented at VIITE-1551
   def updateChangeSet(changeSet: ChangeSet): Unit = {
+
+
+
   }
 
   /**
@@ -846,6 +849,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: RoadA
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long, newSession: Boolean = true): Seq[RoadAddressLink] = {
     throw new NotImplementedError("Will be implemented at VIITE-1537")
+    //TODO this method will need to check the adjacency between missing road address geometry
 //    val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks, frozenTimeVVHAPIServiceEnabled)
 //    val pointCloud = chainRoadLinks.map(_.geometry).map(GeometryUtils.geometryEndpoints).flatMap(x => Seq(x._1, x._2))
 //    val boundingPoints = GeometryUtils.boundingRectangleCorners(pointCloud)

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.util.{TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when

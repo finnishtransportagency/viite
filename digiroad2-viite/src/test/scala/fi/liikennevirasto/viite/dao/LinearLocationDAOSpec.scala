@@ -16,7 +16,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   val linearLocationDAO = new LinearLocationDAO
-  val roadAddressDAO = new RoadAddressDAO
+  val roadAddressDAO = new RoadwayDAO
 
   val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)

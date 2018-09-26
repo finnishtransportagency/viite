@@ -140,7 +140,7 @@ object DataFixture {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val username = properties.getProperty("bonecp.username")
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressDAO = new RoadAddressDAO
+    val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     OracleDatabase.withDynTransaction {
@@ -253,7 +253,7 @@ object DataFixture {
 
   private def updateProjectLinkGeom(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressDAO = new RoadAddressDAO
+    val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
@@ -271,7 +271,7 @@ object DataFixture {
 
   private def correctNullElyCodeProjects(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressDAO = new RoadAddressDAO
+    val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
