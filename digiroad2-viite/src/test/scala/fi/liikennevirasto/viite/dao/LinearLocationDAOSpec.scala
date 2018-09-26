@@ -347,7 +347,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       // Without geometry
       val floating1 = FloatingReason.ManualFloating
-      linearLocationDAO.setLinearLocationFloatingReason(id = id1, geometry = None, floatingReason = floating1, createdBy = "test")
+      linearLocationDAO.updateToFloating(id = id1, geometry = None, floatingReason = floating1, createdBy = "test")
       val expired1 = linearLocationDAO.fetchById(id1).getOrElse(fail())
       expired1.validTo.nonEmpty should be(true)
       expired1.floating should be(FloatingReason.NoFloating)
@@ -359,7 +359,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       // With geometry
       val floating2 = FloatingReason.GeometryChanged
       val newGeometry = Seq(Point(1.1, 10.1), Point(2.2, 20.2))
-      linearLocationDAO.setLinearLocationFloatingReason(id = id2, geometry = Some(newGeometry), floatingReason = floating2)
+      linearLocationDAO.updateToFloating(id = id2, geometry = Some(newGeometry), floatingReason = floating2)
       val expired2 = linearLocationDAO.fetchById(id2).getOrElse(fail())
       expired2.validTo.nonEmpty should be(true)
       expired2.floating should be(FloatingReason.NoFloating)
