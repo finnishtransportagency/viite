@@ -94,18 +94,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
 
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    val (floatingRoadAddress, roadAddresses) = roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations).partition(_.isFloating)
+    val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
 
-    //TODO this will need to be improved after filltopology task
-    floatingRoadAddress.flatMap{ra =>
-      historyRoadLinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
-    } ++
-    roadAddresses.flatMap{ra =>
-      val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
-      roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
-    }
-
-//    RoadAddressFiller.fillTopology()
+    RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
   def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {

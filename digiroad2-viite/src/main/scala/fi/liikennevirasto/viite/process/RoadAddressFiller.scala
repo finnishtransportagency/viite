@@ -187,7 +187,7 @@ object RoadAddressFiller {
 
       linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
-          val roadLinkOption = topologyMap(linkId).headOption
+          val roadLinkOption = topologyMap.getOrElse(linkId, Seq()).headOption
           //If there is on segment floating any adjustment should be done for the road link
           if(roadLinkOption.isEmpty || roadLinkSegments.exists(_.isFloating)){
             (existingSegments ++ roadLinkSegments, changeSet)
@@ -227,30 +227,31 @@ object RoadAddressFiller {
     }
   }
 
-  private def generateFloatingSegments(historyTopology: Seq[VVHHistoryRoadLink])(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
-    Seq()
-  }
-
   private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
     roadAddresses.map(ra => RoadAddressLinkBuilder.build(topology, ra))
   }
 
+  def fillTopologyWithFloating(topology: Seq[RoadLinkLike], historyTopology: Seq[VVHHistoryRoadLink], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+    val (floatingRoadAddresses, nonFloatingRoadAddresses) = roadAddresses.partition(_.isFloating)
 
+    val floatingRoadAddressLinks = floatingRoadAddresses.flatMap{ra =>
+      historyTopology.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
+    }
 
-  def fillTopology(topology: Seq[RoadLinkLike], historyTopology: Seq[VVHHistoryRoadLink], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+    floatingRoadAddressLinks ++ fillTopology(topology, nonFloatingRoadAddresses)
+  }
+
+  def fillTopology(topology: Seq[RoadLinkLike], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     val fillOperations: Seq[(RoadLinkLike, Seq[RoadAddress]) => Seq[RoadAddressLink]] = Seq(
       generateUnaddressedSegments,
-      //generateFloatingSegments(historyTopology),
       generateSegments
     )
 
     val roadAddressesMap = roadAddresses.groupBy(_.linkId)
-
     topology.flatMap {
       roadLink =>
-        val segments = roadAddressesMap(roadLink.linkId)
-
-        None
+        val segments = roadAddressesMap.getOrElse(roadLink.linkId, Seq())
+        fillOperations.flatMap(operation =>  operation(roadLink, segments))
     }
   }
 }
