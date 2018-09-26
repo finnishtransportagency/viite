@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
-import fi.liikennevirasto.viite.dao.{LinearLocationDAO, MissingRoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{LinearLocationDAO, UnaddressedRoadLink, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -27,7 +27,7 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 
 //class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 //  def receive = {
-//    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[MissingRoadAddress]])
+//    case w: Seq[any] => roadAddressService.createUnaddressedRoadLink(w.asInstanceOf[Seq[UnaddressedRoadLink]])
 //    case _                    => println("roadAddressUpdater: Received unknown message")
 //  }
 //}
@@ -99,7 +99,7 @@ object Digiroad2Context {
 
 
 //  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
-//  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
+//  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistUnaddressedRoadLink")
 
 //  val roadAddressMerger = system.actorOf(Props(classOf[RoadAddressMerger], roadAddressService), name = "roadAddressMerger")
 //  eventbus.subscribe(roadAddressMerger, "roadAddress:mergeRoadAddress")

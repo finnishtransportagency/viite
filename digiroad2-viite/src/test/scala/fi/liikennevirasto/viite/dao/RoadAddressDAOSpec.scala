@@ -112,7 +112,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //  }
 
   //TODO will be implemented at VIITE-1542
-//  test("Fetch missing road address by boundingBox"){
+//  test("Fetch unaddressed road links by boundingBox"){
 //    runWithRollback {
 //      val boundingBox = BoundingRectangle(Point(6699381, 396898), Point(6699382, 396898))
 //      sqlu"""
@@ -120,8 +120,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //           values (1943845, 0, 1, 1, 0, 34.944, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(6699381,396898,0,0.0,6699382,396898,0,2)))
 //           """.execute
 //
-//      val missingRoadAddresses = RoadAddressDAO.fetchMissingRoadAddressesByBoundingBox(boundingBox)
-//      val addedValue = missingRoadAddresses.find(p => p.linkId == 1943845).get
+//      val unaddressedRoadLinks = RoadAddressDAO.fetchUnaddressedRoadLinksByBoundingBox(boundingBox)
+//      val addedValue = unaddressedRoadLinks.find(p => p.linkId == 1943845).get
 //      addedValue should not be None
 //      addedValue.geom.nonEmpty should be (true)
 //      addedValue.startAddrMValue.get should be (0)
@@ -153,7 +153,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 //  }
 
   //TODO will be implemented at VIITE-1542
-//  test("Adding geometry to missing roadaddress") {
+//  test("Adding geometry to unaddressed road link") {
 //    runWithRollback {
 //      val id = 1943845
 //      sqlu"""

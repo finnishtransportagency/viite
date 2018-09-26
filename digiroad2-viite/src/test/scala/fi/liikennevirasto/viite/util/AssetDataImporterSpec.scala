@@ -53,7 +53,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     * TODO Fix this so that it will roll back the changes made in database.
     * Now ROADWAY table is cleared and populated with the test data.
     *//*
-  ignore("Should not have missing road addresses") {
+  ignore("Should not have unaddressed road links") {
     val vvhRoadLinks = List(
       VVHRoadlink(6656730L, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     )

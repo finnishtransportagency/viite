@@ -196,7 +196,7 @@ class AssetDataImporter {
     sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
   }
 
-  def updateMissingRoadAddresses(vvhClient: VVHClient) = {
+  def updateUnaddressedRoadLinks(vvhClient: VVHClient) = {
     val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
@@ -212,10 +212,10 @@ class AssetDataImporter {
     }
       municipalities.foreach(municipality => {
         println("Processing municipality %d at time: %s".format(municipality, DateTime.now().toString))
-        val missing = service.getMissingRoadAddresses(roadNumbersToFetch, municipality)
-        println("Got %d links".format(missing.size))
-        service.createMissingRoadAddress(missing)
-        println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
+        val unaddressed = service.getUnaddressedRoadLink(roadNumbersToFetch, municipality)
+        println("Got %d links".format(unaddressed.size))
+        service.createUnaddressedRoadLink(unaddressed)
+        println("Municipality %d: %d links added at time: %s".format(municipality, unaddressed.size, DateTime.now().toString))
       })
   }
 

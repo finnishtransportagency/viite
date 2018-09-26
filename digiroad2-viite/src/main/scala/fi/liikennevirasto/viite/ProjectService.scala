@@ -873,7 +873,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    val fetchVVHEndTime = System.currentTimeMillis()
 //    logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
 //
-//    val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
+//    val fetchUnaddressedRoadLinkStartTime = System.currentTimeMillis()
 //    val ((floating, addresses), currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
 //    val projectLinks = if (!currentProjectLinks.isEmpty && (projectState.isEmpty || projectState.isDefined && projectState.get != Saved2TR))
 //      currentProjectLinks
@@ -881,15 +881,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
 //
 //    val missedRL = if (useFrozenVVHLinks) {
-//      Map[Long, Seq[MissingRoadAddress]]()
+//      Map[Long, Seq[UnaddressedRoadLink]]()
 //    } else {
 //      withDynTransaction {
 //        val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- projectLinks.map(_.linkId).toSet
-//        RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
+//        RoadAddressDAO.getUnaddressedRoadLinks(missingLinkIds)
 //      }
 //    }.groupBy(_.linkId)
-//    val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
-//    logger.info("Fetch missing and floating road addresses completed in %d ms".format(fetchMissingRoadAddressEndTime - fetchMissingRoadAddressStartTime))
+//    val fetchUnaddressedRoadLinkEndTime = System.currentTimeMillis()
+//    logger.info("Fetch unaddressed road links and floating linear locations completed in %d ms".format(fetchUnaddressedRoadLinkEndTime - fetchUnaddressedRoadLinkStartTime))
 //
 //    val buildStartTime = System.currentTimeMillis()
 //
