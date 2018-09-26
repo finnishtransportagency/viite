@@ -634,7 +634,7 @@ class RoadAddressDAO extends BaseDAO {
 //    formatter.parseDateTime(string)
 //  }
 //
-//  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
+val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //  def optDateTimeParse(string: String): Option[DateTime] = {
 //    try {
@@ -1451,76 +1451,54 @@ class RoadAddressDAO extends BaseDAO {
 //    Q.updateNA(query).first
 //  }
 //
-//  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
-//    val addressPS = dynamicSession.prepareStatement("insert into ROADWAY (id, road_number, road_part_number, " +
-//      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, modified_by, " +
-//      "VALID_FROM, geometry, floating, calibration_points, ely, road_type, terminated, roadway_number," +
-//      "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
-//      "TO_DATE(?, 'YYYY-MM-DD'), ?, ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-//      "?,?,0.0,?,?,?,0.0,?)), ?, ?, ?, ?, ?, ?, " +
-//      "?, ?, ?, ?, ?, ?)")
-//    val (ready, idLess) = roadAddresses.partition(_.id != NewRoadAddress)
-//    val plIds = Sequences.fetchRoadwayIds(idLess.size)
-//    val createAddresses = ready ++ idLess.zip(plIds).map(x =>
-//      x._1.copy(id = x._2)
-//    )
-//    val savedIds = createAddresses.foreach { case (address) =>
-//      val nextId = if (address.id == NewRoadAddress) {
-//        Sequences.nextRoadwayId
-//      } else {
-//        address.id
-//      }
-//      val nextRoadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
-//        Sequences.nextRoadwaySeqValue
-//      } else {
-//        address.roadwayNumber
-//      }
-//      addressPS.setLong(1, nextId)
-//      addressPS.setLong(2, address.roadNumber)
-//      addressPS.setLong(3, address.roadPartNumber)
-//      addressPS.setLong(4, address.track.value)
-//      addressPS.setLong(5, address.discontinuity.value)
-//      addressPS.setLong(6, address.startAddrMValue)
-//      addressPS.setLong(7, address.endAddrMValue)
-//      addressPS.setString(8, address.startDate match {
-//        case Some(dt) => dateFormatter.print(dt)
-//        case None => ""
-//      })
-//      addressPS.setString(9, address.endDate match {
-//        case Some(dt) => dateFormatter.print(dt)
-//        case None => ""
-//      })
-//      val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
-//      addressPS.setString(10, if (newCreatedBy == null) "-" else newCreatedBy)
-//      addressPS.setString(11, modifiedBy match {
-//        case Some(creator) => creator
-//        case None => ""
-//      })
-//      val (p1, p2) = (address.geometry.head, address.geometry.last)
-//      addressPS.setDouble(12, p1.x)
-//      addressPS.setDouble(13, p1.y)
-//      addressPS.setDouble(14, address.startAddrMValue)
-//      addressPS.setDouble(15, p2.x)
-//      addressPS.setDouble(16, p2.y)
-//      addressPS.setDouble(17, address.endAddrMValue)
-//      addressPS.setInt(18, address.floating.value)
-//      addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
-//      addressPS.setLong(20, address.ely)
-//      addressPS.setInt(21, address.roadType.value)
-//      addressPS.setInt(22, address.terminated.value)
-//      addressPS.setLong(23, nextRoadwayNumber)
-//      addressPS.setLong(24, address.linkId)
-//      addressPS.setLong(25, address.sideCode.value)
-//      addressPS.setDouble(26, address.startMValue)
-//      addressPS.setDouble(27, address.endMValue)
-//      addressPS.setDouble(28, address.adjustedTimestamp)
-//      addressPS.setInt(29, address.linkGeomSource.value)
-//      addressPS.addBatch()
-//    }
-//    addressPS.executeBatch()
-//    addressPS.close()
-//    createAddresses.map(_.id).toSeq
-//  }
+  // TODO Should we have Roadway class that we handle in RoadwayDAO and on the service level combine roadway and linear location to road address?
+  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
+    val roadwayPS = dynamicSession.prepareStatement(
+      """
+        insert into ROADWAY (id, roadway_number, road_number, road_part_number,
+        track_code, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by,
+        road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
+        TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?)
+      """)
+    val (ready, idLess) = roadAddresses.partition(_.id != NewRoadway)
+    val plIds = Sequences.fetchRoadwayIds(idLess.size)
+    val createRoadways = ready ++ idLess.zip(plIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+    val savedRoadwayIds = createRoadways.foreach { case (address) =>
+      val nextRoadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
+        Sequences.nextRoadwayNumber
+      } else {
+        address.roadwayNumber
+      }
+      roadwayPS.setLong(1, address.id)
+      roadwayPS.setLong(2, address.roadwayNumber)
+      roadwayPS.setLong(3, address.roadNumber)
+      roadwayPS.setLong(4, address.roadPartNumber)
+      roadwayPS.setInt(5, address.track.value)
+      roadwayPS.setLong(6, address.startAddrMValue)
+      roadwayPS.setLong(7, address.endAddrMValue)
+      roadwayPS.setInt(8, if (address.reversed) 1 else 0)
+      roadwayPS.setInt(9, address.discontinuity.value)
+      roadwayPS.setString(10, address.startDate match {
+        case Some(dt) => dateFormatter.print(dt)
+        case None => ""
+      })
+      roadwayPS.setString(11, address.endDate match {
+        case Some(dt) => dateFormatter.print(dt)
+        case None => ""
+      })
+      val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
+      roadwayPS.setString(12, if (newCreatedBy == null) "-" else newCreatedBy)
+      roadwayPS.setInt(13, address.roadType.value)
+      roadwayPS.setLong(14, address.ely)
+      roadwayPS.setInt(15, address.terminated.value)
+      roadwayPS.addBatch()
+    }
+    roadwayPS.executeBatch()
+    roadwayPS.close()
+    createRoadways.map(_.id).toSeq
+  }
 //
 //  def roadPartExists(roadNumber:Long, roadPart:Long) :Boolean = {
 //    val query = s"""SELECT COUNT(1)

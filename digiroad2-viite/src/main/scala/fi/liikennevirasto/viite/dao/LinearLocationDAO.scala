@@ -216,7 +216,7 @@ class LinearLocationDAO {
     createLinearLocations.foreach {
       case (location) =>
         val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
-          Sequences.nextRoadwaySeqValue
+          Sequences.nextRoadwayNumber
         } else {
           location.roadwayNumber
         }
@@ -667,7 +667,7 @@ class LinearLocationDAO {
 
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "iloc.geometry")
 
-      val boundingBoxQuery = if(roadNumberLimits.isEmpty) {
+      val boundingBoxQuery = if (roadNumberLimits.isEmpty) {
         s"""select ROADWAY_NUMBER from linear_location iloc
            where iloc.valid_to is null and $boundingBoxFilter"""
       } else {
