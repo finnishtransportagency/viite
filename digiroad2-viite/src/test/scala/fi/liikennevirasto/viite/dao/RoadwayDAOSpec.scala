@@ -77,8 +77,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(
         testRoadway1,
-        testRoadway2.copy(roadwayNumber = roadwayNumber1, endDate = Some(DateTime.parse("2000-12-31"))),
-        testRoadway3.copy(roadwayNumber = roadwayNumber1, validTo = Some(DateTime.parse("2000-12-31")))))
+        testRoadway2.copy(roadwayNumber = roadwayNumber1, endDate = Some(DateTime.parse("2000-12-31")))
+      ))
       val roadway = dao.fetchByRoadwayNumber(roadwayNumber1).getOrElse(fail())
       roadway.endDate should be(None)
       roadway.validTo should be(None)
@@ -181,8 +181,69 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test fetchAllByRoadAndTracks When non-existing road number Then return None") {
+    runWithRollback {
+      dao.fetchAllByRoadAndTracks(nonExistingRoadNumber, Set(Track.Combined)).size should be(0)
+    }
+  }
 
-  // TODO Test naming convention: Test<Method> When <State Under Test> Then <Expected Behavior>
+  test("Test fetchAllByRoadAndTracks When existing road number and empty track Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadAndTracks(roadNumber1, Set()).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadAndTracks When existing road number and non-existing track Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadAndTracks(roadNumber1, Set(Track.Unknown)).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadAndTracks When existing road number and road part number Then return roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1), testRoadway3))
+      val roadways = dao.fetchAllByRoadAndTracks(roadNumber1, Set(Track.Combined))
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.size should be(2)
+    }
+  }
+
+  test("Test fetchAllByRoadwayNumbers When non-existing roadway numbers Then return None") {
+    runWithRollback {
+      dao.fetchAllByRoadwayNumbers(Set(nonExistingRoadwayNumber)).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadwayNumbers When existing roadway numbers Then return the current roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2, testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2))
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
+      roadways.size should be(2)
+    }
+  }
+
+  test("Test fetchAllByRoadwayNumbers When existing roadway numbers Then return only the current roadways") {
+    runWithRollback {
+      dao.create(List(
+        testRoadway1,
+        testRoadway1.copy(startAddrMValue = 100, endAddrMValue = 200, endDate = Some(DateTime.parse("2000-12-31"))),
+        testRoadway2
+      ))
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1))
+      roadways.size should be(1)
+      roadways.head.endDate should be(None)
+      roadways.head.validTo should be(None)
+    }
+  }
+
+
+  // TODO Test naming convention: Test <Method> When <State Under Test> Then <Expected Behavior>
 
   //TODO test the constraints ROADWAY_HISTORY_UK and TERMINATION_END_DATE_CHK
   test("insert roadway duplicate info check") {

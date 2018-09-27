@@ -318,7 +318,7 @@ class RoadwayDAO extends BaseDAO {
     * @return Current road addresses at specified sections
     */
   def fetchAllBySectionsAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track]): Seq[Roadway] = {
-    time(logger, "Fetch road address by road number, road part numbers and tracks") {
+    time(logger, "Fetch roadways by road number, road part numbers and tracks") {
       if (tracks.isEmpty || roadPartNumbers.isEmpty)
         Seq()
       else
@@ -327,8 +327,8 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def fetchAllByRoadAndTracks(roadNumber: Long, tracks: Set[Track]): Seq[Roadway] = {
-    time(logger, "Fetch road address by road number and tracks") {
-      if(tracks.isEmpty)
+    time(logger, "Fetch roadways by road number and tracks") {
+      if (tracks.isEmpty)
         Seq()
       else
         fetch(withRoadAndTracks(roadNumber, tracks))
