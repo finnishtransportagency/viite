@@ -447,6 +447,11 @@
     };
 
     var hideLayer = function () {
+      projectLinkLayer.getSource().clear();
+      calibrationPointLayer.getSource().clear();
+      suravageProjectDirectionMarkerLayer.getSource().clear();
+      suravageRoadProjectLayer.getSource().clear();
+      directionMarkerLayer.getSource().clear();
       me.clearLayers(layers);
     };
 
