@@ -83,7 +83,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadwayDAO, linearLocationDAO: Linear
           enCalibration.map(address => CalibrationPoint(linearLocation.linkId, if(linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength, address))
         )
 
-        val sideCode = if(roadwayAddress.reverted) SideCode.switch(linearLocation.sideCode) else linearLocation.sideCode
+        val sideCode = if(roadwayAddress.reversed) SideCode.switch(linearLocation.sideCode) else linearLocation.sideCode
         RoadAddress(roadwayAddress.id, linearLocation.id, roadwayAddress.roadNumber, roadwayAddress.roadPartNumber, roadwayAddress.roadType, roadwayAddress.track, Discontinuity.Continuous, st, en,
           Some(roadwayAddress.startDate), roadwayAddress.endDate, Some(roadwayAddress.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, sideCode,
           linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.floating, linearLocation.geometry, linearLocation.linkGeomSource, roadwayAddress.ely, roadwayAddress.terminated,

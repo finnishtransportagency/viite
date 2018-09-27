@@ -21,6 +21,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
+import fi.liikennevirasto.viite._
 
 import scala.util.control.NonFatal
 
@@ -36,6 +37,55 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  val dao = new RoadwayDAO
+
+  private val roadNumber1 = 990
+  private val roadNumber2 = 993
+
+  private val nonExistingRoadwayNumber = -9999
+  private val roadwayNumber1 = 1000000l
+  private val roadwayNumber2 = 2000000l
+  private val roadwayNumber3 = 3000000l
+
+  val testRoadway1 = Roadway(NewRoadway, roadwayNumber1, roadNumber1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+    0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+
+  val testRoadway2 = Roadway(NewRoadway, roadwayNumber2, roadNumber1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+    100, 200, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+
+  val testRoadway3 = Roadway(NewRoadway, roadwayNumber3, roadNumber2, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+    0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+
+  test("Test fetchByRoadwayNumber When non-existing roadway number Then return None") {
+    runWithRollback {
+      dao.fetchByRoadwayNumber(nonExistingRoadwayNumber) should be(None)
+    }
+  }
+
+  test("Test fetchByRoadwayNumber When existing roadway number Then return the current roadway") {
+    runWithRollback {
+      val roadways = List(testRoadway1, testRoadway2, testRoadway3)
+      dao.create(roadways)
+      roadways.foreach(r =>
+        dao.fetchByRoadwayNumber(r.roadwayNumber).getOrElse(fail()).roadwayNumber should be(r.roadwayNumber))
+    }
+  }
+
+  test("Test fetchByRoadwayNumber When existing roadway number Then return only the current roadway") {
+    runWithRollback {
+      val roadways = List(
+        testRoadway1,
+        testRoadway2.copy(roadwayNumber = roadwayNumber1, endDate = Some(DateTime.parse("2000-12-31"))),
+        testRoadway3.copy(roadwayNumber = roadwayNumber1, validTo = Some(DateTime.parse("2000-12-31"))))
+      dao.create(roadways)
+      val roadway = dao.fetchByRoadwayNumber(roadwayNumber1).getOrElse(fail())
+      roadway.endDate should be(None)
+      roadway.validTo should be(None)
+    }
+  }
+
+  // TODO Test naming convention: Test<Method> When <State Under Test> Then <Expected Behavior>
 
   //TODO test the constraints ROADWAY_HISTORY_UK and TERMINATION_END_DATE_CHK
   test("insert road address duplicate info check") {

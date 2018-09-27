@@ -16,7 +16,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   val linearLocationDAO = new LinearLocationDAO
-  val roadAddressDAO = new RoadwayDAO
+  val roadwayDAO = new RoadwayDAO
 
   val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
@@ -659,17 +659,13 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber2, linkId = linkId3)))
 
-      // TODO RoadAddressDAO should be renamed to RoadwayDAO and it should take in Roadway object
-      roadAddressDAO.create(Seq(RoadAddress(NewRoadway, id1, 100, 1, RoadType.PublicRoad, Combined, Discontinuity.Continuous, 0, 200,
-        Some(DateTime.parse("2000-01-01")), None, Some("test"), linkId1, testLinearLocation.startMValue, testLinearLocation.endMValue,
-        testLinearLocation.sideCode, testLinearLocation.adjustedTimestamp, (None, None), testLinearLocation.floating,
-        testLinearLocation.geometry, testLinearLocation.linkGeomSource, 1, TerminationCode.NoTermination, roadwayNumber1)))
+      roadwayDAO.create(Seq(Roadway(NewRoadway, roadwayNumber1, 100, 1, RoadType.PublicRoad, Combined,
+        Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test",
+        Some("ROAD 1"), 1, TerminationCode.NoTermination)))
 
-      // TODO RoadAddressDAO should be renamed to RoadwayDAO and it should take in Roadway object
-      roadAddressDAO.create(Seq(RoadAddress(NewRoadway, id2, 101, 1, RoadType.PublicRoad, Combined, Discontinuity.Continuous, 0, 100,
-        Some(DateTime.parse("2000-01-01")), None, Some("test"), linkId3, testLinearLocation.startMValue, testLinearLocation.endMValue,
-        testLinearLocation.sideCode, testLinearLocation.adjustedTimestamp, (None, None), testLinearLocation.floating,
-        testLinearLocation.geometry, testLinearLocation.linkGeomSource, 1, TerminationCode.NoTermination, roadwayNumber2)))
+      roadwayDAO.create(Seq(Roadway(NewRoadway, roadwayNumber2, 101, 1, RoadType.PublicRoad, Combined,
+        Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test",
+        Some("ROAD 2"), 1, TerminationCode.NoTermination)))
 
       val roadNumberFilter = Seq((100, 100))
       val locations = linearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), roadNumberFilter)
