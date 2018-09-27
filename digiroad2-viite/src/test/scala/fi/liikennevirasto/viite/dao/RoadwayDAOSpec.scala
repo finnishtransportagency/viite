@@ -60,6 +60,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchByRoadwayNumber When non-existing roadway number Then return None") {
     runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
       dao.fetchByRoadwayNumber(nonExistingRoadwayNumber) should be(None)
     }
   }
@@ -87,6 +88,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllBySection When non-existing road number Then return None") {
     runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
       dao.fetchAllBySection(nonExistingRoadNumber, 1).size should be(0)
     }
   }
@@ -110,6 +112,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllBySectionAndTracks When non-existing road number Then return None") {
     runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
       dao.fetchAllBySectionAndTracks(nonExistingRoadNumber, 1, Set(Track.Combined)).size should be(0)
     }
   }
@@ -133,6 +136,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllBySectionsAndTracks When non-existing road number Then return None") {
     runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
       dao.fetchAllBySectionsAndTracks(nonExistingRoadNumber, Set(1l, 2l, 3l), Set(Track.Combined)).size should be(0)
     }
   }
@@ -183,6 +187,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllByRoadAndTracks When non-existing road number Then return None") {
     runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
       dao.fetchAllByRoadAndTracks(nonExistingRoadNumber, Set(Track.Combined)).size should be(0)
     }
   }
@@ -213,6 +218,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllByRoadwayNumbers When non-existing roadway numbers Then return None") {
     runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
       dao.fetchAllByRoadwayNumbers(Set(nonExistingRoadwayNumber)).size should be(0)
     }
   }
@@ -242,6 +248,30 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test fetchAllByBetweenRoadNumbers When non-existing road numbers Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchAllByBetweenRoadNumbers((nonExistingRoadNumber - 1, nonExistingRoadNumber)).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByBetweenRoadNumbers When existing road numbers but bigger number first Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2, testRoadway3))
+      dao.fetchAllByBetweenRoadNumbers(roadNumber2, roadNumber1).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByBetweenRoadNumbers When existing road numbers Then return roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2, testRoadway3))
+      val roadways = dao.fetchAllByBetweenRoadNumbers(roadNumber1, roadNumber2)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(1)
+      roadways.size should be(3)
+    }
+  }
 
   // TODO Test naming convention: Test <Method> When <State Under Test> Then <Expected Behavior>
 
