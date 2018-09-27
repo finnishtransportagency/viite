@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
@@ -193,7 +194,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
     * @param trackOption Optional track code
     * @return Returns all the filtered road addresses
     */
-  def getRoadAddress(road: Long, roadPart: Long, addressM: Long, trackOption: Option[Int]): Seq[RoadAddress] = {
+  def getRoadAddress(road: Long, roadPart: Long, addressM: Long, trackOption: Option[Track]): Seq[RoadAddress] = {
     withDynSession {
       val roadwayAddresses = trackOption match {
         case Some(track) =>
@@ -213,7 +214,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
     * @param tracks The set of track codes
     * @return Returns all the filtered road addresses
     */
-  def getRoadAddressWithRoadNumber(road: Long, tracks: Set[Int]): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadNumber(road: Long, tracks: Set[Track]): Seq[RoadAddress] = {
     withDynSession {
       val roadwayAddresses = roadAddressDAO.fetchAllByRoadAndTracks(road, tracks)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
@@ -227,7 +228,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
     * @param tracks The set of track codes
     * @return Returns all the filtered road addresses
     */
-  def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Set[Long], tracks: Set[Int]): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Set[Long], tracks: Set[Track]): Seq[RoadAddress] = {
     withDynSession {
       val roadwayAddresses = roadAddressDAO.fetchAllBySectionsAndTracks(road, roadParts, tracks)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)

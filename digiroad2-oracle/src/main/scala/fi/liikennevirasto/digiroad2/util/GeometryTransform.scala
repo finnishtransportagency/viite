@@ -6,12 +6,26 @@ package fi.liikennevirasto.digiroad2.util
   */
 sealed trait Track {
   def value: Int
+
+  override def toString: String = value.toString
 }
 object Track {
   val values = Set(Combined, RightSide, LeftSide, Unknown)
 
   def apply(intValue: Int): Track = {
     values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  def applyOption(track: Option[Int]): Option[Track] = {
+    if (track.nonEmpty) {
+      Some(apply(track.get))
+    } else {
+      None
+    }
+  }
+
+  def applyAll(values: Iterable[Int]): Set[Track] = {
+    values.map(value => Track.apply(value)).toSet
   }
 
   /**
