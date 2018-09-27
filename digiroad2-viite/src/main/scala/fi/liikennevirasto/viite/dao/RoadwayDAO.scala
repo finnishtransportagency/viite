@@ -301,8 +301,8 @@ class RoadwayDAO extends BaseDAO {
     * @return Current road addresses at specified section
     */
   def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track]): Seq[Roadway] = {
-    time(logger, "Fetch road address by road number, road part number and tracks") {
-      if(tracks.isEmpty) {
+    time(logger, "Fetch roadway by road number, road part number and tracks") {
+      if (tracks.isEmpty) {
         Seq()
       } else {
         fetch(withSectionAndTracks(roadNumber, roadPartNumber, tracks))
@@ -424,7 +424,8 @@ class RoadwayDAO extends BaseDAO {
           (select rn.road_name from road_name rn where rn.road_number = a.road_number and rn.end_date is null and rn.valid_to is null) as road_name
         from ROADWAY a
       """
-    Q.queryNA[Roadway](queryFilter(query)).iterator.toSeq
+    val q = queryFilter(query)
+    Q.queryNA[Roadway](q).iterator.toSeq
   }
 
   private def withSection(roadNumber: Long, roadPartNumber: Long)(query: String): String = {
@@ -432,15 +433,15 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and tracks in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and track_code in (${tracks.mkString(",")})"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = ${roadPartNumbers.mkString(",")} and tracks in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = ${roadPartNumbers.mkString(",")} and track_code in (${tracks.mkString(",")})"""
   }
 
   private def withRoadAndTracks(roadNumber: Long, tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and tracks in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and track_code in (${tracks.mkString(",")})"""
   }
 
   private def withLRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
