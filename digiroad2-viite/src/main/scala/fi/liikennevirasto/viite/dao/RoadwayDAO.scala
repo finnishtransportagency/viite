@@ -300,7 +300,7 @@ class RoadwayDAO extends BaseDAO {
     * @param tracks The set of track codes
     * @return Current road addresses at specified section
     */
-  def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Int]): Seq[Roadway] = {
+  def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track]): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part number and tracks") {
       if(tracks.isEmpty) {
         Seq()
@@ -317,7 +317,7 @@ class RoadwayDAO extends BaseDAO {
     * @param tracks The set of track codes
     * @return Current road addresses at specified sections
     */
-  def fetchAllBySectionsAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Int]): Seq[Roadway] = {
+  def fetchAllBySectionsAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track]): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part numbers and tracks") {
       if(tracks.isEmpty || roadPartNumbers.isEmpty)
         Seq()
@@ -326,7 +326,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadAndTracks(roadNumber: Long, tracks: Set[Int]): Seq[Roadway] = {
+  def fetchAllByRoadAndTracks(roadNumber: Long, tracks: Set[Track]): Seq[Roadway] = {
     time(logger, "Fetch road address by road number and tracks") {
       if(tracks.isEmpty)
         Seq()
@@ -368,7 +368,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllBySectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Int, startAddrM: Option[Long], endAddrM: Option[Long]): Seq[Roadway] = {
+  def fetchAllBySectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long]): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part number, start address measure and end address measure") {
       fetch(withSectionTrackAndAddresses(roadNumber, roadPartNumber, track, startAddrM, endAddrM))
     }
@@ -431,15 +431,15 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber"""
   }
 
-  private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Int])(query: String): String = {
+  private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track])(query: String): String = {
     s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and tracks in (${tracks.mkString(",")})"""
   }
 
-  private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Int])(query: String): String = {
+  private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track])(query: String): String = {
     s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = ${roadPartNumbers.mkString(",")} and tracks in (${tracks.mkString(",")})"""
   }
 
-  private def withRoadAndTracks(roadNumber: Long, tracks: Set[Int])(query: String): String = {
+  private def withRoadAndTracks(roadNumber: Long, tracks: Set[Track])(query: String): String = {
     s"""$query where valid_to is null and road_number = $roadNumber and tracks in (${tracks.mkString(",")})"""
   }
 
@@ -468,7 +468,7 @@ class RoadwayDAO extends BaseDAO {
       s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
   }
 
-  private def withSectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Int, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
+  private def withSectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
     val addressFilter = (startAddrMOption, endAddrMOption) match {
       case (Some(startAddrM), Some(endAddrM)) => s"""and (start_addr_m >= $startAddrM and end_addr_m <= $endAddrM}) or ($startAddrM >= start_addr_m and $startAddrM < end_addr_m) or ($endAddrM > start_addr_m and $endAddrM <= ra.end_addr_m))"""
       case (Some(startAddrM), _) => s"""and end_addr_m > $startAddrM"""
@@ -1583,7 +1583,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //    }
 //  }
 //
-//  def withRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double])(query: String): String = {
+//  def withRoadAddress(road: Long, roadPart: Long, track: Option[Track], mValue: Option[Double])(query: String): String = {
 //    val trackFilter = track match {
 //      case Some(t) => s"  AND ra.track_code = $t"
 //      case None => ""
@@ -1619,7 +1619,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //    query + s" WHERE ra.road_number = $road $roadPartFilter $trackFilter AND ra.floating = 0 " + withValidityCheck
 //  }
 //
-//  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
+//  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Track, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
 //    val floating = optFloating match {
 //      case Some(floatingValue) => s"AND ra.floating = $floatingValue"
 //      case None => ""

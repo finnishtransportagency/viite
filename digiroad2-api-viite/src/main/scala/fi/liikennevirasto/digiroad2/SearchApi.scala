@@ -2,14 +2,15 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService
 import fi.liikennevirasto.digiroad2.asset.{Modification, TimeStamps}
-import fi.liikennevirasto.digiroad2.util.DigiroadSerializers
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, Track}
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.json4s.Formats
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.slf4j.LoggerFactory
+
 
 class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -46,7 +47,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     val roadNumber = params("road").toLong
     time(logger, s"GET request for /road_address/$roadNumber/?") {
       val trackCodes = multiParams.getOrElse("tracks", Seq()).map(_.toInt)
-      roadAddressService.getRoadAddressWithRoadNumber(roadNumber, trackCodes.toSet).map(roadAddressMapper)
+      roadAddressService.getRoadAddressWithRoadNumber(roadNumber, Track.applyAll(trackCodes)).map(roadAddressMapper)
     }
   }
 
@@ -65,7 +66,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     val track = params.get("track").map(_.toInt)
 
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/$address/? (track: $track)") {
-      roadAddressService.getRoadAddress(roadNumber, roadPart, address, track).map(roadAddressMapper)
+      roadAddressService.getRoadAddress(roadNumber, roadPart, address, Track.applyOption(track)).map(roadAddressMapper)
     }
   }
 
@@ -92,7 +93,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
       val roadNumber = params("road").toLong
       val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
       val tracks = (parsedBody \ "tracks").extract[Seq[Int]]
-      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts.toSet, tracks.toSet).map(roadAddressMapper)
+      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts.toSet, Track.applyAll(tracks)).map(roadAddressMapper)
     }
   }
 
