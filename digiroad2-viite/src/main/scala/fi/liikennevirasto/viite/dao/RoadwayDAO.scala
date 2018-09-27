@@ -461,9 +461,9 @@ class RoadwayDAO extends BaseDAO {
 
   private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
       val addressFilter = (startAddrMOption, endAddrMOption) match {
-        case (Some(startAddrM), Some(endAddrM)) => s"""and (start_addr_m >= $startAddrM and end_addr_m <= $endAddrM}) or ($startAddrM >= start_addr_m and $startAddrM < end_addr_m) or ($endAddrM > start_addr_m and $endAddrM <= ra.end_addr_m))"""
-        case (Some(startAddrM), _) => s"""and end_addr_m > $startAddrM"""
-        case (_, Some(endAddrM)) => s"""and start_addr_m < $endAddrM"""
+        case (Some(startAddrM), Some(endAddrM)) => s"""and (a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM}) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
+        case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
+        case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
         case _ => s""""""
       }
       s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
@@ -471,12 +471,12 @@ class RoadwayDAO extends BaseDAO {
 
   private def withSectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
     val addressFilter = (startAddrMOption, endAddrMOption) match {
-      case (Some(startAddrM), Some(endAddrM)) => s"""and (start_addr_m >= $startAddrM and end_addr_m <= $endAddrM}) or ($startAddrM >= start_addr_m and $startAddrM < end_addr_m) or ($endAddrM > start_addr_m and $endAddrM <= ra.end_addr_m))"""
-      case (Some(startAddrM), _) => s"""and end_addr_m > $startAddrM"""
-      case (_, Some(endAddrM)) => s"""and start_addr_m < $endAddrM"""
+      case (Some(startAddrM), Some(endAddrM)) => s"""and (a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM}) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
+      case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
+      case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
       case _ => s""""""
     }
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and track = $track and $addressFilter"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and track_code = $track $addressFilter"""
   }
 
   private def withRoadwayNumberAndNotEnded(roadwayNumber: Long)(query: String): String = {
