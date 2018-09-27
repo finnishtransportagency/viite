@@ -235,9 +235,10 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 }
 
 case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
-                   discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reverted: Boolean,
+                   discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false,
                    startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String],
-                   ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime, validTo: Option[DateTime] = None)
+                   ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime = DateTime.now(),
+                   validTo: Option[DateTime] = None)
 
 
 class BaseDAO {
@@ -275,7 +276,7 @@ class RoadwayDAO extends BaseDAO {
     * @return Current road address at given roadway
     */
   def fetchByRoadwayNumber(roadwayNumber: Long) : Option[Roadway] = {
-    time(logger, "Fetch current road addresses by roadway id") {
+    time(logger, "Fetch current roadway by roadway number") {
       fetch(withRoadwayNumberAndNotEnded(roadwayNumber)).headOption
     }
   }
@@ -1451,8 +1452,8 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //    Q.updateNA(query).first
 //  }
 //
-  // TODO Should we have Roadway class that we handle in RoadwayDAO and on the service level combine roadway and linear location to road address?
-  def create(roadAddresses: Iterable[RoadAddress], createdBy: Option[String] = None, modifiedBy: Option[String] = None): Seq[Long] = {
+
+  def create(roadways: Iterable[Roadway]): Seq[Long] = {
     val roadwayPS = dynamicSession.prepareStatement(
       """
         insert into ROADWAY (id, roadway_number, road_number, road_part_number,
@@ -1460,19 +1461,19 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
         road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
         TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?)
       """)
-    val (ready, idLess) = roadAddresses.partition(_.id != NewRoadway)
+    val (ready, idLess) = roadways.partition(_.id != NewRoadway)
     val plIds = Sequences.fetchRoadwayIds(idLess.size)
     val createRoadways = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
-    val savedRoadwayIds = createRoadways.foreach { case (address) =>
-      val nextRoadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
+    createRoadways.foreach { case (address) =>
+      val roadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
         Sequences.nextRoadwayNumber
       } else {
         address.roadwayNumber
       }
       roadwayPS.setLong(1, address.id)
-      roadwayPS.setLong(2, address.roadwayNumber)
+      roadwayPS.setLong(2, roadwayNumber)
       roadwayPS.setLong(3, address.roadNumber)
       roadwayPS.setLong(4, address.roadPartNumber)
       roadwayPS.setInt(5, address.track.value)
@@ -1480,16 +1481,12 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
       roadwayPS.setLong(7, address.endAddrMValue)
       roadwayPS.setInt(8, if (address.reversed) 1 else 0)
       roadwayPS.setInt(9, address.discontinuity.value)
-      roadwayPS.setString(10, address.startDate match {
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
+      roadwayPS.setString(10, dateFormatter.print(address.startDate))
       roadwayPS.setString(11, address.endDate match {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      val newCreatedBy = createdBy.getOrElse(address.createdBy.getOrElse("-"))
-      roadwayPS.setString(12, if (newCreatedBy == null) "-" else newCreatedBy)
+      roadwayPS.setString(12, address.createdBy)
       roadwayPS.setInt(13, address.roadType.value)
       roadwayPS.setLong(14, address.ely)
       roadwayPS.setInt(15, address.terminated.value)
