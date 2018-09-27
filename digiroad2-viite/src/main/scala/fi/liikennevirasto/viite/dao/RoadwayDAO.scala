@@ -319,7 +319,7 @@ class RoadwayDAO extends BaseDAO {
     */
   def fetchAllBySectionsAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track]): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part numbers and tracks") {
-      if(tracks.isEmpty || roadPartNumbers.isEmpty)
+      if (tracks.isEmpty || roadPartNumbers.isEmpty)
         Seq()
       else
         fetch(withSectionAndTracks(roadNumber, roadPartNumbers, tracks))
@@ -424,8 +424,8 @@ class RoadwayDAO extends BaseDAO {
           (select rn.road_name from road_name rn where rn.road_number = a.road_number and rn.end_date is null and rn.valid_to is null) as road_name
         from ROADWAY a
       """
-    val q = queryFilter(query)
-    Q.queryNA[Roadway](q).iterator.toSeq
+    val filteredQuery = queryFilter(query)
+    Q.queryNA[Roadway](filteredQuery).iterator.toSeq
   }
 
   private def withSection(roadNumber: Long, roadPartNumber: Long)(query: String): String = {
@@ -437,7 +437,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = ${roadPartNumbers.mkString(",")} and track_code in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number in (${roadPartNumbers.mkString(",")}) and track_code in (${tracks.mkString(",")})"""
   }
 
   private def withRoadAndTracks(roadNumber: Long, tracks: Set[Track])(query: String): String = {
