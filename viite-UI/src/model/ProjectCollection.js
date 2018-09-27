@@ -130,6 +130,7 @@
       newReservedParts = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
+      currentProject = undefined;
       projectInfo = undefined;
       backend.abortLoadingProject();
     };
