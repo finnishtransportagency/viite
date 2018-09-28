@@ -18,12 +18,10 @@ object RoadAddressFiller {
 
   case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class ChangeSet(
-                        droppedSegmentIds: Set[Long],
-                        floatingSegmentIds: Set[Long],
-                        adjustedMValues: Seq[LinearLocationAdjustment],
-                        unaddressedRoadLink: Seq[UnaddressedRoadLink])
-
-
+                      droppedSegmentIds: Set[Long],
+                      adjustedMValues: Seq[LinearLocationAdjustment],
+                      //TODO check if this will be needed here at VIITE-1596
+                      unaddressedRoadLink: Seq[UnaddressedRoadLink])
 
   private def extendToGeometry(roadLink: RoadLinkLike, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
     if (segments.isEmpty || segments.exists(_.connectedLinkId.nonEmpty))
@@ -144,7 +142,7 @@ object RoadAddressFiller {
     val lastSegment = sorted.last
     val restSegments = sorted.init
 
-    val (extendedSegments, adjustments) = if((lastSegment.endMValue < linkLength + MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed ){
+    val (extendedSegments, adjustments) = if((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed ){
       (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength)), Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength))))
     } else {
       (segments, Seq())
@@ -183,7 +181,7 @@ object RoadAddressFiller {
 
       val topologyMap = topology.groupBy(_.linkId)
       val linearLocationMap = linearLocations.groupBy(_.linkId)
-      val initialChangeSet = ChangeSet(Set.empty, Set.empty, Seq.empty, Seq.empty)
+      val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty)
 
       linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
