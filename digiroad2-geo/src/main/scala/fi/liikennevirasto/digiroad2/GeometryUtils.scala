@@ -107,9 +107,10 @@ object GeometryUtils {
     case class AlgorithmState(previousPoint: Point, length: Double)
     if (geometry.size < 2) { 0.0 }
     else {
-      geometry.tail.foldLeft(AlgorithmState(geometry.head, 0.0)) { (acc, point) =>
+      val length = geometry.tail.foldLeft(AlgorithmState(geometry.head, 0.0)) { (acc, point) =>
         AlgorithmState(point, acc.length + acc.previousPoint.distance2DTo(point))
       }.length
+      scaleToThreeDigits(length)
     }
   }
 

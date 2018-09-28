@@ -20,7 +20,7 @@ import scala.util.control.NonFatal
 
 class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Seq[any] => roadAddressService.updateChangeSet(w.asInstanceOf[ChangeSet])
+    case w: ChangeSet => roadAddressService.updateChangeSet(w)
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
 }

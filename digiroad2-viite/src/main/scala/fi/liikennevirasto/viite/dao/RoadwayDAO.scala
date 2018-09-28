@@ -340,6 +340,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllByRoad(roadNumber: Long): Seq[Roadway] = {
+    time(logger, "Fetch road address by road number") {
+      fetch(withRoad(roadNumber))
+    }
+  }
+
   def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long]): Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if(roadwayNumbers.isEmpty)
@@ -448,6 +454,10 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadAndTracks(roadNumber: Long, tracks: Set[Track])(query: String): String = {
     s"""$query where valid_to is null and road_number = $roadNumber and TRACK in (${tracks.mkString(",")})"""
+  }
+
+  private def withRoad(roadNumber: Long)(query: String): String = {
+    s"""$query where valid_to is null and road_number = $roadNumber"""
   }
 
   private def withLRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
