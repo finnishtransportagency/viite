@@ -65,24 +65,9 @@ object ProjectState {
   case object Saved2TR extends ProjectState{def value = 5; def description = "Viety tierekisteriin"}
   case object Failed2GenerateTRIdInViite extends ProjectState {def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
-
-  case object ErrorInViite extends ProjectState {
-    def value = 8
-
-    def description = "Virhe Viite-sovelluksessa"
-  }
-
-  case object SendingToTR extends ProjectState {
-    def value = 9
-
-    def description = "Lähettää Tierekisteriin"
-  }
-
-  case object Unknown extends ProjectState {
-    def value = 99
-
-    def description = "Tuntematon"
-  }
+  case object ErrorInViite extends ProjectState {def value = 8; def description = "Virhe Viite-sovelluksessa"}
+  case object SendingToTR extends ProjectState {def value = 9; def description = "Lähettää Tierekisteriin"}
+  case object Unknown extends ProjectState {def value = 99; def description = "Tuntematon"}
 
 }
 

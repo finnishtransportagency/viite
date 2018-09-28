@@ -125,10 +125,12 @@
 
     this.clearRoadAddressProjects = function () {
       roadAddressProjects = [];
+      fetchedProjectLinks = [];
       currentReservedParts = [];
       newReservedParts = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
+      currentProject = undefined;
       projectInfo = undefined;
       backend.abortLoadingProject();
     };

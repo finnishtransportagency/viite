@@ -401,7 +401,8 @@
     };
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
-
+    if (window.getSelection) {window.getSelection().removeAllRanges();} //removes selection from forms
+    else if (document.selection) {document.selection.empty();}
     /**
      * This will add all the following interactions from the map:
      * -selectDoubleClick
@@ -446,6 +447,11 @@
     };
 
     var hideLayer = function () {
+      projectLinkLayer.getSource().clear();
+      calibrationPointLayer.getSource().clear();
+      suravageProjectDirectionMarkerLayer.getSource().clear();
+      suravageRoadProjectLayer.getSource().clear();
+      directionMarkerLayer.getSource().clear();
       me.clearLayers(layers);
     };
 
@@ -674,7 +680,14 @@
     });
 
     me.redraw = function () {
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility(), true);
+      var checkedBoxLayers = _.filter(layers, function(layer){
+          if((layer.get('name') === 'suravageRoadProjectLayer' || layer.get('name') === 'suravageProjectDirectionMarkerLayer') &&
+              (!suravageRoadProjectLayer.getVisible() || !suravageProjectDirectionMarkerLayer.getVisible())){
+            return false;
+          } else
+            return true;
+      });
+      me.toggleLayersVisibility(checkedBoxLayers, applicationModel.getRoadVisibility(), true);
       var marker;
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
