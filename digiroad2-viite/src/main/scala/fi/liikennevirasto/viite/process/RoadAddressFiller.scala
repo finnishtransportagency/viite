@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.client.vvh.VVHHistoryRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
@@ -16,7 +16,7 @@ object RoadAddressFiller {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
+  case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point] = Seq())
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
                       adjustedMValues: Seq[LinearLocationAdjustment],

@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao._
+import org.joda.time.{DateTime, LocalDateTime}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -149,6 +150,20 @@ class RoadwayAddressMapper(roadAddressDAO: RoadwayDAO, linearLocationDAO: Linear
 
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
     val roadwayAddresses = roadAddressDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
+
+    roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
+  }
+
+  def getCurrentRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]) : Seq[RoadAddress] = {
+    val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
+    val roadwayAddresses = roadAddressDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, new DateTime())
+
+    roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
+  }
+
+  def getNetworkVersionRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation], roadNetworkId: Long) : Seq[RoadAddress] = {
+    val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
+    val roadwayAddresses = roadAddressDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, roadNetworkId)
 
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
