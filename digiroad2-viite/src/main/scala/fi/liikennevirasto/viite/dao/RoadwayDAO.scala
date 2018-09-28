@@ -469,7 +469,8 @@ class RoadwayDAO extends BaseDAO {
 
   private def withLRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
     def dateFilter(table: String): String = {
-      s" ($table.start_date <= to_date('$searchDate', 'yyyy-mm-dd') and (to_date('$searchDate', 'yyyy-mm-dd') < $table.end_date or $table.end_date is null))"
+      val strDate = dateFormatter.print(searchDate)
+      s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') < $table.end_date or $table.end_date is null))"
     }
 
     s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
