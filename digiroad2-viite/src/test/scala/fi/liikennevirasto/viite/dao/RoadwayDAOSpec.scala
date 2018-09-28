@@ -465,14 +465,52 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO test the constraints ROADWAY_HISTORY_UK and TERMINATION_END_DATE_CHK
-  test("insert roadway duplicate info check") {
+  // create
+
+  test("Test create When insert duplicate roadway Then give error") {
     runWithRollback {
       val error = intercept[SQLException] {
-        dao.create(Seq(testRoadway1))
-        dao.create(Seq(testRoadway1))
+        dao.create(Seq(testRoadway1, testRoadway1))
       }
       error.getErrorCode should be(1)
+    }
+  }
+
+  test("Test create When insert duplicate roadway with different roadway number Then give error") {
+    runWithRollback {
+      val error = intercept[SQLException] {
+        dao.create(Seq(testRoadway1, testRoadway1.copy(roadwayNumber = roadwayNumber2)))
+      }
+      error.getErrorCode should be(1)
+    }
+  }
+
+  test("Test create When insert roadway with termination code 1 but no end date Then give error") {
+    runWithRollback {
+      val error = intercept[SQLException] {
+        dao.create(Seq(testRoadway1.copy(terminated = TerminationCode.Termination)))
+      }
+      error.getErrorCode should be(2290)
+    }
+  }
+
+  test("Test create When insert roadway with termination code 2 but no end date Then give error") {
+    runWithRollback {
+      val error = intercept[SQLException] {
+        dao.create(Seq(testRoadway1.copy(terminated = TerminationCode.Subsequent)))
+      }
+      error.getErrorCode should be(2290)
+    }
+  }
+
+  test("Test create When insert roadway with termination code 1 with end date Then roadway should be inserted") {
+    runWithRollback {
+      val endDate = Some(DateTime.parse("2001-12-31"))
+      dao.create(Seq(testRoadway1.copy(terminated = TerminationCode.Termination, endDate = endDate)))
+      val roadway = dao.fetchByRoadwayNumber(roadwayNumber1, includeHistory = true).getOrElse(fail())
+      roadway.roadwayNumber should be(roadwayNumber1)
+      roadway.terminated should be(TerminationCode.Termination)
+      roadway.endDate should be(endDate)
     }
   }
 

@@ -271,13 +271,18 @@ class BaseDAO {
 class RoadwayDAO extends BaseDAO {
 
   /**
-    * Fetch all the current road address by roadway id
-    * @param roadwayNumber Roadway identifier
-    * @return Current road address at given roadway
+    * Fetch the roadway by the roadway number
+    * @param roadwayNumber Roadway number
+    * @param includeHistory Include also historical roadway
+    * @return Current roadway
     */
-  def fetchByRoadwayNumber(roadwayNumber: Long) : Option[Roadway] = {
-    time(logger, "Fetch current roadway by roadway number") {
-      fetch(withRoadwayNumberAndNotEnded(roadwayNumber)).headOption
+  def fetchByRoadwayNumber(roadwayNumber: Long, includeHistory: Boolean = false) : Option[Roadway] = {
+    time(logger, "Fetch roadway by roadway number") {
+      if (includeHistory) {
+        fetch(withRoadwayNumber(roadwayNumber)).headOption
+      } else {
+        fetch(withRoadwayNumberAndNotEnded(roadwayNumber)).headOption
+      }
     }
   }
 
@@ -478,6 +483,10 @@ class RoadwayDAO extends BaseDAO {
       case _ => s""""""
     }
     s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and track_code = $track $addressFilter"""
+  }
+
+  private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
+    s"""$query where a.valid_to is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
   private def withRoadwayNumberAndNotEnded(roadwayNumber: Long)(query: String): String = {
