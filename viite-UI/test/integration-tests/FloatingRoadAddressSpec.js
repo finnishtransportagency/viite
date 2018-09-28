@@ -22,7 +22,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
       }, backend);
     });
 
-    describe('Selecting the first floating', function () {
+   /* describe('Selecting the first floating', function () {
       before(function (done) {
         eventbus.once('linkProperties:selected', function () {
           done();
@@ -134,6 +134,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
         expect(_.first(linkData).id).to.not.equals(-1000);
         expect(_.first(linkData).roadLinkType).to.not.equals(-1);
       });
-    });
+    });*/
   });
 });

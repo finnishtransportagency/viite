@@ -20,7 +20,7 @@
     var isNotEditingData = true;
     var isActiveLayer = false;
 
-    var styler = new Styler();
+    //var styler = new Styler();
     var projectLinkStyler = new ProjectLinkStyler();
 
     var projectLinkVector = new ol.source.Vector({
@@ -75,7 +75,7 @@
       source: projectLinkVector,
       name: layerName,
       style: function(feature) {
-        return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
+        return projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, map.getView().getZoom());
       },
       zIndex: RoadZIndex.VectorLayer.value
     });
