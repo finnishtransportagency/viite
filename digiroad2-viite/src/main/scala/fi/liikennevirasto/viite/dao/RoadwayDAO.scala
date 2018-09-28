@@ -484,16 +484,17 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbersAndNotEnded(roadwayNumbers: Set[Long])(query: String): String = {
-    s"""$query where a.valid_to is null and  a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
+    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
     s"""$query where valid_to is null and road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}"""
   }
 
+  // TODO What about end_date?
   private def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
-      s"""$query valid_to is null and start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)
-          AND start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"""
+      s"""$query where valid_to is null and start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+          AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
   }
 
   private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway]{
