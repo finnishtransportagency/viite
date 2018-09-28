@@ -514,6 +514,30 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test create When insert roadway Then all values are saved correctly") {
+    runWithRollback {
+      dao.create(Seq(testRoadway1))
+      val roadway = dao.fetchByRoadwayNumber(roadwayNumber1).getOrElse(fail())
+      roadway.id should be > 0l
+      roadway.roadwayNumber should be(testRoadway1.roadwayNumber)
+      roadway.roadNumber should be(testRoadway1.roadNumber)
+      roadway.roadPartNumber should be(testRoadway1.roadPartNumber)
+      roadway.track should be(testRoadway1.track)
+      roadway.startAddrMValue should be(testRoadway1.startAddrMValue)
+      roadway.endAddrMValue should be(testRoadway1.endAddrMValue)
+      roadway.reversed should be(testRoadway1.reversed)
+      roadway.discontinuity should be(testRoadway1.discontinuity)
+      roadway.startDate should be(testRoadway1.startDate)
+      roadway.endDate should be(testRoadway1.endDate)
+      roadway.createdBy should be(testRoadway1.createdBy)
+      roadway.roadType should be(testRoadway1.roadType)
+      roadway.ely should be(testRoadway1.ely)
+      roadway.terminated should be(testRoadway1.terminated)
+      roadway.validFrom should not be(None)
+      roadway.validTo should be(None)
+    }
+  }
+
   //TODO will be implemented at VIITE-1552
   //  test("insert road address m-values overlap") {
   //    runWithRollback {
