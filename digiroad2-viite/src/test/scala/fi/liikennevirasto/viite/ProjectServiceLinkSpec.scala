@@ -292,14 +292,14 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     val raId = Sequences.nextRoadwayId
     sqlu"""insert into ROADWAY (id, road_number, road_part_number, track_code, discontinuity, START_ADDR_M, END_ADDR_M,
            start_date, end_date, created_by, VALID_FROM, geometry, floating, calibration_points,
-           start_Measure,end_Measure,Link_id, side_code)
+           start_Measure,end_Measure,Link_id, SIDE)
            VALUES ($raId, 1, 1, 0, 5, 0, 87, date'2011-01-01', null, 'foo', date'2011-01-01',
            MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,87.0,0,87)), 0, 0,
            0,87,1,2)""".execute
     ProjectDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
     sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
           START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROADWAY_ID, GEOMETRY,
-          link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES
+          link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES
           (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',
           TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0, $raId,
           ${fi.liikennevirasto.viite.toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))},
@@ -1446,7 +1446,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //      //Roads for template links
 //      sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
 //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
-//            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+//            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
 //            (${ids(0)},'16081','1','0','5','0','635',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
 //            to_date('16.10.1998','DD.MM.RRRR'),'2','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
 //            MDSYS.SDO_ORDINATE_ARRAY(480695.572,7058971.185,0,0,481049.95703856583,7058685.435957936,0,635)),null, 8,
@@ -1454,7 +1454,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //
 //      sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
 //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
-//            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+//            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
 //            (${ids(1)},'16081','1','0','5','635','753',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
 //            to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
 //            MDSYS.SDO_ORDINATE_ARRAY(481234.045,7058485.271,0,0,481158.027,7058573.51,0,753)),null, 8,
@@ -1462,7 +1462,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //
 //      sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
 //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
-//            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+//            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
 //            (${ids(2)},'16081','1','0','5','753','841',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
 //            to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
 //            MDSYS.SDO_ORDINATE_ARRAY(481250.504,7058400.315,0,0,481234.04508322186,7058485.270820141,0,841)),null, 8,
@@ -1470,7 +1470,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //
 //      sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
 //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO, ELY,
-//            SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
+//            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
 //            (${ids(3)},'16081','1','0','5','841','2115',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
 //            to_date('16.10.1998','DD.MM.RRRR'),'1','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
 //            MDSYS.SDO_ORDINATE_ARRAY(481234.04508322186,7058485.270820141,0,0,480783.428,7057271.799,0,2115)),null, 8,
