@@ -95,7 +95,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
 
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
+    val roadAddresses = withDynSession {
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
+    }
 
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
@@ -133,10 +135,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
+    val nonFloatingRoadAddresses = withDynSession {
+      val linearLocations = linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
 
-    val linearLocations = linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
-
-    val nonFloatingRoadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
+    }
 
     nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
   }
@@ -166,7 +169,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
     //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
+    val roadAddresses = withDynSession {
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
+    }
 
     roadAddresses.flatMap{ra =>
       //TODO check if the floating are needed
@@ -216,7 +221,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
     */
   def getRoadAddressWithRoadNumber(road: Long, tracks: Set[Track]): Seq[RoadAddress] = {
     withDynSession {
-      val roadwayAddresses = roadAddressDAO.fetchAllByRoadAndTracks(road, tracks)
+      val roadwayAddresses = if(tracks.isEmpty)
+          roadAddressDAO.fetchAllByRoad(road)
+        else
+          roadAddressDAO.fetchAllByRoadAndTracks(road, tracks)
+
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
     }
   }
@@ -325,11 +334,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
 
     val (roadlinks, historyRoadlinks) = roadLinkService.getAllRoadLinksFromVVH(Set(linkId))
 
-    val linearLocations = withDynSession {
-      linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
-    }
+    val (floatingRoadAddress, roadAddresses) = withDynSession {
+       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
 
-    val (floatingRoadAddress, roadAddresses) = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
+    }
 
     //TODO this will need to be improved
     val result = floatingRoadAddress.flatMap{ra =>
@@ -350,10 +359,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
 
   }
 
-  //TODO Will be implemented at VIITE-1551
   def updateChangeSet(changeSet: ChangeSet): Unit = {
 
+    withDynTransaction {
 
+      //Expire linear locations
+      linearLocationDAO.expireByIds(changeSet.droppedSegmentIds)
+
+      //Update all the linear location measures
+      linearLocationDAO.updateAll(changeSet.adjustedMValues, "adjustTopology")
+
+      //TODO Implement the missing at user story VIITE-1596
+    }
 
   }
 
