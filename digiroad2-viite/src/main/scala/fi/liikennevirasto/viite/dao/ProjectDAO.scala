@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import oracle.spatial.geometry.JGeometry
+import oracle.sql.STRUCT
 
 sealed trait ProjectState {
   def value: Int
@@ -190,7 +192,7 @@ object ProjectDAO {
     s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
   PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE_CODE,
-  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.link_id, PROJECT_LINK.GEOMETRY,
+  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.link_id, PROJECT_LINK.geometry,
   (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
   PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
@@ -260,7 +262,7 @@ object ProjectDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextStringOption()
+      val geom=r.nextObjectOption().map(g => g.asInstanceOf[STRUCT])
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -284,7 +286,7 @@ object ProjectDAO {
       val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
-        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, parseStringGeometry(geom.getOrElse("")), projectId,
+        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, loadGeometry(geom), projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
         roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM = roadAddressStartAddrM, roadAddressEndAddrM = roadAddressEndAddrM, roadAddressTrack = roadAddressTrack,
@@ -298,6 +300,16 @@ object ProjectDAO {
       toGeometry(geomString)
     else
       Seq()
+  }
+
+  private def loadGeometry(geometry: Option[STRUCT]): Seq[Point] = {
+    //convert STRUCT into geometry
+    if (geometry.nonEmpty){
+      val jgeom: JGeometry = JGeometry.load(geometry.get)
+      toGeomPoint(jgeom.getOrdinatesArray.toList.sliding(3,3).toList)
+    }
+    else
+    Seq()
   }
 
   private def listQuery(query: String) = {

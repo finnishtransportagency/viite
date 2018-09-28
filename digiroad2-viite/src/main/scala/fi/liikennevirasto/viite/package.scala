@@ -169,6 +169,10 @@ package object viite {
     }.toSeq
   }
 
+  def toGeomPoint(geomList: List[List[Double]]): Seq[Point] = {
+    geomList.map(p => Point(p.head, p.tail.head, p.last))
+  }
+
   object CombineMaps {
     type Mapped = Map[String, String]
 
