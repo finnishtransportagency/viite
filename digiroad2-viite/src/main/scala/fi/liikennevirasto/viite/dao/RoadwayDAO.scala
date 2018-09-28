@@ -424,7 +424,7 @@ class RoadwayDAO extends BaseDAO {
   private def fetch(queryFilter: String => String): Seq[Roadway] = {
     val query = """
         select
-          a.id, a.ROADWAY_NUMBER, a.road_number, a.road_part_number, a.track_code, a.start_addr_m, a.end_addr_m,
+          a.id, a.ROADWAY_NUMBER, a.road_number, a.road_part_number, a.TRACK, a.start_addr_m, a.end_addr_m,
           a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.road_type, a.ely, a.terminated,
           a.valid_from, a.valid_to,
           (select rn.road_name from road_name rn where rn.road_number = a.road_number and rn.end_date is null and rn.valid_to is null) as road_name
@@ -439,15 +439,15 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and track_code in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK in (${tracks.mkString(",")})"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number in (${roadPartNumbers.mkString(",")}) and track_code in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number in (${roadPartNumbers.mkString(",")}) and TRACK in (${tracks.mkString(",")})"""
   }
 
   private def withRoadAndTracks(roadNumber: Long, tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and track_code in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and road_number = $roadNumber and TRACK in (${tracks.mkString(",")})"""
   }
 
   private def withLRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
@@ -482,7 +482,7 @@ class RoadwayDAO extends BaseDAO {
       case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
       case _ => s""""""
     }
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and track_code = $track $addressFilter"""
+    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK = $track $addressFilter"""
   }
 
   private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
@@ -622,7 +622,7 @@ class RoadwayDAO extends BaseDAO {
 //
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
@@ -737,7 +737,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -772,7 +772,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //        val query =
 //          s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -808,7 +808,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      val where = if (roadNumbers.isEmpty) {
 //        return List()
 //      } else {
-//        s""" where ra.track_code in (0,1) AND $filter"""
+//        s""" where ra.TRACK in (0,1) AND $filter"""
 //      }
 //      val coarseWhere = if (coarse) {
 //        " AND ra.calibration_points != 0"
@@ -817,7 +817,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      }
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -846,7 +846,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //            ""
 //          val query =
 //            s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -878,7 +878,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        idTableName =>
 //          val query =
 //            s"""
-//              select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//              select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //              ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //              ra.SIDE, ra.adjusted_timestamp,
 //              ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -912,7 +912,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //            ""
 //          val query =
 //            s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -950,7 +950,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      (r2.END_DATE is not null AND NOT (r.END_DATE <= r2.START_DATE OR r.START_DATE >= r2.END_DATE))) AND
 //    r2.ROAD_NUMBER = r.ROAD_NUMBER AND
 //      r2.ROAD_PART_NUMBER = r.ROAD_PART_NUMBER AND
-//      (r2.TRACK_CODE = r.TRACK_CODE OR r.TRACK_CODE = 0 OR r2.TRACK_CODE = 0) AND
+//      (r2.TRACK = r.TRACK OR r.TRACK = 0 OR r2.TRACK = 0) AND
 //      NOT (r2.END_ADDR_M <= r.START_ADDR_M OR r2.START_ADDR_M >= r.END_ADDR_M)
 //    )"""
 //      Q.queryNA[(Long, Long, Long)](query).list
@@ -968,7 +968,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      // valid_to > sysdate because we may expire and query the data again in same transaction
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -978,7 +978,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
 //        where $floating ra.road_number = $roadNumber AND t.id < t2.id and
 //        valid_to is null
-//        ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m
+//        ORDER BY ra.road_number, ra.road_part_number, ra.TRACK, ra.start_addr_m
 //      """
 //      queryList(query)
 //    }
@@ -989,7 +989,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      val history = if (!includesHistory) s" AND ra.END_DATE is null " else ""
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1010,7 +1010,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      val history = if (!includesHistory) s" AND ra.END_DATE is null " else ""
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1045,7 +1045,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //    time(logger, "Fetch road addresses by road number (multi segment link ids)") {
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1089,7 +1089,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      sqlu"""UPDATE ROADWAY
 //        SET road_number = ${roadAddress.roadNumber},
 //           road_part_number= ${roadAddress.roadPartNumber},
-//           track_code = ${roadAddress.track.value},
+//           TRACK = ${roadAddress.track.value},
 //           discontinuity= ${roadAddress.discontinuity.value},
 //           START_ADDR_M= ${roadAddress.startAddrMValue},
 //           END_ADDR_M= ${roadAddress.endAddrMValue},
@@ -1127,7 +1127,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //    sqlu"""UPDATE ROADWAY
 //        SET road_number = ${roadAddress.roadNumber},
 //           road_part_number= ${roadAddress.roadPartNumber},
-//           track_code = ${roadAddress.track.value},
+//           TRACK = ${roadAddress.track.value},
 //           discontinuity= ${roadAddress.discontinuity.value},
 //           START_ADDR_M= ${roadAddress.startAddrMValue},
 //           END_ADDR_M= ${roadAddress.endAddrMValue},
@@ -1321,7 +1321,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        idTableName =>
 //          val query =
 //            s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1351,7 +1351,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      }
 //      val query =
 //        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1401,7 +1401,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //    val query =
 //      s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1432,7 +1432,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        idTableName =>
 //          val query =
 //            s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1469,7 +1469,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
     val roadwayPS = dynamicSession.prepareStatement(
       """
         insert into ROADWAY (id, roadway_number, road_number, road_part_number,
-        track_code, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by,
+        TRACK, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by,
         road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
         TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?)
       """)
@@ -1531,10 +1531,10 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //                (Select Max(ra.end_Date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
 //                FROM ROADWAY r
 //             INNER JOIN (Select  MAX(start_addr_m) as lol FROM ROADWAY rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
-//             rm.valid_to is null AND rm.end_date is null AND track_code in (0,1)) ra
+//             rm.valid_to is null AND rm.end_date is null AND TRACK in (0,1)) ra
 //             on r.START_ADDR_M=ra.lol
 //             WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
-//             r.valid_to is null AND track_code in (0,1)"""
+//             r.valid_to is null AND TRACK in (0,1)"""
 //    Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
 //  }
 //
@@ -1551,7 +1551,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      } else ""
 //
 //      val query =
-//        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
@@ -1580,7 +1580,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //    time(logger, "Get road addresses by filter") {
 //      val query =
 //        s"""
-//         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
@@ -1597,7 +1597,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //  def withRoadAddress(road: Long, roadPart: Long, track: Option[Track], mValue: Option[Double])(query: String): String = {
 //    val trackFilter = track match {
-//      case Some(t) => s"  AND ra.track_code = $t"
+//      case Some(t) => s"  AND ra.TRACK = $t"
 //      case None => ""
 //    }
 //    val mValueFilter = mValue match {
@@ -1610,7 +1610,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //  def withRoadNumber(road: Long, trackCodes: Seq[Int])(query: String): String = {
 //    val trackFilter = if(trackCodes.nonEmpty) {
-//      s" AND ra.TRACK_CODE in (${trackCodes.mkString(",")})"
+//      s" AND ra.TRACK in (${trackCodes.mkString(",")})"
 //    } else {
 //       ""
 //    }
@@ -1619,7 +1619,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //  def withRoadNumberParts(road: Long, roadParts: Seq[Long], trackCodes: Seq[Int])(query: String): String = {
 //    val trackFilter = if(trackCodes.nonEmpty) {
-//      s" AND ra.TRACK_CODE in (${trackCodes.mkString(",")})"
+//      s" AND ra.TRACK in (${trackCodes.mkString(",")})"
 //    } else {
 //      ""
 //    }
@@ -1644,8 +1644,8 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //    query + s" where ra.road_number = $roadNumber " +
 //      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
-//      s" AND ra.TRACK_CODE = $track " + floating + withValidityCheck +
-//      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
+//      s" AND ra.TRACK = $track " + floating + withValidityCheck +
+//      s" ORDER BY ra.road_number, ra.road_part_number, ra.TRACK, ra.start_addr_m "
 //  }
 //
 //  def withLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double])(query: String): String = {
@@ -1709,7 +1709,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //
 //      val query =
 //        s"""
-//         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
@@ -1735,7 +1735,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      }
 //
 //      val query =
-//        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
 //       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
 //       ra.SIDE, ra.adjusted_timestamp,
 //       ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,

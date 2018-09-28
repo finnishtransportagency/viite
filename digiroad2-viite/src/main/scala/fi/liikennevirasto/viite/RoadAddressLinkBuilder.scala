@@ -111,9 +111,9 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 //        if (add.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
 //          add.track.value
 //        } else {
-//          roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+//          roadLink.attributes.getOrElse("TRACK", Track.Unknown.value).toString.toInt
 //        }
-//      case _ => roadLink.attributes.getOrElse("TRACK_CODE", Track.Unknown.value).toString.toInt
+//      case _ => roadLink.attributes.getOrElse("TRACK", Track.Unknown.value).toString.toInt
 //    }
 //
 //    val elyCode: Long = headAddress match {
