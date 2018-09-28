@@ -311,11 +311,9 @@
       });
     };
 
-    this.getCoordinatesFromRoadAddress = function (roadNumber, section, distance, lane) {
-      return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
-        .then(function (x) {
-          return JSON.parse(x);
-        });
+    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, callback) {
+
+      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: 0}, callback);
     };
 
     this.removeProjectLinkSplit = function (data, success, errorCallback) {

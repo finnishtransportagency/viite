@@ -968,6 +968,86 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
 //    }
 //    false
 //  }
+/*
+  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
+    }
+  }
+
+  def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumber(road, tracks))
+    }
+  }
+*/
+  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
+    throw new NotImplementedError("Implement RoadAddressService.getRoadAddressWithRoadNumberAddress")
+    //withDynSession {
+    //  RoadwayDAO.getRoadAddressByFilter(RoadwayDAO.withRoadNumberAddress(road, addrMValue))
+    //}
+  }
+/*
+  def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Seq[Long], tracks: Seq[Int]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumberParts(road, roadParts, tracks))
+    }
+  }
+
+  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
+    }
+  }
+
+  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
+    withDynSession {
+      RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
+    }
+  }
+
+  def getRoadAddressByLinkIds(linkIds: Set[Long], withFloating: Boolean): Seq[RoadAddress] = {
+    withDynTransaction {
+      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, includeHistory = false, includeTerminated = false)
+    }
+  }
+
+  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
+
+    val roadAddresses =
+      withDynTransaction {
+        RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
+      }
+
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+
+    roadAddresses.flatMap { roadAddress =>
+      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+        ChangedRoadAddress(
+          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
+          link = roadLink
+        )
+      }
+    }
+  }
+
+  /**
+    * This will define what road_addresses should have a black outline according to the following rule:
+    * Address must have road type = 3 (MunicipalityStreetRoad)
+    * The length of all addresses in the same road number and road part number that posses road type = 3  must be
+    * bigger than the combined length of ALL the road numbers that have the same road number and road part number divided by 2.
+    *
+    * @param addresses Sequence of all road addresses that were fetched
+    * @return Sequence of road addresses properly tagged in order to get the
+    */
+  private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    time(logger, "Set the black underline") {
+      val typesForBlackUnderline = Set(RoadType.MunicipalityStreetRoad.value, RoadType.PrivateRoadType.value)
+      addresses.map(a => a.copy(blackUnderline = typesForBlackUnderline.contains(a.roadType.value)))
+    }
+  }
+  */
 }
 
 sealed trait RoadClass {
@@ -998,7 +1078,6 @@ object RoadClass {
   case object PrivateRoadClass extends RoadClass { def value = 12; def roads: Range.Inclusive = 50001 to 59999;}
   case object NoClass extends RoadClass { def value = 99; def roads: Range.Inclusive = 0 to 0;}
 }
-
 //TODO check if this is needed
 class Contains(r: Range) {
   def unapply(i: Int): Boolean = r contains i

@@ -343,6 +343,8 @@
     map.on('click', function(event) {
       //The addition of the check for features on point and the selection mode
       // seem to fix the problem with the clicking on the empty map after being in the defloating process would allow a deselection and enabling of the menus
+      if (window.getSelection) {window.getSelection().removeAllRanges();} //removes selection from forms
+      else if (document.selection) {document.selection.empty();}
       var hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}));
       var nonSpecialSelectionType = !_.contains(applicationModel.specialSelectionTypes, applicationModel.getSelectionType().value);
       if (isActiveLayer){

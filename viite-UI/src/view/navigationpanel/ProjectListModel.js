@@ -184,10 +184,10 @@
           return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
         });
 
-        var triggerOpening = function (event) {
+        var triggerOpening = function (event, button) {
           userFilterVisibility(false);
           $('#TRProjectsVisibleCheckbox').prop('checked', false);
-          if (this.className === "project-open btn btn-new-error") {
+          if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
             projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
             eventbus.once("roadAddressProject:reOpenedProject", function (successData) {
               openProjectSteps(event);
@@ -226,15 +226,16 @@
           html += '</table>';
           $('#project-list').html(html);
           $('[id*="open-project"]').click(function (event) {
-            if (parseInt($(this).attr("data-projectStatus")) === projectStatus.SendingToTR.value) {
+            var button = $(this);
+            if (parseInt(button.attr("data-projectStatus")) === projectStatus.SendingToTR.value) {
               new GenericConfirmPopup("Avaamalla tämän projektin sen tila muuttuu Keskeneräiseksi. Haluatko varmasti avata sen?", {
                 successCallback: function () {
-                  triggerOpening(event);
+                  triggerOpening(event, button);
                 },
                 closeCallback: function () {
                 }
               });
-            } else triggerOpening(event);
+            } else triggerOpening(event, button);
           });
         } else {
           html += '</table>';
