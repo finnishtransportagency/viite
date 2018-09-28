@@ -148,9 +148,7 @@ class RoadwayAddressMapper(roadAddressDAO: RoadwayDAO, linearLocationDAO: Linear
 //    val roadwayAddresses = Await.result(roadwayAddressesF, Duration.Inf)
 
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
-    val roadwayAddresses = OracleDatabase.withDynSession {
-      roadAddressDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
-    }
+    val roadwayAddresses = roadAddressDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
 
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }

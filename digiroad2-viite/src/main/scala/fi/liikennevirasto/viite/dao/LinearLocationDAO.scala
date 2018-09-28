@@ -574,7 +574,7 @@ class LinearLocationDAO {
 
   }
 
-  def updateAll(linearLocationAdjustments: List[LinearLocationAdjustment],
+  def updateAll(linearLocationAdjustments: Seq[LinearLocationAdjustment],
                 createdBy: String = "updateLinearLocation"): Unit = {
     for (adjustment <- linearLocationAdjustments) update(adjustment, createdBy)
   }
