@@ -320,7 +320,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllBySectionTrackAndAddresses When valid values of existing roadways Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
-      val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.Combined, Some(0l), Some(100l))
+      val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.Combined, Some(0l), Some(200l))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
       roadways.size should be(2)
