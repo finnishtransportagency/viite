@@ -166,8 +166,8 @@
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
-          if (suravageRoadAddresses[1].length !== 0)
-              eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[1]);
+          if (suravageRoadAddresses[0].length !== 0)
+              eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[0]);
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);

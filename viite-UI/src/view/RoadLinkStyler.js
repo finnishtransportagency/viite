@@ -5,17 +5,17 @@
      */
 
     var strokeWidthRules = [
-        new StyleRule().where('zoomLevel').is(5).use({stroke: {width: 5 }}),
-        new StyleRule().where('zoomLevel').is(6).use({stroke: {width: 5 }}),
-        new StyleRule().where('zoomLevel').is(7).use({stroke: {width: 6 }}),
-        new StyleRule().where('zoomLevel').is(8).use({stroke: {width: 6 }}),
-        new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 6 }}),
-        new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 7 }}),
-        new StyleRule().where('zoomLevel').is(11).use({stroke: {width: 7 }}),
-        new StyleRule().where('zoomLevel').is(12).use({stroke: {width: 9 }}),
-        new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 12 }}),
-        new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 16 }}),
-        new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 16 }})
+        new StyleRule().where('zoomLevel').is(5).use({stroke: {width: 4 }}),
+        new StyleRule().where('zoomLevel').is(6).use({stroke: {width: 4 }}),
+        new StyleRule().where('zoomLevel').is(7).use({stroke: {width: 5 }}),
+        new StyleRule().where('zoomLevel').is(8).use({stroke: {width: 5 }}),
+        new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 5 }}),
+        new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 6 }}),
+        new StyleRule().where('zoomLevel').is(11).use({stroke: {width: 6 }}),
+        new StyleRule().where('zoomLevel').is(12).use({stroke: {width: 8 }}),
+        new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 11 }}),
+        new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 15 }}),
+        new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 15 }})
     ];
 
       var overLayStrokeWidthRules = [
@@ -27,9 +27,9 @@
           new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 5 }}),
           new StyleRule().where('zoomLevel').is(11).use({stroke: {width: 5 }}),
           new StyleRule().where('zoomLevel').is(12).use({stroke: {width: 7 }}),
-          new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 8 }}),
-          new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 8 }}),
-          new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 8 }})
+          new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 10 }}),
+          new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 14 }}),
+          new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 14 }})
       ];
 
       var roadLinkRules = [
@@ -48,9 +48,10 @@
           new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
           new StyleRule().where('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#ff9900', lineCap: 'round'}}),
           new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
-          new StyleRule().where('administrativeClass').is('Municipality').use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
-          new StyleRule().where('administrativeClass').is('Private').and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
-          new StyleRule().where('roadClass').is(99).use({stroke: {color: '#A4A4A2', lineCap: 'round'}})
+          new StyleRule().where('administrativeClass').is('Municipality').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
+          new StyleRule().where('administrativeClass').is('Private').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
+          new StyleRule().where('roadClass').is(99).and('roadLinkSource').isNot(3).use({stroke: {color: '#A4A4A2', lineCap: 'round'}}),
+          new StyleRule().where('roadLinkSource').is(3).and('roadClass').is(99).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
     ];
 
     var overlayRules = [
@@ -69,7 +70,8 @@
        new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
        new StyleRule().where('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#ff9900', lineCap: 'round'}}),
        new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
-       new StyleRule().where('roadClass').is(99).use({stroke: {color: '#A4A4A2', lineCap: 'round'}})
+       new StyleRule().where('roadClass').is(99).and('roadLinkSource').isNot(3).use({stroke: {color: '#A4A4A2', lineCap: 'round'}}),
+       new StyleRule().where('roadLinkSource').is(3).and('roadClass').is(99).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
     ];
 
     var roadLinkStyle = new StyleRuleProvider({});

@@ -497,8 +497,10 @@
       var cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
-      var roadLinks = roadCollection.getAll();
-      var suravageLinks=roadCollection.getSuravageLinks();
+      var suravageLinks = roadCollection.getSuravageLinks();
+      var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
+        return _.contains(_.map(suravageLinks, function(sl){ return sl.linkId;}), rl.linkId);
+      });
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
       me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, suravageMarkerLayer, directionMarkerLayer, calibrationPointLayer]);
 
@@ -654,14 +656,14 @@
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function (link) {
         var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
         var isUnknown = _.every(selectedLink, function(sl) {
-          return sl.anomaly !== Anomaly.None.value && sl.floating !== SelectionType.Floating.value;
+          return sl.anomaly !== Anomaly.None.value && sl.floating !== SelectionType.Floating.value && sl.roadLinkSource !== LinkGeomSource.SuravageLinkInterface.descriptionFI;
         });
         var roads = isUnknown ? geometryChangedLayer.getSource().getFeatures() : roadLayer.layer.getSource().getFeatures();
         var features = [];
         _.each(selectedLink, function (featureLink) {
           if (selectedLinkProperty.canOpenByLinearLocationId(featureLink.linearLocationId)) {
             _.each(roads, function (feature) {
-              if (_.contains(featureLink.selectedIds, feature.linkData.linearLocationId))
+              if (_.contains(featureLink.selectedLinks, feature.linkData.linearLocationId))
                 return features.push(feature);
             });
           } else if (featureLink.linkId !== 0) {

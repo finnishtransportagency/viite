@@ -823,8 +823,6 @@
 
     var filterFeaturesAfterSimulation = function(features){
       var linkIdsToRemove = linkIdsToExclude();
-      if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
-        //Filter the features without said linkIds
         if(linkIdsToRemove.length !== 0){
           return _.reject(features, function(feature){
               return _.contains(linkIdsToRemove, feature.linkData.linkId);
@@ -832,11 +830,10 @@
         } else {
           return features;
         }
-      } else return features;
     };
 
     var linkIdsToExclude = function(){
-      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep())).map(function(feature){
+      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep()).concat(roadCollection.getSuravageLinks())).map(function(feature){
         return feature.linkId;
       }).uniq().value();
     };

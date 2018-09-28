@@ -41,7 +41,7 @@
         var directionMarkerColor= function(roadLink){
             if(roadLink.status === LinkValues.LinkStatus.New.value){
                 return '#ff55dd';
-            } else if (roadLink.roadLinkSource === LinkValues.LinkGeomSource.SuravageLinkInterface.value && roadLink.id === 0) {
+            } else if (roadLink.roadLinkSource === LinkValues.LinkGeomSource.SuravageLinkInterface.value && roadLink.linearLocationId === 0) {
                 return '#d3aff6';
             }
             else if (roadLink.roadClass in colorMap) {
@@ -84,11 +84,6 @@
       box.linkData = roadlink;
       return box;
     };
-
-      var getBounds = function(lon, lat) {
-          return [lon, lat, lat, lon];
-      };
-
 
       var calculateMiddlePoint = function(link){
       var points = _.map(link.points, function(point) {
