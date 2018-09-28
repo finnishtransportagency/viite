@@ -434,7 +434,36 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO Test naming convention: Test <Method> When <State Under Test> Then <Expected Behavior>
+  // TODO Should the end date of the roadway be taken in account in fetchAllByBetweenDates query as well?
+
+  // fetchAllCurrentRoadNumbers
+
+  test("Test fetchAllCurrentRoadNumbers When search Then return all current road numbers") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2, testRoadway3))
+      val numbers = dao.fetchAllCurrentRoadNumbers()
+      numbers should contain(roadNumber1)
+      numbers should contain(roadNumber2)
+    }
+  }
+
+  // fetchAllRoadAddressErrors
+
+  test("Test fetchAllRoadAddressErrors When fetch excluding history Then return addresses with errors") {
+    runWithRollback {
+      val errors = dao.fetchAllRoadAddressErrors()
+      // errors.size should be > 0
+      // TODO Test data could include some error cases
+    }
+  }
+
+  test("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
+    runWithRollback {
+      val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
+      // errors.size should be > 0
+      // TODO Test data could include some error cases
+    }
+  }
 
   //TODO test the constraints ROADWAY_HISTORY_UK and TERMINATION_END_DATE_CHK
   test("insert roadway duplicate info check") {
