@@ -33,8 +33,8 @@
     roadLayer.set('name', 'roadLayer');
 
     function vectorLayerStyle(feature) {
-      return [roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()}),
-              roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()})];
+      return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()}),
+          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()})];
     }
 
     var loadFeatures = function (features) {
