@@ -336,6 +336,49 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  // fetchAllBySectionAndAddresses
+
+  test("Test fetchAllBySectionAndAddresses When non-existing road number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchAllBySectionAndAddresses(nonExistingRoadNumber, 1l, Some(0l), Some(100l)).size should be(0)
+    }
+  }
+
+  test("Test fetchAllBySectionAndAddresses When non-existing road part numbers Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchAllBySectionAndAddresses(roadNumber1, -9999l, Some(0l), Some(100l)).size should be(0)
+    }
+  }
+
+  test("Test fetchAllBySectionAndAddresses When non-existing road address Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2, testRoadway3))
+      dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, Some(1000l), Some(1100l)).size should be(0)
+    }
+  }
+
+  test("Test fetchAllBySectionAndAddresses When valid values of existing roadways Then return roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
+      val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, Some(0l), Some(200l))
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.size should be(2)
+    }
+  }
+
+  test("Test fetchAllBySectionAndAddresses When existing road number and road part numbers and multiple tracks Then return roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(track = Track.RightSide, roadPartNumber = 1l), testRoadway3))
+      val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, Some(0l), Some(100l))
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.size should be(1)
+    }
+  }
+
+
   // TODO Test naming convention: Test <Method> When <State Under Test> Then <Expected Behavior>
 
   //TODO test the constraints ROADWAY_HISTORY_UK and TERMINATION_END_DATE_CHK
