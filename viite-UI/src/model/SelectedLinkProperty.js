@@ -39,14 +39,14 @@
       }
     };
 
-    var isSingleLinkSelection = function() {
+    /*var isSingleLinkSelection = function() {
       return current.length === 1;
-    };
+    };*/
 
-    var isDifferingSelection = function(singleLinkSelect) {
+    /*var isDifferingSelection = function(singleLinkSelect) {
       return (!_.isUndefined(singleLinkSelect) &&
       (singleLinkSelect !== isSingleLinkSelection()));
-    };
+    };*/
 
     var setCurrent = function(data){
       current = data;
@@ -132,10 +132,10 @@
         } else {
           openDoubleClick(data);
         }
-        var currentFloatings = getCurrentFloatings();
+        /*var currentFloatings = getCurrentFloatings();
         if (!_.isEmpty(currentFloatings)) {
           setSources(currentFloatings);
-        }
+        }*/
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -214,11 +214,11 @@
         if(!applicationModel.isReadOnly() && get()[0].anomaly === Anomaly.NoAddressGiven.value){
           addToFeaturesToKeep(data4Display);
         }
-        if(!_.isEmpty(getFeaturesToKeep()) && !isLinkIdInFeaturesToKeep(linkId)){
+        if(!_.isEmpty(getFeaturesToKeep()) && !isLinkIdInFeaturesToKeep(data.linkId)){
           addToFeaturesToKeep(data4Display);
         }
         var contains = _.find(getFeaturesToKeep(), function(fk){
-          return fk.linkId === linkId;
+          return fk.linkId === data.linkId;
         });
 
         if(!_.isEmpty(getFeaturesToKeep()) && _.isUndefined(contains)){
@@ -243,7 +243,7 @@
           if (s.id !== LinkValues.UnknownRoadId && s.id !== LinkValues.NewRoadId) {
             return s.id === vf.linkData.id && s.mmlId === vf.linkData.mmlId;
           } else {
-            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.roadLinkType === vf.linkData.roadLinkType && s.anomaly === vf.linkData.anomaly;
+            return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.floating === vf.linkData.floating && s.anomaly === vf.linkData.anomaly;
           }
         }));
       });
