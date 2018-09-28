@@ -461,7 +461,7 @@ class RoadwayDAO extends BaseDAO {
 
   private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
       val addressFilter = (startAddrMOption, endAddrMOption) match {
-        case (Some(startAddrM), Some(endAddrM)) => s"""and (a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM}) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
+        case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
         case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
         case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
         case _ => s""""""
@@ -471,7 +471,7 @@ class RoadwayDAO extends BaseDAO {
 
   private def withSectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
     val addressFilter = (startAddrMOption, endAddrMOption) match {
-      case (Some(startAddrM), Some(endAddrM)) => s"""and (a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM}) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
+      case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
       case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
       case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
       case _ => s""""""
