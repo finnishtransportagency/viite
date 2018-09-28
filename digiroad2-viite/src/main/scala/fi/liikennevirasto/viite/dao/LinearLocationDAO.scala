@@ -552,24 +552,36 @@ class LinearLocationDAO {
 
   }
 
-  def update(linearLocationAdjustment: LinearLocationAdjustment,
+  def update(adjustment: LinearLocationAdjustment,
              createdBy: String = "updateLinearLocation"): Unit = {
 
     // Expire old row
-    val expired: LinearLocation = fetchById(linearLocationAdjustment.linearLocationId).getOrElse(
-      throw new IllegalStateException(s"""Failed to update linear location ${linearLocationAdjustment.linearLocationId}. Linear location not found."""))
-    expireByIds(Set(linearLocationAdjustment.linearLocationId))
+    val expired: LinearLocation = fetchById(adjustment.linearLocationId).getOrElse(
+      throw new IllegalStateException(s"""Failed to update linear location ${adjustment.linearLocationId}. Linear location not found."""))
+    expireByIds(Set(adjustment.linearLocationId))
 
     // Create new row
-    val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
-    (startM, endM) match {
-      case (Some(s), Some(e)) =>
-        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, startMValue = s, endMValue = e)), createdBy)
-      case (_, Some(e)) =>
-        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, endMValue = e)), createdBy)
-      case (Some(s), _) =>
-        create(Seq(expired.copy(id = NewLinearLocation, linkId = linearLocationAdjustment.linkId, startMValue = s)), createdBy)
-      case _ =>
+    val (startM, endM, geometry) = (adjustment.startMeasure, adjustment.endMeasure, adjustment.geometry)
+    if (geometry.isEmpty) {
+      (startM, endM) match {
+        case (Some(s), Some(e)) =>
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s, endMValue = e)), createdBy)
+        case (_, Some(e)) =>
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, endMValue = e)), createdBy)
+        case (Some(s), _) =>
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s)), createdBy)
+        case _ =>
+      }
+    } else {
+      (startM, endM) match {
+        case (Some(s), Some(e)) =>
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, startMValue = s, endMValue = e)), createdBy)
+        case (_, Some(e)) =>
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, endMValue = e)), createdBy)
+        case (Some(s), _) =>
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, startMValue = s)), createdBy)
+        case _ =>
+      }
     }
 
   }

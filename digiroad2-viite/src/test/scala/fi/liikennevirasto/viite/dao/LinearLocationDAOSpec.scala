@@ -384,7 +384,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val startM = 1.1
       val endM = 2.2
-      linearLocationDAO.update(LinearLocationAdjustment(id2, linkId2, Some(startM), Some(endM)), createdBy = "test")
+      linearLocationDAO.update(LinearLocationAdjustment(id2, linkId2, Some(startM), Some(endM),
+        Seq(Point(0.0, 0.0), Point(0.0, 1.1))), createdBy = "test")
 
       // Original linear location should be expired
       val expired = linearLocationDAO.fetchById(id2).getOrElse(fail())
@@ -397,17 +398,36 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val updated = locations.head
       updated.startMValue should be(startM +- 0.001)
       updated.endMValue should be(endM +- 0.001)
+      updated.geometry.head.x should be(0.0)
+      updated.geometry.head.y should be(0.0)
+      updated.geometry.last.x should be(0.0)
+      updated.geometry.last.y should be(1.1)
 
       // Update only startM
-      linearLocationDAO.update(LinearLocationAdjustment(updated.id, linkId2, Some(startM - 1), None), createdBy = "test")
+      linearLocationDAO.update(LinearLocationAdjustment(updated.id, linkId2, Some(startM - 1), None,
+        Seq(Point(0.0, 0.0), Point(0.0, 2.1))), createdBy = "test")
       val updated2 = linearLocationDAO.fetchByLinkId(Set(updated.linkId)).head
       updated2.startMValue should be(startM - 1 +- 0.001)
       updated2.endMValue should be(endM +- 0.001)
+      updated2.geometry.head.x should be(0.0)
+      updated2.geometry.head.y should be(0.0)
+      updated2.geometry.last.x should be(0.0)
+      updated2.geometry.last.y should be(2.1)
 
       // Update linkId and endM
-      linearLocationDAO.update(LinearLocationAdjustment(updated2.id, 999999999l, None, Some(9999.9)), createdBy = "test")
-      val locations3 = linearLocationDAO.fetchByLinkId(Set(updated2.linkId))
-      locations3.size should be(0)
+      val linkId3 = 999999999l
+      val endM3 = 9999.9
+      linearLocationDAO.update(LinearLocationAdjustment(updated2.id, linkId3, None, Some(endM3),
+        Seq(Point(0.0, 0.0), Point(0.0, 9999.9))), createdBy = "test")
+      val expired2 = linearLocationDAO.fetchByLinkId(Set(updated2.linkId))
+      expired2.size should be(0)
+      val updated3 = linearLocationDAO.fetchByLinkId(Set(linkId3)).head
+      updated3.linkId should be(linkId3)
+      updated3.endMValue should be(endM3)
+      updated3.geometry.head.x should be(0.0)
+      updated3.geometry.head.y should be(0.0)
+      updated3.geometry.last.x should be(0.0)
+      updated3.geometry.last.y should be(9999.9)
 
     }
   }
