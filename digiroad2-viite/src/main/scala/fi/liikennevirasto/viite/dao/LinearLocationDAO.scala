@@ -175,7 +175,7 @@ class LinearLocationDAO {
 
   val selectFromLinearLocation =
     """
-    select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.side_code,
+    select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
       loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
       loc.valid_from, loc.valid_to
     from LINEAR_LOCATION loc cross join
@@ -201,7 +201,7 @@ class LinearLocationDAO {
 
   def create(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Seq[Long] = {
     val ps = dynamicSession.prepareStatement(
-      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, side_code,
+      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
         cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")

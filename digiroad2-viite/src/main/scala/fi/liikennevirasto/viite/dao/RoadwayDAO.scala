@@ -624,7 +624,7 @@ class RoadwayDAO extends BaseDAO {
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
 //        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
 //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
@@ -739,7 +739,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -774,7 +774,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //          s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL and ${dateFilter(table = "rn")})
 //        $networkData
@@ -819,7 +819,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -848,7 +848,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //            s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -880,7 +880,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //            s"""
 //              select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //              ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//              ra.side_code, ra.adjusted_timestamp,
+//              ra.SIDE, ra.adjusted_timestamp,
 //              ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //              (SELECT max(rn.road_name) FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.VALID_TO IS NULL AND ${dateFilter(table = "rn")})
 //              $networkData
@@ -914,7 +914,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //            s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -970,7 +970,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -991,7 +991,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//          ra.side_code, ra.adjusted_timestamp,
+//          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //          from ROADWAY ra cross join
@@ -1012,7 +1012,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//          ra.side_code, ra.adjusted_timestamp,
+//          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //          from ROADWAY ra cross join
@@ -1047,7 +1047,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -1323,7 +1323,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //            s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -1353,7 +1353,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -1403,7 +1403,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL and rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -1434,7 +1434,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //            s"""
 //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -1553,7 +1553,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      val query =
 //        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
+//        ra.SIDE, ra.adjusted_timestamp,
 //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join
@@ -1582,7 +1582,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//          ra.side_code, ra.adjusted_timestamp,
+//          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
 //          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
@@ -1711,7 +1711,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //        s"""
 //         select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//          ra.side_code, ra.adjusted_timestamp,
+//          ra.SIDE, ra.adjusted_timestamp,
 //          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
 //          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
 //          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
@@ -1737,7 +1737,7 @@ val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 //      val query =
 //        s"""select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
 //       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//       ra.side_code, ra.adjusted_timestamp,
+//       ra.SIDE, ra.adjusted_timestamp,
 //       ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
 //       (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
 //        from ROADWAY ra cross join

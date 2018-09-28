@@ -71,7 +71,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     // TODO
     TestTransactions.runWithRollback() {
       val roadsToBeConverted = Seq(
-        //               TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                LOPPUPVM               MUUTOSPVM              -     ELY TIETYYPPI -, LINKID    KAYTTAJA      ALKUX             ALKUY              LOPPUX            LOPPUY             (LRMID)        AJORATAID  SIDE_CODE
+        //               TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                LOPPUPVM               MUUTOSPVM              -     ELY TIETYYPPI -, LINKID    KAYTTAJA      ALKUX             ALKUY              LOPPUX            LOPPUY             (LRMID)        AJORATAID  SIDE
         ConversionAddress(25, 756,  22, 5,     1,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 6656730L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082),  7465456,   Unknown),
         ConversionAddress(25, 765,  22, 5,     1,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 6656730L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 148122173, Unknown),
         ConversionAddress(25, 694,  22, 5,     1,  756,  0,   62,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 6656730L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 7465931,   Unknown),
@@ -178,7 +178,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     TestTransactions.runWithRollback() {
       val roadsToBeConverted = Seq(
-        //                    TIE AOSA  AJR JATKUU AET   LET    ALKU LOPPU ALKUPVM                LOPPUPVM               MUUTOSPVM              -     ELY TIETYYPPI -, LINKID KAYTTAJA ALKUX             ALKUY              LOPPUX            LOPPUY             (LRMID) AJORATAID SIDE_CODE
+        //                    TIE AOSA  AJR JATKUU AET   LET    ALKU LOPPU ALKUPVM                LOPPUPVM               MUUTOSPVM              -     ELY TIETYYPPI -, LINKID KAYTTAJA ALKUX             ALKUY              LOPPUX            LOPPUY             (LRMID) AJORATAID SIDE
         ConversionAddress(25, 765,  22, 5,     1000, 1100,    0, 100,  Some(d("02.01.2010")), None,                         Some(d("03.01.2010")), None, 1,  1,        0, 1000L, "test",  Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 10000,    Unknown),
         ConversionAddress(25, 765,  22, 5,     1100, 1200,  100, 200,  Some(d("02.01.2010")), None,                         Some(d("03.01.2010")), None, 1,  1,        0, 1000L, "test",  Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 11111,    Unknown),
         ConversionAddress(25, 765,  22, 5,     1200, 1300,  200, 300,  Some(d("02.01.2010")), None,                         Some(d("03.01.2010")), None, 1,  1,        0, 1000L, "test",  Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 11111,    Unknown),

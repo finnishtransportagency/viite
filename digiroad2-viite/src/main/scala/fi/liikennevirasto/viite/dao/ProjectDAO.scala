@@ -205,7 +205,7 @@ object ProjectDAO {
   private val projectLinkQueryBase =
     s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
-  PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE_CODE,
+  PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.link_id, PROJECT_LINK.GEOMETRY,
   (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
   PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROADWAY_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
@@ -234,7 +234,7 @@ object ProjectDAO {
     s"""
         select plh.ID, plh.PROJECT_ID, plh.TRACK_CODE, plh.DISCONTINUITY_TYPE,
           plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.START_ADDR_M, plh.END_ADDR_M,
-          plh.START_MEASURE, plh.END_MEASURE, plh.SIDE_CODE,
+          plh.START_MEASURE, plh.END_MEASURE, plh.SIDE,
           plh.CREATED_BY, plh.MODIFIED_BY, plh.link_id, plh.GEOMETRY,
           (plh.END_MEASURE - plh.START_MEASURE) as length, plh.CALIBRATION_POINTS, plh.STATUS,
           plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROADWAY_ID, plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
@@ -326,7 +326,7 @@ object ProjectDAO {
         "road_number, road_part_number, " +
         "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
         "calibration_points, status, road_type, ROADWAY_ID, connected_link_id, ely, reversed, geometry, " +
-        "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
+        "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
         "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewRoadway)
       val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
@@ -391,7 +391,7 @@ object ProjectDAO {
 //      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
 //        "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
 //        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-//        "SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
+//        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
 //
 //      for (projectLink <- links) {
 //        projectLinkPS.setLong(1, projectLink.roadNumber)
@@ -951,7 +951,7 @@ object ProjectDAO {
         s" STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue}, " +
         s" CALIBRATION_POINTS = ${CalibrationCode.getFromAddress(roadAddress).value}, CONNECTED_LINK_ID = null, REVERSED = 0, " +
         s" CALIBRATION_POINTS_SOURCE = ${CalibrationPointSource.RoadAddressSource.value}, " +
-        s" SIDE_CODE = ${roadAddress.sideCode.value}, " +
+        s" SIDE = ${roadAddress.sideCode.value}, " +
         s" start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry" +
         s" WHERE ROADWAY_ID = ${roadAddress.id} AND PROJECT_ID = $projectId"
       Q.updateNA(updateProjectLink).execute
@@ -976,7 +976,7 @@ object ProjectDAO {
       val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-        s"side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END) " +
+        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END) " +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
       Q.updateNA(updateProjectLink).execute
@@ -1110,7 +1110,7 @@ object ProjectDAO {
       sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE,
               ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
                MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROADWAY_ID, CONNECTED_LINK_ID, ELY,
-                REVERSED, GEOMETRY, SIDE_CODE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
+                REVERSED, GEOMETRY, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
                  LINK_SOURCE, CALIBRATION_POINTS_SOURCE
           FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
     sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
