@@ -147,7 +147,7 @@ class AssetDataImporter {
             	AND ROADWAY.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
             	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
             	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
-            	AND ROADWAY.TRACK_CODE = rw.TRACK_CODE
+            	AND ROADWAY.TRACK = rw.TRACK
             	AND ROADWAY.ENd_date = rw.start_date
             	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
 

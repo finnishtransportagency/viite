@@ -701,8 +701,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //
 //      //Creation of test ROADWAY_CHANGES
 //      sqlu"""insert into ROADWAY_CHANGES
-//             (project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
-//              old_road_number,old_road_part_number,old_track_code,old_start_addr_m,old_end_addr_m)
+//             (project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
+//              old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m)
 //             Values ($projectId,1,$roadNumber,$roadPartNumber,0,0,10,2,1,8,$roadNumber,$roadPartNumber,0,0,10)""".execute
 //
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
@@ -798,8 +798,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //
 //      //Creation of test ROADWAY_CHANGES
 //      sqlu"""insert into ROADWAY_CHANGES
-//             (project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
-//              old_road_number,old_road_part_number,old_track_code,old_start_addr_m,old_end_addr_m)
+//             (project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
+//              old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m)
 //             Values ($projectId,5,$roadNumber,$roadPartNumber,1,0,10,1,1,8,$roadNumber,$roadPartNumber,1,0,10)""".execute
 //
 //      projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)

@@ -165,16 +165,16 @@ object RoadwayChangesDAO {
     val projectIdsString = projectIds.mkString(",")
     val withProjectIds = s""" where rac.project_id in ($projectIdsString)"""
     val query = s"""Select p.id as project_id, p.name, p.created_by, p.created_date, p.start_date, p.modified_by,
-                p.modified_date, rac.new_ely, rac.change_type, rac.old_road_number, rac.old_track_code,
+                p.modified_date, rac.new_ely, rac.change_type, rac.old_road_number, rac.old_TRACK,
                 rac.old_road_part_number, rac.old_road_part_number,
-                rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_track_code,
+                rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_TRACK,
                 rac.new_road_part_number, rac.new_road_part_number,
                 rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, rac.old_road_type,
                 rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed
                 From ROADWAY_CHANGES rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
                 ORDER BY COALESCE(rac.new_road_number, rac.old_road_number), COALESCE(rac.new_road_part_number, rac.old_road_part_number),
-                  COALESCE(rac.new_start_addr_m, rac.old_start_addr_m), COALESCE(rac.new_track_code, rac.old_track_code),
+                  COALESCE(rac.new_start_addr_m, rac.old_start_addr_m), COALESCE(rac.new_TRACK, rac.old_TRACK),
                   CHANGE_TYPE DESC"""
     queryList(query)
   }
@@ -265,7 +265,7 @@ object RoadwayChangesDAO {
           case Some(ely) =>
             val roadwayChangePS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES " +
               "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
-              "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
+              "old_TRACK,new_TRACK,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
               "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
             val terminated = ProjectDeltaCalculator.partition(delta.terminations)
