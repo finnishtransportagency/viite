@@ -107,7 +107,7 @@
     };
 
     var isOnLinearLocation = function(data) {
-      return !_.isUndefined(data) && !_.isUndefined(data.linearLocationId);
+      return !_.isUndefined(data) && !_.isUndefined(data.linearLocationId) && data.linearLocationId !== 0;
     };
 
     var openSingleClick = function (data) {
