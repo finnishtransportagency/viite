@@ -432,6 +432,48 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Update linear location without geometry") {
+    runWithRollback {
+      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val (linkId1, linkId2) = (111111111l, 222222222l)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+
+      val startM = 1.1
+      val endM = 2.2
+      linearLocationDAO.update(LinearLocationAdjustment(id2, linkId2, Some(startM), Some(endM), Seq()), createdBy = "test")
+
+      // Original linear location should be expired
+      val expired = linearLocationDAO.fetchById(id2).getOrElse(fail())
+      expired.validTo.nonEmpty should be(true)
+      val unChanged = linearLocationDAO.fetchById(id1).getOrElse(fail())
+      unChanged.validTo.isEmpty should be(true)
+
+      // New linear location should have new startM and endM
+      val locations = linearLocationDAO.fetchByLinkId(Set(linkId2))
+      val updated = locations.head
+      updated.startMValue should be(startM +- 0.001)
+      updated.endMValue should be(endM +- 0.001)
+
+      // Update only startM
+      linearLocationDAO.update(LinearLocationAdjustment(updated.id, linkId2, Some(startM - 1), None, Seq()), createdBy = "test")
+      val updated2 = linearLocationDAO.fetchByLinkId(Set(updated.linkId)).head
+      updated2.startMValue should be(startM - 1 +- 0.001)
+      updated2.endMValue should be(endM +- 0.001)
+
+      // Update linkId and endM
+      val linkId3 = 999999999l
+      val endM3 = 9999.9
+      linearLocationDAO.update(LinearLocationAdjustment(updated2.id, linkId3, None, Some(endM3), Seq()), createdBy = "test")
+      val expired2 = linearLocationDAO.fetchByLinkId(Set(updated2.linkId))
+      expired2.size should be(0)
+      val updated3 = linearLocationDAO.fetchByLinkId(Set(linkId3)).head
+      updated3.linkId should be(linkId3)
+      updated3.endMValue should be(endM3)
+
+    }
+  }
+
   test("Update geometry - no flipping of the side code") {
     runWithRollback {
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
