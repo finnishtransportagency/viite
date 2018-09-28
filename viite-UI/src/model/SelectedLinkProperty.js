@@ -253,8 +253,8 @@
     var processOl3Features = function (visibleFeatures) {
       var selectedOL3Features = _.filter(visibleFeatures, function (vf) {
         return (_.some(get().concat(featuresToKeep), function (s) {
-          if (s.id !== LinkValues.UnknownRoadId && s.id !== LinkValues.NewRoadId) {
-            return s.id === vf.linkData.id && s.mmlId === vf.linkData.mmlId;
+          if (s.linearLocationId !== LinkValues.UnknownRoadId && s.linearLocationId !== LinkValues.NewRoadId) {
+            return s.linearLocationId === vf.linkData.linearLocationId && s.mmlId === vf.linkData.mmlId;
           } else {
             return s.linkId === vf.linkData.linkId && s.mmlId === vf.linkData.mmlId && s.floating === vf.linkData.floating && s.anomaly === vf.linkData.anomaly;
           }
