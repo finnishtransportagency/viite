@@ -380,6 +380,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  // TODO Could this be renamed to fetchAllByDateRange?
   def fetchAllByBetweenDates(sinceDate: DateTime, untilDate: DateTime): Seq[Roadway] = {
     time(logger, "Fetch road address by dates") {
       fetch(withBetweenDates(sinceDate, untilDate))
