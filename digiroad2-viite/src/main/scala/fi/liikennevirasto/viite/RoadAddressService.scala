@@ -157,7 +157,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
 
     val allRoadLinks = roadLinks ++ Await.result(suravageRoadLinksF, atMost = Duration.create(1, TimeUnit.HOURS))
 
-    //TODO Road network error RoadNetworkDAO.getLatestRoadNetworkVersion.nonEmpty or use current date
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
         linearLocationDAO.fetchRoadwayByLinkId(allRoadLinks.map(_.linkId).toSet)
@@ -170,7 +169,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadAddressDAO: Roadw
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
     val roadAddresses = withDynSession {
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
+      RoadNetworkDAO.getLatestRoadNetworkVersionId match {
+        case Some(roadNetworkId) => roadwayAddressMapper.getNetworkVersionRoadAddressesByLinearLocation(adjustedLinearLocations, roadNetworkId)
+        case _ => roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations)
+      }
     }
 
     roadAddresses.flatMap{ra =>
