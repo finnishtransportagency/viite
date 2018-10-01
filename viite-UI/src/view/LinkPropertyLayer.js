@@ -243,7 +243,7 @@
       if (isActiveLayer)
         _.defer(function(){
           if (selectedLinkProperty.get().length === 0 && map.getView().getZoom() <= 13) {
-            map.getView().setZoom(map.getView().getZoom() + 1);
+            map.getView().setZoom(Math.abs(map.getView().getZoom() + 1));
           }
         });
     };
@@ -1247,7 +1247,8 @@
     };
 
     me.eventListener.listenTo(eventbus, 'linkProperty:fetch', function() {
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), map.getView().getZoom() + 1);
+      map.getView().setZoom(Math.round(map.getView().getZoom()));
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','),map.getView().getZoom() + 1);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:activateInteractions', function(){

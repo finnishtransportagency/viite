@@ -78,7 +78,7 @@
     roadLinkStyle.addRules(roadLinkRules);
     roadLinkStyle.addRules(strokeWidthRules);
 
-    var overlayStyle = new StyleRuleProvider({zIndex:99});
+    var overlayStyle = new StyleRuleProvider({zIndex: LinkValues.RoadZIndex.HistoricRoadLayer.value});
     overlayStyle.addRules(overlayRules);
     overlayStyle.addRules(overLayStrokeWidthRules);
 
