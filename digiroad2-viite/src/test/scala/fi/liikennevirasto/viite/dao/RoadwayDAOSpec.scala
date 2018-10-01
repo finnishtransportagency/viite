@@ -537,7 +537,22 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   // fetchAllByRoad
 
-  // TODO
+  test("Test fetchAllByRoad When non-existing road number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchAllByRoad(nonExistingRoadNumber).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoad When existing road number Then return roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2, testRoadway3))
+      val roadways = dao.fetchAllByRoad(roadNumber1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.size should be(2)
+    }
+  }
 
   // fetchAllByRoadwayNumbers
 
