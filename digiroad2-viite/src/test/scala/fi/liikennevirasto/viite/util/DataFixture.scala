@@ -274,11 +274,11 @@ object DataFixture {
     val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
     val projectCount=projectsIDs.size
     var c=0
-    projectsIDs.foreach(x=>
+    projectsIDs.foreach(proj=>
     {
       c+=1
       println("Updating Geometry for project " +c+ "/"+projectCount)
-      projectService.updateProjectLinkSdoGeometry(x,"BJ")
+      projectService.updateProjectLinkSdoGeometry(proj,"BJ")
     })
 
   }
