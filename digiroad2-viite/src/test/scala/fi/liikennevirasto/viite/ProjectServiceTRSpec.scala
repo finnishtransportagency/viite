@@ -102,31 +102,33 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("update ProjectStatus when TR saved") {
-    val sent2TRState = ProjectState.apply(2) //notfinnished
-    val savedState = ProjectState.apply(5)
-    val projectId = 0
-    val addresses = List(ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-    val roadAddressProject = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
-    runWithRollback {
-      val saved = projectService.createRoadLinkProject(roadAddressProject)
-      val stateaftercheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "", saved.id)
-      stateaftercheck.description should be(ProjectState.Saved2TR.description)
-    }
+  //TODO Will be implemented at VIITE-1539
+//  test("update ProjectStatus when TR saved") {
+//    val sent2TRState = ProjectState.apply(2) //notfinnished
+//    val savedState = ProjectState.apply(5)
+//    val projectId = 0
+//    val addresses = List(ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+//    val roadAddressProject = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
+//    runWithRollback {
+//      val saved = projectService.createRoadLinkProject(roadAddressProject)
+//      val stateaftercheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "", saved.id)
+//      stateaftercheck.description should be(ProjectState.Saved2TR.description)
+//    }
+//
+//  }
 
-  }
-
-  test("Update to TRerror state") {
-    val sent2TRState = ProjectState.apply(2) //notfinnished
-    val savedState = ProjectState.apply(3)
-    val projectId = 0
-    val addresses = List(ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-    val roadAddressProject = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
-    runWithRollback {
-      val saved = projectService.createRoadLinkProject(roadAddressProject)
-      val stateaftercheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "failed", saved.id)
-      stateaftercheck.description should be(ProjectState.ErrorInTR.description)
-    }
-
-  }
+  //TODO Will be implemented at VIITE-1539
+//  test("Update to TRerror state") {
+//    val sent2TRState = ProjectState.apply(2) //notfinnished
+//    val savedState = ProjectState.apply(3)
+//    val projectId = 0
+//    val addresses = List(ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+//    val roadAddressProject = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
+//    runWithRollback {
+//      val saved = projectService.createRoadLinkProject(roadAddressProject)
+//      val stateaftercheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "failed", saved.id)
+//      stateaftercheck.description should be(ProjectState.ErrorInTR.description)
+//    }
+//
+//  }
 }
