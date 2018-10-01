@@ -26,9 +26,6 @@ import fi.liikennevirasto.viite._
 import scala.util.control.NonFatal
 
 
-/**
-  * Created by venholat on 12.9.2016.
-  */
 class RoadwayDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
@@ -537,6 +534,18 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadway.validTo should be(None)
     }
   }
+
+  // fetchAllByRoad
+
+  // TODO
+
+  // fetchAllByRoadwayNumbers
+
+  // TODO
+
+  // fetchAllByRoadwayNumbers
+
+  // TODO
 
   //TODO will be implemented at VIITE-1552
   //  test("insert road address m-values overlap") {
