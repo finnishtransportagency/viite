@@ -45,113 +45,119 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
+
+  test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should return road addresses on normal and history road links") {
+    //Check method calls in road address service
   }
 
-  private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
-    calibrationPoint match {
-      case Some(point) =>
-        val mValue = point.segmentMValue match {
-          case 0.0 => 0.0
-          case _ => Math.min(point.segmentMValue, GeometryUtils.geometryLength(geometry))
-        }
-        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, mValue)), ("value", point.addressMValue)).toMap)
-      case _ => None
-    }
+  test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should not filter out floatings") {
+    //Mock floating returns
   }
 
-  def roadAddressLinkToApi(roadLink: RoadAddressLink): Map[String, Any] = {
-    Map(
-      "segmentId" -> roadLink.id,
-      "linkId" -> roadLink.linkId,
-      "mmlId" -> roadLink.attributes.get("MTKID"),
-      "points" -> roadLink.geometry,
-      "calibrationPoints" -> Seq(calibrationPoint(roadLink.geometry, roadLink.startCalibrationPoint),
-        calibrationPoint(roadLink.geometry, roadLink.endCalibrationPoint)),
-      "administrativeClass" -> roadLink.administrativeClass.toString,
-      "linkType" -> roadLink.linkType.value,
-      "modifiedAt" -> roadLink.modifiedAt,
-      "modifiedBy" -> roadLink.modifiedBy,
-      "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
-      "verticalLevel" -> roadLink.attributes.get("VERTICALLEVEL"),
-      "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
-      "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
-      "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
-      "minAddressNumberRight" -> roadLink.attributes.get("FROM_RIGHT"),
-      "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
-      "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
-      "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
-      "roadNumber" -> roadLink.roadNumber,
-      "roadPartNumber" -> roadLink.roadPartNumber,
-      "elyCode" -> roadLink.elyCode,
-      "trackCode" -> roadLink.trackCode,
-      "startAddressM" -> roadLink.startAddressM,
-      "endAddressM" -> roadLink.endAddressM,
-      "discontinuity" -> roadLink.discontinuity,
-      "endDate" -> roadLink.endDate,
-      "roadwayId" -> roadLink.roadwayNumber) // TODO Rename roadwayId to roadwayNumber
+  test("Test getRoadAddressesWithLinearGeometry When municipality has road addresses on top of suravage and complementary road links Then return all the road addresses") {
+    //Mock floating returns
   }
 
-  test("test getRoadLinkFromVVH should have specific fields (still to be defined) not empty") {
-
-    OracleDatabase.withDynTransaction {
-
-      val roadLinks = Seq(RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834, 0.0), Point(533388.14110884, 6994014.1296834, 0.0)),
-        0.0, Municipality, UnknownLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,
-        Some("Vt5"), None, BigInt(0), None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01",
-        0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123))
-      val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(roadLinks)
-      partitionedRoadLinks.map {
-        _.map(roadAddressLinkToApi)
-      }
-      val roadPartNumber = partitionedRoadLinks.head.head.roadPartNumber
-      val roadNumber = partitionedRoadLinks.head.head.roadNumber
-      val trackCode = partitionedRoadLinks.head.head.trackCode
-      val segmentId = partitionedRoadLinks.head.head.id
-      val constructionType = partitionedRoadLinks.head.head.constructionType.value
-      val roadwayNumber = partitionedRoadLinks.head.head.roadwayNumber
-
-      segmentId should not be None
-      roadNumber should be(5)
-      roadPartNumber should be(205)
-      trackCode should be(1)
-      constructionType should be(0)
-      roadwayNumber should be(123)
-    }
+  test("Test getRoadAddressesWithLinearGeometry When called by any bounding box and any road number limits Then should not return floatings") {
+    //Mock floating returns
   }
 
-  test("Check the correct return of a RoadAddressLink by Municipality") {
-    val municipalityId = 235
+  test("Test getAllByMunicipality When exists road network version Then returns road addresses of that version") {
 
-    val modifificationDate = "1455274504000l"
-    val modificationUser = "testUser"
-    runWithRollback {
-      val (linkId) = sql""" Select ra.LINK_ID
-                                From ROADWAY ra
-                                Order By ra.id asc""".as[Long].firstOption.get
-      val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityId)).thenReturn((Seq(roadLink),Seq()))
-      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(municipalityId)).thenReturn(Seq())
-      when(mockRoadLinkService.getSuravageRoadLinks(municipalityId)).thenReturn(Seq())
-      val roadAddressLink = roadAddressService.getAllByMunicipality(municipalityId)
-
-      roadAddressLink.isInstanceOf[Seq[RoadAddressLink]] should be(true)
-      roadAddressLink.nonEmpty should be(true)
-      roadAddressLink.head.linkId should be(linkId)
-      roadAddressLink.head.attributes.contains("MUNICIPALITYCODE") should be (true)
-      roadAddressLink.head.attributes.get("MUNICIPALITYCODE") should be (Some(municipalityId))
-    }
   }
+
+  test("Test getAllByMunicipality When does not exists road network version Then returns current road addresses") {
+
+  }
+
+  test("Test getRoadAddress When the biggest address in section is greater than the parameter $addressM Then should filter out all the road addresses with start address greater then $addressM") {
+
+  }
+
+  test("Test getRoadAddressWithLinkIdAndMeasure When link id, start measure and end measure is given Then returns all the road address in the given link id and in between given measures") {
+
+  }
+
+  test("Test getRoadAddressWithLinkIdAndMeasure When only link id is given Then return all the road addresses in the link id") {
+
+  }
+
+  test("Test getRoadAddressWithLinkIdAndMeasure When only link id and start measure is given Then return all road addresses in link id and with start measure greater or equal than $startM") {
+
+  }
+
+  test("Test getRoadAddressWithLinkIdAndMeasure When only link id and end measure is given Then return all road addresses in link id and with end measure less or equal than $endM") {
+
+  }
+
+  test("Test getRoadAddressesFiltered When roadway have less and greater addresses than given measures Then returns only road addresses in between given address measures") {
+
+  }
+
+  test("Test getRoadAddressByLinkIds When exists floating road addresses Then floatings should be filterd out") {
+
+  }
+
+  //TODO test event roadAddress:persistChangeSet called with changeSet returned by adustToTopology
+
+//  def runWithRollback[T](f: => T): T = {
+//    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+//      val t = f
+//      dynamicSession.rollback()
+//      t
+//    }
+//  }
+
+//  private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
+//    calibrationPoint match {
+//      case Some(point) =>
+//        val mValue = point.segmentMValue match {
+//          case 0.0 => 0.0
+//          case _ => Math.min(point.segmentMValue, GeometryUtils.geometryLength(geometry))
+//        }
+//        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, mValue)), ("value", point.addressMValue)).toMap)
+//      case _ => None
+//    }
+//  }
+
+//  def roadAddressLinkToApi(roadLink: RoadAddressLink): Map[String, Any] = {
+//    Map(
+//      "segmentId" -> roadLink.id,
+//      "linkId" -> roadLink.linkId,
+//      "mmlId" -> roadLink.attributes.get("MTKID"),
+//      "points" -> roadLink.geometry,
+//      "calibrationPoints" -> Seq(calibrationPoint(roadLink.geometry, roadLink.startCalibrationPoint),
+//        calibrationPoint(roadLink.geometry, roadLink.endCalibrationPoint)),
+//      "administrativeClass" -> roadLink.administrativeClass.toString,
+//      "linkType" -> roadLink.linkType.value,
+//      "modifiedAt" -> roadLink.modifiedAt,
+//      "modifiedBy" -> roadLink.modifiedBy,
+//      "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
+//      "verticalLevel" -> roadLink.attributes.get("VERTICALLEVEL"),
+//      "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
+//      "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
+//      "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
+//      "minAddressNumberRight" -> roadLink.attributes.get("FROM_RIGHT"),
+//      "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
+//      "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
+//      "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
+//      "roadNumber" -> roadLink.roadNumber,
+//      "roadPartNumber" -> roadLink.roadPartNumber,
+//      "elyCode" -> roadLink.elyCode,
+//      "trackCode" -> roadLink.trackCode,
+//      "startAddressM" -> roadLink.startAddressM,
+//      "endAddressM" -> roadLink.endAddressM,
+//      "discontinuity" -> roadLink.discontinuity,
+//      "endDate" -> roadLink.endDate,
+//      "roadwayId" -> roadLink.roadwayNumber) // TODO Rename roadwayId to roadwayNumber
+//  }
+
 
   //TODO VIITE-1550
 //  test("Linear location modifications are published") {
@@ -191,54 +197,127 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    }
 //  }
 
-  test("Check for MTK-Class in integration API"){
-    runWithRollback {
-      //12316 -> FeatureClass.TractorRoad
-      val attributesMap1 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))
-      val mockRoadLink1 = RoadLink(11111, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap1)
-      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99999, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99999, 3, 0, 16.576, 11111, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+  //  //TODO this will be implemented at VIITE-1551
+//  test("Check for MTK-Class in integration API"){
+//    runWithRollback {
+//      //12316 -> FeatureClass.TractorRoad
+//      val attributesMap1 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))
+//      val mockRoadLink1 = RoadLink(11111, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap1)
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99999, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99999, 3, 0, 16.576, 11111, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//
+//      //12141 -> FeatureClass.DrivePath
+//      val attributesMap2 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))
+//      val mockRoadLink2 = RoadLink(22222, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap2)
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99998, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99998, 3, 0, 16.576, 22222, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//
+//      //12314 -> FeatureClass.CycleOrPedestrianPath
+//      val attributesMap3 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))
+//      val mockRoadLink3 = RoadLink(33333, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap3)
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99997, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99997, 3, 0, 16.576, 33333, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//
+//      //12312 -> FeatureClass.WinterRoads
+//      val attributesMap4 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312))
+//      val mockRoadLink4 = RoadLink(44444, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap4)
+//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99996, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99990, 3, 0, 16.576, 44444, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
+//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//
+//      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink1, mockRoadLink2, mockRoadLink3, mockRoadLink4), Seq.empty[ChangeInfo]))
+//      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
+//      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
+//      val roadAddresses = roadAddressService.getAllByMunicipality(99999)
+//      roadAddresses.size should be (4)
+//    }
+//  }
 
-      //12141 -> FeatureClass.DrivePath
-      val attributesMap2 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))
-      val mockRoadLink2 = RoadLink(22222, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap2)
-      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99998, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99998, 3, 0, 16.576, 22222, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//  //TODO delete this test it was already replaced
+//   test("Check the correct return of a RoadAddressLink by Municipality") {
+//      val municipalityId = 235
+//  //TODO this will be implemented at VIITE-1551
+//      val modifificationDate = "1455274504000l"//  test("check if the integration api is returning history") {
+//      val modificationUser = "testUser"//    runWithRollback {
+//      runWithRollback {//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', TIMESTAMP '2013-01-23 00:00:00.000000',
+//        val (linkId) = sql""" Select ra.LINK_ID//            'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
+//                                  From ROADWAY ra//            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)),
+//                                  Order By ra.id asc""".as[Long].firstOption.get//            NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+//        val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+//  //
+//        when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityId)).thenReturn((Seq(roadLink),Seq()))//      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+//        when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(municipalityId)).thenReturn(Seq())//      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
+//        when(mockRoadLinkService.getSuravageRoadLinks(municipalityId)).thenReturn(Seq())//      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink), Seq.empty[ChangeInfo]))
+//        val roadAddressLink = roadAddressService.getAllByMunicipality(municipalityId)
+//        roadAddressLink.isInstanceOf[Seq[RoadAddressLink]] should be(true)//      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
+//        roadAddressLink.nonEmpty should be(true)//      roadAddresses.count(_.roadNumber > 0) should be (0)
+//        roadAddressLink.head.linkId should be(linkId)//    }
+//        roadAddressLink.head.attributes.contains("MUNICIPALITYCODE") should be (true)//  }
+//        roadAddressLink.head.attributes.get("MUNICIPALITYCODE") should be (Some(municipalityId))
+//      }
+//    }
 
-      //12314 -> FeatureClass.CycleOrPedestrianPath
-      val attributesMap3 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))
-      val mockRoadLink3 = RoadLink(33333, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap3)
-      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99997, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99997, 3, 0, 16.576, 33333, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+  //TODO this will be implemented at VIITE-1551
+  //  test("check if the integration api returns expired addresses") {
+  //    runWithRollback {
+  //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
+  //            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), TIMESTAMP '2013-01-23 00:00:00.000000',
+  //             1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+  //      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+  //
+  //      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+  //      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
+  //      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink), Seq.empty[ChangeInfo]))
+  //      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
+  //      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
+  //      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
+  //      roadAddresses.count(_.roadNumber > 0) should be (0)
+  //    }
+  //  }
 
-      //12312 -> FeatureClass.WinterRoads
-      val attributesMap4 = Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312))
-      val mockRoadLink4 = RoadLink(44444, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap4)
-      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 99996, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 99990, 3, 0, 16.576, 44444, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1,NULL)""".execute
-      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+  //TODO this will be implemented at VIITE-1551
+  //  test("check if the integration api returns regular, complementary and suravage") {
+  //    runWithRollback {
+  //
+  //      //Regular
+  //      val regularAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+  //      val mockRegularRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, regularAttributesMap)
+  //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+  //      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+  //
+  //      //Complementary
+  //      val complementaryAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+  //      val mockComplementaryRoadLink = RoadLink(99989, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, complementaryAttributesMap)
+  //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 62888, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99989, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+  //      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+  //
+  //      //Suravage
+  //      val suravageAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
+  //      val mockSuravageRoadLink = RoadLink(99988, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, suravageAttributesMap, linkSource = LinkGeomSource.SuravageLinkInterface)
+  //      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 787878, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99988, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
+  //      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
+  //
+  //      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRegularRoadLink), Seq.empty[ChangeInfo]))
+  //      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq(mockSuravageRoadLink))
+  //      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq(mockComplementaryRoadLink))
+  //      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
+  //      roadAddresses.size should be (3)
+  //    }
+  //  }
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink1, mockRoadLink2, mockRoadLink3, mockRoadLink4), Seq.empty[ChangeInfo]))
-      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
-      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
-      val roadAddresses = roadAddressService.getAllByMunicipality(99999)
-      roadAddresses.size should be (4)
-    }
-  }
-
-  private def getSpecificUnaddressedRoadLinks(linkId :Long): List[(Long, Long, Long, Long, Long, Int)] = {
-    sql"""
-          select link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code
-            from UNADDRESSED_ROAD_LINK where link_id = $linkId
-      """.as[(Long, Long, Long, Long, Long, Int)].list
-  }
-
-  private def getFloatingCount(): Long = {
-    sql"""
-       select count(*)
-       from ROADWAY where floating > 0
-       and valid_to is null and END_DATE is null
-    """.as[Long].first
-  }
+//  private def getSpecificUnaddressedRoadLinks(linkId :Long): List[(Long, Long, Long, Long, Long, Int)] = {
+//    sql"""
+//          select link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code
+//            from UNADDRESSED_ROAD_LINK where link_id = $linkId
+//      """.as[(Long, Long, Long, Long, Long, Int)].list
+//  }
+//
+//  private def getFloatingCount(): Long = {
+//    sql"""
+//       select count(*)
+//       from ROADWAY where floating > 0
+//       and valid_to is null and END_DATE is null
+//    """.as[Long].first
+//  }
 
 //TODO This will not be needed anymore since those were temporary restrictions from
 //  test("check PO temporary restrictions"){
@@ -453,17 +532,17 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    }
 //  }
 
-  private def roadAddressLinkToRoadLink(roadAddressLink: RoadAddressLink) = {
-    RoadLink(roadAddressLink.linkId, roadAddressLink.geometry, GeometryUtils.geometryLength(roadAddressLink.geometry),
-      roadAddressLink.administrativeClass, 99, TrafficDirection.AgainstDigitizing, SingleCarriageway,
-      Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-      InUse, NormalLinkInterface)
-  }
-
-  private def roadAddressLinkToHistoryLink(roadAddressLink: RoadAddressLink) = {
-    VVHHistoryRoadLink(roadAddressLink.linkId, 749, roadAddressLink.geometry, roadAddressLink.administrativeClass,
-      TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, 123, 123, Map("MUNICIPALITYCODE" -> BigInt.apply(749)))
-  }
+//  private def roadAddressLinkToRoadLink(roadAddressLink: RoadAddressLink) = {
+//    RoadLink(roadAddressLink.linkId, roadAddressLink.geometry, GeometryUtils.geometryLength(roadAddressLink.geometry),
+//      roadAddressLink.administrativeClass, 99, TrafficDirection.AgainstDigitizing, SingleCarriageway,
+//      Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+//      InUse, NormalLinkInterface)
+//  }
+//
+//  private def roadAddressLinkToHistoryLink(roadAddressLink: RoadAddressLink) = {
+//    VVHHistoryRoadLink(roadAddressLink.linkId, 749, roadAddressLink.geometry, roadAddressLink.administrativeClass,
+//      TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, 123, 123, Map("MUNICIPALITYCODE" -> BigInt.apply(749)))
+//  }
 
   private def roadAddressLinkToRoadAddress(floating: FloatingReason)(l: RoadAddressLink) = {
     throw new NotImplementedError("Is missing the linear location id")
@@ -1244,73 +1323,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1551
-//  test("check if the integration api is returning history") {
-//    runWithRollback {
-//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', TIMESTAMP '2013-01-23 00:00:00.000000',
-//            'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
-//            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)),
-//            NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
-//
-//      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
-//      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
-//      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink), Seq.empty[ChangeInfo]))
-//      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
-//      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
-//      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
-//      roadAddresses.count(_.roadNumber > 0) should be (0)
-//    }
-//  }
-
-  //TODO this will be implemented at VIITE-1551
-//  test("check if the integration api returns expired addresses") {
-//    runWithRollback {
-//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0',
-//            MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), TIMESTAMP '2013-01-23 00:00:00.000000',
-//             1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
-//
-//      val attributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
-//      val mockRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, attributesMap)
-//      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRoadLink), Seq.empty[ChangeInfo]))
-//      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
-//      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
-//      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
-//      roadAddresses.count(_.roadNumber > 0) should be (0)
-//    }
-//  }
-
-  //TODO this will be implemented at VIITE-1551
-//  test("check if the integration api returns regular, complementary and suravage") {
-//    runWithRollback {
-//
-//      //Regular
-//      val regularAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
-//      val mockRegularRoadLink = RoadLink(75532, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, regularAttributesMap)
-//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 11788, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 40688, 3, 0, 16.576, 75532, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
-//
-//      //Complementary
-//      val complementaryAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
-//      val mockComplementaryRoadLink = RoadLink(99989, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, complementaryAttributesMap)
-//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 62888, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99989, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
-//
-//      //Suravage
-//      val suravageAttributesMap = Map("MUNICIPALITYCODE" -> BigInt.apply(99999))
-//      val mockSuravageRoadLink = RoadLink(99988, Seq(), 20, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, suravageAttributesMap, linkSource = LinkGeomSource.SuravageLinkInterface)
-//      sqlu"""INSERT INTO ROADWAY VALUES(viite_general_seq.nextval, 787878, 1, 0, 5, 0, 17, TIMESTAMP '1980-08-01 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000', 2, '0', MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(476065.229, 7162211.93, 0, 0, 476060.737, 7162162.094, 0, 51)), NULL, 1, 1, 0, 78987, 3, 0, 20.076, 99988, 1510876800000, TIMESTAMP '2018-03-06 09:56:18.675242', 1, NULL)""".execute
-//      sqlu"""INSERT INTO PUBLISHED_ROADWAY VALUES ((SELECT MAX(ID) FROM PUBLISHED_ROAD_NETWORK), viite_general_seq.currval)""".execute
-//
-//      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn((Seq(mockRegularRoadLink), Seq.empty[ChangeInfo]))
-//      when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq(mockSuravageRoadLink))
-//      when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq(mockComplementaryRoadLink))
-//      val roadAddresses = roadAddressService.getRoadAddressesLinkByMunicipality(99999)
-//      roadAddresses.size should be (3)
-//    }
-//  }
-
   //TODO this probably will not be needed
 //  test("Check if road address history is fused") {
 //    runWithRollback {
@@ -1634,62 +1646,62 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //}
 //}
 
-  private def createRoadAddressLink(roadwayId: Long, linearLocationId: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
-                                    startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
-                                    endCalibrationPoint: Boolean = false, roadwayNumber: Long = 0) = {
-    val length = GeometryUtils.geometryLength(geom)
-    RoadAddressLink(roadwayId, linearLocationId, linkId, geom, length, State, LinkType.apply(1),
-      ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
-      trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
-      if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,
-      if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
-      anomaly, roadwayNumber)
+//  private def createRoadAddressLink(roadwayId: Long, linearLocationId: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
+//                                    startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
+//                                    endCalibrationPoint: Boolean = false, roadwayNumber: Long = 0) = {
+//    val length = GeometryUtils.geometryLength(geom)
+//    RoadAddressLink(roadwayId, linearLocationId, linkId, geom, length, State, LinkType.apply(1),
+//      ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
+//      trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
+//      if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,
+//      if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
+//      anomaly, roadwayNumber)
+//
+//  }
 
-  }
+//  private def toHistoryLink(rl: RoadLink): VVHHistoryRoadLink = {
+//    VVHHistoryRoadLink(rl.linkId, rl.municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection,
+//      FeatureClass.AllOthers, 84600, 86400, rl.attributes)
+//  }
 
-  private def toHistoryLink(rl: RoadLink): VVHHistoryRoadLink = {
-    VVHHistoryRoadLink(rl.linkId, rl.municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection,
-      FeatureClass.AllOthers, 84600, 86400, rl.attributes)
-  }
+//  private def toHistoryLink(ra: RoadAddress): VVHHistoryRoadLink = {
+//    VVHHistoryRoadLink(ra.linkId, 0, ra.geometry, State, TrafficDirection.TowardsDigitizing,
+//      FeatureClass.AllOthers, 84600, 86400, Map.empty[String, Any])
+//  }
 
-  private def toHistoryLink(ra: RoadAddress): VVHHistoryRoadLink = {
-    VVHHistoryRoadLink(ra.linkId, 0, ra.geometry, State, TrafficDirection.TowardsDigitizing,
-      FeatureClass.AllOthers, 84600, 86400, Map.empty[String, Any])
-  }
+//  private def createChangeTable(oldId: Long, newId: Long, changeType: ChangeType, oldStart: Double, oldEnd: Double,
+//                                newStart: Double, newEnd: Double, vvhTimeStamp: Long) = {
+//    changeType match {
+//      case CombinedRemovedPart | CombinedModifiedPart | ReplacedCommonPart | DividedModifiedPart | DividedNewPart =>
+//        ChangeInfo(Some(oldId), Some(newId), newId, changeType.value, Some(oldStart), Some(oldEnd), Some(newStart),
+//          Some(newEnd), vvhTimeStamp)
+//      case ReplacedNewPart => ChangeInfo(None, Some(newId), newId, changeType.value, None, None, Some(newStart),
+//        Some(newEnd), vvhTimeStamp)
+//// TODO
+////      case ChangeType.Unknown =>
+////      case LenghtenedCommonPart =>
+////      case LengthenedNewPart =>
+////      case ShortenedCommonPart =>
+////      case ShortenedRemovedPart =>
+////      case Removed =>
+////      case New =>
+////      case ReplacedRemovedPart =>
+//      case _ => throw new NotImplementedError("implement it")
+//    }
+//  }
 
-  private def createChangeTable(oldId: Long, newId: Long, changeType: ChangeType, oldStart: Double, oldEnd: Double,
-                                newStart: Double, newEnd: Double, vvhTimeStamp: Long) = {
-    changeType match {
-      case CombinedRemovedPart | CombinedModifiedPart | ReplacedCommonPart | DividedModifiedPart | DividedNewPart =>
-        ChangeInfo(Some(oldId), Some(newId), newId, changeType.value, Some(oldStart), Some(oldEnd), Some(newStart),
-          Some(newEnd), vvhTimeStamp)
-      case ReplacedNewPart => ChangeInfo(None, Some(newId), newId, changeType.value, None, None, Some(newStart),
-        Some(newEnd), vvhTimeStamp)
-// TODO
-//      case ChangeType.Unknown =>
-//      case LenghtenedCommonPart =>
-//      case LengthenedNewPart =>
-//      case ShortenedCommonPart =>
-//      case ShortenedRemovedPart =>
-//      case Removed =>
-//      case New =>
-//      case ReplacedRemovedPart =>
-      case _ => throw new NotImplementedError("implement it")
-    }
-  }
-
-  private def sanityCheck(result: Seq[RoadAddress]) = {
-    result.size should be > 0
-    result.forall(l =>
-      l.startCalibrationPoint.isEmpty || l.startCalibrationPoint.get.addressMValue == l.startAddrMValue) should be(true)
-    result.forall(l =>
-      l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.get.addressMValue == l.endAddrMValue) should be(true)
-    result.forall(l =>
-      Set[SideCode](SideCode.AgainstDigitizing, SideCode.TowardsDigitizing).contains(l.sideCode)
-    )
-    result.forall(l =>
-      l.startAddrMValue < l.endAddrMValue
-    )
-
-  }
+//  private def sanityCheck(result: Seq[RoadAddress]) = {
+//    result.size should be > 0
+//    result.forall(l =>
+//      l.startCalibrationPoint.isEmpty || l.startCalibrationPoint.get.addressMValue == l.startAddrMValue) should be(true)
+//    result.forall(l =>
+//      l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.get.addressMValue == l.endAddrMValue) should be(true)
+//    result.forall(l =>
+//      Set[SideCode](SideCode.AgainstDigitizing, SideCode.TowardsDigitizing).contains(l.sideCode)
+//    )
+//    result.forall(l =>
+//      l.startAddrMValue < l.endAddrMValue
+//    )
+//
+//  }
 }
