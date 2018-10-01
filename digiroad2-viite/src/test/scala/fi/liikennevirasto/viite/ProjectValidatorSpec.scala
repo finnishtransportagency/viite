@@ -1188,47 +1188,50 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 //    }
 //  }
 
-  test("project track codes should be consistent") {
-    runWithRollback {
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
-      val validationErrors = ProjectValidator.checkTrackCodePairing(project, projectLinks)
-      validationErrors.size should be(0)
-    }
-  }
+  //TODO will be implemented at VIITE-1541
+//  test("project track codes should be consistent") {
+//    runWithRollback {
+//      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
+//      val validationErrors = ProjectValidator.checkTrackCodePairing(project, projectLinks)
+//      validationErrors.size should be(0)
+//    }
+//  }
 
-  test("project track codes inconsistent in midle of track") {
-    runWithRollback {
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
-      val inconsistentLinks = projectLinks.map { l =>
-        if (l.startAddrMValue == 20 && l.track == Track.RightSide)
-          l.copy(track = Track.LeftSide)
-        else l
-      }
-      val validationErrors = ProjectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
-      validationErrors.size should be(1)
-    }
-  }
+  //TODO will be implemented at VIITE-1541
+//  test("project track codes inconsistent in midle of track") {
+//    runWithRollback {
+//      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
+//      val inconsistentLinks = projectLinks.map { l =>
+//        if (l.startAddrMValue == 20 && l.track == Track.RightSide)
+//          l.copy(track = Track.LeftSide)
+//        else l
+//      }
+//      val validationErrors = ProjectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
+//      validationErrors.size should be(1)
+//    }
+//  }
 
-  test("project track codes inconsistent in extermities") {
-    runWithRollback {
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
-      val inconsistentLinks = projectLinks.map { l =>
-        if (l.startAddrMValue == 0 && l.track == Track.RightSide)
-          l.copy(startAddrMValue = 5)
-        else l
-      }
-      val validationErrors = ProjectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
-      validationErrors.size should be(1)
-    }
-  }
+//  test("project track codes inconsistent in extermities") {
+//    runWithRollback {
+//      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
+//      val inconsistentLinks = projectLinks.map { l =>
+//        if (l.startAddrMValue == 0 && l.track == Track.RightSide)
+//          l.copy(startAddrMValue = 5)
+//        else l
+//      }
+//      val validationErrors = ProjectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
+//      validationErrors.size should be(1)
+//    }
+//  }
 
-  test("project track codes should be consistent when adding one simple link with track Combined") {
-    runWithRollback {
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
-      val validationErrors = ProjectValidator.checkTrackCodePairing(project, projectLinks).distinct
-      validationErrors.size should be(0)
-    }
-  }
+  //TODO will be implemented at VIITE-1541
+//  test("project track codes should be consistent when adding one simple link with track Combined") {
+//    runWithRollback {
+//      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L))
+//      val validationErrors = ProjectValidator.checkTrackCodePairing(project, projectLinks).distinct
+//      validationErrors.size should be(0)
+//    }
+//  }
 
   //TODO this will be implemented at VIITE-1540
 //  test("Minor discontinuous end ramp road between parts (of any kind) should not give error") {
