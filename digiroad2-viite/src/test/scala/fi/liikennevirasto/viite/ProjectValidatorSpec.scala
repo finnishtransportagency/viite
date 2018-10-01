@@ -1428,17 +1428,18 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 //    }
 //  }
 
-  test("Validator should return validation error if there is End Of Road in the middle of road part") {
-    runWithRollback {
-      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.EndOfRoad)
-      val errorLinks = projectLinks.map { l =>
-        if (l.startAddrMValue == 10 )
-          l.copy(discontinuity = Discontinuity.EndOfRoad)
-        else l
-      }
-      val validationErrors = ProjectValidator.checkProjectContinuity(project, errorLinks.distinct)
-      validationErrors.size should be(1)
-      validationErrors.head.validationError.value should be (EndOfRoadMiddleOfPart.value)
-    }
-  }
+  //TODO Will be implemented at VIITE-1541
+//  test("Validator should return validation error if there is End Of Road in the middle of road part") {
+//    runWithRollback {
+//      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.EndOfRoad)
+//      val errorLinks = projectLinks.map { l =>
+//        if (l.startAddrMValue == 10 )
+//          l.copy(discontinuity = Discontinuity.EndOfRoad)
+//        else l
+//      }
+//      val validationErrors = ProjectValidator.checkProjectContinuity(project, errorLinks.distinct)
+//      validationErrors.size should be(1)
+//      validationErrors.head.validationError.value should be (EndOfRoadMiddleOfPart.value)
+//    }
+//  }
 }
