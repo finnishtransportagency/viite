@@ -350,7 +350,6 @@ object ProjectDAO {
     try {
       val points: Seq[Double] = geometry.flatMap(p => toGeomDouble(p))
       val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
-
       sqlu"""
         UPDATE PROJECT_LINK SET GEOMETRY = #$geometryQuery WHERE id = $id""".execute
     } catch {
@@ -504,8 +503,8 @@ object ProjectDAO {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
         sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
-                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-          .as[(Long, String)].list.map(l => (l._1, parseStringGeometry(l._2))).toMap
+                where #$filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M"""
+          .as[(Long, String)].list.map(l => l._1 -> parseStringGeometry(l._2)).toMap
     }
   }
 
