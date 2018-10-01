@@ -52,8 +52,76 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     override def withDynTransaction[T](f: => T): T = f
   }
 
+  private def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
+    dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, NoFloating, LinkGeomSource.NormalLinkInterface)
+
+  private def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason): LinearLocation =
+    dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, floatingReason, LinkGeomSource.NormalLinkInterface)
+
+  private def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): LinearLocation ={
+    LinearLocation(roadwayNumber + orderNumber, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None), floatingReason,
+      Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, roadwayNumber)
+  }
+
+  private def dummyRoadAddress(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime],
+    linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource): RoadAddress =
+    dummyRoadAddress(roadwayNumber, roadNumber, roadPartNumber, startAddrM, endAddrM, startDate, endDate, linkId, startMValue, endMValue, NoFloating, linkGeomSource)
+
+  private def dummyRoadAddress(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime],
+                               linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): RoadAddress = {
+    RoadAddress(0L, 0L, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, startDate, endDate, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing,
+      0L, (None, None), floatingReason, Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, 0L, NoTermination, roadwayNumber, None, None, None)
+  }
+
+  private def dummyVvhHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): VVHHistoryRoadLink ={
+    val municipalityCode = 0
+    VVHHistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownConstructionType, HistoryLinkInterface, yCoordinates.sum)
+  }
+
+  private def dummyRoadLink(linkId: Long, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
+  }
+
   test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should return road addresses on normal and history road links") {
-    //Check method calls in road address service
+    val linearLocations = Seq(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating)
+    )
+
+    val roadAddresses = Seq(
+      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 100L, None, None, linkId = 123L, startMValue = 0.0, endMValue = 10.0, LinkGeomSource.NormalLinkInterface),
+      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 100L, endAddrM = 200L, None, None, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating, LinkGeomSource.HistoryLinkInterface),
+      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, None, None, linkId = 124L, startMValue = 0.0, endMValue = 10.0, LinkGeomSource.NormalLinkInterface),
+      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, None, None, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating, LinkGeomSource.HistoryLinkInterface)
+    )
+
+    val vvhHistoryRoadLinks = Seq(
+      dummyVvhHistoryRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0)),
+      dummyVvhHistoryRoadLink(linkId = 125L, Seq(0.0, 10.0))
+    )
+
+    val roadLinks = Seq(
+      dummyRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
+      dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
+    )
+
+    when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
+
+    when(mockRoadwayAddressMapper.getRoadAddressesByLinearLocation(any[Seq[LinearLocation]])).thenReturn(roadAddresses)
+
+
+    //Road Link service mocks
+    when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[Long]])).thenReturn(Future(Seq.empty))
+    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(vvhHistoryRoadLinks)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+
+    roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
+
+    verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L))
   }
 
   test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should not filter out floatings") {
