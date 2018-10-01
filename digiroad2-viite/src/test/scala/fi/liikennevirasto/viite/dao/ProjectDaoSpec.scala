@@ -187,24 +187,24 @@ class ProjectDaoSpec extends FunSuite with Matchers {
 //    }
 //  }
 
-
-  test("update project link") {
-    runWithRollback {
-      val projectLinks = ProjectDAO.getProjectLinks(7081807)
-      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.UnChanged, "test")
-      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
-      ProjectDAO.updateProjectLinksToDB(Seq(savedProjectLinks.sortBy(_.startAddrMValue).last.copy(status = LinkStatus.Terminated)), "tester")
-      val terminatedLink = projectLinks.sortBy(_.startAddrMValue).last
-      val updatedProjectLinks = ProjectDAO.getProjectLinks(7081807).filter(link => link.id == terminatedLink.id)
-      val updatedLink = updatedProjectLinks.head
-      updatedLink.status should be(LinkStatus.Terminated)
-      updatedLink.discontinuity should be(Discontinuity.Continuous)
-      updatedLink.startAddrMValue should be(savedProjectLinks.sortBy(_.startAddrMValue).last.startAddrMValue)
-      updatedLink.endAddrMValue should be(savedProjectLinks.sortBy(_.startAddrMValue).last.endAddrMValue)
-      updatedLink.track should be(savedProjectLinks.sortBy(_.startAddrMValue).last.track)
-      updatedLink.roadType should be(savedProjectLinks.sortBy(_.startAddrMValue).last.roadType)
-    }
-  }
+//TODO Will be implemented at VIITE-1540
+//  test("update project link") {
+//    runWithRollback {
+//      val projectLinks = ProjectDAO.getProjectLinks(7081807)
+//      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.UnChanged, "test")
+//      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
+//      ProjectDAO.updateProjectLinksToDB(Seq(savedProjectLinks.sortBy(_.startAddrMValue).last.copy(status = LinkStatus.Terminated)), "tester")
+//      val terminatedLink = projectLinks.sortBy(_.startAddrMValue).last
+//      val updatedProjectLinks = ProjectDAO.getProjectLinks(7081807).filter(link => link.id == terminatedLink.id)
+//      val updatedLink = updatedProjectLinks.head
+//      updatedLink.status should be(LinkStatus.Terminated)
+//      updatedLink.discontinuity should be(Discontinuity.Continuous)
+//      updatedLink.startAddrMValue should be(savedProjectLinks.sortBy(_.startAddrMValue).last.startAddrMValue)
+//      updatedLink.endAddrMValue should be(savedProjectLinks.sortBy(_.startAddrMValue).last.endAddrMValue)
+//      updatedLink.track should be(savedProjectLinks.sortBy(_.startAddrMValue).last.track)
+//      updatedLink.roadType should be(savedProjectLinks.sortBy(_.startAddrMValue).last.roadType)
+//    }
+//  }
 
   test("Empty list will not throw an exception") {
     ProjectDAO.getProjectLinksByIds(Seq())
@@ -294,16 +294,17 @@ class ProjectDaoSpec extends FunSuite with Matchers {
 //    }
 //  }
 
-  test("change project Ely DAO") {
-    runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-      ProjectDAO.createRoadAddressProject(rap)
-      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-      ProjectDAO.updateProjectEly(id, 100)
-      ProjectDAO.getProjectEly(id).get should be(100)
-    }
-  }
+  //TODO Will be implemented at VIITE-1539
+//  test("change project Ely DAO") {
+//    runWithRollback {
+//      val id = Sequences.nextViitePrimaryKeySeqValue
+//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+//      ProjectDAO.createRoadAddressProject(rap)
+//      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+//      ProjectDAO.updateProjectEly(id, 100)
+//      ProjectDAO.getProjectEly(id).get should be(100)
+//    }
+//  }
 
   test("update project_link's road_type and discontinuity") {
     runWithRollback {
