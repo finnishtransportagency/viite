@@ -221,7 +221,7 @@ object ProjectDAO {
         select plh.ID, plh.PROJECT_ID, plh.TRACK_CODE, plh.DISCONTINUITY_TYPE,
           plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.START_ADDR_M, plh.END_ADDR_M,
           plh.START_MEASURE, plh.END_MEASURE, plh.SIDE_CODE,
-          plh.CREATED_BY, plh.MODIFIED_BY, plh.link_id, plh.GEOMETRY_STRING,
+          plh.CREATED_BY, plh.MODIFIED_BY, plh.link_id, plh.GEOMETRY,
           (plh.END_MEASURE - plh.START_MEASURE) as length, plh.CALIBRATION_POINTS, plh.STATUS,
           plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROAD_ADDRESS_ID, plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
           CASE
