@@ -192,7 +192,7 @@ object ProjectDAO {
     s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
   PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE_CODE,
-  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.link_id, PROJECT_LINK.geometry,
+  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.LINK_ID, PROJECT_LINK.GEOMETRY,
   (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
   PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
@@ -323,10 +323,6 @@ object ProjectDAO {
   }
 
   def createLink(pl: ProjectLink): Unit = {
-    def extractPoint(point: Point): Seq[Double] = {
-      Seq(point.x, point.y, point.z)
-    }
-
     try {
         val roadAddressId: Option[Long] = if (pl.roadAddressId == 0)
           None
@@ -345,7 +341,7 @@ object ProjectDAO {
 
         val id = Sequences.nextViitePrimaryKeySeqValue
 
-        val points :Seq[Double] = pl.geometry.flatMap(p => extractPoint(p))
+        val points :Seq[Double] = pl.geometry.flatMap(p => toGeomDouble(p))
 
         val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
 
@@ -361,6 +357,20 @@ object ProjectDAO {
            ${pl.calibrationPointsSourcesToDB().value}, #$geometryQuery)"""
 
         query.execute
+    } catch {
+      case e: Exception =>
+        println(e)
+        throw new RuntimeException("SQL Error: "+e.getMessage)
+    }
+  }
+
+  def updateGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
+    try {
+      val points: Seq[Double] = geometry.flatMap(p => toGeomDouble(p))
+      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+
+      sqlu"""
+        UPDATE PROJECT_LINK SET GEOMETRY = #$geometryQuery WHERE id = $id""".execute
     } catch {
       case e: Exception =>
         println(e)
