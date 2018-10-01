@@ -41,7 +41,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   private val roadNumber1 = 990
   private val roadNumber2 = 993
 
-  private val nonExistingRoadwayNumber = -9999
+  private val nonExistingRoadwayNumber = -9999l
   private val roadwayNumber1 = 1000000l
   private val roadwayNumber2 = 2000000l
   private val roadwayNumber3 = 3000000l
@@ -554,11 +554,53 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  // fetchAllByRoadwayNumbers
+  // fetchAllByRoadwayNumbers and date
 
-  // TODO
+  test("Test fetchAllByRoadwayNumbers and date When non-existing roadway numbers Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchAllByRoadwayNumbers(Set(nonExistingRoadwayNumber), DateTime.parse("2018-10-01")).size should be(0)
+    }
+  }
 
-  // fetchAllByRoadwayNumbers
+  test("Test fetchAllByRoadwayNumbers and date When existing roadway numbers Then return the current roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2, testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), DateTime.parse("2018-10-01"))
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
+      roadways.size should be(2)
+    }
+  }
+
+  test("Test fetchAllByRoadwayNumbers and date When existing roadway numbers and old date Then return only the current roadways") {
+    runWithRollback {
+      dao.create(List(
+        testRoadway1,
+        testRoadway1.copy(startAddrMValue = 100, endAddrMValue = 200, endDate = Some(DateTime.parse("2000-12-31"))),
+        testRoadway2
+      ))
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1), DateTime.parse("1800-01-01"))
+      roadways.size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadwayNumbers and date When existing roadway numbers Then return only the current roadways") {
+    runWithRollback {
+      dao.create(List(
+        testRoadway1,
+        testRoadway1.copy(startAddrMValue = 100, endAddrMValue = 200, endDate = Some(DateTime.parse("2000-12-31"))),
+        testRoadway2
+      ))
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1), DateTime.parse("2018-10-01"))
+      roadways.size should be(1)
+      roadways.head.endDate should be(None)
+      roadways.head.validTo should be(None)
+    }
+  }
+
+  // fetchAllByRoadwayNumbers and road network id
 
   // TODO
 
