@@ -9,6 +9,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
+import oracle.spatial.geometry.JGeometry
+import oracle.sql.STRUCT
 import org.slf4j.Logger
 
 import scala.util.matching.Regex.Match
@@ -141,6 +143,23 @@ package object viite {
 
   def isRamp(r: BaseRoadAddress): Boolean = {
     isRamp(r.roadNumber, r.track.value)
+  }
+
+  def parseStringGeometry(geomString: String): Seq[Point] = {
+    if (geomString.nonEmpty)
+      toGeometry(geomString)
+    else
+      Seq()
+  }
+
+  def toJGeometry(geometry: Option[STRUCT]): Seq[Point] = {
+    //convert STRUCT into geometry
+    if (geometry.nonEmpty){
+      val jgeom: JGeometry = JGeometry.load(geometry.get)
+      toGeomPoint(jgeom.getOrdinatesArray.toList.sliding(3,3).toList)
+    }
+    else
+      Seq()
   }
 
   def toGeomString(geometry: Seq[Point]): String = {
