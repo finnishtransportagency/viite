@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.{parseStringGeometry, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
@@ -500,13 +500,13 @@ object ProjectDAO {
     }
   }
 
-  def getProjectLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[(Long, String)] = {
+  def getProjectLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Map[Long, Seq[Point]] = {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
-        s"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
+        sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-          .as[(Long, String)]
+          .as[(Long, String)].list.map(l => (l._1, parseStringGeometry(l._2))).toMap
     }
   }
 
