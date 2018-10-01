@@ -81,8 +81,13 @@
     var isDirty = function() {
       return _.any(models, function(model) { return model.isDirty(); });
     };
+
     var setZoomLevel = function(level) {
-      zoom.level = level;
+      zoom.level = Math.round(level);
+    };
+
+    var getZoomLevel = function() {
+      return zoom.level;
     };
 
     var roadsVisibility = true;
@@ -141,7 +146,7 @@
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
         centerLonLat = center;
-        eventbus.trigger('map:refresh', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
+        eventbus.trigger('map:refresh', {selectedLayer: selectedLayer, zoom: getZoomLevel(), bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
