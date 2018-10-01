@@ -503,7 +503,6 @@ object ProjectDAO {
   def getProjectLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Map[Long, Seq[Point]] = {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
-      val query =
         sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
           .as[(Long, String)].list.map(l => (l._1, parseStringGeometry(l._2))).toMap
