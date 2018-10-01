@@ -723,7 +723,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectLinkSdoGeometry(projectId: Long, username: String, onlyNotHandled: Boolean = false): Unit = {
     withDynTransaction {
       val linksGeometry = ProjectDAO.getProjectLinksGeometry(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
-      println(s"Got ${linksGeometry.count(_)} links from project $projectId")
+      println(s"Got ${linksGeometry.size} links from project $projectId")
       linksGeometry.foreach(pl => ProjectDAO.updateGeometryStringToSdo(pl._1, pl._2))
     }
 }
