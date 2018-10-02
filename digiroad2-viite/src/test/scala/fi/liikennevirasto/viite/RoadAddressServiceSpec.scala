@@ -442,8 +442,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.head.endMValue should be (10.0)
   }
 
-  //TODO test event roadAddress:persistChangeSet called with changeSet returned by adustToTopology
-
 //  def runWithRollback[T](f: => T): T = {
 //    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
 //      val t = f
