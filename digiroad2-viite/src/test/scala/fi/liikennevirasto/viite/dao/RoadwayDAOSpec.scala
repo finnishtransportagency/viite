@@ -2,29 +2,14 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.SQLException
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.dao.FloatingReason.{GeometryChanged, NoFloating}
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{RoadType, _}
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
-import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.RoadNetworkDAO
-
-import scala.util.control.NonFatal
 
 
 class RoadwayDAOSpec extends FunSuite with Matchers {
@@ -43,9 +28,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   private val roadNumber2 = 993
 
   private val nonExistingRoadwayNumber = -9999l
-  private val roadwayNumber1 = 1000000000l;
-  private val roadwayNumber2 = 2000000000l;
-  private val roadwayNumber3 = 3000000000l;
+  private val roadwayNumber1 = 1000000000l
+  private val roadwayNumber2 = 2000000000l
+  private val roadwayNumber3 = 3000000000l
 
   val testRoadway1 = Roadway(NewRoadway, roadwayNumber1, roadNumber1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
@@ -113,6 +98,13 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   }
 
   // fetchAllBySectionAndTracks
+
+  test("Test fetchAllBySectionAndTracks When empty tracks Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllBySectionAndTracks(roadNumber1, 1, Set()).size should be(0)
+    }
+  }
 
   test("Test fetchAllBySectionAndTracks When non-existing road number Then return None") {
     runWithRollback {
@@ -225,6 +217,13 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   }
 
   // fetchAllByRoadwayNumbers
+
+  test("Test fetchAllByRoadwayNumbers When empty roadway numbers Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadwayNumbers(Set()).size should be(0)
+    }
+  }
 
   test("Test fetchAllByRoadwayNumbers When non-existing roadway numbers Then return None") {
     runWithRollback {
@@ -617,6 +616,13 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   // fetchAllByRoadwayNumbers and date
 
+  test("Test fetchAllByRoadwayNumbers and date When empty roadway numbers Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadwayNumbers(roadwayNumbers = Set[Long](), DateTime.parse("2018-10-01")).size should be(0)
+    }
+  }
+
   test("Test fetchAllByRoadwayNumbers and date When non-existing roadway numbers Then return None") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2))
@@ -663,6 +669,15 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   // fetchAllByRoadwayNumbers and road network id
 
+
+  test("Test fetchAllByRoadwayNumbers and road network id When empty roadway numbers Then return None") {
+    runWithRollback {
+      RoadNetworkDAO.createPublishedRoadNetwork
+      val roadNetworkId = RoadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadwayNumbers(Set[Long](), roadNetworkId).size should be(0)
+    }
+  }
 
   test("Test fetchAllByRoadwayNumbers and road network id When non-existing roadway numbers Then return None") {
     runWithRollback {
