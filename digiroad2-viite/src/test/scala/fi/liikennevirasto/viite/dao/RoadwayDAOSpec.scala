@@ -571,6 +571,15 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test create When insert roadway with new roadway number Then roadway should be inserted") {
+    runWithRollback {
+      dao.create(Seq(testRoadway1.copy(roadwayNumber = NewRoadwayNumber)))
+      val roadwayNumber = Sequences.nextRoadwayNumber - 1
+      val roadway = dao.fetchByRoadwayNumber(roadwayNumber).getOrElse(fail())
+      roadway.roadwayNumber should be(roadwayNumber)
+    }
+  }
+
   test("Test create When insert roadway Then all values are saved correctly") {
     runWithRollback {
       dao.create(Seq(testRoadway1))
