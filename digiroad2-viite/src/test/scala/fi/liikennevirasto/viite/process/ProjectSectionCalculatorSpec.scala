@@ -24,7 +24,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val roadAddressService: RoadAddressService {
-  } = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, mockRoadwayAddressMapper, mockEventBus) {
+  } = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

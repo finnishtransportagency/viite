@@ -511,7 +511,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId), testRoadway2, testRoadway3))
-      RoadNetworkDAO.addRoadNetworkError(roadwayId, 1)
+      val roadNetworkDAO = new RoadNetworkDAO
+      roadNetworkDAO.addRoadNetworkError(roadwayId, 1)
       val errors = dao.fetchAllRoadAddressErrors()
       errors.size should be > 0
     }
@@ -684,8 +685,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllByRoadwayNumbers and road network id When empty roadway numbers Then return None") {
     runWithRollback {
-      RoadNetworkDAO.createPublishedRoadNetwork
-      val roadNetworkId = RoadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
+      val roadNetworkDAO = new RoadNetworkDAO
+      roadNetworkDAO.createPublishedRoadNetwork
+      val roadNetworkId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
       dao.create(List(testRoadway1))
       dao.fetchAllByRoadwayNumbers(Set[Long](), roadNetworkId).size should be(0)
     }
@@ -693,8 +695,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllByRoadwayNumbers and road network id When non-existing roadway numbers Then return None") {
     runWithRollback {
-      RoadNetworkDAO.createPublishedRoadNetwork
-      val roadNetworkId = RoadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
+      val roadNetworkDAO = new RoadNetworkDAO
+      roadNetworkDAO.createPublishedRoadNetwork
+      val roadNetworkId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
       dao.create(List(testRoadway1, testRoadway2))
       dao.fetchAllByRoadwayNumbers(Set(nonExistingRoadwayNumber), roadNetworkId).size should be(0)
     }
@@ -711,15 +714,16 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllByRoadwayNumbers and road network id When existing roadway numbers Then return the current roadways") {
     runWithRollback {
-      RoadNetworkDAO.createPublishedRoadNetwork
-      val roadNetworkVersionId = RoadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
+      val roadNetworkDAO = new RoadNetworkDAO
+      roadNetworkDAO.createPublishedRoadNetwork
+      val roadNetworkVersionId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
       val roadwayId1 = Sequences.nextRoadwayId
       val roadwayId2 = Sequences.nextRoadwayId
       val roadwayId3 = Sequences.nextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway3.copy(id = roadwayId3)))
-      RoadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId1)
-      RoadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
-      RoadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId3)
+      roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId1)
+      roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
+      roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId3)
       val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), roadNetworkVersionId)
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)

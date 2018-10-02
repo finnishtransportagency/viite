@@ -4,7 +4,7 @@ import java.util.{Date, Properties}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{InUse, UnknownConstructionType}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface, SuravageLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
@@ -47,9 +47,17 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
+
+  val roadwayAddressMappper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
+
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayAddressMappper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
+  }
+
+  private def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime]) = {
+    Roadway(0L, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "", None, 0L, NoTermination)
   }
 
   private def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
@@ -90,11 +98,48 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating)
     )
 
-    val roadAddresses = Seq(
-      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 100L, None, None, linkId = 123L, startMValue = 0.0, endMValue = 10.0, LinkGeomSource.NormalLinkInterface),
-      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 100L, endAddrM = 200L, None, None, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating, LinkGeomSource.HistoryLinkInterface),
-      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, None, None, linkId = 124L, startMValue = 0.0, endMValue = 10.0, LinkGeomSource.NormalLinkInterface),
-      dummyRoadAddress(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, None, None, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating, LinkGeomSource.HistoryLinkInterface)
+    val vvhHistoryRoadLinks = Seq(
+      dummyVvhHistoryRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0)),
+      dummyVvhHistoryRoadLink(linkId = 125L, Seq(0.0, 10.0))
+    )
+
+    val roadways = Seq(
+      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
+    )
+
+    val roadLinks = Seq(
+      dummyRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
+      dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
+    )
+
+    when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
+
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+
+    //Road Link service mocks
+    when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[Long]])).thenReturn(Future(Seq.empty))
+    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(vvhHistoryRoadLinks)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+
+    val result = roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
+
+    verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L))
+
+    result.size should be (4)
+  }
+
+  test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should not filter out floatings") {
+    val linearLocations = Seq(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating)
+    )
+
+    val roadways = Seq(
+      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
     val vvhHistoryRoadLinks = Seq(
@@ -109,34 +154,81 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
 
-    when(mockRoadwayAddressMapper.getRoadAddressesByLinearLocation(any[Seq[LinearLocation]])).thenReturn(roadAddresses)
-
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
 
     //Road Link service mocks
     when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[Long]])).thenReturn(Future(Seq.empty))
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(vvhHistoryRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
 
-    roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
+    val (floating, nonFloating) = roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq()).partition(_.floating)
 
-    verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
-    verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
-    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L))
+    floating.size should be (2)
+    nonFloating.size should be (2)
+
+    floating.map(_.linkId) should contain allOf (123L,125L)
+    nonFloating.map(_.linkId) should contain allOf (123L,124L)
   }
 
-  test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should not filter out floatings") {
-    //Mock floating returns
-  }
+  test("Test getRoadAddressesWithLinearGeometry When municipality has road addresses on top of suravage and complementary road links Then should not return floatings") {
+    val linearLocations = Seq(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating)
+    )
 
-  test("Test getRoadAddressesWithLinearGeometry When municipality has road addresses on top of suravage and complementary road links Then return all the road addresses") {
-    //Mock floating returns
-  }
+    val roadways = Seq(
+      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
+    )
 
-  test("Test getRoadAddressesWithLinearGeometry When called by any bounding box and any road number limits Then should not return floatings") {
-    //Mock floating returns
+    when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
+
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+
+    val (floating, nonFloating) = roadAddressService.getRoadAddressesWithLinearGeometry(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq()).partition(_.floating)
+
+    floating.size should be (0)
+    nonFloating.size should be (2)
+
+    nonFloating.map(_.linkId) should contain allOf (123L,124L)
   }
 
   test("Test getAllByMunicipality When exists road network version Then returns road addresses of that version") {
+
+    val linearLocations = List(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 5L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+    )
+
+    val roadways = Seq(
+      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
+    )
+
+    val roadLinks = Seq(
+      dummyRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
+      dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
+    )
+
+    val suravageRoadLinks = Seq(
+      dummyRoadLink(linkId = 126L, Seq(0.0, 10.0, 20.0), SuravageLinkInterface)
+    )
+
+    when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
+
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+
+
+
+    //Road Link service mocks
+    when(mockRoadLinkService.getSuravageRoadLinks(any[Int])).thenReturn(suravageRoadLinks)
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, Seq()))
+
+    val (floating, nonFloating) = roadAddressService.getAllByMunicipality(municipality = 100).partition(_.floating)
+
 
   }
 
