@@ -698,7 +698,7 @@ class LinearLocationDAO {
       val query =
         s"""
         $selectFromLinearLocation
-        where valid_to is and t.id < t2.id null and ROADWAY_NUMBER in ($boundingBoxQuery)
+        where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in ($boundingBoxQuery)
         """
       queryList(query)
     }
