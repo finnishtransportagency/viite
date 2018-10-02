@@ -22,6 +22,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.RoadNetworkDAO
 
 import scala.util.control.NonFatal
 
@@ -42,9 +43,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   private val roadNumber2 = 993
 
   private val nonExistingRoadwayNumber = -9999l
-  private val roadwayNumber1 = 1000000l
-  private val roadwayNumber2 = 2000000l
-  private val roadwayNumber3 = 3000000l
+  private val roadwayNumber1 = 1000000000l;
+  private val roadwayNumber2 = 2000000000l;
+  private val roadwayNumber3 = 3000000000l;
 
   val testRoadway1 = Roadway(NewRoadway, roadwayNumber1, roadNumber1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
@@ -574,7 +575,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchAllByRoadwayNumbers and date When existing roadway numbers and old date Then return only the current roadways") {
+  test("Test fetchAllByRoadwayNumbers and date When existing roadway numbers and old date Then return None") {
     runWithRollback {
       dao.create(List(
         testRoadway1,
@@ -602,7 +603,43 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   // fetchAllByRoadwayNumbers and road network id
 
-  // TODO
+
+  test("Test fetchAllByRoadwayNumbers and road network id When non-existing roadway numbers Then return None") {
+    runWithRollback {
+      RoadNetworkDAO.createPublishedRoadNetwork
+      val roadNetworkId = RoadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchAllByRoadwayNumbers(Set(nonExistingRoadwayNumber), roadNetworkId).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadwayNumbers and road network id When existing roadway numbers and non-existing network id Then return None") {
+    runWithRollback {
+      val nonExistingRoadNetworkId = -9999l
+      dao.create(List(testRoadway1, testRoadway2, testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), nonExistingRoadNetworkId)
+      roadways.size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadwayNumbers and road network id When existing roadway numbers Then return the current roadways") {
+    runWithRollback {
+      RoadNetworkDAO.createPublishedRoadNetwork
+      val roadNetworkVersionId = RoadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadwayId2 = Sequences.nextRoadwayId
+      val roadwayId3 = Sequences.nextRoadwayId
+      dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway3.copy(id = roadwayId3)))
+      RoadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId1)
+      RoadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
+      RoadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId3)
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), roadNetworkVersionId)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
+      roadways.size should be(2)
+    }
+  }
 
   //TODO will be implemented at VIITE-1552
   //  test("insert road address m-values overlap") {
