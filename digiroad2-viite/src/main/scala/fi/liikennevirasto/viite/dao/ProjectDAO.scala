@@ -1,10 +1,9 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.{JDBCType, Timestamp}
+import java.sql.Timestamp
 import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import com.jolbox.bonecp.ConnectionHandle
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -20,14 +19,11 @@ import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, Saved2TR}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import oracle.jdbc.OracleConnection
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import oracle.spatial.geometry.JGeometry
-import oracle.sql.STRUCT
 
 sealed trait ProjectState {
   def value: Int
@@ -301,6 +297,7 @@ object ProjectDAO {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
+  //TODO delete when there is no longer needed. This is now need to script where we migrate PROJECT_LINK .GEOMETRY_STRING to .GEOMETRY
   def updateGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
     try {
       val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
@@ -403,7 +400,7 @@ object ProjectDAO {
         projectLinkPS.setInt(11, projectLink.status.value)
         projectLinkPS.setInt(12, projectLink.roadType.value)
         projectLinkPS.setInt(13, if (projectLink.reversed) 1 else 0)
-        projectLinkPS.setString(14, toGeomString(projectLink.geometry))
+        projectLinkPS.setObject(14, OracleDatabase.create(projectLink.geometry, dynamicSession.conn))
         projectLinkPS.setInt(15, projectLink.sideCode.value)
         projectLinkPS.setDouble(16, projectLink.startMValue)
         projectLinkPS.setDouble(17, projectLink.endMValue)
@@ -421,7 +418,7 @@ object ProjectDAO {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ?, MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
 
       for (projectLink <- projectLinks) {
-        projectLinkPS.setString(1, toGeomString(projectLink.geometry))
+        projectLinkPS.setObject(1, OracleDatabase.create(projectLink.geometry, dynamicSession.conn))
         projectLinkPS.setString(2, modifier)
         projectLinkPS.setLong(3, projectLink.linkGeometryTimeStamp)
         projectLinkPS.setLong(4, projectLink.id)
@@ -947,7 +944,9 @@ object ProjectDAO {
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true) = {
     time(logger, "Update project link values") {
 
-      val updateGeometry = if (updateGeom) s", GEOMETRY = '${toGeomString(roadAddress.geometry)}'" else s""
+      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
 
       val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, " +
         s" ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK_CODE = ${roadAddress.track.value}, " +
