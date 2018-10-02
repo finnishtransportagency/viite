@@ -347,6 +347,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   def getRoadAddressErrors(includesHistory: Boolean = false): List[AddressConsistencyValidator.AddressErrorDetails] = {
     withDynSession {
+      // TODO Fetch linear locations and roadways separately since there can be multiple linear locations related to roadway.
       roadwayDAO.fetchAllRoadAddressErrors(includesHistory)
     }
   }

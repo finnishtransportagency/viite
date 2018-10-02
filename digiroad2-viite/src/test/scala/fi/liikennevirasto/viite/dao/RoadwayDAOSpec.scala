@@ -506,19 +506,22 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   // fetchAllRoadAddressErrors
 
-  test("Test fetchAllRoadAddressErrors When fetch excluding history Then return addresses with errors") {
+  // TODO
+  ignore("Test fetchAllRoadAddressErrors When fetch excluding history Then return addresses with errors") {
     runWithRollback {
+      val roadwayId = Sequences.nextRoadwayId
+      dao.create(List(testRoadway1.copy(id = roadwayId), testRoadway2, testRoadway3))
+      RoadNetworkDAO.addRoadNetworkError(roadwayId, 1)
       val errors = dao.fetchAllRoadAddressErrors()
-      // errors.size should be > 0
-      // TODO Test data could include some error cases
+      errors.size should be > 0
     }
   }
 
-  test("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
+  // TODO
+  ignore("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
     runWithRollback {
       val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
       // errors.size should be > 0
-      // TODO Test data could include some error cases
     }
   }
 

@@ -484,6 +484,8 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  // TODO Is this SQL correct? Can we really fetch same time the linear location and the roadway data?
+  // TODO What if roadway has multiple linear locations with different link ids?
   def fetchAllRoadAddressErrors(includesHistory: Boolean = false): List[AddressErrorDetails] = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
