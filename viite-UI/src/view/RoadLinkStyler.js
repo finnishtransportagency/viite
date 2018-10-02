@@ -5,9 +5,9 @@
      */
 
     var strokeWidthRules = [
-        new StyleRule().where('zoomLevel').is(5).use({stroke: {width: 2 }}),
-        new StyleRule().where('zoomLevel').is(6).use({stroke: {width: 2 }}),
-        new StyleRule().where('zoomLevel').is(7).use({stroke: {width: 3 }}),
+        new StyleRule().where('zoomLevel').is(5).use({stroke: {width: 4 }}),
+        new StyleRule().where('zoomLevel').is(6).use({stroke: {width: 4 }}),
+        new StyleRule().where('zoomLevel').is(7).use({stroke: {width: 4 }}),
         new StyleRule().where('zoomLevel').is(8).use({stroke: {width: 5 }}),
         new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 5 }}),
         new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 5 }}),
@@ -66,9 +66,9 @@
       ];
 
       var fillWidthRules = [
-          new StyleRule().where('zoomLevel').is(5).use({stroke: {width: 3 }}),
-          new StyleRule().where('zoomLevel').is(6).use({stroke: {width: 3 }}),
-          new StyleRule().where('zoomLevel').is(7).use({stroke: {width: 4 }}),
+          new StyleRule().where('zoomLevel').is(5).use({stroke: {width: 1 }}),
+          new StyleRule().where('zoomLevel').is(6).use({stroke: {width: 2 }}),
+          new StyleRule().where('zoomLevel').is(7).use({stroke: {width: 2 }}),
           new StyleRule().where('zoomLevel').is(8).use({stroke: {width: 4 }}),
           new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 4 }}),
           new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 4 }}),
@@ -81,8 +81,8 @@
 
     var strokeRules = [
         new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'round'}}),
-        new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FF9900',  lineCap: 'round'}}),
-        new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FF9900',  lineCap: 'round'}}),
+        new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FFD76A',  lineCap: 'round'}}),
+        new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FFD76A',  lineCap: 'round'}}),
         new StyleRule().where('roadClass').is(4).use({stroke: {color: '#0011BB',  lineCap: 'round'}}),
         new StyleRule().where('roadClass').is(5).use({stroke: {color: '#33CCCC',  lineCap: 'round'}}),
         new StyleRule().where('roadClass').is(6).use({stroke: {color: '#E01DD9',  lineCap: 'round'}}),
