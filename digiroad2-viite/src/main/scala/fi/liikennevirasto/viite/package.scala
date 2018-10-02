@@ -152,16 +152,6 @@ package object viite {
       Seq()
   }
 
-  def toJGeometry(geometry: Option[STRUCT]): Seq[Point] = {
-    //convert STRUCT into geometry
-    if (geometry.nonEmpty){
-      val jgeom: JGeometry = JGeometry.load(geometry.get)
-      toGeomPoint(jgeom.getOrdinatesArray.toList.sliding(3,3).toList)
-    }
-    else
-      Seq()
-  }
-
   def toGeomString(geometry: Seq[Point]): String = {
     def toBD(d: Double): String = {
       val zeroEndRegex = """(\.0+)$""".r
@@ -186,10 +176,6 @@ package object viite {
       case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
       case regex(x, y, _) => Point(toBD(x), toBD(y))
     }.toSeq
-  }
-
-  def toGeomPoint(geomList: List[List[Double]]): Seq[Point] = {
-    geomList.map(p => Point(p.head, p.tail.head, p.last))
   }
 
   def toGeomDouble(point: Point): Seq[Double] = {
