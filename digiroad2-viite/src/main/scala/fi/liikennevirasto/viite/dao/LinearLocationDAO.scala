@@ -671,7 +671,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where $boundingBoxFilter and valid_to is null
+          where $boundingBoxFilter and t.id < t2.id and valid_to is null
         """
       queryList(query)
     }
@@ -698,7 +698,7 @@ class LinearLocationDAO {
       val query =
         s"""
         $selectFromLinearLocation
-        where valid_to is null and ROADWAY_NUMBER in ($boundingBoxQuery)
+        where valid_to is and t.id < t2.id null and ROADWAY_NUMBER in ($boundingBoxQuery)
         """
       queryList(query)
     }
@@ -711,7 +711,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where valid_to is null and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
+          where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
         """
       queryList(query)
     }
