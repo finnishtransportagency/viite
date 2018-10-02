@@ -13,7 +13,6 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.RoadNetworkDAO.getLatestRoadNetworkVersionId
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -142,7 +141,8 @@ object DataFixture {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+    val roadNetworkDAO = new RoadNetworkDAO
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     OracleDatabase.withDynTransaction {
       val checker = new FloatingChecker(roadLinkService)
       val roads = checker.checkRoadNetwork(username)
@@ -255,7 +255,8 @@ object DataFixture {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+    val roadNetworkDAO = new RoadNetworkDAO
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
     val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
     val projectCount=projectsIDs.size
@@ -273,7 +274,8 @@ object DataFixture {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+    val roadNetworkDAO = new RoadNetworkDAO
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
     val startTime = DateTime.now()
     println(s"Starting project Ely code correct now")

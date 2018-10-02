@@ -19,6 +19,7 @@ class RoadNetworkService {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
+  val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
 
   def checkRoadAddressNetwork(options: RoadCheckOptions): Unit = {
 
@@ -33,7 +34,7 @@ class RoadNetworkService {
       road1.endAddrMValue != road2.startAddrMValue && road1.track.value == road2.track.value &&
         !sortedRows.exists(s => s.track != road1.track && s.startAddrMValue == road1.endAddrMValue) match {
         case true => {
-          RoadNetworkDAO.addRoadNetworkError(road1.id, OverlappingRoadAddresses.value)
+          roadNetworkDAO.addRoadNetworkError(road1.id, OverlappingRoadAddresses.value)
         }
         case _ => None
       }
@@ -49,7 +50,7 @@ class RoadNetworkService {
         checkCalibrationPoints(road1, road2)
       match {
         case true => {
-          RoadNetworkDAO.addRoadNetworkError(road1.id, InconsistentTopology.value)
+          roadNetworkDAO.addRoadNetworkError(road1.id, InconsistentTopology.value)
         }
         case _ => None
       }
@@ -93,7 +94,7 @@ class RoadNetworkService {
 
   def getLatestPublishedNetworkDate : Option[DateTime] = {
     withDynSession {
-      RoadNetworkDAO.getLatestPublishedNetworkDate
+      roadNetworkDAO.getLatestPublishedNetworkDate
     }
   }
 }

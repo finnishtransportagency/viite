@@ -11,7 +11,8 @@ import slick.jdbc.{StaticQuery => Q}
 
 case class RoadNetworkError(id: Long, roadwayId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
 
-object RoadNetworkDAO {
+//TODO add unit tests for it at VIITE-1543
+class RoadNetworkDAO {
 
   def createPublishedRoadNetwork: Unit = {
     sqlu"""INSERT INTO published_road_network (id, created) VALUES (PUBLISHED_ROAD_NETWORK_SEQ.NEXTVAL, sysdate)""".execute
