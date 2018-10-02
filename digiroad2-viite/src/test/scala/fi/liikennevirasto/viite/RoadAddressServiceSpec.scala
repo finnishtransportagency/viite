@@ -352,18 +352,56 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("Test getRoadAddressWithLinkIdAndMeasure When only link id and start measure is given Then return all road addresses in link id and with start measure greater or equal than $startM") {
+    val linearLocations = List(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating)
+    )
 
+    val roadways = Seq(
+      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
+    )
+
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
+
+    val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L, Some(10.0), None)
+
+    result.size should be (1)
+    result.head.linkId should be (123L)
+    result.head.startMValue should be (10.0)
+    result.head.endMValue should be (20.0)
   }
 
   test("Test getRoadAddressWithLinkIdAndMeasure When only link id and end measure is given Then return all road addresses in link id and with end measure less or equal than $endM") {
+    val linearLocations = List(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating)
+    )
 
+    val roadways = Seq(
+      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
+    )
+
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
+
+    val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L, None, Some(10.0))
+
+    result.size should be (1)
+    result.head.linkId should be (123L)
+    result.head.startMValue should be (0.0)
+    result.head.endMValue should be (10.0)
   }
 
   test("Test getRoadAddressesFiltered When roadway have less and greater addresses than given measures Then returns only road addresses in between given address measures") {
 
   }
 
-  test("Test getRoadAddressByLinkIds When exists floating road addresses Then floatings should be filterd out") {
+  test("Test getRoadAddressByLinkIds When exists floating road addresses Then floatings should be filtered out") {
 
   }
 
