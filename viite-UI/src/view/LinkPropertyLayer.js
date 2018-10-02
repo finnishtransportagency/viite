@@ -524,8 +524,7 @@
         });
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
-          if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-            anomalousMarkerLayer.getSource().addFeature(marker);
+          anomalousMarkerLayer.getSource().addFeature(marker);
         });
 
         var suravageRoadMarkers = _.filter(suravageLinks, function(roadlink) {

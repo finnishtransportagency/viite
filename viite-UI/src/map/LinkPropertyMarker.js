@@ -70,11 +70,11 @@
             });
         };
 
-      if(roadlink.roadLinkType===-1) {
+      if(roadlink.floating===LinkValues.SelectionType.Floating.value) {
         box.setStyle(boxStyleFloat);
       } else if(roadlink.roadLinkSource===LinkValues.LinkGeomSource.SuravageLinkInterface.value){
         box.setStyle(boxStyleDirectional(roadlink));
-      } else if(roadlink.id===0 && roadlink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value){
+      } else if(roadlink.linearLocationId===0 && roadlink.roadClass === LinkValues.LinkGeomSource.Unknown.value){
         box.setStyle(boxStyleUnknown);
       } else {
         box.setStyle(boxStyleDirectional(roadlink));
