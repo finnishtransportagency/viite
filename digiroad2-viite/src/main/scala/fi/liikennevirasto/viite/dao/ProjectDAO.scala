@@ -307,7 +307,7 @@ object ProjectDAO {
     } catch {
       case e: Exception =>
         println(e)
-        throw new RuntimeException("SQL Error: "+e.getMessage)
+        throw new RuntimeException("SQL Error: " + e.getMessage)
     }
   }
 

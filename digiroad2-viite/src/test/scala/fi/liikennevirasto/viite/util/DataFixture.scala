@@ -227,20 +227,20 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
-      val (roadLinks, changedRoadLinks) = roadLinkService.getFrozenRoadLinksAndChangesFromVVH(municipality.toInt,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
-      println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
-      println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
-      if(roadLinks.nonEmpty) {
+      val (roadLinks, changedRoadLinks) = roadLinkService.getFrozenRoadLinksAndChangesFromVVH(municipality.toInt, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+      println("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
+      println("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
+      if (roadLinks.nonEmpty) {
         val changedLinkIds = changedRoadLinks.map(c => c.oldId.getOrElse(c.newId.getOrElse(0L))).toSet
         //  Get road address from viite DB from the roadLinks ids
-        val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
+        val roadAddresses: List[RoadAddress] = OracleDatabase.withDynTransaction {
           RoadAddressDAO.fetchByLinkId(changedLinkIds, includeTerminated = false)
         }
         try {
           val groupedAddresses = roadAddresses.groupBy(_.linkId)
           val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
           val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
-          println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
+          println("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
           roadAddressService.applyChanges(roadLinks, affectingChanges, roadAddresses)
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
@@ -254,15 +254,14 @@ object DataFixture {
   private def updateProjectLinkGeom(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
-    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
-    val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
-    val projectCount=projectsIDs.size
-    var c=0
-    projectsIDs.foreach(x=>
-    {
-      c+=1
-      println("Updating Geometry for project " +c+ "/"+projectCount)
-      projectService.updateProjectLinkGeometry(x,"BJ")
+    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+    val projectsIDs = projectService.getRoadAddressAllProjects.map(x => x.id)
+    val projectCount = projectsIDs.size
+    var c = 0
+    projectsIDs.foreach(x => {
+      c += 1
+      println("Updating Geometry for project " + c + "/" + projectCount)
+      projectService.updateProjectLinkGeometry(x, "BJ")
     })
 
   }
@@ -270,15 +269,14 @@ object DataFixture {
   private def updateProjectLinkSdoGeometry(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
-    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
-    val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
-    val projectCount=projectsIDs.size
-    var c=0
-    projectsIDs.foreach(proj=>
-    {
-      c+=1
-      println("Updating Geometry for project " +c+ "/"+projectCount)
-      projectService.updateProjectLinkSdoGeometry(proj,"BJ")
+    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+    val projectsIDs = projectService.getRoadAddressAllProjects.map(x => x.id)
+    val projectCount = projectsIDs.size
+    var c = 0
+    projectsIDs.foreach(proj => {
+      c += 1
+      println("Updating Geometry for project " + c + "/" + projectCount)
+      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
     })
 
   }
