@@ -871,7 +871,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       fetchProjectHistoryLinks(projectId)
     }
     else currentProjectLinks
-    
+
+    val floatingHistoryRoadLinks = withDynTransaction {
+      roadLinkService.getRoadLinksHistoryFromVVH(floating.keySet)
+    }
+    val historyLinkAddresses = floatingHistoryRoadLinks.map(fh => {
+       roadAddressService.buildFloatingRoadAddressLink(fh, floating.values.flatten.toSeq.filter(f => f.linkId == fh.linkId && !projectLinks.map(_.linkId).contains(f.linkId)))
+      })
     val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
 
     val missedRL = if (useFrozenVVHLinks) {
@@ -910,7 +916,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
-      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
+      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link)) ++ historyLinkAddresses.flatten
     if (useFrozenVVHLinks) {
       returningTopology.filter(link => link.anomaly != Anomaly.NoAddressGiven).map(ProjectAddressLinkBuilder.build) ++ projectRoadLinks
     } else {
