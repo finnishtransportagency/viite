@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceResetterDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, RoadAddress, RoadNetworkDAO, RoadwayDAO}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -248,43 +248,58 @@ class AssetDataImporter {
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var changed = 0
-    withDynTransaction {
-        val chunks = fetchChunkLinkIds()
-        chunks.foreach {
-        case (min, max) =>
-        val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
-        val topologyLocation = unGroupedTopology.groupBy(_.linkId)
-        val isLoopOrEmptyGeom = if (unGroupedTopology.sortBy(_.orderNumber).flatMap(_.geometry).equals(Nil)) {
-          true
-        } else GeometryUtils.isLoopGeometry(unGroupedTopology.sortBy(_.orderNumber).flatMap(_.geometry))
-
-        roadLinksFromVVH.foreach(roadLink => {
-          val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
-          segmentsOnViiteDatabase.foreach(segment => {
-            val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
-            if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
-              val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
-              val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
-              val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
-              val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
-              if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
-                (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
-                ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
-                  (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
-                isLoopOrEmptyGeom) {
-                linearLocationDAO.updateGeometry(segment.id, newGeom)
-                println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
-                changed += 1
-              } else {
-                println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
-              }
-            }
-          })
-        })
+      val chunks = withDynSession{fetchChunkLinkIds()}
+      chunks.par.foreach {
+          case (min, max) =>
+            withDynTransaction {
+            val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
+            val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
+            val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
+            val topologyLocation = unGroupedTopology.groupBy(_.linkId)
+            roadLinksFromVVH.foreach(roadLink => {
+              val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
+              segmentsOnViiteDatabase.foreach(segment => {
+                val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+                if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
+                  val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
+                  val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
+                  val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
+                  val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
+                  if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
+                    (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
+                    ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
+                      (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
+                    updateGeometry(segment.id, newGeom)
+                    println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
+                    changed += 1
+                  } else {
+                    println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+                  }
+                }
+              })
+            })
+        }
       }
       println(s"Geometries changed count: $changed")
+  }
+
+  def updateGeometry(linearLocationId: Long, geometry: Seq[Point]): Unit = {
+    if (geometry.nonEmpty) {
+      val first = geometry.head
+      val last = geometry.last
+      val (x1, y1, z1, x2, y2, z2) = (
+        GeometryUtils.scaleToThreeDigits(first.x),
+        GeometryUtils.scaleToThreeDigits(first.y),
+        GeometryUtils.scaleToThreeDigits(first.z),
+        GeometryUtils.scaleToThreeDigits(last.x),
+        GeometryUtils.scaleToThreeDigits(last.y),
+        GeometryUtils.scaleToThreeDigits(last.z)
+      )
+      val length = GeometryUtils.geometryLength(geometry)
+      sqlu"""UPDATE LINEAR_LOCATION
+          SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+               MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
+          WHERE id = ${linearLocationId}""".execute
     }
   }
 
