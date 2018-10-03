@@ -127,7 +127,8 @@ object RoadAddressFiller {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val (overflowingSegments, passThroughSegments) = segments.partition(x => (x.endMValue - MaxAllowedMValueError > linkLength) && (x.endMValue - linkLength <= MaxDistanceDiffAllowed))
     val cappedSegments = overflowingSegments.map { s =>
-      (s.copy(endMValue = linkLength), LinearLocationAdjustment(s.id, roadLink.linkId, None, Option(linkLength), GeometryUtils.truncateGeometry3D(roadLink.geometry, s.startMValue, linkLength)))
+      val newGeom = GeometryUtils.geometrySeqEndPoints(GeometryUtils.truncateGeometry3D(roadLink.geometry, s.startMValue, linkLength))
+      (s.copy(endMValue = linkLength, geometry = newGeom), LinearLocationAdjustment(s.id, roadLink.linkId, None, Option(linkLength), newGeom))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
@@ -143,8 +144,9 @@ object RoadAddressFiller {
     val restSegments = sorted.init
 
     val (extendedSegments, adjustments) = if((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed ){
-      (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength)),
-        Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength), GeometryUtils.truncateGeometry3D(roadLink.geometry, lastSegment.startMValue, linkLength))))
+      val newGeom = GeometryUtils.geometrySeqEndPoints(GeometryUtils.truncateGeometry3D(roadLink.geometry, lastSegment.startMValue, linkLength))
+      (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength, geometry = newGeom)),
+        Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength), newGeom)))
     } else {
       (segments, Seq())
     }
