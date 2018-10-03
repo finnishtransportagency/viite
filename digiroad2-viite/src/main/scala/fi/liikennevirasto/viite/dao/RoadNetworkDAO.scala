@@ -26,24 +26,26 @@ class RoadNetworkDAO {
     sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
 
-def addRoadNetworkError(roadwayId: Long, errorCode: Long): Unit = {
-  val timestamp = System.currentTimeMillis()
-  val lastVersion = getLatestRoadNetworkVersionId
-      val networkErrorPS = dynamicSession.prepareStatement("INSERT INTO road_network_error (id, ROADWAY_ID, error_code, error_timestamp, road_network_version)" +
-        " values (?, ?, ?, ?, ?)")
-      val nextId =  Sequences.nextRoadNetworkErrorSeqValue
-      networkErrorPS.setLong(1, nextId)
-      networkErrorPS.setLong(2, roadwayId)
-      networkErrorPS.setLong(3, errorCode)
-      networkErrorPS.setDouble(4, timestamp)
-  lastVersion match {
-        case Some(v) => networkErrorPS.setLong(5, v)
-        case _ => networkErrorPS.setString(5, null)
-      }
-      networkErrorPS.addBatch()
-      networkErrorPS.executeBatch()
-      networkErrorPS.close()
-}
+  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, errorCode: Long): Unit = {
+    val timestamp = System.currentTimeMillis()
+    val lastVersion = getLatestRoadNetworkVersionId
+    val networkErrorPS = dynamicSession.prepareStatement(
+      """INSERT INTO road_network_error (id, ROADWAY_ID, linear_location_id, error_code, error_timestamp, road_network_version)
+      values (?, ?, ?, ?, ?, ?)""")
+    val nextId = Sequences.nextRoadNetworkErrorSeqValue
+    networkErrorPS.setLong(1, nextId)
+    networkErrorPS.setLong(2, roadwayId)
+    networkErrorPS.setLong(3, linearLocationId)
+    networkErrorPS.setLong(4, errorCode)
+    networkErrorPS.setDouble(5, timestamp)
+    lastVersion match {
+      case Some(v) => networkErrorPS.setLong(6, v)
+      case _ => networkErrorPS.setString(6, null)
+    }
+    networkErrorPS.addBatch()
+    networkErrorPS.executeBatch()
+    networkErrorPS.close()
+  }
 
   def removeNetworkErrors: Unit = {
     sqlu"""DELETE FROM road_network_error""".execute

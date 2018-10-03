@@ -2,6 +2,8 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.SQLException
 
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -506,23 +508,37 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   // fetchAllRoadAddressErrors
 
-  // TODO
-  ignore("Test fetchAllRoadAddressErrors When fetch excluding history Then return addresses with errors") {
+  test("Test fetchAllRoadAddressErrors When fetch excluding history Then return addresses with errors") {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId), testRoadway2, testRoadway3))
+      val linearLocationDAO = new LinearLocationDAO
+      val linearLocationId = Sequences.nextLinearLocationId
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+        (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
+        testRoadway1.roadwayNumber)
+      linearLocationDAO.create(List(linearLocation))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, 1)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, 1)
       val errors = dao.fetchAllRoadAddressErrors()
       errors.size should be > 0
     }
   }
 
-  // TODO
-  ignore("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
+  test("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
     runWithRollback {
+      val roadwayId = Sequences.nextRoadwayId
+      dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2010-01-01"))), testRoadway2, testRoadway3))
+      val linearLocationDAO = new LinearLocationDAO
+      val linearLocationId = Sequences.nextLinearLocationId
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+        (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
+        testRoadway1.roadwayNumber)
+      linearLocationDAO.create(List(linearLocation))
+      val roadNetworkDAO = new RoadNetworkDAO
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, 1)
       val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
-      // errors.size should be > 0
+      errors.size should be > 0
     }
   }
 

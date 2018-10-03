@@ -484,15 +484,14 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  // TODO Is this SQL correct? Can we really fetch same time the linear location and the roadway data?
-  // TODO What if roadway has multiple linear locations with different link ids?
+  // TODO Can we really have errors in history? Do we need includesHistory -parameter?
   def fetchAllRoadAddressErrors(includesHistory: Boolean = false): List[AddressErrorDetails] = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
       val history = if (!includesHistory) s" where ra.end_date is null " else ""
       val query =
         s"""
         select
-        	ra.id, ll.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely
+        	ll.id, ll.link_id, ra.road_number, ra.road_part_number, re.error_code, ra.ely
         from ROADWAY ra
         join linear_location ll on ll.ROADWAY_NUMBER = ra.ROADWAY_NUMBER
         join road_network_error re on re.ROADWAY_ID = ra.id and re.linear_location_id = ll.id $history
