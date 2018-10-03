@@ -22,6 +22,7 @@
     var sessionUserRoles = '';
     var specialSelectionTypes = [LinkValues.SelectionType.Floating.value, LinkValues.SelectionType.Unknown.value];
 
+
     var getContinueButtons = function(){
       return continueButton;
     };
@@ -105,8 +106,8 @@
     var getUserGeoLocation = function() {
       return {
         x: centerLonLat[0],
-        y:centerLonLat[1],
-        zoom:zoom.level
+        y: centerLonLat[1],
+        zoom: zoom.level
       };
     };
 
