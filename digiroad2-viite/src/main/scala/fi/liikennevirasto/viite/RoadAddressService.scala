@@ -315,7 +315,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     withDynSession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
-      roadAddresses.filterNot(_.isFloating)
+      roadAddresses.filter(ra => linkIds.contains(ra.linkId)).filterNot(_.isFloating)
     }
   }
 
@@ -1187,6 +1187,6 @@ object AddressConsistencyValidator {
     }
   }
 
-  case class AddressErrorDetails(id: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
+  case class AddressErrorDetails(linearLocationId: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
 
 }

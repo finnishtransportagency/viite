@@ -1010,7 +1010,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadAddressErrorsToApi(addressError: AddressErrorDetails): Map[String, Long] = {
     Map(
-      "id" -> addressError.id,
+      "id" -> addressError.linearLocationId,
       "linkId" -> addressError.linkId,
       "roadNumber" -> addressError.roadNumber,
       "roadPartNumber" -> addressError.roadPartNumber,

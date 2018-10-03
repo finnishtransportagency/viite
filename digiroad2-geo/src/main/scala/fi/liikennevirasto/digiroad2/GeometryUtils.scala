@@ -13,6 +13,10 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
+  def geometrySeqEndPoints(geometry: Seq[Point]): Seq[Point] = {
+    Seq(geometry.head, geometry.last)
+  }
+
   private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
