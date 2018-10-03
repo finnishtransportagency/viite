@@ -108,7 +108,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val secondTrackPoint = secondTrackPoints.minBy(lp => (lp - firstTrackPoint).length())
         (firstTrackToProcess,secondTrackToProcess) match {
           case (Track.LeftSide , Track.RightSide) => (firstTrackPoint, secondTrackPoint)
-          case _ => (secondTrackPoint, firstTrackPoint)
+          case (Track.RightSide , Track.LeftSide) => (secondTrackPoint, firstTrackPoint)
+          case _ => throw new Exception(s"Supplied track combination invalid, valid should be either ${(Track.LeftSide , Track.RightSide)}, ${(Track.RightSide , Track.LeftSide)} the supplied values were: ${(firstTrackToProcess , secondTrackToProcess)}")
         }
       }
     }
