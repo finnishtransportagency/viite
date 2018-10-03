@@ -111,7 +111,7 @@ object OracleDatabase {
     """
   }
 
-  def create(points: Seq[Point], con: java.sql.Connection): STRUCT = {
+  def createJGeometry(points: Seq[Point], con: java.sql.Connection): STRUCT = {
     val ordinates = points.flatMap(p => Seq(p.x, p.y, p.z)).toArray
     val dim = 4
     val srid = 3067
@@ -119,7 +119,7 @@ object OracleDatabase {
       JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
   }
 
-  def load(geometry: Option[Object]): Seq[Point] = {
+  def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
     //convert STRUCT into geometry
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])
     if (geom.nonEmpty){
