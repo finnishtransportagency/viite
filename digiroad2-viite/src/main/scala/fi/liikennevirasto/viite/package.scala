@@ -178,10 +178,6 @@ package object viite {
     }.toSeq
   }
 
-  def toGeomDouble(point: Point): Seq[Double] = {
-    Seq(point.x, point.y, point.z)
-  }
-
   object CombineMaps {
     type Mapped = Map[String, String]
 

@@ -285,7 +285,7 @@ object ProjectDAO {
       val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
-        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, OracleDatabase.load(geom), projectId,
+        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, OracleDatabase.loadJGeometryToGeometry(geom), projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
         roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM = roadAddressStartAddrM, roadAddressEndAddrM = roadAddressEndAddrM, roadAddressTrack = roadAddressTrack,
@@ -349,7 +349,7 @@ object ProjectDAO {
             addressPS.setString(14, null)
           addressPS.setLong(15, pl.ely)
           addressPS.setBoolean(16, pl.reversed)
-          addressPS.setObject(17, OracleDatabase.create(pl.geometry, dynamicSession.conn))
+          addressPS.setObject(17, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
           addressPS.setLong(18, pl.linkId)
           addressPS.setLong(19, pl.sideCode.value)
           addressPS.setDouble(20, pl.startMValue)
@@ -400,7 +400,7 @@ object ProjectDAO {
         projectLinkPS.setInt(11, projectLink.status.value)
         projectLinkPS.setInt(12, projectLink.roadType.value)
         projectLinkPS.setInt(13, if (projectLink.reversed) 1 else 0)
-        projectLinkPS.setObject(14, OracleDatabase.create(projectLink.geometry, dynamicSession.conn))
+        projectLinkPS.setObject(14, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
         projectLinkPS.setInt(15, projectLink.sideCode.value)
         projectLinkPS.setDouble(16, projectLink.startMValue)
         projectLinkPS.setDouble(17, projectLink.endMValue)
@@ -414,11 +414,12 @@ object ProjectDAO {
   }
 
   def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
-    time(logger, "Update project links geometry") {
+    time(logger,
+      "Update project links geometry") {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ?, MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
 
       for (projectLink <- projectLinks) {
-        projectLinkPS.setObject(1, OracleDatabase.create(projectLink.geometry, dynamicSession.conn))
+        projectLinkPS.setObject(1, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
         projectLinkPS.setString(2, modifier)
         projectLinkPS.setLong(3, projectLink.linkGeometryTimeStamp)
         projectLinkPS.setLong(4, projectLink.id)
