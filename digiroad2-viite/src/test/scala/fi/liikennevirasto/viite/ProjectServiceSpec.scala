@@ -247,7 +247,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adding and removing TR_ID") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      val rap = RoadAddressProject(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
       runWithRollback {
         ProjectDAO.createRoadAddressProject(rap)
         val emptyTrId = ProjectDAO.getRotatingTRProjectId(projectId)

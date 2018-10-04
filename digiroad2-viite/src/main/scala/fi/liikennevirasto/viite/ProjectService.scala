@@ -137,7 +137,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long): Either[String, Seq[ReservedRoadPart]] = {
+  def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long): Either[String, Seq[ProjectReservedPart]] = {
     withDynTransaction {
       (startPart to endPart).foreach(part =>
         ProjectDAO.roadPartReservedByProject(roadNumber, part) match {
@@ -174,7 +174,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def validateProjectDate(reservedParts: Seq[ReservedRoadPart], date: DateTime): Option[String] = {
+  def validateProjectDate(reservedParts: Seq[ProjectReservedPart], date: DateTime): Option[String] = {
     throw new NotImplementedError("Will be implemented at VIITE-1540")
 //    withDynSession {
 //      reservedParts.map(rp => (rp.roadNumber, rp.roadPartNumber) -> RoadAddressDAO.getRoadPartInfo(rp.roadNumber, rp.roadPartNumber)).toMap.
@@ -194,11 +194,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    }
   }
 
-  private def getAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ReservedRoadPart] = {
+  private def getAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
     ProjectDAO.fetchReservedRoadPart(roadNumber, roadPart).orElse(generateAddressPartInfo(roadNumber, roadPart))
   }
 
-  private def generateAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ReservedRoadPart] = {
+  private def generateAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
     throw new NotImplementedError("Will be implemented at VIITE-1539")
 //    RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart).map {
 //      case (_, linkId, addrLength, discontinuity, ely, _, _) =>
@@ -454,7 +454,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    }
   }
 
-  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectId: Long,
+  private def validateReservations(reservedRoadParts: Seq[ProjectReservedPart], projectEly: Option[Long], projectId: Long,
                                    projectLinks: Seq[ProjectLink]): Option[String] = {
     throw new NotImplementedError("Will be implemented at VIITE-1539")
 //    val errors = reservedRoadParts.flatMap { part =>
@@ -742,7 +742,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param reservedRoadPart Reservation information (req: road number, road part number)
     * @return
     */
-  private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ReservedRoadPart): (Option[ReservedRoadPart], Option[String]) = {
+  private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ProjectReservedPart): (Option[ProjectReservedPart], Option[String]) = {
     logger.info(s"Check ${project.id} matching to " + ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber))
     ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber) match {
       case Some(proj) if proj._1 != project.id => (None, Some(proj._2))
@@ -1076,8 +1076,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     true
   }
 
-  def toReservedRoadPart(roadNumber: Long, roadPartNumber: Long, ely: Long): ReservedRoadPart = {
-    ReservedRoadPart(0L, roadNumber, roadPartNumber,
+  def toReservedRoadPart(roadNumber: Long, roadPartNumber: Long, ely: Long): ProjectReservedPart = {
+    ProjectReservedPart(0L, roadNumber, roadPartNumber,
       None, None, Some(ely),
       None, None, None, None, false)
   }
