@@ -87,10 +87,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   // addRoadNetworkError
 
-  private def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
-    dao.expireRoadNetwork
-    dao.createPublishedRoadNetwork
-    roadwayDAO.create(List(testRoadway1.copy(id = roadwayId), testRoadway2, testRoadway3))
+  private def addLinearLocationAndRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
     val linearLocationDAO = new LinearLocationDAO
     val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
       (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
@@ -99,13 +96,20 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     dao.addRoadNetworkError(roadwayId, linearLocationId, addressError)
   }
 
+  private def expireAndAddRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
+    dao.expireRoadNetwork
+    dao.createPublishedRoadNetwork
+    roadwayDAO.create(List(testRoadway1.copy(id = roadwayId)))
+    addLinearLocationAndRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
+  }
+
   test("Test addRoadNetworkError When add one error Then getRoadNetworkErrors should return one error with the correct values") {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
       val linkId = 1000l
       val addressError = AddressError.InconsistentTopology
-      addRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
+      expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(roadwayId, addressError)
       errors.size should be(1)
       errors.head.roadwayId should be(roadwayId)
@@ -120,7 +124,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   test("Test removeNetworkErrors When one error Then should be removed") {
     runWithRollback {
       val error = AddressError.InconsistentTopology
-      addRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l, error)
+      expireAndAddRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l, error)
       val errors = dao.getRoadNetworkErrors(error)
       errors.size should be(1)
       dao.removeNetworkErrors
@@ -140,7 +144,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   test("Test hasRoadNetworkErrors When there are errors Then should return true") {
     runWithRollback {
-      addRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l, AddressError.InconsistentTopology)
+      expireAndAddRoadNetworkError(Sequences.nextRoadwayId, Sequences.nextLinearLocationId, 1000l, AddressError.InconsistentTopology)
       dao.hasRoadNetworkErrors should be(true)
     }
   }
@@ -195,7 +199,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
       val linkId = 1000l
       val addressError = AddressError.InconsistentTopology
-      addRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
+      expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(-9999l, addressError)
       errors.size should be(0)
     }
@@ -207,7 +211,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
       val linkId = 1000l
       val addressError = AddressError.InconsistentTopology
-      addRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
+      expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(roadwayId, AddressError.InconsistentLrmHistory)
       errors.size should be(0)
     }
@@ -219,15 +223,45 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
       val linkId = 1000l
       val addressError = AddressError.InconsistentTopology
-      addRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
+      expireAndAddRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
       val errors = dao.getRoadNetworkErrors(roadwayId, addressError)
-      errors.size should be (1)
+      errors.size should be(1)
       val error = errors.head
       error.error should be(addressError)
       error.error_timestamp should be > 0l
       error.id should be > 0l
       error.network_version.getOrElse(fail) should be > 0l
       error.roadwayId should be(roadwayId)
+    }
+  }
+
+  test("Test getRoadNetworkErrors When searching error in roadway that has multiple linear locations Then should return multiple network errors") {
+    runWithRollback {
+      val roadwayId = Sequences.nextRoadwayId
+      val linearLocationId1 = Sequences.nextLinearLocationId
+      val linearLocationId2 = Sequences.nextLinearLocationId
+      val linkId1 = 1000l
+      val linkId2 = 2000l
+      val addressError = AddressError.InconsistentTopology
+      expireAndAddRoadNetworkError(roadwayId, linearLocationId1, linkId1, addressError)
+      addLinearLocationAndRoadNetworkError(roadwayId, linearLocationId2, linkId2, addressError)
+      val errors = dao.getRoadNetworkErrors(roadwayId, addressError)
+      errors.size should be(2)
+      val error1 = errors.filter(e => e.linearLocationId == linearLocationId1).head
+      error1.error should be(addressError)
+      error1.error_timestamp should be > 0l
+      error1.id should be > 0l
+      error1.network_version.getOrElse(fail) should be > 0l
+      error1.roadwayId should be(roadwayId)
+      error1.linearLocationId should be(linearLocationId1)
+      val error2 = errors.filter(e => e.linearLocationId == linearLocationId2).head
+      error2.error should be(addressError)
+      error2.error_timestamp should be > 0l
+      error2.id should be > 0l
+      error2.id should not be (error1.id)
+      error2.network_version.getOrElse(fail) should be(error1.network_version.getOrElse(fail))
+      error2.roadwayId should be(roadwayId)
+      error2.linearLocationId should be(linearLocationId2)
     }
   }
 
