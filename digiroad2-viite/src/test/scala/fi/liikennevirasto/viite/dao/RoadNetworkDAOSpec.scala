@@ -187,7 +187,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  // getRoadNetworkError
+  // getRoadNetworkErrors
 
   test("Test getRoadNetworkError When searching with non-existing id Then should return None") {
     runWithRollback {
