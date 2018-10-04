@@ -768,6 +768,10 @@
       return currentProject;
     };
 
+    this.setCurrentProject = function (project) {
+      currentProject = project;
+    };
+
     this.getPublishableStatus = function () {
       return publishableProject;
     };
