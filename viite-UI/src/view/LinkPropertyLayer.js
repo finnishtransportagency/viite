@@ -68,6 +68,7 @@
 
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
+      name: 'geometryChangedLayer',
       style: function(feature) {
           return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
       },
