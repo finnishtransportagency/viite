@@ -10,7 +10,7 @@ UPDATE
    IF;
 END
 ;
-
+/
 CREATE
 OR REPLACE TRIGGER validToDate_validation2 BEFORE
 INSERT
