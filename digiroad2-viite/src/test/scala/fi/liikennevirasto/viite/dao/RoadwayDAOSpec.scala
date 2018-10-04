@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import fi.liikennevirasto.viite.{RoadType, _}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -519,7 +520,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
         testRoadway1.roadwayNumber)
       linearLocationDAO.create(List(linearLocation))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, 1)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, AddressError.InconsistentLrmHistory)
       val errors = dao.fetchAllRoadAddressErrors()
       errors.size should be > 0
     }
@@ -536,7 +537,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
         testRoadway1.roadwayNumber)
       linearLocationDAO.create(List(linearLocation))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, 1)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, AddressError.InconsistentLrmHistory)
       val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
       errors.size should be > 0
     }
