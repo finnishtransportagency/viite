@@ -753,7 +753,7 @@
       if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function(links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
-            return projectLink.anomaly !== Anomaly.None.value;
+            return projectLink.id !== 0 || (projectLink.id === 0 && projectLink.anomaly === Anomaly.NoAddressGiven.value) || (projectLink.id === 0 && projectLink.roadLinkType === RoadLinkType.FloatingRoadLinkType.value);
           });
           _.each(directionMarkers, function (directionLink) {
             marker = cachedMarker.createProjectMarker(directionLink);
