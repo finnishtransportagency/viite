@@ -61,8 +61,10 @@
   };
 
   $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
-    applicationModel.removeSpinner();
-    console.log("Request '" + settings.url + "' failed: " + thrownError);
+    if (jqxhr.getAllResponseHeaders()) {
+      applicationModel.removeSpinner();
+      console.log("Request '" + settings.url + "' failed: " + thrownError);
+    }
   });
 
   var createOpenLayersMap = function(startupParameters, layers) {

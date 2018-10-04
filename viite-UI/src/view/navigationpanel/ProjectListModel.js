@@ -94,7 +94,7 @@
     };
 
     function toggle() {
-      $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
+      $('.container').append('<div class="modal-overlay confirm-modal" id="projectList"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.toggle());
       for (var id in headers) { // Initialize ordering -> sort by ELY
         if (headers.hasOwnProperty(id)) {
@@ -241,7 +241,6 @@
           html += '</table>';
           $('#project-list').html(html);
         }
-        applicationModel.removeSpinner();
       };
 
       $('#filterUser').click(function () {

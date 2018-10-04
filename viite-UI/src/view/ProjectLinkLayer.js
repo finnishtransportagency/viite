@@ -822,7 +822,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
-      applicationModel.removeSpinner();
       me.redraw();
       _.defer(function () {
         highlightFeatures();
