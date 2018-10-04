@@ -55,31 +55,31 @@ object Discontinuity {
   }
 
   case object EndOfRoad extends Discontinuity {
-    def value = 1;
+    def value = 1
 
     def description = "Tien loppu"
   }
 
   case object Discontinuous extends Discontinuity {
-    def value = 2;
+    def value = 2
 
     def description = "Epäjatkuva"
   }
 
   case object ChangingELYCode extends Discontinuity {
-    def value = 3;
+    def value = 3
 
     def description = "ELY:n raja"
   }
 
   case object MinorDiscontinuity extends Discontinuity {
-    def value = 4;
+    def value = 4
 
     def description = "Lievä epäjatkuvuus"
   }
 
   case object Continuous extends Discontinuity {
-    def value = 5;
+    def value = 5
 
     def description = "Jatkuva"
   }
