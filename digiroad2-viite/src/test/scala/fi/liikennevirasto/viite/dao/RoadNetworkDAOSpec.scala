@@ -189,7 +189,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   // getRoadNetworkErrors
 
-  test("Test getRoadNetworkError When searching with non-existing id Then should return None") {
+  test("Test getRoadNetworkErrors When searching with non-existing id Then should return None") {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
@@ -201,7 +201,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test getRoadNetworkError When searching with non-existing error Then should return None") {
+  test("Test getRoadNetworkErrors When searching with non-existing error Then should return None") {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
@@ -213,7 +213,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test getRoadNetworkError When searching with existing id and error Then should return network error") {
+  test("Test getRoadNetworkErrors When searching with existing id and error Then should return network error") {
     runWithRollback {
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
