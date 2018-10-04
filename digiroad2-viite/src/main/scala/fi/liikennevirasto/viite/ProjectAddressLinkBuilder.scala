@@ -70,7 +70,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val calibrationPoints = projectLink.toCalibrationPoints()
 
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode,
-      linkType, projectLink.roadType,  projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
+      linkType, projectLink.roadType, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
       calibrationPoints._1, calibrationPoints._2,
       Anomaly.None, projectLink.status, projectLink.roadwayId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
@@ -92,7 +92,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     }
     build(roadLink, 0L, geom, length, roadLinkRoadNumber, roadLinkRoadPartNumber, roadLinkTrackCode, Some(roadName), municipalityCode,
       linkType, getRoadType(roadLink.administrativeClass, linkType), Discontinuity.Continuous, unaddressedRoadLink.startAddrMValue.getOrElse(0), unaddressedRoadLink.endAddrMValue.getOrElse(0),
-      unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(0.0),SideCode.Unknown,
+      unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(0.0), SideCode.Unknown,
       None, None, Anomaly.None, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), reversed = false, None, None)
   }
 
@@ -103,7 +103,6 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
       ral.anomaly, LinkStatus.Unknown, ral.id)
   }
-
 
 
   private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long,
@@ -134,6 +133,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       else
         seq.tail
     }
+
     if (split1.startMValue < split2.startMValue)
       Some(split1.geometry ++ safeTail(split2.geometry))
     else
