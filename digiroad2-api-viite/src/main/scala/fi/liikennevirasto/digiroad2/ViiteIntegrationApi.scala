@@ -69,6 +69,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService, val roadNa
       "geometryWKT" -> ""
   }
 
+  // TODO Should we add the roadway_id also here?
   def roadAddressLinksToApi(roadAddressLinks : Seq[RoadAddressLink]): Seq[Map[String, Any]] = {
     roadAddressLinks.map{
       roadAddressLink =>
