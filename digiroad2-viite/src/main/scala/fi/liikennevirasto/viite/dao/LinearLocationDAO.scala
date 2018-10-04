@@ -662,7 +662,7 @@ class LinearLocationDAO {
   }
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[LinearLocation] = {
-    time(logger, "Fetch road addresses by bounding box") {
+    time(logger, "Fetch linear locations by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
@@ -678,7 +678,7 @@ class LinearLocationDAO {
   }
 
   def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
-    time(logger, "Fetch road addresses by bounding box") {
+    time(logger, "Fetch all the linear locations of the matching roadways by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 

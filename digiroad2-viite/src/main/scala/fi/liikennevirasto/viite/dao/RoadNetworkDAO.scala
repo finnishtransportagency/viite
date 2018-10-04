@@ -6,13 +6,15 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
+import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-case class RoadNetworkError(id: Long, roadwayId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
+case class RoadNetworkError(id: Long, roadwayId: Long, linearLocationId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
 
-//TODO add unit tests for it at VIITE-1543
 class RoadNetworkDAO {
+
+  protected def logger = LoggerFactory.getLogger(getClass)
 
   def createPublishedRoadNetwork: Unit = {
     sqlu"""INSERT INTO published_road_network (id, created) VALUES (PUBLISHED_ROAD_NETWORK_SEQ.NEXTVAL, sysdate)""".execute
@@ -26,7 +28,7 @@ class RoadNetworkDAO {
     sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
 
-  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, errorCode: Long): Unit = {
+  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, addressError: AddressError): Unit = {
     val timestamp = System.currentTimeMillis()
     val lastVersion = getLatestRoadNetworkVersionId
     val networkErrorPS = dynamicSession.prepareStatement(
@@ -36,7 +38,7 @@ class RoadNetworkDAO {
     networkErrorPS.setLong(1, nextId)
     networkErrorPS.setLong(2, roadwayId)
     networkErrorPS.setLong(3, linearLocationId)
-    networkErrorPS.setLong(4, errorCode)
+    networkErrorPS.setLong(4, addressError.value)
     networkErrorPS.setDouble(5, timestamp)
     lastVersion match {
       case Some(v) => networkErrorPS.setLong(6, v)
@@ -55,25 +57,33 @@ class RoadNetworkDAO {
     sql"""SELECT COUNT(*) FROM road_network_error """.as[Long].first > 0
   }
 
-  def getLatestRoadNetworkVersion: Option[Long] = {
-    sql"""SELECT MAX(id) FROM published_road_network""".as[Option[Long]].first
-  }
-
   def getLatestRoadNetworkVersionId: Option[Long] = {
-    sql"""SELECT id FROM published_road_network order by id desc""".as[Long].firstOption
+    sql"""SELECT MAX(id) FROM published_road_network WHERE valid_to is null""".as[Option[Long]].first
   }
 
   def getLatestPublishedNetworkDate: Option[DateTime] = {
-    sql"""SELECT MAX(created) as created FROM published_road_network""".as[Option[DateTime]].first
+    sql"""SELECT MAX(created) as created FROM published_road_network WHERE valid_to is null""".as[Option[DateTime]].first
   }
 
-  def getRoadNetworkError(addressId: Long, error: AddressError): Option[RoadNetworkError] = {
+  def getRoadNetworkErrors(error: AddressError): List[RoadNetworkError] = {
+    val query =
+      s"""SELECT id, roadway_id, linear_location_id, error_code, error_timestamp, road_network_version
+         FROM road_network_error where error_code = ${error.value} order by road_network_version desc""".stripMargin
 
-    val query = s"""SELECT * FROM road_network_error where ROADWAY_ID = $addressId and error_code = ${error.value} order by road_network_version desc"""
+    Q.queryNA[(Long, Long, Long, Int, Long, Option[Long])](query).list.map {
+      case (id, roadwayId, linearLocationId, errorCode, timestamp, version) =>
+        RoadNetworkError(id, roadwayId, linearLocationId, AddressError.apply(errorCode), timestamp, version)
+    }
+  }
 
-    Q.queryNA[(Long, Long, Int, Long, Option[Long])](query).list.headOption.map {
-      case (id, roadwayId, errorCode, timestamp, version) =>
-        RoadNetworkError(id, roadwayId, AddressError.apply(errorCode), timestamp, version)
+  def getRoadNetworkErrors(roadwayId: Long, error: AddressError): List[RoadNetworkError] = {
+    val query =
+      s"""SELECT id, roadway_id, linear_location_id, error_code, error_timestamp, road_network_version
+         FROM road_network_error where ROADWAY_ID = $roadwayId and error_code = ${error.value} order by road_network_version desc""".stripMargin
+
+    Q.queryNA[(Long, Long, Long, Int, Long, Option[Long])](query).list.map {
+      case (id, roadwayId, linearLocationId, errorCode, timestamp, version) =>
+        RoadNetworkError(id, roadwayId, linearLocationId, AddressError.apply(errorCode), timestamp, version)
     }
   }
 

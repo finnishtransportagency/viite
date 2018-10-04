@@ -34,7 +34,7 @@ class RoadNetworkService {
       road1.endAddrMValue != road2.startAddrMValue && road1.track.value == road2.track.value &&
         !sortedRows.exists(s => s.track != road1.track && s.startAddrMValue == road1.endAddrMValue) match {
         case true => {
-          roadNetworkDAO.addRoadNetworkError(road1.id, road1.linearLocationId, OverlappingRoadAddresses.value)
+          roadNetworkDAO.addRoadNetworkError(road1.id, road1.linearLocationId, OverlappingRoadAddresses)
         }
         case _ => None
       }
@@ -50,7 +50,7 @@ class RoadNetworkService {
         checkCalibrationPoints(road1, road2)
       match {
         case true => {
-          roadNetworkDAO.addRoadNetworkError(road1.id, road1.linearLocationId, InconsistentTopology.value)
+          roadNetworkDAO.addRoadNetworkError(road1.id, road1.linearLocationId, InconsistentTopology)
         }
         case _ => None
       }

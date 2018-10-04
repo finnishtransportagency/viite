@@ -56,7 +56,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return Optional error message, None if no error
     */
   def checkRoadPartsExist(roadNumber: Long, roadStartPart: Long, roadEndPart: Long): Option[String] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
+    throw new NotImplementedError("Will be implemented at VIITE-1539")
 //    withDynTransaction {
 //      if (!RoadAddressDAO.roadPartExists(roadNumber, roadStartPart)) {
 //        if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
