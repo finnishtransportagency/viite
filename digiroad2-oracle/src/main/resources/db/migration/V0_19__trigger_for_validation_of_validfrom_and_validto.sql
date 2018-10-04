@@ -5,7 +5,7 @@ UPDATE
    BEGIN
       if :new.start_date = :new.end_date
    THEN
-      :NEW.valid_to := sysdate ;
+      :NEW.valid_to := :NEW.valid_from ;
    END
    IF;
 END
@@ -18,7 +18,7 @@ INSERT
    BEGIN
       if :new.start_date = :new.end_date
    THEN
-      :NEW.valid_to := sysdate ;
+      :NEW.valid_to := :NEW.valid_from ;
    END
    IF;
 END
