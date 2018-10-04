@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
@@ -88,55 +89,23 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
-  private def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
-                                    calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
-    def fetchEndpoints(projectLink: ProjectLink): (Point, Point) = {
-      (projectLink.startingPoint, projectLink.endPoint)
-    }
-
-    def processTracks(firstTrackToProcess: Track, secondTrackToProcess: Track) = {
-      val firstTrackPoint = findStartingPoint(newLinks.filter(_.track != firstTrackToProcess), oldLinks.filter(_.track != firstTrackToProcess),
-        calibrationPoints)
-      if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, firstTrackPoint) && l.track == Track.Combined))
-        (firstTrackPoint, firstTrackPoint)
-      else {
-        // Get left track non-connected points and find the closest to right track starting point
-        val secondTrackLinks = newLinks.filter(_.track != secondTrackToProcess) ++ oldLinks.filter(_.track != secondTrackToProcess)
-        val secondTrackPoints = TrackSectionOrder.findOnceConnectedLinks(secondTrackLinks).keys
-        if (secondTrackPoints.isEmpty)
-          throw new InvalidAddressDataException("Missing left track starting points")
-        val secondTrackPoint = secondTrackPoints.minBy(lp => (lp - firstTrackPoint).length())
-        (firstTrackToProcess,secondTrackToProcess) match {
-          case (Track.LeftSide , Track.RightSide) => (firstTrackPoint, secondTrackPoint)
-          case (Track.RightSide , Track.LeftSide) => (secondTrackPoint, firstTrackPoint)
-          case _ => throw new Exception(s"Supplied track combination invalid, valid should be either ${(Track.LeftSide , Track.RightSide)}, ${(Track.RightSide , Track.LeftSide)} the supplied values were: ${(firstTrackToProcess , secondTrackToProcess)}")
-        }
-      }
-    }
-
-    /*
-    1. Find all new and old links by track
-    2. Find what track has the "biggest" start point and use that track as the basis of the calculation
-    3. Use the "findStartingPoint" routine on said track side
-    4. The remaining track side will be subject to the regular treatment
-     */
-    val newRightSideLinks = newLinks.filter(_.track != Track.LeftSide)
-    val oldRightSideLinks = oldLinks.filter(_.track != Track.LeftSide)
-    val newLeftSideLinks = newLinks.filter(_.track != Track.RightSide)
-    val oldLeftSideLinks = oldLinks.filter(_.track != Track.RightSide)
-
-
-    val rightSideLinks = (newRightSideLinks++oldRightSideLinks).map(fetchEndpoints).minBy(p => p._1.distance2DTo(Point(0.0, 0.0, 0.0)))
-    val leftSideLinks = (newLeftSideLinks++oldLeftSideLinks).map(fetchEndpoints).minBy(p => p._1.distance2DTo(Point(0.0, 0.0, 0.0)))
-
-    if (rightSideLinks._1.distance2DTo(Point(0.0, 0.0, 0.0)) > leftSideLinks._1.distance2DTo(Point(0.0, 0.0, 0.0))) {
-      //Choose right side first
-      processTracks(Track.LeftSide, Track.RightSide)
-    } else {
-      //Choose left side first
-      processTracks(Track.RightSide, Track.LeftSide)
+  def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
+                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
+    val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
+      calibrationPoints)
+    if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
+      (rightStartPoint, rightStartPoint)
+    else {
+      // Get left track non-connected points and find the closest to right track starting point
+      val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
+      val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
+      if (leftPoints.isEmpty)
+        throw new InvalidAddressDataException("Missing left track starting points")
+      val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
+      (rightStartPoint, leftStartPoint)
     }
   }
+
 
   /**
     * Find a starting point for this road part
@@ -152,6 +121,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val link = oldLinks.find(_.id == calibrationPoint.projectLinkId).orElse(newLinks.find(_.id == calibrationPoint.projectLinkId))
       link.flatMap(pl => GeometryUtils.calculatePointFromLinearReference(pl.geometry, calibrationPoint.segmentMValue))
     }
+
+    //First it will return the subtraction between endPoint - startPoint of all the points variable
+    //Then it will sum all the results of the previous operation as a vector (v1 is the accumulated result, v2 is the next item to sum
+    def calculateDirectionVector(projectLinkSeq: Seq[ProjectLink]): Vector3d = {
+      projectLinkSeq.map(pl => (pl.startingPoint, pl.endPoint)).map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+    }
+
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(_.startingPoint).getOrElse {
@@ -160,10 +136,16 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           throw new InvalidAddressDataException("Missing right track starting project links")
         //Grab all the endpoints of the links
         val points = remainLinks.map(pl => (pl.startingPoint, pl.endPoint))
-        //First it will return the subtraction between endPoint - startPoint of all the points variable
-        //Then it will sum all the results of the previous operation as a vector (v1 is the accumulated result, v2 is the next item to sum
-        val direction = points.map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+
+        val direction = remainLinks.exists(_.sideCode != SideCode.Unknown) match {
+          case true =>
+            //We use the points that already have a side code defined as the basis to find the direction vector
+            calculateDirectionVector(remainLinks.filter(_.sideCode != SideCode.Unknown))
+          case _ =>
+            calculateDirectionVector(remainLinks)
+        }
         // Approximate estimate of the mid point: averaged over count, not link length
+        // Calculation is done by summing the direction of the vector multiplied by 0.5 to the start point
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
           (p - Point(0, 0)).scale(1.0 / points.size) + x
         }
