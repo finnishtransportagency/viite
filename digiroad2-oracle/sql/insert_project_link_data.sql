@@ -24,4 +24,4 @@ Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROA
 UPDATE PROJECT_LINK SET
   ROAD_TYPE = 1,
   ELY = 1,
-  GEOMETRY = '[6975409.0,' || (525303 + start_addr_m) || '],[6975409,' || (525303 + end_addr_m) || ']';
+  GEOMETRY_STRING = '[6975409.0,' || (525303 + start_addr_m) || '],[6975409,' || (525303 + end_addr_m) || ']';

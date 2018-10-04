@@ -2,15 +2,18 @@ package fi.liikennevirasto.digiroad2.oracle
 
 import java.sql.Date
 import java.util.Properties
-import javax.sql.DataSource
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import javax.sql.DataSource
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource, ConnectionHandle}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import oracle.jdbc.{driver, OracleDriver}
+import oracle.jdbc.{OracleDriver, driver}
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.Point
+import oracle.spatial.geometry.JGeometry
+import oracle.sql.STRUCT
 
 object OracleDatabase {
   lazy val ds: DataSource = initDataSource
@@ -106,5 +109,24 @@ object OracleDatabase {
                          'querytype=WINDOW'
                          ) = 'TRUE'
     """
+  }
+
+  def createJGeometry(points: Seq[Point], con: java.sql.Connection): STRUCT = {
+    val ordinates = points.flatMap(p => Seq(p.x, p.y, p.z)).toArray
+    val dim = 4
+    val srid = 3067
+    val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
+      JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
+  }
+
+  def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
+    //convert STRUCT into geometry
+    val geom = geometry.map(g => g.asInstanceOf[STRUCT])
+    if (geom.nonEmpty){
+      val jgeom: JGeometry = JGeometry.load(geom.get)
+      jgeom.getOrdinatesArray.toList.sliding(3,3).toList.map(p => Point(p.head, p.tail.head, p.last))
+    }
+    else
+      Seq()
   }
 }
