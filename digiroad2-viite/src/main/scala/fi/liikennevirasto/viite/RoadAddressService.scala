@@ -1129,16 +1129,6 @@ class Contains(r: Range) {
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 
-//TODO move this class to project
-case class ReservedRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None,
-                            discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None,
-                            newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None,
-                            newEly: Option[Long] = None, startingLinkId: Option[Long] = None, isDirty: Boolean = false) {
-  def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
-    roadNumber == baseRoadAddress.roadNumber && roadPartNumber == baseRoadAddress.roadPartNumber
-  }
-}
-
 case class LinearLocationResult(current: Seq[LinearLocation], floating: Seq[LinearLocation])
 
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],

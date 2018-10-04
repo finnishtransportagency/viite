@@ -451,7 +451,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
       when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
-      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       val templateGeom = toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
