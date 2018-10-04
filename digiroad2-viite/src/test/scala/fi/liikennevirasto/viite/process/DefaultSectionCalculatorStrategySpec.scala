@@ -49,7 +49,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers{
     val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
     val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
     projectLinksWithAssignedValues.forall(_.sideCode == projectLinksWithAssignedValues.head.sideCode) should be (true)
-    startingPointsForCalculations should be ((geomRight2.last, geomLeft2.last))
+    startingPointsForCalculations should be ((geomRight1.head, geomLeft1.head))
 
     val additionalGeomLeft1= Seq(Point(40.0, 10.0), Point(30.0, 10.0))
     val additionalGeomRight1= Seq(Point(40.0, 20.0), Point(30.0, 20.0))
@@ -73,7 +73,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers{
     projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be (true)
     projectLinksWithAssignedValuesPlus.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(_.sideCode.value).sorted) should be(true)
     projectLinksWithAssignedValues.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value) )
-    findStartingPointsPlus should be ((additionalGeomRight1.head, additionalGeomLeft1.head))
+    findStartingPointsPlus should be (startingPointsForCalculations)
 
 
     val additionalGeomLeftBefore= Seq(Point(10.0, 10.0), Point(0.0, 10.0))
@@ -95,8 +95,8 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers{
 
     val projectLinksWithAssignedValuesBefore = defaultSectionCalculatorStrategy.assignMValues(projectLinksWithAssignedValues++beforeProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
     val findStartingPointsBefore = defaultSectionCalculatorStrategy.findStartingPoints(projectLinksWithAssignedValues++beforeProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == SideCode.switch(projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode)) should be (true)
-    projectLinksWithAssignedValuesBefore.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(p => SideCode.switch(p.sideCode).value).sorted) should be(true)
+    projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be (true)
+    projectLinksWithAssignedValuesBefore.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(p => p.sideCode.value).sorted) should be(true)
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value) )
     findStartingPointsBefore should be ((additionalGeomRightBefore.last, additionalGeomLeftBefore.last))
   }
