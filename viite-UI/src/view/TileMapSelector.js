@@ -42,13 +42,9 @@
     });
     $('#roadsVisibleCheckbox').change(function () {
       applicationModel.toggleRoadVisibility();
-      switch(applicationModel.getSelectedLayer()) {
-        case 'linkProperty':
           eventbus.trigger('linkProperty:visibilityChanged');
-          break;
-        case 'roadAddressProject':
           eventbus.trigger('roadAddressProject:visibilityChanged');
-      }
+
     });
 
   };
