@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -83,6 +83,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
       }
     }
+
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.right.links), userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.left.links), userDefinedCalibrationPoint)
     val (left, right) = adjustTracksToMatch(leftLinks.sortBy(_.startAddrMValue), rightLinks.sortBy(_.startAddrMValue), None)
@@ -90,7 +91,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
-                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
+                         calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
     if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
