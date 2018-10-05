@@ -935,7 +935,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating))
-      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(endDate = Option(new DateTime(new Date()))))
+      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(endDate = Option(new DateTime(new Date()).plusDays(1))))
 
       val roadLinks = Seq(
         RoadLink(90000, linkGeom, GeometryUtils.geometryLength(linkGeom),
@@ -1025,7 +1025,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
 
       val currentAddresses = currentAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(validTo = Option(new DateTime(new Date()))))
-      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(endDate = Option(new DateTime(new Date()))))
+      val historicAddresses = historyAddressLinks.map(roadAddressLinkToRoadAddress(NoFloating)).map(_.copy(endDate = Option(new DateTime(new Date()).plusDays(1))))
 
       val roadLinks = Seq(
         RoadLink(90000, linkGeom, GeometryUtils.geometryLength(linkGeom),

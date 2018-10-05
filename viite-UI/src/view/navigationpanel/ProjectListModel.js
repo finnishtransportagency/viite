@@ -5,25 +5,25 @@
     var projectArray = [];
     var headers = {
       "sortName": {
-        toStr: "PROJEKTIN NIMI", width: "255", order: 0,
+        toStr: "PROJEKTIN NIMI", width: "255",
         sortFunc: function (a, b) {
           return a.name.localeCompare(b.name, 'fi');
         }
       },
       "sortELY": {
-        toStr: "ELY", width: "50", order: 1,
+        toStr: "ELY", width: "50",
         sortFunc: function (a, b) {
           return a.ely - b.ely;
         }
       },
       "sortUser": {
-        toStr: "KÄYTTÄJÄ", width: "115", order: 0,
+        toStr: "KÄYTTÄJÄ", width: "115",
         sortFunc: function (a, b) {
           return a.createdBy.localeCompare(b.createdBy, 'fi');
         }
       },
       "sortDate": {
-        toStr: "LUONTIPVM", width: "110", order: 0,
+        toStr: "LUONTIPVM", width: "110",
         sortFunc: function (a, b) {
           var aDate = a.createdDate.split('.').reverse().join('-');
           var bDate = b.createdDate.split('.').reverse().join('-');
@@ -31,38 +31,45 @@
         }
       },
       "sortStatus": {
-        toStr: "TILA", width: "60", order: 0,
+        toStr: "TILA", width: "60",
         sortFunc: function (a, b) {
           return a.statusCode - b.statusCode;
         }
       }
     };
 
-    var decodeOrder = function (o) {
-      switch (o) {
-        case 1:
-          return 'fa-sort-up';
-        case -1:
+    var orderBy = {
+      id: "sortELY", reversed: false
+    };
+
+    var filterBox = {
+      input: "", visible: false
+    };
+
+    var getIcon = function (id) {
+      if (orderBy.id === id) {
+        if (orderBy.reversed) {
           return 'fa-sort-down';
-        default:
-          return 'fa-sort';
+        } else {
+          return 'fa-sort-up';
+        }
+      } else {
+        return 'fa-sort';
       }
     };
 
     var headersToHtml = function () {
       var html = "";
-      for (var id in headers) {
-        if (headers.hasOwnProperty(id)) {
+      _.forEach(Object.keys(headers), function(id) {
           var header = headers[id];
-          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="btn-icon sort fas ' + decodeOrder(header.order) + '"></i>';
+          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="btn-icon sort fas ' + getIcon(id) + '"></i>';
           if (id === "sortUser") {
             html += '<i id="filterUser" class="btn-icon fas fa-filter"></i></label>' +
               '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
               '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>';
           }
           html += '</label>';
-        }
-      }
+      });
       return html;
     };
 
@@ -96,14 +103,6 @@
     function toggle() {
       $('.container').append('<div class="modal-overlay confirm-modal" id="projectList"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.toggle());
-      for (var id in headers) { // Initialize ordering -> sort by ELY
-        if (headers.hasOwnProperty(id)) {
-          var header = headers[id];
-          header.order = id === "sortELY" ? 1 : 0;
-          // Update classes
-          $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(decodeOrder(header.order));
-        }
-      }
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
@@ -135,10 +134,10 @@
     };
 
 
-    var userFilterVisibility = function (showFilters) {
+    var userFilterVisibility = function () {
       var searchBox = $('#userFilterSpan');
       var textField = $('#userNameBox');
-      if (showFilters) {
+      if (filterBox.visible) {
         searchBox.show();
         if (textField.val() === "") {
           textField.val(applicationModel.getSessionUsername());
@@ -157,35 +156,28 @@
           return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
         });
         createProjectList(projectArray);
+        userFilterVisibility();
       });
 
-      var createProjectList = function (projects, sortFunction, order) {
-
-        if (!sortFunction)
-          sortFunction = function (a, b) {
-            return a.ely - b.ely;
-          };
-
-        if (!order)
-          order = 1;
-
+      var createProjectList = function (projects) {
         var unfinishedProjects = _.filter(projects, function (proj) {
           if (proj.statusCode === projectStatus.Saved2TR.value) {
             var hoursInDay = 24;
             var millisecondsToHours = 1000 * 60 * 60;
-            //check if show all TR projects checkbox is checked or the project has been sent to TR under two days ago
+            //check if show all TR projects checkbox is checked or the project has been sent to TR less than two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
           return _.contains(statusToDisplay, proj.statusCode);
         });
 
         var sortedProjects = unfinishedProjects.sort(function (a, b) {
-          var cmp = sortFunction(a, b);
-          return (cmp !== 0) ? cmp * order : a.name.localeCompare(b.name, 'fi');
+          var cmp = headers[orderBy.id].sortFunc(a, b);
+          return (cmp !== 0) ? cmp : a.name.localeCompare(b.name, 'fi');
         });
+        if (orderBy.reversed)
+          sortedProjects.reverse();
 
         var triggerOpening = function (event, button) {
-          userFilterVisibility(false);
           $('#TRProjectsVisibleCheckbox').prop('checked', false);
           if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
             projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
@@ -244,8 +236,8 @@
       };
 
       $('#filterUser').click(function () {
-        var spanIsInvisible = $('#userFilterSpan').css('display') === 'none';
-        userFilterVisibility(spanIsInvisible);
+        filterBox.visible = !filterBox.visible;
+        userFilterVisibility();
       });
 
       var openProjectSteps = function (event) {
@@ -265,30 +257,23 @@
        */
       projectList.on('click', '[id^=sort]', function (event) {
         var eventId = event.target.id;
-        for (var id in headers) { // Update order values
-          if (headers.hasOwnProperty(id)) {
-            var header = headers[id];
-            switch (id) {
-              case eventId :
-                header.order = header.order === 0 ? 1 : header.order * -1;
-                break;
-              default:
-                header.order = 0;
-            }
-            // Update classes
-            $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(decodeOrder(header.order));
+        _.forEach(Object.keys(headers), function(id) {
+          var icon = 'fa-sort';
+          if (id === eventId) {
+            orderBy.reversed = orderBy.id === id && !orderBy.reversed;
+            orderBy.id = id;
+            icon = getIcon(id);
           }
-        }
-        // Create project list with right sorting
-        createProjectList(projectArray, headers[eventId].sortFunc, headers[eventId].order);
+          $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(icon);
+          // Update classes
+        });
+        // Create project list
+        createProjectList(projectArray);
         filterByUser();
       });
 
       $('#TRProjectsVisibleCheckbox').change(function () {
-        var sortByHeader = Object.values(headers).find(function (header) {
-          return header.order !== 0;
-        });
-        createProjectList(projectArray, sortByHeader.sortFunc, sortByHeader.order);
+        createProjectList(projectArray);
         filterByUser();
       });
 
@@ -297,7 +282,6 @@
       });
 
       projectList.on('click', 'button.new', function () {
-        userFilterVisibility(false);
         $('#TRProjectsVisibleCheckbox').prop('checked', false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger('roadAddress:newProject');
@@ -307,7 +291,6 @@
       });
 
       projectList.on('click', 'button.close', function () {
-        userFilterVisibility(false);
         $('#project-list').find('table').remove();
         $('.project-item').remove();
         $('#TRProjectsVisibleCheckbox').prop('checked', false);
