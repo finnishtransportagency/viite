@@ -178,13 +178,18 @@
         } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         }
+        var suravageVisibleCheckbox = $('#suravageVisibleCheckbox')[0];
         if (layer === 'roadAddressProject') {
-          $('#suravageVisibleCheckbox')[0].checked = false;
-          $('#suravageVisibleCheckbox')[0].disabled = true;
+          if (suravageVisibleCheckbox) {
+            $('#suravageVisibleCheckbox')[0].checked = false;
+            $('#suravageVisibleCheckbox')[0].disabled = true;
+          }
           eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
         } else {
-          $('#suravageVisibleCheckbox')[0].checked = true;
-          $('#suravageVisibleCheckbox')[0].disabled = false;
+          if (suravageVisibleCheckbox) {
+            $('#suravageVisibleCheckbox')[0].checked = true;
+            $('#suravageVisibleCheckbox')[0].disabled = false;
+          }
           eventbus.trigger('suravageProjectRoads:toggleVisibility', true);
         }
       },
