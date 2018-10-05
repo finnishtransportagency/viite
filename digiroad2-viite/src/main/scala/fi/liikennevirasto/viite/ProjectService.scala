@@ -746,6 +746,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  //TODO - This method will not be used now because we don't want to show suravage in project mode. It will be used in future
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
@@ -758,6 +759,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
     keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
       projectLinks
+  }
+
+  //TODO - Temporary method that will be replaced for getProjectLinksWithSuravage method
+  def getProjectLinksWithoutSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
+                                  roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
+                                  publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
+    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
+    fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, useFrozenVVHLinks, fetch)
   }
 
   def getProjectLinksLinear(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
