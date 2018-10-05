@@ -72,9 +72,9 @@
       };
       if (roadLink.roadLinkType === -1) {
         box.setStyle(boxStyleFloat);
-      } else if(roadLink.id===0 && roadLink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value){
+      } else if (roadLink.id === 0 && roadLink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value) {
         box.setStyle(boxStyleUnknown);
-      }  else {
+      } else {
         box.setStyle(boxStyleDirectional(roadLink));
       }
       box.id = roadLink.linkId;
