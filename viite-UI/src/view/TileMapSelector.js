@@ -42,8 +42,8 @@
     });
     $('#roadsVisibleCheckbox').change(function () {
       applicationModel.toggleRoadVisibility();
-          eventbus.trigger('linkProperty:visibilityChanged');
-          eventbus.trigger('roadAddressProject:visibilityChanged');
+      eventbus.trigger('linkProperty:visibilityChanged');
+      eventbus.trigger('roadAddressProject:visibilityChanged');
 
     });
 
