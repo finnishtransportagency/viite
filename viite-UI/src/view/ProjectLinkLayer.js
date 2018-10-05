@@ -731,7 +731,7 @@
       if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function(links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
-            return projectLink.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
+            return projectLink.id !== 0 || (projectLink.id === 0 && projectLink.anomaly === Anomaly.NoAddressGiven.value) || (projectLink.id === 0 && projectLink.roadLinkType === RoadLinkType.FloatingRoadLinkType.value);
           });
           _.each(directionMarkers, function (directionLink) {
             marker = cachedMarker.createProjectMarker(directionLink);
@@ -800,7 +800,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
-      applicationModel.removeSpinner();
       me.redraw();
       _.defer(function () {
         highlightFeatures();
