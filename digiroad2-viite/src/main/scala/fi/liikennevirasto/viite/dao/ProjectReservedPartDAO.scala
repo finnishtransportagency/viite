@@ -51,7 +51,7 @@ object ProjectReservedPartDAO {
     time(logger, "Remove reserved road part") {
       sqlu"""
            DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
-           (EXISTS (SELECT 1 FROM ROADWAY RA WHERE RA.ID = ROADWAY_ID AND
+           (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND LC.ID = LINEAR_LOCATION_ID AND
            RA.ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND RA.ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}))
            OR (ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
            AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
@@ -125,8 +125,8 @@ object ProjectReservedPartDAO {
               FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
               PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
               pl.road_part_number = rp.road_part_number AND pl.status != 5)
-              LEFT JOIN
-              ROADWAY ra ON (ra.id = pl.ROADWAY_ID OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
+              LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
+              LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
               WHERE
                 rp.project_id = $projectId
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
@@ -165,10 +165,9 @@ object ProjectReservedPartDAO {
               MAX(ra.ely) as ELY,
               MAX(pl.ely) as ELY_NEW
               FROM PROJECT_RESERVED_ROAD_PART rp
-              LEFT JOIN
-              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
-              LEFT JOIN
-              ROADWAY ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROADWAY_ID)
+              LEFT JOIN PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
+              LEFT JOIN ROADWAY ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROADWAY_ID)
+              LEFT JOIN LINEAR_LOCATION ln ON (lc.Id = pl.Linear_Location_Id)
               WHERE
                 rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
