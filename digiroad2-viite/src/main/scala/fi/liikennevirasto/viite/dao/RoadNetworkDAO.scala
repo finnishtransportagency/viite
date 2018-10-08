@@ -6,71 +6,84 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
+import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-case class RoadNetworkError(id: Long, roadAddressId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
+case class RoadNetworkError(id: Long, roadwayId: Long, linearLocationId: Long, error: AddressError, error_timestamp: Long, network_version: Option[Long])
 
-object RoadNetworkDAO {
+class RoadNetworkDAO {
+
+  protected def logger = LoggerFactory.getLogger(getClass)
 
   def createPublishedRoadNetwork: Unit = {
-    sqlu"""INSERT INTO published_road_network (id, created) VALUES (published_road_network_key_seq.NEXTVAL, sysdate)""".execute
+    sqlu"""INSERT INTO published_road_network (id, created) VALUES (PUBLISHED_ROAD_NETWORK_SEQ.NEXTVAL, sysdate)""".execute
   }
 
   def expireRoadNetwork: Unit = {
     sqlu"""UPDATE published_road_network SET valid_to = sysdate WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
   }
 
-  def createPublishedRoadAddress(networkVersion: Long, roadAddressId: Long): Unit = {
-    sqlu"""INSERT INTO published_road_address (network_id, road_address_id) VALUES ($networkVersion, $roadAddressId)""".execute
+  def createPublishedRoadway(networkVersion: Long, roadwayId: Long): Unit = {
+    sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
 
-def addRoadNetworkError(roadAddressId: Long, errorCode: Long): Unit = {
-  val timestamp = System.currentTimeMillis()
-  val lastVersion = getLatestRoadNetworkVersionId
-      val networkErrorPS = dynamicSession.prepareStatement("INSERT INTO road_network_errors (id, road_address_id, error_code, error_timestamp, road_network_version)" +
-        " values (?, ?, ?, ?, ?)")
-      val nextId =  Sequences.nextRoadNetworkErrorSeqValue
-      networkErrorPS.setLong(1, nextId)
-      networkErrorPS.setLong(2, roadAddressId)
-      networkErrorPS.setLong(3, errorCode)
-      networkErrorPS.setDouble(4, timestamp)
-  lastVersion match {
-        case Some(v) => networkErrorPS.setLong(5, v)
-        case _ => networkErrorPS.setString(5, null)
-      }
-      networkErrorPS.addBatch()
-      networkErrorPS.executeBatch()
-      networkErrorPS.close()
-}
+  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, addressError: AddressError): Unit = {
+    val timestamp = System.currentTimeMillis()
+    val lastVersion = getLatestRoadNetworkVersionId
+    val networkErrorPS = dynamicSession.prepareStatement(
+      """INSERT INTO road_network_error (id, ROADWAY_ID, linear_location_id, error_code, error_timestamp, road_network_version)
+      values (?, ?, ?, ?, ?, ?)""")
+    val nextId = Sequences.nextRoadNetworkErrorSeqValue
+    networkErrorPS.setLong(1, nextId)
+    networkErrorPS.setLong(2, roadwayId)
+    networkErrorPS.setLong(3, linearLocationId)
+    networkErrorPS.setLong(4, addressError.value)
+    networkErrorPS.setDouble(5, timestamp)
+    lastVersion match {
+      case Some(v) => networkErrorPS.setLong(6, v)
+      case _ => networkErrorPS.setString(6, null)
+    }
+    networkErrorPS.addBatch()
+    networkErrorPS.executeBatch()
+    networkErrorPS.close()
+  }
 
   def removeNetworkErrors: Unit = {
-    sqlu"""DELETE FROM road_network_errors""".execute
+    sqlu"""DELETE FROM road_network_error""".execute
   }
 
   def hasRoadNetworkErrors: Boolean = {
-    sql"""SELECT COUNT(*) FROM road_network_errors """.as[Long].first > 0
-  }
-
-  def getLatestRoadNetworkVersion: Option[Long] = {
-    sql"""SELECT MAX(id) FROM published_road_network""".as[Option[Long]].first
+    sql"""SELECT COUNT(*) FROM road_network_error """.as[Long].first > 0
   }
 
   def getLatestRoadNetworkVersionId: Option[Long] = {
-    sql"""SELECT id FROM published_road_network order by id desc""".as[Long].firstOption
+    sql"""SELECT MAX(id) FROM published_road_network WHERE valid_to is null""".as[Option[Long]].first
   }
 
   def getLatestPublishedNetworkDate: Option[DateTime] = {
-    sql"""SELECT MAX(created) as created FROM published_road_network""".as[Option[DateTime]].first
+    sql"""SELECT MAX(created) as created FROM published_road_network WHERE valid_to is null""".as[Option[DateTime]].first
   }
 
-  def getRoadNetworkError(addressId: Long, error: AddressError): Option[RoadNetworkError] = {
+  def getRoadNetworkErrors(error: AddressError): List[RoadNetworkError] = {
+    val query =
+      s"""SELECT id, roadway_id, linear_location_id, error_code, error_timestamp, road_network_version
+         FROM road_network_error where error_code = ${error.value} order by road_network_version desc""".stripMargin
 
-    val query = s"""SELECT * FROM road_network_errors where road_address_id = $addressId and error_code = ${error.value} order by road_network_version desc"""
+    Q.queryNA[(Long, Long, Long, Int, Long, Option[Long])](query).list.map {
+      case (id, roadwayId, linearLocationId, errorCode, timestamp, version) =>
+        RoadNetworkError(id, roadwayId, linearLocationId, AddressError.apply(errorCode), timestamp, version)
+    }
+  }
 
-    Q.queryNA[(Long, Long, Int, Long, Option[Long])](query).list.headOption.map {
-      case (id, roadAddressId, errorCode, timestamp, version) =>
-        RoadNetworkError(id, roadAddressId, AddressError.apply(errorCode), timestamp, version)
+  def getRoadNetworkErrors(roadwayId: Long, error: AddressError): List[RoadNetworkError] = {
+    val query =
+      s"""SELECT id, roadway_id, linear_location_id, error_code, error_timestamp, road_network_version
+         FROM road_network_error where ROADWAY_ID = $roadwayId and error_code = ${error.value} order by road_network_version desc""".stripMargin
+
+    Q.queryNA[(Long, Long, Long, Int, Long, Option[Long])](query).list.map {
+      case (id, roadwayId, linearLocationId, errorCode, timestamp, version) =>
+        RoadNetworkError(id, roadwayId, linearLocationId, AddressError.apply(errorCode), timestamp, version)
     }
   }
 

@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadName}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService, RoadType}
@@ -21,7 +20,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  when(mockRoadAddressService.getRoadAddressesLinkByMunicipality(235)).thenReturn(Seq())
+  when(mockRoadAddressService.getAllByMunicipality(235)).thenReturn(Seq())
 
   val mockRoadNameService = MockitoSugar.mock[RoadNameService]
 
@@ -62,10 +61,11 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
 
   test("encode road address") {
     val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
-    val roadAdressLink = RoadAddressLink(63298, 5171208, geometry, GeometryUtils.geometryLength(geometry), Municipality,
-      UnknownLinkType, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"),
+    // This roadAddressLink has linearLocationId equal to zero, just to compile.
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), Municipality,
+      UnknownLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"),
       None, BigInt(0), None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01",
-      "2016-01-01", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None, 0, floating = false)
+      "2016-01-01", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None, 0)
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",

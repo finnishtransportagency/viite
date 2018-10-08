@@ -108,7 +108,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     else {
       val mapping = createAddressMap(changes)
       val mapped = roadAddresses.mapValues(_.flatMap(mapAddress(mapping, roadAddresses.values.flatten.toSeq)))
-      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayId))
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayNumber))
     }
   }
 
@@ -124,7 +124,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         } else
           mapAddress(mapping, roadAddresses.values.flatten.toSeq)(ra)
       ))
-      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayId))
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayNumber))
     }
   }
 
@@ -138,7 +138,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         } else
           ra
       ))
-      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayId))
+      mapped.values.toSeq.flatten.groupBy(m => (m.linkId, m.roadwayNumber))
     }
   }
 
@@ -174,7 +174,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     (resultCurr.values ++ resultHist.values).flatMap(_.flatMap(_.allSegments)).groupBy(_.linkId).mapValues(s => LinkRoadAddressHistory(s.toSeq.partition(_.endDate.isEmpty)))
   }
 
-  private def groupByRoadSections(currentSections: Seq[RoadAddressSection], historySections: Seq[RoadAddressSection], roadAddresses: Iterable[LinkRoadAddressHistory]): (Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) = {
+  private def groupByRoadSections(currentSections: Seq[RoadwaySection], historySections: Seq[RoadwaySection], roadAddresses: Iterable[LinkRoadAddressHistory]): (Map[RoadwaySection, Seq[LinkRoadAddressHistory]], Map[RoadwaySection, Seq[LinkRoadAddressHistory]]) = {
 
     val mappedCurrent = currentSections.map(section => section -> roadAddresses.filter(lh => lh.currentSegments.exists(section.includes)).map {
       l => LinkRoadAddressHistory((l.currentSegments, Seq()))
@@ -188,7 +188,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   // TODO: Don't try to apply changes to invalid sections
-  private def preTransferCheckBySection(sections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) = {
+  private def preTransferCheckBySection(sections: Map[RoadwaySection, Seq[LinkRoadAddressHistory]]) = {
     sections.map(_._2.flatMap(_.currentSegments)).map(seq =>
       try {
         preTransferChecks(seq)
@@ -200,8 +200,8 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       })
   }
 
-  private def postTransferCheckBySection(currentSections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], historySections: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]],
-                                         original: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], history: Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]): (Map[RoadAddressSection, Seq[LinkRoadAddressHistory]], Map[RoadAddressSection, Seq[LinkRoadAddressHistory]]) = {
+  private def postTransferCheckBySection(currentSections: Map[RoadwaySection, Seq[LinkRoadAddressHistory]], historySections: Map[RoadwaySection, Seq[LinkRoadAddressHistory]],
+                                         original: Map[RoadwaySection, Seq[LinkRoadAddressHistory]], history: Map[RoadwaySection, Seq[LinkRoadAddressHistory]]): (Map[RoadwaySection, Seq[LinkRoadAddressHistory]], Map[RoadwaySection, Seq[LinkRoadAddressHistory]]) = {
     val curr = currentSections.map(s =>
       try {
         postTransferChecksForCurrent(s)

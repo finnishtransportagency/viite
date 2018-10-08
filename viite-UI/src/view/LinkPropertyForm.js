@@ -53,7 +53,7 @@
     var roadTypeDynamicField = function(){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field = '';
-      var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadTypeId'));
+      var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadLinkSource'));
       var decodedRoadTypes = "";
       _.each(uniqRoadTypes, function(rt) {
           if (decodedRoadTypes.length === 0) {
@@ -114,7 +114,8 @@
       var field = "";
       var linkCounter = 0;
       field = floatingListField('VALITUT LINKIT (IRTI GEOMETRIASTA OLEVAT):');
-      _.each(sources, function(slp) {
+      _.each(sources, function(src) {
+        var slp = src.getData();
         var divId = "VALITUTLINKIT" + linkCounter;
         var linkId = slp.linkId;
         var id = _.isUndefined(slp.id) ? -1: slp.id;
@@ -268,7 +269,7 @@
     };
 
     var template = function(firstSelectedLinkProperty, linkProperties) {
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadLinkSource) : roadTypeDynamicField();
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : staticField('ALKUETÄISYYS', linkProperties.startAddressM);
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
       return _.template('' +
@@ -305,7 +306,7 @@
     var templateFloating = function(firstSelectedLinkProperty, linkProperties) {
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadLinkSource) : roadTypeDynamicField();
       return _.template('' +
         '<header>' +
           title() +
@@ -338,7 +339,7 @@
     var templateFloatingEditMode = function(firstSelectedLinkProperty, linkProperties) {
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadLinkSource) : roadTypeDynamicField();
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
         '<header>' +
           title() +
@@ -431,7 +432,7 @@
         toggleMode(readOnly, linkProperties);
         var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
         var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature) {
-          return feature.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
+          return feature.floating === LinkValues.SelectionType.Floating.value;
         }));
         //checks if previousSelected road was not unknown and current select road IS unknown
         var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].anomaly !== LinkValues.Anomaly.NoAddressGiven.value;
@@ -451,15 +452,15 @@
           var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
           if (!_.isEmpty(uniqFeaturesToKeep)) {
             if (readOnly) {
-              if (lastFeatureToKeep.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (lastFeatureToKeep.floating === LinkValues.SelectionType.Floating.value) {
                 rootElement.html(templateFloating(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
             } else {
-              if (lastFeatureToKeep.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (lastFeatureToKeep.floating === LinkValues.SelectionType.Floating.value) {
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
-                if (applicationModel.selectionTypeIs(selectionType.Floating) && firstSelectedLinkProperty.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+                if (applicationModel.selectionTypeIs(selectionType.Floating) && firstSelectedLinkProperty.floating === LinkValues.SelectionType.Floating.value) {
                   selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
@@ -474,13 +475,13 @@
             }
           } else if (!_.isEmpty(selectedLinkProperty.get())) {
             if (readOnly) {
-              if (firstSelectedLinkProperty.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (firstSelectedLinkProperty.floating === LinkValues.SelectionType.Floating.value) {
                 rootElement.html(templateFloating(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
             } else {
-              if (_.last(selectedLinkProperty.get()).roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value) {
+              if (_.last(selectedLinkProperty.get()).floating === LinkValues.SelectionType.Floating.value) {
                 applicationModel.setSelectionType(selectionType.Floating);
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
                 selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
@@ -501,7 +502,7 @@
         rootElement.empty();
         if (!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(props)) {
 
-          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value || selectedLinkProperty.getFeaturesToKeep().length >= 1);
+          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].floating === LinkValues.SelectionType.Floating.value || selectedLinkProperty.getFeaturesToKeep().length >= 1);
           props.modifiedBy = props.modifiedBy || '-';
           props.modifiedAt = props.modifiedAt || '';
           props.roadNameFi = props.roadNameFi || '';
@@ -519,7 +520,6 @@
           props.elyCode = isNaN(parseFloat(props.elyCode)) ? '' : props.elyCode;
           props.endAddressM = props.endAddressM || '';
           props.discontinuity = props.discontinuity || '';
-          props.roadType = props.roadType || '';
           props.roadLinkType = props.roadLinkType || '';
           props.roadLinkSource = props.roadLinkSource || '';
           switchMode(applicationModel.isReadOnly(), props);
@@ -546,7 +546,7 @@
 
       var processFloatingAdjacents = function (sources, targets, additionalSourceLinkId) {
         var adjacents = _.reject(targets, function(t) {
-          return t.roadLinkType === LinkValues.RoadLinkType.FloatingRoadLinkType.value;
+          return t.floating === LinkValues.SelectionType.Floating.value;
         });
 
         if (!_.isUndefined(additionalSourceLinkId)) {

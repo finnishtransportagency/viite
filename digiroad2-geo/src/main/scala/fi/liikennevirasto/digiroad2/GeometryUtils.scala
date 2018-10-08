@@ -13,6 +13,10 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
+  def geometrySeqEndPoints(geometry: Seq[Point]): Seq[Point] = {
+    Seq(geometry.head, geometry.last)
+  }
+
   private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
@@ -107,9 +111,10 @@ object GeometryUtils {
     case class AlgorithmState(previousPoint: Point, length: Double)
     if (geometry.size < 2) { 0.0 }
     else {
-      geometry.tail.foldLeft(AlgorithmState(geometry.head, 0.0)) { (acc, point) =>
+      val length = geometry.tail.foldLeft(AlgorithmState(geometry.head, 0.0)) { (acc, point) =>
         AlgorithmState(point, acc.length + acc.previousPoint.distance2DTo(point))
       }.length
+      scaleToThreeDigits(length)
     }
   }
 
@@ -427,4 +432,24 @@ object GeometryUtils {
     val sourcePoint = geom.minBy(p => p.distance2DTo(referencePoint))
     geom.map(p => p.minus(sourcePoint))
   }
+
+  /**
+    * Check if geometry is towards digitisation.
+    *
+    * - Starting point is south from the ending point
+    * - In case of exactly horizontal starting and end points check if the starting point is east from the ending point
+    *
+    * @param geometry
+    * @return
+    */
+  def isTowardsDigitisation(geometry: Seq[Point]): Boolean = {
+    if (geometry.head.y < geometry.last.y) {
+      true
+    } else if (geometry.head.y == geometry.last.y && geometry.head.x < geometry.last.x) {
+      true
+    } else {
+      false
+    }
+  }
+
 }

@@ -20,7 +20,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     List.empty[ReservedRoadPart], None)
 
   private def dummyProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
-    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, track, Continuous,
+    //TODO the road address now have the linear location id and as been setted to 1L
+    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, track, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
       geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
@@ -30,16 +31,17 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     val idRoad1 = 1L //     <
     val idRoad2 = 2L //   >
     val idRoad3 = 3L //     <
-    val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+    //TODO the road address now have the linear location id and as been setted to 1L
+    val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
       Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-    val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+    val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
       Seq(Point(42, 14),Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-    val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+    val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
       Seq(Point(42, 14), Point(75, 19.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-    val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+    val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
       Seq(Point(103.0, 15.0),Point(75, 19.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
@@ -60,8 +62,9 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
+    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 3).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
@@ -83,8 +86,9 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
+    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
@@ -112,8 +116,9 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
+    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
@@ -138,8 +143,9 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
+    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }
@@ -164,8 +170,9 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
+    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1l, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
         g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
     }

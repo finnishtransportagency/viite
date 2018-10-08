@@ -100,7 +100,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
         .withProjectLinks(data.projectLinks)
         .withGetProjectsWithLinksById(data.projectsWithLinks)
         .withRoadAddressProjects(data.projects)
-        .withGetRoadLinkByLinkId(data.roadLinkById)
+        .withGetRoadAddressByLinkId(data.roadLinkById)
+        .withGetProjectLinkByLinkId(data.roadLinkById)
         .withCreateRoadAddressProject(data.createRoadAddressProject)
         .withPreSplitData(data.splitData)
         .withRoadAddressCreation();

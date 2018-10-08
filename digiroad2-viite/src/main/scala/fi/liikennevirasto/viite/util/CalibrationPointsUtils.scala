@@ -35,8 +35,8 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadAddressId: Long = 0L): ProjectLinkCalibrationPoint = {
-    roadAddressId match {
+  def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadwayId: Long = 0L): ProjectLinkCalibrationPoint = {
+    roadwayId match {
       case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)
       case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressSource)
     }
@@ -46,12 +46,12 @@ object CalibrationPointsUtils {
     ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
   }
 
-  def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadAddressId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+  def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadwayId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
     originalCalibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPoint(cp1, roadAddressId)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPoint(cp1, roadAddressId)))
-      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPoint(cp1, roadAddressId)), Option(toProjectLinkCalibrationPoint(cp2, roadAddressId)))
+      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPoint(cp1, roadwayId)), Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPoint(cp1, roadwayId)))
+      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPoint(cp1, roadwayId)), Option(toProjectLinkCalibrationPoint(cp2, roadwayId)))
     }
   }
 

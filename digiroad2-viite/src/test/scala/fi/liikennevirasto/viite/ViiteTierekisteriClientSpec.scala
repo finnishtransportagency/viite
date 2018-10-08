@@ -26,9 +26,9 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  val defaultChangeInfo=RoadAddressChangeInfo(AddressChangeType.apply(2),
-    RoadAddressChangeSection(None, None, None, None, None, None, None, None, None),
-    RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
+  val defaultChangeInfo=RoadwayChangeInfo(AddressChangeType.apply(2),
+    RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
+    RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
       Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), false)
 
   def getRestEndPoint: String = {
@@ -78,7 +78,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   }
 
   test("Check that project_id is replaced with tr_id attribute") {
-    val change=ViiteTierekisteriClient.convertToChangeProject(List(ProjectRoadAddressChange(100L, Some("testproject"), 1, "user", DateTime.now(),defaultChangeInfo,DateTime.now(),Some(2))))
+    val change=ViiteTierekisteriClient.convertToChangeProject(List(ProjectRoadwayChange(100L, Some("testproject"), 1, "user", DateTime.now(),defaultChangeInfo,DateTime.now(),Some(2))))
     change.id should be (2)
   }
   test("parse changeinforoadparts from json") {
@@ -91,7 +91,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "\"let\": 1052" +
       "}"
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val cirp = parse(StringInput(string)).extract[RoadAddressChangeSection]
+    val cirp = parse(StringInput(string)).extract[RoadwayChangeSection]
     cirp.roadNumber should be (Some(1))
     cirp.trackCode should be (Some(0))
     cirp.startRoadPartNumber should be (Some(10))

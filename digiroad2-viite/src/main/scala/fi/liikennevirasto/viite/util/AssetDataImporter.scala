@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.util
 
 import java.util.Properties
-import javax.sql.DataSource
 
+import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -14,16 +14,17 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceResetterDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.viite.dao.{LinearLocationDAO, RoadAddress, RoadNetworkDAO, RoadwayDAO}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
-
+// TODO This could be renamed to something else than asset...
 object AssetDataImporter {
   sealed trait ImportDataSet {
     def database(): DatabaseDef
@@ -116,71 +117,51 @@ class AssetDataImporter {
                             importOptions: ImportOptions): Unit = {
 
     withDynTransaction {
-      sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
+      sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
       sqlu"""DELETE FROM PROJECT""".execute
-      sqlu"""DELETE FROM ROAD_NETWORK_ERRORS""".execute
-      sqlu"""DELETE FROM PUBLISHED_ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
+      sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
-      sqlu"""DELETE FROM ROAD_ADDRESS""".execute
-      sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES""".execute
+      sqlu"""DELETE FROM ROADWAY""".execute
+      sqlu"""DELETE FROM LINEAR_LOCATION""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       println(s"${DateTime.now()} - Old address data removed")
 
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE ROAD_ADDRESS
+      sqlu"""UPDATE LINEAR_LOCATION
         SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
 
-      println(s"${DateTime.now()} - Updating calibration point information")
-      // both dates are open-ended or there is overlap (checked with inverse logic)
-      sqlu"""UPDATE ROAD_ADDRESS
-        SET CALIBRATION_POINTS = CASE
-                                    WHEN CALIBRATION_POINTS = 2 THEN 3
-                                    WHEN CALIBRATION_POINTS = 3 THEN 3
-                                    ELSE 1
-                                  END
-        WHERE NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
-        RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
-        RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
-        RA2.START_ADDR_M = ROAD_ADDRESS.END_ADDR_M AND
-        RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
-        RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
-        (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
-        NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
-      sqlu"""UPDATE ROAD_ADDRESS
-        SET CALIBRATION_POINTS = CASE
-                                    WHEN CALIBRATION_POINTS = 2 THEN 2
-                                    WHEN CALIBRATION_POINTS = 3 THEN 3
-                                    ELSE CALIBRATION_POINTS + 2
-                                  END
-          WHERE
-            START_ADDR_M = 0 OR
-            NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
-              RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
-              RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
-              RA2.END_ADDR_M = ROAD_ADDRESS.START_ADDR_M AND
-              RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
-              RA2.COMMON_HISTORY_ID = ROAD_ADDRESS.COMMON_HISTORY_ID AND
-              (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
-                NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
-              )
-            )""".execute
-      sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+      println(s"${DateTime.now()} - Updating terminated roadways information")
+
+      sqlu"""UPDATE ROADWAY SET TERMINATED = 2
+            WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
+            	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
+            	AND ROADWAY.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+            	AND ROADWAY.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
+            	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
+            	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
+            	AND ROADWAY.TRACK = rw.TRACK
+            	AND ROADWAY.ENd_date = rw.start_date
+            	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
+
+      sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
       roadwayResetter()
     }
   }
 
   def roadwayResetter(): Unit = {
     val sequenceResetter = new SequenceResetterDAO()
-    sql"""select MAX(common_history_id) FROM ROAD_ADDRESS""".as[Long].firstOption match {
-      case Some(roadwayId) =>
-        sequenceResetter.resetSequenceToNumber("common_history_seq", roadwayId + 1)
-      case _ => sequenceResetter.resetSequenceToNumber("common_history_seq", 1)
+    sql"""select MAX(ROADWAY_NUMBER) FROM ROADWAY""".as[Long].firstOption match {
+      case Some(roadwayNumber) =>
+        sequenceResetter.resetSequenceToNumber("ROADWAY_NUMBER_SEQ", roadwayNumber + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("ROADWAY_NUMBER_SEQ", 1)
     }
   }
 
@@ -188,163 +169,137 @@ class AssetDataImporter {
     new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
 
-  def updateRoadAddressesValues(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
-    val eventBus = new DummyEventBus
-    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-
-    val roadsWithMultipleValues = conversionDatabase.withDynSession {
-      sql"""SELECT t.tie, t.aosa, ajr, greatest(aet,let) as addrM, tietyyppi as type_before, (SELECT tietyyppi FROM VVH_TIEOSOITE_NYKY u WHERE u.tie = t.tie AND u.aosa=t.aosa AND (u.ajr = t.ajr OR u.ajr=0 OR t.ajr=0)
-            AND ((u.aet = t.let and t.aet < t.let) or (u.let = t.aet and t.aet > t.let) ) AND ROWNUM < 2) type_after, ely FROM VVH_TIEOSOITE_NYKY t
-            JOIN (SELECT gr.TIE, gr.AOSA, count(distinct TIETYYPPI) FROM VVH_TIEOSOITE_NYKY gr group by gr.tie, gr.aosa having count(distinct TIETYYPPI) > 1) foo ON
-            (foo.tie = t.tie AND foo.aosa = t.aosa)
-            WHERE (  EXISTS (SELECT 1 FROM VVH_TIEOSOITE_NYKY chg WHERE chg.tie = t.tie and chg.aosa=t.aosa and
-            (chg.ajr = t.ajr OR chg.ajr=0 OR t.ajr=0) AND  ((chg.aet = t.let and t.aet < t.let) or (chg.let = t.aet and t.aet > t.let) )
-            AND chg.tietyyppi != t.tietyyppi)) order by tie, aosa, addrM, ajr
-         """.as[(Long, Long, Long, Long, Int, Int, Int)].list.map {
-        case (roadNumber, roadPartNumber, trackCode, addressMChangeRoadType, roadTypeBefore, roadTypeAfter, ely) =>
-          RoadTypeChangePoints(roadNumber, roadPartNumber, addressMChangeRoadType, RoadType.apply(roadTypeBefore), RoadType.apply(roadTypeAfter), ely)
-      }
-    }
-
-    val roadsWithSingleRoadType = conversionDatabase.withDynSession {
-      sql""" select distinct tie, aosa, tietyyppi, ely from VVH_TIEOSOITE_NYKY
-             where (tie, aosa) in(
-             SELECT gr.TIE, gr.AOSA FROM VVH_TIEOSOITE_NYKY gr  group by gr.tie, gr.aosa  having count(distinct gr.TIETYYPPI) = 1)
-              union
-            select distinct tie, aosa, tietyyppi, ely from vvh_tieosoite_taydentava
-            where (tie, aosa) in(
-            SELECT t.TIE, t.AOSA FROM vvh_tieosoite_taydentava t  group by t.tie, t.aosa  having count(distinct t.TIETYYPPI) = 1)
-            order by tie, aosa
-        """.as[(Long, Long, Long, Long)].list
-    }
-
-    withDynTransaction{
-      roadsWithSingleRoadType.foreach(road => {
-        updateRoadWithSingleRoadType(road._1, road._2, road._3, road._4)
-      })
-
-      roadsWithMultipleValues.groupBy(m => (m.roadNumber, m.roadPartNumber)).foreach{ case ((roadNumber, roadPartNumber), roadMaps) => {
-        val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true, true)
-        println(s"updating tie = $roadNumber, aosa = $roadPartNumber: (${addresses.size} rows)")
-        addresses.foreach(address => {
-          val ely = roadMaps.head.elyCode
-          roadType(roadMaps, address) match {
-            case Left(roadType) =>
-              sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType.value}, ELY= $ely where ID = ${address.id}""".execute
-            case Right((addrM, roadTypeBefore, roadTypeAfter)) =>
-              val roadLinkFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(Set(address.linkId))
-              if (roadLinkFromVVH.isEmpty)
-                println(s"WARNING! LinkId ${address.linkId} not found in current, complementary or suravage links list, using address geometry")
-              val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.headOption.map(_.geometry).getOrElse(address.geometry)), addrM, roadTypeBefore, roadTypeAfter, ely)
-              println(s"Split ${address.id} ${address.startMValue}-${address.endMValue} (${address.startAddrMValue}-${address.endAddrMValue}) into")
-              println(s"  ${splittedRoadAddresses.head.startMValue}-${splittedRoadAddresses.head.endMValue} (${splittedRoadAddresses.head.startAddrMValue}-${splittedRoadAddresses.head.endAddrMValue}) and")
-              println(s"  ${splittedRoadAddresses.last.startMValue}-${splittedRoadAddresses.last.endMValue} (${splittedRoadAddresses.last.startAddrMValue}-${splittedRoadAddresses.last.endAddrMValue})")
-              RoadAddressDAO.expireById(Set(address.id))
-              sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = 99, ELY= $ely where ID = ${address.id}""".execute
-              RoadAddressDAO.create(splittedRoadAddresses)
-          }
-        })
-      }}
-    }
-
-  }
-
   def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
-    println(s"Splitting road address id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    println(s"Splitting roadway id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
+    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadway, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue - splitMValue
           else
             0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue
           else
-            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check common_history_id
+            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
 
-    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadAddress, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadway, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             0.0
           else
             splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue - splitMValue
           else
-            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check common_history_id
+            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check roadway_number
     Seq(roadAddressA, roadAddressB)
   }
 
   def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
     println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
-    sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
+    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
   }
 
-  def updateMissingRoadAddresses(vvhClient: VVHClient) = {
+  def updateUnaddressedRoadLinks(vvhClient: VVHClient) = {
     val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val service = new RoadAddressService(linkService, eventBus)
+    val roadAddressDAO = new RoadwayDAO
+    val linearLocationDAO = new LinearLocationDAO
+    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
+    val service = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     val municipalities = OracleDatabase.withDynTransaction {
-      sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM UNADDRESSED_ROAD_LINK""".execute
       println("Old address data cleared")
       Queries.getMunicipalitiesWithoutAhvenanmaa
     }
       municipalities.foreach(municipality => {
         println("Processing municipality %d at time: %s".format(municipality, DateTime.now().toString))
-        val missing = service.getMissingRoadAddresses(roadNumbersToFetch, municipality)
-        println("Got %d links".format(missing.size))
-        service.createMissingRoadAddress(missing)
-        println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
+        val unaddressed = service.getUnaddressedRoadLink(roadNumbersToFetch, municipality)
+        println("Got %d links".format(unaddressed.size))
+        service.createUnaddressedRoadLink(unaddressed)
+        println("Municipality %d: %d links added at time: %s".format(municipality, unaddressed.size, DateTime.now().toString))
       })
   }
 
-  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean, customFilter: String = "") = {
+  private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+    val (chunks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
+      case ((fchunks, index), linkId) =>
+        if (index > 0 && index % chunkNumber == 0) {
+          (fchunks ++ Seq(linkId), index + 1)
+        } else {
+          (fchunks, index + 1)
+        }
+    }
+    val result = if (chunks.last == linkIds.last) {
+      chunks
+    } else {
+      chunks ++ Seq(linkIds.last)
+    }
+
+    result.zip(result.tail)
+  }
+
+  protected def fetchChunkLinkIds(): Seq[(Long, Long)] = {
+      val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[Long].list
+      generateChunks(linkIds, 25000l)
+    }
+
+  def updateRoadAddressesGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
+    val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    var counter = 0
     var changed = 0
-    withDynTransaction {
-      val roadNumbers = RoadAddressDAO.getAllValidRoadNumbers(if (filterRoadAddresses)
-        "AND (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))" else customFilter)
-      roadNumbers.foreach(roadNumber => {
-        counter += 1
-        println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
-        val linkIds = RoadAddressDAO.fetchByRoad(roadNumber).map(_.linkId).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-        val unGroupedAddresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true)
-        val addresses = unGroupedAddresses.groupBy(_.linkId)
-        val isLoopOrEmptyGeom = if (unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry).equals(Nil)) {
-          true
-        } else GeometryUtils.isLoopGeometry(unGroupedAddresses.sortBy(_.endAddrMValue).flatMap(_.geometry))
-
-        roadLinksFromVVH.foreach(roadLink => {
-          val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
-          segmentsOnViiteDatabase.foreach(segment => {
-            val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
-            if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
-              val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
-              val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
-              val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
-              val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
-              if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
-                (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
-                ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
-                  (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
-                (isLoopOrEmptyGeom)) {
-                RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println("Changed geometry on roadAddress id " + segment.id + " and linkId =" + segment.linkId)
-                changed += 1
-              } else {
-                println(s"Skipped geometry update on Road Address ID : ${segment.id} and linkId: ${segment.linkId}")
-              }
-            }
-          })
-        })
-
-        println("RoadNumber:  %d: %d roadAddresses updated at time: %s".format(roadNumber, addresses.size, DateTime.now().toString))
-
-      })
+      val chunks = withDynSession{fetchChunkLinkIds()}
+      chunks.par.foreach {
+          case (min, max) =>
+            withDynTransaction {
+            val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
+            val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
+            val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
+            val topologyLocation = unGroupedTopology.groupBy(_.linkId)
+            roadLinksFromVVH.foreach(roadLink => {
+              val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
+              segmentsOnViiteDatabase.foreach(segment => {
+                val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+                if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
+                  val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
+                  val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
+                  val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
+                  val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
+                  if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
+                    (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
+                    ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
+                      (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
+                    updateGeometry(segment.id, newGeom)
+                    println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
+                    changed += 1
+                  } else {
+                    println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+                  }
+                }
+              })
+            })
+        }
+      }
       println(s"Geometries changed count: $changed")
+  }
 
+  def updateGeometry(linearLocationId: Long, geometry: Seq[Point]): Unit = {
+    if (geometry.nonEmpty) {
+      val first = geometry.head
+      val last = geometry.last
+      val (x1, y1, z1, x2, y2, z2) = (
+        GeometryUtils.scaleToThreeDigits(first.x),
+        GeometryUtils.scaleToThreeDigits(first.y),
+        GeometryUtils.scaleToThreeDigits(first.z),
+        GeometryUtils.scaleToThreeDigits(last.x),
+        GeometryUtils.scaleToThreeDigits(last.y),
+        GeometryUtils.scaleToThreeDigits(last.z)
+      )
+      val length = GeometryUtils.geometryLength(geometry)
+      sqlu"""UPDATE LINEAR_LOCATION
+          SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+               MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
+          WHERE id = ${linearLocationId}""".execute
     }
   }
 

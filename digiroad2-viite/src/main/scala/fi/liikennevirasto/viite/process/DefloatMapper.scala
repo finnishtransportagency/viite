@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnected
 
 object DefloatMapper extends RoadAddressMapper {
 
-  def adjustRoadAddresses(roadAddress: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] = {
+  def adjustRoadAddresses(roadway: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] = {
     def overrideStartAddrM(ra: RoadAddress, address: Long) : RoadAddress = {
       ra.copy(startAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = address)), ra.calibrationPoints._2))
     }
@@ -29,11 +29,11 @@ object DefloatMapper extends RoadAddressMapper {
     }
     val (minAddr, maxAddr) = (current.map(_.startAddrMValue).min, current.map(_.endAddrMValue).max)
 
-    roadAddress.size match {
+    roadway.size match {
       case 0 => Seq()
-      case 1 => Seq(overrideBothAddrM(roadAddress.head, minAddr, maxAddr))
+      case 1 => Seq(overrideBothAddrM(roadway.head, minAddr, maxAddr))
       case _ =>
-        val ordered = roadAddress.sortBy(ra => (ra.endAddrMValue, ra.startAddrMValue))
+        val ordered = roadway.sortBy(ra => (ra.endAddrMValue, ra.startAddrMValue))
         val overridden = ordered.head +: ordered.zip(ordered.tail).map(adjustTwo)
         overrideStartAddrM(overridden.head, minAddr) +: overridden.init.tail :+ overrideEndAddrM(overridden.last, maxAddr)
     }
@@ -89,7 +89,7 @@ object DefloatMapper extends RoadAddressMapper {
     }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
-    // VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple road_addresses as target
+    // VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple roadways as target
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
 
     /**

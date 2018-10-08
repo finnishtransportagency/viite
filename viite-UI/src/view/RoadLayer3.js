@@ -1,8 +1,9 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
-    var layerName = 'roadLayer';
+  root.RoadLayer3 = function(map, roadCollection, selectedLinkProperty) {
+
     Layer.call(this, map);
     var me = this;
+    var roadLinkStyler = new RoadLinkStyler();
 
     var roadVector = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
@@ -32,7 +33,8 @@
     roadLayer.set('name', 'roadLayer');
 
     function vectorLayerStyle(feature) {
-      return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
+      return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()}),
+          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()})];
     }
 
     var loadFeatures = function (features) {

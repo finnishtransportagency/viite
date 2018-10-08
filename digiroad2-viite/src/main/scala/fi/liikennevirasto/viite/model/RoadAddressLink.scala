@@ -3,8 +3,7 @@ package fi.liikennevirasto.viite.model
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.service.RoadLinkType
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadName}
+import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.RoadType
 
 trait RoadAddressLinkLike extends PolyLine {
@@ -13,7 +12,6 @@ trait RoadAddressLinkLike extends PolyLine {
   def length: Double
   def administrativeClass: AdministrativeClass
   def linkType: LinkType
-  def roadLinkType: RoadLinkType
   def constructionType: ConstructionType
   def roadLinkSource: LinkGeomSource
   def roadType: RoadType
@@ -38,16 +36,15 @@ trait RoadAddressLinkLike extends PolyLine {
   def startCalibrationPoint: Option[CalibrationPoint]
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
-  def blackUnderline: Boolean
 }
 
-case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
+case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geometry: Seq[Point],
                            length: Double, administrativeClass: AdministrativeClass,
-                           linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
+                           linkType: LinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None, roadwayId: Long = 0, newGeometry: Option[Seq[Point]] = None, blackUnderline: Boolean = false, floating: Boolean = false) extends RoadAddressLinkLike {
+                           anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, floating: Boolean = false) extends RoadAddressLinkLike {
 }
 
 sealed trait Anomaly {

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
@@ -117,7 +117,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks") {
+  get("/roadaddress") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
     time(logger, s"GET request for /roadlinks (zoom: $zoom)") {
@@ -127,8 +127,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/floatingRoadAddresses") {
-    time(logger, "GET request for /floatingRoadAddresses") {
+  get("/roadaddress/floatings") {
+    time(logger, "GET request for /roadAddress/floatings") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
         g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.startAddrMValue))
@@ -136,8 +136,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadAddressErrors") {
-    time(logger, "GET request for /roadAddressErrors") {
+  get("/roadaddress/errors") {
+    time(logger, "GET request for /roadAddress/errors") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getRoadAddressErrors().groupBy(_.ely).map(
         g => g._1 -> g._2.sortBy(ra => (ra.roadNumber, ra.roadPartNumber))
@@ -145,36 +145,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/:linkId") {
+  get("/roadaddress/linkid/:linkId") {
     val linkId = params("linkId").toLong
-    time(logger, s"GET request for /roadlinks/$linkId") {
-      val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
-      val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
+    time(logger, s"GET request for /roadAddress/linkid/$linkId") {
+      //TODO This process can be improved
+      val roadLinks = roadAddressService.getRoadAddressLink(linkId)
       foldSegments(roadLinks)
-        .orElse(foldSegments(projectLinks))
         .map(midPoint)
         .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
   }
 
-  get("/roadlinks/id/:id") {
+  get("/roadaddress/:id") {
     val id = params("id").toLong
-    time(logger, s"GET request for /roalinks/$id") {
+    time(logger, s"GET request for /roadAddress/$id") {
+      //TODO BUG: suravage links should be included here
       val roadLinks = roadAddressService.getRoadAddressLinkById(id)
         foldSegments(roadLinks)
           .map(midPoint)
           .getOrElse(Map("success" -> false, "reason" -> ("ID:" + id + " not found")))
-    }
-
-  }
-
-  get("/roadlinks/project/prefillfromvvh/:linkId") {
-    val linkId = params("linkId").toLong
-    time(logger, s"GET request for /roadlinks/project/prefillfromvvh/$linkId") {
-      projectService.fetchPreFillFromVVH(linkId) match {
-        case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName)
-        case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
-      }
     }
   }
 
@@ -190,6 +179,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     time(logger, s"GET request for /roadlinks/adjacent (chainLinks: $chainLinkIds, linkId: $linkId, roadNumber: $roadNumber, roadPartNumber: $roadPartNumber, trackCode: $trackCode)") {
       roadAddressService.getFloatingAdjacent(chainLinkIds, chainIds, linkId, id, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+    }
+  }
+
+  get("/roadlinks/midpoint/:linkId") {
+    val linkId = params("linkId").toLong
+    time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
+      roadLinkService.getMidPointByLinkId(linkId)
     }
   }
 
@@ -228,8 +224,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/multiSourceAdjacents") {
-    time(logger, "GET request for /roadlinks/multiSourceAdjacents") {
+  get("/roadlinks/adjacent/multiSource") {
+    time(logger, "GET request for /roadlinks/adjacent/multiSource") {
       val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String, Any]]]
       if (roadData.isEmpty) {
         Set.empty
@@ -283,6 +279,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case e: Exception =>
           logger.warn(e.getMessage, e)
           InternalServerError("An unexpected error occurred while processing this action.")
+      }
+    }
+  }
+
+  get("/project/roadaddress/linkid/:linkId") {
+    val linkId = params("linkId").toLong
+    time(logger, s"GET request for /project/roadAddress/linkid/$linkId") {
+      //TODO This process can be improved and also it seems to have a bug when the project link is on top of a suravage
+      val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
+      foldSegments(projectLinks)
+        .map(midPoint)
+        .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
+    }
+  }
+
+  //TODO this is a project entry point
+  get("/roadlinks/project/prefillfromvvh/:linkId") {
+    val linkId = params("linkId").toLong
+    time(logger, s"GET request for /roadlinks/project/prefillfromvvh/$linkId") {
+      projectService.fetchPreFillFromVVH(linkId) match {
+        case Right(preFillInfo) => Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName)
+        case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
       }
     }
   }
@@ -791,9 +809,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for api/viite/roadlinks/roadaddress/$roadNumber/$roadPartNumber") {
       (roadNumber, roadPartNumber) match {
         case (Some(road), Some(part)) =>
-          roadAddressService.getRoadAddress(road, part, None, addrMValue)
+          roadAddressService.getRoadAddress(road, part, addrMValue.getOrElse(0), None) // TODO Check if fix after merge is correct
         case (Some(road), _) =>
-          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue)
+          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue) // TODO Implement service method
         case _ => BadRequest("Missing road number from URL")
       }
     }
@@ -939,14 +957,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
-    val roadLinkTypeValue = roadAddressLink match {
-      case ra: RoadAddressLink => if (ra.floating) RoadLinkType.FloatingRoadLinkType.value else roadAddressLink.roadLinkType.value
-      case _ => roadAddressLink.roadLinkType.value
-    }
     Map(
       "success" -> true,
-      "segmentId" -> roadAddressLink.id,
-      "id" -> roadAddressLink.id,
+      "roadwayId" -> roadAddressLink.id,
+      //"linearLocationId" -> roadAddressLink.linearLocationId, //TODO uncoment this and remove this one from the call to this
       "linkId" -> roadAddressLink.linkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
       "points" -> roadAddressLink.geometry,
@@ -954,9 +968,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "calibrationPoints" -> Seq(calibrationPoint(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
         calibrationPoint(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
       "administrativeClass" -> roadAddressLink.administrativeClass.toString,
-      "roadClass" -> roadAddressService.RoadClass.get(roadAddressLink.roadNumber.toInt),
-      "roadTypeId" -> roadAddressLink.roadType.value,
-      "roadType" -> roadAddressLink.roadType.displayValue,
+      "roadClass" -> RoadClass.get(roadAddressLink.roadNumber.toInt),
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,
       "municipalityCode" -> roadAddressLink.attributes.get("MUNICIPALITYCODE"),
@@ -971,14 +983,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
       "anomaly" -> roadAddressLink.anomaly.value,
-      "roadLinkType" -> roadLinkTypeValue,
       "constructionType" -> roadAddressLink.constructionType.value,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value,
-      "blackUnderline" -> roadAddressLink.blackUnderline,
       "roadName" -> roadAddressLink.roadName
     )
   }
@@ -1000,7 +1010,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadAddressErrorsToApi(addressError: AddressErrorDetails): Map[String, Long] = {
     Map(
-      "id" -> addressError.id,
+      "id" -> addressError.linearLocationId,
       "linkId" -> addressError.linkId,
       "roadNumber" -> addressError.roadNumber,
       "roadPartNumber" -> addressError.roadPartNumber,
@@ -1014,7 +1024,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map(
         "startDate" -> roadAddressLink.startDate,
         "endDate" -> roadAddressLink.endDate,
-        "newGeometry" -> roadAddressLink.newGeometry
+        "newGeometry" -> roadAddressLink.newGeometry,
+        "linearLocationId" -> roadAddressLink.linearLocationId, //TODO This needs to be made inside the roadAddressLinkLikeToApi once the project links have the new structure
+        "floating" -> roadAddressLink.floating
       )
   }
 

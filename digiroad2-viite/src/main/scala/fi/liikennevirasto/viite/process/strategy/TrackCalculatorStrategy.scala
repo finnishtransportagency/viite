@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import fi.liikennevirasto.viite.NewRoadAddress
+import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
@@ -80,7 +80,7 @@ trait TrackCalculatorStrategy {
     val splitMeasure = pl.startMValue + ((pl.startAddrMValue - address) * coefficient)
     (
       pl.copy(geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = 0, endMeasure = splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
-      pl.copy(id = NewRoadAddress, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = splitMeasure, endMeasure = pl.geometryLength), geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
+      pl.copy(id = NewRoadway, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = splitMeasure, endMeasure = pl.geometryLength), geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
     )
   }
 
@@ -175,7 +175,7 @@ trait TrackCalculatorStrategy {
       case _ =>
         val pls = projectlinks.map {
           pl =>
-            val raCalibrationCode = raCalibrationPoints.get(pl.roadAddressId).getOrElse(CalibrationCode.No)
+            val raCalibrationCode = raCalibrationPoints.get(pl.roadwayId).getOrElse(CalibrationCode.No)
             val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
             val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
             setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
@@ -208,14 +208,15 @@ trait TrackCalculatorStrategy {
 
   def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     //TODO this can be improved if we use the combine track
-    val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
-
-    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadAddressId).filter(_ > 0).distinct)
-
-    (
-      setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
-      setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint)
-    )
+    throw new NotImplementedError("Will be implemented at VIITE-1540")
+//    val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
+//
+//    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadwayId).filter(_ > 0).distinct)
+//
+//    (
+//      setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
+//      setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint)
+//    )
   }
 
   def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.endAddrMValue
