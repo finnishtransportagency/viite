@@ -81,14 +81,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
-  def getRoadwayId{
-    if (status == LinkStatus.New) 0 else roadwayId
-  }
-
-  def getLinearLocationId{
-    if (status == LinkStatus.New) 0 else getLinearLocationId
-  }
-
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
   }
