@@ -25,6 +25,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+//TODO naming SQL conventions
+
 sealed trait ProjectState {
   def value: Int
 
@@ -66,7 +68,7 @@ case class RoadAddressProject(id: Long, status: ProjectState, name: String, crea
 
 case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
-class ProjectDAO {
+object ProjectDAO {
   private def logger = LoggerFactory.getLogger(getClass)
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {

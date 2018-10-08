@@ -25,6 +25,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+//TODO naming SQL conventions
+
 sealed trait CalibrationPointSource {
   def value: Int
 }
@@ -142,7 +144,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 }
 
-class ProjectLinkDAO {
+object ProjectLinkDAO {
   private def logger = LoggerFactory.getLogger(getClass)
 
   private val projectLinkQueryBase =
