@@ -831,27 +831,6 @@ object ProjectDAO {
     }
   }
 
-  def getCheckCounter(projectID: Long): Option[Long] = {
-    val query =
-      s"""
-         SELECT CHECK_COUNTER
-         FROM project
-         WHERE id=$projectID
-       """
-    Q.queryNA[Long](query).firstOption match {
-      case Some(number) => Some(number)
-      case None => Some(0)
-    }
-  }
-
-  def setCheckCounter(projectID: Long, counter: Long) = {
-    sqlu"""UPDATE project SET check_counter=$counter WHERE id=$projectID""".execute
-  }
-
-  def incrementCheckCounter(projectID: Long, increment: Long) = {
-    sqlu"""UPDATE project SET check_counter = check_counter + $increment WHERE id=$projectID""".execute
-  }
-
   def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
