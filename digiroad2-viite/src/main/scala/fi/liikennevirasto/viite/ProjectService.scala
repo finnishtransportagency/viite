@@ -752,6 +752,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  //TODO - This method will not be used now because we don't want to show suravage in project mode. It will be used in future
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
@@ -765,6 +766,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //    val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
 //    keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
 //      projectLinks
+  }
+
+  //TODO - Temporary method that will be replaced for getProjectLinksWithSuravage method
+  def getProjectLinksWithoutSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
+                                  roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
+                                  publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
+    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
+    fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, useFrozenVVHLinks, fetch)
   }
 
   def getProjectLinksLinear(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
@@ -852,7 +861,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def fetchProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                             everything: Boolean = false, publicRoads: Boolean = false, fetch: ProjectBoundingBoxResult): Seq[ProjectAddressLink] = {
     throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+//def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
 //                                everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
 //      everything || publicRoads || roadNumberLimits.exists {
 //        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
@@ -879,6 +888,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //      fetchProjectHistoryLinks(projectId)
 //    }
 //    else currentProjectLinks
+//
+//    val floatingLinkAddresses = withDynTransaction {
+//      roadLinkService.getRoadLinksHistoryFromVVH(floating.keySet)
+//    }.map(fh => {
+//      roadAddressService.buildFloatingRoadAddressLink(fh, floating.values.flatten.toSeq.filter(f => f.linkId == fh.linkId && !projectLinks.map(_.linkId).contains(f.linkId)))
+//    })
 //
 //    val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
 //
@@ -918,7 +933,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 //
 //    val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
 //    val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
-//      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
+//      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))++ floatingLinkAddresses.flatten
 //    if (useFrozenVVHLinks) {
 //      returningTopology.filter(link => link.anomaly != Anomaly.NoAddressGiven).map(ProjectAddressLinkBuilder.build) ++ projectRoadLinks
 //    } else {
