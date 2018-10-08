@@ -25,6 +25,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+//TODO naming SQL conventions
+
 case class ProjectReservedPart(id: Long, roadNumber: Long, roadPartNumber: Long, addressLength: Option[Long] = None,
                                discontinuity: Option[Discontinuity] = None, ely: Option[Long] = None,
                                newLength: Option[Long] = None, newDiscontinuity: Option[Discontinuity] = None,
