@@ -64,7 +64,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
-  def getMidPointByLinId(linkId: Long): Option[Point] = {
+  def getMidPointByLinkId(linkId: Long): Option[Point] = {
     val roadLinkOption = vvhClient.roadLinkData.fetchByLinkId(linkId).orElse(vvhClient.complementaryData.fetchByLinkId(linkId).orElse(vvhClient.suravageData.fetchByLinkId(linkId)))
     roadLinkOption.map{
       roadLink =>
