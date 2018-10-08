@@ -24,7 +24,7 @@ object RoadAddressValidator {
   }
 
   def checkNotReserved(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
-    val project = ProjectDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
+    val project = ProjectReservedPartDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
     if (project.nonEmpty) {
       throw new ProjectValidationException(s"TIE $number OSA $part on jo varattuna projektissa ${project.get}, tarkista tiedot")
     }
