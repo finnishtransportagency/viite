@@ -951,6 +951,7 @@
       simulatedRoadsLayer.getSource().clear();
       me.eventListener.listenToOnce(eventbus, 'roadLinks:fetched', function(){
         applicationModel.removeSpinner();
+        geometryChangedLayer.setVisible(true);
       });
     };
 
