@@ -185,7 +185,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/midpoint/:linkId") {
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
-      roadLinkService.getMidPointByLinId(linkId)
+      roadLinkService.getMidPointByLinkId(linkId)
     }
   }
 
