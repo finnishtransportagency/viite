@@ -26,14 +26,6 @@
         Unknown:                    {value: 99, descriptionFI: "Tuntematon",     description: "Unknown"}
     };
 
-    root.RoadLinkType = {
-        UnknownRoadLinkType:        {value: 0, description: "UnknownRoadLinkType"},
-        NormalRoadLinkType:         {value: 1, description: "NormalRoadLinkType"},
-        ComplementaryRoadLinkType:  {value: 3, description: "ComplementaryRoadLinkType"},
-        FloatingRoadLinkType:       {value: -1, description: "FloatingRoadLinkType"},
-        SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
-    };
-
     root.ConstructionType = {
         InUse:                      {value: 0, description: "InUse"},
         UnderConstruction:          {value: 1, description: "UnderConstruction"},

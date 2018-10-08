@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity._
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
 
 /**
   * Created by venholat on 15.9.2016.
@@ -20,34 +20,38 @@ trait AddressError {
 case class MissingSegment(roadNumber: Long, roadPartNumber: Long, startMAddr: Option[Long], endMAddr: Option[Long], linkId: Option[Long]) extends AddressError
 case class MissingLink(roadNumber: Long, roadPartNumber: Long, startMAddr: Option[Long], endMAddr: Option[Long], linkId: Option[Long]) extends AddressError
 
+//TODO check the need of that continuity checker
 class ContinuityChecker(roadLinkService: RoadLinkService) {
 
   def checkRoadPart(roadNumber: Int, roadPartNumber: Int, checkMissingLinks: Boolean = false) = {
-    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
-    assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
-    val missingSegments = checkAddressesHaveNoGaps(roadAddressList)
-    // TODO: Combine these checks, maybe?
-    if (checkMissingLinks)
-      new FloatingChecker(roadLinkService).checkRoadNetwork().map(ra =>
-        MissingLink(ra.roadNumber, ra.roadPartNumber, Some(ra.startAddrMValue), Some(ra.endAddrMValue), Some(ra.linkId)))
-    else
-      missingSegments
+    throw new NotImplementedError("Will be implemented at VIITE-1538")
+//    val roadwayList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
+//    assert(roadwayList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
+//    val missingSegments = checkAddressesHaveNoGaps(roadwayList)
+//    // TODO: Combine these checks, maybe?
+//    if (checkMissingLinks)
+//      new FloatingChecker(roadLinkService).checkRoadNetwork().map(ra =>
+//        MissingLink(ra.roadNumber, ra.roadPartNumber, Some(ra.startAddrMValue), Some(ra.endAddrMValue), Some(ra.linkId)))
+//    else
+//      missingSegments
   }
 
   def checkRoad(roadNumber: Int) = {
-    var current = Option(0)
-    while (current.nonEmpty) {
-      current = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, current.get)
-      current.foreach(partNumber => checkRoadPart(roadNumber, partNumber))
-    }
+    throw new NotImplementedError("Will be implemented at VIITE-1538")
+//    var current = Option(0)
+//    while (current.nonEmpty) {
+//      current = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, current.get)
+//      current.foreach(partNumber => checkRoadPart(roadNumber, partNumber))
+//    }
   }
 
   def checkRoadNetwork() = {
-    var current = Option(0)
-    while (current.nonEmpty) {
-      current = RoadAddressDAO.fetchNextRoadNumber(current.get)
-      current.foreach(checkRoad)
-    }
+    throw new NotImplementedError("Will be implemented at VIITE-1538")
+//    var current = Option(0)
+//    while (current.nonEmpty) {
+//      current = RoadAddressDAO.fetchNextRoadNumber(current.get)
+//      current.foreach(checkRoad)
+//    }
   }
 
   def checkAddressesHaveNoGaps(addresses: Seq[RoadAddress]): Seq[MissingSegment] = {

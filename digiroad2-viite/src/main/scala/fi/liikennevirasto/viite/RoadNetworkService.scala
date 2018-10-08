@@ -19,6 +19,7 @@ class RoadNetworkService {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
+  val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
 
   def checkRoadAddressNetwork(options: RoadCheckOptions): Unit = {
 
@@ -33,7 +34,7 @@ class RoadNetworkService {
       road1.endAddrMValue != road2.startAddrMValue && road1.track.value == road2.track.value &&
         !sortedRows.exists(s => s.track != road1.track && s.startAddrMValue == road1.endAddrMValue) match {
         case true => {
-          RoadNetworkDAO.addRoadNetworkError(road1.id, OverlappingRoadAddresses.value)
+          roadNetworkDAO.addRoadNetworkError(road1.id, road1.linearLocationId, OverlappingRoadAddresses)
         }
         case _ => None
       }
@@ -49,51 +50,51 @@ class RoadNetworkService {
         checkCalibrationPoints(road1, road2)
       match {
         case true => {
-          RoadNetworkDAO.addRoadNetworkError(road1.id, InconsistentTopology.value)
+          roadNetworkDAO.addRoadNetworkError(road1.id, road1.linearLocationId, InconsistentTopology)
         }
         case _ => None
       }
     }
-
-    withDynTransaction {
-      try {
-        ExportLockDAO.insert
-        RoadAddressDAO.lockRoadAddressWriting
-        val allRoads = RoadAddressDAO.fetchAllCurrentRoads(options).groupBy(_.roadNumber).flatMap(road => {
-          val groupedRoadParts = road._2.groupBy(_.roadPartNumber).toSeq.sortBy(_._1)
-          val lastRoadAddress = groupedRoadParts.last._2.maxBy(_.startAddrMValue)
-          groupedRoadParts.map(roadPart => {
-            if (roadPart._2.last.roadPartNumber == lastRoadAddress.roadPartNumber && lastRoadAddress.discontinuity != Discontinuity.EndOfRoad) {
-              RoadNetworkDAO.addRoadNetworkError(lastRoadAddress.id, InconsistentTopology.value)
-            }
-            val sortedRoads = roadPart._2.sortBy(s => (s.track.value, s.startAddrMValue))
-            sortedRoads.zip(sortedRoads.tail).foreach(r => {
-              checkOverlapping(r._1, r._2)(sortedRoads)
-              checkTopology(r._1, r._2)(sortedRoads)
-            })
-            roadPart
-          })
-        })
-        if (!RoadNetworkDAO.hasRoadNetworkErrors) {
-          RoadNetworkDAO.expireRoadNetwork
-          RoadNetworkDAO.createPublishedRoadNetwork
-          allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadAddress(RoadNetworkDAO.getLatestRoadNetworkVersion.get, p.id)))
-        }
-        ExportLockDAO.delete
-      } catch {
-        case e: SQLIntegrityConstraintViolationException => logger.info("A road network check is already running")
-        case _: Exception => {
-          logger.error("Error during road address network check")
-          dynamicSession.rollback()
-          ExportLockDAO.delete
-        }
-      }
-    }
+    throw new NotImplementedError("Will be implemented at RoadNetworkService")
+//    withDynTransaction {
+//      try {
+//        ExportLockDAO.insert
+//        RoadAddressDAO.lockRoadAddressWriting
+//        val allRoads = RoadAddressDAO.fetchAllCurrentRoads(options).groupBy(_.roadNumber).flatMap(road => {
+//          val groupedRoadParts = road._2.groupBy(_.roadPartNumber).toSeq.sortBy(_._1)
+//          val lastRoadAddress = groupedRoadParts.last._2.maxBy(_.startAddrMValue)
+//          groupedRoadParts.map(roadPart => {
+//            if (roadPart._2.last.roadPartNumber == lastRoadAddress.roadPartNumber && lastRoadAddress.discontinuity != Discontinuity.EndOfRoad) {
+//              RoadNetworkDAO.addRoadNetworkError(lastRoadAddress.id, InconsistentTopology.value)
+//            }
+//            val sortedRoads = roadPart._2.sortBy(s => (s.track.value, s.startAddrMValue))
+//            sortedRoads.zip(sortedRoads.tail).foreach(r => {
+//              checkOverlapping(r._1, r._2)(sortedRoads)
+//              checkTopology(r._1, r._2)(sortedRoads)
+//            })
+//            roadPart
+//          })
+//        })
+//        if (!RoadNetworkDAO.hasRoadNetworkErrors) {
+//          RoadNetworkDAO.expireRoadNetwork
+//          RoadNetworkDAO.createPublishedRoadNetwork
+//          allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadway(RoadNetworkDAO.getLatestRoadNetworkVersion.get, p.id)))
+//        }
+//        ExportLockDAO.delete
+//      } catch {
+//        case e: SQLIntegrityConstraintViolationException => logger.info("A road network check is already running")
+//        case _: Exception => {
+//          logger.error("Error during road address network check")
+//          dynamicSession.rollback()
+//          ExportLockDAO.delete
+//        }
+//      }
+//    }
   }
 
   def getLatestPublishedNetworkDate : Option[DateTime] = {
     withDynSession {
-      RoadNetworkDAO.getLatestPublishedNetworkDate
+      roadNetworkDAO.getLatestPublishedNetworkDate
     }
   }
 }

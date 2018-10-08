@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite.process
 
 import java.util.Date
 
-import fi.liikennevirasto.digiroad2.service.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
@@ -14,7 +13,6 @@ import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, FloatingRe
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.viite.util._
 
 class DefloatMapperSpec extends FunSuite with Matchers{
   val sources = Seq(
@@ -380,20 +378,22 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     } else {
       None
     }
-    RoadAddressLink(id, linkId, geom, length, State, LinkType.apply(1), NormalRoadLinkType,
+    RoadAddressLink(id, id, linkId, geom, length, State, LinkType.apply(1),
       ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
       trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, length, sideCode, startCP, endCP, anomaly)
   }
 
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
-    RoadAddress(l.id, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
+    //TODO road address now have the linear location check this value here
+    RoadAddress(l.id, 1L, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, l.linkId, l.startMValue, l.endMValue, l.sideCode, l.attributes.getOrElse("ADJUSTED_TIMESTAMP", 0L).asInstanceOf[Long],
       (l.startCalibrationPoint, l.endCalibrationPoint), if (floating) FloatingReason.ApplyChanges else NoFloating, l.geometry, l.roadLinkSource, l.elyCode, NoTermination, 0)
   }
 
   private def dummyRoadAddress(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, floating: FloatingReason) = {
-    RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.apply(trackCode.toInt), Discontinuity.Continuous,
+    //TODO road address now have the linear location check this value here
+    RoadAddress(id, 1L, roadNumber, roadPartNumber, RoadType.Unknown, Track.apply(trackCode.toInt), Discontinuity.Continuous,
       startAddressM, endAddressM, Option(new DateTime(new Date())), None, None, linkId, 0, GeometryUtils.geometryLength(geom), sideCode, 0L,
       (None, None), floating, geom, LinkGeomSource.NormalLinkInterface, 1, NoTermination, 0)
   }

@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.service.{RoadLinkService, RoadLinkType}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
@@ -23,6 +23,7 @@ import fi.liikennevirasto.viite.MaxSuravageToleranceToGeometry
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
@@ -37,8 +38,9 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   val mockProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -339,7 +341,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     GeometryUtils.areAdjacent(terminatedLink.geometry, splitA.geometry) should be (true)
     GeometryUtils.areAdjacent(terminatedLink.geometry, template.geometry) should be (true)
     Seq(splitA, splitB).foreach { l =>
-      l.roadAddressId should be (template.roadAddressId)
+      l.roadwayId should be (template.roadwayId)
       GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
       l.roadNumber should be (template.roadNumber)
       l.roadPartNumber should be (template.roadPartNumber)
@@ -441,8 +443,9 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       val geom = Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
       val roadLink = RoadLink(1, geom , GeometryUtils.geometryLength(geom), State, 99, TrafficDirection.AgainstDigitizing,
         UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
-      val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
-        AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.UnknownRoadLinkType, ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, Some("testRoad"), None,
+      //TODO this roadAddressLink have linearLocationId equal to zero, just to compile.
+      val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 0, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
+        AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, Some("testRoad"), None,
         8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.Unknown, None, None, Anomaly.None)
 
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
@@ -452,8 +455,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       ProjectDAO.createRoadAddressProject(rap)
       val templateGeom = toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
-      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
-            start_Measure,end_Measure,Link_id,side_code)
+      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
+            start_Measure,end_Measure,Link_id,SIDE)
             VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, $templateGeom,
             0,87,1,2)""".execute
 

@@ -7,16 +7,26 @@ import slick.jdbc.{StaticQuery => Q}
 
 object Queries {
 
-  def nextPrimaryKeyId = sql"select primary_key_seq.nextval from dual"
-
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
-  def nextRoadwayValue = sql"select common_history_seq.nextval from dual"
+  def nextRoadwayId = sql"select ROADWAY_SEQ.nextval from dual"
 
-  def nextRoadNetworkErrorValue = sql"select road_network_errors_key_seq.nextval from dual"
+  def nextLinearLocationId = sql"select LINEAR_LOCATION_SEQ.nextval from dual"
+
+  def nextRoadwayNumber = sql"select ROADWAY_NUMBER_SEQ.nextval from dual"
+
+  def nextRoadNetworkErrorId = sql"select ROAD_NETWORK_ERROR_SEQ.nextval from dual"
 
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
+  }
+
+  def fetchRoadwayIds(len: Int) = {
+    sql"""select ROADWAY_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+  }
+
+  def fetchLinearLocationIds(len: Int) = {
+    sql"""select LINEAR_LOCATION_SEQ.nextval from dual connect by level <= $len""".as[Long].list
   }
 
   def getMunicipalities: Seq[Int] = {

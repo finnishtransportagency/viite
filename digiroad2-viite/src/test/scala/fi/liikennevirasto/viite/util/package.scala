@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -41,11 +40,6 @@ package object util {
        |${
       if (l.anomaly != Anomaly.None) {
         " " + l.anomaly
-      } else ""
-    }
-       |${
-      if (l.roadLinkType != RoadLinkType.NormalRoadLinkType) {
-        " " + l.roadLinkType
       } else ""
     }
      """.stripMargin.replace("\n", "")
@@ -121,14 +115,14 @@ package object util {
     val projectId = Sequences.nextViitePrimaryKeySeqValue
 
     def createRoadAddresses(roadNumber: Long, roadPartNumber: Long, track: Long, start: Long, end: Long): (Long, Long) = {
-      val nextLinkId = sql"""SELECT MAX(LINK_ID) FROM ROAD_ADDRESS""".as[Long].first + 1
-      val roadAddressId = Sequences.nextViitePrimaryKeySeqValue
+      val nextLinkId = sql"""SELECT MAX(LINK_ID) FROM ROADWAY""".as[Long].first + 1
+      val roadwayId = Sequences.nextRoadwayId
       val endMeasure = end - start
-      sqlu"""INSERT INTO ROAD_ADDRESS VALUES ($roadAddressId, $roadNumber, $roadPartNumber, $track, ${discontinuity.value}, $start, $end,
+      sqlu"""INSERT INTO ROADWAY VALUES ($roadwayId, $roadNumber, $roadPartNumber, $track, ${discontinuity.value}, $start, $end,
             sysdate, NULL, 'test user', sysdate, 0, 0,
             MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY($start, 0, 0, 0, $end, 0, 0, $endMeasure)),
             NULL, $ely, 1, 0, NULL, 1, 0, $endMeasure, $nextLinkId, 0, sysdate, 1, NULL)""".execute
-      (roadAddressId, nextLinkId)
+      (roadwayId, nextLinkId)
     }
 
 
@@ -136,8 +130,8 @@ package object util {
     def withTrack(t: Track, roadNumber: Long, roadPartNumber: Long): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map {
         case (st, en) => {
-          val (roadAddressId, linkId) = if (withRoadAddress) createRoadAddresses(roadNumber, roadPartNumber, t.value, st, en) else (0L, 0L)
-          projectLink(st, en, t, projectId, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, linkId, roadAddressId)
+          val (roadwayId, linkId) = if (withRoadAddress) createRoadAddresses(roadNumber, roadPartNumber, t.value, st, en) else (0L, 0L)
+          projectLink(st, en, t, projectId, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, linkId, roadwayId)
         }
       }
     }
@@ -177,11 +171,11 @@ package object util {
   }
 
   def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
-                  roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadAddressId: Long = 0L) = {
-    ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
+                  roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadwayId: Long = 0L) = {
+    ProjectLink(NewRoadway, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
       Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
       floating = NoFloating, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
-      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadAddressId, ely, reversed = false, None, 0L)
+      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, ely, reversed = false, None, 0L)
   }
 
   def toTransition(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): (RoadAddress, ProjectLink) = {
@@ -216,7 +210,7 @@ package object util {
   }
 
   def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
-    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
+    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
       ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
@@ -227,7 +221,7 @@ package object util {
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
-      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadAddressId), floating = NoFloating, rl.geometry, project.id,
+      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadwayId), floating = NoFloating, rl.geometry, project.id,
       LinkStatus.NotHandled, RoadType.PublicRoad,
       rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, rl.elyCode, false,
       None, rl.vvhTimeStamp)
@@ -237,7 +231,7 @@ package object util {
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
-      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadAddressId), floating=NoFloating, rl.geometry, project.id,
+      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadwayId), floating=NoFloating, rl.geometry, project.id,
       rl.status, RoadType.PublicRoad,
       rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), 0, rl.elyCode,false,
       None, rl.vvhTimeStamp)

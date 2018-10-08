@@ -107,8 +107,7 @@
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    var styler = new Styler();
-    var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
+    var roadLayer = new RoadLayer3(map, models.roadCollection, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
@@ -121,7 +120,7 @@
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)
     });
 
     var mapPluginsContainer = jQuery('#map-plugins');

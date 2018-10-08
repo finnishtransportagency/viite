@@ -2,14 +2,15 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService
 import fi.liikennevirasto.digiroad2.asset.{Modification, TimeStamps}
-import fi.liikennevirasto.digiroad2.util.DigiroadSerializers
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, Track}
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.json4s.Formats
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.slf4j.LoggerFactory
+
 
 class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -46,7 +47,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     val roadNumber = params("road").toLong
     time(logger, s"GET request for /road_address/$roadNumber/?") {
       val trackCodes = multiParams.getOrElse("tracks", Seq()).map(_.toInt)
-      roadAddressService.getRoadAddressWithRoadNumber(roadNumber, trackCodes).map(roadAddressMapper)
+      roadAddressService.getRoadAddressWithRoadNumber(roadNumber, Track.applyAll(trackCodes)).map(roadAddressMapper)
     }
   }
 
@@ -54,7 +55,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/?") {
-      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, None, None).map(roadAddressMapper)
+      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart).map(roadAddressMapper)
     }
   }
 
@@ -65,25 +66,25 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     val track = params.get("track").map(_.toInt)
 
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/$address/? (track: $track)") {
-      roadAddressService.getRoadAddress(roadNumber, roadPart, track, Some(address)).map(roadAddressMapper)
+      roadAddressService.getRoadAddress(roadNumber, roadPart, address, Track.applyOption(track)).map(roadAddressMapper)
     }
   }
 
   get("/road_address/:road/:roadPart/:startAddress/:endAddress/?") {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
-    val startAddress = params("startAddress").toDouble
-    val endAddress = params("endAddress").toDouble
+    val startAddress = params("startAddress").toLong
+    val endAddress = params("endAddress").toLong
 
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/$startAddress/$endAddress/?") {
-      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, Some(startAddress), Some(endAddress)).map(roadAddressMapper)
+      roadAddressService.getRoadAddressesFiltered(roadNumber, roadPart, startAddress, endAddress).map(roadAddressMapper)
     }
   }
 
   post("/road_address/?") {
     time(logger, s"POST request for /road_address/?") {
       val linkIds = (parsedBody).extract[Set[Long]]
-      roadAddressService.getRoadAddressByLinkIds(linkIds, false).map(roadAddressMapper)
+      roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
   }
 
@@ -92,7 +93,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
       val roadNumber = params("road").toLong
       val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
       val tracks = (parsedBody \ "tracks").extract[Seq[Int]]
-      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts, tracks).map(roadAddressMapper)
+      roadAddressService.getRoadAddressWithRoadNumberParts(roadNumber, roadParts.toSet, Track.applyAll(tracks)).map(roadAddressMapper)
     }
   }
 

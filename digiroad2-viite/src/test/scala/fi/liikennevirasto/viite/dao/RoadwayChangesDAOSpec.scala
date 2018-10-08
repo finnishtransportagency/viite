@@ -13,7 +13,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
+class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -33,9 +33,9 @@ class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
       val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val project = RoadAddressProject(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses, None)
       ProjectDAO.createRoadAddressProject(project)
-      sqlu""" insert into road_address_changes(project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(100,1,6,1,1,0,10.5,1,1,8) """.execute
-      val projectId = sql"""Select p.id From Project p Inner Join road_address_changes rac on p.id = rac.project_id""".as[Long].first
-      val changesList = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(100,1,6,1,1,0,10.5,1,1,8) """.execute
+      val projectId = sql"""Select p.id From Project p Inner Join ROADWAY_CHANGES rac on p.id = rac.project_id""".as[Long].first
+      val changesList = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
       changesList.isEmpty should be(false)
       changesList.head.projectId should be(projectId)
     }
@@ -48,8 +48,8 @@ class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
     val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
-      RoadAddressChangesDAO.insertDeltaToRoadChangeTable(delta, 1)
-      sql"""Select Project_Id From road_address_changes Where Project_Id In (1)""".as[Long].firstOption.get should be(1)
+      RoadwayChangesDAO.insertDeltaToRoadChangeTable(delta, 1)
+      sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.get should be(1)
     }
   }
 }

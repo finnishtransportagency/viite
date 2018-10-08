@@ -80,12 +80,12 @@ object TrackSectionOrder {
 
       val startCp = startCalibrationPoint.getOrElse(pl.calibrationPoints._1) match {
         case None => Option.empty[ProjectLinkCalibrationPoint]
-        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadAddressId))
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadwayId))
       }
 
       val endCP = endCalibrationPoint.getOrElse(pl.calibrationPoints._2) match {
         case None => Option.empty[ProjectLinkCalibrationPoint]
-        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadAddressId))
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPoint(cp, pl.roadwayId))
       }
 
       pl.copy(sideCode = sideCode.getOrElse(pl.sideCode),

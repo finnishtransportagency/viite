@@ -35,7 +35,7 @@ object CalibrationPointDAO {
   def findCalibrationPointById(id: Long): Option[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
-         Select * From CALIBRATION_POINT Where ID = ${id}
+         Select * From PROJECT_CALIBRATION_POINT Where ID = ${id}
        """
 
     val tuples = Q.queryNA[UserDefinedCalibrationPoint](baseQuery).list
@@ -48,7 +48,7 @@ object CalibrationPointDAO {
   def findCalibrationPointByRemainingValues(projectLinkId: Long, projectId: Long, segmentMValue: Double, epsilon: Double = 0.1): Seq[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From CALIBRATION_POINT Where
+         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where
          PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId And ABS(LINK_M - $segmentMValue) < $epsilon
        """
 
@@ -60,8 +60,8 @@ object CalibrationPointDAO {
   def findEndCalibrationPoint(projectLinkId: Long, projectId: Long): Seq[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId
-         And ADDRESS_M = (Select Max(Address_M) from CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId)
+         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId
+         And ADDRESS_M = (Select Max(Address_M) from PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId)
        """
 
     Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
@@ -72,7 +72,7 @@ object CalibrationPointDAO {
   def findCalibrationPointsOfRoad(projectId: Long, projectLinkId: Long): Seq[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID = ${projectId}
+         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID = ${projectId}
        """
 
     Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
@@ -83,8 +83,8 @@ object CalibrationPointDAO {
   def fetchByRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Seq[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
-         Select CALIBRATION_POINT.ID, PROJECT_LINK_ID, pl.PROJECT_ID, LINK_M, ADDRESS_M From CALIBRATION_POINT JOIN PROJECT_LINK pl
-           ON (pl.ID = CALIBRATION_POINT.PROJECT_LINK_ID)
+         Select PROJECT_CALIBRATION_POINT.ID, PROJECT_LINK_ID, pl.PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT JOIN PROJECT_LINK pl
+           ON (pl.ID = PROJECT_CALIBRATION_POINT.PROJECT_LINK_ID)
          WHERE pl.ROAD_NUMBER = $roadNumber AND pl.ROAD_PART_NUMBER = $roadPartNumber
          AND pl.PROJECT_ID = ${projectId}
        """
@@ -95,18 +95,18 @@ object CalibrationPointDAO {
   }
 
   def createCalibrationPoint(calibrationPoint: UserDefinedCalibrationPoint): Long = {
-    val nextCalibrationPointId = sql"""select CALIBRATION_POINT_ID_SEQ.nextval from dual""".as[Long].first
+    val nextCalibrationPointId = sql"""select PROJECT_CAL_POINT_ID_SEQ.nextval from dual""".as[Long].first
     sqlu"""
-      Insert Into CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
+      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
       (${nextCalibrationPointId}, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
       """.execute
     nextCalibrationPointId
   }
 
   def createCalibrationPoint(projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long): Long = {
-    val nextCalibrationPointId = sql"""select CALIBRATION_POINT_ID_SEQ.nextval from dual""".as[Long].first
+    val nextCalibrationPointId = sql"""select PROJECT_CAL_POINT_ID_SEQ.nextval from dual""".as[Long].first
     sqlu"""
-      Insert Into CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
+      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
       (${nextCalibrationPointId}, ${projectLinkId}, ${projectId}, ${segmentMValue}, ${addressMValue})
       """.execute
     nextCalibrationPointId
@@ -114,32 +114,32 @@ object CalibrationPointDAO {
 
   def updateSpecificCalibrationPointMeasures(id: Long, segmentMValue: Double, addressMValue: Long) = {
     sqlu"""
-        Update CALIBRATION_POINT Set LINK_M = ${segmentMValue}, ADDRESS_M = ${addressMValue} Where ID = ${id}
+        Update PROJECT_CALIBRATION_POINT Set LINK_M = ${segmentMValue}, ADDRESS_M = ${addressMValue} Where ID = ${id}
       """.execute
   }
 
   def removeSpecificCalibrationPoint(id: Long) = {
     sqlu"""
-        Delete From CALIBRATION_POINT Where ID = ${id}
+        Delete From PROJECT_CALIBRATION_POINT Where ID = ${id}
       """.execute
   }
 
   def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long) = {
     sqlu"""
-        Delete From CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID  = ${projectId}
+        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID  = ${projectId}
       """.execute
   }
 
   def removeAllCalibrationPoints(projectLinkIds: Set[Long]) = {
     if(projectLinkIds.nonEmpty)
     sqlu"""
-        Delete From CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
+        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
       """.execute
   }
 
   def removeAllCalibrationPointsFromProject(projectId: Long) = {
     sqlu"""
-        Delete From CALIBRATION_POINT Where PROJECT_ID  = ${projectId}
+        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_ID  = ${projectId}
       """.execute
   }
 

@@ -12,11 +12,11 @@
       var year = params.year;
       if (!withHistory)
         return {
-          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
         };
       else
         return {
-          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
         };
     });
 
@@ -53,16 +53,28 @@
       });
     }, 1000);
 
-    this.getRoadLinkByLinkId = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/' + linkId, function (data) {
+    this.getProjectLinkByLinkId = _.throttle(function (linkId, callback) {
+        return $.getJSON('api/viite/project/roadaddress/linkid/' + linkId, function (data) {
+            return _.isFunction(callback) && callback(data);
+        });
+    }, 1000);
+
+    this.getRoadAddressByLinkId = _.throttle(function (linkId, callback) {
+        return $.getJSON('api/viite/roadaddress/linkid/' + linkId, function (data) {
+            return _.isFunction(callback) && callback(data);
+        });
+    }, 1000);
+
+    this.getRoadAddressById = _.throttle(function (id, callback) {
+      return $.getJSON('api/viite/roadaddress/' + id, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
-    this.getRoadLinkById = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/id/' + linkId, function (data) {
+    this.getRoadAddressMiddlePoint = _.throttle(function (linkId, callback) {
+      return $.getJSON('api/viite/roadlinks/midpoint/' + linkId, function (data) {
         return _.isFunction(callback) && callback(data);
-      });
+        });
     }, 1000);
 
     this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
@@ -105,7 +117,7 @@
     }, 1000);
 
     this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/multiSourceAdjacents?roadData=' + JSON.stringify(roadData), function (data) {
+      return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -350,11 +362,11 @@
     }, 1000);
 
     this.getFloatingRoadAddresses = function () {
-      return $.getJSON('api/viite/floatingRoadAddresses');
+      return $.getJSON('api/viite/roadaddress/floatings');
     };
 
     this.getRoadAddressErrors = function () {
-      return $.getJSON('api/viite/roadAddressErrors');
+      return $.getJSON('api/viite/roadaddress/errors');
     };
 
     function createCallbackRequestor(getParameters) {
@@ -440,10 +452,6 @@
     };
 
     var afterSave = false;
-
-    var resetAfterSave = function () {
-      afterSave = false;
-    };
 
     this.withRoadAddressProjects = function (returnData) {
       self.getRoadAddressProjects = function () {
@@ -545,13 +553,6 @@
       return self;
     };
 
-    this.withSaveRoadAddressProject = function (returnData) {
-      self.saveRoadAddressProject = function () {
-        return returnData;
-      };
-      return self;
-    };
-
     this.withCreateRoadAddressProject = function (returnData) {
       self.createRoadAddressProject = function (data, successCallback) {
         successCallback(returnData);
@@ -560,14 +561,21 @@
       return self;
     };
 
-    this.withGetRoadLinkByLinkId = function (returnData) {
-      self.getRoadLinkByLinkId = function (linkId, callback) {
-        callback(returnData);
-        return returnData;
-      };
-      return self;
+    this.withGetProjectLinkByLinkId = function (returnData) {
+        self.getProjectLinkByLinkId = function (linkId, callback) {
+            callback(returnData);
+            return returnData;
+        };
+        return self;
     };
 
+    this.withGetRoadAddressByLinkId = function (returnData) {
+        self.getRoadAddressByLinkId = function (linkId, callback) {
+            callback(returnData);
+            return returnData;
+        };
+        return self;
+    };
 
     this.withGetTargetAdjacent = function (returnData) {
       self.getTargetAdjacent = function (linkId, callback) {
@@ -583,30 +591,6 @@
         return returnData;
       };
       return self;
-    };
-
-    this.getDummyRoadAddressesByRoadNumber = function (roadNumber, callback) {
-      //add API call here
-      var dummyReturnObject = [{
-        id: 0,
-        roadNumber: 12345,
-        roadNameFi: "AAAAAAA",
-        startDate: "22-06-2018",
-        endDate: "11-02-2000"
-      }, {
-        id: 1,
-        roadNumber: 12345,
-        roadNameFi: "AAAAAAA",
-        startDate: "22-06-2018",
-        endDate: ""
-      }, {
-        id: 2,
-        roadNumber: 123456,
-        roadNameFi: "BBBBBBBB",
-        startDate: "22-06-2018",
-        endDate: ""
-      }];
-      return callback(dummyReturnObject);
     };
 
     this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {

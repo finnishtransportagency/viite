@@ -88,7 +88,11 @@
     };
 
     var setZoomLevel = function (level) {
-      zoom.level = level;
+      zoom.level = Math.round(level);
+    };
+
+    var getZoomLevel = function() {
+      return zoom.level;
     };
 
     var roadsVisibility = true;
@@ -149,7 +153,7 @@
         centerLonLat = center;
         eventbus.trigger('map:refresh', {
           selectedLayer: selectedLayer,
-          zoom: zoom,
+          zoom: getZoomLevel(),
           bbox: bbox,
           center: center,
           hasZoomLevelChanged: hasZoomLevelChanged
