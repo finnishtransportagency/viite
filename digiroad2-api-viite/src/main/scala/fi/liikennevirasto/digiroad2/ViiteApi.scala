@@ -897,9 +897,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawRoadPartsOnly =>
         Seq()
       case DrawLinearPublicRoads => projectService.getProjectLinksLinear(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
-      case DrawPublicRoads => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
-      case DrawAllRoads => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
-      case _ => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
+      case DrawPublicRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999), (40000, 49999)), Set())
+      case DrawAllRoads => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
+      case _ => projectService.getProjectLinksWithoutSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
     }
     logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
