@@ -8,7 +8,6 @@ object DatabaseMigration {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setLocations("db.migration")
-    flyway.setInitOnMigrate(true)
     flyway.migrate()
   }
 }
