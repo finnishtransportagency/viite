@@ -1449,7 +1449,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
       SideCode.Unknown, (None, None), floating = NoFloating, rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
-      0L, ely, reversed = false, None, rl.vvhTimeStamp, roadName = Some(roadName))
+      0L, 0L, ely, reversed = false, None, rl.vvhTimeStamp, roadName = Some(roadName))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, splitOptions: SplitOptions): ProjectLink = {
