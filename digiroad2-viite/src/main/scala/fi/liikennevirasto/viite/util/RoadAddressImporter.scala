@@ -206,7 +206,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       roadwayNumber => println(s"Suppressed ROADWAY_NUMBER $roadwayNumber because it contains NULL LINKID values ")
     }
 
-    //TODO - insert expiredConversionAddresses and historyConversionAddresses
     val groupedLinkCoeffs = allConversionAddresses.filter(_.expirationDate.isEmpty).groupBy(_.linkId).mapValues {
       addresses =>
         val minM = addresses.map(_.startM).min
