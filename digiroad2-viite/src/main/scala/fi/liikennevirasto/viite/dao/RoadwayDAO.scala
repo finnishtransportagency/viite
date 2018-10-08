@@ -583,7 +583,18 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbersAndNotEnded(roadwayNumbers: Set[Long])(query: String): String = {
-    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
+    if (roadwayNumbers.size > 1000) {
+      MassQuery.withIds(roadwayNumbers) {
+        idTableName =>
+          s"""
+            $query
+            join $idTableName i on i.id = a.ROADWAY_NUMBER
+            where a.valid_to is null and a.end_date is null
+          """.stripMargin
+      }
+    } else {
+      s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
+    }
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
