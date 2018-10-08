@@ -108,8 +108,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       } else {
         withTrack(Combined)
       }
-    ProjectDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
-    ProjectDAO.create(links)
+    ProjectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
+    ProjectLinkDAO.create(links)
     project
   }
 
@@ -121,8 +121,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
       projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
     }
-    ProjectDAO.reserveRoadPart(id, 39999L, 1L, "u")
-    ProjectDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
+    ProjectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
+    ProjectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
     project
   }
 

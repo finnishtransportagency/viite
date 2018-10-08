@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.ReservedRoadPart
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.{Delta, ReNumeration, Transferred, Unchanged}

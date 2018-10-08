@@ -104,8 +104,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       } else {
         withTrack(Combined)
       }
-    ProjectDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
-    ProjectDAO.create(links)
+    ProjectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
+    ProjectLinkDAO.create(links)
     project
   }
 
@@ -200,7 +200,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
-    val dbLinks = ProjectDAO.getProjectLinks(id)
+    val dbLinks = ProjectLinkDAO.getProjectLinks(id)
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
@@ -296,7 +296,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
            VALUES ($raId, 1, 1, 0, 5, 0, 87, date'2011-01-01', null, 'foo', date'2011-01-01',
            MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,87.0,0,87)), 0, 0,
            0,87,1,2)""".execute
-    ProjectDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
+    ProjectReservedPartDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
     sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
           START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROADWAY_ID, GEOMETRY,
           link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES

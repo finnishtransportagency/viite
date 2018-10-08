@@ -271,8 +271,12 @@ object DataFixture {
   }
 
   private def updateProjectLinkSdoGeometry(): Unit = {
+    val roadAddressDAO = new RoadwayDAO
+    val linearLocationDAO = new LinearLocationDAO
+    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    val eventBus = new DummyEventBus
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
     val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
     val projectCount=projectsIDs.size
