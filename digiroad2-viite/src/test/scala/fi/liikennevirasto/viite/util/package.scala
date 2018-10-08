@@ -144,7 +144,7 @@ package object util {
       roads.flatMap {
         road => {
           val (roadNumber, roadPartNumber) = (road._1, road._2)
-          ProjectDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "u")
+          ProjectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "u")
           if (changeTrack) {
             withTrack(RightSide, roadNumber, roadPartNumber) ++ withTrack(LeftSide, roadNumber, roadPartNumber)
           } else {
@@ -153,8 +153,8 @@ package object util {
         }
       }
     roads.groupBy(_._1).foreach(road => ProjectLinkNameDAO.create(projectId, road._1, road._2.head._3))
-    ProjectDAO.create(links)
-    (project, ProjectDAO.getProjectLinks(projectId))
+    ProjectLinkDAO.create(links)
+    (project, ProjectLinkDAO.getProjectLinks(projectId))
   }
 
   def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
@@ -165,8 +165,8 @@ package object util {
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
       projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
     }
-    ProjectDAO.reserveRoadPart(id, 39999L, 1L, "u")
-    ProjectDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
+    ProjectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
+    ProjectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
     project
   }
 

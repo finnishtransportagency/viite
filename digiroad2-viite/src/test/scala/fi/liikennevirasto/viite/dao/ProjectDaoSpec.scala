@@ -41,8 +41,8 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-      val project= ProjectDAO.getProjectLinksByIds(id,Set())
-      project.isEmpty should be (true)
+      val projectLinks = ProjectLinkDAO.getProjectLinksByIds(id,Set())
+      projectLinks.isEmpty should be (true)
     }
   }
 
@@ -207,8 +207,8 @@ class ProjectDaoSpec extends FunSuite with Matchers {
 //  }
 
   test("Empty list will not throw an exception") {
-    ProjectDAO.getProjectLinksByIds(Seq())
-    ProjectDAO.removeProjectLinksById(Set())
+    ProjectLinkDAO.getProjectLinksByIds(Seq())
+    ProjectLinkDAO.removeProjectLinksById(Set())
   }
 
 
@@ -308,11 +308,11 @@ class ProjectDaoSpec extends FunSuite with Matchers {
 
   test("update project_link's road_type and discontinuity") {
     runWithRollback {
-      val projectLinks = ProjectDAO.getProjectLinks(7081807)
+      val projectLinks = ProjectLinkDAO.getProjectLinks(7081807)
       val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
-      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
-      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
-      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
+      ProjectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
+      ProjectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
+      val savedProjectLinks = ProjectLinkDAO.getProjectLinks(7081807)
       savedProjectLinks.filter(_.roadType.value == 2).size should be(savedProjectLinks.size)
       savedProjectLinks.filter(_.discontinuity.value == 2).size should be(1)
       savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be(biggestProjectLink.id)
