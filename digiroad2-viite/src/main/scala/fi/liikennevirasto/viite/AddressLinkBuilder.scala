@@ -124,6 +124,7 @@ trait AddressLinkBuilder {
   )
   }
 
+  // TODO Implement in VIITE-1536
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     throw new NotImplementedError("The fuse process should use only linear location")
 //    if (roadAddresses.size == 1) {
