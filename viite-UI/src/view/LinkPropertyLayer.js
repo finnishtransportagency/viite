@@ -775,7 +775,9 @@
         suravageMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
-        me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
+        //Exclude suravage layers from toggle
+        me.toggleLayersVisibility([roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
