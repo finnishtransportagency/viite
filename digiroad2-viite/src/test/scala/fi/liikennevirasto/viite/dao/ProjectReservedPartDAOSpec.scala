@@ -1,9 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
@@ -35,9 +40,35 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
 
+  private val roadNumber1 = 5
+  private val roadNumber2 = 6
+
+  private val roadPartNumber1 = 1
+  private val roadPartNumber2 = 2
+
+  private val roadwayNumber1 = 1000000000l
+  private val roadwayNumber2 = 2000000000l
+  private val roadwayNumber3 = 3000000000l
+
+  private val linkId1 = 1000l
+  private val linkId2 = 2000l
+  private val linkId3 = 3000l
+
+  private val linearLocationId = 1
+
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None): RoadAddressProject ={
     RoadAddressProject(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("status info"), ely, coordinates)
   }
+
+  def dummyProjectLink(id: Long, projectId: Long, linkId : Long, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long,
+                       startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
+                       floating: FloatingReason = NoFloating, geometry: Seq[Point] = Seq(), status: LinkStatus, roadType: RoadType, reversed: Boolean): ProjectLink =
+    ProjectLink(id, roadNumber, roadPartNumber, Track.Combined,
+      Discontinuity.Continuous, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
+      endDate, Some("testUser"), linkId, startMValue, endMValue,
+      TowardsDigitizing, calibrationPoints, floating, geometry, projectId, status, roadType,
+      LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), id, linearLocationId, 0, reversed,
+      None, 631152000, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
   test("Test reserveRoadPart When having reserved one project with that part Then should fetch it without any problems") {
     runWithRollback {
@@ -54,7 +85,57 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1539
+  test("Test roadPartReservedByProject When removeReservedRoadPart is done in that same road part Then should not be returning that removed part") {
+    //Creation of Test road
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = id + 1
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      projectDAO.createRoadAddressProject(rap)
+      projectReservedPartDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
+      )
+      projectLinkDAO.create(projectLinks)
+      val project = projectReservedPartDAO.roadPartReservedByProject(5, 203)
+      project should be(Some("TestProject"))
+      val reserved = projectReservedPartDAO.fetchReservedRoadPart(5, 203)
+      reserved.nonEmpty should be(true)
+      projectReservedPartDAO.fetchReservedRoadParts(id) should have size 1
+      projectReservedPartDAO.removeReservedRoadPart(id, reserved.get)
+      val projectAfter = projectReservedPartDAO.roadPartReservedByProject(5, 203)
+      projectAfter should be(None)
+      projectReservedPartDAO.fetchReservedRoadPart(5, 203).isEmpty should be(true)
+    }
+  }
+
+  test("Test fetchByProjectRoadParts When using fetchByRoadPart for two different parts should return same amount of project link ids ") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId1 = id + 1
+      val projectLinkId2 = id + 2
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      projectDAO.createRoadAddressProject(rap)
+      projectReservedPartDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+      projectReservedPartDAO.reserveRoadPart(id, 5, 205, rap.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId1, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true),
+        dummyProjectLink(projectLinkId2, id, linkId2, 5, 205, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
+      )
+      projectLinkDAO.create(projectLinks)
+      projectReservedPartDAO.roadPartReservedByProject(5, 203) should be(Some("TestProject"))
+      projectReservedPartDAO.roadPartReservedByProject(5, 205) should be(Some("TestProject"))
+      val reserved203 = projectLinkDAO.fetchByProjectRoadParts(Set((5L, 203L)), id)
+      reserved203.nonEmpty should be (true)
+      val reserved205 = projectLinkDAO.fetchByProjectRoadParts(Set((5L, 205L)), id)
+      reserved205.nonEmpty should be (true)
+      reserved203 shouldNot be (reserved205)
+      reserved203.toSet.intersect(reserved205.toSet) should have size 0
+      val reserved = projectLinkDAO.fetchByProjectRoadParts(Set((5L,203L), (5L, 205L)), id)
+      reserved.map(_.id).toSet should be (reserved203.map(_.id).toSet ++ reserved205.map(_.id).toSet)
+      reserved should have size projectLinks.size
+    }
+  }
+
   //  test("roadpart reserved, fetched with and without filtering, and released by project test") {
   //    //Creation of Test road
   //    runWithRollback {
