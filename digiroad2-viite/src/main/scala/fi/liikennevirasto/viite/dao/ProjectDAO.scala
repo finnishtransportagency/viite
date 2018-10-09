@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.{parseStringGeometry, _}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
@@ -68,7 +68,8 @@ case class RoadAddressProject(id: Long, status: ProjectState, name: String, crea
 
 case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
-object ProjectDAO {
+class ProjectDAO {
+  val projectReservedPartDAO = new ProjectReservedPartDAO
   private def logger = LoggerFactory.getLogger(getClass)
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
@@ -123,11 +124,11 @@ object ProjectDAO {
         case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
         ely, statusInfo, coordX, coordY, zoom) if ely.contains(-1L) =>
           RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-            addInfo, ProjectReservedPartDAO.fetchReservedRoadParts(id), statusInfo, None, Some(ProjectCoordinates(coordX, coordY, zoom)))
+            addInfo, projectReservedPartDAO.fetchReservedRoadParts(id), statusInfo, None, Some(ProjectCoordinates(coordX, coordY, zoom)))
         case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
         ely, statusInfo, coordX, coordY, zoom) =>
           RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-            addInfo, ProjectReservedPartDAO.fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+            addInfo, projectReservedPartDAO.fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
       }.headOption
     }
   }
@@ -147,9 +148,9 @@ object ProjectDAO {
         case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
           val projectState = ProjectState.apply(state)
           val reservedRoadParts = if (projectState == Saved2TR)
-            ProjectReservedPartDAO.fetchHistoryRoadParts(id).distinct
+            projectReservedPartDAO.fetchHistoryRoadParts(id).distinct
           else if (projectId != 0)
-            ProjectReservedPartDAO.fetchReservedRoadParts(id).distinct
+            projectReservedPartDAO.fetchReservedRoadParts(id).distinct
           else
             Seq()
           RoadAddressProject(id, projectState, name, createdBy, createdDate, modifiedBy, start_date,
