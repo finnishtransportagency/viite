@@ -1,9 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -12,6 +15,12 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
   * Class to test DB trigger that does not allow reserving already reserved links to project
   */
 class ProjectLinkDAOSpec extends FunSuite with Matchers {
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
 
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
@@ -21,6 +30,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+  val projectLinkDAO = new ProjectLinkDAO
 
   //TODO will be implement at VIITE-1539
 //  //TODO: this test is always deadlocking, need to check better
@@ -113,8 +123,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 //  }
 
   test("Empty list will not throw an exception") {
-    ProjectLinkDAO.getProjectLinksByIds(Seq())
-    ProjectLinkDAO.removeProjectLinksById(Set())
+    projectLinkDAO.getProjectLinksByIds(Seq())
+    projectLinkDAO.removeProjectLinksById(Set())
   }
 
   //TODO will be implement at VIITE-1540
@@ -139,11 +149,11 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   test("update project_link's road_type and discontinuity") {
     runWithRollback {
-      val projectLinks = ProjectLinkDAO.getProjectLinks(7081807)
+      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
       val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
-      ProjectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
-      ProjectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
-      val savedProjectLinks = ProjectLinkDAO.getProjectLinks(7081807)
+      projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
+      projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
+      val savedProjectLinks = projectLinkDAO.getProjectLinks(7081807)
       savedProjectLinks.filter(_.roadType.value == 2).size should be(savedProjectLinks.size)
       savedProjectLinks.filter(_.discontinuity.value == 2).size should be(1)
       savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be(biggestProjectLink.id)

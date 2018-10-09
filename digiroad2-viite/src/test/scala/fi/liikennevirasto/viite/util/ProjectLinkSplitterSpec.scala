@@ -57,6 +57,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     override def withDynTransaction[T](f: => T): T = f
   }
 
+  val projectDAO = new ProjectDAO
+
   after {
     reset(mockRoadLinkService)
   }
@@ -452,7 +454,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
       val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
-      ProjectDAO.createRoadAddressProject(rap)
+      projectDAO.createRoadAddressProject(rap)
       val points = Seq(Point(0.0, 0.0, 0.0), Point(0.0, 45.3 ,0.0), Point(0.0, 123.5 ,0.0), Point(0.5, 140.0 ,0.0)).flatMap(p => Seq(p.x, p.y, p.z))
       val templateGeom = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute

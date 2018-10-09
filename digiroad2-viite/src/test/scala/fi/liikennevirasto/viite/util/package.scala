@@ -17,6 +17,10 @@ import slick.jdbc.StaticQuery.interpolation
   * Created by venholat on 14.6.2017.
   */
 package object util {
+  val projectDAO = new ProjectDAO
+  val projectLinkDAO = new ProjectLinkDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
+
   // used for debugging when needed
   def prettyPrint(l: RoadAddressLink): String = {
 
@@ -138,13 +142,13 @@ package object util {
 
     val project = RoadAddressProject(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(ely), None)
-    ProjectDAO.createRoadAddressProject(project)
+    projectDAO.createRoadAddressProject(project)
 
     val links =
       roads.flatMap {
         road => {
           val (roadNumber, roadPartNumber) = (road._1, road._2)
-          ProjectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "u")
+          projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "u")
           if (changeTrack) {
             withTrack(RightSide, roadNumber, roadPartNumber) ++ withTrack(LeftSide, roadNumber, roadPartNumber)
           } else {
@@ -153,20 +157,20 @@ package object util {
         }
       }
     roads.groupBy(_._1).foreach(road => ProjectLinkNameDAO.create(projectId, road._1, road._2.head._3))
-    ProjectLinkDAO.create(links)
-    (project, ProjectLinkDAO.getProjectLinks(projectId))
+    projectLinkDAO.create(links)
+    (project, projectLinkDAO.getProjectLinks(projectId))
   }
 
   def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(8), None)
-    ProjectDAO.createRoadAddressProject(project)
+    projectDAO.createRoadAddressProject(project)
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
       projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
     }
-    ProjectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
-    ProjectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
+    projectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
+    projectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
     project
   }
 

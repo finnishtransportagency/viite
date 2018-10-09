@@ -49,6 +49,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
     override def withDynTransaction[T](f: => T): T = f
   }
+  val projectDAO = new ProjectDAO
+  val projectLinkDAO = new ProjectLinkDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
+
 
   //TODO this will be implemented at VIITE-1540
 //  private def testDataForCheckTerminationContinuity(noErrorTest: Boolean = false) = {
@@ -101,15 +105,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(8), None)
-    ProjectDAO.createRoadAddressProject(project)
+    projectDAO.createRoadAddressProject(project)
     val links =
       if (changeTrack) {
         withTrack(RightSide) ++ withTrack(LeftSide)
       } else {
         withTrack(Combined)
       }
-    ProjectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
-    ProjectLinkDAO.create(links)
+    projectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
+    projectLinkDAO.create(links)
     project
   }
 
@@ -117,12 +121,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(8), None)
-    ProjectDAO.createRoadAddressProject(project)
+    projectDAO.createRoadAddressProject(project)
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
       projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
     }
-    ProjectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
-    ProjectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
+    projectReservedPartDAO.reserveRoadPart(id, 39999L, 1L, "u")
+    projectLinkDAO.create(links.init :+ links.last.copy(discontinuity = EndOfRoad))
     project
   }
 

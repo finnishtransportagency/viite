@@ -67,6 +67,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
   }
   val projectValidator = ProjectValidator
+  val projectDAO = new ProjectDAO
+  val projectLinkDAO = new ProjectLinkDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
 
 
   after {
@@ -174,7 +177,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
-    val dbLinks = ProjectLinkDAO.getProjectLinks(id)
+    val dbLinks = projectLinkDAO.getProjectLinks(id)
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
@@ -203,15 +206,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val projectStartDate = if (startDate.isEmpty) DateTime.now() else startDate.get
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", projectStartDate, "", projectStartDate, projectStartDate,
       "", Seq(), None, Some(8), None)
-    ProjectDAO.createRoadAddressProject(project)
+    projectDAO.createRoadAddressProject(project)
     val links =
       if (changeTrack) {
         withTrack(RightSide) ++ withTrack(LeftSide)
       } else {
         withTrack(Combined)
       }
-    ProjectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
-    ProjectLinkDAO.create(links)
+    projectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
+    projectLinkDAO.create(links)
     project
   }
 
@@ -249,20 +252,20 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
       runWithRollback {
-        ProjectDAO.createRoadAddressProject(rap)
-        val emptyTrId = ProjectDAO.getRotatingTRProjectId(projectId)
+        projectDAO.createRoadAddressProject(rap)
+        val emptyTrId = projectDAO.getRotatingTRProjectId(projectId)
         emptyTrId.isEmpty should be(true)
-        val projectNone = ProjectDAO.getRoadAddressProjectById(projectId)
+        val projectNone = projectDAO.getRoadAddressProjectById(projectId)
         projectService.removeRotatingTRId(projectId)
         projectNone.head.statusInfo.getOrElse("").size should be(0)
-        ProjectDAO.addRotatingTRProjectId(projectId)
-        val trId = ProjectDAO.getRotatingTRProjectId(projectId)
+        projectDAO.addRotatingTRProjectId(projectId)
+        val trId = projectDAO.getRotatingTRProjectId(projectId)
         trId.nonEmpty should be(true)
         projectService.removeRotatingTRId(projectId)
         emptyTrId.isEmpty should be(true)
-        ProjectDAO.addRotatingTRProjectId(projectId)
+        projectDAO.addRotatingTRProjectId(projectId)
         projectService.removeRotatingTRId(projectId)
-        val project = ProjectDAO.getRoadAddressProjectById(projectId).head
+        val project = projectDAO.getRoadAddressProjectById(projectId).head
         project.status should be(ProjectState.Incomplete)
         project.statusInfo.getOrElse("1").size should be > 2
       }

@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.{parseStringGeometry, _}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
@@ -36,7 +36,7 @@ case class ProjectReservedPart(id: Long, roadNumber: Long, roadPartNumber: Long,
   }
 }
 
-object ProjectReservedPartDAO {
+class ProjectReservedPartDAO {
   private def logger = LoggerFactory.getLogger(getClass)
 
   /**
