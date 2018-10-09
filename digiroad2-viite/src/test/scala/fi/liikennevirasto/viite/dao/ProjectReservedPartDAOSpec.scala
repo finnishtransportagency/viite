@@ -93,7 +93,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
       projectDAO.createRoadAddressProject(rap)
       projectReservedPartDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
       projectLinkDAO.create(projectLinks)
       val project = projectReservedPartDAO.roadPartReservedByProject(5, 203)
@@ -118,8 +118,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, 5, 205, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true),
-        dummyProjectLink(projectLinkId2, id, linkId2, 5, 205, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
+        dummyProjectLink(projectLinkId1, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false),
+        dummyProjectLink(projectLinkId2, id, linkId2, 5, 205, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
       projectLinkDAO.create(projectLinks)
       projectReservedPartDAO.roadPartReservedByProject(5, 203) should be(Some("TestProject"))
