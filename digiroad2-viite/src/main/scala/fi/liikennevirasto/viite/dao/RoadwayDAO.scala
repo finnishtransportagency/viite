@@ -422,6 +422,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long): Seq[Roadway] = {
+    time(logger, "Fetch roadway by road number and part") {
+      fetch(withRoadAndPart(roadNumber, roadPart))
+    }
+  }
+
   def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long]): Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
@@ -538,6 +544,10 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and road_number = $roadNumber"""
   }
 
+  private def withRoadAndPart(roadNumber: Long, roadPart: Long)(query: String): String = {
+    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart"""
+  }
+
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
 
     s"""$query
@@ -596,7 +606,7 @@ class RoadwayDAO extends BaseDAO {
           AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
   }
 
-  private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway] {
+  private implicit val getRoadway: GetResult[Roadway] = new GetResult[Roadway] {
     def apply(r: PositionedResult) = {
 
       val id = r.nextLong()

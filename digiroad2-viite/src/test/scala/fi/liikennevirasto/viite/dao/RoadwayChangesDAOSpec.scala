@@ -20,6 +20,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+  val projectDAO = new ProjectDAO
 
   def addprojects(): Unit = {
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
@@ -31,7 +32,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       //inserts one case
       val addresses = List(ProjectReservedPart(5:Long, 203:Long, 203:Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val project = RoadAddressProject(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses, None)
-      ProjectDAO.createRoadAddressProject(project)
+      projectDAO.createRoadAddressProject(project)
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(100,1,6,1,1,0,10.5,1,1,8) """.execute
       val projectId = sql"""Select p.id From Project p Inner Join ROADWAY_CHANGES rac on p.id = rac.project_id""".as[Long].first
       val changesList = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectId))

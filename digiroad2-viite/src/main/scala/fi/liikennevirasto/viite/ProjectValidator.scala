@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 object ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
-
+  val projectLinkDAO = new ProjectLinkDAO
   private def distanceToPoint = 10.0
 
   // Utility method, will return correct GeometryEndpoint
@@ -284,7 +284,7 @@ object ProjectValidator {
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
     val (splitLinks, nonSplitLinks) = pl.partition(_.isSplit)
     val splitIds = splitLinks.flatMap(s => Seq(s.connectedLinkId.get, s.linkId))
-    val connectedSplitLinks = ProjectLinkDAO.getProjectLinksByConnectedLinkId(splitIds)
+    val connectedSplitLinks = projectLinkDAO.getProjectLinksByConnectedLinkId(splitIds)
     val (ids, points) = (nonSplitLinks ++ connectedSplitLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty) {
       Some(ValidationErrorDetails(id, validationError, ids,
@@ -603,7 +603,7 @@ object ProjectValidator {
     */
   def checkRoadContinuityCodes(project: RoadAddressProject, roadProjectLinks: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
 
-    val allProjectLinks = ProjectLinkDAO.getProjectLinks(project.id)
+    val allProjectLinks = projectLinkDAO.getProjectLinks(project.id)
 
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
       throw new NotImplementedError("Will be implemented at VIITE-1540")

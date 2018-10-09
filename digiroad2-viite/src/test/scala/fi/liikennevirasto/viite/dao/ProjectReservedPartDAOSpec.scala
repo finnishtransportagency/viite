@@ -1,9 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -12,6 +15,12 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
   * Class to test DB trigger that does not allow reserving already reserved parts to project
   */
 class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
 
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
@@ -19,6 +28,29 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
+    }
+  }
+  val roadwayDAO = new RoadwayDAO
+  val projectDAO = new ProjectDAO
+  val projectLinkDAO = new ProjectLinkDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
+
+  private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None): RoadAddressProject ={
+    RoadAddressProject(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("status info"), ely, coordinates)
+  }
+
+  test("Test reserveRoadPart When having reserved one project with that part Then should fetch it without any problems") {
+    runWithRollback {
+      val reservedParts = Seq(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, Some(8L), None)
+      projectDAO.createRoadAddressProject(rap)
+      projectReservedPartDAO.reserveRoadPart(id, 5, 203, "TestUser")
+      val fetchedPart = projectReservedPartDAO.fetchReservedRoadPart(5, 203)
+      fetchedPart.nonEmpty should be (true)
+      fetchedPart.get.id should be (id)
+      fetchedPart.get.roadNumber should be (reservedParts.head.roadNumber)
+      fetchedPart.get.roadPartNumber should be (reservedParts.head.roadPartNumber)
     }
   }
 
