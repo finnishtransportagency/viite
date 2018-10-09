@@ -47,6 +47,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     override def withDynTransaction[T](f: => T): T = f
   }
+  val projectDAO = new ProjectDAO
 
   after {
     reset(mockRoadLinkService)
@@ -94,7 +95,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = RoadAddressProject(1, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.now(), DateTime.now(), "info", List(
           ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), None)
-      ProjectDAO.createRoadAddressProject(project)
+      projectDAO.createRoadAddressProject(project)
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(1,1,6,1,1,0,10.5,1,1,8) """.execute
       //Assuming that there is data to show
       val responses = projectService.getRoadwayChangesAndSendToTR(Set(1))

@@ -144,7 +144,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 }
 
-object ProjectLinkDAO {
+class ProjectLinkDAO {
   private def logger = LoggerFactory.getLogger(getClass)
 
   private val projectLinkQueryBase =
