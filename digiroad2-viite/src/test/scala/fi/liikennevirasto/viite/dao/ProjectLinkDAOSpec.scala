@@ -79,7 +79,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       val returnedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
-      projectLinks.count(x => x.reversed) should be(0)
+      returnedProjectLinks.count(x => x.reversed) should be(0)
     }
   }
 
