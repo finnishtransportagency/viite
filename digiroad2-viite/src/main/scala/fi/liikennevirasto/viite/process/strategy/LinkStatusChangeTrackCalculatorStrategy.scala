@@ -14,7 +14,6 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes FROM or TO a status equal "NEW" or "TERMINATED" and track is Left or Right
     projectLink.status != headProjectLink.status &&
-      (projectLink.status == LinkStatus.New || headProjectLink.status == LinkStatus.New || projectLink.status == LinkStatus.Terminated || headProjectLink.status == LinkStatus.Terminated) &&
       (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
 
