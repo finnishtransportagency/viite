@@ -173,7 +173,7 @@
           selectedProjectLinkProperty.openShift(selectedLinkIds);
         }
         highlightFeatures();
-      } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
+      } else if (!_.isUndefined(selection) && selectedProjectLinkProperty.isDirty()) {
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);

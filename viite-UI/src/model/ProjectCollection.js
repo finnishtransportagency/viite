@@ -257,7 +257,6 @@
               publishableProject = successObject.publishable;
               projectErrors = successObject.projectErrors;
               eventbus.trigger('projectLink:projectLinksCreateSuccess');
-              eventbus.trigger('roadAddress:projectLinksCreateSuccess');
               eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
             }
           });
