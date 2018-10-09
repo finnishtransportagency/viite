@@ -37,7 +37,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
-  val projectReversedProjectDAO = new ProjectReservedPartDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayDAO = new RoadwayDAO
 
   private val roadNumber1 = 5
@@ -83,76 +83,75 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1539
-//  //TODO: this test is always deadlocking, need to check better
-//  test("check the removal of project links") {
-//    val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.reserveRoadPart(id, address.roadNumber, address.roadPartNumber, rap.createdBy)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses)
-//      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet) should be(projectLinks.size)
-//      ProjectDAO.getProjectLinks(id).nonEmpty should be(false)
-//    }
-//  }
+  test("Test removeProjectLinksById When list of project links are removed Then they should not be found anymore") {
+    val reservedPart = ProjectReservedPart(5: Long, 5: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId1 = id + 1
+      val projectLinkId2 = id + 2
+      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, Seq(reservedPart), None, None)
+      projectDAO.createRoadAddressProject(rap)
+      projectReservedPartDAO.reserveRoadPart(id, reservedPart.roadNumber, reservedPart.roadPartNumber, rap.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId1, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false),
+        dummyProjectLink(projectLinkId2, id, linkId2, 5, 205, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
+      )
+      projectLinkDAO.create(projectLinks)
+      projectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      val returnedProjectLinks = projectLinkDAO.getProjectLinks(id)
+      projectLinkDAO.removeProjectLinksById(returnedProjectLinks.map(_.id).toSet) should be(returnedProjectLinks.size)
+      projectLinkDAO.getProjectLinks(id).nonEmpty should be(false)
+    }
+  }
 
-  //TODO will be implement at VIITE-1540
-//  // Tests now also for VIITE-855 - accidentally removing all links if set is empty
-//  test("Update project link status and remove zero links") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses)
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Terminated, "test")
-//      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
-//      updatedProjectLinks.head.status should be(LinkStatus.Terminated)
-//      ProjectDAO.removeProjectLinksByLinkId(id, Set())
-//      ProjectDAO.getProjectLinks(id).size should be(updatedProjectLinks.size)
-//    }
-//  }
+  test("update project_link's road_type and discontinuity") {
+    runWithRollback {
+      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
+      projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
+      projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
+      val savedProjectLinks = projectLinkDAO.getProjectLinks(7081807)
+      savedProjectLinks.filter(_.roadType.value == 2).size should be(savedProjectLinks.size)
+      savedProjectLinks.filter(_.discontinuity.value == 2).size should be(1)
+      savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be(biggestProjectLink.id)
+    }
+  }
 
-  //TODO will be implement at VIITE-1540
-//  test("Update project link to reversed") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses)
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//      projectLinks.count(x => !x.reversed) should be(projectLinks.size)
-//      val maxM = projectLinks.map(_.endAddrMValue).max
-//      val reversedprojectLinks = projectLinks.map(x => x.copy(reversed = true, status=Transfer,
-//        startAddrMValue = maxM-x.endAddrMValue, endAddrMValue = maxM-x.startAddrMValue))
-//      ProjectDAO.updateProjectLinksToDB(reversedprojectLinks, "testuset")
-//      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
-//      updatedProjectLinks.count(x => x.reversed) should be(updatedProjectLinks.size)
-//    }
-//  }
+  test("Test create When project links is saved as reversed Then project links should also be reversed") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId1 = id + 1
+      val projectLinkId2 = id + 2
+      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty, None, None)
+      projectDAO.createRoadAddressProject(rap)
+      projectReservedPartDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId1, id, linkId1, 5, 203, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true),
+        dummyProjectLink(projectLinkId2, id, linkId2, 5, 205, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
+      )
+      projectLinkDAO.create(projectLinks.map(x => x.copy(reversed = true)))
+      val returnedProjectLinks = projectLinkDAO.getProjectLinks(id)
+      returnedProjectLinks.count(x => x.reversed) should be(projectLinks.size)
+    }
+  }
 
-  //TODO will be implement at VIITE-1539
-//  test("Create reversed project link") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses.map(x => x.copy(reversed = true)))
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//      projectLinks.count(x => x.reversed) should be(projectLinks.size)
-//    }
-//  }
+  test("Empty list will not throw an exception") {
+    projectLinkDAO.getProjectLinksByIds(Seq())
+    projectLinkDAO.removeProjectLinksById(Set())
+  }
+
+  //  test("Create reversed project link") {
+  //    runWithRollback {
+  //      val id = Sequences.nextViitePrimaryKeySeqValue
+  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+  //      ProjectDAO.createRoadAddressProject(rap)
+  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+  //      ProjectDAO.create(addresses.map(x => x.copy(reversed = true)))
+  //      val projectLinks = ProjectDAO.getProjectLinks(id)
+  //      projectLinks.count(x => x.reversed) should be(projectLinks.size)
+  //    }
+  //  }
 
 //TODO Will be implemented at VIITE-1540
 //  test("update project link") {
@@ -173,10 +172,10 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 //    }
 //  }
 
-  test("Empty list will not throw an exception") {
-    projectLinkDAO.getProjectLinksByIds(Seq())
-    projectLinkDAO.removeProjectLinksById(Set())
-  }
+//  test("Empty list will not throw an exception") {
+//    projectLinkDAO.getProjectLinksByIds(Seq())
+//    projectLinkDAO.removeProjectLinksById(Set())
+//  }
 
   //TODO will be implement at VIITE-1540
 //  test("Change road address direction") {
@@ -198,19 +197,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 //    }
 //  }
 
-  test("update project_link's road_type and discontinuity") {
-    runWithRollback {
-      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
-      val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
-      projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
-      projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
-      val savedProjectLinks = projectLinkDAO.getProjectLinks(7081807)
-      savedProjectLinks.filter(_.roadType.value == 2).size should be(savedProjectLinks.size)
-      savedProjectLinks.filter(_.discontinuity.value == 2).size should be(1)
-      savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be(biggestProjectLink.id)
-    }
-  }
-
   //TODO will be implement at VIITE-1540
 //  test("update ProjectLinkgeom") {
 //    //Creation of Test road
@@ -230,5 +216,60 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 //      updatedProjectlinks.head.geometry should be (Stream(Point(1.0,1.0,1.0), Point(2.0,2.0,2.0), Point(1.0,2.0,0.0)))
 //    }
 //  }
+
+  //  test("check the removal of project links") {
+  //    val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+  //    runWithRollback {
+  //      val id = Sequences.nextViitePrimaryKeySeqValue
+  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
+  //      ProjectDAO.createRoadAddressProject(rap)
+  //      ProjectDAO.reserveRoadPart(id, address.roadNumber, address.roadPartNumber, rap.createdBy)
+  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+  //      ProjectDAO.create(addresses)
+  //      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+  //      val projectLinks = ProjectDAO.getProjectLinks(id)
+  //      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet) should be(projectLinks.size)
+  //      ProjectDAO.getProjectLinks(id).nonEmpty should be(false)
+  //    }
+  //  }
+
+  //TODO will be implement at VIITE-1540
+  //  // Tests now also for VIITE-855 - accidentally removing all links if set is empty
+  //  test("Update project link status and remove zero links") {
+  //    runWithRollback {
+  //      val id = Sequences.nextViitePrimaryKeySeqValue
+  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+  //      ProjectDAO.createRoadAddressProject(rap)
+  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+  //      ProjectDAO.create(addresses)
+  //      val projectLinks = ProjectDAO.getProjectLinks(id)
+  //      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Terminated, "test")
+  //      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
+  //      updatedProjectLinks.head.status should be(LinkStatus.Terminated)
+  //      ProjectDAO.removeProjectLinksByLinkId(id, Set())
+  //      ProjectDAO.getProjectLinks(id).size should be(updatedProjectLinks.size)
+  //    }
+  //  }
+
+  //TODO will be implement at VIITE-1540
+  //  test("Update project link to reversed") {
+  //    runWithRollback {
+  //      val id = Sequences.nextViitePrimaryKeySeqValue
+  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+  //      ProjectDAO.createRoadAddressProject(rap)
+  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+  //      ProjectDAO.create(addresses)
+  //      val projectLinks = ProjectDAO.getProjectLinks(id)
+  //      projectLinks.count(x => !x.reversed) should be(projectLinks.size)
+  //      val maxM = projectLinks.map(_.endAddrMValue).max
+  //      val reversedprojectLinks = projectLinks.map(x => x.copy(reversed = true, status=Transfer,
+  //        startAddrMValue = maxM-x.endAddrMValue, endAddrMValue = maxM-x.startAddrMValue))
+  //      ProjectDAO.updateProjectLinksToDB(reversedprojectLinks, "testuset")
+  //      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
+  //      updatedProjectLinks.count(x => x.reversed) should be(updatedProjectLinks.size)
+  //    }
+  //  }
 
 }
