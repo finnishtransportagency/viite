@@ -270,26 +270,6 @@ object DataFixture {
 
   }
 
-  private def updateProjectLinkSdoGeometry(): Unit = {
-    val roadAddressDAO = new RoadwayDAO
-    val linearLocationDAO = new LinearLocationDAO
-    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val eventBus = new DummyEventBus
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
-    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
-    val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
-    val projectCount=projectsIDs.size
-    var c=0
-    projectsIDs.foreach(proj=>
-    {
-      c+=1
-      println("Updating Geometry for project " +c+ "/"+projectCount)
-      projectService.updateProjectLinkSdoGeometry(proj,"BJ")
-    })
-
-  }
-
   private def correctNullElyCodeProjects(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressDAO = new RoadwayDAO
@@ -507,8 +487,6 @@ object DataFixture {
         updateRoadAddressGeometrySource()
       case Some("update_project_link_geom") =>
         updateProjectLinkGeom()
-      case Some("update_project_link_SDO_GEOMETRY") =>
-        updateProjectLinkSdoGeometry()
       case Some("import_road_names") =>
         importRoadNames()
       case Some("correct_null_ely_code_projects") =>

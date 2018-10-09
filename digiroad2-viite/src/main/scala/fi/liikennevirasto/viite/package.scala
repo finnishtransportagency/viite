@@ -147,39 +147,6 @@ package object viite {
     isRamp(r.roadNumber, r.track.value)
   }
 
-  def parseStringGeometry(geomString: String): Seq[Point] = {
-    if (geomString.nonEmpty)
-      toGeometry(geomString)
-    else
-      Seq()
-  }
-
-  def toGeomString(geometry: Seq[Point]): String = {
-    def toBD(d: Double): String = {
-      val zeroEndRegex = """(\.0+)$""".r
-      val lastZero = """(\.[0-9])0*$""".r
-      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
-      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) } )
-    }
-    geometry.map(p =>
-      (if (p.z != 0.0)
-        Seq(p.x, p.y, p.z)
-      else
-        Seq(p.x, p.y)).map(toBD).mkString("[", ",","]")).mkString(",")
-  }
-
-  def toGeometry(geometryString: String): Seq[Point] = {
-    def toBD(s: String): Double = {
-      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
-    }
-    val pointRegex = raw"\[[^\]]*]".r
-    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
-    pointRegex.findAllIn(geometryString).map {
-      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
-      case regex(x, y, _) => Point(toBD(x), toBD(y))
-    }.toSeq
-  }
-
   object CombineMaps {
     type Mapped = Map[String, String]
 
