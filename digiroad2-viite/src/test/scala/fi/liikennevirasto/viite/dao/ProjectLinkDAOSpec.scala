@@ -1,9 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
+import fi.liikennevirasto.viite.{NewRoadway, RoadType}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
@@ -30,7 +35,53 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+  val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
+  val projectReversedProjectDAO = new ProjectReservedPartDAO
+  val roadwayDAO = new RoadwayDAO
+
+  private val roadNumber1 = 5
+  private val roadNumber2 = 6
+
+  private val roadPartNumber1 = 1
+  private val roadPartNumber2 = 2
+
+  private val roadwayNumber1 = 1000000000l
+  private val roadwayNumber2 = 2000000000l
+  private val roadwayNumber3 = 3000000000l
+
+  private val linkId1 = 1000l
+  private val linkId2 = 2000l
+  private val linkId3 = 3000l
+
+  private val linearLocationId = 1
+
+  def dummyProjectLink(id: Long, projectId: Long, linkId : Long, roadNumber: Long = roadNumber1, roadPartNumber: Long =roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long,
+                       startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
+                       floating: FloatingReason = NoFloating, geometry: Seq[Point] = Seq(), status: LinkStatus, roadType: RoadType, reversed: Boolean): ProjectLink =
+    ProjectLink(id, roadNumber, roadPartNumber, Track.Combined,
+      Discontinuity.Continuous, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
+      endDate, Some("testUser"), linkId, startMValue, endMValue,
+      TowardsDigitizing, calibrationPoints, floating, geometry, projectId, status, roadType,
+      LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), id, linearLocationId, 0, reversed,
+    None, 631152000, roadAddressLength = Some(endAddrMValue - startAddrMValue))
+
+  private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None): RoadAddressProject ={
+    RoadAddressProject(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("status info"), ely, coordinates)
+  }
+
+  test("Test create When having no reversed links Then should return no reversed project links") {
+    runWithRollback {
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = projectId + 1
+      val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None, None)
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, projectId, linkId1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
+      )
+      projectLinkDAO.create(projectLinks)
+      val returnedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
+      projectLinks.count(x => x.reversed) should be(0)
+    }
+  }
 
   //TODO will be implement at VIITE-1539
 //  //TODO: this test is always deadlocking, need to check better
