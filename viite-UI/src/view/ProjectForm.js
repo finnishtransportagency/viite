@@ -375,6 +375,7 @@
         activeLayer = true;
         eventbus.trigger('roadAddressProject:clearTool');
         disableFormInputs();
+        applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
