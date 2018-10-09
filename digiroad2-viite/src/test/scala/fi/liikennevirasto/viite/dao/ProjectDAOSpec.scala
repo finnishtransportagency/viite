@@ -78,50 +78,36 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     projectDAO.getRoadAddressProjectById(id).head.reservedParts.isEmpty should be(true)
   }
 
-  test("get projects waiting TR response") {
-    val address = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+  test("Test getProjectsWithWaitingTRStatus When project is sent to TR Then projects waiting TR response should be increased") {
+    val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val waitingCountp = projectDAO.getProjectsWithWaitingTRStatus().length
+      val waitingCountP = projectDAO.getProjectsWithWaitingTRStatus().length
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
-      projectDAO.createRoadAddressProject(rap)
+      val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(reservedPart), None, None)
+        projectDAO.createRoadAddressProject(rap)
       val waitingCountNow = projectDAO.getProjectsWithWaitingTRStatus().length
-      waitingCountNow - waitingCountp should be(1)
+      waitingCountNow - waitingCountP should be(1)
     }
   }
 
-  //TODO will be implement at VIITE-1539
-//  test("Create project with no reversed links") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses.map(x => x.copy(reversed = false)))
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//      projectLinks.count(x => x.reversed) should be(0)
-//    }
-//  }
-
-  test("Update project status") {
+  test("Test updateProjectStatus When Update project status Then project status should be updated") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(), None, None)
       projectDAO.createRoadAddressProject(rap)
       projectDAO.updateProjectStatus(id, ProjectState.Saved2TR)
       projectDAO.getProjectStatus(id) should be(Some(ProjectState.Saved2TR))
     }
   }
 
-  test("Update project info") {
-    val address = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+  test("Test updateRoadAddressProject When Update project info Then should update the project infos such as project name, additional info, startDate") {
+    val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
-      val updatedrap = RoadAddressProject(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(address), None)
+      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List(), None, None)
+      val updatedRap = RoadAddressProject(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(reservedPart), None)
       projectDAO.createRoadAddressProject(rap)
-      projectDAO.updateRoadAddressProject(updatedrap)
+      projectDAO.updateRoadAddressProject(updatedRap)
       projectDAO.getRoadAddressProjectById(id) match {
         case Some(project) =>
           project.name should be("newname")
@@ -133,11 +119,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("get roadaddressprojects") {
+  test("Test getRoadAddressProjects When get adding one new project Then outcome size of projects should be bigger than before") {
     runWithRollback {
       val projectListSize = projectDAO.getRoadAddressProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None, None)
       projectDAO.createRoadAddressProject(rap)
       val projectList = projectDAO.getRoadAddressProjects()
       projectList.length - projectListSize should be(1)
@@ -145,29 +131,28 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   }
 
   //TODO Will be implemented at VIITE-1539
-//  test("change project Ely DAO") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-//      ProjectDAO.updateProjectEly(id, 100)
-//      ProjectDAO.getProjectEly(id).get should be(100)
-//    }
-//  }
-
-  test("Get Projects whose status is SendintToTR") {
-    val address = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+  test("Test updateProjectEly When updating Ely for project Then ely should change") {
     runWithRollback {
-      val waitingCountp = projectDAO.getProjectsWithSendingToTRStatus().length
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(9), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
+      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None, None)
       projectDAO.createRoadAddressProject(rap)
-      val waitingCountNow = projectDAO.getProjectsWithSendingToTRStatus().length
-      waitingCountNow - waitingCountp should be(1)
+      projectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      projectDAO.updateProjectEly(id, 100)
+      projectDAO.getProjectEly(id).get should be(100)
     }
   }
 
+  test("Test getProjectsWithSendingToTRStatus When there is one project in SendingToTR status Then should return that one project") {
+    val address = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+    runWithRollback {
+      val waitingCountP = projectDAO.getProjectsWithSendingToTRStatus().length
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = dummyRoadAddressProject(id, ProjectState.SendingToTR, List.empty[ProjectReservedPart], None, None)
+      projectDAO.createRoadAddressProject(rap)
+      val waitingCountNow = projectDAO.getProjectsWithSendingToTRStatus().length
+      waitingCountNow - waitingCountP should be(1)
+    }
+  }
 
   //  test("Test createRoadAddressProject When having reserved part and links Then should return project links with geometry") {
   //    val reservedParts = Seq(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -190,4 +175,17 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   //      projectLinkDAO.fetchFirstLink(id, 5, 203) should be(Some(projectlinks.minBy(_.startAddrMValue)))
   //    }
   //  }
+
+//  test("Test Create project with no reversed links") {
+//    runWithRollback {
+//      val id = Sequences.nextViitePrimaryKeySeqValue
+//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+//      ProjectDAO.createRoadAddressProject(rap)
+//      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+//      ProjectDAO.create(addresses.map(x => x.copy(reversed = false)))
+//      val projectLinks = ProjectDAO.getProjectLinks(id)
+//      projectLinks.count(x => x.reversed) should be(0)
+//    }
+//  }
 }
