@@ -396,12 +396,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def validateReservations(reservedRoadParts: ProjectReservedPart, projectEly: Option[Long],
+  def validateReservations(reservedRoadParts: ProjectReservedPart, projectEly: Option[Long],
                                    projectLinks: Seq[ProjectLink], roadways: Seq[Roadway]): Option[String] = {
 
-    if (roadways.isEmpty || !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
+    if (roadways.isEmpty && !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
       Some(s"$ErrorFollowingRoadPartsNotFoundInDB TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
-    else if (projectEly.get != defaultProjectEly && projectLinks.forall(_.ely == projectEly) || roadways.forall(_.ely == projectEly))
+    else if (projectEly.get != defaultProjectEly && (projectLinks.exists(_.ely != reservedRoadParts.ely.get) || roadways.exists(_.ely != reservedRoadParts.ely.get)))
       Some(s"$ErrorFollowingPartsHaveDifferingEly TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
     else
       None
