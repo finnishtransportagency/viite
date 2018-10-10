@@ -39,7 +39,7 @@ case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String)
 
 case class LinkToRevert(id: Long, linkId: Long, status: Long, geometry: Seq[Point])
 
-class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, linearLocationDAO: LinearLocationDAO, eventbus: DigiroadEventBus) {
+class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -47,6 +47,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private val logger = LoggerFactory.getLogger(getClass)
   val roadwayDAO = new RoadwayDAO
+  val linearLocationDAO = new LinearLocationDAO
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
@@ -439,14 +440,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
         validateReservations(reserved, project.ely, projectLinks, roadways) match {
           case Some(error) => throw new RoadPartReservedException(error)
+          case _ =>
+            val (suravageSource, regular) = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+            val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
+            val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
+            val fullMapping = regularMapping ++ suravageMapping
+            checkAndReserve(project, reserved)
+            val addresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+            addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
         }
-        val (suravageSource, regular) = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-        val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
-        val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
-        val fullMapping = regularMapping ++ suravageMapping
-        checkAndReserve(project, reserved)
-        val addresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-        addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
     }}
     logger.debug(s"Reserve done")
     projectLinkDAO.create(newProjectLinks.filterNot(ad => projectLinks.exists(pl => pl.roadNumber == ad.roadNumber && pl.roadPartNumber == ad.roadPartNumber)))
