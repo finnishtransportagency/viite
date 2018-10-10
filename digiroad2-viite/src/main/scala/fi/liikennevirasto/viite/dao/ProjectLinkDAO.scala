@@ -567,8 +567,9 @@ class ProjectLinkDAO {
     }
   }
 
+  //TODO check in VIITE-1540 if there is the need to also update by "AND LINEAR_LOCATION_ID = ${roadAddress.linearLocationId}
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true) = {
-    //TODO check in VIITE-1540 if there is the need to also update by "AND LINEAR_LOCATION_ID = ${roadAddress.linearLocationId}
+
     time(logger, "Update project link values") {
 
       val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z))
@@ -684,6 +685,7 @@ class ProjectLinkDAO {
       removeProjectLinks(projectId, roadNumber, roadPartNumber, linkIds)
     }
   }
+
   private def removeProjectLinks(projectId: Long, roadNumber: Option[Long], roadPartNumber: Option[Long],
                                  linkIds: Set[Long] = Set()): Int = {
     val roadFilter = roadNumber.map(l => s"AND road_number = $l").getOrElse("")

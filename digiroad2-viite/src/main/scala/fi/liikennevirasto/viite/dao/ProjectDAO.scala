@@ -74,8 +74,8 @@ class ProjectDAO {
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
-         insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
-         values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, null, ${roadAddressProject.createdBy}, sysdate, ${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
+         insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
+         values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, null, ${roadAddressProject.createdBy}, sysdate, ${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo}, ${roadAddressProject.statusInfo})
          """.execute
   }
 
