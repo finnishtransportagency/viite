@@ -303,6 +303,99 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   //  }
 
 
+  /*** Roadway reservation tests ***/
+
+  test("Test checkRoadPartsExist When roadway exist Then return None") {
+    runWithRollback {
+      val roadNumber = 19438
+      val roadStartPart = 1
+      val roadwayNumber = 8000
+      val id1 = Sequences.nextRoadwayId
+      val ra = Seq(Roadway(id1, roadwayNumber, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 1000L, reversed = false,
+        DateTime.parse("1901-01-01"), None, "tester", Some("test road"), 1L))
+      roadwayDAO.create(ra)
+      val check = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadStartPart)
+      check should be (None)
+    }
+  }
+
+  test("Test checkRoadPartsExist When roadway does not exist Then return error message") {
+    runWithRollback {
+      val roadNumber = 19438
+      val roadStartPart = 1
+      val roadEndPart = 2
+      val check = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
+      check should be (Some(ErrorStartingRoadPartNotFound))
+    }
+  }
+
+  test("Test checkRoadPartsExist When start road way exists and end doesn't then return error message") {
+    runWithRollback {
+      val roadNumber = 19438
+      val roadStartPart = 1
+      val roadEndPart = 2
+      val roadwayNumber = 8000
+      val id1 = Sequences.nextRoadwayId
+      val ra = Seq(Roadway(id1, roadwayNumber, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 1000L, reversed = false,
+        DateTime.parse("1901-01-01"), None, "tester", Some("test road"), 1L))
+      roadwayDAO.create(ra)
+      val check = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
+      check should be (Some(ErrorEndingRoadPartNotFound))
+    }
+  }
+
+  test("Test checkRoadPartsExist When start road way does not exist and end exists then return error message") {
+    runWithRollback {
+      val roadNumber = 19438
+      val roadStartPart = 1
+      val roadEndPart = 2
+      val roadwayNumber = 8000
+      val id1 = Sequences.nextRoadwayId
+      val ra = Seq(Roadway(id1, roadwayNumber, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 1000L, reversed = false,
+        DateTime.parse("1901-01-01"), None, "tester", Some("test road"), 1L))
+      roadwayDAO.create(ra)
+      val check = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
+      check should be (Some(ErrorStartingRoadPartNotFound))
+    }
+  }
+
+  test("Test validateReservations When road parts don't exist Then return error") {
+    runWithRollback {
+      val roadNumber = 19438
+      val roadPartNumber = 1
+      val projectEly = 8L
+      val errorRoad = s"TIE $roadNumber OSA: $roadPartNumber"
+      val reservedPart = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
+      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
+      projectService.validateReservations(reservedPart, Some(projectEly), Seq(), roadWays) should be (Some(s"$ErrorFollowingRoadPartsNotFoundInDB $errorRoad"))
+    }
+  }
+
+  test("Test validateReservations When ely code is diferent Then return error") {
+    runWithRollback {
+      val roadNumber = 5
+      val roadPartNumber = 205
+      val projectEly = 8L
+      val newReserveEly = 1L
+      val errorRoad = s"TIE $roadNumber OSA: $roadPartNumber"
+      val reservedPart1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
+      val projectLinks = projectLinkDAO.getProjectLinks(project.id)
+
+      val reservedPart2 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(newReserveEly))
+
+      projectService.validateReservations(reservedPart2, Some(projectEly), projectLinks, roadWays) should be (Some(s"$ErrorFollowingPartsHaveDifferingEly $errorRoad"))
+    }
+  }
+
+  test("Test validateReservations When road parts exist and ely is the same Then return None") {
+
+  }
+
 
 
   test("Adding and removing TR_ID") {
@@ -918,33 +1011,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
-//  test("verify existence of roadAddressNumbersAndSEParts") {
-//    val roadNumber = 1943845
-//    val roadStartPart = 1
-//    val roadEndPart = 2
-//    runWithRollback {
-//      val id1 = RoadAddressDAO.getNextRoadwayId
-//      val id2 = RoadAddressDAO.getNextRoadwayId
-//      val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-//        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
-//      val rb = Seq(RoadAddress(id2, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-//        Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
-//      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//      val shouldNotExist = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
-//      shouldNotExist.get should be("Tienumeroa ei ole olemassa, tarkista tiedot")
-//      RoadAddressDAO.create(ra)
-//      val roadNumberShouldNotExist = projectService.checkRoadPartsExist(roadNumber, roadStartPart + 1, roadEndPart)
-//      roadNumberShouldNotExist.get should be("Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
-//      val endingPartShouldNotExist = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
-//      endingPartShouldNotExist.get should be("Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
-//      RoadAddressDAO.create(rb)
-//      val allIsOk = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
-//      allIsOk should be(None)
-//    }
-//  }
+
 
   //TODO this will be implemented at VIITE-1539
 //  test("check reservability of a road") {
