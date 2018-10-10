@@ -55,6 +55,8 @@ package object viite {
 
   val NewRoadNameId: Long = -1000L
 
+  val NewProjectLink: Long = -1000L
+
   val MaxDistanceForConnectedLinks = 0.1
 
   /* Used for small jumps on discontinuity or self-crossing tracks */
@@ -129,6 +131,8 @@ package object viite {
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
   val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering)
+
+  val defaultProjectEly = -1L
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
