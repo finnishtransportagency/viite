@@ -499,10 +499,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             if (reservedRoadParts.isEmpty) {
               Map("success" -> s"Puuttuvan tielinkkidatan takia kyseistä tieosaa ei pystytä varaamaan.")
             } else {
-              projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
-                case Some(errMsg) => Map("success" -> errMsg)
-                case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
-              }
+              //TODO "Will be implemented at VIITE-1540" for now result is always with success
+              //              projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+              //                case Some(errMsg) => Map("success" -> errMsg)
+              //                case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+              //              }
+              Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
             }
           }
         }

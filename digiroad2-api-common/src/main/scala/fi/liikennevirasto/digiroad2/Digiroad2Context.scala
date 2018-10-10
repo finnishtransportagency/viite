@@ -121,7 +121,7 @@ object Digiroad2Context {
   }
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new ProjectService(roadAddressService, roadLinkService, eventbus)
   }
 
   lazy val roadNetworkService: RoadNetworkService = {
