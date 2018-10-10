@@ -51,7 +51,7 @@ class ProjectReservedPartDAO {
     time(logger, "Remove reserved road part") {
       sqlu"""
            DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
-           (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND LC.ID = LINEAR_LOCATION_ID AND
+           (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
            RA.ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND RA.ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}))
            OR (ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
            AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
@@ -167,7 +167,7 @@ class ProjectReservedPartDAO {
               FROM PROJECT_RESERVED_ROAD_PART rp
               LEFT JOIN PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
               LEFT JOIN ROADWAY ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROADWAY_ID)
-              LEFT JOIN LINEAR_LOCATION ln ON (lc.Id = pl.Linear_Location_Id)
+              LEFT JOIN LINEAR_LOCATION lc ON (lc.Id = pl.Linear_Location_Id)
               WHERE
                 rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
