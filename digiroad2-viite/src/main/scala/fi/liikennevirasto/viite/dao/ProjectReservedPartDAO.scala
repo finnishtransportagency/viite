@@ -167,7 +167,7 @@ class ProjectReservedPartDAO {
               FROM PROJECT_RESERVED_ROAD_PART rp
               LEFT JOIN PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
               LEFT JOIN ROADWAY ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROADWAY_ID)
-              LEFT JOIN LINEAR_LOCATION ln ON (lc.Id = pl.Linear_Location_Id)
+              LEFT JOIN LINEAR_LOCATION lc ON (lc.Id = pl.Linear_Location_Id)
               WHERE
                 rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
                 RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
