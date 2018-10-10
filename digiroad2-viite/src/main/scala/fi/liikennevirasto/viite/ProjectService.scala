@@ -62,19 +62,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return Optional error message, None if no error
     */
   def checkRoadPartsExist(roadNumber: Long, roadStartPart: Long, roadEndPart: Long): Option[String] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1539")
-//    withDynTransaction {
-//      if (!RoadAddressDAO.roadPartExists(roadNumber, roadStartPart)) {
-//        if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
-//          Some(ErrorRoadNumberDoesNotExist)
-//        }
-//        else //roadnumber exists, but starting roadpart not
-//          Some(ErrorStartingRoadPartNotFound)
-//      } else if (!RoadAddressDAO.roadPartExists(roadNumber, roadEndPart)) { // ending part check
-//        Some(ErrorEndingRoadPartNotFound)
-//      } else
-//        None
-//    }
+    withDynTransaction {
+      if (roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadStartPart).isEmpty) {
+        Some(ErrorStartingRoadPartNotFound)
+      } else if (roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadEndPart).isEmpty) {
+        Some(ErrorEndingRoadPartNotFound)
+      } else
+        None
+    }
   }
 
   def calculateProjectCoordinates(projectId: Long, resolution: Int): ProjectCoordinates = {
@@ -405,9 +400,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                                    projectLinks: Seq[ProjectLink], roadways: Seq[Roadway]): Option[String] = {
 
     if (roadways.isEmpty || !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
-      Some(ErrorFollowingRoadPartsNotFoundInDB)
+      Some(s"$ErrorFollowingRoadPartsNotFoundInDB TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
     else if (projectEly.get != defaultProjectEly && projectLinks.forall(_.ely == projectEly) || roadways.forall(_.ely == projectEly))
-      Some(ErrorFollowingPartsHaveDifferingEly)
+      Some(s"$ErrorFollowingPartsHaveDifferingEly TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
     else
       None
   }
@@ -432,7 +427,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     logger.info(s"Adding reserved road parts with links to project ${project.id}")
     val projectLinks = projectLinkDAO.getProjectLinks(project.id)
     logger.debug(s"${projectLinks.size} links fetched")
-    val projectLinkOriginalParts = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => (ra.roadNumber, ra.roadPartNumber))
+    val projectLinkOriginalParts = if (projectLinks.nonEmpty) roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => (ra.roadNumber, ra.roadPartNumber)) else Seq()
 
     val newProjectLinks = project.reservedParts.filterNot(res =>
       projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
