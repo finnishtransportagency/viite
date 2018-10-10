@@ -80,14 +80,13 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
   test("Test reserveRoadPart When having reserved one project with that part Then should fetch it without any problems") {
     runWithRollback {
-      val reservedParts = Seq(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val id = Sequences.nextViitePrimaryKeySeqValue
+      val reservedParts = Seq(ProjectReservedPart(id: Long, roadNumber1: Long, roadPartNumber1: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, Some(8L), None)
       projectDAO.createRoadAddressProject(rap)
-      projectReservedPartDAO.reserveRoadPart(id, 5, 203, "TestUser")
-      val fetchedPart = projectReservedPartDAO.fetchReservedRoadPart(5, 203)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, "TestUser")
+      val fetchedPart = projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1)
       fetchedPart.nonEmpty should be (true)
-      fetchedPart.get.id should be (id)
       fetchedPart.get.roadNumber should be (reservedParts.head.roadNumber)
       fetchedPart.get.roadPartNumber should be (reservedParts.head.roadPartNumber)
     }
