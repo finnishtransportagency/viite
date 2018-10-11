@@ -63,6 +63,10 @@ object FloatingReason {
     def value = 7
   }
 
+  case object ChangeTypeNotSupported extends FloatingReason {
+    def value = 8
+  }
+
 }
 
 trait BaseLinearLocation {

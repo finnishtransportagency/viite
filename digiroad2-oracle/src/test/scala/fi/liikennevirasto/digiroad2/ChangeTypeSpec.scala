@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2
+  package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import org.scalatest.{FunSuite, Matchers}
@@ -18,7 +18,7 @@ class ChangeTypeSpec extends FunSuite with Matchers {
   }
 
   test("Changes should belong to only one category") {
-    ChangeType.values.map(v => ChangeInfo(None, None, 1L, v.value, None, None, None, None)).foreach(ci => {
+    ChangeType.values.map(v => ChangeInfo(None, None, 1L, ChangeType.apply(v.value), None, None, None, None)).foreach(ci => {
       val (group, othergroups) = allClasses(ci).partition(b => b)
       group.size should be (1)
       othergroups.size should be (4)

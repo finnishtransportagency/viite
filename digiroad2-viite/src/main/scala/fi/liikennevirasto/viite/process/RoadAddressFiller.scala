@@ -180,6 +180,8 @@ object RoadAddressFiller {
         capToGeometry,
         extendToGeometry,
         dropShort
+        //
+//        RoadAddressChangeInfoMapper.applyChanges(Map())
       )
 
       val topologyMap = topology.groupBy(_.linkId)
