@@ -613,7 +613,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadWayIds(roadwayIds: Seq[Long])(query: String): String = {
-    s"""$query where roadway_id in (${roadwayIds.mkString(",")})"""
+    s"""$query where id in (${roadwayIds.mkString(",")})"""
   }
 
   private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway] {
