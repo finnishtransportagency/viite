@@ -103,7 +103,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1541
 //  test("update ProjectStatus when TR saved") {
 //    val sent2TRState = ProjectState.apply(2) //notfinnished
 //    val savedState = ProjectState.apply(5)
@@ -118,7 +118,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
 //
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1541
 //  test("Update to TRerror state") {
 //    val sent2TRState = ProjectState.apply(2) //notfinnished
 //    val savedState = ProjectState.apply(3)

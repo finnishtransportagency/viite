@@ -1148,129 +1148,127 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
-//  test("Project ELY -1 update when reserving roadpart and revert to -1 when all reserved roadparts are removed") {
-//    val projectIdNew = 0L
-//    val roadNumber = 1943845
-//    val roadPartNumber = 1
-//    val linkId = 12345L
-//
-//    runWithRollback {
-//
-//      //Creation of Test road
-//      val id = RoadAddressDAO.getNextRoadwayId
-//      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-//        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-//      val rl = RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
-//        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
-//      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
-//      RoadAddressDAO.create(ra)
-//      val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-//
-//      //Creation of test project with test links
-//      val project = RoadAddressProject(projectIdNew, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
-//        DateTime.now(), DateTime.now(), "info",
-//        List.empty, None)
-//      val proj = projectService.createRoadLinkProject(project)
-//      val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
-//      returnedProject.name should be("testiprojekti")
-//      returnedProject.ely.getOrElse(-1) should be(-1)
-//      mockForProject(proj.id, RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(proj)))
-//      val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses))
-//      val updatedReturnProject = projectService.getRoadAddressSingleProject(proj.id).head
-//      updatedReturnProject.ely.getOrElse(-1) should be(8)
-//      projectService.saveProject(proj.copy(ely = None)) //returns project to null
-//      val updatedReturnProject2 = projectService.getRoadAddressSingleProject(proj.id).head
-//      updatedReturnProject2.ely.getOrElse(-1) should be(-1)
-//      projectService.saveProject(proj.copy(reservedParts = addresses))
-//      val updatedReturnProject3 = projectService.getRoadAddressSingleProject(proj.id).head
-//      updatedReturnProject3.ely.getOrElse(-1) should be(8)
-//    }
-//  }
+  test("Test saveProject When all reserved parts are removed Then Project ELY  should be -1 ") {
+    val projectIdNew = 0L
+    val roadNumber = 1943845
+    val roadPartNumber = 1
+    val linkId = 12345L
+    val roadwayNumber = 8000L
 
-  //TODO this will be implemented at VIITE-1539
-//  test("get the project with it's reserved road parts") {
-//    var projectId = 0L
-//    val roadNumber = 1943845
-//    val roadPartNumber = 1
-//    val linkId = 12345L
-//
-//    runWithRollback {
-//
-//      //Creation of Test road
-//      val id = RoadAddressDAO.getNextRoadwayId
-//      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
-//        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-//        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-//      val rl = RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
-//        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
-//      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
-//      RoadAddressDAO.create(ra)
-//
-//      //Creation of test project with test links
-//      val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
-//        DateTime.now(), DateTime.now(), "info",
-//        List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, roadNumber: Long, roadPartNumber: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), None)
-//      val proj = projectService.createRoadLinkProject(project)
-//      val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
-//      returnedProject.name should be("testiprojekti")
-//      returnedProject.reservedParts.size should be(1)
-//      returnedProject.reservedParts.head.roadNumber should be(roadNumber)
-//    }
-//
-//  }
+    runWithRollback {
 
-  //TODO this will be implemented at VIITE-1539
-//  test("error message when reserving already used road number&part (in other project ids). Empty error message if same road number&part but == proj id ") {
-//    runWithRollback {
-//      val idr = RoadAddressDAO.getNextRoadwayId
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
-//      val projectLink = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 5, 203, RoadType.Unknown, Track.Combined, Discontinuous,
-//        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
-//        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-//      ProjectDAO.createRoadAddressProject(rap)
-//
-//      val rap2 = RoadAddressProject(id + 1, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-04"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
-//      val projectLink2 = toProjectLink(rap2, LinkStatus.New)(RoadAddress(idr, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous,
-//        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
-//        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-//      ProjectDAO.createRoadAddressProject(rap2)
-//
-//      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous,
-//        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
-//        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-//
-//      val calibrationPoints = projectLink.toCalibrationPoints()
-//      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
-//        1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, Some(""), Some("vvh_modified"),
-//        Map(), projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
-//        projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
-//        projectLink.sideCode,
-//        calibrationPoints._1,
-//        calibrationPoints._2, Anomaly.None, projectLink.status, 0)
-//
-//      mockForProject(id, Seq(p))
-//
-//      val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
-//      val links = ProjectDAO.getProjectLinks(id)
-//      links.size should be(0)
-//      message1project1 should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
-//
-//      val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
-//      val links2 = ProjectDAO.getProjectLinks(id + 1)
-//      links2.size should be(1)
-//      message1project2 should be(None)
-//
-//      val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId).getOrElse("")
-//      val links3 = ProjectDAO.getProjectLinks(id)
-//      links3.size should be(0)
-//      message2project1 should be("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
-//    }
-//  }
+      //Creation of Test road
+      val id = Sequences.nextRoadwayId
+      val ra = Seq(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 1000L,
+        reversed = false, DateTime.parse("1901-01-01"), None, "teste", Option("test name"), 8L, NoTermination))
+      val rl = RoadLink(linkId,Seq(Point(0.0, 0.0), Point(0.0, 9.8)), 9.8, State, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
+      roadwayDAO.create(ra)
+      val addresses: List[ProjectReservedPart] = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+
+      //Creation of test project with test links
+      val project = RoadAddressProject(projectIdNew, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
+        DateTime.now(), DateTime.now(), "info",
+        List.empty, None)
+      val proj = projectService.createRoadLinkProject(project)
+      val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
+      returnedProject.name should be("testiprojekti")
+      returnedProject.ely.getOrElse(-1) should be(-1)
+      mockForProject(project.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 203)).map(toProjectLink(proj)))
+      val projupdated = projectService.saveProject(proj.copy(reservedParts = addresses))
+      val updatedReturnProject = projectService.getRoadAddressSingleProject(proj.id).head
+      updatedReturnProject.ely.getOrElse(-1) should be(8)
+      projectService.saveProject(proj.copy(ely = None)) //returns project to null
+      val updatedReturnProject2 = projectService.getRoadAddressSingleProject(proj.id).head
+      updatedReturnProject2.ely.getOrElse(-1) should be(-1)
+      projectService.saveProject(proj.copy(reservedParts = addresses))
+      val updatedReturnProject3 = projectService.getRoadAddressSingleProject(proj.id).head
+      updatedReturnProject3.ely.getOrElse(-1) should be(8)
+    }
+  }
+
+  test("Test getRoadAddressSingleProject When project with reserved parts is created Then return the created project") {
+    var projectId = 0L
+    val roadNumber = 1943845
+    val roadPartNumber = 1
+    val linkId = 12345L
+    val roadwayNumber = 8000
+
+    runWithRollback {
+
+      //Creation of Test road
+      val id = Sequences.nextRoadwayId
+      val ra = Seq(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+        reversed = false, DateTime.parse("1901-01-01"), None, "Tester", Option("test name"), 8L))
+      val rl = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), 9.8, State, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
+      roadwayDAO.create(ra)
+
+      //Creation of test project with test links
+      val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
+        DateTime.now(), DateTime.now(), "info",
+        List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue: Long, roadNumber: Long, roadPartNumber: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), None)
+      val proj = projectService.createRoadLinkProject(project)
+      val returnedProject = projectService.getRoadAddressSingleProject(proj.id).get
+      returnedProject.name should be("testiprojekti")
+      returnedProject.reservedParts.size should be(1)
+      returnedProject.reservedParts.head.roadNumber should be(roadNumber)
+    }
+
+  }
+
+
+  test(" Test addNewLinksToProject When reserving part already used in other project Then return error message") {
+    runWithRollback {
+      val idr = Sequences.nextRoadwayId
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ProjectReservedPart], None)
+      val projectLink = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr,123, 5, 203, RoadType.Unknown, Track.Combined, Discontinuous,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
+        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      projectDAO.createRoadAddressProject(rap)
+
+      val rap2 = RoadAddressProject(id + 1, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-04"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ProjectReservedPart], None)
+      val projectLink2 = toProjectLink(rap2, LinkStatus.New)(RoadAddress(idr,1234, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
+        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      projectDAO.createRoadAddressProject(rap2)
+
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr,12345, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
+        SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      val calibrationPoints = projectLink.toCalibrationPoints()
+      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
+        1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, Some(""), Some("vvh_modified"),
+        Map(), projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
+        projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
+        projectLink.sideCode,
+        calibrationPoints._1,
+        calibrationPoints._2, Anomaly.None, projectLink.status, 12345,123456)
+
+      mockForProject(id, Seq(p))
+
+      val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
+      val links = projectLinkDAO.getProjectLinks(id)
+      links.size should be(0)
+      message1project1 should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
+
+      val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
+      val links2 = projectLinkDAO.getProjectLinks(id + 1)
+      links2.size should be(1)
+      message1project2 should be(None)
+
+      val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId).getOrElse("")
+      val links3 = projectLinkDAO.getProjectLinks(id)
+      links3.size should be(0)
+      message2project1 should be("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
+    }
+  }
 
   test("parsePrefillData no-link from vvh") {
     projectService.parsePreFillData(Seq.empty[VVHRoadlink]) should be(Left("Link could not be found in VVH"))
@@ -1299,21 +1297,21 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     projectService.parsePreFillData(Seq(newRoadLink1)) should be(Left("Link does not contain valid prefill info"))
   }
 
-  //TODO Will be implemented at VIITE-1539
-//  test("changing project ELY") {
-//    runWithRollback {
-//      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None, None)
-//      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//      val project = projectService.createRoadLinkProject(roadAddressProject)
-//      project.ely should be(None)
-//      val result = projectService.setProjectEly(project.id, 2)
-//      result should be(None)
-//      val result2 = projectService.setProjectEly(project.id, 2)
-//      result2 should be(None)
-//      val result3 = projectService.setProjectEly(project.id, 3)
-//      result3.isEmpty should be(false)
-//    }
-//  }
+
+  test("Test setProjectEly When ely is changed Then project ely should change") {
+    runWithRollback {
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None, None)
+      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      val project = projectService.createRoadLinkProject(roadAddressProject)
+      project.ely should be(None)
+      val result = projectService.setProjectEly(project.id, 2)
+      result should be(None)
+      val result2 = projectService.setProjectEly(project.id, 2)
+      result2 should be(None)
+      val result3 = projectService.setProjectEly(project.id, 3)
+      result3.isEmpty should be(false)
+    }
+  }
 
   //TODO this will be implemented at VIITE-1540
 //  test("split road address save behaves correctly on transfer + new") {
@@ -1396,7 +1394,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    result.count(_.endDate.isEmpty) should be(2)
 //  }
 
-  //TODO this will be implemented at VIITE-1539
+  //TODO This might be not necessary anymore
 //  test("verify correction of a null ELY code project") {
 //    runWithRollback {
 //      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -1472,26 +1470,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
+  test("Test createProjectLinks When project link is created for part not reserved Then should return error message") {
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val newLink = Seq(ProjectLink(-1000L, 5L, 203L, Track.apply(99), Discontinuity.Continuous, 0L, 50L, None, None,
+        None, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), NoFloating,
+        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 1234, 1234, 8L, reversed = false, None, 123456L, 12345L))
+      val project = projectService.createRoadLinkProject(rap)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
+      val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 203, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      response("success").asInstanceOf[Boolean] should be(false)
+      response("errorMessage").asInstanceOf[String] should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
+    }
+  }
 
-  //TODO Will be implemented at VIITE-1539
-//  test("create project link for road part that is not reserved") {
-//    runWithRollback {
-//      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-//        Seq(), None)
-//      val newLink = Seq(ProjectLink(-1000L, 5L, 203L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
-//        None, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), NoFloating,
-//        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, false,
-//        None, 86400L))
-//      val project = projectService.createRoadLinkProject(rap)
-//      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
-//      val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 203, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
-//      response.get("success").get.asInstanceOf[Boolean] should be(false)
-//      response.get("errorMessage").get.asInstanceOf[String] should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
-//    }
-//  }
-
-  //TODO this will be implemented at VIITE-1539
+  //TODO this will be implemented at VIITE-1540
 //  test("renumber a reserved road part to a road part reserved by other project") {
 //    runWithRollback {
 //      val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -1515,7 +1510,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
+  //TODO this will be implemented at VIITE-1540
 //  test("renumber a project link to a road part not reserved with end date null") {
 //    runWithRollback {
 //      val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -1549,7 +1544,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1540
 //  test("Reserving new part with same linkId for existing part in same project (with status New too), should override and remove old part") {
 //    runWithRollback {
 //      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -1598,7 +1593,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
+  //TODO this will be implemented at VIITE-1540
 //  test("unreserved road with new road name should remove road name") {
 //    runWithRollback {
 //      val testRoad: (Long, Long, String) = {
@@ -1611,7 +1606,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
+  //TODO this will be implemented at VIITE-1540
 //  test("delete the project should remove project road name if no other project uses same road") {
 //    runWithRollback {
 //      val testRoad: (Long, Long, String) = {
@@ -1658,7 +1653,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
+  //TODO this will be implemented at VIITE-1540
 //  test("Road address geometry after reverting should be the same as VVH") {
 //    val projectId = 0L
 //    val user = "TestUser"
@@ -1706,7 +1701,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-//TODO Will be implemented at VIITE-1539
+//TODO Will be implemented at VIITE-1540
 //  test("New user given addressMValues, even on Left/Right tracks, should keep continuous and incremented address values (calibration ones included) for all links") {
 //    /**
 //      * This test checks:
@@ -1880,7 +1875,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1540
 //  test("Re-Reversing direction should restore and ignore previous user given addressMValues") {
 //    /**
 //      * This test checks:
@@ -1968,7 +1963,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1540
 //  test("Change direction should not alter discontinuity of road addresses that are not the same road number and road part number") {
 //    runWithRollback {
 //
@@ -2509,26 +2504,25 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
-//  test("Service should indentify the correct writable states (Incomplete, ErrorInViite and ErrorInTR)") {
-//    runWithRollback {
-//      val incomplete = RoadAddressProject(0L, ProjectState.apply(1), "I am Incomplete", "TestUser", DateTime.parse("1901-01-01"),
-//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-//        Seq(), None)
-//      val incompleteProject = projectService.createRoadLinkProject(incomplete)
-//      val errorInViite = RoadAddressProject(0L, ProjectState.apply(1), "I am ErrorInViite", "TestUser", DateTime.parse("1901-01-01"),
-//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-//        Seq(), None)
-//      val errorInViiteProject = projectService.createRoadLinkProject(errorInViite)
-//      val erroredInTR = RoadAddressProject(0L, ProjectState.apply(1), "I am ErroredInTR", "TestUser", DateTime.parse("1901-01-01"),
-//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-//        Seq(), None)
-//      val erroredInTRProject = projectService.createRoadLinkProject(erroredInTR)
-//      projectService.isWritableState(incompleteProject.id) should be(true)
-//      projectService.isWritableState(errorInViiteProject.id) should be(true)
-//      projectService.isWritableState(erroredInTRProject.id) should be(true)
-//    }
-//  }
+  test("Test createRoadLinkProject When project in writable state Then  Service should indentify states (Incomplete, ErrorInViite and ErrorInTR)") {
+    runWithRollback {
+      val incomplete = RoadAddressProject(0L, ProjectState.apply(1), "I am Incomplete", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val incompleteProject = projectService.createRoadLinkProject(incomplete)
+      val errorInViite = RoadAddressProject(0L, ProjectState.apply(1), "I am ErrorInViite", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val errorInViiteProject = projectService.createRoadLinkProject(errorInViite)
+      val erroredInTR = RoadAddressProject(0L, ProjectState.apply(1), "I am ErroredInTR", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val erroredInTRProject = projectService.createRoadLinkProject(erroredInTR)
+      projectService.isWritableState(incompleteProject.id) should be(true)
+      projectService.isWritableState(errorInViiteProject.id) should be(true)
+      projectService.isWritableState(erroredInTRProject.id) should be(true)
+    }
+  }
 
   //TODO this will be implemented at VIITE-1541
 //  test("RoadAddressHistoryCorrections should return the projectLinks that share the same start date (days, months and year) of the existing roadways") {

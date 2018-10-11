@@ -270,7 +270,8 @@ object DataFixture {
 
   }
 
-  private def correctNullElyCodeProjects(): Unit = {
+  //TODO this might not be needed anymore
+  /*private def correctNullElyCodeProjects(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
@@ -281,7 +282,7 @@ object DataFixture {
     println(s"Starting project Ely code correct now")
     projectService.correctNullProjectEly()
     println(s"Project Ely's correct in  ${hms.print(new Period(startTime, DateTime.now()))}")
-  }
+  }*/
 
 
   private def updateRoadAddressGeometrySource(): Unit = {
@@ -489,8 +490,8 @@ object DataFixture {
         updateProjectLinkGeom()
       case Some("import_road_names") =>
         importRoadNames()
-      case Some("correct_null_ely_code_projects") =>
-        correctNullElyCodeProjects()
+      /*case Some("correct_null_ely_code_projects") =>
+        correctNullElyCodeProjects()*/
 //      case Some("check_lrm_position") =>
 //        checkLinearLocation()
 //      case Some("fuse_road_address_with_history") =>
