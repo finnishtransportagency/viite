@@ -219,6 +219,23 @@ class ProjectReservedPartDAO {
     Q.queryNA[Long](query).list.head
   }
 
+  def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
+    time(logger, s"Check if the road part $roadNumber/$roadPartNumber is not available for the project $projectId") {
+      val query =
+        s"""
+          SELECT 1 FROM dual WHERE EXISTS(select 1
+             from project pro,
+             ROADWAY ra
+             where  pro.id = $projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+             (ra.START_DATE > pro.START_DATE or ra.END_DATE > pro.START_DATE) AND
+             ra.VALID_TO is null) OR EXISTS (
+             SELECT 1 FROM project_reserved_road_part pro, ROADWAY ra
+              WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number
+               AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)"""
+      Q.queryNA[Int](query).firstOption.nonEmpty
+    }
+  }
+
   implicit val getDiscontinuity = new GetResult[Option[Discontinuity]] {
     def apply(r: PositionedResult) = {
       r.nextLongOption().map(l => Discontinuity.apply(l))

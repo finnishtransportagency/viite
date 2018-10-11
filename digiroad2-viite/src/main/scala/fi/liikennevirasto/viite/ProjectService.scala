@@ -200,12 +200,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def generateAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1539")
-//    RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart).map {
-//      case (_, linkId, addrLength, discontinuity, ely, _, _) =>
-//        ReservedRoadPart(0L, roadNumber, roadPart, Some(addrLength), Some(Discontinuity.apply(discontinuity.toInt)), Some(ely),
-//          newLength = Some(addrLength), newDiscontinuity = Some(Discontinuity.apply(discontinuity.toInt)), newEly = Some(ely), Some(linkId))
-//    }
+    roadwayDAO.getRoadPartInfo(roadNumber, roadPart).map {
+      case (_, linkId, addrLength, discontinuity, ely, _, _) =>
+        ProjectReservedPart(0L, roadNumber, roadPart, Some(addrLength), Some(Discontinuity.apply(discontinuity.toInt)), Some(ely),
+          newLength = Some(addrLength), newDiscontinuity = Some(Discontinuity.apply(discontinuity.toInt)), newEly = Some(ely), Some(linkId))
+    }
   }
 
   private def sortRamps(seq: Seq[ProjectLink], linkIds: Seq[Long]): Seq[ProjectLink] = {
