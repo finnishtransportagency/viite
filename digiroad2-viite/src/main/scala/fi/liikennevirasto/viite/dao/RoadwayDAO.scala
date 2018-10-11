@@ -1645,7 +1645,7 @@ class RoadwayDAO extends BaseDAO {
                rm.valid_to is null AND rm.end_date is null AND rm.TRACK in (0,1)) ra
                on r.START_ADDR_M=ra.maxstartaddrm
                WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
-               r.valid_to is null AND r.TRACK in (0,1)"""
+               r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
     Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
   //
