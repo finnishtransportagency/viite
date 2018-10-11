@@ -179,9 +179,8 @@ object RoadAddressFiller {
         dropSegmentsOutsideGeometry,
         capToGeometry,
         extendToGeometry,
-        dropShort
-        //
-//        RoadAddressChangeInfoMapper.applyChanges(Map())
+        dropShort,
+        ApplyChangeInfoProcess.applyChanges(Map())
       )
 
       val topologyMap = topology.groupBy(_.linkId)
