@@ -268,11 +268,12 @@ object ProjectValidator {
   def projectLinksValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     val projectValidations: Seq[(RoadAddressProject, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
-      checkProjectContinuity,
-      checkForNotHandledLinks,
-      checkTrackCodePairing,
-      checkRemovedEndOfRoadParts,
-      checkProjectElyCodes
+      //TODO in 1542
+//      checkProjectContinuity,
+//      checkForNotHandledLinks,
+//      checkTrackCodePairing,
+//      checkRemovedEndOfRoadParts,
+//      checkProjectElyCodes
     )
 
     val errors: Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>

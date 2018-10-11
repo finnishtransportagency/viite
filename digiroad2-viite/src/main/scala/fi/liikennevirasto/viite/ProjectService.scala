@@ -449,7 +449,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     logger.debug(s"New links created ${newProjectLinks.size}")
     val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
     projectLinkDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
-    updateProjectEly(project.id)
+    //TODO project ely is being -1 after reserving project part with valid ely
+//    updateProjectEly(project.id)
+    projectReservedPartDAO.fetchReservedRoadParts(project.id).find(_.ely.nonEmpty).flatMap(_.ely).foreach(ely =>
+    projectDAO.updateProjectEly(project.id, ely))
+    None
   }
 
   def revertSplit(projectId: Long, linkId: Long, userName: String): Option[String] = {
