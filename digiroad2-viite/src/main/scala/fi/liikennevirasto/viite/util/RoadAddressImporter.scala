@@ -44,7 +44,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def roadwayStatement() =
     dynamicSession.prepareStatement("insert into ROADWAY (id, ROADWAY_NUMBER, road_number, road_part_number, TRACK, start_addr_m, end_addr_m, reversed, start_date, end_date, created_by, road_type, ely, valid_from, valid_to, discontinuity, terminated) " +
-                                          "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
+      "values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
   private def linearLocationStatement() =
     dynamicSession.prepareStatement("insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, cal_start_addr_m, cal_end_addr_m, link_source, " +
@@ -181,7 +181,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
-        val conversionAddressesFromChunk = conversionAddresses.filter(address => (min+1 to max).contains(address.roadwayNumber))
+        val conversionAddressesFromChunk = conversionAddresses.filter(address => (min + 1 to max).contains(address.roadwayNumber))
         importAddresses(conversionAddressesFromChunk, conversionAddresses)
     }
 
@@ -206,8 +206,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       roadwayNumber => println(s"Suppressed ROADWAY_NUMBER $roadwayNumber because it contains NULL LINKID values ")
     }
 
-    //TODO - insert expiredConversionAddresses and historyConversionAddresses
-    val groupedLinkCoeffs = allConversionAddresses.filter(_.expirationDate.isEmpty).groupBy(_.linkId).mapValues{
+    val groupedLinkCoeffs = allConversionAddresses.filter(_.expirationDate.isEmpty).groupBy(_.linkId).mapValues {
       addresses =>
         val minM = addresses.map(_.startM).min
         val maxM = addresses.map(_.endM).max
@@ -221,12 +220,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val roadwayPs = roadwayStatement()
     val linearLocationPs = linearLocationStatement()
 
-    currentMappedConversionAddresses.mapValues{
+    currentMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach{
+    }.foreach {
       case (key, addresses) =>
-        addresses.foreach{
+        addresses.foreach {
           //add current linear locations
           add =>
             val converted = add._1
@@ -234,11 +233,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
             val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, getStartCalibrationPointValue(converted), getEndCalibrationPointValue(converted),
               roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
-            if(add._1.directionFlag == 1){
+            if (add._1.directionFlag == 1) {
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)
-            }
-            else{
+            } else {
               insertLinearLocation(linearLocationPs, linearLocation)
             }
         }
@@ -252,16 +250,16 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         insertRoadway(roadwayPs, roadAddress)
     }
 
-    historyMappedConversionAddresses.mapValues{
+    historyMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach{
+    }.foreach {
       case (key, addresses) =>
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
         val linkIds = addresses.map(_._1.linkId)
         val currentAddresses = currentConversionAddresses.filter(add => add.roadwayNumber == minAddress.roadwayNumber && linkIds.contains(add.linkId)).sortBy(_.startAddressM)
-        val isReversed = if(currentAddresses.head.linkId == minAddress.linkId && currentAddresses.head.startM == minAddress.startM) 1 else 0
+        val isReversed = if (currentAddresses.head.linkId == minAddress.linkId && currentAddresses.head.startM == minAddress.startM) 1 else 0
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, isReversed, minAddress.startDate,
           minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value)
@@ -281,24 +279,24 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val expiredOldMappedConversionAddresses = expiredOldConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
 
-    validExpiredMappedConversionAddresses.mapValues{
+    validExpiredMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach{
+    }.foreach {
       case (key, addresses) =>
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity,  terminated = Termination.value)
+          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = Termination.value)
 
         insertRoadway(roadwayPs, roadAddress)
     }
 
-    expiredOldMappedConversionAddresses.mapValues{
+    expiredOldMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach{
+    }.foreach {
       case (key, addresses) =>
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
@@ -313,7 +311,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
 
-    private def getStartCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
+  private def getStartCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
     convertedAddress.calibrationCode match {
       case AtBeginning | AtBoth => Some(convertedAddress.startAddressM)
       case _ => None
@@ -355,16 +353,15 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       val endCalibrationPoint = r.nextLong()
 
 
-      def getCalibrationCode (startCalibrationPoint: Long, endCalibrationPoint: Long, startAddrM: Long, endAddrM: Long): CalibrationCode = {
-        if(startAddrM < endAddrM){
+      def getCalibrationCode(startCalibrationPoint: Long, endCalibrationPoint: Long, startAddrM: Long, endAddrM: Long): CalibrationCode = {
+        if (startAddrM < endAddrM) {
           (startCalibrationPoint, endCalibrationPoint) match {
             case (1, 1) => CalibrationCode.AtBoth
             case (1, 0) => CalibrationCode.AtBeginning
             case (0, 1) => CalibrationCode.AtEnd
             case _ => CalibrationCode.No
           }
-        }
-        else{
+        } else {
           (startCalibrationPoint, endCalibrationPoint) match {
             case (1, 1) => CalibrationCode.AtBoth
             case (1, 0) => CalibrationCode.AtEnd

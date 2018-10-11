@@ -2,11 +2,13 @@ CREATE OR REPLACE FUNCTION GET_X (g sdo_geometry) return number is
 begin
 return g.sdo_ordinates(1);
 end;
+/
 
 CREATE OR REPLACE FUNCTION GET_Y (g sdo_geometry) return number is
 begin
 return g.sdo_ordinates(2);
 end;
+/
 
 CREATE OR REPLACE FUNCTION TO_2D (geom MDSYS.SDO_GEOMETRY)
   RETURN MDSYS.SDO_GEOMETRY DETERMINISTIC
@@ -86,3 +88,4 @@ BEGIN
   END IF;
   RETURN geom_2d;
 END to_2d;
+/

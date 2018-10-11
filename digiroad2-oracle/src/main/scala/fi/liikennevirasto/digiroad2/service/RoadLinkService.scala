@@ -23,6 +23,7 @@ case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeCla
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 
+//TODO delete all the references to frozen interface
 /**
   * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
   *
@@ -64,7 +65,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
-  def getMidPointByLinId(linkId: Long): Option[Point] = {
+  def getMidPointByLinkId(linkId: Long): Option[Point] = {
     val roadLinkOption = vvhClient.roadLinkData.fetchByLinkId(linkId).orElse(vvhClient.complementaryData.fetchByLinkId(linkId).orElse(vvhClient.suravageData.fetchByLinkId(linkId)))
     roadLinkOption.map{
       roadLink =>

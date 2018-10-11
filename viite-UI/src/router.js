@@ -60,6 +60,7 @@
 
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
+        eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
         var parsedProjectId = parseInt(projectId);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       },
