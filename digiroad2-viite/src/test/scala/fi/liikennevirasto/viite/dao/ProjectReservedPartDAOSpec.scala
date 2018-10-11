@@ -15,6 +15,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved parts to project
@@ -211,56 +212,41 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       }
     }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("invalidated rows don't affect reservation (7)") {
-  //    runWithRollback {
-  //      createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), Option.apply(DateTime.parse("2000-01-01")))
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1997-01-01"),
-  //        "TestUser", DateTime.parse("1997-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      RoadAddressDAO.isNotAvailableForProject(8888,1,id) should be (true)
-  //      sqlu"""update ROADWAY set valid_to = sysdate WHERE road_number = 8888""".execute
-  //      createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), None)
-  //      RoadAddressDAO.isNotAvailableForProject(8888,1,id) should be (false)
-  //    }
-  //  }
+    test("Test isNotAvailableForProject case (7) When START_DATE > PROJ_DATE, END_DATE > PROJ_DATE Then invalidated rows don't affect reservation") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("2000-01-01")))))
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1997-01-01"),
+          "TestUser", DateTime.parse("1997-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap)
+        projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id) should be (true)
+        sqlu"""update ROADWAY set valid_to = sysdate WHERE road_number = $roadNumber1""".execute
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"))))
+        projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id) should be (false)
+      }
+    }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("New roadnumber and roadpart number  reserved") {
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      val reserved=   RoadAddressDAO.isNotAvailableForProject(1234567899,1,id)
-  //      reserved should be (false)
-  //    }
-  //  }
+    test("Test isNotAvailableForProject When there is no reserved part for project Then road part can be reserved") {
+      runWithRollback {
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(123456789,1,id)
+        reserveNotAvailable should be (false)
+      }
+    }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("Terminated road reservation") {
-  //    runWithRollback {
-  //      val idr = RoadAddressDAO.getNextRoadwayId
-  //      val ra = Seq(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-  //        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-  //      RoadAddressDAO.create(ra)
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      val reserved=   RoadAddressDAO.isNotAvailableForProject(1943845,1,id)
-  //      reserved should be (false)
-  //    }
-  //  }
-
-  //TODO will be implemented at VIITE-1539
-  //  test("Returning of a terminated road") {
-  //    runWithRollback {
-  //      createTerminatedRoadAddress7777(Option.apply(DateTime.parse("1975-11-18")))
-  //      val roadAddresses = RoadAddressDAO.fetchByLinkId(Set(7777777))
-  //      roadAddresses.size should be (1)
-  //      roadAddresses.head.terminated.value should be (1)
-  //    }
-  //  }
+    test("Test isNotAvailableForProject When road is not terminated Then road part can be reserved") {
+      runWithRollback {
+        val idr = roadwayDAO.getNextRoadwayId
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1901-01-01"), endDate = Some(DateTime.parse("1902-01-01")))))
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id)
+        reserveNotAvailable should be (false)
+      }
+    }
 
   //TODO will be implemented at VIITE-1550
   //  test("Fetching road addresses by bounding box should ignore start dates") {
