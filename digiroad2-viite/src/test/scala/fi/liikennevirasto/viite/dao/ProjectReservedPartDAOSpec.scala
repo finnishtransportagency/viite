@@ -116,7 +116,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       }
     }
 
-    test("Test isNotAvailableForProject case (2b) When START_DATE == PROJ_DATE, END_DATE = null Then should NOT be reservable") {
+    test("Test isNotAvailableForProject case (2b) When START_DATE == PROJ_DATE, END_DATE = null Then should be reservable") {
       // Update: after VIITE-1411 we can have start date equal to project date
       runWithRollback {
         val id3 = Sequences.nextViitePrimaryKeySeqValue
@@ -124,99 +124,92 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
           "TestUser", DateTime.parse("1962-11-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
         projectDAO.createRoadAddressProject(rap3)
         roadwayDAO.fetchAllByRoadAndPart(5, 207).map(r => r.startDate.toDate).min should be (DateTime.parse("1962-11-01").toDate)
-        val reserved3 = projectReservedPartDAO.isNotAvailableForProject(5,207, id3)
-        reserved3 should be (false)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(5,207, id3)
+        reserveNotAvailable should be (false)
       }
     }
 
-//    test("New roadnumber and roadpart available because start date and end date before project date (3a)") {
-//      runWithRollback {
-//        createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), Option.apply(DateTime.parse("2000-01-01")))
-//        val id4 = Sequences.nextViitePrimaryKeySeqValue
-//        val rap4 = RoadAddressProject(id4, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-//        ProjectDAO.createRoadAddressProject(rap4)
-//        val reserved4 = RoadAddressDAO.isNotAvailableForProject(8888,1,id4)
-//        reserved4 should be (false)
-//      }
-//    }
+    test("Test isNotAvailableForProject case (3a) When START_DATE < PROJ_DATE, END_DATE < PROJ_DATE Then should be reservable") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("2000-01-01")))))
+        val id4 = Sequences.nextViitePrimaryKeySeqValue
+        val rap4 = RoadAddressProject(id4, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap4)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id4)
+        reserveNotAvailable should be (false)
+      }
+    }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("New roadnumber and roadpart available because end date equals project date (3b)") {
-  //    runWithRollback {
-  //      createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), Option.apply(DateTime.parse("2700-01-01")))
-  //      val id5 = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap5 = RoadAddressProject(id5, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap5)
-  //      val reserved5 = RoadAddressDAO.isNotAvailableForProject(8888,1,id5)
-  //      reserved5 should be (false)
-  //
-  //    }
-  //  }
-  //TODO will be implemented at VIITE-1539
-  //  test("New roadnumber and roadpart not available because project date between start and end date (4a)") {
-  //    runWithRollback {
-  //      createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), Option.apply(DateTime.parse("2800-01-01")))
-  //      val id6 = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap6 = RoadAddressProject(id6, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap6)
-  //      val reserved6 = RoadAddressDAO.isNotAvailableForProject(8888,1,id6)
-  //      reserved6 should be (true)
-  //    }
-  //  }
+    test("Test isNotAvailableForProject case (3b) When START_DATE < PROJ_DATE, END_DATE == PROJ_DATE Then should be reservable") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("2700-01-01")))))
+        val id5 = Sequences.nextViitePrimaryKeySeqValue
+        val rap5 = RoadAddressProject(id5, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap5)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id5)
+        reserveNotAvailable should be (false)
+      }
+    }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("New roadnumber and roadpart not available because project date between start and end date (4b)") {
-  //    runWithRollback {
-  //      createRoadAddress8888(Option.apply(DateTime.parse("2700-01-01")), Option.apply(DateTime.parse("2800-01-01")))
-  //      val id6 = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap6 = RoadAddressProject(id6, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap6)
-  //      val reserved6 = RoadAddressDAO.isNotAvailableForProject(8888,1,id6)
-  //      reserved6 should be (true)
-  //
-  //    }
-  //  }
+    test("Test isNotAvailableForProject case (4a) When START_DATE < PROJ_DATE, END_DATE > PROJ_DATE Then should NOT be reservable") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("2800-01-01")))))
+        val id6 = Sequences.nextViitePrimaryKeySeqValue
+        val rap6 = RoadAddressProject(id6, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap6)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id6)
+        reserveNotAvailable should be (true)
+      }
+    }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("New roadnumber and roadpart number not reservable if it's going to exist in the future (5a)") {
-  //    runWithRollback {
-  //      val id7 = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap7 = RoadAddressProject(id7, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"),
-  //        "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap7)
-  //      createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), Option.apply(DateTime.parse("1990-01-01")))
-  //      val reserved7 = RoadAddressDAO.isNotAvailableForProject(8888,1,id7)
-  //      reserved7 should be (true)
-  //    }
-  //  }
+    test("Test isNotAvailableForProject case (4b) When START_DATE == PROJ_DATE, END_DATE > PROJ_DATE Then should NOT be reservable") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("2700-01-01"), endDate = Some(DateTime.parse("2800-01-01")))))
+        val id7 = Sequences.nextViitePrimaryKeySeqValue
+        val rap7 = RoadAddressProject(id7, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap7)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id7)
+        reserveNotAvailable should be (true)
+      }
+    }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("New roadnumber and roadpart number reservable if it's going to exist in the future (5b)") {
-  //    runWithRollback {
-  //      createRoadAddress8888(Option.apply(DateTime.parse("1975-01-01")))
-  //      val id9 = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap9 = RoadAddressProject(id9, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"),
-  //        "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap9)
-  //      val reserved9 = RoadAddressDAO.isNotAvailableForProject(8888, 1, id9)
-  //      reserved9 should be(false)
-  //    }
-  //  }
+    test("Test isNotAvailableForProject case (5a) When START_DATE > PROJ_DATE, END_DATE > PROJ_DATE Then should NOT be reservable") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("1990-01-01")))))
+        val id8 = Sequences.nextViitePrimaryKeySeqValue
+        val rap8 = RoadAddressProject(id8, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"),
+          "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap8)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id8)
+        reserveNotAvailable should be (true)
+      }
+    }
 
-  //TODO will be implemented at VIITE-1539
-  //  test("New roadnumber and roadpart available because last end date is open ended (6)") {
-  //    runWithRollback {
-  //      createRoadAddress8888(Option.apply(DateTime.parse("1975-11-18")), Option.apply(DateTime.parse("2000-01-01")))
-  //      createRoadAddress8888(Option.apply(DateTime.parse("2000-01-01")), Option.apply(DateTime.parse("2001-01-01")))
-  //      createRoadAddress8888(Option.apply(DateTime.parse("2001-01-01")))
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2017-01-01"),
-  //        "TestUser", DateTime.parse("2017-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      val reserved = RoadAddressDAO.isNotAvailableForProject(8888,1,id)
-  //      reserved should be (false)
-  //    }
-  //  }
+    test("Test isNotAvailableForProject case (5b) When START_DATE > PROJ_DATE, END_DATE > PROJ_DATE Then should NOT be reservable") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-01-01"))))
+        val id9 = Sequences.nextViitePrimaryKeySeqValue
+        val rap9 = RoadAddressProject(id9, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"),
+          "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap9)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id9)
+        reserveNotAvailable should be(false)
+      }
+    }
+
+    test("Test isNotAvailableForProject case (6) When START_DATE > PROJ_DATE, END_DATE > PROJ_DATE Then should be reservable") {
+      runWithRollback {
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("2000-01-01")))))
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("2000-01-01"), endDate = Some(DateTime.parse("2001-01-01")))))
+        roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("2001-01-01"))))
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2017-01-01"),
+          "TestUser", DateTime.parse("2017-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+        projectDAO.createRoadAddressProject(rap)
+        val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id)
+        reserveNotAvailable should be (false)
+      }
+    }
 
   //TODO will be implemented at VIITE-1539
   //  test("invalidated rows don't affect reservation (7)") {
