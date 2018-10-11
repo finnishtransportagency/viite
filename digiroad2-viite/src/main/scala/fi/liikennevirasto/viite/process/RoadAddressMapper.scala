@@ -9,37 +9,37 @@ import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 
 trait RoadAddressMapper {
 
-  def calculateMeasures(ra: RoadAddress, adjMap: RoadAddressMapping) : (Double, Double) = {
+  def calculateMeasures(ra: RoadAddress, adjMap: LinearLocationMapping) : (Double, Double) = {
     (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
   }
 
-  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping], allRoadAddresses : Seq[RoadAddress])(ra: RoadAddress): Seq[RoadAddress] = {
-    roadAddressMapping.filter(_.matches(ra, allRoadAddresses)).map(adjMap => {
-      val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
-        if (isDirectionMatch(adjMap)) {
-          (ra.sideCode, truncateGeometriesWithAddressValues(ra, adjMap), splitRoadAddressValues(ra, adjMap))
-        } else {
-          (switchSideCode(ra.sideCode), truncateGeometriesWithAddressValues(ra, adjMap).reverse, splitRoadAddressValues(ra, adjMap))
-        }
-
-      val (startM, endM) = calculateMeasures(ra, adjMap)
-
-      val startCP = ra.startCalibrationPoint match {
-        case None => None
-        case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) endM - startM else 0.0)) else None
-      }
-      val endCP = ra.endCalibrationPoint match {
-        case None => None
-        case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) endM - startM else 0.0)) else None
-      }
-      ra.copy(id = NewRoadway, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
-        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
-        startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
-        calibrationPoints = (startCP, endCP), floating = NoFloating, geometry = if(mappedGeom.isEmpty) ra.geometry else mappedGeom)
-    })
-  }
+//  def mapRoadAddresses(roadAddressMapping: Seq[LinearLocationMapping], allRoadAddresses : Seq[RoadAddress])(ra: RoadAddress): Seq[RoadAddress] = {
+//    roadAddressMapping.filter(_.matches(ra, allRoadAddresses)).map(adjMap => {
+//      val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
+//        if (isDirectionMatch(adjMap)) {
+//          (ra.sideCode, truncateGeometriesWithAddressValues(ra, adjMap), splitRoadAddressValues(ra, adjMap))
+//        } else {
+//          (switchSideCode(ra.sideCode), truncateGeometriesWithAddressValues(ra, adjMap).reverse, splitRoadAddressValues(ra, adjMap))
+//        }
+//
+//      val (startM, endM) = calculateMeasures(ra, adjMap)
+//
+//      val startCP = ra.startCalibrationPoint match {
+//        case None => None
+//        case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
+//          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) endM - startM else 0.0)) else None
+//      }
+//      val endCP = ra.endCalibrationPoint match {
+//        case None => None
+//        case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
+//          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) endM - startM else 0.0)) else None
+//      }
+//      ra.copy(id = NewRoadway, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
+//        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), linkId = adjMap.targetLinkId,
+//        startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
+//        calibrationPoints = (startCP, endCP), floating = NoFloating, geometry = if(mappedGeom.isEmpty) ra.geometry else mappedGeom)
+//    })
+//  }
 
   /** Used when road address span is larger than mapping: road address must be split into smaller parts
     *
@@ -47,7 +47,7 @@ trait RoadAddressMapper {
     * @param mapping     Mapping entry that may or may not have smaller or larger span than road address
     * @return A pair of address start and address end values this mapping and road address applies to
     */
-  private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
+  private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: LinearLocationMapping): (Long, Long) = {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM)) {
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
     } else {
@@ -62,7 +62,7 @@ trait RoadAddressMapper {
     }
   }
 
-  private def truncateGeometriesWithAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): Seq[Point] = {
+  private def truncateGeometriesWithAddressValues(roadAddress: RoadAddress, mapping: LinearLocationMapping): Seq[Point] = {
     def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
       // When operating with fake geometries (automatic change tables) the geometry may not have correct length
       val startM = Math.min(Math.max(Math.min(d1, d2), 0.0), GeometryUtils.geometryLength(geometry))
@@ -226,7 +226,7 @@ trait RoadAddressMapper {
     Math.min(x._1, x._2)
   }
 
-  def isDirectionMatch(r: RoadAddressMapping): Boolean = {
+  def isDirectionMatch(r: LinearLocationMapping): Boolean = {
     ((r.sourceStartM - r.sourceEndM) * (r.targetStartM - r.targetEndM)) > 0
   }
   def withinTolerance(mValue1: Double, mValue2: Double) = {
