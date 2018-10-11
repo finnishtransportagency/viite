@@ -94,7 +94,6 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   6. Combination 1+3a(+3a+3a+3a+...)
   7. Expired rows are not checked
    */
-  //TODO will be implemented at VIITE-1539
     test("Test isNotAvailableForProject case (1) When START_DATE > PROJ_DATE, END_DATE = null Then should be reservable") {
       runWithRollback {
         val id1 = Sequences.nextViitePrimaryKeySeqValue
