@@ -422,9 +422,9 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long): Seq[Roadway] = {
+  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
-      fetch(withRoadAndPart(roadNumber, roadPart))
+      fetch(withRoadAndPart(roadNumber, roadPart, withHistory))
     }
   }
 
@@ -550,8 +550,12 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and road_number = $roadNumber"""
   }
 
-  private def withRoadAndPart(roadNumber: Long, roadPart: Long)(query: String): String = {
-    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart"""
+  private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false)(query: String): String = {
+    val historyFilter = if (!includeHistory)
+      " AND end_date is null"
+    else
+      ""
+    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter"""
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
@@ -613,7 +617,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadWayIds(roadwayIds: Seq[Long])(query: String): String = {
-    s"""$query where roadway_id in (${roadwayIds.mkString(",")})"""
+    s"""$query where id in (${roadwayIds.mkString(",")})"""
   }
 
   private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway] {

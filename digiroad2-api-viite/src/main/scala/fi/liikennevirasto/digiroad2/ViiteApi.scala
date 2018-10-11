@@ -369,10 +369,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           projectWritable(roadAddressProject.id)
         }
         val reservationMessage = if (roadAddressProject.reservedParts.nonEmpty) {
-          projectService.validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
-            case Some(errMsg) => Some(errMsg)
-            case None => None
-          }
+          //TODO "Will be implemented at VIITE-1540" for now result is always with success
+//          projectService.validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
+//            case Some(errMsg) => Some(errMsg)
+//            case None => None
+//          }
+          None
         } else {
           None
         }
