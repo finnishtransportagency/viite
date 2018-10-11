@@ -1418,9 +1418,9 @@ class RoadwayDAO extends BaseDAO {
   //    }
   //  }
   //
-  //  def getNextRoadwayId: Long = {
-  //    Queries.nextRoadwayId.as[Long].first
-  //  }
+    def getNextRoadwayId: Long = {
+      Queries.nextRoadwayId.as[Long].first
+    }
   //
   //  implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
   //
