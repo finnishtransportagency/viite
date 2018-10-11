@@ -12,7 +12,7 @@ object ApplyChangeInfoProcess {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long, orderNumber: Option[Int] = None)
+  private case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long, orderIncrement: Int = 0)
 
   private def newChangeInfoDetected(linearLocation : LinearLocation, changes: Map[Long, Seq[ChangeInfo]]) = {
     changes.getOrElse(linearLocation.linkId, Seq()).exists(c =>
@@ -75,13 +75,13 @@ object ApplyChangeInfoProcess {
     //TODO check if this is the right way to group divided changes
     dividedChanges.groupBy(_.mmlId).flatMap {
       case (_, groupedChanges) =>
-        val orderNumbers = 0 to changes.size
-        groupedChanges.sortBy(_.oldStartMeasure).zip(orderNumbers).flatMap {
-          case (change, orderNumber) =>
+        val orderIncrements = 0 to changes.size
+        groupedChanges.sortBy(_.oldStartMeasure).zip(orderIncrements).flatMap {
+          case (change, orderIncrement) =>
             change.changeType match {
               case DividedModifiedPart | DividedNewPart =>
                 logger.debug("Change info> oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
-                Some(Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp, Some(orderNumber)))
+                Some(Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp, orderIncrement))
               case _ =>
                 logger.debug("Change info ignored, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
                 None
