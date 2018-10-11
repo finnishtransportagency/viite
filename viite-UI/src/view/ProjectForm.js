@@ -358,7 +358,6 @@
         currentPublishedNetworkDate = result.publishedNetworkDate;
         projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
-        projectCollection.clearRoadAddressProjects();
         projectCollection.setReservedParts(result.projectLinks);
         var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
         var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
