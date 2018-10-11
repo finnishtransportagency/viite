@@ -234,7 +234,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO Will be implemented at VIITE-1539
   test("Test updateProjectEly When updating Ely for project Then ely should change") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
