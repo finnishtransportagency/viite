@@ -22,8 +22,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) =>
       try {
-        val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(
-          findStartingPoints(projectLinks, oldLinks, userCalibrationPoints), projectLinks ++ oldLinks)
+        val currStartPoints = findStartingPoints(projectLinks, oldLinks, userCalibrationPoints)
+        val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, projectLinks ++ oldLinks)
+
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
 
         // TODO: userCalibrationPoints to Long -> Seq[UserDefinedCalibrationPoint] in method params
@@ -94,18 +95,36 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
+    val rightLinks = newLinks.filter(_.track != Track.LeftSide) ++ oldLinks.filter(_.track != Track.LeftSide)
+    val rightPoints = TrackSectionOrder.findOnceConnectedLinks(rightLinks).keys
     if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
       (rightStartPoint, rightStartPoint)
     else {
       // Get left track non-connected points and find the closest to right track starting point
       val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
       val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
+
+
+      val (d1, d2) = GeometryUtils.distancesBetweenEndPointsInOrigin(rightPoints.toSeq, leftPoints.toSeq)
+      val  isRightHeadAdjacentToRightStartPoint= GeometryUtils.areAdjacent(rightPoints.head, rightStartPoint)
+     val possiblePoints = if(d1 > d2) {
+        if(isRightHeadAdjacentToRightStartPoint)
+          (rightStartPoint, leftPoints.last)
+        else
+          (rightStartPoint, leftPoints.head)
+      } else {
+        if(isRightHeadAdjacentToRightStartPoint)
+          (rightStartPoint, leftPoints.head)
+        else
+          (rightStartPoint, leftPoints.last)
+      }
+
       if (leftPoints.isEmpty)
         throw new InvalidAddressDataException("Missing left track starting points")
-      val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
-      (rightStartPoint, leftStartPoint)
+      possiblePoints
     }
   }
+
 
 
   /**
@@ -123,12 +142,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       link.flatMap(pl => GeometryUtils.calculatePointFromLinearReference(pl.geometry, calibrationPoint.segmentMValue))
     }
 
-    //First it will return the subtraction between endPoint - startPoint of all the points variable
-    //Then it will sum all the results of the previous operation as a vector (v1 is the accumulated result, v2 is the next item to sum
-    def calculateDirectionVector(projectLinkSeq: Seq[ProjectLink]): Vector3d = {
-      projectLinkSeq.map(pl => (pl.startingPoint, pl.endPoint)).map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
-    }
-
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(_.startingPoint).getOrElse {
@@ -136,24 +149,19 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if (remainLinks.isEmpty)
           throw new InvalidAddressDataException("Missing right track starting project links")
         //Grab all the endpoints of the links
-        val points = remainLinks.map(pl => (pl.startingPoint, pl.endPoint))
-        //TODO: ORIGINAL Direction calculation
-        val direction = points.map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
-        /*TODO: VIITE-1601 direction calculation
-        val direction = remainLinks.exists(_.sideCode != SideCode.Unknown) match {
-          case true =>
-            //We use the points that already have a side code defined as the basis to find the direction vector
-            calculateDirectionVector(remainLinks.filter(_.sideCode != SideCode.Unknown))
-          case _ =>
-            calculateDirectionVector(remainLinks)
+        val direction = if(remainLinks.exists(_.sideCode != SideCode.Unknown)) {
+          remainLinks.filter(_.sideCode != SideCode.Unknown).map(p => p.endPoint - p.startingPoint).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+        } else {
+          Vector3d(1,1,0)
         }
-        */
+
+        val points = remainLinks.map(pl => pl.getEndPoints(direction) )
+
         // Approximate estimate of the mid point: averaged over count, not link length
-        // Calculation is done by summing the direction of the vector multiplied by 0.5 to the start point
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
           (p - Point(0, 0)).scale(1.0 / points.size) + x
         }
-        TrackSectionOrder.findOnceConnectedLinks(remainLinks).keys.minBy(p => direction.dot(p.toVector - midPoint))
+       TrackSectionOrder.findOnceConnectedLinks(remainLinks).keys.minBy(p => direction.dot(p.toVector - midPoint))
       }
 
     )
