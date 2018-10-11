@@ -164,6 +164,7 @@ case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue
     }*/
 }
 
+//TODO Rename all the method names to follow a rule like fetchById instead of have fetchById and QueryById
 class LinearLocationDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)

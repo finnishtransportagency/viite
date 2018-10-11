@@ -1,8 +1,9 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -83,14 +84,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
       }
     }
+
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.right.links), userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.left.links), userDefinedCalibrationPoint)
     val (left, right) = adjustTracksToMatch(leftLinks.sortBy(_.startAddrMValue), rightLinks.sortBy(_.startAddrMValue), None)
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
-  private def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
-                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
+  def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
+                         calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
     if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
@@ -106,6 +108,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }
   }
 
+
   /**
     * Find a starting point for this road part
     *
@@ -120,22 +123,23 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val link = oldLinks.find(_.id == calibrationPoint.projectLinkId).orElse(newLinks.find(_.id == calibrationPoint.projectLinkId))
       link.flatMap(pl => GeometryUtils.calculatePointFromLinearReference(pl.geometry, calibrationPoint.segmentMValue))
     }
+
+    //First it will return the subtraction between endPoint - startPoint of all the points variable
+    //Then it will sum all the results of the previous operation as a vector (v1 is the accumulated result, v2 is the next item to sum
+    def calculateDirectionVector(projectLinkSeq: Seq[ProjectLink]): Vector3d = {
+      projectLinkSeq.map(pl => (pl.startingPoint, pl.endPoint)).map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+    }
+
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(_.startingPoint).getOrElse {
         val remainLinks = oldLinks ++ newLinks
         if (remainLinks.isEmpty)
           throw new InvalidAddressDataException("Missing right track starting project links")
-
-        val direction = if(remainLinks.exists(_.sideCode != SideCode.Unknown)) {
-          remainLinks.filter(_.sideCode != SideCode.Unknown).map(p => p.endPoint - p.startingPoint).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
-        } else {
-          Vector3d(1,1,0)
-        }
-
-        val points = remainLinks.map(pl => pl.getEndPoints(direction) )
-
+        val points = remainLinks.map(pl => (pl.startingPoint, pl.endPoint))
+        val direction = points.map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
         // Approximate estimate of the mid point: averaged over count, not link length
+        // Calculation is done by summing the direction of the vector multiplied by 0.5 to the start point
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
           (p - Point(0, 0)).scale(1.0 / points.size) + x
         }

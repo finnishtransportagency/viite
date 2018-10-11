@@ -65,6 +65,7 @@
 
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
+      name: 'geometryChangedLayer',
       style: function(feature) {
           return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()}),
               roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()})];
@@ -1034,6 +1035,7 @@
       if (applicationModel.getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
         reservedRoadLayer.getSource().addFeatures(styledFeatures);
       }
+      applicationModel.removeSpinner();
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:deselectFeaturesSelected', function(){
