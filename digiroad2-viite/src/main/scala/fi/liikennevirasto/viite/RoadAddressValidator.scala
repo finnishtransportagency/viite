@@ -4,7 +4,9 @@ import fi.liikennevirasto.viite.dao._
 import org.joda.time.format.DateTimeFormat
 
 object RoadAddressValidator {
-  val projectDAO = new ProjectDAO
+
+  //TODO this class can probably be removed
+  /*val projectDAO = new ProjectDAO
   val roadwayDAO = new RoadwayDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   def checkReservedExistence(currentProject: RoadAddressProject, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
@@ -33,6 +35,6 @@ object RoadAddressValidator {
   def checkProjectExists(id: Long): Unit = {
     if (projectDAO.getRoadAddressProjectById(id).isEmpty)
       throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia")
-  }
+  }*/
 
 }
