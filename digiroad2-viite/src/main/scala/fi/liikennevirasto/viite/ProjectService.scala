@@ -72,8 +72,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def calculateProjectCoordinates(projectId: Long, resolution: Int): ProjectCoordinates = {
-    withDynTransaction {
+  def calculateProjectCoordinates(projectId: Long): ProjectCoordinates = {
       val links = projectLinkDAO.getProjectLinks(projectId)
       if (links.nonEmpty) {
         val corners = GeometryUtils.boundingRectangleCorners(links.flatten(_.geometry))
@@ -90,13 +89,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       } else {
         ProjectCoordinates(0, 0, 0)
       }
-    }
   }
 
   def saveProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
-    withDynSession {
       projectDAO.updateProjectCoordinates(projectId, coordinates)
-    }
   }
 
   private def createProject(roadAddressProject: RoadAddressProject): RoadAddressProject = {
@@ -157,12 +153,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
 
   def isWritableState(projectId: Long): Boolean = {
-    withDynTransaction {
       projectWritableCheck(projectId) match {
         case Some(_) => false
         case None => true
       }
-    }
   }
 
   private def projectWritableCheck(projectId: Long): Option[String] = {
@@ -223,39 +217,44 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def writableWithValidTrack(projectId: Long, track: Int): Option[String] = {
+    if (!isWritableState(projectId)) Some(projectNotWritable)
+    else if (!validateLinkTrack(track)) Some("Invalid track code")
+    else None
+  }
 
   def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                          discontinuity: Discontinuity, roadType: RoadType, roadLinkSource: LinkGeomSource,
                          roadEly: Long, user: String, roadName: String): Map[String, Any] = {
+    withDynSession {
+      writableWithValidTrack(projectId, track.value) match {
+        case None =>
+          val linkId = linkIds.head
+          val roadLinks = (if (roadLinkSource != LinkGeomSource.SuravageLinkInterface) {
+            roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
+          } else {
+            roadLinkService.getSuravageRoadLinksFromVVH(linkIds.toSet)
+          }).map(l => l.linkId -> l).toMap
+          if (roadLinks.keySet != linkIds.toSet)
+            return Map("success" -> false,
+              "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
+          val project = projectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
 
-    validateLinkTrack(track.value) match {
-      case true =>
-        val linkId = linkIds.head
-        val roadLinks = (if (roadLinkSource != LinkGeomSource.SuravageLinkInterface) {
-          roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
-        } else {
-          roadLinkService.getSuravageRoadLinksFromVVH(linkIds.toSet)
-        }).map(l => l.linkId -> l).toMap
-        if (roadLinks.keySet != linkIds.toSet)
-          return Map("success" -> false,
-            "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
-        val project = withDynSession {
-          projectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
-        }
-        val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
-          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName)
-        }
-        setProjectEly(projectId, roadEly) match {
-          case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-          case None => {
-            addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId) match {
-              case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-              case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId))
+          val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
+            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName)
+          }
+          saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
+          setProjectEly(projectId, roadEly) match {
+            case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
+            case None => {
+              addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId) match {
+                case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
+                case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId))
+              }
             }
           }
-        }
-      case _ =>
-        Map("success" -> false, "errorMessage" -> "Invalid track code")
+        case Some(error) => Map("success" -> false, "errorMessage" -> error)
+      }
     }
   }
 
@@ -406,18 +405,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       None
   }
 
-  private def updateProjectEly(projectId: Long): Option[String] = {
-    val project = projectDAO.getRoadAddressProjectById(projectId)
-    val ely = project.flatMap(_.ely)
-    ely.size match {
-      case 0 => projectDAO.updateProjectEly(projectId, defaultProjectEly)
-        None
-      case 1 => projectDAO.updateProjectEly(projectId, ely.get)
-        None
-      case _ => throw new RoadPartReservedException(ErrorRoadPartsHaveDifferingEly)
-    }
-  }
-
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
     * project links that are no longer reserved for the project. Reservability is check before this.
@@ -427,7 +414,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = projectLinkDAO.getProjectLinks(project.id)
     logger.debug(s"${projectLinks.size} links fetched")
     val projectLinkOriginalParts = if (projectLinks.nonEmpty) roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => (ra.roadNumber, ra.roadPartNumber)) else Seq()
-
     val newProjectLinks = project.reservedParts.filterNot(res =>
       projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
       reserved => {
@@ -440,19 +426,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
             val fullMapping = regularMapping ++ suravageMapping
             checkAndReserve(project, reserved)
-            val addresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+            val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravageSource ++ regular).groupBy(_.roadwayNumber)(r.roadwayNumber)))
             addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
         }
-    }}
+      }
+    }
     logger.debug(s"Reserve done")
     projectLinkDAO.create(newProjectLinks.filterNot(ad => projectLinks.exists(pl => pl.roadNumber == ad.roadNumber && pl.roadPartNumber == ad.roadPartNumber)))
     logger.debug(s"New links created ${newProjectLinks.size}")
     val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
     projectLinkDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
-    //TODO project ely is being -1 after reserving project part with valid ely
-//    updateProjectEly(project.id)
-    projectReservedPartDAO.fetchReservedRoadParts(project.id).find(_.ely.nonEmpty).flatMap(_.ely).foreach(ely =>
-    projectDAO.updateProjectEly(project.id, ely))
     None
   }
 
@@ -612,23 +595,30 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectFound(roadAddressProject).isEmpty)
       throw new IllegalArgumentException("Project not found")
     withDynTransaction {
-      if (projectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)) {
-        val storedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-        val removed = storedProject.reservedParts.filterNot(part =>
-          roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
-            rp.roadNumber == part.roadNumber))
-        removed.foreach(p => projectReservedPartDAO.removeReservedRoadPart(roadAddressProject.id, p))
-        removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
-        addLinksToProject(roadAddressProject)
-        val updatedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-        if (updatedProject.reservedParts.nonEmpty) {
-          projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = projectLinkDAO.getElyFromProjectLinks(roadAddressProject.id)))
-        } else { //in empty case we release ely
-          projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = None))
+      isWritableState(roadAddressProject.id) match {
+        case true => {
+          if (projectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)) {
+            val storedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+            val removed = storedProject.reservedParts.filterNot(part =>
+              roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
+                rp.roadNumber == part.roadNumber))
+            removed.foreach(p => projectReservedPartDAO.removeReservedRoadPart(roadAddressProject.id, p))
+            removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
+            addLinksToProject(roadAddressProject)
+            val updatedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+            if (updatedProject.reservedParts.nonEmpty) {
+              projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = projectLinkDAO.getElyFromProjectLinks(roadAddressProject.id)))
+            } else { //in empty case we release ely
+              projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = None))
+            }
+            val savedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+            saveProjectCoordinates(savedProject.id, calculateProjectCoordinates(savedProject.id))
+            savedProject
+          } else {
+            throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
+          }
         }
-        projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-      } else {
-        throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
+        case _ => throw new IllegalStateException(projectNotWritable)
       }
     }
   }
@@ -660,7 +650,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")
     withDynTransaction {
       if (projectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)) {
-        createProject(roadAddressProject)
+        val savedProject = createProject(roadAddressProject)
+        saveProjectCoordinates(savedProject.id, calculateProjectCoordinates(savedProject.id))
+        savedProject
       } else {
         throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
       }
@@ -706,13 +698,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ProjectReservedPart): (Option[ProjectReservedPart], Option[String]) = {
-    logger.info(s"Check ${project.id} matching to " + projectReservedPartDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber))
-    projectReservedPartDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber) match {
+    val currentReservedPart = projectReservedPartDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber)
+    logger.info(s"Check ${project.id} matching to " + currentReservedPart)
+    currentReservedPart match {
       case Some(proj) if proj._1 != project.id => (None, Some(proj._2))
       case Some(proj) if proj._1 == project.id =>
         (projectReservedPartDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), None)
       case _ =>
         projectReservedPartDAO.reserveRoadPart(project.id, reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber, project.modifiedBy)
+        setProjectEly(project.id, reservedRoadPart.ely.getOrElse(-1))
         (projectReservedPartDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), None)
     }
   }
@@ -1848,14 +1842,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def setProjectEly(currentProjectId: Long, newEly: Long): Option[String] = {
-    withDynTransaction {
-      getProjectEly(currentProjectId).filterNot(_ == newEly).map { currentProjectEly =>
-        logger.info(s"The project can not handle multiple ELY areas (the project ELY range is $currentProjectEly). Recording was discarded.")
-        s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on $currentProjectEly). Tallennus hylättiin."
-      }.orElse {
-        projectDAO.updateProjectEly(currentProjectId, newEly)
-        None
-      }
+    getProjectEly(currentProjectId).filterNot(_ == newEly).map { currentProjectEly =>
+      logger.info(s"The project can not handle multiple ELY areas (the project ELY range is $currentProjectEly). Recording was discarded.")
+      s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on $currentProjectEly). Tallennus hylättiin."
+    }.orElse {
+      projectDAO.updateProjectEly(currentProjectId, newEly)
+      None
     }
   }
 
