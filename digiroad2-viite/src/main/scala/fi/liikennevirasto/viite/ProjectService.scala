@@ -95,6 +95,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectDAO.updateProjectCoordinates(projectId, coordinates)
   }
 
+  /**
+    * Creates the new project
+    * Adds the road addresses from the reserved parts to the project link table
+    *
+    * @param roadAddressProject
+    * @return the created project
+    */
   private def createProject(roadAddressProject: RoadAddressProject): RoadAddressProject = {
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = roadAddressProject.copy(id = id)
@@ -394,6 +401,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    *  Checks if the road part that user wants to reserve exists
+    *  Checks if the road parts that user tries to reserve have different ely    *
+    *
+    * @param reservedRoadParts
+    * @param projectEly
+    * @param projectLinks
+    * @param roadways
+    * @return None in case of success, error code in case of failed validation
+    */
+
   def validateReservations(reservedRoadParts: ProjectReservedPart, projectEly: Option[Long],
                                    projectLinks: Seq[ProjectLink], roadways: Seq[Roadway]): Option[String] = {
 
@@ -408,6 +426,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
     * project links that are no longer reserved for the project. Reservability is check before this.
+    * for each reserved part get all roadways
+    * validate if the road exists on the roadway table and if there isn't different ely codes reserved
+    *     in case there is, throw roadPartReserved exception
+    * get the road links from the suravage and from the regular interface
+    * map the road links into road address objects
+    * check, make the reservation and update the ely code of the project
+    * map the addresses into project links
+    * insert the new project links and remove the ones that were unreserved
     */
   private def addLinksToProject(project: RoadAddressProject): Option[String] = {
     logger.info(s"Adding reserved road parts with links to project ${project.id}")
@@ -425,13 +451,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
             val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
             val fullMapping = regularMapping ++ suravageMapping
-            checkAndReserve(project, reserved)
             val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravageSource ++ regular).groupBy(_.roadwayNumber)(r.roadwayNumber)))
+            checkAndReserve(project, reserved)
+            logger.debug(s"Reserve done")
             addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
         }
       }
     }
-    logger.debug(s"Reserve done")
     projectLinkDAO.create(newProjectLinks.filterNot(ad => projectLinks.exists(pl => pl.roadNumber == ad.roadNumber && pl.roadPartNumber == ad.roadPartNumber)))
     logger.debug(s"New links created ${newProjectLinks.size}")
     val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
@@ -961,11 +987,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def getProjectWithReservationChecks(projectId: Long, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): RoadAddressProject = {
-    RoadAddressValidator.checkProjectExists(projectId)
+    ProjectValidator.checkProjectExists(projectId)
     val project = projectDAO.getRoadAddressProjectById(projectId).get
-    RoadAddressValidator.checkReservedExistence(project, newRoadNumber, newRoadPart, linkStatus, projectLinks)
-    RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
-    RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
+    ProjectValidator.checkReservedExistence(project, newRoadNumber, newRoadPart, linkStatus, projectLinks)
+    ProjectValidator.checkAvailable(newRoadNumber, newRoadPart, project)
+    ProjectValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
     project
   }
 
