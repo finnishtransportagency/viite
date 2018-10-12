@@ -13,12 +13,44 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.TrackSectionOrder
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import org.joda.time.format.DateTimeFormat
 
 object ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
   val projectLinkDAO = new ProjectLinkDAO
+  val roadwayDAO = new RoadwayDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
+  val projectDAO = new ProjectDAO
   private def distanceToPoint = 10.0
+
+  def checkReservedExistence(currentProject: RoadAddressProject, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
+    if (LinkStatus.New.value == linkStatus.value && roadwayDAO.fetchAllByRoadAndPart(newRoadNumber, newRoadPart).nonEmpty) {
+      if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
+        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+        throw new ProjectValidationException(RoadNotAvailableMessage.format(newRoadNumber, newRoadPart, currentProject.startDate.toString(fmt)))
+      }
+    }
+  }
+
+  def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
+    if (projectReservedPartDAO.isNotAvailableForProject(number, part, currentProject.id)) {
+      val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+      throw new ProjectValidationException(RoadNotAvailableMessage.format(number, part, currentProject.startDate.toString(fmt)))
+    }
+  }
+
+  def checkNotReserved(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
+    val project = projectReservedPartDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
+    if (project.nonEmpty) {
+      throw new ProjectValidationException(s"TIE $number OSA $part on jo varattuna projektissa ${project.get}, tarkista tiedot")
+    }
+  }
+
+  def checkProjectExists(id: Long): Unit = {
+    if (projectDAO.getRoadAddressProjectById(id).isEmpty)
+      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia")
+  }
 
   // Utility method, will return correct GeometryEndpoint
   private def endPoint(b: BaseRoadAddress) = {
