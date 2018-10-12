@@ -120,13 +120,14 @@ object OracleDatabase {
   }
 
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
-    //convert STRUCT into geometry
+    // Convert STRUCT into geometry
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])
-    if (geom.nonEmpty){
+    if (geom.nonEmpty) {
       val jgeom: JGeometry = JGeometry.load(geom.get)
-      jgeom.getOrdinatesArray.toList.sliding(3,3).toList.map(p => Point(p.head, p.tail.head, p.last))
-    }
-    else
+      jgeom.getOrdinatesArray.toList.sliding(3, 3).toList.map(p => Point(p.head, p.tail.head, p.last))
+    } else {
       Seq()
+    }
   }
+
 }

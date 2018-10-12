@@ -270,6 +270,21 @@ object DataFixture {
 
   }
 
+  private def updateProjectLinkSdoGeometry(): Unit = {
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+    val projectsIDs = projectService.getRoadAddressAllProjects.map(x => x.id)
+    val projectCount = projectsIDs.size
+    var c = 0
+    projectsIDs.foreach(proj => {
+      c += 1
+      println("Updating Geometry for project " + c + "/" + projectCount)
+      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
+    })
+
+  }
+
   //TODO this might not be needed anymore
   /*private def correctNullElyCodeProjects(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
