@@ -761,6 +761,16 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   //  }
 
   //TODO will be implemented at VIITE-1553
+//  test("Returning of a terminated road") {
+//    runWithRollback {
+//      createTerminatedRoadAddress7777(Option.apply(DateTime.parse("1975-11-18")))
+//      val roadAddresses = roadwayDAO.fetchByLinkId(Set(7777777))
+//      roadAddresses.size should be (1)
+//      roadAddresses.head.terminated.value should be (1)
+//    }
+//  }
+
+  //TODO will be implemented at VIITE-1553
   //  test("testFetchByRoadPart") {
   //    runWithRollback {
   //      RoadAddressDAO.fetchByRoadPart(5L, 201L).isEmpty should be(false)

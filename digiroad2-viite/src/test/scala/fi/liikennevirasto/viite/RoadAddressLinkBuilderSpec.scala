@@ -256,7 +256,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-//TODO Will be implemented at VIITE-1539
+//TODO Will be implemented at VIITE-1540 when working on the project level
 //  test("Suravage link builder when link is in DB project-link table") {
 //    runWithRollback {
 //      sqlu""" alter session set nls_language = 'american' NLS_NUMERIC_CHARACTERS = ', '""".execute
