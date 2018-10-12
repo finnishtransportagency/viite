@@ -1,16 +1,15 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
-import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.viite.process.strategy.{LinkStatusChangeTrackCalculatorStrategy, TrackCalculatorContext}
+import org.scalatest.{FunSuite, Matchers}
 
-class TrackCalculatorStrategySpec extends FunSuite with Matchers{
-
+class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
   test("Test correct assignment strategy when dealing with operation changes in tracks") {
 
@@ -42,12 +41,12 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers{
 
     val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
     val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
-    val projectLinks = leftSideProjectLinks++rightSideProjectLinks
+    val projectLinks = leftSideProjectLinks ++ rightSideProjectLinks
 
     val strategySequence = TrackCalculatorContext.getNextStrategy(projectLinks)
-    strategySequence.size should be (1)
-    strategySequence.head._1 should be (projectLinks.sortBy(_.startAddrMValue).head.startAddrMValue)
-    strategySequence.head._2.isInstanceOf[LinkStatusChangeTrackCalculatorStrategy] should be (true)
+    strategySequence.size should be(1)
+    strategySequence.head._1 should be(projectLinks.minBy(_.startAddrMValue).startAddrMValue)
+    strategySequence.head._2.isInstanceOf[LinkStatusChangeTrackCalculatorStrategy] should be(true)
   }
 
 }
