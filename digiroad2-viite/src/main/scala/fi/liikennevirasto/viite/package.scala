@@ -9,8 +9,6 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import oracle.spatial.geometry.JGeometry
-import oracle.sql.STRUCT
 import org.slf4j.Logger
 
 import scala.util.matching.Regex.Match
@@ -134,6 +132,25 @@ package object viite {
   val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering)
 
   val defaultProjectEly = -1L
+
+  def parseStringGeometry(geomString: String): Seq[Point] = {
+    if (geomString.nonEmpty)
+      toGeometry(geomString)
+    else
+      Seq()
+  }
+
+  def toGeometry(geometryString: String): Seq[Point] = {
+    def toBD(s: String): Double = {
+      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
+    val pointRegex = raw"\[[^\]]*]".r
+    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
+    pointRegex.findAllIn(geometryString).map {
+      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
+      case regex(x, y, _) => Point(toBD(x), toBD(y))
+    }.toSeq
+  }
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2

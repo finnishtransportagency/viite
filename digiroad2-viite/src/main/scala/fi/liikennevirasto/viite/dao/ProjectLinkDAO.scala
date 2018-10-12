@@ -260,7 +260,7 @@ class ProjectLinkDAO {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
-  //TODO delete when there is no longer needed. This is now need to script where we migrate PROJECT_LINK .GEOMETRY_STRING to .GEOMETRY
+  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
   def updateGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
     try {
       val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
@@ -451,6 +451,16 @@ class ProjectLinkDAO {
         s"""$projectLinkQueryBase
                 where PROJECT_LINK.link_id = $projectLinkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
+    }
+  }
+
+  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
+  def getProjectLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Map[Long, Seq[Point]] = {
+    time(logger, "Get project links") {
+      val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
+      sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
+                where #$filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M"""
+        .as[(Long, String)].list.map(l => l._1 -> parseStringGeometry(l._2)).toMap
     }
   }
 
