@@ -266,6 +266,7 @@
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
+        selectedProjectLinkProperty.setCurrent([]);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
