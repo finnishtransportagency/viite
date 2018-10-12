@@ -181,7 +181,7 @@ class ProjectLinkDAO {
         select plh.ID, plh.PROJECT_ID, plh.TRACK, plh.DISCONTINUITY_TYPE,
           plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.START_ADDR_M, plh.END_ADDR_M,
           plh.START_MEASURE, plh.END_MEASURE, plh.SIDE,
-          plh.CREATED_BY, plh.MODIFIED_BY, plh.link_id, plh.GEOMETRY,
+          plh.CREATED_BY, plh.MODIFIED_BY, plh.LINK_ID, plh.GEOMETRY,
           (plh.END_MEASURE - plh.START_MEASURE) as length, plh.CALIBRATION_POINTS, plh.STATUS,
           plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROADWAY_ID, plh.Linear_Location_Id plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
           CASE
@@ -258,6 +258,20 @@ class ProjectLinkDAO {
 
   private def listQuery(query: String) = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
+  }
+
+  //TODO delete when there is no longer needed. This is now need to script where we migrate PROJECT_LINK .GEOMETRY_STRING to .GEOMETRY
+  def updateGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
+    try {
+      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      sqlu"""
+        UPDATE PROJECT_LINK SET GEOMETRY = #$geometryQuery WHERE id = $id""".execute
+    } catch {
+      case e: Exception =>
+        println(e)
+        throw new RuntimeException("SQL Error: " + e.getMessage)
+    }
   }
 
   def create(links: Seq[ProjectLink]): Seq[Long] = {
