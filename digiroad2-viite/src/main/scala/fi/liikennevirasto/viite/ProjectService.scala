@@ -715,6 +715,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
+  def updateProjectLinkSdoGeometry(projectId: Long, username: String, onlyNotHandled: Boolean = false): Unit = {
+    withDynTransaction {
+      val linksGeometry = projectLinkDAO.getProjectLinksGeometry(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
+      println(s"Got ${linksGeometry.size} links from project $projectId")
+      linksGeometry.foreach(pl => projectLinkDAO.updateGeometryStringToSdo(pl._1, pl._2))
+    }
+  }
+
   /**
     * Check that road part is available for reservation and return the id of reserved road part table row.
     * Reservation must contain road number and road part number, other data is not used or saved.
