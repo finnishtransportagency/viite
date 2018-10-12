@@ -137,7 +137,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           throw new InvalidAddressDataException("Missing right track starting project links")
         //Grab all the endpoints of the links
         val points = remainLinks.map(pl => (pl.startingPoint, pl.endPoint))
-
+        //TODO: ORIGINAL Direction calculation
+        val direction = points.map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+        /*TODO: VIITE-1601 direction calculation
         val direction = remainLinks.exists(_.sideCode != SideCode.Unknown) match {
           case true =>
             //We use the points that already have a side code defined as the basis to find the direction vector
@@ -145,6 +147,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           case _ =>
             calculateDirectionVector(remainLinks)
         }
+        */
         // Approximate estimate of the mid point: averaged over count, not link length
         // Calculation is done by summing the direction of the vector multiplied by 0.5 to the start point
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
