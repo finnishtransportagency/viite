@@ -70,7 +70,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry), floating = false)
   }
 
-//TODO Check if this is needed at project creation
+//TODO Check if this is needed at project creation. If used in the future it should use buildRoadAddressLink instead and have some refactor
 //  def buildSuravageRoadAddressLink(roadLinkProjectidTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
 //    val roadLink = roadLinkProjectidTuple._1
 //    val roadAddresses = roadLinkProjectidTuple._2 match { //Check if project attribute has been initialized
