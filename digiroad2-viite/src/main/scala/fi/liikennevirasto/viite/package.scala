@@ -118,6 +118,7 @@ package object viite {
   val trUnreachableMessage = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
     s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon. "
   val genericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
+  val projectNotWritable = s"Projekti ei ole enää muokattavissa"
 
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
