@@ -61,6 +61,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    LinearLocationResult(nonFloatingAddresses, floatingAddresses)
   }
 
+  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle) = {
+    withDynSession {
+      time(logger, "Fetch floating and non-floating addresses") {
+        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits = Seq())
+      }
+    }
+  }
+
+  def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]) = {
+    roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
+  }
+
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
     //TODO check if this will continue to be needed or if it was something that
 //    def complementaryLinkFilter(roadAddressLink: RoadAddressLink) = {
@@ -285,6 +297,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     withDynSession {
       val roadwayAddresses = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+    }
+  }
+
+  /**
+    * Gets all the valid road address in the given road number and project start date
+    * @param roadNumber The road number
+    * @param startDate The project start date
+    * @return Returns road addresses filtered given section
+    */
+  def getValidRoadAddressParts(roadNumber: Long, startDate: DateTime): Seq[Long] = {
+    withDynSession {
+      roadwayDAO.getValidRoadParts(roadNumber, startDate)
     }
   }
 
