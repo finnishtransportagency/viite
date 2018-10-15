@@ -30,7 +30,6 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
-
 sealed trait Discontinuity {
   def value: Int
 
@@ -341,6 +340,7 @@ class BaseDAO {
 }
 
 class RoadwayDAO extends BaseDAO {
+  val linearLocationDAO = new LinearLocationDAO
 
   /**
     * Fetch the roadway by the roadway number
@@ -713,47 +713,47 @@ class RoadwayDAO extends BaseDAO {
   //    }
   //  }
   //
-  //  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
-  //    time(logger, "Fetch road addresses by bounding box") {
-  //      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
-  //        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
-  //      val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
-  //
-  //      val floatingFilter = if (fetchOnlyFloating)
-  //        " and ra.floating > 0"
-  //      else
-  //        ""
-  //      val normalRoadsFilter = if (onlyNormalRoads)
-  //        " and ra.link_source = 1"
-  //      else
-  //        ""
-  //      val roadNumbersFilter = if (roadNumberLimits.nonEmpty)
-  //        withRoadNumbersFilter(roadNumberLimits)
-  //      else
-  //        ""
-  //
-  //
-  //      val query =
-  //        s"""
-  //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
-  //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-  //        ra.SIDE, ra.adjusted_timestamp,
-  //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
-  //        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
-  //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
-  //        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
-  //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-  //        ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
-  //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
-  //        from ROADWAY ra
-  //        where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
-  //          ra.terminated = 0 and
-  //          ra.valid_to is null and
-  //          ra.end_date is null
-  //      """
-  //      queryList(query)
-  //    }
-  //  }
+    def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
+      time(logger, "Fetch road addresses by bounding box") {
+        val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+          boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+        val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+
+        val floatingFilter = if (fetchOnlyFloating)
+          " and ra.floating > 0"
+        else
+          ""
+        val normalRoadsFilter = if (onlyNormalRoads)
+          " and ra.link_source = 1"
+        else
+          ""
+        val roadNumbersFilter = if (roadNumberLimits.nonEmpty)
+          linearLocationDAO.withRoadNumbersFilter(roadNumberLimits, "Roadway")
+        else
+          ""
+
+
+        val query =
+          s"""
+          select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
+          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+          ra.SIDE, ra.adjusted_timestamp,
+          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
+          ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
+          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
+          from ROADWAY ra
+          where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
+            ra.terminated = 0 and
+            ra.valid_to is null and
+            ra.end_date is null
+        """
+        queryList(query)
+      }
+    }
   //
   //
   //  def dateTimeParse(string: String): DateTime = {
@@ -1355,16 +1355,16 @@ class RoadwayDAO extends BaseDAO {
   //    * @param startDate
   //    * @return
   //    */
-  //  def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
-  //    sql"""
-  //       select distinct ra.road_part_number
-  //              from ROADWAY ra
-  //              where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
-  //              AND END_DATE IS NULL
-  //              AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
-  //               = 1 and pl.status = 5)
-  //      """.as[Long].list
-  //  }
+    def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
+      sql"""
+         select distinct ra.road_part_number
+                from ROADWAY ra
+                where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
+                AND END_DATE IS NULL
+                AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
+                 = 1 and pl.status = 5)
+        """.as[Long].list
+    }
   //
   //  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment): Unit = {
   //    val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)

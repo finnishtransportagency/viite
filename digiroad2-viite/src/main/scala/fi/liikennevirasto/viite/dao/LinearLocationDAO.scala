@@ -717,7 +717,7 @@ class LinearLocationDAO {
     }
   }
 
-  private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
+  def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s"""($filter)"""
 
