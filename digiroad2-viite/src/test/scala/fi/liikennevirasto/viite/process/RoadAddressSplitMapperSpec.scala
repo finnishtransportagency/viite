@@ -11,10 +11,10 @@ import org.scalatest.{FunSuite, Matchers}
 
 class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
   test("Split mapping, simple case") {
-    val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 19L, None, None, None,
+    val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 19L, 15L, 19L, None, None, None,
       123L, 15.0, 18.9, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(0.0, 15.0), Point(0.0, 18.9)), 1L,
       Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, 3.9, 1L, 1L, 1L, reversed = false, Some(456L), 8750L)
-    val suravage = ProjectLink(2L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, None, None, None,
+    val suravage = ProjectLink(2L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None, None,
       456L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 15.0)), 1L,
       Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 15.0, 1L, 1L, 1L, reversed = false, Some(123L), 8750L)
     val map = RoadAddressSplitMapper.createAddressMap(Seq(template, suravage))
@@ -25,10 +25,10 @@ class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
   }
 
   test("Split mapping, reverse case") {
-    val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 3L, 19L, None, None, None,
+    val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 3L, 19L, 3L, 19L, None, None, None,
       123L, 0.0, 15.0, SideCode.AgainstDigitizing, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 15.0)), 1L,
       Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, 15.0, 1L, 1L, 1L, reversed = false, Some(456L), 8750L)
-    val suravage = ProjectLink(2L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 3L, None, None, None,
+    val suravage = ProjectLink(2L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 3L, 0L, 3L, None, None, None,
       456L, 15.0, 18.9, SideCode.AgainstDigitizing, (None, None), NoFloating, Seq(Point(0.0, 15.0), Point(0.0, 18.9)), 1L,
       Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 3.9, 1L, 1L, 1L, reversed = false, Some(123L), 8750L)
     val map = RoadAddressSplitMapper.createAddressMap(Seq(template, suravage))
@@ -39,13 +39,13 @@ class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
   }
 
   test("Split mapping, changing digitization direction case") {
-    val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 115L, None, None, None,
+    val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 115L, 100L, 115L, None, None, None,
       123L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 15.0)), 1L,
       Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, 15.0, 1L, 1L, 1L, reversed = false, Some(456L), 8750L)
-    val suravage = ProjectLink(2L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 115L, 119L, None, None, None,
+    val suravage = ProjectLink(2L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 115L, 119L, 115L, 119L, None, None, None,
       456L, 0.0, 3.9, SideCode.AgainstDigitizing, (None, None), NoFloating, Seq(Point(0.0, 18.9), Point(0.0, 15.0)), 1L,
       Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 3.9, 1L, 1L, 1L, reversed = true, Some(123L), 8750L)
-    val newPart = ProjectLink(3L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 105L, 115L, None, None, None,
+    val newPart = ProjectLink(3L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 105L, 115L, 105L, 115L, None, None, None,
       456L, 3.9, 13.9, SideCode.AgainstDigitizing, (None, None), NoFloating, Seq(Point(0.0, 15.0), Point(5.0, 15.0), Point(5.0, 20.0)), 1L,
       Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 10.0, 1L, 1L, 1L, reversed = false, Some(123L), 8750L)
     val map = RoadAddressSplitMapper.createAddressMap(Seq(template, suravage, newPart))
