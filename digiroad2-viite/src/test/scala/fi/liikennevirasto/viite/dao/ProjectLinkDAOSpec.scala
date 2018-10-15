@@ -110,6 +110,24 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     * removeProjectLinksByProjectAndRoadNumber VIITE-1543
     */
 
+  test("Test updateAddrMValues When having changed addr values for some reason (e.g. recalculate) Then should still return original addr values") {
+    runWithRollback {
+      val roadwayIds = roadwayDAO.create(dummyRoadways)
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = projectId + 1
+      val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None, None)
+      projectDAO.createRoadAddressProject(rap)
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
+      val projectLink = dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
+     val (originalStartAddrM, originalEndStartAddrM) = (projectLink.originalStartAddrMValue, projectLink.originalEndAddrMValue)
+      projectLinkDAO.updateAddrMValues(projectLink.copy(startAddrMValue = 200, endAddrMValue = 300))
+      val returnedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
+      returnedProjectLinks.size should be (1)
+      returnedProjectLinks.head.originalStartAddrMValue should be (projectLink.originalStartAddrMValue)
+      returnedProjectLinks.head.originalEndAddrMValue should be (projectLink.originalEndAddrMValue)
+    }
+  }
+
   test("Test create When having no reversed links Then should return no reversed project links") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)

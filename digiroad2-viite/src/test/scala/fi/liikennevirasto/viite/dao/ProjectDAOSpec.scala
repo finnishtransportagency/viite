@@ -69,7 +69,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
                        startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
                        floating: FloatingReason = NoFloating, geometry: Seq[Point] = Seq(), status: LinkStatus, roadType: RoadType, reversed: Boolean): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, Track.Combined,
-      Discontinuity.Continuous, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
+      Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
       endDate, Some("testUser"), linkId, startMValue, endMValue,
       TowardsDigitizing, calibrationPoints, floating, geometry, projectId, status, roadType,
       LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed,
