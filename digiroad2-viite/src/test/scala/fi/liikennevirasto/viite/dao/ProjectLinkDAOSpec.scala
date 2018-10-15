@@ -123,8 +123,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectLinkDAO.updateAddrMValues(projectLink.copy(startAddrMValue = 200, endAddrMValue = 300))
       val returnedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
       returnedProjectLinks.size should be (1)
-      returnedProjectLinks.head.originalStartAddrMValue should be (projectLink.originalStartAddrMValue)
-      returnedProjectLinks.head.originalEndAddrMValue should be (projectLink.originalEndAddrMValue)
+      returnedProjectLinks.head.originalStartAddrMValue should be (originalStartAddrM)
+      returnedProjectLinks.head.originalEndAddrMValue should be (originalEndStartAddrM)
     }
   }
 
