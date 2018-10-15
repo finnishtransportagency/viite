@@ -458,9 +458,9 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       val points = Seq(Point(0.0, 0.0, 0.0), Point(0.0, 45.3 ,0.0), Point(0.0, 123.5 ,0.0), Point(0.5, 140.0 ,0.0)).flatMap(p => Seq(p.x, p.y, p.z))
       val templateGeom = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
-      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
+      sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
             start_Measure, end_Measure, Link_id, side)
-            VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, #$templateGeom ,0, 87, 1, 2)""".execute
+            VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,0,87,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, #$templateGeom ,0, 87, 1, 2)""".execute
 
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(toRoadLink(suravageAddressLink)))
