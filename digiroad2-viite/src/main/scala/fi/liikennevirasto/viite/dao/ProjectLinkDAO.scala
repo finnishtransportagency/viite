@@ -69,7 +69,7 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue
 }
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None), floating: FloatingReason = NoFloating,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
@@ -150,6 +150,7 @@ class ProjectLinkDAO {
   private val projectLinkQueryBase =
     s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK, PROJECT_LINK.DISCONTINUITY_TYPE,
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+  PROJECT_LINK.ORIGINAL_START_ADDR_M, PROJECT_LINK.ORIGINAL_END_ADDR_M,
   PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.LINK_ID, PROJECT_LINK.GEOMETRY,
   (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
@@ -180,6 +181,7 @@ class ProjectLinkDAO {
     s"""
         select plh.ID, plh.PROJECT_ID, plh.TRACK, plh.DISCONTINUITY_TYPE,
           plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.START_ADDR_M, plh.END_ADDR_M,
+          plh.ORIGINAL_START_ADDR_M, plh.ORIGINAL_END_ADDR_M,
           plh.START_MEASURE, plh.END_MEASURE, plh.SIDE,
           plh.CREATED_BY, plh.MODIFIED_BY, plh.LINK_ID, plh.GEOMETRY,
           (plh.END_MEASURE - plh.START_MEASURE) as length, plh.CALIBRATION_POINTS, plh.STATUS,
@@ -217,6 +219,8 @@ class ProjectLinkDAO {
       val roadPartNumber = r.nextLong()
       val startAddrM = r.nextLong()
       val endAddrM = r.nextLong()
+      val originalStartAddrMValue = r.nextLong()
+      val originalEndAddrMValue = r.nextLong()
       val startMValue = r.nextDouble()
       val endMValue = r.nextDouble()
       val sideCode = SideCode.apply(r.nextInt)
@@ -247,12 +251,12 @@ class ProjectLinkDAO {
       val roadAddressRoadPart = r.nextLongOption()
       val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
 
-      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
+      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate,
         modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, OracleDatabase.loadJGeometryToGeometry(geom), projectId,
-        status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
-        roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
-        roadAddressStartAddrM = roadAddressStartAddrM, roadAddressEndAddrM = roadAddressEndAddrM, roadAddressTrack = roadAddressTrack,
-        roadAddressRoadNumber = roadAddressRoadNumber, roadAddressRoadPart = roadAddressRoadPart)
+        status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, NewRoadwayNumber, Some(roadName),
+        roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
+        roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack,
+        roadAddressRoadNumber, roadAddressRoadPart)
     }
   }
 
