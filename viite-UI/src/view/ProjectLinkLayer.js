@@ -170,7 +170,7 @@
           } else {
             selectedLinkIds = _.union(selectedLinkIds, clickedIds);
           }
-          selectedProjectLinkProperty.openShift(selectedLinkIds);
+          selectedProjectLinkProperty.openCtrl(selectedLinkIds);
         }
         highlightFeatures();
       } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
@@ -230,7 +230,7 @@
           } else {
             selectedLinkIds = selectedLinkIds.concat(getSelectedId(selection.linkData));
           }
-          selectedProjectLinkProperty.openShift(selectedLinkIds);
+          selectedProjectLinkProperty.openCtrl(selectedLinkIds);
         }
         highlightFeatures();
       } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
