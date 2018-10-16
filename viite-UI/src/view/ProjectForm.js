@@ -358,11 +358,13 @@
         currentPublishedNetworkDate = result.publishedNetworkDate;
         projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
+        projectCollection.clearRoadAddressProjects();
+        projectCollection.setCurrentProject(result);
         projectCollection.setReservedParts(result.projectLinks);
         var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
         var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
-        jQuery('.modal-overlay').remove();
+        jQuery('#projectList').remove();
         if (!_.isUndefined(currentProject)) {
           eventbus.trigger('linkProperties:selectedProject', result.linkId, result.project);
           eventbus.trigger('roadAddressProject:deactivateAllSelections');
@@ -372,7 +374,6 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         eventbus.trigger('roadAddressProject:clearTool');
-        applicationModel.removeSpinner();
         disableFormInputs();
       });
 
@@ -403,6 +404,7 @@
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
         $('#project-errors').html(errorsList());
+        applicationModel.removeSpinner();
       });
 
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
