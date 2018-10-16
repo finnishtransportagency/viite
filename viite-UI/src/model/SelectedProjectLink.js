@@ -121,7 +121,7 @@
             dirty = value;
         };
 
-        var openShift = function(linkIds) {
+        var openCtrl = function(linkIds) {
             if (linkIds.length === 0) {
                 cleanIds();
                 close();
@@ -259,7 +259,7 @@
         return {
             open: open,
             openWithErrorMessage: openWithErrorMessage,
-            openShift: openShift,
+            openCtrl: openCtrl,
             openSplit: openSplit,
             get: get,
             clean: clean,
