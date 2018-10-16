@@ -427,7 +427,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/project/reverse") {
     time(logger, "PUT request for /project/reverse") {
       //TODO VIITE-1540 multiple service calls and logic should be in the service layer
-      /*val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser()
       try {
         //check for validity
         val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
@@ -445,7 +445,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
           BadRequest("Missing mandatory ProjectLink parameter")
-      }*/
+      }
     }
   }
 
@@ -1228,6 +1228,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       }
       case _ => None
     }
+  }
+
+  @throws(classOf[Exception])
+  // TODO This method was removed previously for some reason. Is this still valid? At least many methods use this.
+  private def projectWritable(projectId: Long): ProjectService = {
+    val writable = projectService.isWritableState(projectId)
+    if (!writable)
+      throw new IllegalStateException("Projekti ei ole enää muokattavissa") //project is not in modifiable state
+    projectService
   }
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)

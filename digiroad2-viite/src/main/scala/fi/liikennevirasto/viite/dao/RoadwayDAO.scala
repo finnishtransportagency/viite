@@ -713,6 +713,8 @@ class RoadwayDAO extends BaseDAO {
   //    }
   //  }
   //
+
+    // TODO RoadwayDAO should return Roadway -objects. RoadAddress objects are combined of Roadway and LinearLocation data and should be handled by RoadAddressService.
     def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
       time(logger, "Fetch road addresses by bounding box") {
         val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
@@ -906,12 +908,13 @@ class RoadwayDAO extends BaseDAO {
   //  }
   //
   //
-  //  private def queryList(query: String): List[RoadAddress] = {
-  //    Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
-  //      case (_, roadAddressList) =>
-  //        roadAddressList.head
-  //    }.toList
-  //  }
+  private def queryList(query: String): List[RoadAddress] = {
+    throw new NotImplementedError()
+//    Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
+//      case (_, roadAddressList) =>
+//        roadAddressList.head
+//    }.toList
+  }
   //
   //  def fetchPartsByRoadNumbers(boundingRectangle: BoundingRectangle, roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
   //    time(logger, "Fetch road addresses of road parts by road numbers") {

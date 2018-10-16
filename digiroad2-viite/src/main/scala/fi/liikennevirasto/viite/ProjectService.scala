@@ -359,38 +359,37 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Seq[LinkToRevert], username: String): Option[String] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
-//    try {
-//      withDynTransaction {
-//        if (ProjectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
-//          return Some(ErrorReversingUnchangedLinks)
-//        val continuity = ProjectDAO.getContinuityCodes(projectId, roadNumber, roadPartNumber)
-//        val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
-//          val discontinuityAtEnd = continuity.maxBy(_._1)
-//          continuity.filterKeys(_ < discontinuityAtEnd._1).map { case (addr, d) => (discontinuityAtEnd._1 - addr) -> d } ++
-//            Map(discontinuityAtEnd._1 -> discontinuityAtEnd._2)
-//        } else
-//          Map()
-//        ProjectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
-//        val projectLinks = ProjectDAO.getProjectLinks(projectId).filter(pl => {
-//          pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
-//        })
-//        val originalSideCodes = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadwayId).toSet, includeFloating = true)
-//          .map(ra => ra.id -> ra.sideCode).toMap
-//
-//        ProjectDAO.updateProjectLinksToDB(projectLinks.map(x =>
-//          x.copy(reversed = isReversed(originalSideCodes)(x),
-//            discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username)
-//        CalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
-//        recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
-//        None
-//      }
-//    } catch {
-//      case NonFatal(e) =>
-//        logger.info("Direction change failed", e)
-//        Some(ErrorSavingFailed)
-//    }
+    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
+    try {
+      withDynTransaction {
+        if (projectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
+          return Some(ErrorReversingUnchangedLinks)
+        val continuity = projectDAO.getContinuityCodes(projectId, roadNumber, roadPartNumber)
+        val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
+          val discontinuityAtEnd = continuity.maxBy(_._1)
+          continuity.filterKeys(_ < discontinuityAtEnd._1).map { case (addr, d) => (discontinuityAtEnd._1 - addr) -> d } ++
+            Map(discontinuityAtEnd._1 -> discontinuityAtEnd._2)
+        } else
+          Map()
+        projectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
+        val projectLinks = projectDAO.getProjectLinks(projectId).filter(pl => {
+          pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
+        })
+        val originalSideCodes = linearLocationDAO.fetchByRoadways(projectLinks.map(_.roadwayId).toSet)
+          .map(l => l.id -> l.sideCode).toMap
+
+        projectDAO.updateProjectLinksToDB(projectLinks.map(x =>
+          x.copy(reversed = isReversed(originalSideCodes)(x),
+            discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username)
+        CalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
+        recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
+        None
+      }
+    } catch {
+      case NonFatal(e) =>
+        logger.info("Direction change failed", e)
+        Some(ErrorSavingFailed)
+    }
   }
 
   private def isReversed(originalSideCodes: Map[Long, SideCode])(projectLink: ProjectLink): Boolean = {
