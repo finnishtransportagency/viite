@@ -61,10 +61,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    LinearLocationResult(nonFloatingAddresses, floatingAddresses)
   }
 
-  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle) = {
+  def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
-        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits = Seq())
+        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
   }
@@ -260,6 +260,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
+    * Gets all the road addresses in the same road number, road parts and track codes.
+    * If the road part number sequence or track codes sequence is empty
+    * @param road The road number
+    * @param part The road part
+    * @param withHistory The optional parameter that allows the search to also look for historic links
+    * @param withFloating The optional parameter that allows the search to also look for floating links
+    * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
+    * @return Returns all the filtered road addresses
+    */
+  def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
+    withDynSession {
+      val roadwayAddresses = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, withFloating, fetchOnlyEnd)
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+    }
+  }
+
+  /**
     * Gets all the road addresses in between the given linear location.
     * - If only given the start measure, will return all the road addresses with the start measure equal or greater than ${startMOption}
     * - If only given the end measure, will return all the road addresses with end measure equal or less than ${endMOption}
@@ -311,6 +328,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       roadwayDAO.getValidRoadParts(roadNumber, startDate)
     }
   }
+
+  /**
+    * Gets all the previous road address part in the given road number and road part number
+    * @param roadNumber The road number
+    * @param roadPart The road part number
+    * @return Returns previous parts in road number, if they exist
+    */
+  def getPreviousRoadAddressPart(roadNumber: Long, roadPart: Long): Option[Long] = {
+    withDynSession {
+      roadwayDAO.fetchPreviousRoadPartNumber(roadNumber, roadPart)
+    }
+  }
+
+//  fetchPreviousRoadPartNumber
 
   /**
     * Gets all the road addresses in given road number, road part number and between given address measures.
@@ -880,7 +911,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //      .distinct.filterNot(fo => chainIds.contains(fo.id) || chainLinks.contains(fo.linkId))
 //  }
 
-  def getFloatingAdjacent(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
+  def getFloatingAdjacent(cgehainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
     throw new NotImplementedError("Will be implemented at VIITE-1537")
 //    val (floatings, _) = withDynTransaction {
 //      RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true).partition(_.isFloating)

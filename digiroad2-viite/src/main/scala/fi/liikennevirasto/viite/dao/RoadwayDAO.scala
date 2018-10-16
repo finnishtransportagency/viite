@@ -422,9 +422,9 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false): Seq[Roadway] = {
+  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
-      fetch(withRoadAndPart(roadNumber, roadPart, withHistory))
+      fetch(withRoadAndPart(roadNumber, roadPart, withHistory, withFloating, fetchOnlyEnd))
     }
   }
 
@@ -550,12 +550,20 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and road_number = $roadNumber"""
   }
 
-  private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false)(query: String): String = {
+  private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, includeFloating: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
     val historyFilter = if (!includeHistory)
       " AND end_date is null"
     else
       ""
-    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter"""
+
+    val floatingFilter = if (!includeFloating)
+      " AND floating = 0"
+    else
+      ""
+    val endPart = if (fetchOnlyEnd) {
+      s" AND ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPart And (road.valid_to IS NULL AND road.end_date is null))"
+    } else ""
+    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter $floatingFilter $endPart"""
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
@@ -673,18 +681,18 @@ class RoadwayDAO extends BaseDAO {
   //    Q.queryNA[Int](query).firstOption
   //  }
   //
-  //  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
-  //    val query =
-  //      s"""
-  //          SELECT * FROM (
-  //            SELECT ra.road_part_number
-  //            FROM ROADWAY ra
-  //            WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
-  //            ORDER BY road_part_number DESC
-  //          ) WHERE ROWNUM < 2
-  //      """
-  //    Q.queryNA[Long](query).firstOption
-  //  }
+    def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
+      val query =
+        s"""
+            SELECT * FROM (
+              SELECT ra.road_part_number
+              FROM ROADWAY ra
+              WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
+              ORDER BY road_part_number DESC
+            ) WHERE ROWNUM < 2
+        """
+      Q.queryNA[Long](query).firstOption
+    }
 
 
   //  /**
