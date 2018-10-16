@@ -21,7 +21,7 @@ import fi.liikennevirasto.viite.dao.FloatingReason.{NewAddressGiven, NoFloating}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.{CalibrationPointsUtils, ProjectLinkSplitter, SplitOptions, SplitResult}
@@ -47,6 +47,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private val logger = LoggerFactory.getLogger(getClass)
   val roadwayDAO = new RoadwayDAO
+  val roadAddressDAO = new RoadAddressDAO
   val linearLocationDAO = new LinearLocationDAO
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
@@ -1027,35 +1028,35 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     throw new NotImplementedError("Will be implemented at VIITE-1540")
-    //    ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    //    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet)
-    //    val roadAddresses = RoadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
-    //    roadAddresses.foreach(ra =>
-    //      modified.find(mod => mod.linkId == ra.linkId) match {
-    //        case Some(mod) if mod.geometry.nonEmpty => {
-    //          checkAndReserve(ProjectDAO.getRoadAddressProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
-    //          val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
-    //          val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
-    //          ProjectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
-    //        }
-    //        case _ => {
-    //          checkAndReserve(ProjectDAO.getRoadAddressProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
-    //          ProjectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
-    //        }
-    //      })
-    //
-    //    revertRoadName(projectId, roadNumber)
-    //
-    //    if (recalculate)
-    //      try {
-    //        recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
-    //      } catch {
-    //        case _: Exception => logger.info("Couldn't recalculate after reverting a link (this may happen)")
-    //      }
-    //    val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-    //    if (afterUpdateLinks.isEmpty) {
-    //      releaseRoadPart(projectId, roadNumber, roadPartNumber, userName)
-    //    }
+    projectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
+    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet)
+    val roadAddresses = roadAddressDAO.fetchByLinkId(modified.map(_.linkId).toSet)
+    roadAddresses.foreach(ra =>
+      modified.find(mod => mod.linkId == ra.linkId) match {
+        case Some(mod) if mod.geometry.nonEmpty => {
+          checkAndReserve(projectDAO.getRoadAddressProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
+          val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
+          val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
+          projectDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+        }
+        case _ => {
+          checkAndReserve(projectDAO.getRoadAddressProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
+          projectDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
+        }
+      })
+
+    revertRoadName(projectId, roadNumber)
+
+    if (recalculate)
+      try {
+        recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
+      } catch {
+        case _: Exception => logger.info("Couldn't recalculate after reverting a link (this may happen)")
+      }
+    val afterUpdateLinks = projectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
+    if (afterUpdateLinks.isEmpty) {
+      releaseRoadPart(projectId, roadNumber, roadPartNumber, userName)
+    }
   }
 
   def isProjectWithGivenLinkIdWritable(linkId: Long): Boolean = {
