@@ -317,12 +317,11 @@ object ProjectValidator {
   def projectLinksValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     val projectValidations: Seq[(RoadAddressProject, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
-      //TODO in 1542
-//      checkProjectContinuity,
-//      checkForNotHandledLinks,
-//      checkTrackCodePairing,
-//      checkRemovedEndOfRoadParts,
-//      checkProjectElyCodes
+      checkProjectContinuity,
+      checkForNotHandledLinks,
+      checkTrackCodePairing,
+      checkRemovedEndOfRoadParts,
+      checkProjectElyCodes
     )
 
     val errors: Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
@@ -468,21 +467,20 @@ object ProjectValidator {
     If previous road address is part of the project and not terminated, don't throw error
   */
   def checkRemovedEndOfRoadParts(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == EndOfRoad).flatMap { rrp =>
-//      RoadAddressDAO.fetchPreviousRoadPartNumber(rrp.roadNumber, rrp.roadPartNumber) match {
-//        case Some(previousRoadPartNumber) =>
-//          RoadAddressDAO.fetchByRoadPart(rrp.roadNumber, previousRoadPartNumber).reverse
-//            .find(ra => !projectLinks.exists(link => link.roadwayId == ra.id || link.status != Terminated)) match {
-//              case Some(actualProjectLinkForPreviousEnd) =>
-//                return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
-//                  Seq(actualProjectLinkForPreviousEnd.id),
-//                  Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, 12)), Some("")))
-//              case None => Seq()
-//          }
-//        case None => Seq()
-//      }
-//    }
+    projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == EndOfRoad).flatMap { rrp =>
+      roadAddressService.getPreviousRoadAddressPart(rrp.roadNumber, rrp.roadPartNumber) match {
+        case Some(previousRoadPartNumber) =>
+          roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, previousRoadPartNumber).reverse
+            .find(ra => !projectLinks.exists(link => link.roadwayId == ra.id || link.status != Terminated)) match {
+              case Some(actualProjectLinkForPreviousEnd) =>
+                return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
+                  Seq(actualProjectLinkForPreviousEnd.id),
+                  Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, 12)), Some("")))
+              case None => Seq()
+          }
+        case None => Seq()
+      }
+    }
   }
 
   def checkProjectElyCodes(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -602,13 +600,13 @@ object ProjectValidator {
           val lowerCorner = Point(sp.x - distanceToPoint, sp.y - distanceToPoint, sp.z - distanceToPoint)
           val higherCorner = Point(sp.x + distanceToPoint, sp.y + distanceToPoint, sp.z + distanceToPoint)
           val box = BoundingRectangle(lowerCorner, higherCorner)
-         roadAddressService.fetchRoadAddressesByBoundingBox(box)
+         roadAddressService.fetchLinearLocationByBoundingBox(box)
         }
         val connectingAtEnd = {
           val lowerCorner = Point(ep.x - distanceToPoint, ep.y - distanceToPoint, ep.z - distanceToPoint)
           val higherCorner = Point(ep.x + distanceToPoint, ep.y + distanceToPoint, ep.z + distanceToPoint)
           val box = BoundingRectangle(lowerCorner, higherCorner)
-          roadAddressService.fetchRoadAddressesByBoundingBox(box)
+          roadAddressService.fetchLinearLocationByBoundingBox(box)
         }
         connectingAtStart ++ connectingAtEnd
       }
@@ -656,18 +654,17 @@ object ProjectValidator {
     val allProjectLinks = projectLinkDAO.getProjectLinks(project.id)
 
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
-      throw new NotImplementedError("Will be implemented at VIITE-1540")
-//      // This code means that this road part (of a ramp) should be connected to a roundabout
-//      val endPoints = pls.map(endPoint).map(p => (p.x, p.y)).unzip
-//      val boundingBox = BoundingRectangle(Point(endPoints._1.min,
-//        endPoints._2.min), Point(endPoints._1.max, endPoints._2.max))
-//      // Fetch all ramps and roundabouts roads and parts this is connected to (or these, if ramp has multiple links)
-//      val roadParts = RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingBox, fetchOnlyFloating = false, onlyNormalRoads = false,
-//        Seq((RampsMinBound, RampsMaxBound))).filter(ra =>
-//        pls.exists(_.connected(ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
-//      // Check all the fetched road parts to see if any of them is a roundabout
-//      roadParts.keys.exists(rp => TrackSectionOrder.isRoundabout(
-//        RoadAddressDAO.fetchByRoadPart(rp._1, rp._2, includeFloating = true)))
+//      throw new NotImplementedError("Will be implemented at VIITE-1540")
+      // This code means that this road part (of a ramp) should be connected to a roundabout
+      val endPoints = pls.map(endPoint).map(p => (p.x, p.y)).unzip
+      val boundingBox = BoundingRectangle(Point(endPoints._1.min,
+        endPoints._2.min), Point(endPoints._1.max, endPoints._2.max))
+      // Fetch all ramps and roundabouts roads and parts this is connected to (or these, if ramp has multiple links)
+      val roadParts = roadAddressService.getCurrentRoadAddresses(roadAddressService.fetchLinearLocationByBoundingBox(boundingBox, Seq((RampsMinBound, RampsMaxBound)))).filter(ra =>
+        pls.exists(_.connected(ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
+      // Check all the fetched road parts to see if any of them is a roundabout
+      roadParts.keys.exists(rp => TrackSectionOrder.isRoundabout(
+        roadAddressService.getRoadAddressWithRoadAndPart(rp._1, rp._2, withFloating = true)))
     }
 
     def checkContinuityBetweenLinksOnParts: Seq[ValidationErrorDetails] = {
@@ -861,20 +858,19 @@ object ProjectValidator {
     }
 
     def checkEndOfRoadOutsideOfProject: Seq[ValidationErrorDetails] = {
-      throw new NotImplementedError("Will be implemented at VIITE-1540")
-//      val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
-//      RoadAddressDAO.fetchPreviousRoadPartNumber(road, part) match {
-//        case Some(previousRoadPartNumber) =>
-//          val actualProjectLinkForPreviousEnd = RoadAddressDAO.fetchByRoadPart(road, previousRoadPartNumber, fetchOnlyEnd = true)
-//            .filter(ra => ra.discontinuity == EndOfRoad && !allProjectLinks.exists(link => link.roadwayId == ra.id))
-//          if (actualProjectLinkForPreviousEnd.nonEmpty)
-//            return outsideOfProjectError(
-//              project.id,
-//              alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((road, previousRoadPartNumber))))
-//            )(actualProjectLinkForPreviousEnd).toSeq
-//        case None => Seq()
-//      }
-//      Seq()
+      val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
+      roadAddressService.getPreviousRoadAddressPart(road, part) match {
+        case Some(previousRoadPartNumber) =>
+          val actualProjectLinkForPreviousEnd = roadAddressService.getRoadAddressWithRoadAndPart(road, previousRoadPartNumber, false, fetchOnlyEnd = true)
+            .filter(ra => ra.discontinuity == EndOfRoad && !allProjectLinks.exists(link => link.roadwayId == ra.id))
+          if (actualProjectLinkForPreviousEnd.nonEmpty)
+            return outsideOfProjectError(
+              project.id,
+              alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((road, previousRoadPartNumber))))
+            )(actualProjectLinkForPreviousEnd).toSeq
+        case None => Seq()
+      }
+      Seq()
     }
 
     def checkEndOfRoadBetweenLinksOnPart: Seq[ValidationErrorDetails] = {
