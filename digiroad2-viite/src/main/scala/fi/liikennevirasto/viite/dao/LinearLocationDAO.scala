@@ -72,7 +72,7 @@ object FloatingReason {
 trait BaseLinearLocation {
   def id: Long
 
-  def orderNumber: Long
+  def orderNumber: Double
 
   def linkId: Long
 
@@ -134,8 +134,10 @@ trait BaseLinearLocation {
   }
 }
 
-// Note: Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+// Notes:
+//  - Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
+//  - Order number is a Double in LinearLocation case class and Long on the database because when there is for example divided change type we need to add more linear locations
+case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                           adjustedTimestamp: Long, calibrationPoints: (Option[Long], Option[Long]) = (None, None),
                           floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource,
                           roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
@@ -227,7 +229,7 @@ class LinearLocationDAO {
         }
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
-        ps.setLong(3, location.orderNumber)
+        ps.setLong(3, location.orderNumber.toLong)
         ps.setLong(4, location.linkId)
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
@@ -414,6 +416,11 @@ class LinearLocationDAO {
     }
   }
 
+  /**
+    * Fetch all the linear locations inside roadways with the given link ids
+    * @param linkIds The given road link identifiers
+    * @return Returns all the filtered linear locations
+    */
   def fetchRoadwayByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
     time(logger, "Fetch all linear locations of a roadway by link id") {
       if (linkIds.isEmpty) {
