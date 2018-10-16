@@ -20,6 +20,7 @@ object RoadAddressFiller {
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
                       adjustedMValues: Seq[LinearLocationAdjustment],
+                      newLinearLocations: Seq[LinearLocation],
                       //TODO check if this will be needed here at VIITE-1596
                       unaddressedRoadLink: Seq[UnaddressedRoadLink])
 
@@ -180,12 +181,12 @@ object RoadAddressFiller {
         capToGeometry,
         extendToGeometry,
         dropShort,
-        ApplyChangeInfoProcess.applyChanges(Map())
+        ApplyChangeInfoProcess.applyChanges(Map(), Map())
       )
 
       val topologyMap = topology.groupBy(_.linkId)
       val linearLocationMap = linearLocations.groupBy(_.linkId)
-      val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty)
+      val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)
 
       linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
