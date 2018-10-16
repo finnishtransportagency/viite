@@ -793,7 +793,8 @@ class ProjectDAO {
     Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list
   }
 
-//  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true) = {
+  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom: Boolean = true) = {
+    throw new NotImplementedError()
 //    time(logger, "Update project link values") {
 //
 //      val updateGeometry = if (updateGeom) s", GEOMETRY = '${toGeomString(roadAddress.geometry)}'" else s""
@@ -809,7 +810,7 @@ class ProjectDAO {
 //        s" WHERE ROADWAY_ID = ${roadAddress.id} AND PROJECT_ID = $projectId"
 //      Q.updateNA(updateProjectLink).execute
 //    }
-//  }
+  }
 
   /**
     * Reverses the road part in project. Switches side codes 2 <-> 3, updates calibration points start <-> end,

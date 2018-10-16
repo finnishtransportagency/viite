@@ -14,11 +14,11 @@ import org.scalatest.{FunSuite, Matchers}
 
 class RoadwayMapperSpec extends FunSuite with Matchers{
 
-  val mockRoadAddressDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
 
   test("Should map current roadway linear location into road addresses"){
-    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadAddressDAO, mockLinearLocationDAO)
+    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
     val roadwayNumber = 12L
     val startDate = new DateTime(2007, 1, 1, 0, 0)
@@ -53,7 +53,7 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
   }
 
   test("Should map history roadway linear location into road addresses"){
-    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadAddressDAO, mockLinearLocationDAO)
+    val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
     val roadwayNumber = 12L
     val currentStartDate = new DateTime(2007, 1, 1, 0, 0)
@@ -68,7 +68,7 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
       LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0, (Some(250), Some(300)), NoFloating, Seq(Point(154.0,0.0), Point(205.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
     )
 
-    when(mockRoadAddressDAO.fetchByRoadwayNumber(roadwayNumber)).thenReturn(Some(currentRoadwayAddress))
+    when(mockRoadwayDAO.fetchByRoadwayNumber(roadwayNumber)).thenReturn(Some(currentRoadwayAddress))
 
     val roadAddresses = roadwayAddressMapper.mapRoadAddresses(historyRoadwayAddress, linearLocations)
 
