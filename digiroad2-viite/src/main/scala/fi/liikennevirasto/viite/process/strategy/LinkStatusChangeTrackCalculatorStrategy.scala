@@ -12,7 +12,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
   override def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.startAddrMValue
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
-    //Will be applied if the link status changes FROM or TO a status equal "NEW" or "TERMINATED" and track is Left or Right
+    //Will be applied if the link status changes for every status change detected and track is Left or Right
     projectLink.status != headProjectLink.status &&
       (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
