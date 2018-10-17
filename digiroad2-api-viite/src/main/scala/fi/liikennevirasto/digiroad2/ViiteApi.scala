@@ -185,7 +185,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/midpoint/:linkId") {
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
-      roadLinkService.getMidPointByLinId(linkId)
+      roadLinkService.getMidPointByLinkId(linkId)
     }
   }
 
@@ -363,10 +363,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
       try {
         val reservationMessage = if (roadAddressProject.reservedParts.nonEmpty) {
-          projectService.validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
-            case Some(errMsg) => Some(errMsg)
-            case None => None
-          }
+          //TODO "Will be implemented at VIITE-1540" for now result is always with success -- it should go to the service layer
+          //          projectService.validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
+          //            case Some(errMsg) => Some(errMsg)
+          //            case None => None
+          //          }
           None
         } else {
           None
@@ -412,31 +413,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/sendToTR") {
     val projectID = (parsedBody \ "projectID").extract[Long]
     time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
-    //TODO VIITE-1541 multiple service calls should be in the service layer
-     /* val writableProjectService = projectWritable(projectID)
-      val sendStatus = writableProjectService.publishProject(projectID)
-      if (sendStatus.validationSuccess && sendStatus.sendSuccess)
-        Map("sendSuccess" -> true)
-      else if (sendStatus.errorMessage.getOrElse("").toLowerCase == failedToSendToTRMessage.toLowerCase) {
-        projectService.setProjectStatus(projectID, SendingToTR)
-        Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
-      } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))*/
+      //TODO VIITE-1541 multiple service calls should be in the service layer
+      /* val writableProjectService = projectWritable(projectID)
+       val sendStatus = writableProjectService.publishProject(projectID)
+       if (sendStatus.validationSuccess && sendStatus.sendSuccess)
+         Map("sendSuccess" -> true)
+       else if (sendStatus.errorMessage.getOrElse("").toLowerCase == failedToSendToTRMessage.toLowerCase) {
+         projectService.setProjectStatus(projectID, SendingToTR)
+         Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
+       } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))*/
     }
   }
 
   put("/project/reverse") {
     time(logger, "PUT request for /project/reverse") {
-      //TODO VIITE-1540 multiple service calls and logic should be in the service layer
       val user = userProvider.getCurrentUser()
       try {
-        //check for validity
         val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
-        val writableProjectService = projectWritable(roadInfo.projectId)
-        writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, user.username) match {
+        projectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, roadInfo.coordinates, user.username) match {
           case Some(errorMessage) =>
             Map("success" -> false, "errorMessage" -> errorMessage)
           case None =>
-            writableProjectService.saveProjectCoordinates(roadInfo.projectId, roadInfo.coordinates)
             Map("success" -> true, "projectErrors" -> projectService.validateProjectById(roadInfo.projectId).map(errorPartsToApi))
         }
       } catch {
@@ -495,10 +492,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             if (reservedRoadParts.isEmpty) {
               Map("success" -> s"Puuttuvan tielinkkidatan takia kyseistä tieosaa ei pystytä varaamaan.")
             } else {
-              projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
-                case Some(errMsg) => Map("success" -> errMsg)
-                case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
-              }
+              //TODO "Will be implemented at VIITE-1540" for now result is always with success
+              //              projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+              //                case Some(errMsg) => Map("success" -> errMsg)
+              //                case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+              //              }
               Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
             }
           }
@@ -510,15 +508,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress/project/revertchangesroadlink") {
     time(logger, "PUT request for /roadlinks/roadaddress/project/revertchangesroadlink") {
-      //TODO VIITE-1630 (US VIITE-1540) multiple service calls and logic should be in the service layer
       try {
         val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
         if (linksToRevert.links.nonEmpty) {
-          val writableProject = projectWritable(linksToRevert.projectId)
           val user = userProvider.getCurrentUser().username
-          writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, user) match {
+          projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
-              writableProject.saveProjectCoordinates(linksToRevert.projectId, linksToRevert.coordinates)
               val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi)
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
@@ -718,8 +713,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case Some(link) =>
           try {
             val options = parsedBody.extract[SplitOptions]
-            val writableProject = projectWritable(options.projectId)
-            val (splitLinks, allTerminatedLinks, errorMessage, splitLine) = writableProject.preSplitSuravageLink(link, user.username, options)
+            val (splitLinks, allTerminatedLinks, errorMessage, splitLine) = projectService.preSplitSuravageLink(link, user.username, options)
             val cutGeom = splitLine match {
               case Some(x) => val (p, v) = x
                 Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
@@ -742,7 +736,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                 )
               ) ++ splitLinks.get.flatMap(splitToApi)
               Map("success" -> splitLinks.nonEmpty, "response" -> split)
-
             }
           } catch {
             case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
@@ -762,15 +755,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case Some(link) =>
           try {
             val options = parsedBody.extract[SplitOptions]
-            if (projectService.validateLinkTrack(options.trackCode.value)) {
-              val writableProject = projectWritable(options.projectId)
-              val splitError = writableProject.splitSuravageLink(link, user.username, options)
-              writableProject.saveProjectCoordinates(options.projectId, options.coordinates)
+              val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
               val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
               Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
-            } else {
-              Map("success" -> false, "errorMessage" -> "Invalid track code")
-            }
           } catch {
             case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
             case _: NumberFormatException => BadRequest("Missing mandatory data")
@@ -954,7 +941,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
     Map(
       "success" -> true,
-      "roadAddressId" -> roadAddressLink.id, // TODO Should this be renamed to roadwayId?
+      "roadwayId" -> roadAddressLink.id,
       //"linearLocationId" -> roadAddressLink.linearLocationId, //TODO uncoment this and remove this one from the call to this
       "linkId" -> roadAddressLink.linkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
@@ -1227,14 +1214,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  @throws(classOf[Exception])
+ /* @throws(classOf[Exception])
   // TODO This method was removed previously for some reason. Is this still valid? At least many methods use this.
   private def projectWritable(projectId: Long): ProjectService = {
     val writable = projectService.isWritableState(projectId)
     if (!writable)
       throw new IllegalStateException("Projekti ei ole enää muokattavissa") //project is not in modifiable state
     projectService
-  }
+  }*/
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
 
