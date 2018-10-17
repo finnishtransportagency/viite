@@ -87,7 +87,7 @@ object ApplyChangeInfoProcess {
       val oldLength = originalLinearLocation.endMValue - originalLinearLocation.startMValue
       val newLength = adjustedLinearLocations.map(linearLocation => linearLocation.endMValue - linearLocation.startMValue).sum
 
-      Math.abs(oldLength - newLength) < MinAllowedRoadAddressLength
+      Math.abs(oldLength - newLength) < MaxAdjustmentRange
     }
 
     def checkExistingRoadLink(mappedRoadLinks: Map[Long, RoadLinkLike])(originalLinearLocation: LinearLocation, adjustedLinearLocations: Seq[LinearLocation]): Boolean = {
@@ -99,7 +99,7 @@ object ApplyChangeInfoProcess {
       checkExistingRoadLink(mappedRoadLinks)
     )
 
-    filterOperations.exists(operation => operation(originalLinearLocation, adjustedLinearLocations))
+    filterOperations.forall(operation => operation(originalLinearLocation, adjustedLinearLocations))
   }
 
   private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
