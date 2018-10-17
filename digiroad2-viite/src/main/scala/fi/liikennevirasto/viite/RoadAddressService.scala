@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
@@ -114,6 +115,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
+  // TODO Is this method named correctly? Why "ByLinkId"?
   def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
@@ -136,6 +138,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     )
 
     getRoadAddressLinks(boundingBoxResult)
+  }
+
+  def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
+    val linearLocations = withDynSession {
+      time(logger, "Fetch floating and non-floating linear locations by bounding box") {
+        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
+      }
+    }
+    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
   }
 
   /**
@@ -375,6 +386,58 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   // TODO
+  def getRoadAddressesByLinkIds(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true, includeCurrent: Boolean = true,
+                    filterIds: Set[Long] = Set()): List[RoadAddress] = {
+    throw new NotImplementedError()
+//      if (linkIds.size > 1000 || filterIds.size > 1000) {
+//        return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
+//      }
+//      val linkIdString = linkIds.mkString(",")
+//      val where = if (linkIds.isEmpty) {
+//        return List()
+//      } else {
+//        s""" where ra.link_id in ($linkIdString)"""
+//      }
+//      val floating = if (!includeFloating)
+//        "AND ra.floating='0'"
+//      else
+//        ""
+//      val history = if (!includeHistory)
+//        "AND ra.end_date is null"
+//      else
+//        ""
+//      val current = if (!includeCurrent)
+//        "AND ra.end_date is not null"
+//      else
+//        ""
+//      val idFilter = if (filterIds.nonEmpty)
+//        s"AND ra.id not in ${filterIds.mkString("(", ",", ")")}"
+//      else
+//        ""
+//
+//      val valid = if (!includeTerminated) {
+//        "AND ra.terminated = 0"
+//      } else {
+//        ""
+//      }
+//
+//      val query =
+//        s"""
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+//        ra.side_code, ra.adjusted_timestamp,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+//        from ROAD_ADDRESS ra cross join
+//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+//        $where $floating $history $current $valid $idFilter and t.id < t2.id and
+//           valid_to is null
+//      """
+//      queryList(query)
+  }
+
+  // TODO
   def getRoadAddressesByRoadwayIds(roadwayIds: Set[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
     throw new NotImplementedError()
 //    withDynSession {
@@ -493,6 +556,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //      (addr, RoadAddressDAO.getUnaddressedRoadLinks(addr.map(_.linkId).toSet))
     //    }
     //    processRoadAddresses(addresses, missedRL)
+  }
+
+  // TODO
+  def fetchUnaddressedRoadLinksByLinkIds(linkIds: Set[Long]):Seq[UnaddressedRoadLink] = {
+    throw new NotImplementedError()
+    //    withDynTransaction {
+    //      time(logger, "RoadAddressDAO.fetchUnaddressedRoadLinksByBoundingBox") {
+    //        RoadAddressDAO.fetchUnaddressedRoadLinksByBoundingBox(boundingRectangle).groupBy(_.linkId)
+    //      }
+    //    }
   }
 
   private def processRoadAddresses(addresses: Seq[RoadAddress], missedRL: Seq[UnaddressedRoadLink]): Seq[RoadAddressLink] = {
@@ -1158,6 +1231,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
   */
+
+  def setSubsequentTermination(linkIds: Set[Long]): Unit = {
+    val roadAddresses = getRoadAddressByLinkIds(linkIds/*, includeFloating = true, includeHistory = true*/).filter(_.terminated == NoTermination)
+    val roadways = roadwayDAO.fetchAllByRoadwayId(roadAddresses.map(_.id))
+    roadwayDAO.expireById(roadways.map(_.id).toSet)
+    roadwayDAO.create(roadways.map(ra => ra.copy(id = NewRoadway, terminated = Subsequent)))
+  }
+
 }
 
 sealed trait RoadClass {
