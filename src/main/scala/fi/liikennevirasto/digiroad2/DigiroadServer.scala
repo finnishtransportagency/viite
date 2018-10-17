@@ -41,7 +41,6 @@ trait DigiroadServer {
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     appContext.addServlet(classOf[OAGProxyServlet], "/wmts/*")
-    appContext.addServlet(classOf[OAGRasterServiceProxyServlet], "/rasteripalvelu/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
@@ -67,22 +66,6 @@ class OAGProxyServlet extends ProxyServlet {
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
-
-class OAGRasterServiceProxyServlet extends ProxyServlet {
-
-  def regex = "/(viite)".r
-
-  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    val uri = req.getRequestURI
-    java.net.URI.create("http://oag.liikennevirasto.fi"
-      + regex.replaceFirstIn(uri, ""))
-  }
-
-  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
-  }
-}
-
 
 class ArcGisProxyServlet extends ProxyServlet {
   val logger = LoggerFactory.getLogger(getClass)
