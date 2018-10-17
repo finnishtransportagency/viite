@@ -1,5 +1,5 @@
 (function(root) {
-  root.TileMapCollection = function(OAGGreyConfig) {
+  root.TileMapCollection = function(arcgisConfig) {
     var layerConfig = {
       // minResolution: ?,
       // maxResolution: ?,
@@ -80,12 +80,11 @@
           propertyBorder : propertyBorderLayer
       };
 
-    if(OAGGreyConfig) { //check is not needed it, will almost always be true and checks old getcapabilities
+    if(arcgisConfig) { //check is not needed it, will almost always be true and checks old getcapabilities
       var parser = new ol.format.WMTSCapabilities();
-      var result = parser.read(OAGGreyConfig);
-      var config = {layer: 'liikennevirasto:PTP_Taustakartta_Harmaa', matrixSet:'EPSG:3067_PTP_JHS180'};
+      var result = parser.read(arcgisConfig);
+      var config = {layer: "Taustakartat_Harmaasavy"};
       var options = ol.source.WMTS.optionsFromCapabilities(result, config);
-      options.urls= ['rasteripalvelu/wmts?'];
       var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
       greyscaleLayer.set('name', 'greyScaleLayer');
       tileMapLayers.greyscale = greyscaleLayer;
