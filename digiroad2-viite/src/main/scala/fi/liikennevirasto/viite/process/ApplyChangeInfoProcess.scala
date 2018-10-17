@@ -152,6 +152,8 @@ object ApplyChangeInfoProcess {
       case _ => None
     }
 
+    //TODO check if it's a good idea to generate here the database identifier
+    //PROS: Then we are using the right identifier on the next fill topology adjustments
     val newId = projection.oldLinkId == projection.newLinkId match {
       case true => linearLocation.id
       case _ => NewLinearLocation
@@ -190,11 +192,41 @@ object ApplyChangeInfoProcess {
     }.toSeq
   }
 
-  private def generateNonDividedProjections(nonDividedChanges: Seq[ChangeInfo]): Seq[Projection] = {
+  private def generateLengthenedProjections(lengthenedChanges: Seq[ChangeInfo]): Seq[Projection] = {
+    //VVH change api doesn't seems to support multiple changes for the same day in the same link id.
+    lengthenedChanges.groupBy(ch => ch.vvhTimeStamp).flatMap {
+      case (_, groupedChanges) =>
+        groupedChanges.find(_.changeType == ChangeType.LengthenedCommonPart).map {
+          change =>
+            val minNewMeasure = groupedChanges.map(c => Math.min(c.newStartMeasure.get, c.newEndMeasure.get)).min
+            val maxNewMeasure = groupedChanges.map(c => Math.max(c.newStartMeasure.get, c.newEndMeasure.get)).max
+            val (newStartM, newEndM) = if (change.newStartMeasure.get > change.newEndMeasure.get) (maxNewMeasure, minNewMeasure) else (minNewMeasure, maxNewMeasure)
+            logger.debug("Change info, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
+            Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, newStartM, newEndM, change.vvhTimeStamp)
+        }
+    }.toSeq
+  }
+
+  private def generateShortenedProjections(shortenedChanges: Seq[ChangeInfo]): Seq[Projection] = {
+    //VVH change api doesn't seems to support multiple changes for the same day in the same link id.
+    shortenedChanges.groupBy(ch => ch.vvhTimeStamp).flatMap {
+      case (_, groupedChanges) =>
+        groupedChanges.find(_.changeType == ChangeType.ShortenedCommonPart).map {
+          change =>
+            val minOldMeasure = groupedChanges.map(c => Math.min(c.oldStartMeasure.get, c.oldEndMeasure.get)).min
+            val maxOldMeasure = groupedChanges.map(c => Math.max(c.oldStartMeasure.get, c.oldEndMeasure.get)).max
+            val (oldStartM, oldEndM) = if (change.oldStartMeasure.get > change.oldEndMeasure.get) (maxOldMeasure, minOldMeasure) else (minOldMeasure, maxOldMeasure)
+            logger.debug("Change info, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
+            Projection(change.oldId.get, change.newId.get, oldStartM, oldEndM, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp)
+        }
+    }.toSeq
+  }
+
+  private def generateCombinedProjections(nonDividedChanges: Seq[ChangeInfo]): Seq[Projection] = {
     nonDividedChanges.flatMap {
       change =>
         change.changeType match {
-          case CombinedModifiedPart | CombinedRemovedPart | LengthenedCommonPart  | ShortenedCommonPart =>
+          case CombinedModifiedPart | CombinedRemovedPart =>
             logger.debug("Change info, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
             Some(Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp))
           case _ =>
@@ -211,8 +243,10 @@ object ApplyChangeInfoProcess {
     */
   private def generateProjections(changes: Seq[ChangeInfo]): Seq[Projection] = {
     val (dividedChanges, nonDividedChanges) = changes.partition(_.changeType.isDividedChangeType)
-
-     generateDividedProjections(dividedChanges) ++ generateNonDividedProjections(nonDividedChanges)
+    val (shortenedChanges, nonShortened) = nonDividedChanges.partition(_.changeType.isShortenedChangeType)
+    val (lengthenedChanges, nonLengthened) = nonShortened.partition(_.changeType.isLengthenedChangeType)
+    generateDividedProjections(dividedChanges) ++ generateLengthenedProjections(lengthenedChanges) ++
+     generateShortenedProjections(shortenedChanges) ++ generateCombinedProjections(nonLengthened)
   }
 
   private def filterOutChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
@@ -260,25 +294,4 @@ object ApplyChangeInfoProcess {
         (existingSegments ++ adjustedLinearLocations, resultChangeSet)
     }
   }
-
-//  def applyChanges(mappedChanges: Map[Long, Seq[ChangeInfo]], mappedRoadLinks: Map[Long, RoadLinkLike])(roadLink: RoadLinkLike, linearLocations: Seq[LinearLocation], changeSet: ChangeSet): (Seq[LinearLocation], ChangeSet) = {
-//
-//    //TODO is it needed to remove all the divided and combined changes that have length changes?
-//
-//    val filteredChanges = filterOutChanges(linearLocations, mappedChanges.getOrElse(roadLink.linkId, Seq()))
-//
-//    //If contains some unsupported change type there is no need to apply any change
-//    //because the linear locations will be set as floating
-//    filteredChanges.isEmpty || filteredChanges.exists(nonSupportedChange) match {
-//      case true =>
-//        (linearLocations, changeSet)
-//      case _ =>
-//        val projections = generateProjections(filteredChanges)
-//        linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
-//          case ((cLinearLocations, cChangeSet), linearLocation) =>
-//            val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
-//            (cLinearLocations ++ adjustedLinearLocations, resultChangeSet)
-//        }
-//    }
-//  }
 }
