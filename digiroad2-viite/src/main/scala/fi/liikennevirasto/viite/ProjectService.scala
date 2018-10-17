@@ -358,32 +358,38 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Seq[LinkToRevert], username: String): Option[String] = {
+  def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Seq[LinkToRevert], coordinates: ProjectCoordinates, username: String): Option[String] = {
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
-        if (projectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
-          return Some(ErrorReversingUnchangedLinks)
-        val continuity = projectDAO.getContinuityCodes(projectId, roadNumber, roadPartNumber)
-        val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
-          val discontinuityAtEnd = continuity.maxBy(_._1)
-          continuity.filterKeys(_ < discontinuityAtEnd._1).map { case (addr, d) => (discontinuityAtEnd._1 - addr) -> d } ++
-            Map(discontinuityAtEnd._1 -> discontinuityAtEnd._2)
-        } else
-          Map()
-        projectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
-        val projectLinks = projectDAO.getProjectLinks(projectId).filter(pl => {
-          pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
-        })
-        val originalSideCodes = linearLocationDAO.fetchByRoadways(projectLinks.map(_.roadwayId).toSet)
-          .map(l => l.id -> l.sideCode).toMap
+        projectWritableCheck(projectId) match {
+          case None => {
+            if (projectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
+              return Some(ErrorReversingUnchangedLinks)
+            val continuity = projectDAO.getContinuityCodes(projectId, roadNumber, roadPartNumber)
+            val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
+              val discontinuityAtEnd = continuity.maxBy(_._1)
+              continuity.filterKeys(_ < discontinuityAtEnd._1).map { case (addr, d) => (discontinuityAtEnd._1 - addr) -> d } ++
+                Map(discontinuityAtEnd._1 -> discontinuityAtEnd._2)
+            } else
+              Map()
+            projectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
+            val projectLinks = projectDAO.getProjectLinks(projectId).filter(pl => {
+              pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
+            })
+            val originalSideCodes = linearLocationDAO.fetchByRoadways(projectLinks.map(_.roadwayId).toSet)
+              .map(l => l.id -> l.sideCode).toMap
 
-        projectDAO.updateProjectLinksToDB(projectLinks.map(x =>
-          x.copy(reversed = isReversed(originalSideCodes)(x),
-            discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username)
-        CalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
-        recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
-        None
+            projectDAO.updateProjectLinksToDB(projectLinks.map(x =>
+              x.copy(reversed = isReversed(originalSideCodes)(x),
+                discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username)
+            CalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
+            recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
+            saveProjectCoordinates(projectId, coordinates)
+            None
+          }
+          case Some(error) => Some(error)
+        }
       }
     } catch {
       case NonFatal(e) =>
@@ -522,28 +528,36 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     withDynTransaction {
-      val previousSplit = projectLinkDAO.fetchSplitLinks(splitOptions.projectId, linkId)
-      val updatedSplitOptions =
-        if (previousSplit.nonEmpty) {
-          previousSplitToSplitOptions(previousSplit, splitOptions)
-        } else
-          splitOptions
-      val (splitResultOption, errorMessage, splitVector) = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
-      dynamicSession.rollback()
-      val allTerminatedProjectLinks = if (splitResultOption.isEmpty) {
-        Seq.empty[ProjectLink]
-      } else {
-        splitResultOption.get.allTerminatedProjectLinks.map(fillRoadNames)
+      if (isWritableState(splitOptions.projectId)) {
+        val previousSplit = projectLinkDAO.fetchSplitLinks(splitOptions.projectId, linkId)
+        val updatedSplitOptions =
+          if (previousSplit.nonEmpty) {
+            previousSplitToSplitOptions(previousSplit, splitOptions)
+          } else
+            splitOptions
+        val (splitResultOption, errorMessage, splitVector) = preSplitSuravageLinkInTX(linkId, userName, updatedSplitOptions)
+        dynamicSession.rollback()
+        val allTerminatedProjectLinks = if (splitResultOption.isEmpty) {
+          Seq.empty[ProjectLink]
+        } else {
+          splitResultOption.get.allTerminatedProjectLinks.map(fillRoadNames)
+        }
+        val splitWithMergeTerminated = splitResultOption.map(rs => rs.toSeqWithMergeTerminated.map(fillRoadNames))
+        (splitWithMergeTerminated, allTerminatedProjectLinks, errorMessage, splitVector)
       }
-      val splitWithMergeTerminated = splitResultOption.map(rs => rs.toSeqWithMergeTerminated.map(fillRoadNames))
-      (splitWithMergeTerminated, allTerminatedProjectLinks, errorMessage, splitVector)
+      else (None, Seq(), None, None)
     }
   }
 
-  def splitSuravageLink(linkId: Long, username: String,
+  def splitSuravageLink(track: Int, projectId: Long, coordinates: ProjectCoordinates, linkId: Long, username: String,
                         splitOptions: SplitOptions): Option[String] = {
     withDynTransaction {
-      splitSuravageLinkInTX(linkId, username, splitOptions)
+      writableWithValidTrack(projectId, track) match {
+        case None => {
+          saveProjectCoordinates(projectId, coordinates)
+          splitSuravageLinkInTX(linkId, username, splitOptions) }
+        case Some(error) => Some(error)
+      }
     }
   }
 
@@ -1060,8 +1074,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
 
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], userName: String): Option[String] = {
-    try {
-      withDynTransaction {
         val (added, modified) = links.partition(_.status == LinkStatus.New.value)
         if (modified.exists(_.status == LinkStatus.Numbering.value)) {
           logger.info(s"Reverting whole road part in $projectId ($roadNumber/$roadPartNumber)")
@@ -1074,9 +1086,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           revertLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
         }
         None
+  }
+
+  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], coordinates: ProjectCoordinates, userName: String): Option[String] = {
+    try {
+      withDynTransaction {
+        projectWritableCheck(projectId) match {
+          case None =>
+            revertLinks(projectId, roadNumber, roadPartNumber, links, userName) match {
+              case None => {
+                saveProjectCoordinates(projectId, coordinates)
+                None
+              }
+              case Some(error) => Some(error)
+            }
+        }
       }
-    }
-    catch {
+    } catch {
       case NonFatal(e) =>
         logger.info("Error reverting the changes on roadlink", e)
         Some("Virhe tapahtui muutosten palauttamisen yhteydessä")
