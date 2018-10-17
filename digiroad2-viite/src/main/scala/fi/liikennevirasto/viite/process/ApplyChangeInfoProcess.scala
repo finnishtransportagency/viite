@@ -43,7 +43,7 @@ object ApplyChangeInfoProcess {
       * @return
       */
     def intercepts(linearLocation: LinearLocation): Boolean = {
-      linearLocation.linkId == newLinkId && !(linearLocation.endMValue <= Math.min(oldStart, oldEnd) || linearLocation.startMValue >= Math.max(oldStart, oldEnd))
+      linearLocation.linkId == oldLinkId && !(linearLocation.endMValue <= Math.min(oldStart, oldEnd) || linearLocation.startMValue >= Math.max(oldStart, oldEnd))
     }
   }
 
@@ -163,7 +163,7 @@ object ApplyChangeInfoProcess {
 
     linearLocation.copy(
       id = newId, linkId = projection.newLinkId, startMValue =  newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry,
-      calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), orderNumber = linearLocation.orderNumber + (projection.orderIncrement / decimalPlaces(linearLocation.orderNumber))
+      calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber))
     )
   }
 
@@ -215,25 +215,25 @@ object ApplyChangeInfoProcess {
      generateDividedProjections(dividedChanges) ++ generateNonDividedProjections(nonDividedChanges)
   }
 
-  def applyChanges(mappedChanges: Map[Long, Seq[ChangeInfo]], mappedRoadLinks: Map[Long, RoadLinkLike])(roadLink: RoadLinkLike, linearLocations: Seq[LinearLocation], changeSet: ChangeSet): (Seq[LinearLocation], ChangeSet) = {
-
-    //TODO is it needed to remove all the divided and combined changes that have length changes?
-
+  private def filterOutChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
     val filterOperations: Seq[ChangeInfo => Boolean] = Seq(
       filterOutChangesWithoutLinkIds,
       filterOutOlderChanges(linearLocations)
     )
 
-    val filteredChanges = mappedChanges.getOrElse(roadLink.linkId, Seq()).
-      filter(change => filterOperations.exists(filterOperation => filterOperation(change)))
+    changes.
+      filter(change => filterOperations.forall(filterOperation => filterOperation(change)))
+  }
+
+  private def applyChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
 
     //If contains some unsupported change type there is no need to apply any change
     //because the linear locations will be set as floating
-    filteredChanges.isEmpty || filteredChanges.exists(nonSupportedChange) match {
+    changes.isEmpty || changes.exists(nonSupportedChange) match {
       case true =>
         (linearLocations, changeSet)
       case _ =>
-        val projections = generateProjections(filteredChanges)
+        val projections = generateProjections(changes)
         linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
           case ((cLinearLocations, cChangeSet), linearLocation) =>
             val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
@@ -241,4 +241,44 @@ object ApplyChangeInfoProcess {
         }
     }
   }
+
+  def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]) :(Seq[LinearLocation], ChangeSet) = {
+
+    val filteredChanges = filterOutChanges(linearLocations, changes)
+
+    val mappedChanges = filteredChanges.groupBy(c => c.oldId.getOrElse(c.newId.get))
+
+    val mappedRoadLinks = roadLinks.groupBy(_.linkId).mapValues(_.head)
+
+    val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)
+
+    linearLocations.groupBy(_.linkId).foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
+      case ((existingSegments, changeSet), (linkId, linearLocations)) =>
+
+        val (adjustedLinearLocations, resultChangeSet) = applyChanges(linearLocations, mappedChanges.getOrElse(linkId, Seq()), changeSet, mappedRoadLinks)
+
+        (existingSegments ++ adjustedLinearLocations, resultChangeSet)
+    }
+  }
+
+//  def applyChanges(mappedChanges: Map[Long, Seq[ChangeInfo]], mappedRoadLinks: Map[Long, RoadLinkLike])(roadLink: RoadLinkLike, linearLocations: Seq[LinearLocation], changeSet: ChangeSet): (Seq[LinearLocation], ChangeSet) = {
+//
+//    //TODO is it needed to remove all the divided and combined changes that have length changes?
+//
+//    val filteredChanges = filterOutChanges(linearLocations, mappedChanges.getOrElse(roadLink.linkId, Seq()))
+//
+//    //If contains some unsupported change type there is no need to apply any change
+//    //because the linear locations will be set as floating
+//    filteredChanges.isEmpty || filteredChanges.exists(nonSupportedChange) match {
+//      case true =>
+//        (linearLocations, changeSet)
+//      case _ =>
+//        val projections = generateProjections(filteredChanges)
+//        linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
+//          case ((cLinearLocations, cChangeSet), linearLocation) =>
+//            val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
+//            (cLinearLocations ++ adjustedLinearLocations, resultChangeSet)
+//        }
+//    }
+//  }
 }
