@@ -483,6 +483,10 @@
         }
       });
 
+      rootElement.on('change', '#trackCodeDropdown', function () {
+        checkInputs('.project-');
+      });
+
       rootElement.on('change', '.form-group', function() {
         rootElement.find('.action-selected-field').prop("hidden", false);
       });
