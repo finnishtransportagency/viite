@@ -72,6 +72,7 @@
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
       if (id)
+        backend.abortGettingRoadLinks();
         backend.getProjectLinks({boundingBox: boundingBox, zoom: zoom, projectId: id}, function (fetchedLinks) {
           fetchedProjectLinks = _.map(fetchedLinks, function (projectLinkGroup) {
             return _.map(projectLinkGroup, function (projectLink) {
@@ -256,7 +257,6 @@
               publishableProject = successObject.publishable;
               projectErrors = successObject.projectErrors;
               eventbus.trigger('projectLink:projectLinksCreateSuccess');
-              eventbus.trigger('roadAddress:projectLinksCreateSuccess');
               eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
             }
           });
