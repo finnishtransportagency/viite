@@ -71,7 +71,8 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   }
 
 //TODO Check if this is needed at project creation. If used in the future it should use buildRoadAddressLink instead and have some refactor
-//  def buildSuravageRoadAddressLink(roadLinkProjectidTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
+  def buildSuravageRoadAddressLink(roadLinkProjectidTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
+    throw new NotImplementedError("VIITE-1540")
 //    val roadLink = roadLinkProjectidTuple._1
 //    val roadAddresses = roadLinkProjectidTuple._2 match { //Check if project attribute has been initialized
 //      case (Some(projectId)) =>
@@ -126,7 +127,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
 //      VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
 //      roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
 //      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, floating = false)
-//  }
+  }
 
   private def getVVHRoadName(link: Map[String, Any]): Option[String] = {
     Some(link.getOrElse(FinnishRoadName, link.getOrElse(SwedishRoadName, "none")).toString)

@@ -495,11 +495,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             if (reservedRoadParts.isEmpty) {
               Map("success" -> s"Puuttuvan tielinkkidatan takia kyseistä tieosaa ei pystytä varaamaan.")
             } else {
-              //TODO "Will be implemented at VIITE-1540" for now result is always with success
-              //              projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
-              //                case Some(errMsg) => Map("success" -> errMsg)
-              //                case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
-              //              }
+              projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+                case Some(errMsg) => Map("success" -> errMsg)
+                case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+              }
               Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
             }
           }
@@ -512,7 +511,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/revertchangesroadlink") {
     time(logger, "PUT request for /roadlinks/roadaddress/project/revertchangesroadlink") {
       //TODO VIITE-1630 (US VIITE-1540) multiple service calls and logic should be in the service layer
-      /*try {
+      try {
         val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
         if (linksToRevert.links.nonEmpty) {
           val writableProject = projectWritable(linksToRevert.projectId)
@@ -536,7 +535,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           logger.error(e.toString, e)
           InternalServerError(e.toString)
         }
-      }*/
+      }
     }
   }
 
@@ -713,9 +712,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/project/presplit/:linkID") {
     val linkID = params.get("linkID")
-    //TODO VIITE-1540
     time(logger, s"PUT request for /project/presplit/$linkID") {
-      /*val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser()
       linkID.map(_.toLong) match {
         case Some(link) =>
           try {
@@ -752,15 +750,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             case _: NumberFormatException => BadRequest("Missing mandatory data")
           }
         case _ => BadRequest("Missing Linkid from url")
-      }*/
+      }
     }
   }
 
   put("/project/split/:linkID") {
     val linkID = params.get("linkID")
-    //TODO VIITE-1540
     time(logger, s"PUT request for /project/split/$linkID") {
-      /*val user = userProvider.getCurrentUser()
+      val user = userProvider.getCurrentUser()
       linkID.map(_.toLong) match {
         case Some(link) =>
           try {
@@ -779,7 +776,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             case _: NumberFormatException => BadRequest("Missing mandatory data")
           }
         case _ => BadRequest("Missing Linkid from url")
-      }*/
+      }
     }
   }
 

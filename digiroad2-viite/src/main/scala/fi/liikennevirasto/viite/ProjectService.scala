@@ -753,16 +753,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-    //    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
-    //    val suravageList = withDynSession {
-    //      Await.result(fetch.suravageF, Duration.Inf)
-    //    .map(x => (x, Some(projectId))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-    //    }
-    //    val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, useFrozenVVHLinks, fetch)
-    //    val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
-    //    keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
-    //      projectLinks
+    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
+    val suravageList = withDynSession {
+      Await.result(fetch.suravageF, Duration.Inf)
+        .map(x => (x, Some(projectId))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
+    val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads, fetch)
+    val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
+    keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
+      projectLinks
   }
 
   def getProjectLinksLinear(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
@@ -1652,7 +1651,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   // TODO
   def updateTerminationForHistory(terminatedLinkIds: Set[Long], splitReplacements: Seq[ProjectLink]): Unit = {
-    throw new NotImplementedError()
+    throw new NotImplementedError("Will be implemented at VIITE-1540")
 //    withDynSession {
 //      roadAddressService.setSubsequentTermination(terminatedLinkIds)
 //      val mapping = RoadAddressSplitMapper.createAddressMap(splitReplacements)
@@ -1878,19 +1877,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def correctNullProjectEly(): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-    //    withDynSession {
-    //      //Get all the projects with non-existent ely code
-    //      val nullElyProjects = projectDAO.getRoadAddressProjects(withNullElyFilter = true)
-    //      nullElyProjects.foreach(project => {
-    //        //Get all the reserved road parts of said projects
-    //        val reservedRoadParts = projectDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
-    //        //Find the lowest m-Address Value of the reserved road parts
-    //        val reservedRoadAddresses = RoadAddressDAO.fetchByRoadPart(reservedRoadParts.head.roadNumber, reservedRoadParts.head.roadPartNumber).minBy(_.endAddrMValue)
-    //        //Use this part ELY code and set it on the project
-    //        projectDAO.updateProjectEly(project.id, reservedRoadAddresses.ely)
-    //      })
-    //    }
+    withDynSession {
+      //Get all the projects with non-existent ely code
+      val nullElyProjects = projectDAO.getRoadAddressProjects(withNullElyFilter = true)
+      nullElyProjects.foreach(project => {
+        //Get all the reserved road parts of said projects
+        val reservedRoadParts = projectReservedPartDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
+        //Find the lowest m-Address Value of the reserved road parts
+        val reservedRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(reservedRoadParts.head.roadNumber, reservedRoadParts.head.roadPartNumber).minBy(_.endAddrMValue)
+        //Use this part ELY code and set it on the project
+        projectDAO.updateProjectEly(project.id, reservedRoadAddresses.ely)
+      })
+    }
   }
 
   def getProjectEly(projectId: Long): Option[Long] = {

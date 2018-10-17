@@ -280,9 +280,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
     * @return Returns all the filtered road addresses
     */
+  // TODO Implement fetching with floating
   def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
+    if (withFloating) {
+      throw new NotImplementedError("Fetching with floating not implemented.")
+    }
     withDynSession {
-      val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, withFloating, fetchOnlyEnd)
+      val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
     }
   }

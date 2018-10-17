@@ -1408,13 +1408,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //        Seq(), None)
 //      val project = projectService.createRoadLinkProject(rap)
 //      val id = project.id
-//      val roadParts = RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project))
+//      val roadParts = roadAddressService.getRoadAddressWithRoadAndPart(5, 207).map(toProjectLink(project))
 //      mockForProject(id, roadParts)
-//      ProjectDAO.reserveRoadPart(id, roadParts.head.roadNumber, roadParts.head.roadPartNumber, "TestUser")
-//      ProjectDAO.create(Seq(roadParts.head))
-//      ProjectDAO.getProjectEly(project.id).isEmpty should be(true)
+//      projectDAO.reserveRoadPart(id, roadParts.head.roadNumber, roadParts.head.roadPartNumber, "TestUser")
+//      projectLinkDAO.create(Seq(roadParts.head))
+//      projectDAO.getProjectEly(project.id).isEmpty should be(true)
 //      projectService.correctNullProjectEly()
-//      ProjectDAO.getProjectEly(project.id).isEmpty should be(false)
+//      projectDAO.getProjectEly(project.id).isEmpty should be(false)
 //    }
 //  }
 
