@@ -253,6 +253,30 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
 
   }
 
+  test("Test applyChange When the road link is shortened more than 10 meters Then linear locations should not be adjusted") {
+
+    val linearLocations = Seq(
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 30.0, vvhTimestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+    )
+
+    val roadLinks = Seq(
+      dummyRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0), NormalLinkInterface),
+      dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
+    )
+
+    val changes = Seq(
+      dummyChangeInfo(ChangeType.ShortenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 10.0, oldEndMeasure = 30.0, newStartMeasure = 0.0, newEndMeasure = 20.0, vvhTimeStamp = 1L),
+      dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, vvhTimeStamp = 1L)
+    )
+
+    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+
+    adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
+    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
+  }
+
   test("Test applyChange When the road link is shortened at the end Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
