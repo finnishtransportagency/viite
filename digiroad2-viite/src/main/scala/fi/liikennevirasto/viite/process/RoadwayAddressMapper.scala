@@ -168,7 +168,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 
-  //TODO may be a good idea mode this method to road address service
+  // TODO Might be a good idea to move this method to the RoadAddressService
   def getRoadAddressesByRoadway(roadwayAddresses: Seq[Roadway]) : Seq[RoadAddress] = {
 
     val linearLocations = linearLocationDAO.fetchByRoadways(roadwayAddresses.map(_.roadwayNumber).toSet)

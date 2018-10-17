@@ -422,9 +422,9 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
+  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
-      fetch(withRoadAndPart(roadNumber, roadPart, withHistory, withFloating, fetchOnlyEnd))
+      fetch(withRoadAndPart(roadNumber, roadPart, withHistory, fetchOnlyEnd))
     }
   }
 
@@ -550,20 +550,16 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and road_number = $roadNumber"""
   }
 
-  private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, includeFloating: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
+  private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
     val historyFilter = if (!includeHistory)
       " AND end_date is null"
     else
       ""
 
-    val floatingFilter = if (!includeFloating)
-      " AND floating = 0"
-    else
-      ""
     val endPart = if (fetchOnlyEnd) {
       s" AND ra.end_addr_m = (Select max(road.end_addr_m) From Road_address road Where road.road_number = $roadNumber And road.road_part_number = $roadPart And (road.valid_to IS NULL AND road.end_date is null))"
     } else ""
-    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter $floatingFilter $endPart"""
+    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter $endPart"""
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
@@ -721,49 +717,6 @@ class RoadwayDAO extends BaseDAO {
   //    }
   //  }
   //
-
-    // TODO RoadwayDAO should return Roadway -objects. RoadAddress objects are combined of Roadway and LinearLocation data and should be handled by RoadAddressService.
-    def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
-      time(logger, "Fetch road addresses by bounding box") {
-        val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
-          boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
-        val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
-
-        val floatingFilter = if (fetchOnlyFloating)
-          " and ra.floating > 0"
-        else
-          ""
-        val normalRoadsFilter = if (onlyNormalRoads)
-          " and ra.link_source = 1"
-        else
-          ""
-        val roadNumbersFilter = if (roadNumberLimits.nonEmpty)
-          linearLocationDAO.withRoadNumbersFilter(roadNumberLimits, "Roadway")
-        else
-          ""
-
-
-        val query =
-          s"""
-          select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
-          ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-          ra.SIDE, ra.adjusted_timestamp,
-          ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
-          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
-          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
-          (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
-          (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-          ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
-          (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
-          from ROADWAY ra
-          where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
-            ra.terminated = 0 and
-            ra.valid_to is null and
-            ra.end_date is null
-        """
-        queryList(query)
-      }
-    }
   //
   //
   //  def dateTimeParse(string: String): DateTime = {
@@ -916,13 +869,13 @@ class RoadwayDAO extends BaseDAO {
   //  }
   //
   //
-  private def queryList(query: String): List[RoadAddress] = {
-    throw new NotImplementedError()
+//  private def queryList(query: String): List[RoadAddress] = {
+//    throw new NotImplementedError()
 //    Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
 //      case (_, roadAddressList) =>
 //        roadAddressList.head
 //    }.toList
-  }
+//  }
   //
   //  def fetchPartsByRoadNumbers(boundingRectangle: BoundingRectangle, roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
   //    time(logger, "Fetch road addresses of road parts by road numbers") {
