@@ -1261,16 +1261,16 @@ class RoadwayDAO extends BaseDAO {
   //  }
   //
   //
-  //  def expireById(ids: Set[Long]): Int = {
-  //    val query =
-  //      s"""
-  //          Update ROADWAY Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
-  //        """
-  //    if (ids.isEmpty)
-  //      0
-  //    else
-  //      Q.updateNA(query).first
-  //  }
+  def expireById(ids: Set[Long]): Int = {
+    val query =
+      s"""
+        Update ROADWAY Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
+      """
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
+  }
   //
   //  def expireRoadAddresses (sourceLinkIds: Set[Long]): AnyVal = {
   //    if (!sourceLinkIds.isEmpty) {
