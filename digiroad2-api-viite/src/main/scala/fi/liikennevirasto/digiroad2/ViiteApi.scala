@@ -21,8 +21,10 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.Swagger
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
+import org.scalatra.swagger._
 
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
@@ -57,13 +59,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadNetworkService: RoadNetworkService,
                val roadNameService: RoadNameService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
-               val deploy_date: String = Digiroad2Context.deploy_date
+               val deploy_date: String = Digiroad2Context.deploy_date,
+               implicit val swagger: Swagger
               )
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
-    with GZipSupport {
+    with ContentEncodingSupport
+    with SwaggerSupport {
+
+  protected val applicationDescription = "The user interface API "
 
   class Contains(r: Range) {
     def unapply(i: Int): Boolean = r contains i
@@ -101,7 +107,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     response.setHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  get("/startupParameters") {
+  val getStartupParameters =
+    (apiOperation[List[Map[String, Any]]]("getStartupParameters")
+      tags "User interface"
+      summary "Show all statup parameters"
+      notes "Shows all the start. You can search it too.")
+
+  get("/startupParameters", operation(getStartupParameters)) {
     time(logger, "GET request for /startupParameters") {
       val (east, north, zoom) = {
         val config = userProvider.getCurrentUser().configuration
