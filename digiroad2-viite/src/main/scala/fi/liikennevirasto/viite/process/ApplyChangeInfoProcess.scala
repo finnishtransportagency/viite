@@ -236,11 +236,6 @@ object ApplyChangeInfoProcess {
     }
   }
 
-  /**
-    *
-    * @param changes
-    * @return
-    */
   private def generateProjections(changes: Seq[ChangeInfo]): Seq[Projection] = {
     val (dividedChanges, nonDividedChanges) = changes.partition(_.changeType.isDividedChangeType)
     val (shortenedChanges, nonShortened) = nonDividedChanges.partition(_.changeType.isShortenedChangeType)
