@@ -146,6 +146,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
 class ProjectLinkDAO {
   private def logger = LoggerFactory.getLogger(getClass)
+  val roadwayDAO = new RoadwayDAO
 
   private val projectLinkQueryBase =
     s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK, PROJECT_LINK.DISCONTINUITY_TYPE,
@@ -334,53 +335,53 @@ class ProjectLinkDAO {
   }
 
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    time(logger, "Update project links") {
-//      val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
-//      val addresses = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadwayId).toSet).map(ra => ra.id -> ra).toMap
-//      val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
-//      val links = projectLinks.map { pl =>
-//        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadwayId) && !maxInEachTracks.contains(pl.id)) {
-//          val ra = addresses(pl.roadwayId)
-//          // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
-//          pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
-//            startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
-//            reversed = false)
-//        } else
-//          pl
-//      }
-//      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK=?, " +
-//        "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
-//        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-//        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
-//
-//      for (projectLink <- links) {
-//        projectLinkPS.setLong(1, projectLink.roadNumber)
-//        projectLinkPS.setLong(2, projectLink.roadPartNumber)
-//        projectLinkPS.setInt(3, projectLink.track.value)
-//        projectLinkPS.setInt(4, projectLink.discontinuity.value)
-//        projectLinkPS.setLong(5, projectLink.startAddrMValue)
-//        projectLinkPS.setLong(6, projectLink.endAddrMValue)
-//        projectLinkPS.setLong(7, projectLink.originalStartAddrMValue)
-//        projectLinkPS.setLong(8, projectLink.originalEndAddrMValue)
-//        projectLinkPS.setDate(9, new java.sql.Date(new Date().getTime))
-//        projectLinkPS.setString(10, modifier)
-//        projectLinkPS.setLong(11, projectLink.projectId)
-//        projectLinkPS.setInt(12, CalibrationCode.getFromAddress(projectLink).value)
-//        projectLinkPS.setInt(13, projectLink.status.value)
-//        projectLinkPS.setInt(14, projectLink.roadType.value)
-//        projectLinkPS.setInt(15, if (projectLink.reversed) 1 else 0)
-//        projectLinkPS.setObject(16, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
-//        projectLinkPS.setInt(17, projectLink.sideCode.value)
-//        projectLinkPS.setDouble(18, projectLink.startMValue)
-//        projectLinkPS.setDouble(19, projectLink.endMValue)
-//        projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB().value)
-//        projectLinkPS.setLong(22, projectLink.id)
-//        projectLinkPS.addBatch()
-//      }
-//      projectLinkPS.executeBatch()
-//      projectLinkPS.close()
-//    }
+//    throw new NotImplementedError("Will be implemented at VIITE-1540")
+    time(logger, "Update project links") {
+      val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
+      val addresses = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId).toSeq).map(ra => ra.id -> ra).toMap
+      val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
+      val links = projectLinks.map { pl =>
+        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadwayId) && !maxInEachTracks.contains(pl.id)) {
+          val ra = addresses(pl.roadwayId)
+          // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
+          pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
+            startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
+            reversed = false)
+        } else
+          pl
+      }
+      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
+        "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
+        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
+        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
+
+      for (projectLink <- links) {
+        projectLinkPS.setLong(1, projectLink.roadNumber)
+        projectLinkPS.setLong(2, projectLink.roadPartNumber)
+        projectLinkPS.setInt(3, projectLink.track.value)
+        projectLinkPS.setInt(4, projectLink.discontinuity.value)
+        projectLinkPS.setLong(5, projectLink.startAddrMValue)
+        projectLinkPS.setLong(6, projectLink.endAddrMValue)
+        projectLinkPS.setLong(7, projectLink.originalStartAddrMValue)
+        projectLinkPS.setLong(8, projectLink.originalEndAddrMValue)
+        projectLinkPS.setDate(9, new java.sql.Date(new Date().getTime))
+        projectLinkPS.setString(10, modifier)
+        projectLinkPS.setLong(11, projectLink.projectId)
+        projectLinkPS.setInt(12, CalibrationCode.getFromAddress(projectLink).value)
+        projectLinkPS.setInt(13, projectLink.status.value)
+        projectLinkPS.setInt(14, projectLink.roadType.value)
+        projectLinkPS.setInt(15, if (projectLink.reversed) 1 else 0)
+        projectLinkPS.setObject(16, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
+        projectLinkPS.setInt(17, projectLink.sideCode.value)
+        projectLinkPS.setDouble(18, projectLink.startMValue)
+        projectLinkPS.setDouble(19, projectLink.endMValue)
+        projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB().value)
+        projectLinkPS.setLong(21, projectLink.id)
+        projectLinkPS.addBatch()
+      }
+      projectLinkPS.executeBatch()
+      projectLinkPS.close()
+    }
   }
 
   def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
