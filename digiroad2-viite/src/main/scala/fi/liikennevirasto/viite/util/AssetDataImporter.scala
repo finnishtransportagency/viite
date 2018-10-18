@@ -212,11 +212,11 @@ class AssetDataImporter {
       Queries.getMunicipalitiesWithoutAhvenanmaa
     }
       municipalities.foreach(municipality => {
-        println("Processing municipality %d at time: %s".format(municipality, DateTime.now().toString))
+        println("Processing municipality %d at time: %s".format(municipality, DateTime.now()))
         val unaddressed = service.getUnaddressedRoadLink(roadNumbersToFetch, municipality)
         println("Got %d links".format(unaddressed.size))
         service.createUnaddressedRoadLink(unaddressed)
-        println("Municipality %d: %d links added at time: %s".format(municipality, unaddressed.size, DateTime.now().toString))
+        println("Municipality %d: %d links added at time: %s".format(municipality, unaddressed.size, DateTime.now()))
       })
   }
 

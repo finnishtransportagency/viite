@@ -16,7 +16,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 
 
-class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
+class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
@@ -24,7 +24,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
 
   val mockRoadNameService = MockitoSugar.mock[RoadNameService]
 
-  private val integrationApi = new ViiteIntegrationApi(mockRoadAddressService, mockRoadNameService)
+  private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService)
   addServlet(integrationApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
