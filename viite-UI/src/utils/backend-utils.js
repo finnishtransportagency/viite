@@ -2,6 +2,7 @@
   root.Backend = function () {
     var self = this;
     var loadingProject;
+    var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
@@ -200,7 +201,7 @@
         roadNumber: roadNumber,
         startPart: startPart,
         endPart: endPart,
-        projDate: projDate
+        projDate: convertDateToIso(projDate)
       })
         .then(function (x) {
           eventbus.trigger('roadPartsValidation:checkRoadParts', x);
@@ -391,6 +392,10 @@
         requests.push(getParameters.apply(undefined, arguments));
         return deferred.promise();
       };
+    }
+
+    function convertDateToIso(date){
+      return new Date(date.replace(finnishDatePattern,'$3-$2-$1')).toISOString();
     }
 
     //Methods for the UI Integrated Tests
