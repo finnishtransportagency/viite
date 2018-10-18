@@ -14,7 +14,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.ProjectValidator.ValidationErrorDetails
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.FloatingReason.{NewAddressGiven, NoFloating}
@@ -51,6 +50,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
+  val projectValidator = new ProjectValidator
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
@@ -1017,11 +1017,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def getProjectWithReservationChecks(projectId: Long, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): RoadAddressProject = {
-    ProjectValidator.checkProjectExists(projectId)
+    projectValidator.checkProjectExists(projectId)
     val project = projectDAO.getRoadAddressProjectById(projectId).get
-    ProjectValidator.checkReservedExistence(project, newRoadNumber, newRoadPart, linkStatus, projectLinks)
-    ProjectValidator.checkAvailable(newRoadNumber, newRoadPart, project)
-    ProjectValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
+    projectValidator.checkReservedExistence(project, newRoadNumber, newRoadPart, linkStatus, projectLinks)
+    projectValidator.checkAvailable(newRoadNumber, newRoadPart, project)
+    projectValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
     project
   }
 
@@ -1944,9 +1944,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectDAO.getProjectEly(projectId)
   }
 
-  def validateProjectById(projectId: Long): Seq[ValidationErrorDetails] = {
+  def validateProjectById(projectId: Long): Seq[projectValidator.ValidationErrorDetails] = {
     withDynSession {
-      ProjectValidator.validateProject(projectDAO.getRoadAddressProjectById(projectId).get, projectLinkDAO.getProjectLinks(projectId))
+      projectValidator.validateProject(projectDAO.getRoadAddressProjectById(projectId).get, projectLinkDAO.getProjectLinks(projectId))
     }
   }
 
