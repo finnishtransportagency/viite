@@ -1367,38 +1367,38 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.count(_.endDate.isEmpty) should be(2)
   }
 
-  //TODO this will be implemented at VIITE-1540
-//  test("split road address save behaves correctly on unchanged + new") {
-//    val road = 5L
-//    val roadPart = 205L
-//    val origStartM = 1024L
-//    val origEndM = 1547L
-//    val origStartD = Some(DateTime.now().minusYears(10))
-//    val linkId = 1049L
-//    val endM = 520.387
-//    val suravageLinkId = 5774839L
-//    val user = Some("user")
-//    val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
-//      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
-//    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
-//      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-//      LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
-//    val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM + 100L, Some(DateTime.now()), None, user,
-//      suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
-//      -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId), 85088L),
-//      ProjectLink(3L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origStartM + 177L, Some(DateTime.now()), None, user,
-//        suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
-//        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, false, Some(linkId), 85088L),
-//      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origEndM, Some(DateTime.now()), None, user,
-//        linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
-//        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId), 85088L))
-//    val result = projectService.createSplitRoadAddress(roadAddress, unchangedAndNew, project)
-//    result should have size (3)
-//    result.count(_.terminated == TerminationCode.Termination) should be(1)
-//    result.count(_.startDate == roadAddress.startDate) should be(2)
-//    result.count(_.startDate.get == project.startDate) should be(1)
-//    result.count(_.endDate.isEmpty) should be(2)
-//  }
+  test("split road address save behaves correctly on unchanged + new") {
+    val linearLocationId = 1234L;
+    val road = 5L
+    val roadPart = 205L
+    val origStartM = 1024L
+    val origEndM = 1547L
+    val origStartD = Some(DateTime.now().minusYears(10))
+    val linkId = 1049L
+    val endM = 520.387
+    val suravageLinkId = 5774839L
+    val user = Some("user")
+    val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+    val roadAddress = RoadAddress(1L, linearLocationId, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
+    val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM + 100L, origStartM, origEndM, Some(DateTime.now()), None, user,
+      suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
+      -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, linearLocationId, 8L, false, Some(linkId), 85088L),
+      ProjectLink(3L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origStartM + 177L, origStartM, origEndM, Some(DateTime.now()), None, user,
+        suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
+        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, linearLocationId, 8L, false, Some(linkId), 85088L),
+      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origEndM, origStartM, origEndM, Some(DateTime.now()), None, user,
+        linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
+        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, linearLocationId, 8L, false, Some(suravageLinkId), 85088L))
+    val result = projectService.createSplitRoadAddress(roadAddress, unchangedAndNew, project)
+    result should have size (3)
+    result.count(_.terminated == TerminationCode.Termination) should be(1)
+    result.count(_.startDate == roadAddress.startDate) should be(2)
+    result.count(_.startDate.get == project.startDate) should be(1)
+    result.count(_.endDate.isEmpty) should be(2)
+  }
 
   //TODO This might be not necessary anymore
 //  test("verify correction of a null ELY code project") {
@@ -1483,7 +1483,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), None)
       val newLink = Seq(ProjectLink(-1000L, 5L, 203L, Track.apply(99), Discontinuity.Continuous, 0L, 50L, 0L, 50L, None, None,
         None, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), NoFloating,
-        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 1234, 1234, 8L, reversed = false, None, 123456L, 12345L))
+        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 49704009, 1000570, 8L, reversed = false, None, 123456L, 12345L))
       val project = projectService.createRoadLinkProject(rap)
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 203, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
