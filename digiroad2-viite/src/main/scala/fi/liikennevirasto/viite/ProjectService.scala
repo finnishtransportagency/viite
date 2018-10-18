@@ -62,14 +62,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return Optional error message, None if no error
     */
   def checkRoadPartsExist(roadNumber: Long, roadStartPart: Long, roadEndPart: Long): Option[String] = {
-    withDynTransaction {
       if (roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadStartPart).isEmpty) {
         Some(ErrorStartingRoadPartNotFound)
       } else if (roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadEndPart).isEmpty) {
         Some(ErrorEndingRoadPartNotFound)
       } else
         None
-    }
   }
 
   def calculateProjectCoordinates(projectId: Long): ProjectCoordinates = {
@@ -142,7 +140,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long): Either[String, Seq[ProjectReservedPart]] = {
-    withDynTransaction {
       (startPart to endPart).foreach(part =>
         projectReservedPartDAO.roadPartReservedByProject(roadNumber, part) match {
           case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
@@ -150,6 +147,26 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         })
       Right((startPart to endPart).flatMap(part => getAddressPartInfo(roadNumber, part))
       )
+  }
+
+  def checkRoadPartExistsAndReservable(roadNumber: Long, startPart: Long, endPart: Long, projectDate: DateTime): Either[String, Seq[ProjectReservedPart]] = {
+    withDynTransaction {
+      checkRoadPartsExist(roadNumber, startPart, endPart) match {
+        case None => checkRoadPartsReservable(roadNumber, startPart, endPart) match {
+          case Left(err) => Left(err)
+          case Right(reservedRoadParts) => {
+            if (reservedRoadParts.isEmpty) {
+              Right(reservedRoadParts)
+            } else {
+              validateProjectDate(reservedRoadParts, projectDate) match {
+                case Some(errMsg) => Left(errMsg)
+                case None => Right(reservedRoadParts)
+              }
+            }
+          }
+        }
+        case Some(error) => Left(error)
+      }
     }
   }
 
@@ -177,22 +194,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def validateProjectDate(reservedParts: Seq[ProjectReservedPart], date: DateTime): Option[String] = {
-    withDynSession {
-      reservedParts.map(rp => (rp.roadNumber, rp.roadPartNumber) -> roadwayDAO.getRoadPartInfo(rp.roadNumber, rp.roadPartNumber)).toMap.
-        filterNot(_._2.isEmpty).foreach {
-        case ((roadNumber, roadPartNumber), value) =>
-          val (startDate, endDate) = value.map(v => (v._6, v._7)).get
-          if (startDate.nonEmpty && startDate.get.isAfter(date))
-            return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
-              s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
-              s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
-          if (endDate.nonEmpty && endDate.get.isAfter(date))
-            return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber loppupäivämäärä " +
-              s"${endDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
-              s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
-      }
-      None
+    reservedParts.map(rp => (rp.roadNumber, rp.roadPartNumber) -> roadwayDAO.getRoadPartInfo(rp.roadNumber, rp.roadPartNumber)).toMap.
+      filterNot(_._2.isEmpty).foreach {
+      case ((roadNumber, roadPartNumber), value) =>
+        val (startDate, endDate) = value.map(v => (v._6, v._7)).get
+        if (startDate.nonEmpty && startDate.get.isAfter(date))
+          return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
+            s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
+            s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
+        if (endDate.nonEmpty && endDate.get.isAfter(date))
+          return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber loppupäivämäärä " +
+            s"${endDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
+            s"${date.toString("dd.MM.yyyy")}, tarkista tiedot.")
     }
+    None
   }
 
   private def getAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
@@ -421,7 +436,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     if (roadways.isEmpty && !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
       Some(s"$ErrorFollowingRoadPartsNotFoundInDB TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
-    else if (projectEly.nonEmpty && projectEly.get != defaultProjectEly && (projectLinks.exists(_.ely != reservedRoadParts.ely.get) || roadways.exists(_.ely != reservedRoadParts.ely.get)))
+    else if ((projectLinks.exists(_.ely != reservedRoadParts.ely.get) || roadways.exists(_.ely != reservedRoadParts.ely.get)) && (projectEly.isEmpty || projectEly.get != defaultProjectEly ))
       Some(s"$ErrorFollowingPartsHaveDifferingEly TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
     else
       None
@@ -444,10 +459,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = projectLinkDAO.getProjectLinks(project.id)
     logger.debug(s"${projectLinks.size} links fetched")
     val projectLinkOriginalParts = if (projectLinks.nonEmpty) roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => (ra.roadNumber, ra.roadPartNumber)) else Seq()
+    val roadways = project.reservedParts.foldLeft(Seq.empty[Roadway]){ case (list, reserved) =>
+      list ++ roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
+    }
     val newProjectLinks = project.reservedParts.filterNot(res =>
       projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
       reserved => {
-        val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
+        //val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
         validateReservations(reserved, project.ely, projectLinks, roadways) match {
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
@@ -633,30 +651,34 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectFound(roadAddressProject).isEmpty)
       throw new IllegalArgumentException("Project not found")
     withDynTransaction {
-      isWritableState(roadAddressProject.id) match {
-        case true => {
-          if (projectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)) {
-            val storedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-            val removed = storedProject.reservedParts.filterNot(part =>
-              roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
-                rp.roadNumber == part.roadNumber))
-            removed.foreach(p => projectReservedPartDAO.removeReservedRoadPart(roadAddressProject.id, p))
-            removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
-            addLinksToProject(roadAddressProject)
-            val updatedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-            if (updatedProject.reservedParts.nonEmpty) {
-              projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = projectLinkDAO.getElyFromProjectLinks(roadAddressProject.id)))
-            } else { //in empty case we release ely
-              projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = None))
+      if (isWritableState(roadAddressProject.id)) {
+        validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
+          case Some(errMsg) => throw new IllegalStateException(errMsg)
+          case None => {
+            if (projectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)) {
+              val storedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+              val removed = storedProject.reservedParts.filterNot(part =>
+                roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
+                  rp.roadNumber == part.roadNumber))
+              removed.foreach(p => projectReservedPartDAO.removeReservedRoadPart(roadAddressProject.id, p))
+              removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
+              addLinksToProject(roadAddressProject)
+              val updatedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+              if (updatedProject.reservedParts.nonEmpty) {
+                projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = projectLinkDAO.getElyFromProjectLinks(roadAddressProject.id)))
+              } else { //in empty case we release ely
+                projectDAO.updateRoadAddressProject(roadAddressProject.copy(ely = None))
+              }
+              val savedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
+              saveProjectCoordinates(savedProject.id, calculateProjectCoordinates(savedProject.id))
+              savedProject
+            } else {
+              throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
             }
-            val savedProject = projectDAO.getRoadAddressProjectById(roadAddressProject.id).get
-            saveProjectCoordinates(savedProject.id, calculateProjectCoordinates(savedProject.id))
-            savedProject
-          } else {
-            throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
           }
         }
-        case _ => throw new IllegalStateException(projectNotWritable)
+      } else {
+        throw new IllegalStateException(projectNotWritable)
       }
     }
   }
@@ -1092,14 +1114,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction {
         projectWritableCheck(projectId) match {
-          case None =>
+          case None => {
             revertLinks(projectId, roadNumber, roadPartNumber, links, userName) match {
               case None => {
                 saveProjectCoordinates(projectId, coordinates)
                 None
               }
               case Some(error) => Some(error)
-            }
+            }}
+          case Some(error) => Some(error)
         }
       }
     } catch {

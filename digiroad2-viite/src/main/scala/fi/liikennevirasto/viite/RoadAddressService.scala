@@ -141,11 +141,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
-    val linearLocations = withDynSession {
+    val linearLocations =
       time(logger, "Fetch floating and non-floating linear locations by bounding box") {
         linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       }
-    }
     roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
   }
 

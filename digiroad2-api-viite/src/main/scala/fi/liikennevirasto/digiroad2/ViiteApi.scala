@@ -362,25 +362,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val user = userProvider.getCurrentUser()
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
       try {
-        val reservationMessage = if (roadAddressProject.reservedParts.nonEmpty) {
-          //TODO "Will be implemented at VIITE-1540" for now result is always with success -- it should go to the service layer
-          //          projectService.validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
-          //            case Some(errMsg) => Some(errMsg)
-          //            case None => None
-          //          }
-          None
-        } else {
-          None
-        }
-        if (reservationMessage.isEmpty) {
-          val projectSaved = projectService.saveProject(roadAddressProject)
-          val firstLink = projectService.getFirstProjectLink(projectSaved)
-          Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
-            projectSaved.reservedParts.map(reservedRoadPartToApi),
-            "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
-        } else {
-          Map("success" -> false, "errorMessage" -> reservationMessage.get)
-        }
+        val projectSaved = projectService.saveProject(roadAddressProject)
+        val firstLink = projectService.getFirstProjectLink(projectSaved)
+        Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
+          projectSaved.reservedParts.map(reservedRoadPartToApi),
+          "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
       } catch {
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
@@ -481,28 +467,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val roadNumber = params("roadNumber").toLong
     val startPart = params("startPart").toLong
     val endPart = params("endPart").toLong
-    val projDate = params("projDate").toString
+    val projDate = DateTime.parse(params("projDate"))
     time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
-      val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-      val errorMessageOpt = projectService.checkRoadPartsExist(roadNumber, startPart, endPart)
-      if (errorMessageOpt.isEmpty) {
-        projectService.checkRoadPartsReservable(roadNumber, startPart, endPart) match {
-          case Left(err) => Map("success" -> err, "roadparts" -> Seq.empty)
-          case Right(reservedRoadParts) => {
-            if (reservedRoadParts.isEmpty) {
-              Map("success" -> s"Puuttuvan tielinkkidatan takia kyseistä tieosaa ei pystytä varaamaan.")
-            } else {
-              //TODO "Will be implemented at VIITE-1540" for now result is always with success
-              //              projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
-              //                case Some(errMsg) => Map("success" -> errMsg)
-              //                case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
-              //              }
-              Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
-            }
-          }
+      projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
+        case Left(err) => Map("success" -> err)
+        case Right(reservedRoadParts) =>  Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
         }
-      } else
-        Map("success" -> errorMessageOpt.get)
     }
   }
 
