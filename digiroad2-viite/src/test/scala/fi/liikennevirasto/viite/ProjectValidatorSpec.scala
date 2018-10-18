@@ -1027,131 +1027,219 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       }
   }
 
-  //TODO this will be implemented at VIITE-1540
-//  test("Terminate all links for all parts in a roadNumber") {
-//    runWithRollback {
-//      val ra = Seq(
-//        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-//          0L, 10L, Some(DateTime.now()), None, None, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
-//        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
-//      val raIds = RoadAddressDAO.create(ra, Some("U"))
-//      val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-//        "", Seq(), None, Some(8), None)
-//      ProjectDAO.createRoadAddressProject(project)
-//      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
-//      ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
-//
-//      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated),
-//        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated)).zip(roadAddress).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
-//        roadwayId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
-//      val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-//      val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-//      val errors = ProjectValidator.validateProject(updProject,currentProjectLinks).distinct
-//      errors should have size 0
-//    }
-//  }
+  test("Terminate all links for all parts in a roadNumber") {
+    runWithRollback {
+      val raId = Sequences.nextRoadwayId
+      val startDate = DateTime.now()
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadAddresses = Seq(
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
+        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+      )
+      val ra = Seq(
+        //Combined
+        Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
+        //RightSide
+        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
-  //TODO this will be implemented at VIITE-1540
-//  test("Check end of road with all parts being EndOfRoad and all terminated on project with multiple parts (checkRemovedEndOfRoadParts method)") {
-//    runWithRollback {
-//      val ra = Seq(
-//        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
-//        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
-//      val raIds = RoadAddressDAO.create(ra, Some("U"))
-//      val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-//        "", Seq(), None, Some(8), None)
-//      ProjectDAO.createRoadAddressProject(project)
-//      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
-//      ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
-//
-//      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated),
-//        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged)).zip(roadAddress).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
-//        roadwayId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
-//      val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-//      val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-//      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
-//      errors should have size 0
-//    }
-//  }
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
 
-  //TODO this will be implemented at VIITE-1540
-//  test("Check end of road after first part being EndOfRoad and terminated, and second being EndOfRoad and not terminated in project with multiple parts (checkRemovedEndOfRoadParts method)") {
-//    runWithRollback {
-//      val ra = Seq(
-//        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
-//        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
-//      val raIds = RoadAddressDAO.create(ra, Some("U"))
-//      val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-//        "", Seq(), None, Some(8), None)
-//      ProjectDAO.createRoadAddressProject(project)
-//      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
-//      ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
-//
-//      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated),
-//        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated)).zip(roadAddress).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
-//        roadwayId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
-//      val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-//      val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-//      val errors = ProjectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
-//      errors should have size 0
-//    }
-//  }
+        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber2, Some(startDate), None)
+      )
+      roadwayDAO.create(ra)
+      linearLocationDAO.create(linearLocations)
 
-  //TODO this will be implemented at VIITE-1540
-//  test("Check end of road with both parts EndOfRoad and both not terminated in project with multiple parts") {
-//    runWithRollback {
-//      val ra = Seq(
-//        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39398L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39398L, 0.0, 0L)), Some(CalibrationPoint(39398L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0),
-//        RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L,
-//          (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
-//      val raIds = RoadAddressDAO.create(ra, Some("U"))
-//      val roadAddress = RoadAddressDAO.fetchByIdMassQuery(raIds.toSet).sortBy(_.roadPartNumber)
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-//        "", Seq(), None, Some(8), None)
-//      ProjectDAO.createRoadAddressProject(project)
-//      ProjectDAO.reserveRoadPart(id, 19999L, 1L, "u")
-//      ProjectDAO.reserveRoadPart(id, 19999L, 2L, "u")
-//
-//      ProjectDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged),
-//        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged)).zip(roadAddress).map(x => x._1.copy(roadPartNumber = x._2.roadPartNumber,
-//        roadwayId = x._2.id, geometry = x._2.geometry, discontinuity = x._2.discontinuity)))
-//      val updProject = ProjectDAO.getRoadAddressProjectById(project.id).get
-//      val currentProjectLinks = ProjectDAO.getProjectLinks(updProject.id)
-//      val errors = ProjectValidator.validateProject(updProject, currentProjectLinks).distinct
-//      errors should have size 1
-//      errors.head.affectedIds.head should be (currentProjectLinks.head.id)
-//      errors.head.validationError.value should be (EndOfRoadNotOnLastPart.value)
-//    }
-//  }
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      projectDAO.createRoadAddressProject(project)
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
+      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+
+      val updProject = projectDAO.getRoadAddressProjectById(project.id).get
+      val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
+
+      mockEmptyRoadAddressServiceCalls()
+
+      val errors = projectValidator.validateProject(updProject,currentProjectLinks).distinct
+      errors should have size 0
+    }
+  }
+
+  test("Check end of road with all parts being EndOfRoad and all terminated on project with multiple parts (checkRemovedEndOfRoadParts method)") {
+    runWithRollback {
+
+      val raId = Sequences.nextRoadwayId
+      val startDate = DateTime.now()
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadAddresses = Seq(
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
+        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+      )
+      val ra = Seq(
+        //Combined
+        Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
+        //RightSide
+        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
+
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
+
+        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber2, Some(startDate), None)
+      )
+      roadwayDAO.create(ra)
+      linearLocationDAO.create(linearLocations)
+
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      projectDAO.createRoadAddressProject(project)
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
+
+      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+      val updProject = projectDAO.getRoadAddressProjectById(project.id).get
+      val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
+
+      mockEmptyRoadAddressServiceCalls()
+
+      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      errors should have size 0
+    }
+  }
+
+  test("Check end of road after first part being EndOfRoad and terminated, and second being EndOfRoad and not terminated in project with multiple parts (checkRemovedEndOfRoadParts method)") {
+    runWithRollback {
+
+      val raId = Sequences.nextRoadwayId
+      val startDate = DateTime.now()
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadAddresses = Seq(
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
+        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+      )
+      val ra = Seq(
+        //Combined
+        Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
+        //RightSide
+        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
+
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
+
+        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber2, Some(startDate), None)
+      )
+      roadwayDAO.create(ra)
+      linearLocationDAO.create(linearLocations)
+
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      projectDAO.createRoadAddressProject(project)
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
+
+      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+
+
+      val updProject = projectDAO.getRoadAddressProjectById(project.id).get
+      val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
+
+      mockEmptyRoadAddressServiceCalls()
+
+      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      errors should have size 0
+    }
+  }
+
+  test("Check end of road with both parts EndOfRoad and both not terminated in project with multiple parts") {
+    runWithRollback {
+
+      val raId = Sequences.nextRoadwayId
+      val startDate = DateTime.now()
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadAddresses = Seq(
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
+        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(startDate),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None)
+      )
+      val ra = Seq(
+        //Combined
+        Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
+        //RightSide
+        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
+
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
+
+        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber2, Some(startDate), None)
+      )
+      roadwayDAO.create(ra)
+      linearLocationDAO.create(linearLocations)
+
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      projectDAO.createRoadAddressProject(project)
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
+      projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
+      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 1L, discontinuity = Discontinuity.EndOfRoad, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+
+
+      val updProject = projectDAO.getRoadAddressProjectById(project.id).get
+      val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
+
+      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1l, 2l))
+      when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(roadAddresses)
+      when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
+      when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getPreviousRoadAddressPart(19999l, 1l)).thenReturn(None)
+      when(mockRoadAddressService.getPreviousRoadAddressPart(19999l, 2l)).thenReturn(Some(1l))
+
+      val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
+      errors should have size 1
+      errors.head.affectedIds.head should be (currentProjectLinks.head.id)
+      errors.head.validationError.value should be (projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
+    }
+  }
 
   //TODO this will be implemented at VIITE-1540
 //  test("Check end of road in different road numbers with both parts EndOfRod and both not terminated in project with multiple parts (checkRemovedEndOfRoadParts method)") {
