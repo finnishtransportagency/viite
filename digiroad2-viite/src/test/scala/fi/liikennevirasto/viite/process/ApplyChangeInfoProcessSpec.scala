@@ -267,12 +267,12 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val linearLocationOne = adjustedLinearLocations.find(_.id == 1L).get
 
     linearLocationOne.startMValue should be (0.0)
-    linearLocationOne.endMValue should be (5.0)
+    linearLocationOne.endMValue should be (7.5)
     linearLocationOne.sideCode should be (SideCode.TowardsDigitizing)
 
     val linearLocationTwo = adjustedLinearLocations.find(_.id == 2L).get
 
-    linearLocationTwo.startMValue should be (5.0)
+    linearLocationTwo.startMValue should be (7.5)
     linearLocationTwo.endMValue should be (15.0)
     linearLocationOne.sideCode should be (SideCode.TowardsDigitizing)
 
@@ -330,12 +330,12 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val linearLocationOne = adjustedLinearLocations.find(_.id == 1L).get
 
     linearLocationOne.startMValue should be (0.0)
-    linearLocationOne.endMValue should be (10.0)
+    linearLocationOne.endMValue should be (7.5)
     linearLocationOne.sideCode should be (SideCode.TowardsDigitizing)
 
     val linearLocationTwo = adjustedLinearLocations.find(_.id == 2L).get
 
-    linearLocationTwo.startMValue should be (10.0)
+    linearLocationTwo.startMValue should be (7.5)
     linearLocationTwo.endMValue should be (15.0)
     linearLocationOne.sideCode should be (SideCode.TowardsDigitizing)
 
