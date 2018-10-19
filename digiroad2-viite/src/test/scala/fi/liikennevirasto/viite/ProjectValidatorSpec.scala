@@ -1984,118 +1984,185 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO this will be implemented at VIITE-1540
-//  test("There should be a validation error when there is a road end on previous road part outside of project for 1 & 2 track codes") {
-//    runWithRollback {
-//      RoadAddressDAO.create(Seq(
-//        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
-//        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-//        floating = NoFloating, Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0
-//      ),
-//        RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
-//          0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-//          floating = NoFloating, Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0
-//        )
-//      ))
-//      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), changeTrack = true, roads = Seq((19999L, 2L, "Test road")), discontinuity = Discontinuity.EndOfRoad)
-//      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
-//      errors should have size 1
-//      errors.head.validationError.value should be(DoubleEndOfRoad.value)
-//    }
-//  }
+  test("There should be a validation error when there is a road end on previous road part outside of project for 1 & 2 track codes") {
+    runWithRollback {
 
-  //TODO this will be implemented at VIITE-1540
-//  test("Validator should return MissingEndOfRoad validation error if any of the track codes on the end of a part are not End Of Road") {
-//    runWithRollback {
-//      val roadAddresses = Seq(RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-//        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
-//        floating = NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
-//      val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((19999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
-//      ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(roadAddresses.head)))
-//      val projectLinks = ProjectDAO.getProjectLinks(project.id)
-//      val validationErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks)
-//      //Should have error in both tracks
-//      validationErrors.size should be(1)
-//      validationErrors.head.projectId should be(project.id)
-//      validationErrors.head.validationError.value should be(MissingEndOfRoad.value)
-//      validationErrors.head.affectedIds.sorted should be(projectLinks.filterNot(_.track == Track.Combined).map(_.id).sorted)
-//      //Should only have error in LEFT TRACK
-//      val leftErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
-//        if (pl.track == Track.RightSide)
-//          pl.copy(discontinuity = Discontinuity.EndOfRoad)
-//        else pl
-//      }))
-//      leftErrors.size should be(1)
-//      leftErrors.head.projectId should be(project.id)
-//      leftErrors.head.validationError.value should be(MissingEndOfRoad.value)
-//      leftErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.LeftSide).map(_.id).sorted)
-//      //Should only have error in RIGHT TRACK
-//      val rightErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
-//        if (pl.track == Track.LeftSide)
-//          pl.copy(discontinuity = Discontinuity.EndOfRoad)
-//        else pl
-//      }))
-//      rightErrors.size should be(1)
-//      rightErrors.head.projectId should be(project.id)
-//      rightErrors.head.validationError.value should be(MissingEndOfRoad.value)
-//      rightErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.RightSide).map(_.id).sorted)
-//      //Should have no error
-//      val noErrors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
-//        if (pl.track != Track.Combined)
-//          pl.copy(discontinuity = Discontinuity.EndOfRoad)
-//        else pl
-//      }))
-//      noErrors.size should be(0)
-//    }
-//  }
+      val raId = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
 
-  //TODO this will be implemented at VIITE-1540
-//    test("Validator should return MajorDiscontinuity validation error if any of the track codes on the end of a part are not End Of Road") {
-//      runWithRollback {
-//      val roadAddresses = Seq(RoadAddress(NewRoadAddress, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-//        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (None, None),
-//        floating = NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8L, NoTermination, 0))
-//      val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L, 30L), roads = Seq((19999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
-//      ProjectDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(roadAddresses.head)))
-//      ProjectDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
-//      sqlu"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""".execute
-//      val projectLinks = ProjectDAO.getProjectLinks(project.id)
-//      val reservedParts = ProjectDAO.fetchReservedRoadParts(project.id)
-//      val projectWithReservations = project.copy(reservedParts = reservedParts)
-//      //Should NOT have error in both tracks
-//      val noErrors = ProjectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks)
-//      noErrors.size should be(0)
-//
-//      //Should return MAJOR DISCONTINUITY to both Project Links, part number = 1
-//      val originalGeom = projectLinks.filter(_.roadPartNumber == 2L).head.geometry
-//      val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
-//      val discontinuousGeomString = "'" + toGeomString(Seq(Point(40.0, 50.0), Point(60.0, 70.0))) + "'"
-//      sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = ${discontinuousGeomString} Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
-//      val errorsAtEnd = ProjectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
-//        if (pl.roadPartNumber == 2L)
-//          pl.copyWithGeometry(discontinuousGeom)
-//        else pl
-//      }))
-//      errorsAtEnd.size should be(1)
-//      errorsAtEnd.head.validationError.value should be(MajorDiscontinuityFound.value)
-//      errorsAtEnd.head.affectedIds.sorted should be(projectLinks.filter(pl => pl.roadPartNumber == 1L && pl.track != Track.Combined).map(_.id).sorted)
-//    }
-//  }
+      val ra = Seq(
+        RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.LeftSide, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
+        RoadAddress(12346,linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.RightSide, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(5.0, 40.0), Point(5.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+      )
 
-  //TODO Will be implemented at VIITE-1540
-//  test("Validator should return validation error if there is End Of Road in the middle of road part") {
-//    runWithRollback {
-//      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.EndOfRoad)
-//      val errorLinks = projectLinks.map { l =>
-//        if (l.startAddrMValue == 10 )
-//          l.copy(discontinuity = Discontinuity.EndOfRoad)
-//        else l
-//      }
-//      val validationErrors = ProjectValidator.checkProjectContinuity(project, errorLinks.distinct)
-//      validationErrors.size should be(1)
-//      validationErrors.head.validationError.value should be (EndOfRoadMiddleOfPart.value)
-//    }
-//  }
+      val roadways = Seq(
+        Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None),
+        Roadway(raId+1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+      )
+
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        (Some(0l), Some(10l)), FloatingReason.NoFloating,  Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        roadwayNumber1, Some(DateTime.parse("1901-01-01")), None),
+        LinearLocation(linearLocationId+1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating,  Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber2, Some(DateTime.parse("1901-01-01")), None)
+      )
+
+      roadwayDAO.create(roadways)
+      linearLocationDAO.create(linearLocations)
+
+      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq.empty[Long])
+      when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
+      when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra.head))
+      when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(Some(1L))
+
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), changeTrack = true, roads = Seq((19999L, 2L, "Test road")), discontinuity = Discontinuity.EndOfRoad)
+      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks)
+      errors should have size 1
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.DoubleEndOfRoad.value)
+    }
+  }
+
+  test("Validator should return MissingEndOfRoad validation error if any of the track codes on the end of a part are not End Of Road") {
+    runWithRollback {
+
+      val raId = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
+
+      val ra = Seq(
+        RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+          Seq(Point(0.0, 0.0), Point(0.0, 10.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+      )
+
+      val roadway = Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
+
+      roadwayDAO.create(Seq(roadway))
+      linearLocationDAO.create(Seq(linearLocation))
+
+      val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((19999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
+      projectLinkDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(ra.head)))
+      val projectLinks = projectLinkDAO.getProjectLinks(project.id)
+
+      mockEmptyRoadAddressServiceCalls()
+      val validationErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks)
+      //Should have error in both tracks
+      validationErrors.size should be(1)
+      validationErrors.head.projectId should be(project.id)
+      validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      validationErrors.head.affectedIds.sorted should be(projectLinks.filterNot(_.track == Track.Combined).map(_.id).sorted)
+      //Should only have error in LEFT TRACK
+
+      val leftErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
+        if (pl.track == Track.RightSide)
+          pl.copy(discontinuity = Discontinuity.EndOfRoad)
+        else pl
+      }))
+      leftErrors.size should be(1)
+      leftErrors.head.projectId should be(project.id)
+      leftErrors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      leftErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.LeftSide).map(_.id).sorted)
+      //Should only have error in RIGHT TRACK
+      val rightErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
+        if (pl.track == Track.LeftSide)
+          pl.copy(discontinuity = Discontinuity.EndOfRoad)
+        else pl
+      }))
+      rightErrors.size should be(1)
+      rightErrors.head.projectId should be(project.id)
+      rightErrors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      rightErrors.head.affectedIds.sorted should be(projectLinks.filter(_.track == Track.RightSide).map(_.id).sorted)
+      //Should have no error
+      val noErrors = projectValidator.checkRoadContinuityCodes(project, projectLinks.map(pl => {
+        if (pl.track != Track.Combined)
+          pl.copy(discontinuity = Discontinuity.EndOfRoad)
+        else pl
+      }))
+      noErrors.size should be(0)
+    }
+  }
+
+    test("Validator should return MajorDiscontinuity validation error if any of the track codes on the end of a part are not End Of Road") {
+
+      runWithRollback {
+        val raId = Sequences.nextRoadwayId
+        val linearLocationId = Sequences.nextLinearLocationId
+
+        val ra = Seq(
+          RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
+            Seq(Point(0.0, 0.0), Point(0.0, 10.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        )
+
+        val roadway = Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+
+        val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
+
+        roadwayDAO.create(Seq(roadway))
+        linearLocationDAO.create(Seq(linearLocation))
+
+      val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L, 30L), roads = Seq((19999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
+      projectLinkDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(ra.head)))
+      projectReservedPartDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
+      sqlu"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""".execute
+      val projectLinks = projectLinkDAO.getProjectLinks(project.id)
+      val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      val projectWithReservations = project.copy(reservedParts = reservedParts)
+      //Should NOT have error in both tracks
+        when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
+        when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(ra)
+        when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
+        when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
+        when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra.head))
+        when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(Some(1L))
+
+      val noErrors = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks)
+      noErrors.size should be(0)
+
+      //Should return MAJOR DISCONTINUITY to both Project Links, part number = 1
+      val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
+      val geometry = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
+      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = #${geometryQuery} Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
+      val errorsAtEnd = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
+        if (pl.roadPartNumber == 2L)
+          pl.copyWithGeometry(discontinuousGeom)
+        else pl
+      }))
+      errorsAtEnd.size should be(1)
+      errorsAtEnd.head.validationError.value should be(projectValidator.ValidationErrorList.MajorDiscontinuityFound.value)
+      errorsAtEnd.head.affectedIds.sorted should be(projectLinks.filter(pl => pl.roadPartNumber == 1L && pl.track != Track.Combined).map(_.id).sorted)
+    }
+  }
+
+  test("Validator should return validation error if there is End Of Road in the middle of road part") {
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.EndOfRoad)
+      val errorLinks = projectLinks.map { l =>
+        if (l.startAddrMValue == 10 )
+          l.copy(discontinuity = Discontinuity.EndOfRoad)
+        else l
+      }
+      mockEmptyRoadAddressServiceCalls()
+      val validationErrors = projectValidator.checkProjectContinuity(project, errorLinks.distinct)
+      validationErrors.size should be(1)
+      validationErrors.head.validationError.value should be (projectValidator.ValidationErrorList.EndOfRoadMiddleOfPart.value)
+    }
+  }
 
   //  //TODO to be done/changed in a more detailed story
   //  ignore("Project Links must have a ely change discontinuity code if next part is on different ely") {
