@@ -108,7 +108,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  private def geometryWKT(geometry: Seq[Point], startAddr: Long, endAddr: Long): (String, String) = {
+  def geometryWKT(geometry: Seq[Point], startAddr: Long, endAddr: Long): (String, String) = {
     if (geometry.nonEmpty) {
       val segments = geometry.zip(geometry.tail)
       val factor = (endAddr - startAddr) / GeometryUtils.geometryLength(geometry)
