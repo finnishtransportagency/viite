@@ -26,6 +26,7 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.scalatest.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
