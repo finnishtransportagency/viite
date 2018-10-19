@@ -38,7 +38,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  val projectValidator = ProjectValidator
+  val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val roadwayDAO = new RoadwayDAO
@@ -82,7 +82,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     override def withDynTransaction[T](f: => T): T = f
   }
-
 
   after {
     reset(mockRoadLinkService)

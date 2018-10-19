@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.format.DateTimeFormat
 
-object ProjectValidator {
+class ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
   lazy val dr2properties: Properties = {
@@ -765,7 +765,7 @@ object ProjectValidator {
 
     def checkEndOfRoadOnLastPart: Seq[ValidationErrorDetails] = {
       val afterCheckErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
-        val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
+        val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toLong, project.startDate)
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         trackIntervals.flatMap {
           interval =>
