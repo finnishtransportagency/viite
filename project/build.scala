@@ -31,7 +31,7 @@ object Digiroad2Build extends Build {
         "joda-time" % "joda-time" % "2.2",
         "com.typesafe.akka" %% "akka-actor" % "2.3.2",
         "org.geotools" % "gt-graph" % "13.1",
-        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
       )
     )
   )
@@ -53,7 +53,7 @@ object Digiroad2Build extends Build {
         "org.apache.commons" % "commons-lang3" % "3.2",
         "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
-        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "com.typesafe.slick" %% "slick" % "3.0.0",
         "org.json4s"   %% "json4s-jackson" % "3.5.3",
         "org.joda" % "joda-convert" % "1.2",
@@ -89,7 +89,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % "3.5.3",
-        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
@@ -123,7 +123,7 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "com.typesafe.akka" %% "akka-actor" % "2.3.2",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
-        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "compile,test",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "compile,test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
@@ -162,7 +162,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % "3.5.3",
         "org.json4s"   %% "json4s-native" % "3.5.2",
-        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
@@ -200,7 +200,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % "3.5.3",
-        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
