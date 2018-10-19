@@ -23,6 +23,7 @@ import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressL
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData, _}
 import org.joda.time.DateTime
+import org.mockito.ArgumentMatchers.any
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito.{reset, when}
 import org.mockito.invocation.InvocationOnMock
