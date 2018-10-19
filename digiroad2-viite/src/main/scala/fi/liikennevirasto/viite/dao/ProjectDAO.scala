@@ -121,7 +121,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
   def getEndPoints(direction: Vector3d) = {
-    if(sideCode == SideCode.Unknown) {
+    if (sideCode == SideCode.Unknown) {
       Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
     } else {
       (startingPoint, endPoint)
