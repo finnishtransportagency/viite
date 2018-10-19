@@ -124,7 +124,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   // TODO Should we add the roadway_id also here?
-  private def roadAddressLinksToApi(roadAddressLinks : Seq[RoadAddressLink]): Seq[Map[String, Any]] = {
+  def roadAddressLinksToApi(roadAddressLinks : Seq[RoadAddressLink]): Seq[Map[String, Any]] = {
     roadAddressLinks.map{
       roadAddressLink =>
         Map(

@@ -24,7 +24,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   val mockRoadNameService = MockitoSugar.mock[RoadNameService]
 
-  private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService)
+  private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService, new ViiteSwagger)
   addServlet(integrationApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
