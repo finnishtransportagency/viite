@@ -9,9 +9,8 @@ import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService, RoadType}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Matchers
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 
