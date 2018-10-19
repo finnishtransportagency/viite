@@ -19,23 +19,23 @@ object Dummies {
     Roadway(0L, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "", None, 0L, NoTermination)
   }
 
-  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, vvhTimestamp: Long): LinearLocation =
+  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, vvhTimestamp: Long): LinearLocation =
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, NoFloating, LinkGeomSource.NormalLinkInterface, vvhTimestamp)
 
-  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, vvhTimestamp: Long): LinearLocation =
+  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, vvhTimestamp: Long): LinearLocation =
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, floatingReason, LinkGeomSource.NormalLinkInterface, vvhTimestamp)
 
-  def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
+  def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
     dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, NoFloating, LinkGeomSource.NormalLinkInterface)
 
-  def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason): LinearLocation =
+  def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason): LinearLocation =
     dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, floatingReason, LinkGeomSource.NormalLinkInterface)
 
-  def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): LinearLocation ={
-    dummyLinearLocation(roadwayNumber + orderNumber, roadwayNumber, orderNumber, linkId, startMValue, endMValue, floatingReason, LinkGeomSource.NormalLinkInterface, vvhTimestamp = 0L)
+  def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): LinearLocation ={
+    dummyLinearLocation(roadwayNumber + Math.round(orderNumber), roadwayNumber, orderNumber, linkId, startMValue, endMValue, floatingReason, LinkGeomSource.NormalLinkInterface, vvhTimestamp = 0L)
   }
 
-  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource, vvhTimestamp: Long): LinearLocation ={
+  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource, vvhTimestamp: Long): LinearLocation ={
     LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, vvhTimestamp, (None, None), floatingReason,
       Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, roadwayNumber)
   }

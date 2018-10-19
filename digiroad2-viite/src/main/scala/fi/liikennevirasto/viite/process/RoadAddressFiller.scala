@@ -16,7 +16,7 @@ object RoadAddressFiller {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], order: Int, geometry: Seq[Point])
+  case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], order: Long, geometry: Seq[Point])
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
                       adjustedMValues: Seq[LinearLocationAdjustment],
@@ -129,7 +129,7 @@ object RoadAddressFiller {
     val (overflowingSegments, passThroughSegments) = segments.partition(x => (x.endMValue - MaxAllowedMValueError > linkLength) && (x.endMValue - linkLength <= MaxDistanceDiffAllowed))
     val cappedSegments = overflowingSegments.map { s =>
       val newGeom = GeometryUtils.geometrySeqEndPoints(GeometryUtils.truncateGeometry3D(roadLink.geometry, s.startMValue, linkLength))
-      (s.copy(endMValue = linkLength, geometry = newGeom), LinearLocationAdjustment(s.id, roadLink.linkId, None, Option(linkLength), newGeom))
+      (s.copy(endMValue = linkLength, geometry = newGeom), LinearLocationAdjustment(s.id, roadLink.linkId, None, Option(linkLength), s.orderNumber.toLong, newGeom))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
@@ -147,7 +147,7 @@ object RoadAddressFiller {
     val (extendedSegments, adjustments) = if((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed ){
       val newGeom = GeometryUtils.geometrySeqEndPoints(GeometryUtils.truncateGeometry3D(roadLink.geometry, lastSegment.startMValue, linkLength))
       (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength, geometry = newGeom)),
-        Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength), newGeom)))
+        Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength), lastSegment.orderNumber.toLong, newGeom)))
     } else {
       (segments, Seq())
     }
