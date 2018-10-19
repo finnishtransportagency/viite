@@ -102,25 +102,25 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     else {
       // Get left track non-connected points and find the closest to right track starting point
       val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-      val leftPoints = if (leftLinks.size == 1){
+      val leftPoints = if (leftLinks.size == 1) {
         leftLinks.flatMap(l => {
           val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
           Seq(p1 -> l, p2 -> l)
-        }).groupBy(_._1).mapValues(_.map(_._2).toSeq.distinct).keys
+        }).groupBy(_._1).mapValues(_.map(_._2).distinct).keys
       } else {
         TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
       }
 
 
       val (d1, d2) = GeometryUtils.distancesBetweenEndPointsInOrigin(rightPoints.toSeq, leftPoints.toSeq)
-      val  isRightHeadAdjacentToRightStartPoint= GeometryUtils.areAdjacent(rightPoints.head, rightStartPoint)
-     val possiblePoints = if(d1 > d2) {
-        if(isRightHeadAdjacentToRightStartPoint)
+      val isRightHeadAdjacentToRightStartPoint = GeometryUtils.areAdjacent(rightPoints.head, rightStartPoint)
+      val possiblePoints = if (d1 > d2) {
+        if (isRightHeadAdjacentToRightStartPoint)
           (rightStartPoint, leftPoints.last)
         else
           (rightStartPoint, leftPoints.head)
       } else {
-        if(isRightHeadAdjacentToRightStartPoint)
+        if (isRightHeadAdjacentToRightStartPoint)
           (rightStartPoint, leftPoints.head)
         else
           (rightStartPoint, leftPoints.last)
@@ -131,7 +131,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       possiblePoints
     }
   }
-
 
 
   /**
@@ -155,29 +154,29 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val remainLinks = oldLinks ++ newLinks
         if (remainLinks.isEmpty)
           throw new InvalidAddressDataException("Missing right track starting project links")
-        //Grab all the endpoints of the links
-        val direction = if(remainLinks.exists(_.sideCode != SideCode.Unknown)) {
+        // Grab all the endpoints of the links
+        val direction = if (remainLinks.exists(_.sideCode != SideCode.Unknown)) {
           remainLinks.filter(_.sideCode != SideCode.Unknown).map(p => p.endPoint - p.startingPoint).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
         } else {
           val sampleLink = remainLinks.head.geometry.head
           if (remainLinks.flatMap(_.geometry).forall(geo => geo.y == sampleLink.y)) {
-            //Very rare case
-            //ALL Y Values are equal on the tracks check the X Value
+            // Very rare case
+            // ALL Y Values are equal on the tracks check the X Value
             Vector3d(1.0, 0.0, 0.0)
           } else {
-            //Use the default vector
-            Vector3d(0.0 ,1.0 ,0.0)
+            // Use the default vector
+            Vector3d(0.0, 1.0, 0.0)
           }
 
         }
 
-        val points = remainLinks.map(pl => pl.getEndPoints(direction) )
+        val points = remainLinks.map(pl => pl.getEndPoints(direction))
 
         // Approximate estimate of the mid point: averaged over count, not link length
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
           (p - Point(0, 0)).scale(1.0 / points.size) + x
         }
-       TrackSectionOrder.findOnceConnectedLinks(remainLinks).keys.minBy(p => direction.dot(p.toVector - midPoint))
+        TrackSectionOrder.findOnceConnectedLinks(remainLinks).keys.minBy(p => direction.dot(p.toVector - midPoint))
       }
 
     )
