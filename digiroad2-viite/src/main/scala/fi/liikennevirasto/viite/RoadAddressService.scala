@@ -389,18 +389,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   }
 
-  def sortRoadWayWithNewRoads(newLinearLocations: Seq[LinearLocation]): Seq[LinearLocationAdjustment] = {
+  def sortRoadWayWithNewRoads(newLinearLocations: Seq[LinearLocation]): Seq[LinearLocation] = {
     val linearByRoadwayNumberGroup = linearLocationDAO.fetchByRoadways(newLinearLocations.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
     val newLinearLocationsGroup = newLinearLocations.groupBy(_.roadwayNumber)
     linearByRoadwayNumberGroup.flatMap {
       case (roadwayNumber, locations) =>
         (locations ++ newLinearLocationsGroup(roadwayNumber))
           .sortBy(_.orderNumber)
-          .foldLeft(Seq[LinearLocationAdjustment]()) {
+          .foldLeft(Seq[LinearLocation]()) {
             case (list, linearLocation) => {
-              //(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], order: Int, geometry: Seq[Point])
-              val adjustment = LinearLocationAdjustment(linearLocation.id, linearLocation.linkId, Some(linearLocation.startMValue), Some(linearLocation.endMValue), Seq(list).size + 1, linearLocation.geometry)
-              list ++ Seq(adjustment)
+              list ++ Seq(linearLocation.copy(orderNumber = list.size + 1))
             }
           }
     }.toSeq
@@ -417,8 +415,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       linearLocationDAO.updateAll(changeSet.adjustedMValues, "adjustTopology")
 
       //Create the new linear locations and update the road order
-      val linearLocationOrderAdjustment = sortRoadWayWithNewRoads(changeSet.newLinearLocations)
-      linearLocationDAO.updateAll(linearLocationOrderAdjustment)
+
+      val orderedLinearLocations = sortRoadWayWithNewRoads(changeSet.newLinearLocations)
+      val (toCreate, toUpdate) = orderedLinearLocations.partition(l => linearLocationDAO.fetchById(l.id).isEmpty)
+      //Create the new ones, expire the existing and create them with the new order number
+      linearLocationDAO.create(toCreate)
+      linearLocationDAO.expire(toUpdate)
+      linearLocationDAO.create(toUpdate)
 
       //TODO Implement the missing at user story VIITE-1596
     }
