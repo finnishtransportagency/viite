@@ -573,25 +573,25 @@ class LinearLocationDAO {
     expireByIds(Set(adjustment.linearLocationId))
 
     // Create new row
-    val (startM, endM, geometry, order) = (adjustment.startMeasure, adjustment.endMeasure, adjustment.geometry, adjustment.order)
+    val (startM, endM, geometry) = (adjustment.startMeasure, adjustment.endMeasure, adjustment.geometry)
     if (geometry.isEmpty) {
       (startM, endM) match {
         case (Some(s), Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s, endMValue = e, orderNumber = order)), createdBy)
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s, endMValue = e)), createdBy)
         case (_, Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, endMValue = e, orderNumber = order)), createdBy)
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, endMValue = e)), createdBy)
         case (Some(s), _) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s, orderNumber = order)), createdBy)
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s)), createdBy)
         case _ =>
       }
     } else {
       (startM, endM) match {
         case (Some(s), Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, orderNumber = order, geometry = geometry, startMValue = s, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, startMValue = s, endMValue = e)), createdBy)
         case (_, Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, orderNumber = order, geometry = geometry, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, endMValue = e)), createdBy)
         case (Some(s), _) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, orderNumber = order, geometry = geometry, startMValue = s)), createdBy)
+          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, startMValue = s)), createdBy)
         case _ =>
       }
     }
