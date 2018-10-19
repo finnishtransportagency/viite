@@ -121,7 +121,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(vvhHistoryRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
 
-    val result = roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
+    val result = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
     verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
     verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
@@ -161,7 +161,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(vvhHistoryRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
 
-    val (floating, nonFloating) = roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq()).partition(_.floating)
+    val (floating, nonFloating) = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq()).partition(_.floating)
 
     floating.size should be (2)
     nonFloating.size should be (2)

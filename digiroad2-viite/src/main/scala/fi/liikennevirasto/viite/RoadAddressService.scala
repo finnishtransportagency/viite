@@ -115,8 +115,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
-  // TODO Is this method named correctly? Why "ByLinkId"?
-  def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
+  def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
