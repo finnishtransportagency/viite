@@ -35,16 +35,6 @@ object CalibrationPointsUtils {
     }
   }
 
-  def calibrations(calibrationPoints: (Option[Long], Option[Long]), linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    calibrationPoints match {
-      case (_, _) => (None, None)
-      case (_, Some(endCp)) => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endCp)))
-      case (Some(startCp), _) => (Some(CalibrationPoint(linkId, segmentStartMValue, startCp)), None)
-      case (Some(startCp), Some(endCp)) => (Some(CalibrationPoint(linkId, segmentStartMValue, startCp)),
-        Some(CalibrationPoint(linkId, segmentEndMValue, endCp)))
-    }
-  }
-
   def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadwayId: Long = 0L): ProjectLinkCalibrationPoint = {
     roadwayId match {
       case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)

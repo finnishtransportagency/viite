@@ -885,71 +885,70 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   // TODO
   def fetchProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                             everything: Boolean = false, publicRoads: Boolean = false, fetch: ProjectBoundingBoxResult): Seq[ProjectAddressLink] = {
-    throw new NotImplementedError()
-//    def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-//                                everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
-//      everything || publicRoads || roadNumberLimits.exists {
-//        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
-//      }
-//    }
-//
-//    val projectState = getProjectState(projectId)
-//    val fetchRoadAddressesByBoundingBoxF = Future(withDynTransaction {
-//      val (floating, addresses) = roadAddressService.getRoadAddressesByBoundingBox(boundingRectangle,
-//        roadNumberLimits = roadNumberLimits).partition(_.isFloating)
-//      (floating.groupBy(_.linkId), addresses.groupBy(_.linkId))
-//    })
-//    val fetchProjectLinksF = fetch.projectLinkResultF
-//    val fetchVVHStartTime = System.currentTimeMillis()
-//
-//    val (regularLinks, complementaryLinks, suravageLinks) = awaitRoadLinks(fetch.roadLinkF, fetch.complementaryF, fetch.suravageF)
-//    val linkIds = regularLinks.map(_.linkId).toSet ++ complementaryLinks.map(_.linkId).toSet ++ suravageLinks.map(_.linkId).toSet
-//    val fetchVVHEndTime = System.currentTimeMillis()
-//    logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
-//
-//    val fetchUnaddressedRoadLinkStartTime = System.currentTimeMillis()
-//    val ((floating, addresses), currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
-//    val projectLinks = if (projectState.isDefined && projectState.get == Saved2TR) {
-//      fetchProjectHistoryLinks(projectId)
-//    }
-//    else currentProjectLinks
-//
-//    val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
-//
-//    val missedRL = withDynTransaction {
-//        val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- projectLinks.map(_.linkId).toSet
-//        roadAddressService.fetchUnaddressedRoadLinksByLinkIds(missingLinkIds)
-//      }.groupBy(_.linkId)
-//    val fetchUnaddressedRoadLinkEndTime = System.currentTimeMillis()
-//    logger.info("Fetch unaddressed road links and floating linear locations completed in %d ms".format(fetchUnaddressedRoadLinkEndTime - fetchUnaddressedRoadLinkStartTime))
-//
-//    val buildStartTime = System.currentTimeMillis()
-//
-//    val projectRoadLinks = withDynSession {
-//      projectLinks.groupBy(l => (l.linkId, l.roadType)).flatMap {
-//        pl => buildProjectRoadLink(pl._2)
-//      }
-//    }
-//
-//
-//    val nonProjectRoadLinks = (normalLinks ++ complementaryLinks).filterNot(rl => projectRoadLinks.exists(_.linkId == rl.linkId))
-//
-//    val nonProjectTopology = nonProjectRoadLinks
-//      .map { rl =>
-//        val ra = addresses.getOrElse(rl.linkId, Seq())
-//        val missed = missedRL.getOrElse(rl.linkId, Seq())
-//        rl.linkId -> roadAddressService.buildRoadAddressLink(rl, ra, missed)
-//      }.toMap
-//
-//    val buildEndTime = System.currentTimeMillis()
-//    logger.info("Build road addresses completed in %d ms".format(buildEndTime - buildStartTime))
-//
-//    val (filledTopology, _) = RoadAddressFiller.fillTopology(nonProjectRoadLinks, nonProjectTopology)
-//
-//    val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
-//    val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
-//      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
-//    returningTopology.map(ProjectAddressLinkBuilder.build) ++ projectRoadLinks
+    def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+                                everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
+      everything || publicRoads || roadNumberLimits.exists {
+        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
+      }
+    }
+
+    val projectState = getProjectState(projectId)
+    val fetchRoadAddressesByBoundingBoxF = Future(withDynTransaction {
+      val (floating, addresses) = roadAddressService.getRoadAddressesByBoundingBox(boundingRectangle,
+        roadNumberLimits = roadNumberLimits).partition(_.isFloating)
+      (floating.groupBy(_.linkId), addresses.groupBy(_.linkId))
+    })
+    val fetchProjectLinksF = fetch.projectLinkResultF
+    val fetchVVHStartTime = System.currentTimeMillis()
+
+    val (regularLinks, complementaryLinks, suravageLinks) = awaitRoadLinks(fetch.roadLinkF, fetch.complementaryF, fetch.suravageF)
+    val linkIds = regularLinks.map(_.linkId).toSet ++ complementaryLinks.map(_.linkId).toSet ++ suravageLinks.map(_.linkId).toSet
+    val fetchVVHEndTime = System.currentTimeMillis()
+    logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
+
+    val fetchUnaddressedRoadLinkStartTime = System.currentTimeMillis()
+    val ((floating, addresses), currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
+    val projectLinks = if (projectState.isDefined && projectState.get == Saved2TR) {
+      fetchProjectHistoryLinks(projectId)
+    }
+    else currentProjectLinks
+
+    val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
+
+    val missedRL = withDynTransaction {
+        val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- projectLinks.map(_.linkId).toSet
+        roadAddressService.fetchUnaddressedRoadLinksByLinkIds(missingLinkIds)
+      }.groupBy(_.linkId)
+    val fetchUnaddressedRoadLinkEndTime = System.currentTimeMillis()
+    logger.info("Fetch unaddressed road links and floating linear locations completed in %d ms".format(fetchUnaddressedRoadLinkEndTime - fetchUnaddressedRoadLinkStartTime))
+
+    val buildStartTime = System.currentTimeMillis()
+
+    val projectRoadLinks = withDynSession {
+      projectLinks.groupBy(l => (l.linkId, l.roadType)).flatMap {
+        pl => buildProjectRoadLink(pl._2)
+      }
+    }
+
+
+    val nonProjectRoadLinks = (normalLinks ++ complementaryLinks).filterNot(rl => projectRoadLinks.exists(_.linkId == rl.linkId))
+
+    val nonProjectTopology = nonProjectRoadLinks
+      .map { rl =>
+        val ra = addresses.getOrElse(rl.linkId, Seq())
+        val missed = missedRL.getOrElse(rl.linkId, Seq())
+        rl.linkId -> roadAddressService.buildRoadAddressLink(rl, ra, missed)
+      }.toMap
+
+    val buildEndTime = System.currentTimeMillis()
+    logger.info("Build road addresses completed in %d ms".format(buildEndTime - buildStartTime))
+
+    val filledTopology = RoadAddressFiller.fillTopology(nonProjectRoadLinks, addresses.values.flatten.toSeq)
+
+    val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
+    val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
+      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
+    returningTopology.map(ProjectAddressLinkBuilder.build) ++ projectRoadLinks
   }
 
 
