@@ -424,15 +424,27 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3.1, linkId = 1268L, startMValue = 0.0, endMValue = 20.0)
     )
 
-    when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(linearLocations)
-    val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(newLinearLocations)
-    adjustedLinearLocations.size should be (linearLocations.size + newLinearLocations.size)
-    adjustedLinearLocations.find(_.linkId == 123L).get.orderNumber should be (1)
-    adjustedLinearLocations.find(_.linkId == 124L).get.orderNumber should be (2)
-    adjustedLinearLocations.find(_.linkId == 1267L).get.orderNumber should be (3)
-    adjustedLinearLocations.find(_.linkId == 125L).get.orderNumber should be (4)
-    adjustedLinearLocations.find(_.linkId == 1268L).get.orderNumber should be (5)
-    adjustedLinearLocations.find(_.linkId == 126L).get.orderNumber should be (6)
+    //when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(linearLocations)
+    val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
+    adjustedLinearLocations(1L).size should be (linearLocations.size + newLinearLocations.size)
+    adjustedLinearLocations(1L).find(_.linkId == 123L).get.orderNumber should be (1)
+    adjustedLinearLocations(1L).find(_.linkId == 124L).get.orderNumber should be (2)
+    adjustedLinearLocations(1L).find(_.linkId == 1267L).get.orderNumber should be (3)
+    adjustedLinearLocations(1L).find(_.linkId == 125L).get.orderNumber should be (4)
+    adjustedLinearLocations(1L).find(_.linkId == 1268L).get.orderNumber should be (5)
+    adjustedLinearLocations(1L).find(_.linkId == 126L).get.orderNumber should be (6)
+  }
+
+  test("Test sortRoadWayWithNewRoads When there are no linear locations to create Then should return empty list") {
+    val linearLocations = List(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 124L, startMValue = 0.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 125L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+    )
+    val newLinearLocations = List()
+    val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
+    adjustedLinearLocations.size should be (0)
   }
 
 //  def runWithRollback[T](f: => T): T = {

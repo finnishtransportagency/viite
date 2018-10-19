@@ -389,24 +389,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   }
 
-  def sortRoadWayWithNewRoads(newLinearLocations: Seq[LinearLocation]): Seq[LinearLocation] = {
-    val linearByRoadwayNumberGroup = linearLocationDAO.fetchByRoadways(newLinearLocations.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
+  def sortRoadWayWithNewRoads(originalLinearLocationGroup: Map[Long, Seq[LinearLocation]], newLinearLocations: Seq[LinearLocation]): Map[Long, Seq[LinearLocation]] = {
     val newLinearLocationsGroup = newLinearLocations.groupBy(_.roadwayNumber)
-    linearByRoadwayNumberGroup.flatMap {
+    originalLinearLocationGroup.flatMap {
       case (roadwayNumber, locations) =>
-        (locations ++ newLinearLocationsGroup(roadwayNumber))
-          .sortBy(_.orderNumber)
-          .foldLeft(Seq[LinearLocation]()) {
-            case (list, linearLocation) => {
-              list ++ Seq(linearLocation.copy(orderNumber = list.size + 1))
-            }
-          }
-    }.toSeq
+        val linearLocationsForRoadNumber = newLinearLocationsGroup.getOrElse(roadwayNumber, Seq())
+        linearLocationsForRoadNumber.size match {
+          case 0 => Seq() //Doesn't need to reorder or to expire any link for this roadway
+          case _ =>
+            Map(roadwayNumber ->
+              (locations ++ linearLocationsForRoadNumber)
+                .sortBy(_.orderNumber)
+                .foldLeft(Seq[LinearLocation]()) {
+                  case (list, linearLocation) =>
+                    list ++ Seq(linearLocation.copy(orderNumber = list.size + 1))
+                })
+        }
+    }
   }
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {
 
     withDynTransaction {
+      //Getting the linearLocations before the drop
+      val linearByRoadwayNumberGroup = linearLocationDAO.fetchByRoadways(changeSet.newLinearLocations.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
 
       //Expire linear locations
       linearLocationDAO.expireByIds(changeSet.droppedSegmentIds)
@@ -415,14 +421,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       linearLocationDAO.updateAll(changeSet.adjustedMValues, "adjustTopology")
 
       //Create the new linear locations and update the road order
-
-      val orderedLinearLocations = sortRoadWayWithNewRoads(changeSet.newLinearLocations)
-      val (toCreate, toUpdate) = orderedLinearLocations.partition(l => linearLocationDAO.fetchById(l.id).isEmpty)
-      //Create the new ones, expire the existing and create them with the new order number
-      linearLocationDAO.create(toCreate)
-      linearLocationDAO.expire(toUpdate)
-      linearLocationDAO.create(toUpdate)
-
+      val orderedLinearLocations = sortRoadWayWithNewRoads(linearByRoadwayNumberGroup, changeSet.newLinearLocations)
+      val (toCreate, toUpdate) = orderedLinearLocations.values.flatten.partition(l => linearLocationDAO.fetchById(l.id).isEmpty)
+      orderedLinearLocations.foreach {
+        case (roadwayNumber, linearLocations) =>
+          val originalLocations = linearByRoadwayNumberGroup(roadwayNumber)
+          if (originalLocations.size != linearLocations.size ||
+            !originalLocations.exists(ol => ol.id == linearLocations.find(_.id == ol.id).getOrElse(0))) {
+            logger.info(s"The roadway $roadwayNumber changed in between process skipping the update")
+          } else {
+            linearLocationDAO.create(toCreate)
+            linearLocationDAO.expire(toUpdate.toSeq)
+            linearLocationDAO.create(toUpdate)
+          }
+      }
       //TODO Implement the missing at user story VIITE-1596
     }
 
