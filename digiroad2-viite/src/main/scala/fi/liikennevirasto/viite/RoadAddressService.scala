@@ -85,13 +85,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageRoadLinks
 
-    //TODO Will be implemented at VIITE-1536
-    // val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, changedRoadLinks, addresses)
-
     //TODO Will be implemented at VIITE-1542
     //RoadAddressDAO.getUnaddressedRoadLinks(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
 
-    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
+    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(
+      allRoadLinks,
+      ApplyChangeInfoProcess.applyChanges(
+        linearLocations,
+        allRoadLinks,
+        changeInfos)._1
+    )
 
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
@@ -386,6 +389,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   }
 
+  def sortRoadWayWithNewRoads(newLinearLocations: Seq[LinearLocation]): Seq[LinearLocationAdjustment] = {
+    val linearByRoadwayNumberGroup = linearLocationDAO.fetchByRoadways(newLinearLocations.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
+    val newLinearLocationsGroup = newLinearLocations.groupBy(_.roadwayNumber)
+    linearByRoadwayNumberGroup.flatMap {
+      case (roadwayNumber, locations) =>
+        (locations ++ newLinearLocationsGroup(roadwayNumber))
+          .sortBy(_.orderNumber)
+          .foldLeft(Seq[LinearLocationAdjustment]()) {
+            case (list, linearLocation) => {
+              //(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], order: Int, geometry: Seq[Point])
+              val adjustment = LinearLocationAdjustment(linearLocation.id, linearLocation.linkId, Some(linearLocation.startMValue), Some(linearLocation.endMValue), Seq(list).size + 1, linearLocation.geometry)
+              list ++ Seq(adjustment)
+            }
+          }
+    }.toSeq
+  }
+
   def updateChangeSet(changeSet: ChangeSet): Unit = {
 
     withDynTransaction {
@@ -395,6 +415,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
       //Update all the linear location measures
       linearLocationDAO.updateAll(changeSet.adjustedMValues, "adjustTopology")
+
+      //Create the new linear locations and update the road order
+      val linearLocationOrderAdjustment = sortRoadWayWithNewRoads(changeSet.newLinearLocations)
+      linearLocationDAO.updateAll(linearLocationOrderAdjustment)
 
       //TODO Implement the missing at user story VIITE-1596
     }
