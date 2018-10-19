@@ -25,7 +25,7 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwayAddressMapper}
 import org.joda.time.DateTime
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{when, _}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -2373,7 +2373,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    val transferAndNew = Seq(
 //
 //      // Transferred road address: 1028 -> 1128
-//      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, linkId = suravageLinkId,
+//      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAdfanydrMValue = origStartM + 104, linkId = suravageLinkId,
 //        startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = LinkStatus.Transfer,
 //        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
 //
