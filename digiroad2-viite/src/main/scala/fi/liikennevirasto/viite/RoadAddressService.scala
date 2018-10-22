@@ -439,15 +439,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //      queryList(query)
   }
 
-  // TODO
   def getRoadAddressesByRoadwayIds(roadwayIds: Set[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
-    throw new NotImplementedError()
-//    withDynSession {
-//      // TODO
-//      val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(roadwayIds)
-//      val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
-//      roadAddresses.filter(ra => roadwayIds.contains(ra.linkId)).filterNot(_.isFloating)
-//    }
+    withDynSession {
+      val linearLocations = linearLocationDAO.fetchByRoadways(roadwayIds)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
+      roadAddresses.filter(ra => roadwayIds.contains(ra.linkId)).filterNot(_.isFloating)
+    }
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
