@@ -81,8 +81,6 @@
                 if(input.dataset.roadid == newId) {
                     //TODO: Evaluate if the min date is really needed.
                     var datePicker = dateutil.addSingleDatePicker($(input));
-                    if (minDate)
-                        datePicker.setMinDate(minDate);
                 }
             });
             $('.pika-single.is-bound').css("width", "auto");
@@ -103,13 +101,18 @@
 
       var getDateObjects = function (fieldValue, originalStartDate) {
         var fieldDateString = fieldValue.trim().split('.');
+        var originalDateString = (originalStartDate.trim().startsWith('0') ? originalStartDate.trim().substring(1) : originalStartDate.trim()).split('.');
+
         var fieldDate = new Date(parseInt(fieldDateString[2]), parseInt(fieldDateString[1])-1, parseInt(fieldDateString[0]));
-        var futureDate = new Date();
-        futureDate.setFullYear(futureDate.getFullYear() + yearLimit);
-        var pastDateString = (originalStartDate.trim().startsWith('0') ? originalStartDate.trim().substring(1) : originalStartDate.trim()).split('.');
-        var pastDate = new Date(parseInt(pastDateString[2]), parseInt(pastDateString[1])-1, parseInt(pastDateString[0]));
+        var futureDateSinceOriginal = new Date(parseInt(originalDateString[2]), parseInt(originalDateString[1])-1, parseInt(originalDateString[0]));
+        var pastDate = new Date(parseInt(originalDateString[2]), parseInt(originalDateString[1])-1, parseInt(originalDateString[0]));
+        var futureDateSinceCurrent = new Date();
+
+        futureDateSinceCurrent.setFullYear(futureDateSinceCurrent.getFullYear() + yearLimit);
+        futureDateSinceOriginal.setFullYear(futureDateSinceOriginal.getFullYear() + yearLimit);
         pastDate.setFullYear(pastDate.getFullYear() - yearLimit);
-        return {'fieldDate': fieldDate, 'futureDate': futureDate, 'pastDate': pastDate};
+        return {'fieldDate': fieldDate, 'futureDateSinceCurrent': futureDateSinceCurrent, 'pastDate': pastDate, 'futureDateSinceOriginal': futureDateSinceOriginal};
+
       };
 
         var isValidDate = function (dateString, originalStartDate) {
@@ -125,7 +128,7 @@
             if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0))
                 monthLength[1] = 29;
 
-            var dateValidation = dates.futureDate > dates.fieldDate && dates.pastDate <= dates.fieldDate;
+            var dateValidation = (dates.futureDateSinceCurrent > dates.fieldDate || dates.futureDateSinceOriginal > dates.fieldDate) && dates.pastDate <= dates.fieldDate;
             var sizeValidation = splitDateString.length === 3 && _.last(splitDateString).length === 4;
             var dayValidation = day > 0 && day <= monthLength[month - 1];
             var monthValidation = month > 0 && month <= 12;
