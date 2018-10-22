@@ -24,7 +24,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
+class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, unaddressedRoadLinkDAO: UnaddressedRoadLinkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -562,12 +562,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   // TODO
   def fetchUnaddressedRoadLinksByLinkIds(linkIds: Set[Long]):Seq[UnaddressedRoadLink] = {
-    throw new NotImplementedError()
-    //    withDynTransaction {
-    //      time(logger, "RoadAddressDAO.fetchUnaddressedRoadLinksByBoundingBox") {
-    //        RoadAddressDAO.fetchUnaddressedRoadLinksByBoundingBox(boundingRectangle).groupBy(_.linkId)
-    //      }
-    //    }
+      time(logger, "RoadAddressDAO.getUnaddressedRoadLinks by linkIds") {
+        unaddressedRoadLinkDAO.getUnaddressedRoadLinks(linkIds)
+      }
   }
 
   private def processRoadAddresses(addresses: Seq[RoadAddress], missedRL: Seq[UnaddressedRoadLink]): Seq[RoadAddressLink] = {
