@@ -735,7 +735,6 @@ class LinearLocationDAO {
           $selectFromLinearLocation
           WHERE VALID_TO IS NULL AND ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY =
           (SELECT ELY_NRO FROM MUNICIPALITY WHERE ID = $municipality) AND VALID_TO IS NULL AND END_DATE IS NULL)
-          )
        """
     queryList(query)
   }
