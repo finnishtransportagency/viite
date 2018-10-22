@@ -70,7 +70,7 @@
             });
         };
 
-      if(roadlink.floating===LinkValues.SelectionType.Floating.value) {
+      if(roadlink.floating === LinkValues.SelectionType.Floating.value) {
         box.setStyle(boxStyleFloat);
       } else if(roadlink.roadLinkSource===LinkValues.LinkGeomSource.SuravageLinkInterface.value){
         box.setStyle(boxStyleDirectional(roadlink));

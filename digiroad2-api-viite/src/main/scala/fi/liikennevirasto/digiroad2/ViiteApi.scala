@@ -976,7 +976,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "endDate" -> roadAddressLink.endDate,
         "newGeometry" -> roadAddressLink.newGeometry,
         "linearLocationId" -> roadAddressLink.linearLocationId, //TODO This needs to be made inside the roadAddressLinkLikeToApi once the project links have the new structure
-        "floating" -> roadAddressLink.floating
+        "floating" -> roadAddressLink.floatingAsInt
       )
   }
 
