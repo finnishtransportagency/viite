@@ -159,9 +159,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           remainLinks.filter(_.sideCode != SideCode.Unknown).map(p => p.endPoint - p.startingPoint).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
         } else {
           val sampleLink = remainLinks.head.geometry.head
-          if (remainLinks.flatMap(_.geometry).forall(geo => geo.y == sampleLink.y)) {
+          if (remainLinks.map(p => GeometryUtils.geometryEndpoints(p.geometry)).forall(geo => geo._1.y == sampleLink.y && geo._2.y == sampleLink.y)) {
             // Very rare case
-            // ALL Y Values are equal on the tracks check the X Value
+            // Start and end point of the geometry Y Values are equal on the tracks check the X Value
             Vector3d(1.0, 0.0, 0.0)
           } else {
             // Use the default vector
