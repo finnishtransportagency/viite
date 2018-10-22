@@ -159,6 +159,8 @@ object TerminationCode {
 trait BaseRoadAddress {
   def id: Long
 
+  def linearLocationId: Long
+
   def roadNumber: Long
 
   def roadPartNumber: Long
