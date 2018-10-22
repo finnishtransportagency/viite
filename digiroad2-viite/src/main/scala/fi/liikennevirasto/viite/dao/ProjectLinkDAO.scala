@@ -551,12 +551,11 @@ class ProjectLinkDAO {
           """.execute
   }
 
-  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
+  def updateProjectLinkNumbering(projectlinkIds: Seq[Long], linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart" +
-        s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
+        s"WHERE ID IN ${projectlinkIds.mkString("(", ",", ")")} AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
 
       val updateLastLinkWithDiscontinuity =
@@ -604,11 +603,9 @@ class ProjectLinkDAO {
     }
   }
 
-  //TODO check in VIITE-1540 if there is the need to also update by "AND LINEAR_LOCATION_ID = ${roadAddress.linearLocationId}
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true) = {
 
     time(logger, "Update project link values") {
-
       val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z))
       val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
