@@ -284,9 +284,9 @@ class ProjectLinkDAO {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
         "road_number, road_part_number, " +
         "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
-        "calibration_points, status, road_type, ROADWAY_ID, connected_link_id, ely, reversed, geometry, " +
+        "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, reversed, geometry, " +
         "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewRoadway)
       val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
@@ -311,20 +311,24 @@ class ProjectLinkDAO {
           addressPS.setString(15, null)
         else
           addressPS.setLong(15, pl.roadwayId)
-        if (pl.connectedLinkId.isDefined)
-          addressPS.setLong(16, pl.connectedLinkId.get)
-        else
+        if (pl.linearLocationId == 0)
           addressPS.setString(16, null)
-        addressPS.setLong(17, pl.ely)
-        addressPS.setBoolean(18, pl.reversed)
-        addressPS.setObject(19, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
-        addressPS.setLong(20, pl.linkId)
-        addressPS.setLong(21, pl.sideCode.value)
-        addressPS.setDouble(22, pl.startMValue)
-        addressPS.setDouble(23, pl.endMValue)
-        addressPS.setDouble(24, pl.linkGeometryTimeStamp)
-        addressPS.setInt(25, pl.linkGeomSource.value)
-        addressPS.setInt(26, pl.calibrationPointsSourcesToDB().value)
+        else
+          addressPS.setLong(16, pl.linearLocationId)
+        if (pl.connectedLinkId.isDefined)
+          addressPS.setLong(17, pl.connectedLinkId.get)
+        else
+          addressPS.setString(17, null)
+        addressPS.setLong(18, pl.ely)
+        addressPS.setBoolean(19, pl.reversed)
+        addressPS.setObject(20, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
+        addressPS.setLong(21, pl.linkId)
+        addressPS.setLong(22, pl.sideCode.value)
+        addressPS.setDouble(23, pl.startMValue)
+        addressPS.setDouble(24, pl.endMValue)
+        addressPS.setDouble(25, pl.linkGeometryTimeStamp)
+        addressPS.setInt(26, pl.linkGeomSource.value)
+        addressPS.setInt(27, pl.calibrationPointsSourcesToDB().value)
         addressPS.addBatch()
       }
       addressPS.executeBatch()
