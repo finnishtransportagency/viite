@@ -1545,7 +1545,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test validateProject When it is connected after any other action Then should return invalid unchanged links error") {
+  test("Test validateProject When it is connected after any other action Then it should return invalid unchanged links error") {
     runWithRollback {
 
       val raId = Sequences.nextRoadwayId
