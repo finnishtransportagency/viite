@@ -268,9 +268,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           setProjectEly(projectId, roadEly) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None => {
-              addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId) match {
+              addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, false) match {
                 case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-                case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId))
+                case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId, false))
               }
             }
           }
@@ -1934,8 +1934,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectDAO.getProjectEly(projectId)
   }
 
-  def validateProjectById(projectId: Long): Seq[projectValidator.ValidationErrorDetails] = {
-    withDynSession {
+  def validateProjectById(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
+    if(newSession) {
+      withDynSession {
+        projectValidator.validateProject(projectDAO.getRoadAddressProjectById(projectId).get, projectLinkDAO.getProjectLinks(projectId))
+      }
+    }
+    else{
       projectValidator.validateProject(projectDAO.getRoadAddressProjectById(projectId).get, projectLinkDAO.getProjectLinks(projectId))
     }
   }

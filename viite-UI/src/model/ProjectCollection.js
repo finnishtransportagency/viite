@@ -300,7 +300,7 @@
         }
       };
       var newAndOtherLinks = _.partition(changedLinks, function (l) {
-        return l.id === 0;
+        return l.roadwayId === 0;
       });
       var newLinks = newAndOtherLinks[0];
       var otherLinks = newAndOtherLinks[1];

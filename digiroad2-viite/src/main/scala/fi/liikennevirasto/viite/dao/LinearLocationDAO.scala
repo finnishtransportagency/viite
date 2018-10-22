@@ -719,4 +719,35 @@ class LinearLocationDAO {
     else
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
+
+  def getLinearLocationCalibrationCode(linearLocationId: Long): CalibrationCode = {
+    val query =
+      s"""SELECT (CASE
+            WHEN CAL_START_ADDR_M IS NOT NULL AND CAL_END_ADDR_M IS NOT NULL THEN 3
+            WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
+            WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
+            ELSE 0
+            END) AS calibrationCode
+            FROM LINEAR_LOCATION WHERE id = $linearLocationId"""
+    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
+  }
+
+  def getRoadAddressCalibrationCode(linearLocationIds: Seq[Long]): Map[Long, CalibrationCode] = {
+    if (linearLocationIds.isEmpty) {
+      Map()
+    } else {
+      val query =
+        s"""SELECT (CASE
+                       WHEN CAL_START_ADDR_M IS NOT NULL AND CAL_END_ADDR_M IS NOT NULL THEN 3
+                       WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
+                       WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
+                       ELSE 0
+                       END) AS calibrationCode
+                       FROM LINEAR_LOCATION WHERE id in (${linearLocationIds.mkString(",")})"""
+      Q.queryNA[(Long, Int)](query).list.map {
+        case (id, code) => id -> CalibrationCode(code)
+      }.toMap
+    }
+  }
+
 }

@@ -138,7 +138,7 @@
         if (!_.isUndefined(selectionTarget))
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
                   projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
-                  (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.floating !== SelectionType.Floating.value) ||
+                  (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.floating !== LinkValues.SelectionType.Floating.value) ||
                   selectionTarget.linkData.roadClass === RoadClass.NoClass.value || selectionTarget.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value || (selectionTarget.getProperties().type && selectionTarget.getProperties().type === "marker"))
           );
         else return false;
@@ -204,7 +204,7 @@
       var selection = _.find(event.selected, function (selectionTarget) {
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
                   projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
-                  (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.floating !== SelectionType.Floating.value) ||
+                  (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.floating !== LinkValues.SelectionType.Floating.value) ||
                   selectionTarget.linkData.roadClass === RoadClass.NoClass.value || selectionTarget.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value || (selectionTarget.getProperties().type && selectionTarget.getProperties().type === "marker"))
         );
       });
@@ -753,7 +753,7 @@
       if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function(links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
-            return projectLink.floating !== SelectionType.Floating.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
+            return projectLink.floating !== LinkValues.SelectionType.Floating.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
           });
           _.each(directionMarkers, function (directionLink) {
             marker = cachedMarker.createProjectMarker(directionLink);
