@@ -424,7 +424,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3.1, linkId = 1268L, startMValue = 0.0, endMValue = 20.0)
     )
 
-    //when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(linearLocations)
     val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
     adjustedLinearLocations(1L).size should be (linearLocations.size + newLinearLocations.size)
     adjustedLinearLocations(1L).find(_.linkId == 123L).get.orderNumber should be (1)
