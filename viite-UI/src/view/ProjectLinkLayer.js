@@ -15,7 +15,7 @@
     var RoadZIndex = LinkValues.RoadZIndex;
     var LinkStatus = LinkValues.LinkStatus;
     var RoadClass = LinkValues.RoadClass;
-
+    var SelectionType = LinkValues.SelectionType;
     var isNotEditingData = true;
     var isActiveLayer = false;
 

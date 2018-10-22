@@ -40,16 +40,21 @@
     ];
 
     var selectionStyleRules = [
-      new StyleRule().where('status').is(terminatedStatus).and('connectedLinkId').isDefined().use({stroke: {color: '#C6C00F'}}),
+      new StyleRule().where('status').is(terminatedStatus).and('connectedLinkId').isDefined().use({stroke: {color: '#C6C00F'}})
     ];
 
     var cutterStyleRules = [
       new StyleRule().where('type').is('cutter-crosshair').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
+    var generalLinksRules = [
+      new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}})
+    ];
+
     var projectLinkStyle = new StyleRuleProvider({});
     projectLinkStyle.addRules(projectLinkRules);
     projectLinkStyle.addRules(strokeWidthRules);
+    projectLinkStyle.addRules(generalLinksRules);
 
     var selectionLinkStyle = new StyleRuleProvider({stroke: {lineCap: 'round', width: 8, color: '#00FF00'}});
     selectionLinkStyle.addRules(selectionStyleRules);
