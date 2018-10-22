@@ -1020,7 +1020,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadTypeId" -> projectLink.roadType.value,
       "discontinuity" -> projectLink.discontinuity.value,
       "elyCode" -> projectLink.ely,
-      "roadName" -> projectLink.roadName)
+      "roadName" -> projectLink.roadName,
+      "floating" -> projectLink.floating)
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
