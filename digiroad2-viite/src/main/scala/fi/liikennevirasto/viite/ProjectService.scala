@@ -930,16 +930,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
-
     val nonProjectRoadLinks = (normalLinks ++ complementaryLinks).filterNot(rl => projectRoadLinks.exists(_.linkId == rl.linkId))
-
-    val nonProjectTopology = nonProjectRoadLinks
-      .map { rl =>
-        val ra = addresses.getOrElse(rl.linkId, Seq())
-        val missed = missedRL.getOrElse(rl.linkId, Seq())
-        rl.linkId -> roadAddressService.buildRoadAddressLink(rl, ra, missed)
-      }.toMap
-
     val buildEndTime = System.currentTimeMillis()
     logger.info("Build road addresses completed in %d ms".format(buildEndTime - buildStartTime))
 
