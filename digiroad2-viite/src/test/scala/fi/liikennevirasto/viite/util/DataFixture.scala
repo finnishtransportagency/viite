@@ -46,7 +46,7 @@ object DataFixture {
 
   private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits(2) printZeroAlways() appendHours() appendSeparator(":") appendMinutes() appendSuffix(":") appendSeconds() toFormatter
 
-  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+  //private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
   private lazy val numberThreads: Int = 2
 
@@ -206,49 +206,46 @@ object DataFixture {
   }
 
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1536")
 
-    //    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
-//    val roadAddressService = new RoadAddressService(roadLinkService, new RoadwayAddressMapper(new RoadAddressDAO()), new DummyEventBus)
-//
-//    println("Clearing cache...")
-//    roadLinkService.clearCache()
-//    println("Cache cleaned.")
-//
-//    //Get All Municipalities
-//    val municipalities: ParSet[Long] =
-//      OracleDatabase.withDynTransaction {
-//        MunicipalityDAO.getMunicipalityMapping.keySet
-//      }.par
-//
-//    //For each municipality get all VVH Roadlinks
-//    municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
-//    municipalities.map { municipality =>
-//      println("Start processing municipality %d".format(municipality))
-//
-//      //Obtain all RoadLink by municipality and change info from VVH
-//      val (roadLinks, changedRoadLinks) = roadLinkService.getFrozenRoadLinksAndChangesFromVVH(municipality.toInt,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
-//      println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
-//      println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
-//      if(roadLinks.nonEmpty) {
-//        val changedLinkIds = changedRoadLinks.map(c => c.oldId.getOrElse(c.newId.getOrElse(0L))).toSet
-//        //  Get road address from viite DB from the roadLinks ids
-//        val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-//          RoadAddressDAO.fetchByLinkId(changedLinkIds, includeTerminated = false)
-//        }
-//        try {
-//          val groupedAddresses = roadAddresses.groupBy(_.linkId)
-//          val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
-//          val affectingChanges = changedRoadLinks.filter(ci => timestamps.get(ci.oldId.getOrElse(ci.newId.get)).nonEmpty && ci.vvhTimeStamp >= timestamps.getOrElse(ci.oldId.getOrElse(ci.newId.get), 0L))
-//          println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
-//          roadAddressService.applyChanges(roadLinks, affectingChanges, roadAddresses)
-//        } catch {
-//          case e: Exception => println("ERR! -> " + e.getMessage)
-//        }
-//      }
-//      println("End processing municipality %d".format(municipality))
-//    }
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
+    val linearLocationDAO = new LinearLocationDAO
 
+    println("Clearing cache...")
+    roadLinkService.clearCache()
+    println("Cache cleaned.")
+
+    //Get All Municipalities
+    val municipalities: ParSet[Long] =
+      OracleDatabase.withDynTransaction {
+        MunicipalityDAO.getMunicipalityMapping.keySet
+      }.par
+
+    //For each municipality get all VVH Roadlinks
+    municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Obtain all RoadLink by municipality and change info from VVH
+      val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+      val linearLocations =
+        OracleDatabase.withDynTransaction {
+          linearLocationDAO.fetchCurrentLinearLocationsByMunicipality(municipality.toInt)
+        }
+      println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
+      println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
+      if(roadLinks.nonEmpty) {
+        try {
+          val roadschanges = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changedRoadLinks)
+          println(s"AppliedChanges for municipality $municipality")
+          println(s"${roadschanges._2.droppedSegmentIds.size} dropped roads")
+          println(s"${roadschanges._2.adjustedMValues.size} adjusted m values")
+          println(s"${roadschanges._2.newLinearLocations.size} new linear locations")
+        } catch {
+          case e: Exception => println("ERR! -> " + e.getMessage)
+        }
+      }
+      println("End processing municipality %d".format(municipality))
+    }
   }
 
   private def updateProjectLinkGeom(): Unit = {
@@ -394,9 +391,9 @@ object DataFixture {
 //    })
 //  }
 
-  private def showFreezeInfo(): Unit = {
+  /*private def showFreezeInfo(): Unit = {
     println("Road link geometry freeze is active; exiting without changes")
-  }
+  }*/
 
   def flyway: Flyway = {
     val flyway = new Flyway()
@@ -455,8 +452,8 @@ object DataFixture {
     }
 
     args.headOption match {
-      case Some("find_floating_road_addresses") if geometryFrozen =>
-        showFreezeInfo()
+      /*case Some("find_floating_road_addresses") if geometryFrozen =>
+        showFreezeInfo()*/
       case Some("find_floating_road_addresses") =>
         findFloatingRoadAddresses()
       case Some("import_road_addresses") =>
@@ -466,8 +463,8 @@ object DataFixture {
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
-      case Some("update_missing") if geometryFrozen =>
-        showFreezeInfo()
+      /*case Some("update_missing") if geometryFrozen =>
+        showFreezeInfo()*/
       case Some("update_missing") =>
         updateUnaddressedRoadLink()
 //      case Some("fuse_multi_segment_road_addresses") =>
@@ -476,20 +473,20 @@ object DataFixture {
         updateRoadAddressesGeometry()
       case Some("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
-      case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
-        showFreezeInfo()
+      /*case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
+        showFreezeInfo()*/
       case Some("apply_change_information_to_road_address_links") =>
         val numThreads = if (args.length > 1) toIntNumber(args(1)) else numberThreads
         applyChangeInformationToRoadAddressLinks(numThreads)
-      case Some("update_road_address_link_source") if geometryFrozen =>
-        showFreezeInfo()
+      /*case Some("update_road_address_link_source") if geometryFrozen =>
+        showFreezeInfo()*/
       case Some("update_road_address_link_source") =>
         updateRoadAddressGeometrySource()
       case Some("update_project_link_geom") =>
         updateProjectLinkGeom()
       case Some("import_road_names") =>
         importRoadNames()
-      case Some("correct_null_ely_code_projects") =>
+      case Some("correct_null_ely_code_projects") => // TODO is this batch process still needed?
         correctNullElyCodeProjects()
 //      case Some("check_lrm_position") =>
 //        checkLinearLocation()

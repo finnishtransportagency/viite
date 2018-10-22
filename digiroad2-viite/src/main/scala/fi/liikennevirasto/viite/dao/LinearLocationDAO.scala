@@ -729,6 +729,17 @@ class LinearLocationDAO {
     }
   }
 
+  def fetchCurrentLinearLocationsByMunicipality(municipality: Int):Seq[LinearLocation] = {
+    val query =
+      s"""
+          $selectFromLinearLocation
+          WHERE VALID_TO IS NULL AND ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY =
+          (SELECT ELY_NRO FROM MUNICIPALITY WHERE ID = $municipality) AND VALID_TO IS NULL AND END_DATE IS NULL)
+          )
+       """
+    queryList(query)
+  }
+
   private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s"""($filter)"""
