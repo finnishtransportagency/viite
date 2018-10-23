@@ -342,7 +342,7 @@ class ProjectLinkDAO {
 //    throw new NotImplementedError("Will be implemented at VIITE-1540")
     time(logger, "Update project links") {
       val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
-      val addresses = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId).toSeq).map(ra => ra.id -> ra).toMap
+      val addresses = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => ra.id -> ra).toMap
       val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
       val links = projectLinks.map { pl =>
         if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadwayId) && !maxInEachTracks.contains(pl.id)) {
