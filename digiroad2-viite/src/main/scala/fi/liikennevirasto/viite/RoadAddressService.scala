@@ -164,6 +164,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
   }
 
+  def getRoadAddressesByLinkIds(linkIds: Set[Long]) = {
+    withDynSession {
+      val linearLocations = linearLocationDAO.fetchByLinkId(linkIds)
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
+    }
+  }
+
   /**
     * Gets all the road addresses in the given municipality code.
     * @param municipality The municipality code
@@ -440,11 +447,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def getRoadAddressesByRoadwayIds(roadwayIds: Set[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
-    withDynSession {
-      val linearLocations = linearLocationDAO.fetchByRoadways(roadwayIds)
+      val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(roadwayIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filter(ra => roadwayIds.contains(ra.linkId)).filterNot(_.isFloating)
-    }
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
