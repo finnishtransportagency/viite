@@ -313,8 +313,8 @@
       }));
 
       var ids = _.unique(_.map(otherLinks, function (t) {
-        if (!_.isUndefined(t.linearLocationId)) {
-          return t.linearLocationId;
+        if (!_.isUndefined(t.id)) {
+          return t.id;
         } else return 0;
       }));
 

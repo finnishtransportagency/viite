@@ -994,6 +994,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressLinkLikeToApi(projectAddressLink) ++
       (if (projectAddressLink.isSplit)
         Map(
+          "id" -> projectAddressLink.id,
           "status" -> projectAddressLink.status.value,
           "connectedLinkId" -> projectAddressLink.connectedLinkId,
           "originalGeometry" -> projectAddressLink.originalGeometry,
@@ -1003,6 +1004,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         )
       else
         Map(
+          "id" -> projectAddressLink.id,
           "status" -> projectAddressLink.status.value,
           "reversed" -> projectAddressLink.reversed,
           "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)

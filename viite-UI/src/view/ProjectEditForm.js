@@ -400,6 +400,7 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Terminated.value,
               'roadLinkSource': link.roadLinkSource,
@@ -431,6 +432,7 @@
           $('#roadTypeDropDown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Unchanged.value,
               'roadLinkSource': link.roadLinkSource,
@@ -445,6 +447,7 @@
             return dirty.status === LinkStatus.Transfer.value;
           }).concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Transfer.value,
               'roadLinkSource': link.roadLinkSource,
@@ -463,6 +466,7 @@
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Numbering.value,
               'roadLinkSource': link.roadLinkSource,
