@@ -1039,7 +1039,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
-    projectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
+    projectLinkDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
     val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet)
     val roadAddresses = roadAddressService.getRoadAddressByLinkIds(modified.map(_.linkId).toSet)
     roadAddresses.foreach(ra =>
@@ -1565,7 +1565,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def getProjectsPendingInTR: Seq[Long] = {
     withDynSession {
-      projectDAO.getProjectsWithWaitingTRStatus()
+      projectDAO.getProjectsWithWaitingTRStatus
     }
   }
 
@@ -1961,7 +1961,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def getProjectsWaitingForTR(): Seq[Long] = {
     withDynSession {
-      projectDAO.getProjectsWithSendingToTRStatus()
+      projectDAO.getProjectsWithSendingToTRStatus
     }
   }
 
