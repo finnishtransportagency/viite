@@ -1562,10 +1562,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project1 = projectService.createRoadLinkProject(rap1)
       mockForProject(project1.id, roadAddressServiceRealRoadwayAddressMapper.getRoadAddressWithRoadAndPart(5, 207).map(toProjectLink(project1)))
       projectService.saveProject(project1.copy(reservedParts = addr1))
-      projectService.updateProjectLinks(project1.id, Set(), projectDAO.getProjectLinks(project1.id).map(_.linkId), LinkStatus.Numbering, "TestUser", 6, 207, 0, None, RoadType.PublicRoad.value, Discontinuity.EndOfRoad.value, Some(8))
+      projectService.updateProjectLinks(project1.id, Set(), projectLinkDAO.getProjectLinks(project1.id).map(_.linkId), LinkStatus.Numbering, "TestUser", 6, 207, 0, None, RoadType.PublicRoad.value, Discontinuity.EndOfRoad.value, Some(8))
 
       //Descending order by end address
-      val projectLinks = projectDAO.getProjectLinks(project1.id).sortBy(-_.endAddrMValue)
+      val projectLinks = projectLinkDAO.getProjectLinks(project1.id).sortBy(-_.endAddrMValue)
       projectLinks.tail.forall(_.discontinuity == Discontinuity.Continuous) should be(true)
       projectLinks.head.discontinuity should be(Discontinuity.EndOfRoad)
     }
