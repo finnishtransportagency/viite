@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection, selectedLinkProperty) {
+  root.RoadLayer = function(map, roadCollection, selectedLinkProperty) {
 
     Layer.call(this, map);
     var me = this;

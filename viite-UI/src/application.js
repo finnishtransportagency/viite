@@ -105,7 +105,7 @@
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    var roadLayer = new RoadLayer3(map, models.roadCollection, models.selectedLinkProperty);
+    var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
