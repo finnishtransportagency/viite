@@ -120,8 +120,8 @@ object RoadwayFiller {
   private def generateValuesForTransfer(currentRoadAddresses: Seq[RoadAddress], transferredLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     transferredLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadType)).flatMap {
       case ((_, _, _, _), groupedLinks) =>
-        val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.exists(_.roadwayId == ra.id) && ra.endDate.isEmpty)
-        val roadAddressesToCompare = currentRoadAddresses.filter(ra => groupedLinks.exists(_.roadwayId == ra.id) && ra.endDate.isEmpty)
+        val roadAddressesToReturn = newRoadAddresses.filter(ra => groupedLinks.exists(_.roadwayId == ra.id) && ra.endDate.isEmpty).sortBy(_.startAddrMValue)
+        val roadAddressesToCompare = currentRoadAddresses.filter(ra => groupedLinks.exists(_.roadwayId == ra.id) && ra.endDate.isEmpty).sortBy(_.startAddrMValue)
 
         //if the length of the transferred part is the same in road address table
         if (roadAddressesToReturn.nonEmpty && roadAddressesToCompare.nonEmpty
@@ -203,7 +203,6 @@ object RoadwayFiller {
       }
     }
   }
-
 
   private def fillRoadwayNumber(seq: Seq[RoadAddress], address: RoadAddress): RoadAddress = {
     if (seq.isEmpty) {
