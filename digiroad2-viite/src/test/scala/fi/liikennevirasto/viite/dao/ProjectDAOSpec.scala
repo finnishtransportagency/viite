@@ -185,11 +185,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test getProjectsWithWaitingTRStatus When project is sent to TR Then projects waiting TR response should be increased") {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val waitingCountP = projectDAO.getProjectsWithWaitingTRStatus().length
+      val waitingCountP = projectDAO.getProjectsWithWaitingTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(reservedPart), None, None)
         projectDAO.createRoadAddressProject(rap)
-      val waitingCountNow = projectDAO.getProjectsWithWaitingTRStatus().length
+      val waitingCountNow = projectDAO.getProjectsWithWaitingTRStatus.length
       waitingCountNow - waitingCountP should be(1)
     }
   }
