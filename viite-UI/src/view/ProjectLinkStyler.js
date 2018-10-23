@@ -1,13 +1,14 @@
 (function (root) {
   root.ProjectLinkStyler = function () {
 
-    var notHandledStatus = 0;
-    var unchangedStatus = 1;
-    var newRoadAddressStatus = 2;
-    var transferredStatus = 3;
-    var numberingStatus = 4;
-    var terminatedStatus = 5;
-    var unknownStatus = 99;
+    var LinkStatus = LinkValues.LinkStatus;
+    var notHandledStatus = LinkStatus.NotHandled.value;
+    var unchangedStatus = LinkStatus.Unchanged.value;
+    var newRoadAddressStatus = LinkStatus.New.value;
+    var transferredStatus = LinkStatus.Transfer.value;
+    var numberingStatus = LinkStatus.Numbering.value;
+    var terminatedStatus = LinkStatus.Terminated.value;
+    var unknownStatus = LinkStatus.Undefined.value;
 
     var strokeWidthRules = [
       new StyleRule().where('zoomLevel').is(5).use({stroke: {width: 4 }}),
