@@ -4,6 +4,7 @@
         var newId = -1000;
         var yearLimit = 5;
         var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
+        var defaultDateFormat = 'DD.MM.YYYY';
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
         nameToolSearchWindow.append('<button class="close btn-close" id="closeRoadNameTool">x</button>');
         nameToolSearchWindow.append('<div class="content">Tienimi</div>');
@@ -100,19 +101,15 @@
         }
 
       var getDateObjects = function (fieldValue, originalStartDate) {
-        var fieldDateString = fieldValue.trim().split('.');
-        var originalDateString = (originalStartDate.trim().startsWith('0') ? originalStartDate.trim().substring(1) : originalStartDate.trim()).split('.');
+        var fieldDateString = fieldValue.trim();
 
-        var fieldDate = new Date(parseInt(fieldDateString[2]), parseInt(fieldDateString[1])-1, parseInt(fieldDateString[0]));
-        var futureDateSinceOriginal = new Date(parseInt(originalDateString[2]), parseInt(originalDateString[1])-1, parseInt(originalDateString[0]));
-        var pastDate = new Date(parseInt(originalDateString[2]), parseInt(originalDateString[1])-1, parseInt(originalDateString[0]));
-        var futureDateSinceCurrent = new Date();
+        var fieldDate = moment(fieldDateString, defaultDateFormat);
+        var originalDate = moment(originalStartDate.trim(), defaultDateFormat);
+        var lowerStart = moment(originalStartDate.trim(), defaultDateFormat).add(1, 'days');
+        var upperLimitStart = moment(originalStartDate.trim(), defaultDateFormat).add(5, 'years');
+        var currentUpperLimit = moment().add(5, 'years');
 
-        futureDateSinceCurrent.setFullYear(futureDateSinceCurrent.getFullYear() + yearLimit);
-        futureDateSinceOriginal.setFullYear(futureDateSinceOriginal.getFullYear() + yearLimit);
-        pastDate.setFullYear(pastDate.getFullYear() - yearLimit);
-        return {'fieldDate': fieldDate, 'futureDateSinceCurrent': futureDateSinceCurrent, 'pastDate': pastDate, 'futureDateSinceOriginal': futureDateSinceOriginal};
-
+        return {'fieldDate': fieldDate, 'futureDateSinceCurrent': currentUpperLimit, 'pastDate': lowerStart, 'futureDateSinceOriginal': upperLimitStart};
       };
 
         var isValidDate = function (dateString, originalStartDate) {
@@ -128,7 +125,7 @@
             if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0))
                 monthLength[1] = 29;
 
-            var dateValidation = (dates.futureDateSinceCurrent > dates.fieldDate || dates.futureDateSinceOriginal > dates.fieldDate) && dates.pastDate <= dates.fieldDate;
+            var dateValidation = (dates.futureDateSinceCurrent.isAfter(dates.fieldDate) || dates.futureDateSinceOriginal.isAfter(dates.fieldDate)) && dates.pastDate.isSameOrBefore(dates.fieldDate);
             var sizeValidation = splitDateString.length === 3 && _.last(splitDateString).length === 4;
             var dayValidation = day > 0 && day <= monthLength[month - 1];
             var monthValidation = month > 0 && month <= 12;
