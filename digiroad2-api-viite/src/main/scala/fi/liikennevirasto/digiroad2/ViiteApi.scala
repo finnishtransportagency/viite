@@ -910,7 +910,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map(
       "success" -> true,
       "roadwayId" -> roadAddressLink.id,
-      //"linearLocationId" -> roadAddressLink.linearLocationId, //TODO uncoment this and remove this one from the call to this
+      "linearLocationId" -> roadAddressLink.linearLocationId,
       "linkId" -> roadAddressLink.linkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
       "points" -> roadAddressLink.geometry,

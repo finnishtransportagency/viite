@@ -404,7 +404,7 @@
               'status': LinkStatus.Terminated.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
@@ -435,7 +435,7 @@
               'status': LinkStatus.Unchanged.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
@@ -449,7 +449,7 @@
               'status': LinkStatus.Transfer.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
@@ -467,7 +467,7 @@
               'status': LinkStatus.Numbering.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
