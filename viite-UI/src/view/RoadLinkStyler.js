@@ -130,7 +130,7 @@
     roadLinkStyle.addRules(strokeWidthRules);
     roadLinkStyle.addRules(strokeAdministrativeClassRules);
 
-    var overlayStyle = new StyleRuleProvider({zIndex: LinkValues.RoadZIndex.HistoricRoadLayer.value});
+    var overlayStyle = new StyleRuleProvider({zIndex: LinkValues.RoadZIndex.CalibrationPointLayer.value});
     overlayStyle.addRules(fillRules);
     overlayStyle.addRules(fillWidthRules);
 
