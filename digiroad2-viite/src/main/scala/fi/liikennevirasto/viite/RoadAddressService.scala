@@ -164,11 +164,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
   }
 
-  def getRoadAddressesByLinkIds(linkIds: Set[Long]) = {
-    withDynSession {
-      val linearLocations = linearLocationDAO.fetchByLinkId(linkIds)
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
-    }
+  def getRoadAddressesByLinkIds(linkIds: Seq[Long]) = {
+    val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
+    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
   }
 
   /**
@@ -446,9 +444,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //      queryList(query)
   }
 
-  def getRoadAddressesByRoadwayIds(roadwayIds: Set[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
-      val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(roadwayIds)
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
+  def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
+      val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
       roadAddresses.filter(ra => roadwayIds.contains(ra.linkId)).filterNot(_.isFloating)
   }
 
@@ -806,25 +804,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    fusedRoadAddresses.map(ra => {
 //      RoadAddressLinkBuilder.build(rl, ra)
 //    })
-  }
-
-  //TODO this method is almost duplicated from buildSuravageRoadAddressLink if this method is needed in the future it should be refactored
-  def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[UnaddressedRoadLink], floaters: Seq[RoadAddressLink] = Seq.empty): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
-//    val kept = fusedRoadAddresses.map(_.id).toSet
-//    val removed = roadAddrSeq.map(_.id).toSet.diff(kept)
-//    val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
-//    if (roadAddressesToRegister.nonEmpty)
-//      eventbus.publish("roadAddress:mergeRoadAddress", RoadAddressMerge(removed, roadAddressesToRegister))
-//    if (floaters.nonEmpty) {
-//      floaters.map(_.copy(anomaly = Anomaly.GeometryChanged, newGeometry = Option(rl.geometry)))
-//    } else {
-//      fusedRoadAddresses.map(ra => {
-//        RoadAddressLinkBuilder.build(rl, ra)
-//      }) ++
-//        missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
-//    }
   }
 
   private def getTargetRoadLink(linkId: Long): RoadAddressLink = {

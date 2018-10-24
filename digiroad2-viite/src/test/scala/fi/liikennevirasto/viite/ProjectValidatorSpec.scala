@@ -881,8 +881,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       error2.head.validationError.value should be (projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
       val updatedProjectLinks = Seq(currentProjectLinks2.filter(_.status == LinkStatus.UnChanged).head.copy(status = LinkStatus.Transfer, roadPartNumber = 2L, discontinuity = EndOfRoad))
-
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U")
+      val originalAddresses = mockRoadAddressService.getRoadAddressesByRoadwayIds(roadAddresses.map(_.roadwayId))
+      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", originalAddresses)
       val afterProjectLinks =projectLinkDAO.getProjectLinks(project.id)
 
       mockEmptyRoadAddressServiceCalls()

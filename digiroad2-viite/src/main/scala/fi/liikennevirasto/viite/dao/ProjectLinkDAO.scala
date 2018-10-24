@@ -166,8 +166,8 @@ class ProjectLinkDAO {
     WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
     WHEN rn.road_name IS NULL AND pln.road_name IS NOT NULL THEN pln.road_name
     END AS road_name_pl,
-  ROADWAY.START_ADDR_M as RA_START_ADDR_M,
-  ROADWAY.END_ADDR_M as RA_END_ADDR_M,
+  PROJECT_LINK.ORIGINAL_START_ADDR_M as RA_START_ADDR_M,
+  PROJECT_LINK.ORIGINAL_END_ADDR_M as RA_END_ADDR_M,
   ROADWAY.TRACK as TRACK,
   ROADWAY.ROAD_NUMBER as ROAD_NUMBER,
   ROADWAY.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
@@ -338,15 +338,13 @@ class ProjectLinkDAO {
 
   }
 
-  def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
-//    throw new NotImplementedError("Will be implemented at VIITE-1540")
+  def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
     time(logger, "Update project links") {
       val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
-      val addresses = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => ra.id -> ra).toMap
       val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
       val links = projectLinks.map { pl =>
-        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.contains(pl.roadwayId) && !maxInEachTracks.contains(pl.id)) {
-          val ra = addresses(pl.roadwayId)
+        if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
+          val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
           // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
           pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
             startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,

@@ -41,7 +41,6 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def originalGeometry: Option[Seq[Point]]
 }
 
-//TODO VIITE-1539 OR VIITE-1540 blackUnderline should be removed
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
                               linkType: LinkType, constructionType: ConstructionType,

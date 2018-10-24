@@ -395,9 +395,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val originalSideCodes = linearLocationDAO.fetchByRoadways(projectLinks.map(_.roadwayId).toSet)
               .map(l => l.id -> l.sideCode).toMap
 
+            val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(projectLinks.map(_.roadwayId))
+
             projectLinkDAO.updateProjectLinksToDB(projectLinks.map(x =>
               x.copy(reversed = isReversed(originalSideCodes)(x),
-                discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username)
+                discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username, originalAddresses)
             CalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
             recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
             saveProjectCoordinates(projectId, coordinates)
@@ -1164,13 +1166,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]): Unit = {
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
       if (links.nonEmpty) {
         val lastSegment = links.maxBy(_.endAddrMValue)
         if (links.lengthCompare(1) > 0) {
           val linksToUpdate = links.filterNot(_.id == lastSegment.id)
-          projectLinkDAO.updateProjectLinksToDB(linksToUpdate, userName)
+          projectLinkDAO.updateProjectLinksToDB(linksToUpdate, userName, originalAddresses)
         }
-        projectLinkDAO.updateProjectLinksToDB(Seq(lastSegment.copy(discontinuity = Discontinuity.apply(discontinuity.toInt))), userName)
+        projectLinkDAO.updateProjectLinksToDB(Seq(lastSegment.copy(discontinuity = Discontinuity.apply(discontinuity.toInt))), userName, originalAddresses)
       }
     }
 
@@ -1202,8 +1205,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     def resetLinkValues(toReset: Seq[ProjectLink]): Unit = {
-      roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId).toSet).foreach(ra =>
-        projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false))
+      roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
+        .foreach(ra => projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false))
     }
 
     try {
@@ -1230,7 +1233,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
           case LinkStatus.Numbering =>
             if (toUpdateLinks.nonEmpty) {
-              val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(toUpdateLinks.map(_.roadwayId).toSet, includeFloating = true)
+              val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(toUpdateLinks.map(_.roadwayId), includeFloating = true)
               if (roadAddresses.exists(x =>
                 x.roadNumber == newRoadNumber && x.roadPartNumber == newRoadPartNumber)) // check the original numbering wasn't exactly the same
                 throw new ProjectValidationException(ErrorRenumberingToOriginalNumber) // you cannot use current roadnumber and roadpart number in numbering operation
@@ -1252,7 +1255,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
                 status = linkStatus, calibrationPoints = (None, None), roadType = RoadType.apply(roadType.toInt))
             })
-            projectLinkDAO.updateProjectLinksToDB(updated, userName)
+            val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(updated.map(_.roadwayId))
+            projectLinkDAO.updateProjectLinksToDB(updated, userName, originalAddresses)
             projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
             //transfer cases should remove the part after the project link table update operation
             if (replaceable) {
@@ -1316,8 +1320,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }.toSeq
 
       val recalculatedTerminated = ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
-
-      projectLinkDAO.updateProjectLinksToDB(recalculated ++ recalculatedTerminated, userName)
+      val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ recalculatedTerminated).map(_.roadwayId))
+      projectLinkDAO.updateProjectLinksToDB(recalculated ++ recalculatedTerminated, userName, originalAddresses)
     }
   }
 
@@ -1480,7 +1484,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def fuseProjectLinks(links: Seq[ProjectLink]): Seq[ProjectLink] = {
     val linkIds = links.map(_.linkId).distinct
-    val existingRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId).toSet)
+    val existingRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
     val groupedRoadAddresses = existingRoadAddresses.groupBy(record =>
       (record.roadwayNumber, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
 
