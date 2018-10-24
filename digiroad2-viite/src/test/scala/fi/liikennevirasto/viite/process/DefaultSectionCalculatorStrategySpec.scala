@@ -14,8 +14,8 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
   val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
 
-
-  test("Test the correct assignation of the MValues and it's start directions") {
+  //TODO Will be implemented at VIITE-1540
+  /*test("Test the correct assignation of the MValues and it's start directions") {
 
     val geomLeft1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
     val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
@@ -99,5 +99,5 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(p => p.sideCode.value).sorted) should be(true)
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
     findStartingPointsBefore should be((additionalGeomRightBefore.last, additionalGeomLeftBefore.last))
-  }
+  }*/
 }

@@ -270,7 +270,27 @@ object DataFixture {
 
   }
 
-  private def correctNullElyCodeProjects(): Unit = {
+  private def updateProjectLinkSdoGeometry(): Unit = {
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressDAO = new RoadwayDAO
+    val linearLocationDAO = new LinearLocationDAO
+    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+
+    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+    val projectsIDs = projectService.getRoadAddressAllProjects.map(x => x.id)
+    val projectCount = projectsIDs.size
+    var c = 0
+    projectsIDs.foreach(proj => {
+      c += 1
+      println("Updating Geometry for project " + c + "/" + projectCount)
+      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
+    })
+
+  }
+
+  //TODO this might not be needed anymore
+  /*private def correctNullElyCodeProjects(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
@@ -281,7 +301,7 @@ object DataFixture {
     println(s"Starting project Ely code correct now")
     projectService.correctNullProjectEly()
     println(s"Project Ely's correct in  ${hms.print(new Period(startTime, DateTime.now()))}")
-  }
+  }*/
 
 
   private def updateRoadAddressGeometrySource(): Unit = {
@@ -487,10 +507,12 @@ object DataFixture {
         updateRoadAddressGeometrySource()
       case Some("update_project_link_geom") =>
         updateProjectLinkGeom()
+      case Some("update_project_link_SDO_GEOMETRY") =>
+        updateProjectLinkSdoGeometry()
       case Some("import_road_names") =>
         importRoadNames()
-      case Some("correct_null_ely_code_projects") =>
-        correctNullElyCodeProjects()
+      /*case Some("correct_null_ely_code_projects") =>
+        correctNullElyCodeProjects()*/
 //      case Some("check_lrm_position") =>
 //        checkLinearLocation()
 //      case Some("fuse_road_address_with_history") =>
