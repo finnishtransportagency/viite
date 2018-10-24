@@ -8,6 +8,7 @@ import fi.liikennevirasto.viite.RoadType
 
 trait RoadAddressLinkLike extends PolyLine {
   def id: Long
+  def linearLocationId: Long
   def linkId: Long
   def length: Double
   def administrativeClass: AdministrativeClass

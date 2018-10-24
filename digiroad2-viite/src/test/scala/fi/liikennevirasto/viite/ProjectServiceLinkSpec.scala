@@ -46,6 +46,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val projectDAO = new ProjectDAO
+  val projectLinkDAO = new ProjectLinkDAO
+  val projectReservedPArtDAO = new ProjectReservedPartDAO
+
   val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
@@ -53,7 +57,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
   val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
-
     override def withDynTransaction[T](f: => T): T = f
   }
 
@@ -78,11 +81,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
-                          roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L) = {
+                          roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
     ProjectLink(NewRoadway, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, None, None,
       Some("User"), startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
       floating = NoFloating, Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
-      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, ely, reversed = false, None, 0L)
+      LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
 
   private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
@@ -97,15 +100,15 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
     val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(8), None)
-    ProjectDAO.createRoadAddressProject(project)
+    projectDAO.createRoadAddressProject(project)
     val links =
       if (changeTrack) {
         withTrack(RightSide) ++ withTrack(LeftSide)
       } else {
         withTrack(Combined)
       }
-    ProjectDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
-    ProjectDAO.create(links)
+    projectReservedPArtDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
+    projectLinkDAO.create(links)
     project
   }
 
@@ -200,7 +203,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
-    val dbLinks = ProjectDAO.getProjectLinks(id)
+    val dbLinks = projectLinkDAO.getProjectLinks(id)
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
@@ -284,28 +287,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //
 //  }
-
-  private def createProjectDataForSplit(): RoadAddressProject = {
-    val projectId = Sequences.nextViitePrimaryKeySeqValue
-    val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-    ProjectDAO.createRoadAddressProject(rap)
-    val raId = Sequences.nextRoadwayId
-    sqlu"""insert into ROADWAY (id, road_number, road_part_number, TRACK, discontinuity, START_ADDR_M, END_ADDR_M,
-           start_date, end_date, created_by, VALID_FROM, geometry, floating, calibration_points,
-           start_Measure,end_Measure,Link_id, SIDE)
-           VALUES ($raId, 1, 1, 0, 5, 0, 87, date'2011-01-01', null, 'foo', date'2011-01-01',
-           MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,87.0,0,87)), 0, 0,
-           0,87,1,2)""".execute
-    ProjectDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
-    sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROADWAY_ID, GEOMETRY,
-          link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES
-          (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',
-          TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0, $raId,
-          ${fi.liikennevirasto.viite.toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))},
-          1, 2, 0.0, 87.0, 0, 1)""".execute
-    ProjectDAO.getRoadAddressProjectById(projectId).get
-  }
 
   //TODO Will be implemented VIITE-1540
 //  test("Splitting link test") {
@@ -654,7 +635,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+
+  //TODO Will be implemented at VIITE-1540
 //  test("Project link direction change should remain after adding new links") {
 //    runWithRollback {
 //      sqlu"DELETE FROM ROADWAY WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
@@ -761,7 +743,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1540
 //  test("Project links direction change shouldn't work due to unchanged links on road") {
 //    runWithRollback {
 //      sqlu"DELETE FROM ROADWAY WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
@@ -991,7 +973,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1540
 //  test("Project should not allow adding branching links") {
 //    runWithRollback {
 //      sqlu"DELETE FROM ROADWAY WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
@@ -1397,7 +1379,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
+  //TODO this will be implemented at VIITE-1540
 //  test("Reserve road part, renumber it and revert it; reservation should be freed") {
 //    runWithRollback {
 //      reset(mockRoadLinkService)
@@ -1594,7 +1576,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1539
+  //TODO this will be implemented at VIITE-1540
 //  test("Reserve road part, try to renumber it to the same number should produce an error") {
 //    runWithRollback {
 //      reset(mockRoadLinkService)
@@ -1615,7 +1597,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1540
 //  test("Create a roundabout addressing") {
 //    runWithRollback {
 //      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser",
@@ -1652,7 +1634,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1540
 //  test("Create new road with track 2, update to track 0 should not crash") {
 //    runWithRollback {
 //      val id = Sequences.nextViitePrimaryKeySeqValue

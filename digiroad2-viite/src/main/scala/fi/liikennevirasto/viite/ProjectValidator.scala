@@ -13,12 +13,44 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.TrackSectionOrder
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import org.joda.time.format.DateTimeFormat
 
 object ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
-
+  val projectLinkDAO = new ProjectLinkDAO
+  val roadwayDAO = new RoadwayDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
+  val projectDAO = new ProjectDAO
   private def distanceToPoint = 10.0
+
+  def checkReservedExistence(currentProject: RoadAddressProject, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
+    if (LinkStatus.New.value == linkStatus.value && roadwayDAO.fetchAllByRoadAndPart(newRoadNumber, newRoadPart).nonEmpty) {
+      if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
+        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+        throw new ProjectValidationException(RoadNotAvailableMessage.format(newRoadNumber, newRoadPart, currentProject.startDate.toString(fmt)))
+      }
+    }
+  }
+
+  def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
+    if (projectReservedPartDAO.isNotAvailableForProject(number, part, currentProject.id)) {
+      val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+      throw new ProjectValidationException(RoadNotAvailableMessage.format(number, part, currentProject.startDate.toString(fmt)))
+    }
+  }
+
+  def checkNotReserved(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
+    val project = projectReservedPartDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
+    if (project.nonEmpty) {
+      throw new ProjectValidationException(s"TIE $number OSA $part on jo varattuna projektissa ${project.get}, tarkista tiedot")
+    }
+  }
+
+  def checkProjectExists(id: Long): Unit = {
+    if (projectDAO.getRoadAddressProjectById(id).isEmpty)
+      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia")
+  }
 
   // Utility method, will return correct GeometryEndpoint
   private def endPoint(b: BaseRoadAddress) = {
@@ -268,11 +300,12 @@ object ProjectValidator {
   def projectLinksValidation(project: RoadAddressProject, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     val projectValidations: Seq[(RoadAddressProject, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
-      checkProjectContinuity,
-      checkForNotHandledLinks,
-      checkTrackCodePairing,
-      checkRemovedEndOfRoadParts,
-      checkProjectElyCodes
+      //TODO in 1542
+//      checkProjectContinuity,
+//      checkForNotHandledLinks,
+//      checkTrackCodePairing,
+//      checkRemovedEndOfRoadParts,
+//      checkProjectElyCodes
     )
 
     val errors: Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
@@ -284,7 +317,7 @@ object ProjectValidator {
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
     val (splitLinks, nonSplitLinks) = pl.partition(_.isSplit)
     val splitIds = splitLinks.flatMap(s => Seq(s.connectedLinkId.get, s.linkId))
-    val connectedSplitLinks = ProjectDAO.getProjectLinksByConnectedLinkId(splitIds)
+    val connectedSplitLinks = projectLinkDAO.getProjectLinksByConnectedLinkId(splitIds)
     val (ids, points) = (nonSplitLinks ++ connectedSplitLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty) {
       Some(ValidationErrorDetails(id, validationError, ids,
@@ -603,7 +636,7 @@ object ProjectValidator {
     */
   def checkRoadContinuityCodes(project: RoadAddressProject, roadProjectLinks: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
 
-    val allProjectLinks = ProjectDAO.getProjectLinks(project.id)
+    val allProjectLinks = projectLinkDAO.getProjectLinks(project.id)
 
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
       throw new NotImplementedError("Will be implemented at VIITE-1540")
