@@ -18,11 +18,11 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
     val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
       None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomLeft1, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, false,
+      geomLeft1, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 1L, false,
       None, 86400L)
     val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
       None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomLeft2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, false,
+      geomLeft2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 1L, false,
       None, 86400L)
 
     val geomRight1 = Seq(Point(10.0, 20.0), Point(20.0, 20.0))
@@ -30,12 +30,12 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
     val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
       None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomRight1, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, false,
+      geomRight1, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 1L, false,
       None, 86400L)
 
     val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
       None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomRight2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, false,
+      geomRight2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0,1L, false,
       None, 86400L)
 
 
