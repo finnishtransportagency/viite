@@ -55,7 +55,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   private val linkId2 = 2000l
   private val linkId3 = 3000l
 
-  private val linearLocationId = 1
+  private val linearLocationId = 0
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None): RoadAddressProject ={
     RoadAddressProject(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("current status info"), ely, coordinates)
