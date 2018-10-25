@@ -19,9 +19,7 @@
     var isNotEditingData = true;
     var isActiveLayer = false;
 
-    //var styler = new Styler();
     var projectLinkStyler = new ProjectLinkStyler();
-    var roadLinkStyler = new RoadLinkStyler();
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
@@ -60,7 +58,7 @@
       source: suravageRoadVector,
       name: 'suravageRoadProjectLayer',
       style: function (feature) {
-          return projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()});
+          return projectLinkStyler.getStyler(feature.linkData, {zoomLevel:map.getView().getZoom()});
       },
       zIndex: RoadZIndex.SuravageLayer.value
     });
@@ -75,9 +73,7 @@
       source: projectLinkVector,
       name: layerName,
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()}),
-              projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()})];
+          return projectLinkStyler.getStyler(feature.linkData, {zoomLevel:map.getView().getZoom()});
       },
       zIndex: RoadZIndex.VectorLayer.value
     });
@@ -123,7 +119,7 @@
       style: function (feature) {
         if (!_.isUndefined(feature.linkData))
           if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value || feature.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value) {
-              return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()});
+              return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()});
           }
       }
     });
@@ -194,7 +190,7 @@
       condition: ol.events.condition.doubleClick,
       style: function(feature) {
           if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value || feature.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value) {
-              return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()});
+              return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()});
         }
       }
     });
@@ -783,7 +779,7 @@
         if (editedLink) {
           if (_.contains( _.pluck(toBeTerminated, 'id'), feature.linkData.linkId)) {
             feature.linkData.status = LinkStatus.Terminated.value;
-            var termination = projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()});
+            var termination = projectLinkStyler.getStyler(feature.linkData, {zoomLevel:map.getView().getZoom()});
             feature.setStyle(termination);
             features.push(feature);
           }
