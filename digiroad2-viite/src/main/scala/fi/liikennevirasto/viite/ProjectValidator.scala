@@ -6,14 +6,12 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUti
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.util.LogUtils.time

@@ -851,8 +851,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     sentObj
   }
 
-  // TODO REMOVE newTransaction
-  def getProjectRoadLinksByLinkIds(linkIdsToGet: Set[Long], newTransaction: Boolean = true): Seq[ProjectAddressLink] = {
+  def getProjectRoadLinksByLinkIds(linkIdsToGet: Set[Long]): Seq[ProjectAddressLink] = {
     throw new NotImplementedError("Will be implemented at VIITE-1539")
     //    if (linkIdsToGet.isEmpty)
     //      return Seq()
@@ -884,7 +883,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  // TODO
   def fetchProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                             everything: Boolean = false, publicRoads: Boolean = false, fetch: ProjectBoundingBoxResult): Seq[ProjectAddressLink] = {
     def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
