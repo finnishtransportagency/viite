@@ -236,11 +236,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (roadLinks.keySet != linkIds.toSet)
           return Map("success" -> false,
             "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
-        val project = withDynSession {
-          ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
+        val (project, existingProjectLinks) = withDynSession {
+          (ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId")),ProjectDAO.getProjectLinksByProjectRoadPart(roadNumber, roadPartNumber, projectId))
         }
         val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
-          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName)
+          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName, existingProjectLinks.forall(_.reversed))
         }
         setProjectEly(projectId, roadEly) match {
           case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
@@ -386,8 +386,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def isReversed(originalSideCodes: Map[Long, SideCode])(projectLink: ProjectLink): Boolean = {
     originalSideCodes.get(projectLink.roadAddressId) match {
-      case Some(sideCode) if sideCode != projectLink.sideCode => true
-      case _ => false
+      case Some(sideCode) => if (sideCode != projectLink.sideCode) true else false
+      case _ => projectLink.reversed
     }
   }
 
@@ -1444,12 +1444,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, roadNumber: Long,
                              roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, roadType: RoadType,
-                             ely: Long, roadName: String = ""): ProjectLink = {
+                             ely: Long, roadName: String = "", reversed: Boolean = false): ProjectLink = {
     ProjectLink(NewRoadAddress, roadNumber, roadPartNumber, trackCode, discontinuity,
       0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
       SideCode.Unknown, (None, None), floating = NoFloating, rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
-      0L, ely, reversed = false, None, rl.vvhTimeStamp, roadName = Some(roadName))
+      0L, ely, reversed, None, rl.vvhTimeStamp, roadName = Some(roadName))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, splitOptions: SplitOptions): ProjectLink = {

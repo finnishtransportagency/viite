@@ -116,8 +116,43 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayId: Long = NewRoadwayId, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
-  lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
-  lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+  lazy val startingPoint = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) => {
+      //Against digitizing, reversed
+      geometry.head
+    }
+    case (true, false) => {
+      //Against digitizing, NOT reversed
+      geometry.last
+    }
+    case (false, true) => {
+      //Towards digitizing, reversed
+      geometry.last
+    }
+    case (false, false) => {
+      //Towards digitizing, NOT reversed
+      geometry.head
+    }
+  }
+//  lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+  lazy val endPoint = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) => {
+      //Against digitizing, reversed
+      geometry.last
+    }
+    case (true, false) => {
+      //Against digitizing, NOT reversed
+      geometry.head
+    }
+    case (false, true) => {
+      //Towards digitizing, reversed
+      geometry.head
+    }
+    case (false, false) => {
+      //Towards digitizing, NOT reversed
+      geometry.last
+    }
+  }
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
   def getEndPoints(direction: Vector3d) = {
@@ -965,9 +1000,9 @@ object ProjectDAO {
          and project_link.status != ${LinkStatus.Terminated.value}
          """.as[Long].firstOption.getOrElse(0L)
       val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
-        s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-        s"side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END) " +
+        s"side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END), " +
+        s"reversed =  (CASE reversed WHEN 0 THEN 1 WHEN 1 THEN 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
       Q.updateNA(updateProjectLink).execute

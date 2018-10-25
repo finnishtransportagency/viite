@@ -248,7 +248,21 @@ object TrackSectionOrder {
             (getOppositeEnd(l.geometry, currentPoint), l, None)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed) match {
+          case (false, false) => {
+            SideCode.AgainstDigitizing
+          }
+          case (false, true) => {
+            SideCode.TowardsDigitizing
+          }
+          case (true, false) => {
+            SideCode.TowardsDigitizing
+          }
+          case (true, true) => {
+            SideCode.AgainstDigitizing
+          }
+        }
+//        val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
       }
     }
