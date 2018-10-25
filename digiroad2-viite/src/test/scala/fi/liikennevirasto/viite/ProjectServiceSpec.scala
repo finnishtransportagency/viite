@@ -1601,24 +1601,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO Will be implemented at VIITE-1540
-//  test("revert all new road should remove road name") {
-//    runWithRollback {
-//      val testRoad: (Long, Long, String) = {
-//        (99999L, 1L, "Test name")
-//      }
-//
-//      val (project, links) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
-//      val roadLinks = links.map(toRoadLink)
-//      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
-//      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
-//      val linksToRevert = links.map(l => {
-//        LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
-//      })
-//      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
-//      ProjectLinkNameDAO.get(99999L, project.id) should be(None)
-//    }
-//  }
+  test("Test revertLinks When new roads have name Then the revert should remove the road name") {
+    runWithRollback {
+      val testRoad: (Long, Long, String) = {
+        (99999L, 1L, "Test name")
+      }
+
+      val (project, links) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
+      val roadLinks = links.map(toRoadLink)
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
+      val linksToRevert = links.map(l => {
+        LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
+      })
+      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
+      ProjectLinkNameDAO.get(99999L, project.id) should be(None)
+    }
+  }
 
   //TODO this will be implemented at VIITE-1540
 //  test("unreserved road with new road name should remove road name") {
@@ -1646,87 +1645,84 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //    }
 //  }
 
-  //TODO this will be implemented at VIITE-1540
-//  test("if road exists in another project the new road name should not be removed") {
-//    runWithRollback {
-//      val testRoads: Seq[(Long, Long, String)] = Seq((99999L, 1L, "Test name"), (99999L, 2L, "Test name"))
-//      val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = testRoads, discontinuity = Discontinuity.Continuous)
-//      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
-//      val linksToRevert = links.map(l => {
-//        LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
-//      })
-//      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
-//      ProjectDAO.getProjectLinks(project.id).count(_.roadPartNumber == 2L) should be(2)
-//      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
-//    }
-//  }
+  test("Test revertLinks When road exists in another project Then the new road name should not be removed") {
+    runWithRollback {
+      val testRoads: Seq[(Long, Long, String)] = Seq((99999L, 1L, "Test name"), (99999L, 2L, "Test name"))
+      val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = testRoads, discontinuity = Discontinuity.Continuous)
+      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
+      val linksToRevert = links.map(l => {
+        LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
+      })
+      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
+      projectLinkDAO.getProjectLinks(project.id).count(_.roadPartNumber == 2L) should be(2)
+      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
+    }
+  }
 
-  //TODO this will be implemented at VIITE-1540
-//  test("if road name exists the revert should put the original name in the project link name if no other exists in project") {
-//    runWithRollback {
-//      val testRoad: (Long, Long, String) = {
-//        (99999L, 1L, "new name")
-//      }
-//      val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
-//      val roadLinks = links.map(toRoadLink)
-//      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
-//      sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.NEXTVAL, 99999, 'test name', sysdate, null, sysdate, null, 'test user', sysdate)""".execute
-//      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("new name")
-//      val linksToRevert = links.map(l => {
-//        LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
-//      })
-//      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
-//      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("test name")
-//    }
-//  }
+  test("Test revertLinks When road name exists Then the revert should put the original name in the project link name if no other exists in project") {
+    runWithRollback {
+      val testRoad: (Long, Long, String) = {
+        (99999L, 1L, "new name")
+      }
+      val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
+      val roadLinks = links.map(toRoadLink)
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.NEXTVAL, 99999, 'test name', sysdate, null, sysdate, null, 'test user', sysdate)""".execute
+      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("new name")
+      val linksToRevert = links.map(l => {
+        LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
+      })
+      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
+      ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("test name")
+    }
+  }
 
-  //TODO this will be implemented at VIITE-1540
-//  test("Road address geometry after reverting should be the same as VVH") {
-//    val projectId = 0L
-//    val user = "TestUser"
-//    val (roadNumber, roadPartNumber) = (26020L, 12L)
-//    val (newRoadNumber, newRoadPart) = (9999L, 1L)
-//    val smallerRoadGeom = Seq(Point(0.0, 0.0), Point(0.0, 5.0))
-//    val roadGeom = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
-//    runWithRollback {
-//
-//      val roadAddresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
-//
-//
-//      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", user, DateTime.parse("1901-01-01"),
-//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-//        Seq(), None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      val projectLinksFromRoadAddresses = roadAddresses.map(ra => toProjectLink(rap)(ra))
-//
-//      ProjectDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "Test")
-//      ProjectDAO.create(projectLinksFromRoadAddresses)
-//
-//      val numberingLink = Seq(ProjectLink(-1000L, newRoadNumber, newRoadPart, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
-//        Option(user), projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0, SideCode.Unknown, (None, None), NoFloating,
-//        smallerRoadGeom, 0L, LinkStatus.Numbering, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 10.0, roadAddresses.head.id, 0, false,
-//        None, 86400L))
-//      ProjectDAO.reserveRoadPart(projectId, newRoadNumber, newRoadPart, "Test")
-//      ProjectDAO.create(numberingLink)
-//      val numberingLinks = ProjectDAO.getProjectLinks(projectId, Option(LinkStatus.Numbering))
-//      numberingLinks.head.geometry should be equals (smallerRoadGeom)
-//
-//      val projectLinks = ProjectDAO.getProjectLinks(projectId)
-//      val linksToRevert = projectLinks.filter(_.status != LinkStatus.NotHandled).map(pl => {
-//        LinkToRevert(pl.id, pl.linkId, pl.status.value, pl.geometry)
-//      })
-//      val roadLinks = projectLinks.map(toRoadLink).head.copy(geometry = roadGeom)
-//      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinks))
-//
-//
-//      projectService.revertLinks(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
-//      val geomAfterRevert = GeometryUtils.truncateGeometry3D(roadGeom, projectLinksFromRoadAddresses.head.startMValue, projectLinksFromRoadAddresses.head.endMValue)
-//      val linksAfterRevert = ProjectDAO.getProjectLinks(projectId)
-//      linksAfterRevert.map(_.geometry).contains(geomAfterRevert) should be(true)
-//
-//
-//    }
-//  }
+  test("Test revertLinks When reverting the road Then the road address geometry after reverting should be the same as VVH") {
+    val projectId = 0L
+    val user = "TestUser"
+    val (roadNumber, roadPartNumber) = (26020L, 12L)
+    val (newRoadNumber, newRoadPart) = (9999L, 1L)
+    val smallerRoadGeom = Seq(Point(0.0, 0.0), Point(0.0, 5.0))
+    val roadGeom = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
+    runWithRollback {
+
+      val roadAddresses = roadwayAddressMapper.  roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
+
+
+      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", user, DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      projectDAO.createRoadAddressProject(rap)
+      val projectLinksFromRoadAddresses = roadAddresses.map(ra => toProjectLink(rap)(ra))
+
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, "Test")
+      projectLinkDAO.create(projectLinksFromRoadAddresses)
+
+      val numberingLink = Seq(ProjectLink(-1000L, newRoadNumber, newRoadPart, Track.apply(0), Discontinuity.Continuous, 0L, 0L, None, None,
+        Option(user), projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0, SideCode.Unknown, (None, None), NoFloating,
+        smallerRoadGeom, 0L, LinkStatus.Numbering, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 10.0, roadAddresses.head.id, 0, false,
+        None, 86400L))
+      projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newRoadPart, "Test")
+      projectLinkDAO.create(numberingLink)
+      val numberingLinks = projectLinkDAO.getProjectLinks(projectId, Option(LinkStatus.Numbering))
+      numberingLinks.head.geometry should be equals (smallerRoadGeom)
+
+      val projectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val linksToRevert = projectLinks.filter(_.status != LinkStatus.NotHandled).map(pl => {
+        LinkToRevert(pl.id, pl.linkId, pl.status.value, pl.geometry)
+      })
+      val roadLinks = projectLinks.map(toRoadLink).head.copy(geometry = roadGeom)
+      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinks))
+
+
+      projectService.revertLinks(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
+      val geomAfterRevert = GeometryUtils.truncateGeometry3D(roadGeom, projectLinksFromRoadAddresses.head.startMValue, projectLinksFromRoadAddresses.head.endMValue)
+      val linksAfterRevert = projectLinkDAO.getProjectLinks(projectId)
+      linksAfterRevert.map(_.geometry).contains(geomAfterRevert) should be(true)
+
+
+    }
+  }
 
 //TODO Will be implemented at VIITE-1540
 //  test("New user given addressMValues, even on Left/Right tracks, should keep continuous and incremented address values (calibration ones included) for all links") {

@@ -1041,9 +1041,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
+    val modifiedLinkIds = modified.map(_.linkId).toSet
     projectLinkDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modified.map(_.linkId).toSet)
-    val roadAddresses = roadAddressService.getRoadAddressByLinkIds(modified.map(_.linkId).toSet)
+    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(modifiedLinkIds)
+    val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchRoadwayByLinkId(modifiedLinkIds))
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) if mod.geometry.nonEmpty => {
