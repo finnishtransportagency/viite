@@ -524,7 +524,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         projectLink1.startAddrMValue, projectLink1.endAddrMValue, projectLink1.startMValue, projectLink1.endMValue,
         projectLink1.sideCode,
         calibrationPoints1._1,
-        calibrationPoints1._2, Anomaly.None, projectLink1.status, 0)
+        calibrationPoints1._2, Anomaly.None, projectLink1.status, 0, 0)
 
       val p2 = ProjectAddressLink(idr2, projectLink2.linkId, projectLink2.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink2.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, Some(""), Some("vvh_modified"),
@@ -532,7 +532,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         projectLink2.startAddrMValue, projectLink2.endAddrMValue, projectLink2.startMValue, projectLink2.endMValue,
         projectLink2.sideCode,
         calibrationPoints2._1,
-        calibrationPoints2._2, Anomaly.None, projectLink2.status, 0)
+        calibrationPoints2._2, Anomaly.None, projectLink2.status, 0, 0)
 
       mockForProject(id, Seq(p1, p2))
       projectService.addNewLinksToProject(Seq(projectLink1), id, "U", p1.linkId)
@@ -1061,7 +1061,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val newLink = ProjectAddressLink(NewLinearLocation, 5167571, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 77, 35, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
-        SideCode.AgainstDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
+        SideCode.AgainstDigitizing, None, None, Anomaly.None, LinkStatus.New, 0, 0)
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
       projectService.addNewLinksToProject(Seq(backToProjectLink(rap.copy(id = project.id))(newLink)).map(_.copy(status = LinkStatus.New)), project.id, "U", newLink.linkId) should be(None)
@@ -1073,7 +1073,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(project.id, Set(), transferLinks.map(_.linkId), LinkStatus.Transfer, "Test", 77, 35, 0, Option.empty[Int]) should be(None)
 
       val (resultNew, resultTransfer) = projectLinkDAO.getProjectLinks(project.id).partition(_.status == LinkStatus.New)
-      resultNew.head.calibrationPoints._1 should not be (None)
+      resultNew.head.calibrationPoints._1 should not be None
       resultTransfer.head.calibrationPoints._1 should be(None)
       allLinks.size should be(resultNew.size + resultTransfer.size)
     }
@@ -1109,7 +1109,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val newLink = ProjectAddressLink(NewLinearLocation, 3730091L, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 847, 6, 0L, 12L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
-        SideCode.Unknown, None, None, Anomaly.None, LinkStatus.New, 0)
+        SideCode.Unknown, None, None, Anomaly.None, LinkStatus.New, 0, 0)
 
       val linkToTerminate = geomToLinks.minBy(_.startAddrMValue)
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
@@ -1587,7 +1587,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addProjectAddressLink552 = ProjectAddressLink(NewRoadway, 6552, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 19999, 1, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
-        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0)
+        SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0, 0)
       val addresses = Seq(addProjectAddressLink552)
       mockForProject(id, addresses)
       projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId) should be(None)
