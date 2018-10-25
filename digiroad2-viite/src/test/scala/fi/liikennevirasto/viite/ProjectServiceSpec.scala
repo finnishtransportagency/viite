@@ -38,6 +38,14 @@ import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
+  val mockProjectService = MockitoSugar.mock[ProjectService]
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockVVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
+  val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
