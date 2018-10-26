@@ -533,7 +533,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withSection(roadNumber: Long, roadPartNumber: Long)(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track])(query: String): String = {
@@ -623,7 +623,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadWayIds(roadwayIds: Seq[Long])(query: String): String = {
-    s"""$query where id in (${roadwayIds.mkString(",")})"""
+    s"""$query where id in (${roadwayIds.mkString(",")}) and a.valid_to is null and a.end_date is null"""
   }
 
   private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway] {
