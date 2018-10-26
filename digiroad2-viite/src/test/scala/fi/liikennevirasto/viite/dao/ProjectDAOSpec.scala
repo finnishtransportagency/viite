@@ -130,7 +130,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectStateInfo When project info is updated Then project info should change") {
     runWithRollback {
-      val projectListSize = projectDAO.getRoadAddressProjects().length
+      val projectListSize = projectDAO.getProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], ely = None, coordinates = None)
       projectDAO.createRoadAddressProject(rap)
@@ -225,11 +225,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test getRoadAddressProjects When adding one new project Then outcome size of projects should be bigger than before") {
     runWithRollback {
-      val projectListSize = projectDAO.getRoadAddressProjects().length
+      val projectListSize = projectDAO.getProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None, None)
       projectDAO.createRoadAddressProject(rap)
-      val projectList = projectDAO.getRoadAddressProjects()
+      val projectList = projectDAO.getProjects()
       projectList.length - projectListSize should be(1)
     }
   }

@@ -258,7 +258,7 @@ object DataFixture {
     val roadNetworkDAO = new RoadNetworkDAO
     val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
-    val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
+    val projectsIDs= projectService.getAllProjects.map(x=>x.id)
     val projectCount=projectsIDs.size
     var c=0
     projectsIDs.foreach(x=>
@@ -278,7 +278,7 @@ object DataFixture {
     val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
 
     val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
-    val projectsIDs = projectService.getRoadAddressAllProjects.map(x => x.id)
+    val projectsIDs = projectService.getAllProjects.map(x => x.id)
     val projectCount = projectsIDs.size
     var c = 0
     projectsIDs.foreach(proj => {

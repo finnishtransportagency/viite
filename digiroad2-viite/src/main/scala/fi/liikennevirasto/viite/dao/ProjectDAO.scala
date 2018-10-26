@@ -116,7 +116,7 @@ class ProjectDAO {
     }
   }
 
-  def getRoadAddressProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
+  def getProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
     time(logger, "Get road address projects") {
       val filter = projectId match {
         case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
