@@ -461,13 +461,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = projectLinkDAO.getProjectLinks(project.id)
     logger.debug(s"${projectLinks.size} links fetched")
     val projectLinkOriginalParts = if (projectLinks.nonEmpty) roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => (ra.roadNumber, ra.roadPartNumber)) else Seq()
-    val roadways = project.reservedParts.foldLeft(Seq.empty[Roadway]){ case (list, reserved) =>
-      list ++ roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
-    }
     val newProjectLinks = project.reservedParts.filterNot(res =>
       projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
       reserved => {
-        //val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
+        val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
         validateReservations(reserved, project.ely, projectLinks, roadways) match {
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
