@@ -335,7 +335,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
       try {
         val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
-        val fetched = projectService.getRoadAddressSingleProject(projectSaved.id).get
+        val fetched = projectService.getSingleProjectById(projectSaved.id).get
         val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
         val firstAddress: Map[String, Any] =
           fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
@@ -432,7 +432,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all") {
     time(logger, "GET request for /roadlinks/roadaddress/project/all") {
-      projectService.getRoadAddressAllProjects.map(roadAddressProjectToApi)
+      projectService.getAllProjects.map(roadAddressProjectToApi)
     }
   }
 
@@ -440,7 +440,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("id").toLong
     time(logger, s"GET request for /roadlinks/roadaddress/project/all/projectId/$projectId") {
       try {
-        projectService.getRoadAddressSingleProject(projectId) match {
+        projectService.getSingleProjectById(projectId) match {
           case Some(project) =>
             val projectMap = roadAddressProjectToApi(project)
             val parts = project.reservedParts.map(reservedRoadPartToApi)
