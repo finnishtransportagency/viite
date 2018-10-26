@@ -204,7 +204,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchById When fetching linear location by id Then should return linear location with corresponding id") {
+  test("Test fetchById When fetching linear location by id Then should return linear location with corresponding id v2") {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2) = (111111111l, 222222222l)
@@ -225,7 +225,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchById When fetching linear location by id including floating Then should return linear locations with corresponding id v2") {
+  test("Test fetchById When fetching linear location by id including floating Then should return linear locations with corresponding id") {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2) = (111111111l, 222222222l)
