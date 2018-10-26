@@ -524,9 +524,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Terminate link and new link in the beginning of road part, transfer to the rest of road part") {
     runWithRollback {
-      val reservedRoadPart1 = ProjectReservedPart(3192, 5, 207, Some(3192), Some(Discontinuity.EndOfRoad), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
-      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
-      val addressesOnPart = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet))
+      val reservedRoadPart1 = ProjectReservedPart(3192, 77, 35, Some(3192), Some(Discontinuity.EndOfRoad), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2022-01-01"), DateTime.now(), "Some additional info", Seq(), None, None)
+      val addressesOnPart = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(77, 35).map(_.roadwayNumber).toSet))
       val geometries = StaticTestData.mappedGeoms(addressesOnPart.map(_.linkId).toSet)
       val l = addressesOnPart.map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
@@ -538,7 +538,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val project = projectService.createRoadLinkProject(rap)
       projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart1)))
 
-      val linksBefore = projectLinkDAO.fetchByProjectRoadPart(5, 207, project.id).groupBy(_.linkId).map(_._2.head).toList
+      val linksBefore = projectLinkDAO.fetchByProjectRoadPart(77, 35, project.id).groupBy(_.linkId).map(_._2.head).toList
       val mappedGeoms2 = StaticTestData.mappedGeoms(l.map(_.linkId))
 
       val geomToLinks: List[ProjectLink] = linksBefore.map { l =>
@@ -552,7 +552,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val newLink = ProjectAddressLink(NewLinearLocation, 3730091L, geom, GeometryUtils.geometryLength(geom),
         State, Motorway, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 5, 207, 0L, 12L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
+        RoadType.PublicRoad, Some("X"), None, 749, None, None, Map.empty, 77, 35, 0L, 12L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
         SideCode.Unknown, None, None, Anomaly.None, LinkStatus.New, 0, 0)
 
       val linkToTerminate = geomToLinks.minBy(_.startAddrMValue)
@@ -571,15 +571,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
       transferLinks.groupBy(_.track.value).foreach {
         case (k, seq) =>
-          projectService.updateProjectLinks(project.id, Set(), seq.map(_.linkId), LinkStatus.Transfer, "Test", 5, 207, k, Option.empty[Int]) should be(None)
+          projectService.updateProjectLinks(project.id, Set(), seq.map(_.linkId), LinkStatus.Transfer, "Test", 77, 35, k, Option.empty[Int]) should be(None)
       }
 
       val (resultNew, resultOther) = projectLinkDAO.getProjectLinks(project.id).partition(_.status == LinkStatus.New)
       val (resultTransfer, resultTerm) = resultOther.partition(_.status == LinkStatus.Transfer)
-
-      resultNew.head.calibrationPoints._1 should not be (None)
-      resultTransfer.head.calibrationPoints._1 should be(None)
-      resultTerm.head.toCalibrationPoints() should be (linkToTerminate.toCalibrationPoints())
       allLinks.size should be(resultNew.size + resultTransfer.size + resultTerm.size)
     }
   }
