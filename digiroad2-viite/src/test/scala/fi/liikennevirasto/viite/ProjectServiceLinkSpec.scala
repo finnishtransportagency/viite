@@ -55,11 +55,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   val unaddressedRoadLinkDAO = new UnaddressedRoadLinkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
-
     override def withDynTransaction[T](f: => T): T = f
   }
+
   val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -67,7 +67,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   val projectServiceWithRoadAddressMock = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
-
     override def withDynTransaction[T](f: => T): T = f
   }
 
@@ -258,6 +257,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("update project link numbering and check project status") {
     var count = 0
+
     val roadLinks = Seq(
       RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -271,6 +271,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         "TestUser", DateTime.parse("1962-11-02"), DateTime.now(), "Some additional info", Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(saved.id, roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet)).map(toProjectLink(saved)))
+      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       projectService.saveProject(saved.copy(reservedParts = addresses))
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects
       count = countCurrentProjects.size + 1
@@ -278,9 +279,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val projectLinks = projectLinkDAO.getProjectLinks(saved.id)
       projectLinks.isEmpty should be(false)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-      val linkIds207 = partitioned._1.map(_.linkId).toSet
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds207)).thenReturn(
-        partitioned._1.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
 
       projectService.isProjectPublishable(saved.id) should be(false)
       val linkIds = projectLinkDAO.getProjectLinks(saved.id).map(_.linkId).toSet
