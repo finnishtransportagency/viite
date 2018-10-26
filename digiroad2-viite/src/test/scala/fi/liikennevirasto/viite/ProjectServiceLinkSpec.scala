@@ -1139,12 +1139,16 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         Some(address2.last.endAddrMValue), Some(address2.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
       val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1) ++ Seq(reservedRoadPart2), None, None)
 
-      val links = (address1 ++ address2).map(address => {
+      val links1 = address1.map(address => {
+        toProjectLink(rap, LinkStatus.NotHandled)(address)
+      })
+      val links2 = address2.map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(links.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(address1.map(_.linkId).toSet, false)).thenReturn(links1.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(address2.map(_.linkId).toSet, false)).thenReturn(links2.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
 
       //Unchanged + Transfer
@@ -1160,7 +1164,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         LinkStatus.Transfer, "TestUser", 5, 207, 0, Option.empty[Int]) should be(None)
       val secondTransferLinks = projectLinkDAO.getProjectLinks(project.id)
       secondTransferLinks.filter(_.roadPartNumber == 207).maxBy(_.startAddrMValue).endAddrMValue should be(address2.maxBy(_.startAddrMValue).endAddrMValue - address2.minBy(_.startAddrMValue).endAddrMValue)
-      val mappedLinks = links.groupBy(_.linkId)
+      val mappedLinks = (links1 ++ links2).groupBy(_.linkId)
       val mapping = secondTransferLinks.filter(_.roadPartNumber == 207).map(tl => tl -> mappedLinks(tl.linkId)).filterNot(_._2.size > 1)
       mapping.foreach { case (link, l) =>
         val before = l.head
