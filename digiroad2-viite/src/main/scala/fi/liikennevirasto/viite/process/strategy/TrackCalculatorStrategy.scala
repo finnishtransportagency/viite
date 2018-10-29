@@ -209,7 +209,7 @@ trait TrackCalculatorStrategy {
   def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
 
-    val roadAddressCalibrationPoints = new LinearLocationDAO().getRoadAddressCalibrationCode(projectLinks.map(_.roadwayId).filter(_ > 0).distinct)
+    val roadAddressCalibrationPoints = new LinearLocationDAO().getLinearLocationCalibrationCode(projectLinks.map(_.roadwayId).filter(_ > 0).distinct)
 
     (setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
       setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint))

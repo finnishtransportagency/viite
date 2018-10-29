@@ -732,12 +732,12 @@ class LinearLocationDAO {
     CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
   }
 
-  def getRoadAddressCalibrationCode(linearLocationIds: Seq[Long]): Map[Long, CalibrationCode] = {
+  def getLinearLocationCalibrationCode(linearLocationIds: Seq[Long]): Map[Long, CalibrationCode] = {
     if (linearLocationIds.isEmpty) {
       Map()
     } else {
       val query =
-        s"""SELECT (CASE
+        s"""SELECT ID, (CASE
                        WHEN CAL_START_ADDR_M IS NOT NULL AND CAL_END_ADDR_M IS NOT NULL THEN 3
                        WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
                        WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
