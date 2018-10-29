@@ -37,7 +37,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val projectRoadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO,  new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val projectRoadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -77,8 +77,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, createdBy =Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating=NoFloating, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), floating = NoFloating, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false,
       None, roadAddress.adjustedTimestamp)
   }
@@ -175,8 +175,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         case ls :+ last => ls :+ last.copy(sideCode = AgainstDigitizing)
       }
       val ra = Seq(
-        RoadAddress(12345,1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 10.0), Point(10.0, 20.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(2l))
@@ -235,7 +235,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val (left, right) = projectLinks.partition(_.track == LeftSide)
       val endOfRoadLeft = left.init :+ left.last.copy(discontinuity = EndOfRoad)
       val endOfRoadRight = right.init :+ right.last.copy(discontinuity = EndOfRoad)
-      val endOfRoadSet = endOfRoadLeft++endOfRoadRight
+      val endOfRoadSet = endOfRoadLeft ++ endOfRoadRight
 
       mockEmptyRoadAddressServiceCalls()
 
@@ -274,10 +274,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         Roadway(raId, roadwayNumber1, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 1999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 1999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           10L, 20L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //LeftSide
-        Roadway(raId+2, roadwayNumber3, 1999L, 1L, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 2, roadwayNumber3, 1999L, 1L, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
           10L, 20L, reversed = false, DateTime.now(), None, "test_user ", None, 8, NoTermination, startDate, None))
 
       val combinedTrack = roadwayDAO.create(Set(ra.head))
@@ -285,23 +285,23 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
-        roadwayNumber1, Some(startDate), None),
+          (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
-        roadwayNumber2, Some(startDate), None),
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber2, Some(startDate), None),
 
-        LinearLocation(linearLocationId+2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(0.0, 10.0), Point(10.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
-        roadwayNumber3, Some(startDate), None)
+        LinearLocation(linearLocationId + 2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(0.0, 10.0), Point(10.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber3, Some(startDate), None)
       )
       linearLocationDAO.create(linearLocations)
 
       val combinedAddresses = roadwayDAO.fetchAllByRoadwayId(combinedTrack).sortBy(_.roadPartNumber)
       val rightleftAddresses = roadwayDAO.fetchAllByRoadwayId(rightleftTracks).sortBy(_.roadPartNumber)
 
-      val roadwayLocation: Seq[(Roadway, Seq[LinearLocation])]= Seq(
+      val roadwayLocation: Seq[(Roadway, Seq[LinearLocation])] = Seq(
         combinedAddresses.head -> Seq(linearLocations.head),
         rightleftAddresses.head -> Seq(linearLocations.tail.head),
         rightleftAddresses.last -> Seq(linearLocations.last))
@@ -349,10 +349,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
 
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           10L, 20L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //LeftSide
-        Roadway(raId+2, roadwayNumber3, 19999L, 1L, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 2, roadwayNumber3, 19999L, 1L, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
           10L, 20L, reversed = false, DateTime.now(), None, "test_user ", None, 8, NoTermination, startDate, None))
 
       val combinedTrack = roadwayDAO.create(Set(ra.head))
@@ -363,12 +363,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), None), FloatingReason.NoFloating, Seq(Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(10.0, 10.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None),
 
-        LinearLocation(linearLocationId+2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, Some(20l)), FloatingReason.NoFloating,  Seq(Point(10.0, 0.0), Point(0.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        LinearLocation(linearLocationId + 2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(10.0, 0.0), Point(0.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber3, Some(startDate), None)
       )
       linearLocationDAO.create(linearLocations)
@@ -376,7 +376,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val combinedAddresses = roadwayDAO.fetchAllByRoadwayId(combinedTrack).sortBy(_.roadPartNumber)
       val rightleftAddresses = roadwayDAO.fetchAllByRoadwayId(rightleftTracks).sortBy(_.roadPartNumber)
 
-      val roadwayLocation: Seq[(Roadway, Seq[LinearLocation])]= Seq(
+      val roadwayLocation: Seq[(Roadway, Seq[LinearLocation])] = Seq(
         combinedAddresses.head -> Seq(linearLocations.head),
         rightleftAddresses.head -> Seq(linearLocations.tail.head),
         rightleftAddresses.last -> Seq(linearLocations.last))
@@ -455,8 +455,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       error.head.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
 
       val ra = Seq(
-        RoadAddress(12345,1, 1999L, 2L, RoadType.PublicRoad,Track.Combined, EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 40.0), Point(0.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, 1, 1999L, 2L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
       val raId = Sequences.nextRoadwayId
       val startDate = DateTime.now()
@@ -494,12 +494,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val raId = Sequences.nextRoadwayId
       val startDate = DateTime.now()
       val ra = Seq(
-        RoadAddress(12345,1, 1999L, 2L, RoadType.PublicRoad,Track.Combined, EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, 1, 1999L, 2L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadway = Roadway(raId, roadwayNumber1, 1999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-      0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
+        0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
@@ -526,8 +526,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       //update geometry in order to make links be connected by geometry
       val ra2 = Seq(
-        RoadAddress(12345,1, 1999L, 2L, RoadType.PublicRoad,Track.Combined, EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 40.0), Point(0.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, 1, 1999L, 2L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(2L))
@@ -550,10 +550,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.MinorDiscontinuity,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.MinorDiscontinuity, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val ra = Seq(
@@ -561,7 +561,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.MinorDiscontinuity,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -569,7 +569,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -584,16 +584,16 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 1L, discontinuity = Discontinuity.MinorDiscontinuity, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkProjectContinuity(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.checkProjectContinuity(updProject, currentProjectLinks).distinct
       errors should have size 1
-      errors.head.validationError.value should be (projectValidator.ValidationErrorList.ConnectedDiscontinuousLink.value)
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.ConnectedDiscontinuousLink.value)
     }
   }
 
@@ -605,10 +605,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val ra = Seq(
@@ -616,7 +616,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -624,7 +624,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -638,14 +638,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
       errors should have size 0
     }
   }
@@ -656,10 +656,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val ra = Seq(
@@ -667,7 +667,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -675,7 +675,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -690,14 +690,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
       errors should have size 0
     }
   }
@@ -709,10 +709,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val ra = Seq(
@@ -720,7 +720,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -728,7 +728,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -743,16 +743,16 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.validateProject(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       errors should have size 1
-      errors.head.validationError.value should be (projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
     }
   }
 
@@ -762,10 +762,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val ra = Seq(
@@ -773,7 +773,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -781,7 +781,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -793,7 +793,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         "", Seq(), None, Some(8), None)
       projectDAO.createRoadAddressProject(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
@@ -807,7 +807,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       errors should have size 1
-      errors.head.validationError.value should be (projectValidator.ValidationErrorList.TerminationContinuity.value)
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.TerminationContinuity.value)
     }
   }
 
@@ -817,10 +817,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val ra = Seq(
@@ -828,7 +828,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -836,7 +836,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -849,7 +849,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectDAO.createRoadAddressProject(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
-      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated,roadAddresses.last.roadNumber, roadAddresses.last.roadPartNumber, discontinuity = EndOfRoad).copy(roadwayId = ra.last.id)))
+      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated, roadAddresses.last.roadNumber, roadAddresses.last.roadPartNumber, discontinuity = EndOfRoad).copy(roadwayId = ra.last.id)))
       val currentProjectLinks = projectLinkDAO.getProjectLinks(project.id)
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
 
@@ -860,9 +860,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(roadAddresses.last))
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(Some(1L))
 
-      val error1 = projectValidator.validateProject(updProject,currentProjectLinks).distinct
+      val error1 = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       error1 should have size 1
-      error1.head.validationError.value should be (projectValidator.ValidationErrorList.TerminationContinuity.value)
+      error1.head.validationError.value should be(projectValidator.ValidationErrorList.TerminationContinuity.value)
 
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.UnChanged).copy(roadwayId = ra.head.id, roadNumber = roadAddresses.head.roadNumber, roadPartNumber = roadAddresses.head.roadPartNumber)))
@@ -870,42 +870,42 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       mockEmptyRoadAddressServiceCalls()
 
-      val error2 = projectValidator.validateProject(updProject,currentProjectLinks2).distinct
+      val error2 = projectValidator.validateProject(updProject, currentProjectLinks2).distinct
       error2 should have size 1
-      error2.head.validationError.value should be (projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      error2.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
       val updatedProjectLinks = Seq(currentProjectLinks2.filter(_.status == LinkStatus.UnChanged).head.copy(status = LinkStatus.Transfer, roadPartNumber = 2L, discontinuity = EndOfRoad))
       projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
-      val afterProjectLinks =projectLinkDAO.getProjectLinks(project.id)
+      val afterProjectLinks = projectLinkDAO.getProjectLinks(project.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors3 = projectValidator.validateProject(updProject,afterProjectLinks).distinct
+      val errors3 = projectValidator.validateProject(updProject, afterProjectLinks).distinct
       errors3 should have size 0
     }
   }
 
-  test("Test validateProject When reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 2 (with and without EndOfRoad) Then different results should be expected"){
+  test("Test validateProject When reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 2 (with and without EndOfRoad) Then different results should be expected") {
     runWithRollback {
       val raId = Sequences.nextRoadwayId
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
-      val newRa = RoadAddress(12347, linearLocationId+2, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 3000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-        Seq(Point(10.0, 40.0), Point(20.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+      val newRa = RoadAddress(12347, linearLocationId + 2, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 3000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+        Seq(Point(10.0, 40.0), Point(20.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
 
       val ra = Seq(
         //Combined
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -913,7 +913,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -935,9 +935,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       mockEmptyRoadAddressServiceCalls()
 
-      val error1 = projectValidator.validateProject(updProject,currentProjectLinks).distinct
+      val error1 = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       error1 should have size 1
-      error1.head.validationError.value should be (projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      error1.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
       val updatedProjectLinks = Seq(currentProjectLinks.filter(_.status == LinkStatus.New).head.copy(roadPartNumber = 2L, discontinuity = EndOfRoad))
 
@@ -946,78 +946,78 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       mockEmptyRoadAddressServiceCalls()
 
-      val error2 = projectValidator.validateProject(updProject,currentProjectLinks2).distinct
+      val error2 = projectValidator.validateProject(updProject, currentProjectLinks2).distinct
       error2 should have size 0
     }
   }
 
-    test("Test validateProject When reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 3 (with and without EndOfRoad) Then different results should be expected"){
-      runWithRollback {
+  test("Test validateProject When reserve part 2 (which has EndOfRoad) and Terminate it. Create new part 3 (with and without EndOfRoad) Then different results should be expected") {
+    runWithRollback {
 
-        val raId = Sequences.nextRoadwayId
-        val startDate = DateTime.now()
-        val linearLocationId = Sequences.nextLinearLocationId
-        val roadAddresses = Seq(
-          RoadAddress(12345, linearLocationId, 20000L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-            Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-          RoadAddress(12346, linearLocationId+1, 20000L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-            Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
-        )
+      val raId = Sequences.nextRoadwayId
+      val startDate = DateTime.now()
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadAddresses = Seq(
+        RoadAddress(12345, linearLocationId, 20000L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 20000L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
+      )
 
-        val newRa = RoadAddress(12347, linearLocationId+2, 20000L, 3L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 3000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(20.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+      val newRa = RoadAddress(12347, linearLocationId + 2, 20000L, 3L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 3000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+        Seq(Point(10.0, 40.0), Point(20.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
 
-        val ra = Seq(
-          //Combined
-          Roadway(raId, roadwayNumber1, 20000L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-            0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-          //RightSide
-          Roadway(raId+1, roadwayNumber2, 20000L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
-            0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
+      val ra = Seq(
+        //Combined
+        Roadway(raId, roadwayNumber1, 20000L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
+        //RightSide
+        Roadway(raId + 1, roadwayNumber2, 20000L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+          0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
-        val linearLocations = Seq(
-          LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-            (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
-            roadwayNumber1, Some(startDate), None),
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(startDate), None),
 
-          LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-            (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
-            roadwayNumber2, Some(startDate), None)
-        )
-        roadwayDAO.create(ra)
-        linearLocationDAO.create(linearLocations)
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber2, Some(startDate), None)
+      )
+      roadwayDAO.create(ra)
+      linearLocationDAO.create(linearLocations)
 
-        val id = Sequences.nextViitePrimaryKeySeqValue
-        val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-          "", Seq(), None, Some(8), None)
-        projectDAO.createRoadAddressProject(project)
-        projectReservedPartDAO.reserveRoadPart(id, 20000L, 2L, "u")
-        projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadwayId = ra.last.id, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber)))
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), None, Some(8), None)
+      projectDAO.createRoadAddressProject(project)
+      projectReservedPartDAO.reserveRoadPart(id, 20000L, 2L, "u")
+      projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadwayId = ra.last.id, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber)))
 
-        //add new link with same terminated road part (which had EndOfRoad)
-        projectReservedPartDAO.reserveRoadPart(id, 20000L, 3L, "u")
-        val newpl = Seq(util.toProjectLink(project, LinkStatus.New)(newRa).copy(projectId = project.id, roadNumber = newRa.roadNumber, roadPartNumber = newRa.roadPartNumber))
-        projectLinkDAO.create(newpl)
+      //add new link with same terminated road part (which had EndOfRoad)
+      projectReservedPartDAO.reserveRoadPart(id, 20000L, 3L, "u")
+      val newpl = Seq(util.toProjectLink(project, LinkStatus.New)(newRa).copy(projectId = project.id, roadNumber = newRa.roadNumber, roadPartNumber = newRa.roadPartNumber))
+      projectLinkDAO.create(newpl)
 
-        val currentProjectLinks = projectLinkDAO.getProjectLinks(project.id)
-        val updProject = projectDAO.getRoadAddressProjectById(project.id).get
+      val currentProjectLinks = projectLinkDAO.getProjectLinks(project.id)
+      val updProject = projectDAO.getRoadAddressProjectById(project.id).get
 
-        mockEmptyRoadAddressServiceCalls()
+      mockEmptyRoadAddressServiceCalls()
 
-        val error1 = projectValidator.validateProject(updProject,currentProjectLinks).distinct
-        error1 should have size 1
-        error1.head.validationError.value should be (projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      val error1 = projectValidator.validateProject(updProject, currentProjectLinks).distinct
+      error1 should have size 1
+      error1.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
-        val updatedProjectLinks = Seq(currentProjectLinks.filter(_.status == LinkStatus.New).head.copy(roadPartNumber = 2L, discontinuity = EndOfRoad))
+      val updatedProjectLinks = Seq(currentProjectLinks.filter(_.status == LinkStatus.New).head.copy(roadPartNumber = 2L, discontinuity = EndOfRoad))
 
-        projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
-        val currentProjectLinks2 = projectLinkDAO.getProjectLinks(project.id)
+      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
+      val currentProjectLinks2 = projectLinkDAO.getProjectLinks(project.id)
 
-        mockEmptyRoadAddressServiceCalls()
+      mockEmptyRoadAddressServiceCalls()
 
-        val error2 = projectValidator.validateProject(updProject,currentProjectLinks2).distinct
-        error2 should have size 0
-      }
+      val error2 = projectValidator.validateProject(updProject, currentProjectLinks2).distinct
+      error2 should have size 0
+    }
   }
 
   test("Test validateProject When Terminate all links for all parts in a roadNumber Then should not exist any error") {
@@ -1026,17 +1026,17 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
       val ra = Seq(
         //Combined
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1044,7 +1044,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1058,14 +1058,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.validateProject(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       errors should have size 0
     }
   }
@@ -1077,17 +1077,17 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
       val ra = Seq(
         //Combined
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1095,7 +1095,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1110,13 +1110,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
       errors should have size 0
     }
   }
@@ -1128,17 +1128,17 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
       val ra = Seq(
         //Combined
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1146,7 +1146,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1161,7 +1161,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 1L, discontinuity = Discontinuity.Continuous, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
@@ -1169,7 +1169,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       mockEmptyRoadAddressServiceCalls()
 
-      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
       errors should have size 0
     }
   }
@@ -1181,15 +1181,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(startDate),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(startDate), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(startDate), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(startDate), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(startDate), None, None)
       )
       val ra = Seq(
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1197,7 +1197,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1212,7 +1212,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 1L, discontinuity = Discontinuity.EndOfRoad, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
@@ -1228,8 +1228,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
       errors should have size 1
-      errors.head.affectedIds.head should be (currentProjectLinks.head.id)
-      errors.head.validationError.value should be (projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
+      errors.head.affectedIds.head should be(currentProjectLinks.head.id)
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
     }
   }
 
@@ -1241,15 +1241,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19998L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(startDate),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None)
+        RoadAddress(12345, linearLocationId, 19998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(startDate), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(startDate), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(startDate), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(startDate), None, None)
       )
       val ra = Seq(
         Roadway(raId, roadwayNumber1, 19998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1257,7 +1257,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1271,7 +1271,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19998L, 1L, discontinuity = Discontinuity.EndOfRoad, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.UnChanged, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       val updProject = projectDAO.getRoadAddressProjectById(project.id).get
       val currentProjectLinks = projectLinkDAO.getProjectLinks(updProject.id)
@@ -1284,7 +1284,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getPreviousRoadAddressPart(19999l, 1l)).thenReturn(None)
       when(mockRoadAddressService.getPreviousRoadAddressPart(19999l, 2l)).thenReturn(Some(1l))
 
-      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject,currentProjectLinks).distinct
+      val errors = projectValidator.checkRemovedEndOfRoadParts(updProject, currentProjectLinks).distinct
       errors should have size 0
     }
   }
@@ -1304,13 +1304,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val errorsUpd = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Continuous)), isRampValidation = true).distinct
       errorsUpd should have size 1
-      errorsUpd.head.validationError.value should be (projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      errorsUpd.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
       mockEmptyRoadAddressServiceCalls()
       val errorsUpd2 = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)), isRampValidation = true).distinct
       errorsUpd2 should have size 1
-      errorsUpd2.head.validationError.value should be (projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      errorsUpd2.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
       val raId = Sequences.nextRoadwayId
       val startDate = DateTime.now()
@@ -1324,10 +1324,10 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
-        LinearLocation(linearLocationId+1, 2, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 2, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(2.0, 30.0), Point(7.0, 35.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
-        LinearLocation(linearLocationId+2, 3, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 2, 3, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(7.0, 35.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None)
       )
@@ -1355,15 +1355,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,0, 10, Some(startDate),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(startDate), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 0, 10, Some(startDate), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(startDate), None, None)
       )
       val ra = Seq(
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-        Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1371,7 +1371,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1386,13 +1386,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.NotHandled, roadNumber = 19999L, 1L, discontinuity = Discontinuity.EndOfRoad, 8, 12345, raId, linearLocationId).copy(geometry = roadAddresses.head.geometry),
-        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, roadNumber = 19999L,2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId+1, linearLocationId+1).copy(geometry = roadAddresses.last.geometry)))
+        util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, roadNumber = 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
 
       mockEmptyRoadAddressServiceCalls()
 
       val validationErrors = projectValidator.validateProject(project, projectLinkDAO.getProjectLinks(project.id)).filter(_.validationError.value == projectValidator.ValidationErrorList.HasNotHandledLinks.value)
       validationErrors.size should be(1)
-      validationErrors.head.validationError.message should be ("")
+      validationErrors.head.validationError.message should be("")
       validationErrors.head.optionalInformation should not be ""
     }
   }
@@ -1404,15 +1404,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,10, 20, Some(startDate),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(startDate), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 10, 20, Some(startDate), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(startDate), None, None)
       )
       val ra = Seq(
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-        Roadway(raId+1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1420,7 +1420,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1440,7 +1440,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           util.projectLink(0L, 10L, Combined, id, LinkStatus.Transfer, discontinuity = Discontinuity.Continuous, linkId = 1000, roadwayId = ra.head.id).copy(geometry = roadAddresses.head.geometry),
           util.projectLink(10L, 20L, Combined, id, LinkStatus.NotHandled, discontinuity = Discontinuity.EndOfRoad, linkId = 2000, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry),
           util.projectLink(10L, 20L, Combined, id, LinkStatus.UnChanged, discontinuity = Discontinuity.EndOfRoad, linkId = 2000, roadwayId = ra.last.id).copy(geometry = roadAddresses.last.geometry)
-      ))
+        ))
 
       val projectLinks = projectLinkDAO.getProjectLinks(id, Some(LinkStatus.NotHandled))
       val updatedProjectLinks = Seq(projectLinks.head.copy(status = LinkStatus.Transfer)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged))
@@ -1451,7 +1451,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val validationErrors = projectValidator.validateProject(project, projectLinkDAO.getProjectLinks(project.id))
 
       validationErrors.size shouldNot be(0)
-      validationErrors.foreach(e => e.validationError.value should be (projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
     }
   }
 
@@ -1461,15 +1461,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,10, 20, Some(startDate),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(startDate), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 10, 20, Some(startDate), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(startDate), None, None)
       )
       val ra = Seq(
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-        Roadway(raId+1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.Continuous,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1477,7 +1477,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1509,7 +1509,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
       val validationErrors1 = projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.getProjectLinks(project.id))
       validationErrors1.size shouldNot be(0)
-      validationErrors1.foreach(e => e.validationError.value should be (projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+      validationErrors1.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
       /*
        |---Numbering--->|---Unchanged--->|
         */
@@ -1518,7 +1518,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
       val validationErrors2 = projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.getProjectLinks(project.id))
       validationErrors2.size shouldNot be(0)
-      validationErrors2.foreach(e => e.validationError.value should be (projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+      validationErrors2.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
       /*
        |---Terminated--->|---Unchanged--->|
         */
@@ -1527,7 +1527,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
       val validationErrors3 = projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.getProjectLinks(project.id))
       validationErrors3.size shouldNot be(0)
-      validationErrors3.foreach(e => e.validationError.value should be (projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+      validationErrors3.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
     }
   }
 
@@ -1538,15 +1538,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 30.0), Point(10.0, 40.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.EndOfRoad,10, 20, Some(startDate),None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(startDate), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 10, 20, Some(startDate), None, Some("User"), 2000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(startDate), None, None)
       )
       val ra = Seq(
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-        Roadway(raId+1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1554,7 +1554,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1582,7 +1582,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val validationErrors = projectValidator.validateProject(project, projectLinkDAO.getProjectLinks(project.id))
 
       validationErrors.size should not be 0
-      validationErrors.foreach(e => e.validationError.value should be (projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
+      validationErrors.foreach(e => e.validationError.value should be(projectValidator.ValidationErrorList.ErrorInValidationOfUnchangedLinks.value))
     }
   }
 
@@ -1607,12 +1607,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val roadAddresses = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 10.0), Point(10.0, 10.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber1,Some(startDate), None,None),
-        RoadAddress(12346, linearLocationId+1, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,10, 30, Some(startDate),None, Some("User"), 1000, 10, 35, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 10.0), Point(10.0, 15.0),Point(20.0, 15.0), Point(20.0, 0.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber2,Some(startDate), None,None),
-        RoadAddress(12347, linearLocationId+1, 19999L, 1L, RoadType.PublicRoad,Track.Combined, Discontinuity.Continuous,30, 50, Some(startDate),None, Some("User"), 1000, 35, 50, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(20.0, 0.0), Point(10.0, 0.0), Point(10.0, 10.0)) ,LinkGeomSource.ComplimentaryLinkInterface,8,NoTermination,roadwayNumber3,Some(startDate), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 10, Some(startDate), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 10.0), Point(10.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber1, Some(startDate), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 10, 30, Some(startDate), None, Some("User"), 1000, 10, 35, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 10.0), Point(10.0, 15.0), Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber2, Some(startDate), None, None),
+        RoadAddress(12347, linearLocationId + 1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 30, 50, Some(startDate), None, Some("User"), 1000, 35, 50, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(20.0, 0.0), Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface, 8, NoTermination, roadwayNumber3, Some(startDate), None, None)
       )
       val ra = Seq(
         //Combined
@@ -1621,14 +1621,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 10.0), Point(10.0, 15.0),Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 10.0), Point(10.0, 15.0), Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 2, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 10.0), Point(10.0, 15.0),Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        LinearLocation(linearLocationId + 1, 2, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 10.0), Point(10.0, 15.0), Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None),
 
-        LinearLocation(linearLocationId+3, 3, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 3, 3, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(20.0, 0.0), Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber3, Some(startDate), None)
       )
@@ -1659,8 +1659,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val startDate = DateTime.now()
       val linearLocationId = Sequences.nextLinearLocationId
       val ra = Seq(
-        RoadAddress(12345,1, 16320L, 2L, RoadType.PublicRoad,Track.Combined, EndOfRoad,0, 10, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 40.0), Point(0.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, 1, 16320L, 2L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0, 10, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadway = Roadway(raId, roadwayNumber1, 16320L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -1673,7 +1673,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(Seq(roadway))
       linearLocationDAO.create(Seq(linearLocation))
 
-      val testRoad = {(16320L, 1L, "name")}
+      val testRoad = {
+        (16320L, 1L, "name")
+      }
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, Seq(testRoad), Discontinuity.ChangingELYCode)
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq.empty[Long])
@@ -1697,8 +1699,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linkId = 1817196L
 
       val ra = Seq(
-        RoadAddress(12345,1, 27L, 20L, RoadType.PublicRoad,Track.Combined, EndOfRoad,6109L, 6559L, Some(DateTime.parse("1901-01-01")),None, Some("User"), linkId, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 40.0), Point(0.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, 1, 27L, 20L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 6109L, 6559L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadway = Roadway(raId, roadwayNumber1, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -1711,7 +1713,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(Seq(roadway))
       linearLocationDAO.create(Seq(linearLocation))
 
-      val testRoad = {(27L, 19L, "name")}
+      val testRoad = {
+        (27L, 19L, "name")
+      }
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = false, Seq(testRoad), Discontinuity.Continuous, 12L)
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq.empty[Long])
       when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
@@ -1790,7 +1794,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         //Combined
         Roadway(raId, roadwayNumber1, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
           0L, 20L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
-        Roadway(raId+1, roadwayNumber2, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 39998L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           10L, 30L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
@@ -1798,11 +1802,11 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(2.0, 30.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+1, 2, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 1, 2, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(2.0, 30.0), Point(7.0, 35.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
-        LinearLocation(linearLocationId+3, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        LinearLocation(linearLocationId + 3, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
           (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(7.0, 35.0), Point(0.0, 40.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
@@ -1827,15 +1831,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
 
       val ra = Seq(
-        RoadAddress(12345,linearLocationId, 19999L, 2L, RoadType.PublicRoad,Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(10.0, 40.0), Point(10.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 2L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), FloatingReason.NoFloating,  Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -1868,29 +1872,29 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val raId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
       val ra = Seq(
-        RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.now()),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 0.0), Point(0.0, 10.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346,linearLocationId+1, 19999L, 2L, RoadType.PublicRoad,Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.now()),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 10.0), Point(0.0, 20.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.now()), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.now()), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadways = Seq(Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None),
-      Roadway(raId+1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-        0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None))
+        Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None))
 
       val linearLocations = Seq(LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
-        roadwayNumber1, Some(DateTime.now()), None), LinearLocation(linearLocationId+1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        roadwayNumber1, Some(DateTime.now()), None), LinearLocation(linearLocationId + 1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.ComplimentaryLinkInterface,
         roadwayNumber2, Some(DateTime.now()), None))
 
       roadwayDAO.create(roadways)
       linearLocationDAO.create(linearLocations)
 
-      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L,10L), discontinuity = Discontinuity.Continuous, roadwayId = roadways.head.id)
+      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L), discontinuity = Discontinuity.Continuous, roadwayId = roadways.head.id)
       projectReservedPartDAO.reserveRoadPart(project.id, 19999L, 2L, "u")
-      val addrMNew = Seq(0L,10L)
+      val addrMNew = Seq(0L, 10L)
       val links = addrMNew.init.zip(addrMNew.tail).map { case (st, en) =>
         projectLink(st, en, Track.Combined, project.id, LinkStatus.Transfer, 19999L, 2L, Discontinuity.EndOfRoad, roadwayId = roadways.last.id).copy(geometry = Seq(Point(0.0, 10.0), Point(0.0, 20.0)))
       }
@@ -1905,7 +1909,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
       val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project, g._2).distinct)
-      errors.size should be (0)
+      errors.size should be(0)
       sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
       val linksAfterTransfer = projectLinkDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
 
@@ -1918,8 +1922,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project, g._2).distinct)
-      linksAfterTransfer.head.connected(linksAfterTransfer.last) should be (true)
-      errorsAfterTransfer.size should be (1)
+      linksAfterTransfer.head.connected(linksAfterTransfer.last) should be(true)
+      errorsAfterTransfer.size should be(1)
       errorsAfterTransfer.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
     }
   }
@@ -1930,15 +1934,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
 
       val ra = Seq(
-        RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 40.0), Point(0.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), FloatingReason.NoFloating,  Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -1965,25 +1969,25 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
 
       val ra = Seq(
-        RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.LeftSide, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 40.0), Point(0.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None),
-        RoadAddress(12346,linearLocationId, 19999L, 1L, RoadType.PublicRoad,Track.RightSide, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(5.0, 40.0), Point(5.0, 50.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber2,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.LeftSide, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, EndOfRoad, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadways = Seq(
         Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None),
-        Roadway(raId+1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        Roadway(raId + 1, roadwayNumber2, 19999L, 1L, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
       )
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), FloatingReason.NoFloating,  Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
-        roadwayNumber1, Some(DateTime.parse("1901-01-01")), None),
-        LinearLocation(linearLocationId+1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), FloatingReason.NoFloating,  Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          roadwayNumber1, Some(DateTime.parse("1901-01-01")), None),
+        LinearLocation(linearLocationId + 1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(DateTime.parse("1901-01-01")), None)
       )
 
@@ -2011,8 +2015,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
 
       val ra = Seq(
-        RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-          Seq(Point(0.0, 0.0), Point(0.0, 10.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -2067,26 +2071,26 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-    test("Test checkRoadContinuityCodes When there is any of the track codes on the end of a part are not End Of Road Then Validator should return MajorDiscontinuity validation error") {
+  test("Test checkRoadContinuityCodes When there is any of the track codes on the end of a part are not End Of Road Then Validator should return MajorDiscontinuity validation error") {
 
-      runWithRollback {
-        val raId = Sequences.nextRoadwayId
-        val linearLocationId = Sequences.nextLinearLocationId
+    runWithRollback {
+      val raId = Sequences.nextRoadwayId
+      val linearLocationId = Sequences.nextLinearLocationId
 
-        val ra = Seq(
-          RoadAddress(12345,linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None),FloatingReason.NoFloating,
-            Seq(Point(0.0, 0.0), Point(0.0, 10.0)) ,LinkGeomSource.NormalLinkInterface,8,NoTermination,roadwayNumber1,Some(DateTime.parse("1901-01-01")), None,None)
-        )
+      val ra = Seq(
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 10, TowardsDigitizing, DateTime.now().getMillis, (None, None), FloatingReason.NoFloating,
+          Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
+      )
 
-        val roadway = Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-          0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+      val roadway = Roadway(raId, roadwayNumber1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-        val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
-          roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
-        roadwayDAO.create(Seq(roadway))
-        linearLocationDAO.create(Seq(linearLocation))
+      roadwayDAO.create(Seq(roadway))
+      linearLocationDAO.create(Seq(linearLocation))
 
       val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L, 30L), roads = Seq((19999L, 1L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
       projectLinkDAO.create(Seq(util.toProjectLink(project, LinkStatus.New)(ra.head)))
@@ -2096,12 +2100,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
       val projectWithReservations = project.copy(reservedParts = reservedParts)
       //Should NOT have error in both tracks
-        when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
-        when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(ra)
-        when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
-        when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
-        when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra.head))
-        when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(Some(1L))
+      when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
+      when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(ra)
+      when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
+      when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra.head))
+      when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(Some(1L))
 
       val noErrors = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks)
       noErrors.size should be(0)
@@ -2127,14 +2131,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.EndOfRoad)
       val errorLinks = projectLinks.map { l =>
-        if (l.startAddrMValue == 10 )
+        if (l.startAddrMValue == 10)
           l.copy(discontinuity = Discontinuity.EndOfRoad)
         else l
       }
       mockEmptyRoadAddressServiceCalls()
       val validationErrors = projectValidator.checkProjectContinuity(project, errorLinks.distinct)
       validationErrors.size should be(1)
-      validationErrors.head.validationError.value should be (projectValidator.ValidationErrorList.EndOfRoadMiddleOfPart.value)
+      validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadMiddleOfPart.value)
     }
   }
 
