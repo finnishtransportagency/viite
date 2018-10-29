@@ -394,7 +394,7 @@
       };
     }
 
-    function convertDateToIso(date){
+    function convertDateToIso(date) {
       return new Date(date.replace(finnishDatePattern,'$3-$2-$1')).toISOString();
     }
 
