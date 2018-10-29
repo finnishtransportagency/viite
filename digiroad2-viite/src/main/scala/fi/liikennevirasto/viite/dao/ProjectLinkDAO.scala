@@ -477,7 +477,7 @@ class ProjectLinkDAO {
 
   def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
-      val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.ROADWAY_ID in (${ids.mkString(",")})""" else ""
+      val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.LINEAR_LOCATION_ID in (${ids.mkString(",")})""" else ""
       val query =
 
         s"""$projectLinkQueryBase
@@ -616,7 +616,7 @@ class ProjectLinkDAO {
         s" CALIBRATION_POINTS_SOURCE = ${CalibrationPointSource.RoadAddressSource.value}, " +
         s" SIDE = ${roadAddress.sideCode.value}, " +
         s" start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry" +
-        s" WHERE ROADWAY_ID = ${roadAddress.id} AND PROJECT_ID = $projectId"
+        s" WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId"
       Q.updateNA(updateProjectLink).execute
     }
   }
