@@ -44,7 +44,7 @@ object DataFixture {
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
 
-  private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits(2) printZeroAlways() appendHours() appendSeparator(":") appendMinutes() appendSuffix(":") appendSeconds() toFormatter
+  private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits (2) printZeroAlways() appendHours() appendSeparator (":") appendMinutes() appendSuffix (":") appendSeconds() toFormatter
 
   private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
@@ -153,7 +153,7 @@ object DataFixture {
     println()
   }
 
-  private def importComplementaryRoadAddress(): Unit ={
+  private def importComplementaryRoadAddress(): Unit = {
     println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
@@ -164,6 +164,7 @@ object DataFixture {
     println(s"complementary road address import completed at time: ${DateTime.now()}")
     println()
   }
+
   //TODO this can be deleted
   //  private def combineMultipleSegmentsOnLinks(): Unit = {
 //    println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
@@ -193,7 +194,7 @@ object DataFixture {
     ))
   }
 
-  private def importRoadAddressChangeTestData(): Unit ={
+  private def importRoadAddressChangeTestData(): Unit = {
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
@@ -257,15 +258,14 @@ object DataFixture {
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO = new RoadNetworkDAO
     val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
-    val projectsIDs= projectService.getAllProjects.map(x=>x.id)
-    val projectCount=projectsIDs.size
-    var c=0
-    projectsIDs.foreach(x=>
-    {
-      c+=1
-      println("Updating Geometry for project " +c+ "/"+projectCount)
-      projectService.updateProjectLinkGeometry(x,"BJ")
+    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+    val projectsIDs = projectService.getAllProjects.map(x => x.id)
+    val projectCount = projectsIDs.size
+    var c = 0
+    projectsIDs.foreach(x => {
+      c += 1
+      println("Updating Geometry for project " + c + "/" + projectCount)
+      projectService.updateProjectLinkGeometry(x, "BJ")
     })
 
   }
@@ -296,7 +296,7 @@ object DataFixture {
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO = new RoadNetworkDAO
     val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
+    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
     val startTime = DateTime.now()
     println(s"Starting project Ely code correct now")
     projectService.correctNullProjectEly()
@@ -531,6 +531,7 @@ object DataFixture {
   }
 
   case class TimeLine(addressLength: Long, addresses: Seq[RoadAddress])
+
   private def generateCommonIdChunks(ids: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
     val (chunks, _) = ids.foldLeft((Seq[Long](0), 0)) {
       case ((fchunks, index), linkId) =>
