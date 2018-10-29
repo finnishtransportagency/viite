@@ -659,11 +659,11 @@ class ProjectLinkDAO {
     Q.queryNA[Long](query).list
   }
 
-  def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
+  def countLinksByStatus(projectId: Long, roadNumber: Long, roadPartNumber: Long, linkStatus: Set[Long]): Long = {
+    val filterByStatus = if(linkStatus.nonEmpty) s" AND Status IN (${linkStatus.mkString(",")})" else ""
     val query =
       s"""select count(id) from project_link
-          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and
-          (status = ${LinkStatus.UnChanged.value} or status = ${LinkStatus.NotHandled.value})"""
+          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber $filterByStatus"""
     Q.queryNA[Long](query).first
   }
 

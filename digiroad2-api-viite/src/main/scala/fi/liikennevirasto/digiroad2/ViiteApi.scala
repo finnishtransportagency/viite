@@ -993,23 +993,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames: Seq[RoadName] = Seq()): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
+      (Map(
+        "id" -> projectAddressLink.id,
+        "status" -> projectAddressLink.status.value,
+        "reversed" -> projectAddressLink.reversed,
+        "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
+        )
+    ++
       (if (projectAddressLink.isSplit)
         Map(
-          "id" -> projectAddressLink.id,
-          "status" -> projectAddressLink.status.value,
           "connectedLinkId" -> projectAddressLink.connectedLinkId,
           "originalGeometry" -> projectAddressLink.originalGeometry,
-          "reversed" -> projectAddressLink.reversed,
-          "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry),
-          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
+          "middlePoint" -> GeometryUtils.midPointGeometry(projectAddressLink.geometry)
         )
       else
-        Map(
-          "id" -> projectAddressLink.id,
-          "status" -> projectAddressLink.status.value,
-          "reversed" -> projectAddressLink.reversed,
-          "roadNameBlocked" -> (if (projectAddressLink.roadNumber != 0 && projectAddressLink.roadName.nonEmpty) roadNames.exists(_.roadNumber == projectAddressLink.roadNumber) else false)
-        ))
+        Map())
+      )
   }
 
   def projectLinkToApi(projectLink: ProjectLink): Map[String, Any] = {
