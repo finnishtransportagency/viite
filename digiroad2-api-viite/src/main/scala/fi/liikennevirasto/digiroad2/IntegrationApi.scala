@@ -25,8 +25,13 @@ trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
 
   val realm = "Viite Integration API"
 
-  protected def fromSession = { case id: String => BasicAuthUser(id)  }
-  protected def toSession = { case user: BasicAuthUser => user.username }
+  protected def fromSession = {
+    case id: String => BasicAuthUser(id)
+  }
+
+  protected def toSession = {
+    case user: BasicAuthUser => user.username
+  }
 
   protected val scentryConfig = (new ScentryConfig {}).asInstanceOf[ScentryConfiguration]
 
@@ -124,13 +129,13 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   // TODO Should we add the roadway_id also here?
-  def roadAddressLinksToApi(roadAddressLinks : Seq[RoadAddressLink]): Seq[Map[String, Any]] = {
-    roadAddressLinks.map{
+  def roadAddressLinksToApi(roadAddressLinks: Seq[RoadAddressLink]): Seq[Map[String, Any]] = {
+    roadAddressLinks.map {
       roadAddressLink =>
         Map(
           "muokattu_viimeksi" -> roadAddressLink.modifiedAt.getOrElse(""),
           geometryWKT(
-            if(roadAddressLink.sideCode == SideCode.BothDirections || roadAddressLink.sideCode == SideCode.AgainstDigitizing )
+            if (roadAddressLink.sideCode == SideCode.BothDirections || roadAddressLink.sideCode == SideCode.AgainstDigitizing)
               roadAddressLink.geometry.reverse
             else
               roadAddressLink.geometry
@@ -147,8 +152,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           "ely_code" -> roadAddressLink.elyCode,
           "road_type" -> roadAddressLink.roadType.value,
           "discontinuity" -> roadAddressLink.discontinuity,
-          "start_date" ->  roadAddressLink.startDate,
-          "end_date" ->  roadAddressLink.endDate,
+          "start_date" -> roadAddressLink.startDate,
+          "end_date" -> roadAddressLink.endDate,
           "calibration_points" -> calibrationPoint(roadAddressLink.startCalibrationPoint, roadAddressLink.endCalibrationPoint)
         )
     }
@@ -179,7 +184,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           "names" -> names.map(
             name => Map(
               "change_date" -> {
-                if (name.validFrom.isDefined)  name.validFrom.get.toString else null
+                if (name.validFrom.isDefined) name.validFrom.get.toString else null
               },
               "road_name" -> name.roadName,
               "start_date" -> {
