@@ -57,16 +57,19 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
+
     override def withDynTransaction[T](f: => T): T = f
   }
 
   val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
+
     override def withDynTransaction[T](f: => T): T = f
   }
 
   val projectServiceWithRoadAddressMock = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
+
     override def withDynTransaction[T](f: => T): T = f
   }
 
@@ -224,7 +227,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("update project link status and check project status") {
     var count = 0
-   runWithRollback {
+    runWithRollback {
       val countCurrentProjects = projectService.getAllProjects
       val id = 0
       val addresses = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 206: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -401,26 +404,26 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         toMockAnswer(adjusted.map(toRoadLink))
       )
       val beforeChange = projectLinkDAO.getProjectLinks(7081807)
-      projectService.changeDirection(7081807, 77997, 1, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)), ProjectCoordinates(0,0,0), "testuser")
+      projectService.changeDirection(7081807, 77997, 1, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)), ProjectCoordinates(0, 0, 0), "testuser")
       val changedLinks = projectLinkDAO.getProjectLinks(7081807)
 
-      val maxBefore = if(beforeChange.nonEmpty) beforeChange.maxBy(_.endAddrMValue).endAddrMValue else 0
-      val maxAfter = if(changedLinks.nonEmpty) changedLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
-      maxBefore should be (maxAfter)
+      val maxBefore = if (beforeChange.nonEmpty) beforeChange.maxBy(_.endAddrMValue).endAddrMValue else 0
+      val maxAfter = if (changedLinks.nonEmpty) changedLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
+      maxBefore should be(maxAfter)
       val combined = changedLinks.filter(_.track == Track.Combined)
       val right = changedLinks.filter(_.track == Track.RightSide)
       val left = changedLinks.filter(_.track == Track.LeftSide)
 
-      (combined++right).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]){ case (seq, plink) =>
-        if(seq.nonEmpty)
-          seq.last.endAddrMValue should be (plink.startAddrMValue)
-          seq++Seq(plink)
+      (combined ++ right).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]) { case (seq, plink) =>
+        if (seq.nonEmpty)
+          seq.last.endAddrMValue should be(plink.startAddrMValue)
+        seq ++ Seq(plink)
       }
 
-      (combined++left).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]){ case (seq, plink) =>
-        if(seq.nonEmpty)
-          seq.last.endAddrMValue should be (plink.startAddrMValue)
-        seq++Seq(plink)
+      (combined ++ left).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]) { case (seq, plink) =>
+        if (seq.nonEmpty)
+          seq.last.endAddrMValue should be(plink.startAddrMValue)
+        seq ++ Seq(plink)
       }
       // Test that for every link there should be the address before it or after it (unless it's the first or last link)
       changedLinks.foreach(l =>
@@ -1189,7 +1192,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //      result should be(Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."))
   //    }
   //  }
-
 
 
   //TODO Will be implemented at VIITE-1541
