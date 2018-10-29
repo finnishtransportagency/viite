@@ -98,7 +98,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     * isRoadPartNotHandled VIITE-1543
     * reverseRoadPartDirection VIITE-1543
     * fetchProjectLinkIds VIITE-1543
-    * countLinksUnchangedUnhandled VIITE-1543
+    * countLinksByStatus VIITE-1543
     * getContinuityCodes VIITE-1543
     * fetchFirstLink VIITE-1543
     * deleteProjectLinks VIITE-1543

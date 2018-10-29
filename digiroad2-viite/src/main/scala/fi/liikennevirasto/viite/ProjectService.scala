@@ -380,7 +380,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       withDynTransaction {
         projectWritableCheck(projectId) match {
           case None => {
-            if (projectLinkDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
+            if (projectLinkDAO.countLinksByStatus(projectId, roadNumber, roadPartNumber, Set(UnChanged.value, NotHandled.value)) > 0)
               return Some(ErrorReversingUnchangedLinks)
             val continuity = projectLinkDAO.getProjectLinksContinuityCodes(projectId, roadNumber, roadPartNumber)
             val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {

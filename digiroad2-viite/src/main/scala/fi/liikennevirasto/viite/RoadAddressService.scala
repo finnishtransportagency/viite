@@ -370,8 +370,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  //  fetchPreviousRoadPartNumber
-
   /**
     * Gets all the road addresses in given road number, road part number and between given address measures.
     * The road address measures should be in [startAddrM, endAddrM]
