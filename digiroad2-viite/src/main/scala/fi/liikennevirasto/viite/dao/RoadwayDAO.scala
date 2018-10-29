@@ -1603,6 +1603,8 @@ class RoadwayDAO extends BaseDAO {
   //    if (Q.queryNA[Int](query).first>0) true else false
   //  }
   //
+
+  // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
   def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
   {
     val query =
