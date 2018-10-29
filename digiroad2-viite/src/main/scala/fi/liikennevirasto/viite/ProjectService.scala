@@ -1202,7 +1202,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     def resetLinkValues(toReset: Seq[ProjectLink]): Unit = {
-      roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
+      roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId)).filter(link => toReset.map(_.linkId).contains(link.linkId))
         .foreach(ra => projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false))
     }
 
