@@ -85,8 +85,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }
 
-    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.right.links), userDefinedCalibrationPoint)
-    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.left.links), userDefinedCalibrationPoint)
+    val rightSections = sections.flatMap(_.right.links)
+    val leftSections = sections.flatMap(_.left.links)
+    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(if (rightSections.forall(_.reversed)) rightSections.reverse else rightSections, userDefinedCalibrationPoint)
+    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(if (leftSections.forall(_.reversed)) leftSections.reverse else leftSections, userDefinedCalibrationPoint)
     val (left, right) = adjustTracksToMatch(leftLinks.sortBy(_.startAddrMValue), rightLinks.sortBy(_.startAddrMValue), None)
     TrackSectionOrder.createCombinedSections(right, left)
   }
@@ -111,6 +113,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
       }
 
+      if (leftPoints.isEmpty)
+        throw new InvalidAddressDataException("Missing left track starting points")
 
       val (d1, d2) = GeometryUtils.distancesBetweenEndPointsInOrigin(rightPoints.toSeq, leftPoints.toSeq)
       val isRightHeadAdjacentToRightStartPoint = GeometryUtils.areAdjacent(rightPoints.head, rightStartPoint)
@@ -143,6 +147,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     */
   private def findStartingPoint(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): Point = {
+
     def calibrationPointToPoint(calibrationPoint: UserDefinedCalibrationPoint): Option[Point] = {
       val link = oldLinks.find(_.id == calibrationPoint.projectLinkId).orElse(newLinks.find(_.id == calibrationPoint.projectLinkId))
       link.flatMap(pl => GeometryUtils.calculatePointFromLinearReference(pl.geometry, calibrationPoint.segmentMValue))
@@ -167,7 +172,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             // Use the default vector
             Vector3d(0.0, 1.0, 0.0)
           }
-
         }
 
         val points = remainLinks.map(pl => pl.getEndPoints(direction))
