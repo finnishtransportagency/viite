@@ -436,7 +436,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-
   test("Test checkRoadPartsReservable When road can Then return on right part 2") {
     val roadNumber = 19438
     val roadStartPart = 1
@@ -582,7 +581,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-
   test("Test projectService.saveProject When after project creation we reserve roads to it Then return the count of created project should be increased AND Test projectService.getAllProjects When not specifying a projectId Then return the count of returned projects should be 0 ") {
     var count = 0
     runWithRollback {
@@ -621,7 +619,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.validateProjectDate() When evaluating project links with start date are after the project start date Then return no error message") {
+  test("Test projectService.validateProjectDate() When evaluating project links with start date are equal as the project start date Then return no error message") {
     runWithRollback {
       val projDate = DateTime.parse("1990-01-01")
       val addresses = List(ProjectReservedPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -630,7 +628,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Validate road part dates with project date - startDate valid") {
+  test("Test projectService.validateProjectDate() When evaluating  project links whose start date is a valid one Then return no error message") {
     runWithRollback {
       val projDate = DateTime.parse("2015-01-01")
       val addresses = List(ProjectReservedPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -639,16 +637,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Validate road part dates with project date - startDate and endDate") {
-    runWithRollback {
-      val projDate = DateTime.parse("1990-01-01")
-      val addresses = List(ProjectReservedPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-      val errorMsg = projectService.validateProjectDate(addresses, projDate)
-      errorMsg should not be None
-    }
-  }
-
-  test("Validate road part dates with project date - startDate and endDate valid") {
+  test("Test projectService.validateProjectDate() When evaluating  project links whose start date and end dates are valid Then return no error message") {
     runWithRollback {
       val projDate = DateTime.parse("2018-01-01")
       val addresses = List(ProjectReservedPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -657,7 +646,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("get the road address project") {
+  test("Test projectService.getSingleProjectById() When after creation of a new project, with reserved parts Then return only 1 project whose name is the same that was defined. ") {
     var count = 0
     runWithRollback {
       val countCurrentProjects = projectService.getAllProjects
@@ -679,7 +668,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test saveProject When all reserved parts are removed Then Project ELY  should be -1 ") {
+  test("Test saveProject When all reserved parts are removed Then Project ELY should be -1 ") {
     val projectIdNew = 0L
     val roadNumber = 19438
     val roadPartNumber = 1
@@ -753,7 +742,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test(" Test addNewLinksToProject When reserving part already used in other project Then return error message") {
+  test("Test addNewLinksToProject When reserving part already used in other project Then return error message") {
     runWithRollback {
       val idr = Sequences.nextRoadwayId
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -801,11 +790,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("parsePrefillData no-link from vvh") {
+  test("Test projectService.parsePreFillData When supplied a empty sequence of VVHRoadLinks Then return a error message.") {
     projectService.parsePreFillData(Seq.empty[VVHRoadlink]) should be(Left("Link could not be found in VVH"))
   }
 
-  test("parsePrefillData contains correct info") {
+  test("Test projectService.parsePreFillData When supplied a sequence of one valid VVHRoadLink Then return the correct pre-fill data for that link.") {
     runWithRollback {
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
       val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
@@ -813,7 +802,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("parsePrefillData contains correct info with road name pre fillled") {
+  test("Test projectService.parsePreFillData When supplied a sequence of one valid VVHRoadLink Then return the correct pre-fill data for that link and it's correct name.") {
     runWithRollback {
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 100, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
@@ -822,12 +811,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("parsePrefillData incomplete data") {
+  test("Test projectService.parsePreFillData When supplied a sequence of one incomplete VVHRoadLink Then return an error message indicating that the information is incomplete.") {
     val attributes1 = Map("ROADNUMBER" -> BigInt(2))
     val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
     projectService.parsePreFillData(Seq(newRoadLink1)) should be(Left("Link does not contain valid prefill info"))
   }
-
 
   test("Test setProjectEly When ely is changed Then project ely should change") {
     runWithRollback {
@@ -844,7 +832,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("split road address save behaves correctly on transfer + new") {
+  test("Test projectService.createSplitRoadAddress When dealing with a road addresses that were subjected to the transfer and the new operations " +
+    "Then the resulting links should include 1 terminated (the original one) and 3 more (1 new, 2 transferred) with the start dates be either the project start date or the road address start date and no defined end_date.")
+  {
     val linearLocationId = 1L
     val road = 5L
     val roadPart = 205L
@@ -892,7 +882,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.count(_.endDate.isEmpty) should be(2)
   }
 
-  test("split road address save behaves correctly on unchanged + new") {
+  test("Test projectService.createSplitRoadAddress When dealing with a road addresses that were subjected to the unchanged and the new operations" +
+    "Then the resulting links should include 1 terminated (the original one) and 2 more (1 new, 1 unchanged) with the start dates be either the project start date or the road address start date and no defined end_date.")
+  {
     val linearLocationId = 1234L
     val origStartM = 1024L
     val origEndM = 1547L
@@ -939,7 +931,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("renumber a reserved road part to a road part reserved by other project") {
+  test("Test projectService.updateProjectLinks When applying the operation \"Numerointi\" to a road part that is ALREADY reserved in a different project Then return an error message") {
     runWithRollback {
       val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1963-01-01"),
         "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
@@ -966,8 +958,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       response.get should be("TIE 5 OSA 206 on jo olemassa projektin alkupäivänä 01.01.1963, tarkista tiedot")
     }
   }
-
-  test("renumber a project link to a road part not reserved with end date null") {
+  
+  test("Test projectService.updateProjectLinks When applying the operation \"Numerointi\" to a road part that is ALREADY reserved in a different project Then return an error message" +
+    "renumber a project link to a road part not reserved with end date null") {
     runWithRollback {
       val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1963-01-01"),
         "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
