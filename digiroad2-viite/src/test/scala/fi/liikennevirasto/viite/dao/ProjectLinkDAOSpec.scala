@@ -213,7 +213,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Empty list will not throw an exception") {
+  test("Test both projectLinkDAO.getProjectLinksByIds() and projectLinkDAO.removeProjectLinksById() When supplying a empty list Then both methods should NOT throw an exception") {
     projectLinkDAO.getProjectLinksByIds(Seq())
     projectLinkDAO.removeProjectLinksById(Set())
   }
