@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -627,13 +627,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         case (oldLink, newLink) =>
           oldLink.startAddrMValue should be((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
-          val trackChangeCorrect = (oldLink.track, newLink.track) match {
-            case (Track.Combined, Track.Combined) => true
-            case (Track.RightSide, Track.LeftSide) => true
-            case (Track.LeftSide, Track.RightSide) => true
+          val sideCodeChangeCorrect = (oldLink.sideCode, newLink.sideCode) match {
+            case (SideCode.BothDirections, SideCode.BothDirections) => true
+            case (SideCode.AgainstDigitizing, SideCode.TowardsDigitizing) => true
+            case (SideCode.TowardsDigitizing, SideCode.AgainstDigitizing) => true
             case _ => false
           }
-          trackChangeCorrect should be(true)
+          sideCodeChangeCorrect should be (true)
       }
       linksFirst.id should be(changedLinksFirst.id)
       linksLast.id should be(changedLinksLast.id)
@@ -683,7 +683,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.changeDirection(id, 75, 2, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)), "testuser") should be(None)
       val changedLinks = ProjectDAO.getProjectLinksByIds(links.map { l => l.id })
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
-      changedLinks.foreach(cl => cl.reversed should be(false))
+      changedLinks.foreach(cl => cl.reversed should be(true))
       val geom584 = StaticTestData.mappedGeoms(Seq(5176584L)).values.head
       val addProjectAddressLink584 = ProjectAddressLink(NewRoadAddress, 5176584, geom584, GeometryUtils.geometryLength(geom584),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
@@ -695,15 +695,17 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(addProjectAddressLink584).copy(status = LinkStatus.New)),
         id, "U", addProjectAddressLink584.linkId) should be(None)
 
-      val linksAfter = ProjectDAO.getProjectLinks(id)
+      val linksAfter = ProjectDAO.getProjectLinks(id).sortBy(_.startAddrMValue)
       linksAfter should have size (links.size + 1)
       linksAfter.find(_.linkId == 5176512).get.sideCode should be(changedLinks.find(_.linkId == 5176512).get.sideCode)
       linksAfter.find(_.linkId == 5176552).get.sideCode should be(changedLinks.find(_.linkId == 5176552).get.sideCode)
-      linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(AgainstDigitizing))
-      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(2004)
-      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(893)
-      linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be(0)
-      linksAfter.find(_.linkId == 5176584).get.endAddrMValue should be(206)
+      linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(SideCode.TowardsDigitizing))
+      linksAfter.head.startAddrMValue should be(0)
+      linksAfter.head.endAddrMValue > linksAfter.head.startAddrMValue should be(true)
+      linksAfter.tail.head.startAddrMValue == linksAfter.head.endAddrMValue should be(true)
+      linksAfter.tail.head.endAddrMValue == linksAfter.tail.last.startAddrMValue should be(true)
+
+
     }
   }
 
