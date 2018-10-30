@@ -116,41 +116,22 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayId: Long = NewRoadwayId, blackUnderline: Boolean = false, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
-  lazy val startingPoint = (sideCode == SideCode.AgainstDigitizing, reversed) match {
-    case (true, true) => {
-      //Against digitizing, reversed
+  lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false)=>
+      //reversed for both SideCodes
       geometry.head
-    }
-    case (true, false) => {
-      //Against digitizing, NOT reversed
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
       geometry.last
-    }
-    case (false, true) => {
-      //Towards digitizing, reversed
-      geometry.last
-    }
-    case (false, false) => {
-      //Towards digitizing, NOT reversed
-      geometry.head
-    }
   }
-  lazy val endPoint = (sideCode == SideCode.AgainstDigitizing, reversed) match {
-    case (true, true) => {
-      //Against digitizing, reversed
+//  lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+  lazy val endPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
       geometry.last
-    }
-    case (true, false) => {
-      //Against digitizing, NOT reversed
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
       geometry.head
-    }
-    case (false, true) => {
-      //Towards digitizing, reversed
-      geometry.head
-    }
-    case (false, false) => {
-      //Towards digitizing, NOT reversed
-      geometry.last
-    }
   }
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
