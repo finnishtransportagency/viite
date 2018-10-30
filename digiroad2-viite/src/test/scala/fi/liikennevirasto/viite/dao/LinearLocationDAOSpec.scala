@@ -77,9 +77,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       loc.adjustedTimestamp should be(adjustedTimestamp)
       loc.calibrationPoints should be(calibrationPoints)
       loc.floating should be(floating)
-      loc.geometry(0).x should be(geometry(0).x +- 0.001)
-      loc.geometry(0).y should be(geometry(0).y +- 0.001)
-      loc.geometry(0).z should be(geometry(0).z +- 0.001)
+      loc.geometry.head.x should be(geometry.head.x +- 0.001)
+      loc.geometry.head.y should be(geometry.head.y +- 0.001)
+      loc.geometry.head.z should be(geometry.head.z +- 0.001)
       loc.geometry(1).x should be(geometry(1).x +- 0.001)
       loc.geometry(1).y should be(geometry(1).y +- 0.001)
       loc.geometry(1).z should be(geometry(1).z +- 0.001)
@@ -187,12 +187,12 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val locations = linearLocationDAO.fetchById(id1)
       locations.size should be(1)
-      locations.filter(l => l.id == id1).size should be(1)
+      locations.count(l => l.id == id1) should be(1)
 
       val massQueryLocations = linearLocationDAO.fetchByIdMassQuery(Set(id1, -101l, -102l, -103l, id2))
       massQueryLocations.size should be(2)
-      massQueryLocations.filter(l => l.id == id1).size should be(1)
-      massQueryLocations.filter(l => l.id == id2).size should be(1)
+      massQueryLocations.count(l => l.id == id1) should be(1)
+      massQueryLocations.count(l => l.id == id2) should be(1)
     }
   }
 
@@ -214,14 +214,14 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val locations = linearLocationDAO.fetchByLinkId(Set(linkId1))
       locations.size should be(2)
-      locations.filter(l => l.id == id1).size should be(1)
-      locations.filter(l => l.id == id2).size should be(1)
+      locations.count(l => l.id == id1) should be(1)
+      locations.count(l => l.id == id2) should be(1)
 
       val massQueryLocations = linearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2))
       massQueryLocations.size should be(3)
-      massQueryLocations.filter(l => l.id == id1).size should be(1)
-      massQueryLocations.filter(l => l.id == id2).size should be(1)
-      massQueryLocations.filter(l => l.id == id3).size should be(1)
+      massQueryLocations.count(l => l.id == id1) should be(1)
+      massQueryLocations.count(l => l.id == id2) should be(1)
+      massQueryLocations.count(l => l.id == id3) should be(1)
     }
   }
 
@@ -238,21 +238,21 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val locations1 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId2), includeFloating = true, filterIds = Set(id2, id3))
       locations1.size should be(1)
-      locations1.filter(l => l.id == id1).size should be(1)
-      locations1.filter(l => l.id == id2).size should be(0)
-      locations1.filter(l => l.id == id3).size should be(0)
+      locations1.count(l => l.id == id1) should be(1)
+      locations1.count(l => l.id == id2) should be(0)
+      locations1.count(l => l.id == id3) should be(0)
 
       val locations2 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId2), includeFloating = true, filterIds = Set(id2))
       locations2.size should be(2)
-      locations2.filter(l => l.id == id1).size should be(1)
-      locations2.filter(l => l.id == id2).size should be(0)
-      locations2.filter(l => l.id == id3).size should be(1)
+      locations2.count(l => l.id == id1) should be(1)
+      locations2.count(l => l.id == id2) should be(0)
+      locations2.count(l => l.id == id3) should be(1)
 
       val massQueryLocations = linearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2), includeFloating = true)
       massQueryLocations.size should be(3)
-      massQueryLocations.filter(l => l.id == id1).size should be(1)
-      massQueryLocations.filter(l => l.id == id2).size should be(1)
-      massQueryLocations.filter(l => l.id == id3).size should be(1)
+      massQueryLocations.count(l => l.id == id1) should be(1)
+      massQueryLocations.count(l => l.id == id2) should be(1)
+      massQueryLocations.count(l => l.id == id3) should be(1)
     }
   }
 
@@ -275,15 +275,15 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2)))
 
       val locations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1))
-      locations.filter(l => l.id == id1).size should be(1)
-      locations.filter(l => l.id == id2).size should be(1)
-      locations.filter(l => l.id == id3).size should be(1)
+      locations.count(l => l.id == id1) should be(1)
+      locations.count(l => l.id == id2) should be(1)
+      locations.count(l => l.id == id3) should be(1)
       locations.size should be(3)
 
       val massQueryLocations = linearLocationDAO.fetchRoadwayByLinkIdMassQuery(Set(linkId1))
-      massQueryLocations.filter(l => l.id == id1).size should be(1)
-      massQueryLocations.filter(l => l.id == id2).size should be(1)
-      massQueryLocations.filter(l => l.id == id3).size should be(1)
+      massQueryLocations.count(l => l.id == id1) should be(1)
+      massQueryLocations.count(l => l.id == id2) should be(1)
+      massQueryLocations.count(l => l.id == id3) should be(1)
       massQueryLocations.size should be(3)
     }
   }
@@ -299,23 +299,23 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2)))
 
       val locations1 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1))
-      locations1.filter(l => l.id == id1).size should be(1)
-      locations1.filter(l => l.id == id2).size should be(1)
-      locations1.filter(l => l.id == id3).size should be(1)
+      locations1.count(l => l.id == id1) should be(1)
+      locations1.count(l => l.id == id2) should be(1)
+      locations1.count(l => l.id == id3) should be(1)
       locations1.size should be(3)
 
       val locations2 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId2))
-      locations2.filter(l => l.id == id1).size should be(1)
-      locations2.filter(l => l.id == id2).size should be(1)
-      locations2.filter(l => l.id == id3).size should be(1)
-      locations2.filter(l => l.id == id4).size should be(1)
+      locations2.count(l => l.id == id1) should be(1)
+      locations2.count(l => l.id == id2) should be(1)
+      locations2.count(l => l.id == id3) should be(1)
+      locations2.count(l => l.id == id4) should be(1)
       locations2.size should be(4)
 
       val massQueryLocations = linearLocationDAO.fetchRoadwayByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2))
-      massQueryLocations.filter(l => l.id == id1).size should be(1)
-      massQueryLocations.filter(l => l.id == id2).size should be(1)
-      massQueryLocations.filter(l => l.id == id3).size should be(1)
-      massQueryLocations.filter(l => l.id == id4).size should be(1)
+      massQueryLocations.count(l => l.id == id1) should be(1)
+      massQueryLocations.count(l => l.id == id2) should be(1)
+      massQueryLocations.count(l => l.id == id3) should be(1)
+      massQueryLocations.count(l => l.id == id4) should be(1)
       massQueryLocations.size should be(4)
     }
   }
@@ -328,9 +328,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 3l, floating = FloatingReason.NewAddressGiven)))
 
       val locations = linearLocationDAO.fetchAllFloatingLinearLocations
-      locations.filter(l => l.id == id1).size should be(0)
-      locations.filter(l => l.id == id2).size should be(1)
-      locations.filter(l => l.id == id3).size should be(1)
+      locations.count(l => l.id == id1) should be(0)
+      locations.count(l => l.id == id2) should be(1)
+      locations.count(l => l.id == id3) should be(1)
     }
   }
 
@@ -485,7 +485,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       before.sideCode should be(asset.SideCode.TowardsDigitizing)
 
       // Update geometry so that the direction of digitization changes
-      val newStart = Point(0.0, 0.0)
+      val newStart: Point = Point(0.0, 0.0)
       val newEnd = Point(10.0, 90.0)
       linearLocationDAO.updateGeometry(id1, Seq(newStart, newEnd), "test")
 
@@ -498,7 +498,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       // New linear location should have new geometry
       val locations = linearLocationDAO.fetchByLinkId(Set(linkId1))
       val updated = locations.head
-      updated.id should not be (id1)
+      updated.id should not be id1
       updated.geometry.head.x should be(newStart.x +- 0.001)
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
@@ -532,7 +532,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       // New linear location should have new geometry and side code
       val locations = linearLocationDAO.fetchByLinkId(Set(linkId1))
       val updated = locations.head
-      updated.id should not be (id1)
+      updated.id should not be id1
       updated.geometry.head.x should be(newStart.x +- 0.001)
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
@@ -566,7 +566,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       // New linear location should have new geometry and side code
       val locations = linearLocationDAO.fetchByLinkId(Set(linkId1))
       val updated = locations.head
-      updated.id should not be (id1)
+      updated.id should not be id1
       updated.geometry.head.x should be(newStart.x +- 0.001)
       updated.geometry.head.y should be(newStart.y +- 0.001)
       updated.geometry.last.x should be(newEnd.x +- 0.001)
@@ -593,14 +593,14 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, floating = FloatingReason.NewAddressGiven)))
 
       val locations = linearLocationDAO.queryFloatingByLinkId(Set(linkId1, linkId2, linkId3))
-      locations.filter(l => l.id == id1).size should be(0)
-      locations.filter(l => l.id == id2).size should be(1)
-      locations.filter(l => l.id == id3).size should be(1)
+      locations.count(l => l.id == id1) should be(0)
+      locations.count(l => l.id == id2) should be(1)
+      locations.count(l => l.id == id3) should be(1)
 
       val massQueryLocations = linearLocationDAO.queryFloatingByLinkIdMassQuery(Set(linkId1, linkId2, linkId3))
-      massQueryLocations.filter(l => l.id == id1).size should be(0)
-      massQueryLocations.filter(l => l.id == id2).size should be(1)
-      massQueryLocations.filter(l => l.id == id3).size should be(1)
+      massQueryLocations.count(l => l.id == id1) should be(0)
+      massQueryLocations.count(l => l.id == id2) should be(1)
+      massQueryLocations.count(l => l.id == id3) should be(1)
     }
   }
 
@@ -622,13 +622,13 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       noLocations.size should be(0)
       val locations = linearLocationDAO.queryById(Set(id1), rejectInvalids = false)
       locations.size should be(1)
-      locations.filter(l => l.id == id1).size should be(1)
+      locations.count(l => l.id == id1) should be(1)
 
       val noLocationsM = linearLocationDAO.queryByIdMassQuery(Set(id1))
       noLocationsM.size should be(0)
       val locationsM = linearLocationDAO.queryByIdMassQuery(Set(id1), rejectInvalids = false)
       locationsM.size should be(1)
-      locationsM.filter(l => l.id == id1).size should be(1)
+      locationsM.count(l => l.id == id1) should be(1)
     }
   }
 
@@ -655,10 +655,10 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val locations1 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withLinkIdAndMeasure(linkId, Some(0.0), Some(100.0)))
       locations1.size should be(1)
-      locations1.filter(l => l.id == id1).size should be(1)
+      locations1.count(l => l.id == id1) should be(1)
       val locations2 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withLinkIdAndMeasure(linkId, Some(100.0), Some(200.0)))
       locations2.size should be(1)
-      locations2.filter(l => l.id == id2).size should be(1)
+      locations2.count(l => l.id == id2) should be(1)
     }
   }
 
@@ -672,12 +672,12 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val locations1 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withRoadwayNumbers(roadwayNumber1, roadwayNumber1))
       locations1.size should be(1)
-      locations1.filter(l => l.id == id1).size should be(1)
+      locations1.count(l => l.id == id1) should be(1)
       val locations2 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withRoadwayNumbers(roadwayNumber1, roadwayNumber3))
       locations2.size should be(3)
-      locations2.filter(l => l.id == id1).size should be(1)
-      locations2.filter(l => l.id == id2).size should be(1)
-      locations2.filter(l => l.id == id3).size should be(1)
+      locations2.count(l => l.id == id1) should be(1)
+      locations2.count(l => l.id == id2) should be(1)
+      locations2.count(l => l.id == id3) should be(1)
     }
   }
 
@@ -690,7 +690,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333l)))
       val locations = linearLocationDAO.fetchByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)))
       locations.size should be(1)
-      locations.filter(l => l.id == id2).size should be(1)
+      locations.count(l => l.id == id2) should be(1)
     }
   }
 
@@ -704,8 +704,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = 2222l, linkId = 333333333l)))
       val locations = linearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), Seq())
       locations.size should be(2)
-      locations.filter(l => l.id == id1).size should be(1)
-      locations.filter(l => l.id == id2).size should be(1)
+      locations.count(l => l.id == id1) should be(1)
+      locations.count(l => l.id == id2) should be(1)
     }
   }
 
@@ -732,8 +732,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val roadNumberFilter = Seq((100, 100))
       val locations = linearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), roadNumberFilter)
       locations.size should be(2)
-      locations.filter(l => l.id == id1).size should be(1)
-      locations.filter(l => l.id == id2).size should be(1)
+      locations.count(l => l.id == id1) should be(1)
+      locations.count(l => l.id == id2) should be(1)
     }
   }
 
@@ -748,9 +748,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
       val locations = linearLocationDAO.fetchByRoadways(Set(roadwayNumber))
       locations.size should be(3)
-      locations.filter(l => l.linkId == linkId1).size should be(1)
-      locations.filter(l => l.linkId == linkId2).size should be(1)
-      locations.filter(l => l.linkId == linkId3).size should be(1)
+      locations.count(l => l.linkId == linkId1) should be(1)
+      locations.count(l => l.linkId == linkId2) should be(1)
+      locations.count(l => l.linkId == linkId3) should be(1)
     }
   }
 

@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
@@ -148,16 +149,6 @@ case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue
     this.copy(geometry = newGeometry)
   }
 
-  // TODO
-  /*  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-      val calibrationPointSource = if (id == noRoadwayId || id == NewRoadAddress) ProjectLinkSource else RoadAddressSource
-      calibrationPoints match {
-        case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-        case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
-        case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)) , Option.empty[ProjectLinkCalibrationPoint])
-        case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
-      }
-    }*/
 }
 
 //TODO Rename all the method names to follow a rule like fetchById instead of have fetchById and QueryById
@@ -718,7 +709,7 @@ class LinearLocationDAO {
     }
   }
 
-  private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
+  def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s"""($filter)"""
 
@@ -729,4 +720,35 @@ class LinearLocationDAO {
     else
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
+
+  def getLinearLocationCalibrationCode(linearLocationId: Long): CalibrationCode = {
+    val query =
+      s"""SELECT (CASE
+            WHEN CAL_START_ADDR_M IS NOT NULL AND CAL_END_ADDR_M IS NOT NULL THEN 3
+            WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
+            WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
+            ELSE 0
+            END) AS calibrationCode
+            FROM LINEAR_LOCATION WHERE id = $linearLocationId"""
+    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
+  }
+
+  def getLinearLocationCalibrationCode(linearLocationIds: Seq[Long]): Map[Long, CalibrationCode] = {
+    if (linearLocationIds.isEmpty) {
+      Map()
+    } else {
+      val query =
+        s"""SELECT ID, (CASE
+                       WHEN CAL_START_ADDR_M IS NOT NULL AND CAL_END_ADDR_M IS NOT NULL THEN 3
+                       WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
+                       WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
+                       ELSE 0
+                       END) AS calibrationCode
+                       FROM LINEAR_LOCATION WHERE id in (${linearLocationIds.mkString(",")})"""
+      Q.queryNA[(Long, Int)](query).list.map {
+        case (id, code) => id -> CalibrationCode(code)
+      }.toMap
+    }
+  }
+
 }

@@ -1,29 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
-import java.util.Date
-
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
-import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, Saved2TR}
-import fi.liikennevirasto.viite.process.InvalidAddressDataException
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
 //TODO naming SQL conventions
 
@@ -70,7 +55,7 @@ case class ProjectCoordinates(x: Double = DefaultLatitude, y: Double = DefaultLo
 
 class ProjectDAO {
   val projectReservedPartDAO = new ProjectReservedPartDAO
-  private def logger = LoggerFactory.getLogger(getClass)
+  private def logger: Logger = LoggerFactory.getLogger(getClass)
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
@@ -78,17 +63,15 @@ class ProjectDAO {
          values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, null, ${roadAddressProject.createdBy}, sysdate, ${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo}, ${roadAddressProject.statusInfo})
          """.execute
   }
-
   //Should be only one
-  def getProjectsWithGivenLinkId(linkId: Long): Seq[Long] = {
-    time(logger, "Get projects with given link id") {
-      val query =
-        s"""SELECT P.ID
-               FROM PROJECT P
-              JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
-              WHERE P.STATE = ${Incomplete.value} AND PL.LINK_ID=$linkId"""
-      Q.queryNA[(Long)](query).list
-    }
+  def getProjectsWithGivenLinkId(linkId: Long): Seq[Long] =
+    time(logger, """Get projects with given link id""") {
+    val query =
+      s"""SELECT P.ID
+             FROM PROJECT P
+            JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
+            WHERE P.STATE = ${Incomplete.value} AND PL.LINK_ID=$linkId"""
+    Q.queryNA[Long](query).list
   }
 
   def updateRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
@@ -104,7 +87,7 @@ class ProjectDAO {
          FROM project
          WHERE id=$roadAddressProjectId
        """
-    Q.queryNA[Option[Long]](query).firstOption.getOrElse(None)
+    Q.queryNA[Option[Long]](query).firstOption.flatten
   }
 
   def updateProjectEly(roadAddressProjectId: Long, ely: Long): Unit = {
@@ -115,7 +98,7 @@ class ProjectDAO {
 
   def getRoadAddressProjectById(projectId: Long): Option[RoadAddressProject] = {
     time(logger, "Get road address project by id") {
-      val where = s""" where id =${projectId}"""
+      val where = s""" where id =$projectId"""
       val query =
         s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
            add_info, ely, status_info, coord_x, coord_y, zoom
@@ -133,7 +116,7 @@ class ProjectDAO {
     }
   }
 
-  def getRoadAddressProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
+  def getProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[RoadAddressProject] = {
     time(logger, "Get road address projects") {
       val filter = projectId match {
         case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
@@ -172,23 +155,23 @@ class ProjectDAO {
     }
   }
 
-  def addRotatingTRProjectId(projectId: Long) = {
+  def addRotatingTRProjectId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = VIITE_PROJECT_SEQ.nextval WHERE ID= $projectId").execute
   }
 
-  def removeRotatingTRProjectId(projectId: Long) = {
+  def removeRotatingTRProjectId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = NULL WHERE ID= $projectId").execute
   }
 
-  def updateProjectStateInfo(stateInfo: String, projectId: Long) = {
+  def updateProjectStateInfo(stateInfo: String, projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId").execute
   }
 
-  def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates) = {
+  def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
   }
 
-  def getRotatingTRProjectId(projectId: Long) = {
+  def getRotatingTRProjectId(projectId: Long): Seq[Long] = {
     Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list
   }
 
@@ -196,7 +179,7 @@ class ProjectDAO {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
-  def getProjectsWithWaitingTRStatus(): List[Long] = {
+  def getProjectsWithWaitingTRStatus: List[Long] = {
     val query =
       s"""
          SELECT id
@@ -206,7 +189,7 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
-  def getProjectsWithSendingToTRStatus(): List[Long] = {
+  def getProjectsWithSendingToTRStatus: List[Long] = {
     val query =
       s"""
          SELECT id
@@ -226,5 +209,4 @@ class ProjectDAO {
     val projects = Q.queryNA[Long](query).list
     projects.isEmpty || projects.contains(projectId)
   }
-
 }

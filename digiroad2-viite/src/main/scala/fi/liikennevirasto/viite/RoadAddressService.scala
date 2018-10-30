@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
@@ -23,7 +24,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
+class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, unaddressedRoadLinkDAO: UnaddressedRoadLinkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -59,6 +60,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //      })
 //    }
 //    LinearLocationResult(nonFloatingAddresses, floatingAddresses)
+  }
+
+  def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
+    withDynSession {
+      time(logger, "Fetch floating and non-floating addresses") {
+        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
+      }
+    }
+  }
+
+  def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]) = {
+    roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
 
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
@@ -102,7 +115,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
-  def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
+  def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
@@ -126,11 +139,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     getRoadAddressLinks(boundingBoxResult)
   }
 
+  def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
+    val linearLocations =
+      time(logger, "Fetch floating and non-floating linear locations by bounding box") {
+        linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
+      }
+    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
+  }
+
   /**
     * Gets all the road addresses in the given bounding box, without VVH geometry. Also floating road addresses are filtered out.
     * Indicated to high zoom levels. If the road number limits are given it will also filter all road addresses by those limits.
+    *
     * @param boundingRectangle The bounding box
-    * @param roadNumberLimits The road number limits
+    * @param roadNumberLimits  The road number limits
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
@@ -143,8 +165,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
   }
 
+  def getRoadAddressesByLinkIds(linkIds: Seq[Long]) = {
+    val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
+    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
+  }
+
   /**
     * Gets all the road addresses in the given municipality code.
+    *
     * @param municipality The municipality code
     * @return Returns all the filtered road addresses
     */
@@ -174,15 +202,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     }
 
-    roadAddresses.flatMap{ra =>
+    roadAddresses.flatMap { ra =>
       //TODO check if the floating are needed
-    val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
+      val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
     }
   }
 
   /**
     * Gets all the existing road numbers at the current road network.
+    *
     * @return Returns all the road numbers
     */
   def getRoadNumbers: Seq[Long] = {
@@ -194,22 +223,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   /**
     * Gets all the road addresses in the same road number, road part number with start address less that
     * the given address measure. If trackOption parameter is given it will also filter by track code.
-    * @param road The road number
-    * @param roadPart The road part number
-    * @param addressM The road address at road number and road part
+    *
+    * @param road        The road number
+    * @param roadPart    The road part number
+    * @param addressM    The road address at road number and road part
     * @param trackOption Optional track code
     * @return Returns all the filtered road addresses
     */
   def getRoadAddress(road: Long, roadPart: Long, addressM: Long, trackOption: Option[Track]): Seq[RoadAddress] = {
     withDynSession {
-      val roadwayAddresses = trackOption match {
+      val roadways = trackOption match {
         case Some(track) =>
           roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
         case _ =>
           roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
       }
 
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
       roadAddresses.filter(ra => ra.startAddrMValue < addressM)
     }
   }
@@ -217,33 +247,57 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   /**
     * Gets all the road addresses in the same road number and track codes.
     * If the track sequence is empty will filter only by road number
-    * @param road The road number
+    *
+    * @param road   The road number
     * @param tracks The set of track codes
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressWithRoadNumber(road: Long, tracks: Set[Track]): Seq[RoadAddress] = {
     withDynSession {
-      val roadwayAddresses = if(tracks.isEmpty)
-          roadwayDAO.fetchAllByRoad(road)
-        else
-          roadwayDAO.fetchAllByRoadAndTracks(road, tracks)
+      val roadways = if (tracks.isEmpty)
+        roadwayDAO.fetchAllByRoad(road)
+      else
+        roadwayDAO.fetchAllByRoadAndTracks(road, tracks)
 
-      roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
     }
   }
 
   /**
     * Gets all the road addresses in the same road number, road parts and track codes.
     * If the road part number sequence or track codes sequence is empty
-    * @param road The road number
+    *
+    * @param road      The road number
     * @param roadParts The set of road part numbers
-    * @param tracks The set of track codes
+    * @param tracks    The set of track codes
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Set[Long], tracks: Set[Track]): Seq[RoadAddress] = {
     withDynSession {
-      val roadwayAddresses = roadwayDAO.fetchAllBySectionsAndTracks(road, roadParts, tracks)
-      roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+      val roadways = roadwayDAO.fetchAllBySectionsAndTracks(road, roadParts, tracks)
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+    }
+  }
+
+  /**
+    * Gets all the road addresses in the same road number, road parts and track codes.
+    * If the road part number sequence or track codes sequence is empty
+    *
+    * @param road         The road number
+    * @param part         The road part
+    * @param withHistory  The optional parameter that allows the search to also look for historic links
+    * @param withFloating The optional parameter that allows the search to also look for floating links
+    * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
+    * @return Returns all the filtered road addresses
+    */
+  // TODO Implement fetching with floating
+  def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
+    if (withFloating) {
+      throw new NotImplementedError("Fetching with floating not implemented.")
+    }
+    withDynSession {
+      val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
     }
   }
 
@@ -252,9 +306,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * - If only given the start measure, will return all the road addresses with the start measure equal or greater than ${startMOption}
     * - If only given the end measure, will return all the road addresses with end measure equal or less than ${endMOption}
     * - If any of the measures are given, will return all the road addresses on the given road link id
-    * @param linkId The link identifier of the linear location
+    *
+    * @param linkId       The link identifier of the linear location
     * @param startMOption The start measure of the linear location
-    * @param endMOption The end measure of the linear location
+    * @param endMOption   The end measure of the linear location
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startMOption: Option[Double], endMOption: Option[Double]): Seq[RoadAddress] = {
@@ -277,7 +332,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   /**
     * Gets all the road address in the given road number and road part
-    * @param roadNumber The road number
+    *
+    * @param roadNumber     The road number
     * @param roadPartNumber The road part number
     * @return Returns road addresses filtered given section
     */
@@ -289,12 +345,39 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
+    * Gets all the valid road address in the given road number and project start date
+    *
+    * @param roadNumber The road number
+    * @param startDate  The project start date
+    * @return Returns road addresses filtered given section
+    */
+  def getValidRoadAddressParts(roadNumber: Long, startDate: DateTime): Seq[Long] = {
+    withDynSession {
+      roadwayDAO.getValidRoadParts(roadNumber, startDate)
+    }
+  }
+
+  /**
+    * Gets all the previous road address part in the given road number and road part number
+    *
+    * @param roadNumber The road number
+    * @param roadPart   The road part number
+    * @return Returns previous parts in road number, if they exist
+    */
+  def getPreviousRoadAddressPart(roadNumber: Long, roadPart: Long): Option[Long] = {
+    withDynSession {
+      roadwayDAO.fetchPreviousRoadPartNumber(roadNumber, roadPart)
+    }
+  }
+
+  /**
     * Gets all the road addresses in given road number, road part number and between given address measures.
     * The road address measures should be in [startAddrM, endAddrM]
-    * @param roadNumber The road number
+    *
+    * @param roadNumber     The road number
     * @param roadPartNumber The road part number
-    * @param startAddrM The start address measure
-    * @param endAddrM The end address measure
+    * @param startAddrM     The start address measure
+    * @param endAddrM       The end address measure
     * @return Returns road addresses filtered by road section and address measures
     */
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long): Seq[RoadAddress] = {
@@ -308,6 +391,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   /**
     * Gets all the road addresses on top of given road links.
     * All the floating road address are filterd out from the result.
+    *
     * @param linkIds The set of road link identifiers
     * @return Returns all filtered the road addresses
     */
@@ -317,6 +401,64 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filter(ra => linkIds.contains(ra.linkId)).filterNot(_.isFloating)
     }
+  }
+
+  // TODO
+  def getRoadAddressesByLinkIds(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true, includeCurrent: Boolean = true,
+                    filterIds: Set[Long] = Set()): List[RoadAddress] = {
+    throw new NotImplementedError()
+//      if (linkIds.size > 1000 || filterIds.size > 1000) {
+//        return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
+//      }
+//      val linkIdString = linkIds.mkString(",")
+//      val where = if (linkIds.isEmpty) {
+//        return List()
+//      } else {
+//        s""" where ra.link_id in ($linkIdString)"""
+//      }
+//      val floating = if (!includeFloating)
+//        "AND ra.floating='0'"
+//      else
+//        ""
+//      val history = if (!includeHistory)
+//        "AND ra.end_date is null"
+//      else
+//        ""
+//      val current = if (!includeCurrent)
+//        "AND ra.end_date is not null"
+//      else
+//        ""
+//      val idFilter = if (filterIds.nonEmpty)
+//        s"AND ra.id not in ${filterIds.mkString("(", ",", ")")}"
+//      else
+//        ""
+//
+//      val valid = if (!includeTerminated) {
+//        "AND ra.terminated = 0"
+//      } else {
+//        ""
+//      }
+//
+//      val query =
+//        s"""
+//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
+//        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
+//        ra.side_code, ra.adjusted_timestamp,
+//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
+//        (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
+//        from ROAD_ADDRESS ra cross join
+//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+//        $where $floating $history $current $valid $idFilter and t.id < t2.id and
+//           valid_to is null
+//      """
+//      queryList(query)
+  }
+
+  def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
+      val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+      roadAddresses.filterNot(_.isFloating)
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
@@ -342,6 +484,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   /**
     * Gets all the road addresses errors (excluding history)
+    *
     * @param includesHistory - default value = false to exclude history values
     * @return Returns all filtered road address errors
     */
@@ -362,19 +505,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val (roadlinks, historyRoadlinks) = roadLinkService.getAllRoadLinksFromVVH(Set(linkId))
 
     val (floatingRoadAddress, roadAddresses) = withDynSession {
-       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
+      val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
 
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
     }
 
     //TODO this will need to be improved
-    val result = floatingRoadAddress.flatMap{ra =>
+    val result = floatingRoadAddress.flatMap { ra =>
       historyRoadlinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
     } ++
-    roadAddresses.flatMap{ra =>
-      val roadLink = roadlinks.find(rl => rl.linkId == ra.linkId)
-      roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
-    }
+      roadAddresses.flatMap { ra =>
+        val roadLink = roadlinks.find(rl => rl.linkId == ra.linkId)
+        roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
+      }
 
     result.filter(_.linkId == linkId)
 
@@ -427,6 +570,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //      (addr, RoadAddressDAO.getUnaddressedRoadLinks(addr.map(_.linkId).toSet))
     //    }
     //    processRoadAddresses(addresses, missedRL)
+  }
+
+  // TODO
+  def fetchUnaddressedRoadLinksByLinkIds(linkIds: Set[Long]): Seq[UnaddressedRoadLink] = {
+    time(logger, "RoadAddressDAO.getUnaddressedRoadLinks by linkIds") {
+      unaddressedRoadLinkDAO.getUnaddressedRoadLinks(linkIds)
+    }
   }
 
   private def processRoadAddresses(addresses: Seq[RoadAddress], missedRL: Seq[UnaddressedRoadLink]): Seq[RoadAddressLink] = {
@@ -666,25 +816,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    fusedRoadAddresses.map(ra => {
 //      RoadAddressLinkBuilder.build(rl, ra)
 //    })
-  }
-
-  //TODO this method is almost duplicated from buildSuravageRoadAddressLink if this method is needed in the future it should be refactored
-  def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[UnaddressedRoadLink], floaters: Seq[RoadAddressLink] = Seq.empty): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
-//    val kept = fusedRoadAddresses.map(_.id).toSet
-//    val removed = roadAddrSeq.map(_.id).toSet.diff(kept)
-//    val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
-//    if (roadAddressesToRegister.nonEmpty)
-//      eventbus.publish("roadAddress:mergeRoadAddress", RoadAddressMerge(removed, roadAddressesToRegister))
-//    if (floaters.nonEmpty) {
-//      floaters.map(_.copy(anomaly = Anomaly.GeometryChanged, newGeometry = Option(rl.geometry)))
-//    } else {
-//      fusedRoadAddresses.map(ra => {
-//        RoadAddressLinkBuilder.build(rl, ra)
-//      }) ++
-//        missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
-//    }
   }
 
   private def getTargetRoadLink(linkId: Long): RoadAddressLink = {
@@ -1092,10 +1223,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
   */
+
+  def setSubsequentTermination(linkIds: Set[Long]): Unit = {
+    val roadAddresses = getRoadAddressByLinkIds(linkIds/*, includeFloating = true, includeHistory = true*/).filter(_.terminated == NoTermination)
+    val roadways = roadwayDAO.fetchAllByRoadwayId(roadAddresses.map(_.id))
+    roadwayDAO.expireById(roadways.map(_.id).toSet)
+    roadwayDAO.create(roadways.map(ra => ra.copy(id = NewRoadway, terminated = Subsequent)))
+  }
+
 }
 
 sealed trait RoadClass {
   def value: Int
+
   def roads: Seq[Int]
 }
 
