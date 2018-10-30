@@ -3,6 +3,7 @@
     var self = this;
     var loadingProject;
     var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
+    var gettingRoadLinks;
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
@@ -24,6 +25,14 @@
     this.abortLoadingProject = (function () {
       if (loadingProject) {
         loadingProject.abort();
+      }
+    });
+
+    this.abortGettingRoadLinks = (function () {
+      if (gettingRoadLinks){
+        _.map(gettingRoadLinks.desc.args, function (r) {
+          r.abort();
+        });
       }
     });
 
@@ -381,7 +390,8 @@
       var deferred;
       var requests = new Bacon.Bus();
       var responses = requests.debounceImmediate(500).flatMapLatest(function (params) {
-        return Bacon.$.ajax(params, true);
+        gettingRoadLinks = Bacon.$.ajax(params, true);
+        return gettingRoadLinks;
       });
 
       return function () {

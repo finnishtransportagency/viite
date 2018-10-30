@@ -437,7 +437,7 @@ object GeometryUtils {
     * Check if geometry is towards digitisation.
     *
     * - Starting point is south from the ending point
-    * - In case of exactly horizontal starting and end points check if the starting point is to the east of the ending
+    * - In case of exactly horizontal starting and end points check if the starting point is east from the ending point
     *
     * @param geometry
     * @return

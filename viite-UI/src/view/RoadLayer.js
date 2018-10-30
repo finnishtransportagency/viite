@@ -95,6 +95,7 @@
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
+        applicationModel.removeSpinner();
       } else {
         /*
          This could be implemented also with eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');

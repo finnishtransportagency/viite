@@ -47,10 +47,11 @@
 
     var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection) {
     setupProjections();
-    fetch('components/WMTSCapabilities.xml', {credentials: "include"}).then(function(response) {
+      var url = 'rasteripalvelu/wmts/maasto?';
+      fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
-        var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
@@ -61,8 +62,10 @@
   };
 
   $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
-    applicationModel.removeSpinner();
-    console.log("Request '" + settings.url + "' failed: " + thrownError);
+    if (jqxhr.getAllResponseHeaders()) {
+      applicationModel.removeSpinner();
+      console.log("Request '" + settings.url + "' failed: " + thrownError);
+    }
   });
 
   var createOpenLayersMap = function(startupParameters, layers) {
@@ -100,8 +103,8 @@
     return map;
   };
 
-    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection) {
-    var tileMaps = new TileMapCollection(arcConfig);
+    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection){
+      var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
