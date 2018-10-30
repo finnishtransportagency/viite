@@ -171,7 +171,7 @@
           selectedProjectLinkProperty.openCtrl(selectedLinkIds);
         }
         highlightFeatures();
-      } else if (!_.isUndefined(selection) && selectedProjectLinkProperty.isDirty()) {
+      } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -729,11 +729,7 @@
       if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function(links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
-
-            // TODO Check this! Accepted line merged from master and commented out the line from VIITE-1540 branch.
-            return projectLink.id !== 0 || (projectLink.id === 0 && projectLink.anomaly === Anomaly.NoAddressGiven.value) || (projectLink.id === 0 && projectLink.roadLinkType === RoadLinkType.FloatingRoadLinkType.value);
-            // return projectLink.floating !== SelectionType.Floating.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
-
+            return projectLink.floating !== SelectionType.Floating.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
           });
           _.each(directionMarkers, function (directionLink) {
             marker = cachedMarker.createProjectMarker(directionLink);
