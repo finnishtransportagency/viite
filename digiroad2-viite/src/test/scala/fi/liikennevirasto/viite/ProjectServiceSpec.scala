@@ -974,7 +974,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("renumber all project links and change the last link discontinuity") {
+  test("Test projectLinkDAO.getProjectLinks() When after the \"Numerointi\" operation on project links of a newly created project Then the last returned link should have a discontinuity of \"EndOfRoad\", all the others should be \"Continuous\" ") {
     runWithRollback {
       val rap1 = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
         "TestUser", DateTime.now().plusDays(1), DateTime.now(), "Some additional info",
@@ -992,7 +992,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Reserving new part with same linkId for existing part in same project (with status New too), should override and remove old part") {
+  test("Test projectService.updateProjectLinks When after reserving new part with same linkId for existing part in same project (with status New too) Then the returning project links of said project should reveal that the old part was overridden and removed.") {
     runWithRollback {
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
@@ -1040,7 +1040,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("unreserved road with new road name should remove road name") {
+  test("Test projectService.saveProject() When updating a project to remove ALL it's reserved roads Then the project should lose it's associated road names.") {
     runWithRollback {
       val testRoad: (Long, Long, String) = {
         (99999L, 1L, "Test name")
@@ -1052,7 +1052,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("delete the project should remove project road name if no other project uses same road") {
+  test("Test projectService.deleteProject() When deleting a project Then if no other project makes use of a road name then said name should be removed as well.") {
     runWithRollback {
       val testRoad: (Long, Long, String) = {
         (99999L, 1L, "Test name")
@@ -1144,7 +1144,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }*/
 
-  test("New user given addressMValues, even on Left/Right tracks, should keep continuous and incremented address values (calibration ones included) for all links") {
+  test("Test projectService.updateProjectLinks() When new user given addressMValues, even on Left/Right tracks Then all links should keep continuous and incremented address values (calibration ones included).") {
     /**
       * This test checks:
       * 1.result of addressMValues for new given address value for one Track.Combined link
@@ -1317,7 +1317,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Re-Reversing direction should restore and ignore previous user given addressMValues") {
+  test("Test projectService.updateProjectLinks() and projectService.changeDirection() When Re-Reversing direction of project links Then all links should revert to the previous fiven addressMValues.") {
     /**
       * This test checks:
       * 1.result of addressMValues for new given address value for one Track.Combined link
@@ -1404,7 +1404,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Change direction should not alter discontinuity of road addresses that are not the same road number and road part number") {
+  test("Test projectService.changeDirection() When after the creation of valid project links on a project Then the discontinuity of road addresses that are not the same road number and road part number should not be altered.") {
     runWithRollback {
 
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -1453,7 +1453,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test createRoadLinkProject When project in writable state Then  Service should indentify states (Incomplete, ErrorInViite and ErrorInTR)") {
+  test("Test createRoadLinkProject When project in writable state Then  Service should identify states (Incomplete, ErrorInViite and ErrorInTR)") {
     runWithRollback {
       val incomplete = RoadAddressProject(0L, ProjectState.apply(1), "I am Incomplete", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
@@ -1473,7 +1473,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Transfer last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part and transfer the rest of the part 2") {
+  test("Test projectService.updateProjectLinks() When transferring last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transferred part and transfer the rest of the part 2 " +
+    "Then the mAddressValues of the last links should be equal in both sides of the tracks for part 1.")
+  {
     runWithRollback {
       /**
         * Test data
@@ -1590,8 +1592,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Transfer the rest of the part 2 and then the last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transfered part") {
-
+  test("Test projectService.updateProjectLinks When transferring the rest of the part 2 and then the last ajr 1 & 2 links from part 1 to part 2 and adjust endAddrMValues for last links from transferred part " +
+    "Then the mAddressValues of the last links should be equal in both sides of the tracks for part 1." )
+  {
     runWithRollback {
       /**
         * Test data
@@ -2061,6 +2064,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 //  }
 
   //TODO- will be implemented at VIITE-1541
+
   /*test("road name should not be saved saved on TR success response if road number > 70.000 and it has no name") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
@@ -2079,7 +2083,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       namesAfterUpdate.isEmpty should be(true)
     }
   }*/
-
 
   //TODO Will be implemented at VIITE-1541
   //  test("road name exists on TR success response") {
@@ -2145,6 +2148,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
   //TODO - Will be implemented in VIITE-1541 - Change table
+
   /*test("Unchanged with termination test, repreats termination update, checks calibration points are cleared and moved to correct positions") {
     var count = 0
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
@@ -2289,6 +2293,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   //  }
 
   //TODO - Will be implemented in VIITE-1541 - Change table
+
   /*test("Terminate, new links and then transfer") {
     val roadLink = RoadLink(51L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 1, TrafficDirection.AgainstDigitizing, Motorway,
@@ -2348,7 +2353,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
     }
   }*/
-
 
   //TODO this will be implemented at VIITE-1541
   //  test("process roadChange data and import the roadLink") {
