@@ -216,9 +216,50 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: ParSet[Long] =
-      OracleDatabase.withDynTransaction {
-        MunicipalityDAO.getMunicipalityMapping.keySet
-      }.par
+//      OracleDatabase.withDynTransaction {
+    ////        MunicipalityDAO.getMunicipalityMapping.keySet
+    Set(5l,
+    10l,
+    52l,
+    74l,
+    145l,
+    151l,
+    152l,
+    164l,
+    217l,
+    218l,
+    231l,
+    232l,
+    233l,
+    236l,
+    272l,
+    280l,
+    287l,
+    288l,
+    300l,
+    301l,
+    399l,
+    403l,
+    408l,
+    421l,
+    440l,
+    475l,
+    499l,
+    545l,
+    584l,
+    598l,
+    599l,
+    743l,
+    759l,
+    846l,
+    849l,
+    893l,
+    905l,
+    924l,
+    934l,
+    946l,
+    989l).par
+//      }.par
 
     //For each municipality get all VVH Roadlinks
     municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
@@ -229,17 +270,17 @@ object DataFixture {
       val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
       val linearLocations =
         OracleDatabase.withDynTransaction {
-          linearLocationDAO.fetchCurrentLinearLocationsByMunicipality(municipality.toInt)
+          linearLocationDAO.fetchCurrentLinearLocationsByMunicipality(municipality.toInt).filter(l => Seq(300249, 304095, 300254).contains(l.linkId))
         }
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
         try {
-          val roadschanges = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changedRoadLinks)
+          val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changedRoadLinks)
           println(s"AppliedChanges for municipality $municipality")
-          println(s"${roadschanges._2.droppedSegmentIds.size} dropped roads")
-          println(s"${roadschanges._2.adjustedMValues.size} adjusted m values")
-          println(s"${roadschanges._2.newLinearLocations.size} new linear locations")
+          println(s"${roadsChanges._2.droppedSegmentIds.size} dropped roads")
+          println(s"${roadsChanges._2.adjustedMValues.size} adjusted m values")
+          println(s"${roadsChanges._2.newLinearLocations.size} new linear locations")
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }

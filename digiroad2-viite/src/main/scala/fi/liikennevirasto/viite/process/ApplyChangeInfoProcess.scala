@@ -273,7 +273,7 @@ object ApplyChangeInfoProcess {
 
   def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]) :(Seq[LinearLocation], ChangeSet) = {
 
-    val filteredChanges = filterOutChanges(linearLocations, changes)
+    val filteredChanges = filterOutChanges(linearLocations, changes.filter(c => c.newId == Some(300249) || c.oldId == Some(300249) || c.newId == Some(304095)  || c.oldId == Some(304095) || c.newId == Some(300254)  || c.oldId == Some(300254) ))
 
     val mappedChanges = filteredChanges.groupBy(c => c.oldId.getOrElse(c.newId.get))
 
