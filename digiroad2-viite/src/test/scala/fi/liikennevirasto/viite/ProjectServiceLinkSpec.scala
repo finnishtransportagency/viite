@@ -585,8 +585,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Numbering change on transfer operation with same road number") {
     runWithRollback {
-      val address1 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(45621, 1).map(_.roadwayNumber).toSet))
-      val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(45621, 2).map(_.roadwayNumber).toSet))
+      val address1 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 206).map(_.roadwayNumber).toSet))
+      val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet))
       val reservedRoadPart1 = ProjectReservedPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber,
         Some(address1.last.endAddrMValue), Some(address1.last.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
       val reservedRoadPart2 = ProjectReservedPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber,
@@ -605,19 +605,19 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val transferLinkId = address2.minBy(_.startAddrMValue).linkId
       projectService.updateProjectLinks(project.id, Set(), address1.map(_.linkId), LinkStatus.UnChanged, "TestUser",
         0, 0, 0, Option.empty[Int]) should be(None)
-      projectService.updateProjectLinks(project.id, Set(), Seq(transferLinkId), LinkStatus.Transfer, "TestUser", 45621, 1, 0, Option.empty[Int]) should be(None)
+      projectService.updateProjectLinks(project.id, Set(), Seq(transferLinkId), LinkStatus.Transfer, "TestUser", 5, 206, 0, Option.empty[Int]) should be(None)
       val firstTransferLinks = projectLinkDAO.getProjectLinks(project.id)
       //TODO- this should be uncommented after VIITE-1541 implementation
       //firstTransferLinks.filter(_.roadPartNumber == 1).map(_.endAddrMValue).max should be(address1.map(_.endAddrMValue).max +
       //address2.find(_.linkId == transferLinkId).map(a => a.endAddrMValue - a.startAddrMValue).get)
       //Transfer the rest
       projectService.updateProjectLinks(project.id, Set(), address2.sortBy(_.startAddrMValue).tail.map(_.linkId),
-        LinkStatus.Transfer, "TestUser", 45621, 2, 0, Option.empty[Int]) should be(None)
+        LinkStatus.Transfer, "TestUser", 5, 207, 0, Option.empty[Int]) should be(None)
       val secondTransferLinks = projectLinkDAO.getProjectLinks(project.id)
       //TODO- this should be uncommented after VIITE-1541 implementation
 //      secondTransferLinks.filter(_.roadPartNumber == 2).maxBy(_.startAddrMValue).endAddrMValue should be(address2.maxBy(_.startAddrMValue).endAddrMValue - address2.minBy(_.startAddrMValue).endAddrMValue)
       val mappedLinks = links.groupBy(_.linkId)
-      val mapping = secondTransferLinks.filter(_.roadPartNumber == 2).map(tl => tl -> mappedLinks(tl.linkId)).filterNot(_._2.size > 1)
+      val mapping = secondTransferLinks.filter(_.roadPartNumber == 207).map(tl => tl -> mappedLinks(tl.linkId)).filterNot(_._2.size > 1)
       mapping.foreach { case (link, l) =>
         val before = l.head
         before.endAddrMValue - before.startAddrMValue should be(link.endAddrMValue - link.startAddrMValue +- 1)
