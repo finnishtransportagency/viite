@@ -134,7 +134,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       geometry.head
     }
   }
-//  lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
   lazy val endPoint = (sideCode == SideCode.AgainstDigitizing, reversed) match {
     case (true, true) => {
       //Against digitizing, reversed

@@ -84,10 +84,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
       }
     }
+
     val rightSections = sections.flatMap(_.right.links)
     val leftSections = sections.flatMap(_.left.links)
-    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(if(rightSections.forall(_.reversed)) rightSections.reverse else rightSections, userDefinedCalibrationPoint)
-    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(if(leftSections.forall(_.reversed)) leftSections.reverse else leftSections, userDefinedCalibrationPoint)
+    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(if (rightSections.forall(_.reversed)) rightSections.reverse else rightSections, userDefinedCalibrationPoint)
+    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(if (leftSections.forall(_.reversed)) leftSections.reverse else leftSections, userDefinedCalibrationPoint)
     val (left, right) = adjustTracksToMatch(leftLinks.sortBy(_.startAddrMValue), rightLinks.sortBy(_.startAddrMValue), None)
     TrackSectionOrder.createCombinedSections(right, left)
   }

@@ -262,7 +262,6 @@ object TrackSectionOrder {
             SideCode.AgainstDigitizing
           }
         }
-//        val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
       }
     }
