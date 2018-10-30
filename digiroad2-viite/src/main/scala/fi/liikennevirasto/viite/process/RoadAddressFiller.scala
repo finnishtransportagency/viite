@@ -187,7 +187,8 @@ object RoadAddressFiller {
       val linearLocationMap = linearLocations.groupBy(_.linkId)
       val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)
 
-      linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
+      val filteredSegs = linearLocationMap.filter(l => l._1 == 300249 || l._1 == 304095 || l._1 == 300254)
+      filteredSegs.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
           val roadLinkOption = topologyMap.getOrElse(linkId, Seq()).headOption
           //If there is on segment floating any adjustment should be done for the road link
