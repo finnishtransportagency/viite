@@ -435,9 +435,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
 
   def validateReservations(reservedRoadParts: ProjectReservedPart, projectEly: Option[Long],
-                                   projectLinks: Seq[ProjectLink], roadways: Seq[Roadway]): Option[String] = {
-
-    if (roadways.isEmpty && !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
+                                   projectLinks: Seq[ProjectLink], roadways: Seq[Roadway], allPartsToReserve: Seq[ProjectReservedPart] = Seq.empty[ProjectReservedPart]): Option[String] = {
+    val differingElyParts = allPartsToReserve.filter(pr => pr.ely != allPartsToReserve.head.ely)
+    if(differingElyParts.nonEmpty){
+      val allDifferingElyParts = Seq(allPartsToReserve.head) ++ differingElyParts
+      Some(s"$ErrorFollowingPartsHaveDifferingEly " ++ allDifferingElyParts.map(op => {
+        s"TIE ${op.roadNumber} OSA: ${op.roadPartNumber} ELY: ${op.ely.getOrElse(-1)}"
+      }).mkString(" ja "))
+    } else if (roadways.isEmpty && !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
       Some(s"$ErrorFollowingRoadPartsNotFoundInDB TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
     else if ((projectLinks.exists(_.ely != reservedRoadParts.ely.get) || roadways.exists(_.ely != reservedRoadParts.ely.get)) && (projectEly.isEmpty || projectEly.get != defaultProjectEly ))
       Some(s"$ErrorFollowingPartsHaveDifferingEly TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
@@ -466,7 +471,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
       reserved => {
         val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
-        validateReservations(reserved, project.ely, projectLinks, roadways) match {
+        validateReservations(reserved, project.ely, projectLinks, roadways, project.reservedParts) match {
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
             val (suravageSource, regular) = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
@@ -786,6 +791,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  //TODO - This method will not be used now because we don't want to show suravage in project mode. It will be used in future
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
@@ -798,6 +804,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
     keptSuravageLinks.map(ProjectAddressLinkBuilder.build) ++
       projectLinks
+  }
+
+  //TODO - Temporary method that will be replaced for getProjectLinksWithSuravage method
+  def getProjectLinksWithoutSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
+                                  roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
+                                  publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
+    val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
+    fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads, fetch)
   }
 
   def getProjectLinksLinear(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,

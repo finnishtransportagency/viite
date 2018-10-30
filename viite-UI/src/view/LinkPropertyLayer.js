@@ -65,6 +65,7 @@
 
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
+      name: 'geometryChangedLayer',
       style: function(feature) {
           return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()}),
               roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:map.getView().getZoom()})];
@@ -750,7 +751,9 @@
         suravageMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
-        me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
+        //Exclude suravage layers from toggle
+        me.toggleLayersVisibility([roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
@@ -926,6 +929,7 @@
       simulatedRoadsLayer.getSource().clear();
       me.eventListener.listenToOnce(eventbus, 'roadLinks:fetched', function(){
         applicationModel.removeSpinner();
+        geometryChangedLayer.setVisible(true);
       });
     };
 

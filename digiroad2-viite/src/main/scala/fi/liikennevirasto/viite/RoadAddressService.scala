@@ -184,7 +184,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val allRoadLinks = roadLinks ++ Await.result(suravageRoadLinksF, atMost = Duration.create(1, TimeUnit.HOURS))
 
-    val linearLocations = withDynSession {
+    val linearLocations = withDynTransaction {
       time(logger, "Fetch floating and non-floating addresses") {
         linearLocationDAO.fetchRoadwayByLinkId(allRoadLinks.map(_.linkId).toSet)
       }
@@ -195,7 +195,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    val roadAddresses = withDynSession {
+    val roadAddresses = withDynTransaction {
       roadNetworkDAO.getLatestRoadNetworkVersionId match {
         case Some(roadNetworkId) => roadwayAddressMapper.getNetworkVersionRoadAddressesByLinearLocation(adjustedLinearLocations, roadNetworkId)
         case _ => roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations)
