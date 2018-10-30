@@ -207,16 +207,12 @@ trait TrackCalculatorStrategy {
   }
 
   def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    //TODO this can be improved if we use the combine track
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
-//
-//    val roadAddressCalibrationPoints = RoadAddressDAO.getRoadAddressCalibrationCode(projectLinks.map(_.roadwayId).filter(_ > 0).distinct)
-//
-//    (
-//      setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
-//      setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint)
-//    )
+    val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
+
+    val roadAddressCalibrationPoints = new LinearLocationDAO().getLinearLocationCalibrationCode(projectLinks.map(_.roadwayId).filter(_ > 0).distinct)
+
+    (setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
+      setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint))
   }
 
   def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.endAddrMValue

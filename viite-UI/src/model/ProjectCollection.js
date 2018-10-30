@@ -300,7 +300,7 @@
         }
       };
       var newAndOtherLinks = _.partition(changedLinks, function (l) {
-        return l.id === 0;
+        return l.linearLocationId === 0;
       });
       var newLinks = newAndOtherLinks[0];
       var otherLinks = newAndOtherLinks[1];
@@ -309,13 +309,13 @@
       var linkIds = _.unique(_.map(newLinks, function (t) {
         if (!_.isUndefined(t.linkId)) {
           return t.linkId;
-        } else return t;
+        } else return 0;
       }));
 
       var ids = _.unique(_.map(otherLinks, function (t) {
         if (!_.isUndefined(t.id)) {
           return t.id;
-        } else return t;
+        } else return 0;
       }));
 
       var projectId = projectInfo.id;

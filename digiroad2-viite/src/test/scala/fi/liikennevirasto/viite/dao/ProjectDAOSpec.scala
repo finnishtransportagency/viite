@@ -51,7 +51,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   private val linkId1 = 1000l
   private val linkId2 = 2000l
 
-  private val linearLocationId = 1
+  private val linearLocationId = 0
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None): RoadAddressProject ={
     RoadAddressProject(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("current status info"), ely, coordinates)
@@ -69,7 +69,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
                        startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
                        floating: FloatingReason = NoFloating, geometry: Seq[Point] = Seq(), status: LinkStatus, roadType: RoadType, reversed: Boolean): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, Track.Combined,
-      Discontinuity.Continuous, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
+      Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
       endDate, Some("testUser"), linkId, startMValue, endMValue,
       TowardsDigitizing, calibrationPoints, floating, geometry, projectId, status, roadType,
       LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed,
@@ -130,7 +130,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectStateInfo When project info is updated Then project info should change") {
     runWithRollback {
-      val projectListSize = projectDAO.getRoadAddressProjects().length
+      val projectListSize = projectDAO.getProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], ely = None, coordinates = None)
       projectDAO.createRoadAddressProject(rap)
@@ -185,11 +185,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test getProjectsWithWaitingTRStatus When project is sent to TR Then projects waiting TR response should be increased") {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val waitingCountP = projectDAO.getProjectsWithWaitingTRStatus().length
+      val waitingCountP = projectDAO.getProjectsWithWaitingTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(reservedPart), None, None)
         projectDAO.createRoadAddressProject(rap)
-      val waitingCountNow = projectDAO.getProjectsWithWaitingTRStatus().length
+      val waitingCountNow = projectDAO.getProjectsWithWaitingTRStatus.length
       waitingCountNow - waitingCountP should be(1)
     }
   }
@@ -225,11 +225,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test getRoadAddressProjects When adding one new project Then outcome size of projects should be bigger than before") {
     runWithRollback {
-      val projectListSize = projectDAO.getRoadAddressProjects().length
+      val projectListSize = projectDAO.getProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None, None)
       projectDAO.createRoadAddressProject(rap)
-      val projectList = projectDAO.getRoadAddressProjects()
+      val projectList = projectDAO.getProjects()
       projectList.length - projectListSize should be(1)
     }
   }
@@ -248,11 +248,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test getProjectsWithSendingToTRStatus When there is one project in SendingToTR status Then should return that one project") {
     val address = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val waitingCountP = projectDAO.getProjectsWithSendingToTRStatus().length
+      val waitingCountP = projectDAO.getProjectsWithSendingToTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.SendingToTR, List.empty[ProjectReservedPart], None, None)
       projectDAO.createRoadAddressProject(rap)
-      val waitingCountNow = projectDAO.getProjectsWithSendingToTRStatus().length
+      val waitingCountNow = projectDAO.getProjectsWithSendingToTRStatus.length
       waitingCountNow - waitingCountP should be(1)
     }
   }

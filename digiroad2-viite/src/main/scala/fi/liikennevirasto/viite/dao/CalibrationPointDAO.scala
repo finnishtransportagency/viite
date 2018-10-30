@@ -72,7 +72,7 @@ object CalibrationPointDAO {
   def findCalibrationPointsOfRoad(projectId: Long, projectLinkId: Long): Seq[UserDefinedCalibrationPoint] = {
     val baseQuery =
       s"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID = ${projectId}
+         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId
        """
 
     Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
@@ -86,7 +86,7 @@ object CalibrationPointDAO {
          Select PROJECT_CALIBRATION_POINT.ID, PROJECT_LINK_ID, pl.PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT JOIN PROJECT_LINK pl
            ON (pl.ID = PROJECT_CALIBRATION_POINT.PROJECT_LINK_ID)
          WHERE pl.ROAD_NUMBER = $roadNumber AND pl.ROAD_PART_NUMBER = $roadPartNumber
-         AND pl.PROJECT_ID = ${projectId}
+         AND pl.PROJECT_ID = $projectId
        """
 
     Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {

@@ -1032,7 +1032,7 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightReservedRoads', function(reservedOL3Features){
       var styledFeatures = _.map(reservedOL3Features, function(feature) {
-        feature.setStyle(projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()}));
+        feature.setStyle(roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()}));
         return feature;
       });
       if (applicationModel.getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
