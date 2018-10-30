@@ -20,7 +20,7 @@ object ProjectDeltaCalculator {
   lazy private val logger = LoggerFactory.getLogger(getClass)
 
   def delta(project: RoadAddressProject): Delta = {
-    throw new NotImplementedError("Will be implemented at VIITE-1539")
+    throw new NotImplementedError("Will be implemented at VIITE-1541")
 //    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
 //    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
 //    val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadwayId).toSet,
