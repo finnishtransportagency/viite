@@ -102,32 +102,33 @@ object ApplyChangeInfoProcess {
     filterOperations.forall(operation => operation(originalLinearLocation, adjustedLinearLocations))
   }
 
-  private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
+  private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = {
 
     val applicableProjections = projections.filter(_.intercepts(linearLocation))
 
     applicableProjections match {
       case Seq() =>
-        (Seq(linearLocation), changeSet)
+        (Seq(linearLocation), Seq(), changeSet)
       case _ =>
 
-        //Group te changes by created timestamp to support multiple days execution for the same road link identifier.
+        //Group the changes by created timestamp to support multiple days execution for the same road link identifier.
         //VVH change api doesn't seems to support multiple changes for the same day in the same link id
-        val linearLocations = applicableProjections.groupBy(_.vvhTimeStamp).toSeq.sortBy(_._1).foldLeft(Seq(linearLocation)) {
-          case (adjustedLinearLocations, (_, groupedProjections)) =>
-            val (news, existing) = adjustedLinearLocations.partition(_.id == NewLinearLocation)
-            groupedProjections.flatMap {
+        val (linearLocations, changedLinearLocations) = applicableProjections.groupBy(_.vvhTimeStamp).toSeq.sortBy(_._1).foldLeft(Seq(linearLocation).asInstanceOf[Seq[LinearLocation]], Seq.empty[LinearLocation]) {
+          case ((adjustedLinearLocations, changedLinearLocations), (key, groupedProjections)) =>
+            val (news, existing): (Seq[LinearLocation], Seq[LinearLocation]) = adjustedLinearLocations.partition(_.id == NewLinearLocation)
+            val changes = groupedProjections.flatMap {
               projection =>
                 existing.filter(projection.intercepts).map( l => projectLinearLocation(l, projection, mappedRoadLinks) )
-            } ++ news
+            }
+            (adjustedLinearLocations ++ news, changedLinearLocations ++ changes)
         }
 
-        if(validateLinearLocation(linearLocation, linearLocations, mappedRoadLinks)) {
-          val resultChangeSet = changeSet.copy(newLinearLocations = changeSet.newLinearLocations ++ linearLocations, droppedSegmentIds = changeSet.droppedSegmentIds + linearLocation.id)
+        if(validateLinearLocation(linearLocation, linearLocations++changedLinearLocations, mappedRoadLinks)) {
+          val resultChangeSet = changeSet.copy(newLinearLocations = changeSet.newLinearLocations ++ linearLocations++changedLinearLocations, droppedSegmentIds = changeSet.droppedSegmentIds + linearLocation.id)
 
-          (linearLocations, resultChangeSet)
+          (linearLocations, changedLinearLocations, resultChangeSet)
         } else {
-          (Seq(linearLocation), changeSet)
+          (Seq(linearLocation), Seq(), changeSet)
         }
     }
   }
@@ -254,19 +255,19 @@ object ApplyChangeInfoProcess {
       filter(change => filterOperations.forall(filterOperation => filterOperation(change)))
   }
 
-  private def applyChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
+  private def applyChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = {
 
     //If contains some unsupported change type there is no need to apply any change
     //because the linear locations will be set as floating
     changes.isEmpty || changes.exists(nonSupportedChange) match {
       case true =>
-        (linearLocations, changeSet)
+        (linearLocations, Seq(), changeSet)
       case _ =>
         val projections = generateProjections(changes)
-        linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
-          case ((cLinearLocations, cChangeSet), linearLocation) =>
-            val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
-            (cLinearLocations ++ adjustedLinearLocations, resultChangeSet)
+        linearLocations.foldLeft((Seq[LinearLocation](), Seq[LinearLocation](), changeSet)) {
+          case ((cLinearLocations, adjustedSegments, cChangeSet), linearLocation) =>
+              val (adjustedLinearLocations, changedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
+              (cLinearLocations ++ adjustedLinearLocations, adjustedSegments ++ changedLinearLocations, resultChangeSet)
         }
     }
   }
@@ -282,11 +283,11 @@ object ApplyChangeInfoProcess {
     val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)
 
     linearLocations.groupBy(_.linkId).foldLeft(Seq.empty[LinearLocation], Seq.empty[LinearLocation], initialChangeSet) {
-      case ((existingSegments,  adjustedSegments, changeSet), (linkId, linearLocations)) =>
+      case ((existingSegments, adjustedSegments,  changeSet), (linkId, linearLocations)) =>
 
-        val (adjustedLinearLocations, resultChangeSet) = applyChanges(linearLocations, mappedChanges.getOrElse(linkId, Seq()), changeSet, mappedRoadLinks)
+        val (adjustedLinearLocations, projectedLinearLocations, resultChangeSet) = applyChanges(linearLocations, mappedChanges.getOrElse(linkId, Seq()), changeSet, mappedRoadLinks)
 
-        (existingSegments, adjustedSegments ++ adjustedLinearLocations, resultChangeSet)
+        (existingSegments ++ adjustedLinearLocations, adjustedSegments ++ projectedLinearLocations, resultChangeSet)
     }
   }
 }

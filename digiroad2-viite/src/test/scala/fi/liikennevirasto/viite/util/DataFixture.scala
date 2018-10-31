@@ -232,11 +232,10 @@ object DataFixture {
           OracleDatabase.withDynTransaction {
             linearLocationDAO.fetchCurrentLinearLocationsByEly(ely.toInt)
           }
-        println ("Total linearLocations for ely " + ely + " -> " + linearLocations.size)
-        println ("Total municipalities for ely " + ely + " -> " + elys.size)
 
         //Get All Municipalities
         val municipalities: ParSet[Long] = municipalityEly.keySet.par
+        println ("Total linearLocations for ely " + ely + " -> " + linearLocations.size)
         println ("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
 
 //        val municipalities: ParSet[Long] = Set(5l,
