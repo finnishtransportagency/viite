@@ -123,10 +123,10 @@ object ApplyChangeInfoProcess {
             (adjustedLinearLocations ++ news, changedLinearLocations ++ changes)
         }
 
-        if(validateLinearLocation(linearLocation, linearLocations++changedLinearLocations, mappedRoadLinks)) {
-          val resultChangeSet = changeSet.copy(newLinearLocations = changeSet.newLinearLocations ++ linearLocations++changedLinearLocations, droppedSegmentIds = changeSet.droppedSegmentIds + linearLocation.id)
+        if(validateLinearLocation(linearLocation, changedLinearLocations, mappedRoadLinks)) {
+          val resultChangeSet = changeSet.copy(newLinearLocations = changeSet.newLinearLocations ++ changedLinearLocations, droppedSegmentIds = changeSet.droppedSegmentIds + linearLocation.id)
 
-          (linearLocations, changedLinearLocations, resultChangeSet)
+          (linearLocations++changedLinearLocations, changedLinearLocations, resultChangeSet)
         } else {
           (Seq(linearLocation), Seq(), changeSet)
         }
