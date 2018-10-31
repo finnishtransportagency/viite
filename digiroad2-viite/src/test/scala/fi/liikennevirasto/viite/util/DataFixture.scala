@@ -226,7 +226,7 @@ object DataFixture {
                 MunicipalityDAO.getMunicipalityMapping
     }.groupBy(_._2)
 
-    elys.filter(_._1 == 3l).foreach{
+    elys.filter(_._1 == 8l).foreach{
       case (ely, municipalityEly) =>
         val linearLocations =
           OracleDatabase.withDynTransaction {
@@ -234,7 +234,8 @@ object DataFixture {
           }
 
         //Get All Municipalities
-        val municipalities: ParSet[Long] = municipalityEly.keySet.par
+//        val municipalities: ParSet[Long] = municipalityEly.keySet.par
+        val municipalities: ParSet[Long] = Set(75l).par
         println ("Total linearLocations for ely " + ely + " -> " + linearLocations.size)
         println ("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
 
@@ -289,42 +290,18 @@ object DataFixture {
 //        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
         val (roadLinks, changedRoadLinks, complementaryRoadLinks) = roadLinkService.reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality.toInt)
         val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality.toInt)
+        val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageLinks
 
-        println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
+//        if(allRoadLinks.filter(_.)){
+//          println(s"AppliedChanges for municipality $municipality")
+//        } else {
+//          0
+//        }
+
+        println ("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
         println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
         if(roadLinks.nonEmpty) {
           try {
-            if(roadLinks.count(_.linkId == 300249l) > 0){
-              println(s"${roadLinks.count(_.linkId == 300249l)} roadLinks found for linkid 300249l")
-            } else{
-              0
-            }
-
-            if(changedRoadLinks.count(_.oldId == 300249l) > 0){
-              println(s"${changedRoadLinks.count(_.oldId == 300249l)} changedRoadLinks found for linkid 300249l")
-            } else{
-              0
-            }
-
-            if(changedRoadLinks.count(_.newId == 300249l) > 0){
-              println(s"${changedRoadLinks.count(_.oldId == 300249l)} changedRoadLinks found for linkid 300249l")
-            } else{
-              0
-            }
-
-            if(complementaryRoadLinks.count(_.linkId == 300249l) > 0){
-              println(s"${roadLinks.count(_.linkId == 300249l)} complementaryRoadLinks found for linkid 300249l")
-            } else{
-              0
-            }
-
-            if(suravageLinks.count(_.linkId == 300249l) > 0){
-              println(s"${roadLinks.count(_.linkId == 300249l)} suravageLinks found for linkid 300249l")
-            } else{
-              0
-            }
-
-            val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageLinks
 
             val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
             println(s"${roadsChanges._2.size} new linear locations after apply changes")
