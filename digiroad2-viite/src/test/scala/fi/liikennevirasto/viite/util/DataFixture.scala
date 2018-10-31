@@ -292,6 +292,17 @@ object DataFixture {
         println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
         if(roadLinks.nonEmpty) {
           try {
+            if(roadLinks.count(_.linkId == 300249l) > 0){
+              println(s"${roadLinks.count(_.linkId == 300249l)} roadLinks found for linkid 300249l")
+            } else{
+              0
+            }
+
+            if(changedRoadLinks.count(_.oldId == 300249l) > 0){
+              println(s"${changedRoadLinks.count(_.oldId == 300249l)} changedRoadLinks found for linkid 300249l")
+            } else{
+              0
+            }
             val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changedRoadLinks)
             println(s"${roadsChanges._2.size} new linear locations after apply changes")
             val changeSet = ChangeSet(Set(), Seq(), roadsChanges._2, Seq())
