@@ -417,7 +417,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def isReversed(originalSideCodes: Map[Long, SideCode])(projectLink: ProjectLink): Boolean = {
-    originalSideCodes.get(projectLink.roadwayId) match {
+    originalSideCodes.get(projectLink.linearLocationId) match {
       case Some(sideCode) if sideCode != projectLink.sideCode => true
       case _ => false
     }
@@ -1848,13 +1848,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def convertToRoadAddress(splitReplacements: Seq[ProjectLink], pureReplacements: Seq[ProjectLink], additions: Seq[ProjectLink],
                            roadAddresses: Map[Long, RoadAddress], project: RoadAddressProject): Seq[RoadAddress] = {
-    splitReplacements.groupBy(_.roadwayId).flatMap { case (id, seq) =>
+    splitReplacements.groupBy(_.linearLocationId).flatMap { case (id, seq) =>
       createSplitRoadAddress(roadAddresses(id), seq, project)
     }.toSeq ++
-      pureReplacements.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.roadwayId))) ++
-      additions.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.roadwayId))) ++
+      pureReplacements.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.linearLocationId))) ++
+      additions.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.linearLocationId))) ++
       pureReplacements.flatMap(pl =>
-        setEndDate(roadAddresses(pl.roadwayId), pl, None, project))
+        setEndDate(roadAddresses(pl.linearLocationId), pl, None, project))
   }
 
   private def convertProjectLinkToRoadAddress(pl: ProjectLink, project: RoadAddressProject,
