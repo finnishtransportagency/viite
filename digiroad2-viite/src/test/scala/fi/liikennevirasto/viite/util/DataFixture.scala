@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRun
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
@@ -36,11 +37,17 @@ object DataFixture {
     props
   }
 
-
   val dataImporter = new AssetDataImporter
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
+
+  val eventBus = new DummyEventBus
+  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+  val roadAddressDAO = new RoadwayDAO
+  val linearLocationDAO = new LinearLocationDAO
+  val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
 
@@ -270,17 +277,19 @@ object DataFixture {
       val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
       val linearLocations =
         OracleDatabase.withDynTransaction {
-          linearLocationDAO.fetchCurrentLinearLocationsByMunicipality(municipality.toInt).filter(l => Seq(300249, 304095, 300254).contains(l.linkId))
+          linearLocationDAO.fetchCurrentLinearLocationsByMunicipality(municipality.toInt)
         }
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
         try {
           val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changedRoadLinks)
+          val changeSet = ChangeSet(Set(), Seq(), roadsChanges._2, Seq())
+          roadAddressService.updateChangeSet(changeSet)
           println(s"AppliedChanges for municipality $municipality")
-          println(s"${roadsChanges._2.droppedSegmentIds.size} dropped roads")
-          println(s"${roadsChanges._2.adjustedMValues.size} adjusted m values")
-          println(s"${roadsChanges._2.newLinearLocations.size} new linear locations")
+          println(s"${roadsChanges._3.droppedSegmentIds.size} dropped roads")
+          println(s"${roadsChanges._3.adjustedMValues.size} adjusted m values")
+          println(s"${roadsChanges._3.newLinearLocations.size} new linear locations")
         } catch {
           case e: Exception => println("ERR! -> " + e.getMessage)
         }
