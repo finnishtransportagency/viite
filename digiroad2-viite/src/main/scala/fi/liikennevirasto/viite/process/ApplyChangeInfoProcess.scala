@@ -271,7 +271,7 @@ object ApplyChangeInfoProcess {
     }
   }
 
-  def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]) :(Seq[LinearLocation], ChangeSet) = {
+  def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]) :(Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = {
 
     val filteredChanges = filterOutChanges(linearLocations, changes.filter(c => c.newId == Some(300249) || c.oldId == Some(300249) || c.newId == Some(304095)  || c.oldId == Some(304095) || c.newId == Some(300254)  || c.oldId == Some(300254) ))
 
@@ -281,12 +281,12 @@ object ApplyChangeInfoProcess {
 
     val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)
 
-    linearLocations.groupBy(_.linkId).foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
-      case ((existingSegments, changeSet), (linkId, linearLocations)) =>
+    linearLocations.groupBy(_.linkId).foldLeft(Seq.empty[LinearLocation], Seq.empty[LinearLocation], initialChangeSet) {
+      case ((existingSegments,  adjustedSegments, changeSet), (linkId, linearLocations)) =>
 
         val (adjustedLinearLocations, resultChangeSet) = applyChanges(linearLocations, mappedChanges.getOrElse(linkId, Seq()), changeSet, mappedRoadLinks)
 
-        (existingSegments ++ adjustedLinearLocations, resultChangeSet)
+        (existingSegments, adjustedSegments ++ adjustedLinearLocations, resultChangeSet)
     }
   }
 }
