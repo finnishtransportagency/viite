@@ -584,6 +584,7 @@ class RoadwayDAO extends BaseDAO {
     val addressFilter = (startAddrMOption, endAddrMOption) match {
       case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
       case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
+      case (_, Some(0L)) => s"""and a.start_addr_m > 0"""
       case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
       case _ => s""""""
     }
