@@ -729,6 +729,15 @@ class LinearLocationDAO {
     }
   }
 
+  def fetchCurrentLinearLocationsByEly(ely: Int):Seq[LinearLocation] = {
+    val query =
+      s"""
+          $selectFromLinearLocation
+          WHERE VALID_TO IS NULL AND ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY = $ely AND VALID_TO IS NULL AND END_DATE IS NULL)
+       """
+    queryList(query)
+  }
+
   def fetchCurrentLinearLocationsByMunicipality(municipality: Int):Seq[LinearLocation] = {
     val query =
       s"""
