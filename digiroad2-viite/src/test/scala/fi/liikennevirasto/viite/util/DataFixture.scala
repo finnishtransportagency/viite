@@ -286,7 +286,8 @@ object DataFixture {
         println("Start processing municipality %d".format(municipality))
 
         //Obtain all RoadLink by municipality and change info from VVH
-        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+//        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+        val (roadLinks, changedRoadLinks, complementaryRoadLinks) = roadLinkService.reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality.toInt)
 
         println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
         println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
@@ -303,6 +304,13 @@ object DataFixture {
             } else{
               0
             }
+
+            if(complementaryRoadLinks.count(_.linkId == 300249l) > 0){
+              println(s"${roadLinks.count(_.linkId == 300249l)} roadLinks found for linkid 300249l")
+            } else{
+              0
+            }
+
             val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changedRoadLinks)
             println(s"${roadsChanges._2.size} new linear locations after apply changes")
             val changeSet = ChangeSet(Set(), Seq(), roadsChanges._2, Seq())

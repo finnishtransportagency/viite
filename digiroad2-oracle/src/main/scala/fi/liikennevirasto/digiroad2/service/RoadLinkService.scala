@@ -172,7 +172,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     (enrichRoadLinksFromVVH(links ++ complementaryLinks), changes)
   }
 
-  private def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
+  def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     val fut = for {
       f1Result <- vvhClient.complementaryData.fetchWalkwaysByMunicipalitiesF(municipalities)
       f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
