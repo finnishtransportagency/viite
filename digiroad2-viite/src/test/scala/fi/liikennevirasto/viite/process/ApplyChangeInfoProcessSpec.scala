@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
-import fi.liikennevirasto.viite.dao.{Discontinuity, FloatingReason, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.viite.Dummies._
@@ -35,8 +35,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 0.0, newEndMeasure = 5.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
-
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
     val linearLocationOne = adjustedLinearLocations.find(_.id == 1L).get
 
     linearLocationOne.startMValue should be (0.0)
@@ -73,8 +73,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
-
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
     val linearLocationOne = adjustedLinearLocations.find(_.id == 1L).get
 
     linearLocationOne.startMValue should be (0.0)
@@ -112,7 +112,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyChangeInfo(ChangeType.DividedNewPart, oldId = 123L, newId = 127L, oldStartMeasure = 12.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 8.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     val newLinearLocations = adjustedLinearLocations.filter(_.id == -1000).sortBy(_.orderNumber).toArray
 
@@ -165,7 +166,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyChangeInfo(ChangeType.DividedNewPart, oldId = 123L, newId = 127L, oldStartMeasure = 8.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 12.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     val newLinearLocations = adjustedLinearLocations.filter(_.id == -1000).sortBy(_.orderNumber).toArray
 
@@ -217,7 +219,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyChangeInfo(ChangeType.CombinedRemovedPart, oldId = 125L, newId = 127L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, newStartMeasure = 10.0, newEndMeasure = 20.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     val newLinearLocations = adjustedLinearLocations.filter(_.id == -1000).sortBy(_.orderNumber).toArray
 
@@ -262,7 +265,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 5.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     val linearLocationOne = adjustedLinearLocations.find(_.id == 1L).get
 
@@ -300,7 +304,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
     changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
@@ -325,7 +330,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 15.0, oldEndMeasure = 20.0, vvhTimeStamp = 1L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     val linearLocationOne = adjustedLinearLocations.find(_.id == 1L).get
 
@@ -363,7 +369,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, vvhTimeStamp = 0L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
     changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
@@ -389,7 +396,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
       dummyNewChangeInfo(ChangeType.Removed, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, vvhTimeStamp = 3L)
     )
 
-    val (adjustedLinearLocations, changeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val (adjusted, changed, changeSet): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
+    val adjustedLinearLocations = adjusted ++ changed
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
     changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
