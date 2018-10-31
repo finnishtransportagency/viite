@@ -324,7 +324,9 @@ object DataFixture {
               0
             }
 
-            val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changedRoadLinks)
+            val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageLinks
+
+            val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
             println(s"${roadsChanges._2.size} new linear locations after apply changes")
             val changeSet = ChangeSet(Set(), Seq(), roadsChanges._2, Seq())
             roadAddressService.updateChangeSet(changeSet)
