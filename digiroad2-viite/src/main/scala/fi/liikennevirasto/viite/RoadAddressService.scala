@@ -1225,10 +1225,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   */
 
   def setSubsequentTermination(linkIds: Set[Long]): Unit = {
+    throw new NotImplementedError("This should be implemented at VIITE-1541 - needs to change roadAddress logic to linearlocation")
+    /*
     val roadAddresses = getRoadAddressByLinkIds(linkIds/*, includeFloating = true, includeHistory = true*/).filter(_.terminated == NoTermination)
-    val roadways = roadwayDAO.fetchAllByRoadwayId(roadAddresses.map(_.id))
+    val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadAddresses.map(_.roadwayNumber).toSet)
     roadwayDAO.expireById(roadways.map(_.id).toSet)
     roadwayDAO.create(roadways.map(ra => ra.copy(id = NewRoadway, terminated = Subsequent)))
+    */
   }
 
 }

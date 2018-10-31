@@ -146,16 +146,8 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
   //TODO may be a good idea mode this method to road address service
   def getRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
-    //TODO check if this can be a improvement
-    //    val roadwayAddressesF = Future(roadAddressDAO.fetchByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet))
-    //
-    //    val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
-    //
-    //    val roadwayAddresses = Await.result(roadwayAddressesF, Duration.Inf)
-
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
     val roadways = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
-
     roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 

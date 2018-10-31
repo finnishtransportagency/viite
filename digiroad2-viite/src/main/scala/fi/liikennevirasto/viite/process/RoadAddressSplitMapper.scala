@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao.ProjectLink
 
 object RoadAddressSplitMapper extends RoadAddressMapper {
   def createAddressMap(splitProjectLinks: Seq[ProjectLink]): Seq[RoadAddressMapping] = {
-    splitProjectLinks.groupBy(_.roadwayId).flatMap { case (_, seq) =>
+    splitProjectLinks.groupBy(_.linearLocationId).flatMap { case (_, seq) =>
       val templateTerm = seq.find(_.status == Terminated)
       val kept = seq.find(pl => pl.status == Transfer || pl.status == UnChanged)
       (templateTerm, kept) match {
