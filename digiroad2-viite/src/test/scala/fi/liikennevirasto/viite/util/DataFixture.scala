@@ -288,6 +288,7 @@ object DataFixture {
         //Obtain all RoadLink by municipality and change info from VVH
 //        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
         val (roadLinks, changedRoadLinks, complementaryRoadLinks) = roadLinkService.reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality.toInt)
+        val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality.toInt)
 
         println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
         println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
@@ -305,8 +306,20 @@ object DataFixture {
               0
             }
 
+            if(changedRoadLinks.count(_.newId == 300249l) > 0){
+              println(s"${changedRoadLinks.count(_.oldId == 300249l)} changedRoadLinks found for linkid 300249l")
+            } else{
+              0
+            }
+
             if(complementaryRoadLinks.count(_.linkId == 300249l) > 0){
-              println(s"${roadLinks.count(_.linkId == 300249l)} roadLinks found for linkid 300249l")
+              println(s"${roadLinks.count(_.linkId == 300249l)} complementaryRoadLinks found for linkid 300249l")
+            } else{
+              0
+            }
+
+            if(suravageLinks.count(_.linkId == 300249l) > 0){
+              println(s"${roadLinks.count(_.linkId == 300249l)} suravageLinks found for linkid 300249l")
             } else{
               0
             }
