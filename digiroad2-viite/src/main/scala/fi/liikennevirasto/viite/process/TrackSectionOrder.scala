@@ -21,13 +21,14 @@ object TrackSectionOrder {
       Matrix(Seq(Seq(0.0, -1.0), Seq(1.0, 0.0)))
     else {
       val k = tangent.y / tangent.x
-      val coeff = 1/Math.sqrt(k*k + 1)
-      Matrix(Seq(Seq(coeff, -k*coeff), Seq(k*coeff, coeff)))
+      val coeff = 1 / Math.sqrt(k * k + 1)
+      Matrix(Seq(Seq(coeff, -k * coeff), Seq(k * coeff, coeff)))
     }
   }
 
   /**
     * Returns a mapping of the startPoint or endPoint and all adjacent BaseRoadAddresses to said point
+    *
     * @param seq
     * @tparam T
     * @return
@@ -39,7 +40,7 @@ object TrackSectionOrder {
       val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
       Seq(p1 -> l, p2 -> l)
     }).groupBy(_._1).mapValues(_.map(_._2).toSeq.distinct)
-    pointMap.keys.map{ p =>
+    pointMap.keys.map { p =>
       val links = pointMap.filterKeys(m => GeometryUtils.areAdjacent(p, m, MaxDistanceForConnectedLinks)).values.flatten
       p -> links
     }.toMap.filter(_._2.size == 1).mapValues(_.head)
@@ -54,18 +55,21 @@ object TrackSectionOrder {
   /**
     * A sequence of points is turning counterclockwise if every segment between them is turning left looking from the
     * center of the points
+    *
     * @param seq
     * @return
     */
   def isCounterClockwise(seq: Seq[Point]): Boolean = {
-    val midPoint = seq.tail.fold(seq.head){ case (p1, p2) => p1.copy(x = p1.x + p2.x, y=p1.y + p2.y, z=0)}.toVector.scale(1.0/seq.size)
+    val midPoint = seq.tail.fold(seq.head) { case (p1, p2) => p1.copy(x = p1.x + p2.x, y = p1.y + p2.y, z = 0) }.toVector.scale(1.0 / seq.size)
     // Create vectors from midpoint to p and from p to next
     val extended = seq ++ Seq(seq.head) // Take the last point to be used as the ending point as well
-    val vectors = extended.map(p => p.toVector - midPoint).zip(seq.zip(extended.tail).map{ case (p1, p2) =>
-      p2 - p1})
-    vectors.forall{ case (x, y) =>
+    val vectors = extended.map(p => p.toVector - midPoint).zip(seq.zip(extended.tail).map { case (p1, p2) =>
+      p2 - p1
+    })
+    vectors.forall { case (x, y) =>
       // Using cross product: Right hand rule -> z is positive if y is turning left in relative direction of x
-      x.cross(y).z > 0.0 }
+      x.cross(y).z > 0.0
+    }
   }
 
   def mValueRoundabout(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -94,6 +98,7 @@ object TrackSectionOrder {
         calibrationPoints = (startCp, endCP)
       )
     }
+
     def firstPoint(pl: ProjectLink) = {
       pl.sideCode match {
         case TowardsDigitizing => pl.geometry.head
@@ -101,6 +106,7 @@ object TrackSectionOrder {
         case _ => throw new InvalidGeometryException("SideCode was not decided")
       }
     }
+
     def recursive(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty) {
         // Put calibration point at the end
@@ -127,6 +133,7 @@ object TrackSectionOrder {
           unprocessed.filter(_ != hit))
       }
     }
+
     val firstLink = seq.head // First link is defined by end user and must be always first
     // Put calibration point at the beginning
     val ordered = recursive(firstLink.geometry.last, Seq(adjust(firstLink, sideCode = Some(TowardsDigitizing),
@@ -249,9 +256,9 @@ object TrackSectionOrder {
         }
         // Check if link direction needs to be turned and choose next point
         val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed) match {
-          case (false, false) | (true, true)=>
+          case (false, false) | (true, true) =>
             SideCode.AgainstDigitizing
-          case (false, true) |  (true, false) =>
+          case (false, true) | (true, false) =>
             SideCode.TowardsDigitizing
         }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
@@ -269,10 +276,11 @@ object TrackSectionOrder {
       val pl = s.head
       TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, s.map(_.geometryLength).sum, s)
     }
+
     def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
       if (seq.isEmpty)
         throw new InvalidAddressDataException("Missing track")
-      val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.track != pl2.track}
+      val changePoints = seq.zip(seq.tail).filter { case (pl1, pl2) => pl1.track != pl2.track }
       seq.foldLeft(Seq(Seq[ProjectLink]())) { case (tracks, pl) =>
         if (changePoints.exists(_._2 == pl)) {
           Seq(Seq(pl)) ++ tracks
@@ -303,8 +311,8 @@ object TrackSectionOrder {
             val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
-              Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
+                Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
+            CombinedSection(r.startGeometry, r.endGeometry,.5 * (r.geometryLength + l.geometryLength),
               l, r)
           case _ =>
             throw new RoadAddressException(s"Incorrect track code ${r.track}")
