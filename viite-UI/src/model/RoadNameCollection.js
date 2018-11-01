@@ -5,7 +5,6 @@
         var newId = -1000;
         var currentRoadNumber = -1;
         var currentRoadNameData = [];
-        var minDate;
         var changedIds = [];
         var newRoadName = {id: newId};
         var yearLimit = 5;
@@ -36,9 +35,6 @@
                 }).sortBy('startDate').value();
                 currentRoadNameData = sortedRoadData;
                 var lastRoadName = _.last(sortedRoadData);
-                if (lastRoadName)
-                //TODO: Evaluate if the min date is really needed.
-                    minDate = moment(lastRoadName.startDate).subtract(yearLimit, 'years');
                 eventbus.trigger("roadNameTool:roadsFetched", sortedRoadData);
             });
         };
@@ -59,11 +55,6 @@
                 delete roadName.endDate;
             else
                 roadName.endDate = endDate;
-        };
-
-        this.getMinDate = function () {
-            if (minDate)
-                return minDate.toDate();
         };
 
         this.clear = function () {

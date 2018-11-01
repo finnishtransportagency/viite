@@ -76,11 +76,9 @@
         };
 
         var retroactivelyAddDatePickers = function () {
-            var minDate = roadNameCollection.getMinDate();
             var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder])');
             inputs.each(function (index, input) {
-                if(input.dataset.roadid == newId) {
-                    //TODO: Evaluate if the min date is really needed.
+                if (input.dataset.roadid == newId) {
                     var datePicker = dateutil.addSingleDatePicker($(input));
                 }
             });
