@@ -99,8 +99,8 @@ case class RoadAddressProject(id: Long, status: ProjectState, name: String, crea
 
 case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
-case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue: Double, override val  addressMValue: Long, source: CalibrationPointSource = UnknownSource)
-  extends BaseCalibrationPoint{
+case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, source: CalibrationPointSource = UnknownSource)
+  extends BaseCalibrationPoint {
 
   def toCalibrationPoint(): CalibrationPoint = {
     CalibrationPoint(linkId, segmentMValue, addressMValue)
@@ -117,7 +117,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
-    case (true, true) | (false, false)=>
+    case (true, true) | (false, false) =>
       //reversed for both SideCodes
       geometry.head
     case (true, false) | (false, true) =>
@@ -150,15 +150,15 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
     sideCode match {
       case SideCode.AgainstDigitizing =>
-        endAddrMValue - Math.round((a-startMValue) * coefficient)
+        endAddrMValue - Math.round((a - startMValue) * coefficient)
       case SideCode.TowardsDigitizing =>
-        startAddrMValue + Math.round((a-startMValue) * coefficient)
+        startAddrMValue + Math.round((a - startMValue) * coefficient)
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
   }
 
   def addrMLength() = {
-    if(isSplit)
+    if (isSplit)
       endAddrMValue - startAddrMValue
     else
       roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
@@ -180,18 +180,18 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   def toCalibrationPoints(): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrationPoints match {
       case (None, None) => (Option.empty[CalibrationPoint], Option.empty[CalibrationPoint])
-      case (Some(cp1), None) => (Option(cp1.toCalibrationPoint()) ,Option.empty[CalibrationPoint])
+      case (Some(cp1), None) => (Option(cp1.toCalibrationPoint()), Option.empty[CalibrationPoint])
       case (None, Some(cp1)) => (Option.empty[CalibrationPoint], Option(cp1.toCalibrationPoint()))
-      case (Some(cp1),Some(cp2)) => (Option(cp1.toCalibrationPoint()), Option(cp2.toCalibrationPoint()))
+      case (Some(cp1), Some(cp2)) => (Option(cp1.toCalibrationPoint()), Option(cp2.toCalibrationPoint()))
     }
   }
 
-  def getCalibrationSources():(Option[CalibrationPointSource],Option[CalibrationPointSource]) = {
+  def getCalibrationSources(): (Option[CalibrationPointSource], Option[CalibrationPointSource]) = {
     calibrationPoints match {
       case (None, None) => (Option.empty[CalibrationPointSource], Option.empty[CalibrationPointSource])
-      case (Some(cp1), None) => (Option(cp1.source) ,Option.empty[CalibrationPointSource])
+      case (Some(cp1), None) => (Option(cp1.source), Option.empty[CalibrationPointSource])
       case (None, Some(cp1)) => (Option.empty[CalibrationPointSource], Option(cp1.source))
-      case (Some(cp1),Some(cp2)) => (Option(cp1.source), Option(cp2.source))
+      case (Some(cp1), Some(cp2)) => (Option(cp1.source), Option(cp2.source))
     }
   }
 
@@ -200,7 +200,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case (None, None) => CalibrationPointSource.NoCalibrationPoint
       case (Some(cp1), None) => cp1.source
       case (None, Some(cp1)) => cp1.source
-      case (Some(cp1),Some(cp2)) => cp1.source
+      case (Some(cp1), Some(cp2)) => cp1.source
     }
   }
 }
@@ -282,7 +282,7 @@ object ProjectDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextStringOption()
+      val geom = r.nextStringOption()
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -449,7 +449,7 @@ object ProjectDAO {
          """.execute
   }
 
-  def getElyFromProjectLinks(projectId:Long): Option[Long]= {
+  def getElyFromProjectLinks(projectId: Long): Option[Long] = {
     val query =
       s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROWNUM < 2"""
     Q.queryNA[Long](query).firstOption
@@ -502,7 +502,7 @@ object ProjectDAO {
     }
   }
 
-  def getProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
+  def getProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid: Long): Seq[ProjectLink] = {
     time(logger, "Get project links by link id and project id") {
       val query =
         s"""$projectLinkQueryBase
@@ -945,7 +945,7 @@ object ProjectDAO {
     Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list
   }
 
-  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true) = {
+  def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom: Boolean = true) = {
     time(logger, "Update project link values") {
 
       val updateGeometry = if (updateGeom) s", GEOMETRY = '${toGeomString(roadAddress.geometry)}'" else s""
@@ -989,11 +989,11 @@ object ProjectDAO {
   }
 
   def fetchProjectLinkIds(projectId: Long, roadNumber: Long, roadPartNumber: Long, status: Option[LinkStatus] = None,
-                          maxResults: Option[Int] = None): List[Long] =
-  {
+                          maxResults: Option[Int] = None): List[Long] = {
     val filter = status.map(s => s" AND status = ${s.value}").getOrElse("")
     val limit = maxResults.map(s => s" AND ROWNUM <= $s").getOrElse("")
-    val query= s"""
+    val query =
+      s"""
          SELECT link_id
          FROM Project_link
          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber $filter $limit
@@ -1007,7 +1007,8 @@ object ProjectDAO {
   }
 
   def getReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
-    val query = s"""SELECT ID FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId AND
+    val query =
+      s"""SELECT ID FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId AND
             ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber"""
     Q.queryNA[Long](query).list.head
   }
@@ -1054,7 +1055,8 @@ object ProjectDAO {
   }
 
   def fetchFirstLink(projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[ProjectLink] = {
-    val query = s"""$projectLinkQueryBase
+    val query =
+      s"""$projectLinkQueryBase
     where PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber AND
     PROJECT_LINK.START_ADDR_M = (SELECT MIN(PROJECT_LINK.START_ADDR_M) FROM PROJECT_LINK
       LEFT JOIN
@@ -1092,6 +1094,7 @@ object ProjectDAO {
       removeProjectLinks(projectId, roadNumber, roadPartNumber, linkIds)
     }
   }
+
   private def removeProjectLinks(projectId: Long, roadNumber: Option[Long], roadPartNumber: Option[Long],
                                  linkIds: Set[Long] = Set()): Int = {
     val roadFilter = roadNumber.map(l => s"AND road_number = $l").getOrElse("")
@@ -1112,7 +1115,7 @@ object ProjectDAO {
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {
-      sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE,
+    sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE,
               ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
                MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROAD_ADDRESS_ID, CONNECTED_LINK_ID, ELY,
                 REVERSED, GEOMETRY, SIDE_CODE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
