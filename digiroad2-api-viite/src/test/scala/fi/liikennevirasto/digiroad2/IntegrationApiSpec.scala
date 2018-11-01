@@ -9,14 +9,14 @@ import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService, RoadType}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 
 
-class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
+class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
@@ -24,13 +24,13 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
 
   val mockRoadNameService = MockitoSugar.mock[RoadNameService]
 
-  private val integrationApi = new ViiteIntegrationApi(mockRoadAddressService, mockRoadNameService)
+  private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService, new ViiteSwagger)
   addServlet(integrationApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
     val credentials = username + ":" + password
     val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials + "="
+    val authorizationToken = "Basic " + encodedCredentials
     get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
   }
 
@@ -123,16 +123,16 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("No updated road names, Content-Type should be application/json and response should be empty array") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(Right(Seq()))
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     getWithBasicUserAuth("/roadnames/changes?since=9999-01-01", "kalpa", "kalpa") {
       status should equal(200)
-      response.getHeader("Content-Type") should equal("application/json; charset=UTF-8")
+      response.getHeader("Content-Type") should equal("application/json;charset=utf-8")
       response.body should equal("[]")
     }
   }
 
   test("One update (new road), response should contain one road name") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
@@ -146,7 +146,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("Road name change") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
         RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
@@ -166,7 +166,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("Road name change for two roads") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
@@ -192,16 +192,16 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("No updated road names from /roadnames/changes, Content-Type should be application/json and response should be empty array") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(Right(Seq()))
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     getWithBasicUserAuth("/roadnames/changes?since=9999-01-01&until=9999-01-01", "kalpa", "kalpa") {
       status should equal(200)
-      response.getHeader("Content-Type") should equal("application/json; charset=UTF-8")
+      response.getHeader("Content-Type") should equal("application/json;charset=utf-8")
       response.body should equal("[]")
     }
   }
 
   test("One update (new road), response should contain one road name from /roadnames/changes") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
@@ -215,7 +215,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("Road name change between from /roadnames/changes") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
         RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
@@ -235,7 +235,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   }
 
   test("Road name change for two roads from /roadnames/changes") {
-    when(mockRoadNameService.getUpdatedRoadNames(Matchers.any(), Matchers.any())).thenReturn(
+    when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),

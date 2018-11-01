@@ -20,7 +20,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, 
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadwayAddressMapper}
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import slick.jdbc.StaticQuery.interpolation
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
