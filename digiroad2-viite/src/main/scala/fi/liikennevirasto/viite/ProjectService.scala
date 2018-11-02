@@ -1741,23 +1741,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * This will insert new historic road addresses (valid_to = null and end_date = project_date)
+    * This will insert new historic roadways (valid_to = null and end_date = project_date)
     *
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
   def createHistoryRows(projectLinks: Seq[ProjectLink], expiringRoadAddresses: Map[Long, RoadAddress]): Seq[Long] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1541")
-    //    val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadwayId)
-    //    val roadsToCreate = expiringRoadAddresses.values.flatMap(ex => {
-    //      groupedProjectLinks.get(ex.id) match {
-    //        case Some(pls) =>
-    //          pls.headOption.map(pl => ex.copy(id = NewRoadAddress, endDate =pl.startDate))
-    //        case _ => None
-    //      }
-    //
-    //    })
-    //    RoadAddressDAO.create(roadsToCreate)
+    val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadwayId)
+    val roadwaysToCreate = expiringRoadAddresses.values.flatMap(ex => {
+      groupedProjectLinks.get(ex.id) match {
+        case Some(pls) =>
+          pls.headOption.map(pl => Roadway(NewRoadway, pl.roadwayNumber, pl.roadNumber, pl.roadPartNumber,
+            pl.roadType, pl.track, pl.discontinuity, pl.startAddrMValue, pl.endAddrMValue, pl.reversed, pl.startDate.get, pl.endDate,
+            pl.createdBy.getOrElse("-"), pl.roadName, pl.ely,
+            if (pl.status == LinkStatus.Terminated) TerminationCode.Subsequent else TerminationCode.NoTermination, DateTime.now(), None))
+        case _ => None
+      }
+    })
+    roadwayDAO.create(roadwaysToCreate)
   }
 
   /**
