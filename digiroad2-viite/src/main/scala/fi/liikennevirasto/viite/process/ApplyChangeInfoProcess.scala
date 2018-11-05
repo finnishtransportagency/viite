@@ -104,6 +104,10 @@ object ApplyChangeInfoProcess {
 
   private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = {
 
+    if(projections.count(p => p.oldLinkId == 300249l || p.newLinkId == 300249l) > 0){
+      println(s"FILTERED PROJECTIONS FOR LINKID 300249")
+    }
+
     val applicableProjections = projections.filter(_.intercepts(linearLocation))
 
     applicableProjections match {
@@ -275,9 +279,9 @@ object ApplyChangeInfoProcess {
   def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]) :(Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = {
 
     val filteredChanges = filterOutChanges(linearLocations, changes.filter(c => c.newId.getOrElse(0) == 300249l || c.oldId.getOrElse(0) == 300249l))
-
-    println(s" FILTEREDCHANGES FOR LINKID 300249: ${filteredChanges.size}")
-
+    if(filteredChanges.exists( c => c.newId.getOrElse(0) ==  300249l || c.oldId.getOrElse(0) == 300249l)) {
+      println(s" FOUND FILTEREDCHANGES FOR LINKID 300249: ${filteredChanges.size}")
+    }
     val mappedChanges = filteredChanges.groupBy(c => c.oldId.getOrElse(c.newId.get))
 
     val mappedRoadLinks = roadLinks.groupBy(_.linkId).mapValues(_.head)
