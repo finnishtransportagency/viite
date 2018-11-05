@@ -8,7 +8,8 @@ import slick.jdbc.{StaticQuery => Q}
   */
 object MunicipalityDAO {
   def getMunicipalityMapping = {
-    Q.queryNA[(Long, Long)]("""SELECT id, ely_nro FROM MUNICIPALITY ORDER BY ely_nro ASC""").list.map(x => x._1 -> x._2).toMap
+//    Q.queryNA[(Long, Long)]("""SELECT id, ely_nro FROM MUNICIPALITY ORDER BY ely_nro ASC""").list.map(x => x._1 -> x._2).toMap
+    Q.queryNA[(Long, Long)]("""SELECT id, ely_nro FROM MUNICIPALITY WHERE ely_nro in (3, 8) ORDER BY ely_nro ASC""").list.map(x => x._1 -> x._2).toMap
   }
 
   def getMunicipalityRoadMaintainers = {

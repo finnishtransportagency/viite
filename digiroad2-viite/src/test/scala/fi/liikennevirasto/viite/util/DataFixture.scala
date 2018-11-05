@@ -224,9 +224,7 @@ object DataFixture {
     //get All municipalities and group them for ely
     val elys = OracleDatabase.withDynTransaction {
                 MunicipalityDAO.getMunicipalityMapping
-    }.groupBy(_._2)
-
-    elys.filter(_._1 == 8l).foreach{
+    }.groupBy(_._2).foreach{
       case (ely, municipalityEly) =>
         val linearLocations =
           OracleDatabase.withDynTransaction {
@@ -234,52 +232,9 @@ object DataFixture {
           }
 
         //Get All Municipalities
-//        val municipalities: ParSet[Long] = municipalityEly.keySet.par
-        val municipalities: ParSet[Long] = Set(75l).par
+        val municipalities: ParSet[Long] = municipalityEly.keySet.par
         println ("Total linearLocations for ely " + ely + " -> " + linearLocations.size)
         println ("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
-
-//        val municipalities: ParSet[Long] = Set(5l,
-//                10l,
-//                52l,
-//                74l,
-//                145l,
-//                151l,
-//                152l,
-//                164l,
-//                217l,
-//                218l,
-//                231l,
-//                232l,
-//                233l,
-//                236l,
-//                272l,
-//                280l,
-//                287l,
-//                288l,
-//                300l,
-//                301l,
-//                399l,
-//                403l,
-//                408l,
-//                421l,
-//                440l,
-//                475l,
-//                499l,
-//                545l,
-//                584l,
-//                598l,
-//                599l,
-//                743l,
-//                759l,
-//                846l,
-//                849l,
-//                893l,
-//                905l,
-//                924l,
-//                934l,
-//                946l,
-//                989l).par
 
       //For each municipality get all VVH Roadlinks
       municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
@@ -287,16 +242,11 @@ object DataFixture {
         println("Start processing municipality %d".format(municipality))
 
         //Obtain all RoadLink by municipality and change info from VVH
-//        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
-        val (roadLinks, changedRoadLinks, complementaryRoadLinks) = roadLinkService.reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality.toInt)
-        val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality.toInt)
-        val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageLinks
-
-//        if(allRoadLinks.filter(_.)){
-//          println(s"AppliedChanges for municipality $municipality")
-//        } else {
-//          0
-//        }
+        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+//        val (roadLinks, changedRoadLinks, complementaryRoadLinks) = roadLinkService.reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality.toInt)
+//        val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality.toInt)
+//        val allRoadLinks = roadLinks ++ suravageLinks ++ complementaryRoadLinks
+        val allRoadLinks = roadLinks
 
         println ("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
         println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
@@ -318,7 +268,6 @@ object DataFixture {
         println("End processing municipality %d".format(municipality))
       }
     }
-
   }
 
   private def updateProjectLinkGeom(): Unit = {
