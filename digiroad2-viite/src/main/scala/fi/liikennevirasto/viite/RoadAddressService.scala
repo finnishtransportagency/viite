@@ -428,7 +428,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             linearLocationDAO.create(toCreate)
       println(s"toUpdate IDS: ${toUpdate.map(_.id).mkString(",")} ")
             linearLocationDAO.expire(toUpdate.toSeq)
-            linearLocationDAO.create(toUpdate)
+            linearLocationDAO.create(toUpdate.map(_.copy(id = NewLinearLocation)))
       //TODO Implement the missing at user story VIITE-1596
     }
 
