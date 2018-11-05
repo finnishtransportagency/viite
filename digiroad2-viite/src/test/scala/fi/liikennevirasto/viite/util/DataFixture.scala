@@ -229,10 +229,11 @@ object DataFixture {
         val linearLocations =
           OracleDatabase.withDynTransaction {
             linearLocationDAO.fetchCurrentLinearLocationsByEly(3)
-          }
+          }.filter(_.linkId == 300249l)
 
         //Get All Municipalities
-        val municipalities: ParSet[Long] = municipalityEly.keySet.par
+//        val municipalities: ParSet[Long] = municipalityEly.keySet.par
+        val municipalities: ParSet[Long] = Set(75l).par
         println ("Total linearLocations for ely " + ely + " -> " + linearLocations.size)
         println ("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
 

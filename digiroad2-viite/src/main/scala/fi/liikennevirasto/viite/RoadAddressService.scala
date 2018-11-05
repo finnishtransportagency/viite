@@ -395,7 +395,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           case 0 => Seq() //Doesn't need to reorder or to expire any link for this roadway
           case _ =>
             Map(roadwayNumber ->
-              (locations ++ linearLocationsForRoadNumber)
+              (locations.filterNot(l => linearLocationsForRoadNumber.map(_.id).contains(l.id)) ++ linearLocationsForRoadNumber)
                 .sortBy(_.orderNumber)
                 .foldLeft(Seq[LinearLocation]()) {
                   case (list, linearLocation) =>
@@ -420,9 +420,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       //Create the new linear locations and update the road order
       val orderedLinearLocations = sortRoadWayWithNewRoads(linearByRoadwayNumberGroup, changeSet.newLinearLocations)
 
-      println(s"linearByRoadwayNumberGroup IDS: ${linearByRoadwayNumberGroup.values.size} ")
+      println(s"linearByRoadwayNumberGroup IDS: ${linearByRoadwayNumberGroup.values.flatten.size} ")
       println(s"changeSet.newLinearLocations IDS: ${changeSet.newLinearLocations.size} ")
-      println(s"orderedLinearLocations IDS: ${orderedLinearLocations.values.size} ")
+      println(s"orderedLinearLocations IDS: ${orderedLinearLocations.values.flatten.size} ")
       val (toCreate, toUpdate) = orderedLinearLocations.values.flatten.partition(l => linearByRoadwayNumberGroup.values.flatten.exists(ol => ol.id != l.id))
       println(s"toCreate IDS: ${toCreate.map(_.id).mkString(",")} ")
             linearLocationDAO.create(toCreate)
