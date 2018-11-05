@@ -227,6 +227,7 @@ class LinearLocationDAO {
         } else {
           location.roadwayNumber
         }
+        println(s"NEW LINEAR LOCATION ID: ${location.id} ")
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber.toLong)
