@@ -423,7 +423,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       println(s"linearByRoadwayNumberGroup IDS: ${linearByRoadwayNumberGroup.values.flatten.size} ")
       println(s"changeSet.newLinearLocations IDS: ${changeSet.newLinearLocations.size} ")
       println(s"orderedLinearLocations IDS: ${orderedLinearLocations.values.flatten.size} ")
-      val (toCreate, toUpdate) = orderedLinearLocations.values.flatten.partition(l => linearByRoadwayNumberGroup.values.flatten.exists(ol => ol.id != l.id))
+      val (toCreate, toUpdate) = orderedLinearLocations.values.flatten.partition(l => !linearByRoadwayNumberGroup.values.flatten.toSeq.map(_.id).contains(l.id))
       println(s"toCreate IDS: ${toCreate.map(_.id).mkString(",")} ")
             linearLocationDAO.create(toCreate)
       println(s"toUpdate IDS: ${toUpdate.map(_.id).mkString(",")} ")
