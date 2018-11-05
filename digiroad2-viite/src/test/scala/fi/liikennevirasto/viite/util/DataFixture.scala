@@ -253,8 +253,16 @@ object DataFixture {
         if(roadLinks.nonEmpty) {
           try {
 
+            if(changedRoadLinks.exists( c => c.newId.getOrElse(0) ==  300249l || c.oldId.getOrElse(0) == 300249l)){
+            println(s" FOUND CHANGED ROADLINK 300249")
+            }
+
+            if(allRoadLinks.exists(c => c.linkId ==  300249)){
+              println(s" FOUND ROADLINK 300249")
+            }
+
             val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
-            println(s"${roadsChanges._2.size} new linear locations after apply changes")
+            println(s"${roadsChanges._2.size} NEW LINEAR LOCATIONS AFTER APPLY CHANGES")
             val changeSet = ChangeSet(Set(), Seq(), roadsChanges._2, Seq())
             roadAddressService.updateChangeSet(changeSet)
             println(s"AppliedChanges for municipality $municipality")

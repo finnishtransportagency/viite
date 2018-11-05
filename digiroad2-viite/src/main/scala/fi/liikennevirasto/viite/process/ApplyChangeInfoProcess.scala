@@ -274,7 +274,9 @@ object ApplyChangeInfoProcess {
 
   def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]) :(Seq[LinearLocation], Seq[LinearLocation], ChangeSet) = {
 
-    val filteredChanges = filterOutChanges(linearLocations, changes.filter(c => c.newId == Some(300249) || c.oldId == Some(300249) || c.newId == Some(304095)  || c.oldId == Some(304095) || c.newId == Some(300254)  || c.oldId == Some(300254) ))
+    val filteredChanges = filterOutChanges(linearLocations, changes.filter(c => c.newId.getOrElse(0) == 300249l || c.oldId.getOrElse(0) == 300249l))
+
+    println(s" FILTEREDCHANGES FOR LINKID 300249: ${filteredChanges.size}")
 
     val mappedChanges = filteredChanges.groupBy(c => c.oldId.getOrElse(c.newId.get))
 
