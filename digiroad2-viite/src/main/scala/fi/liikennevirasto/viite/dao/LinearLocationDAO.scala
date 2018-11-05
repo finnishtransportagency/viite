@@ -738,6 +738,15 @@ class LinearLocationDAO {
     queryList(query)
   }
 
+  def fetchCurrentLinearLocations: Seq[LinearLocation] = {
+    val query =
+      s"""
+          $selectFromLinearLocation
+          WHERE VALID_TO IS NULL
+       """
+    queryList(query)
+  }
+
   def fetchCurrentLinearLocationsByMunicipality(municipality: Int):Seq[LinearLocation] = {
     val query =
       s"""

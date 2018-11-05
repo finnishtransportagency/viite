@@ -221,20 +221,21 @@ object DataFixture {
     roadLinkService.clearCache()
     println("Cache cleaned.")
 
+    val linearLocations =
+      OracleDatabase.withDynTransaction {
+        linearLocationDAO.fetchCurrentLinearLocations
+      }
+
+    println("Total linearLocations " + linearLocations.size)
+
     //get All municipalities and group them for ely
     OracleDatabase.withDynTransaction {
                 MunicipalityDAO.getMunicipalityMapping
     }.groupBy(_._2).foreach{
       case (ely, municipalityEly) =>
-        val linearLocations =
-          OracleDatabase.withDynTransaction {
-            linearLocationDAO.fetchCurrentLinearLocationsByEly(3)
-          }.filter(_.linkId == 300249l)
 
         //Get All Municipalities
-//        val municipalities: ParSet[Long] = municipalityEly.keySet.par
-        val municipalities: ParSet[Long] = Set(75l).par
-        println ("Total linearLocations for ely " + ely + " -> " + linearLocations.size)
+        val municipalities: ParSet[Long] = municipalityEly.keySet.par
         println ("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
 
       //For each municipality get all VVH Roadlinks
@@ -244,9 +245,6 @@ object DataFixture {
 
         //Obtain all RoadLink by municipality and change info from VVH
         val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
-//        val (roadLinks, changedRoadLinks, complementaryRoadLinks) = roadLinkService.reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality.toInt)
-//        val suravageLinks = roadLinkService.getSuravageRoadLinks(municipality.toInt)
-//        val allRoadLinks = roadLinks ++ suravageLinks ++ complementaryRoadLinks
         val allRoadLinks = roadLinks
 
         println ("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
@@ -254,16 +252,7 @@ object DataFixture {
         if(roadLinks.nonEmpty) {
           try {
 
-            if(changedRoadLinks.exists( c => c.newId.getOrElse(0) ==  300249l || c.oldId.getOrElse(0) == 300249l)){
-            println(s" FOUND CHANGED ROADLINK 300249")
-            }
-
-            if(allRoadLinks.exists(c => c.linkId ==  300249)){
-              println(s" FOUND ROADLINK 300249")
-            }
-
             val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
-            println(s"${roadsChanges._2.size} NEW LINEAR LOCATIONS AFTER APPLY CHANGES")
             val changeSet = ChangeSet(Set(), Seq(), roadsChanges._2, Seq())
             roadAddressService.updateChangeSet(changeSet)
             println(s"AppliedChanges for municipality $municipality")
