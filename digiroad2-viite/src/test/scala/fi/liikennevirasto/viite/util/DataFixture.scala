@@ -222,13 +222,13 @@ object DataFixture {
     println("Cache cleaned.")
 
     //get All municipalities and group them for ely
-    val elys = OracleDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
                 MunicipalityDAO.getMunicipalityMapping
     }.groupBy(_._2).foreach{
       case (ely, municipalityEly) =>
         val linearLocations =
           OracleDatabase.withDynTransaction {
-            linearLocationDAO.fetchCurrentLinearLocationsByEly(ely.toInt)
+            linearLocationDAO.fetchCurrentLinearLocationsByEly(3)
           }
 
         //Get All Municipalities
