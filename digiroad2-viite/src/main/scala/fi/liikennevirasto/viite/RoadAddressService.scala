@@ -420,9 +420,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       //Create the new linear locations and update the road order
       val orderedLinearLocations = sortRoadWayWithNewRoads(linearByRoadwayNumberGroup, changeSet.newLinearLocations)
 
-      println(s"linearByRoadwayNumberGroup IDS: ${linearByRoadwayNumberGroup.size} ")
+      println(s"linearByRoadwayNumberGroup IDS: ${linearByRoadwayNumberGroup.values.size} ")
       println(s"changeSet.newLinearLocations IDS: ${changeSet.newLinearLocations.size} ")
-      println(s"orderedLinearLocations IDS: ${orderedLinearLocations.size} ")
+      println(s"orderedLinearLocations IDS: ${orderedLinearLocations.values.size} ")
       val (toCreate, toUpdate) = orderedLinearLocations.values.flatten.partition(l => linearByRoadwayNumberGroup.values.flatten.exists(ol => ol.id != l.id))
       println(s"toCreate IDS: ${toCreate.map(_.id).mkString(",")} ")
             linearLocationDAO.create(toCreate)
