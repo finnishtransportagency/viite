@@ -421,18 +421,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val orderedLinearLocations = sortRoadWayWithNewRoads(linearByRoadwayNumberGroup, changeSet.newLinearLocations)
 
       val (toCreate, toUpdate) = orderedLinearLocations.values.flatten.partition(l => linearByRoadwayNumberGroup.values.flatten.exists(ol => ol.id != l.id))
-      orderedLinearLocations.foreach {
-        case (roadwayNumber, linearLocations) =>
-          val originalLocations = linearByRoadwayNumberGroup(roadwayNumber)
-          if (originalLocations.size != linearLocations.size ||
-            !originalLocations.exists(ol => ol.id == linearLocations.find(_.id == ol.id).getOrElse(0))) {
-            logger.info(s"The roadway $roadwayNumber changed in between process skipping the update")
-          } else {
             linearLocationDAO.create(toCreate)
             linearLocationDAO.expire(toUpdate.toSeq)
             linearLocationDAO.create(toUpdate)
-          }
-      }
       //TODO Implement the missing at user story VIITE-1596
     }
 
