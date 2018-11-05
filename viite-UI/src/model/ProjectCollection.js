@@ -322,6 +322,11 @@
       var coordinates = applicationModel.getUserGeoLocation();
       var roadAddressProjectForm = $('#roadAddressProjectForm');
       var endDistance = $('#endDistance')[0];
+      var reversed = _.chain(changedLinks).map(function(c) {
+        return c.reversed;
+      }).reduceRight(function(a, b) {
+        return a || b;
+      }).value();
       var dataJson = {
         ids: ids,
         linkIds: linkIds,
@@ -336,7 +341,8 @@
         roadType: Number(roadAddressProjectForm.find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: endDistance !== undefined ? (!isNaN(Number(endDistance.value)) ? Number(endDistance.value) : null) : null,
         coordinates: coordinates,
-        roadName: roadAddressProjectForm.find('#roadName')[0].value
+        roadName: roadAddressProjectForm.find('#roadName')[0].value,
+        reversed: reversed
       };
       if (dataJson.trackCode === Track.Unknown.value) {
         new ModalConfirm("Tarkista ajoratakoodi");
