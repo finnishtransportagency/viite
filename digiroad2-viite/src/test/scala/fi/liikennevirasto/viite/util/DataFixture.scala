@@ -253,12 +253,11 @@ object DataFixture {
           try {
 
             val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
-            val changeSet = ChangeSet(Set(), Seq(), roadsChanges._2, Seq())
-            roadAddressService.updateChangeSet(changeSet)
+            roadAddressService.updateChangeSet(roadsChanges._2)
             println(s"AppliedChanges for municipality $municipality")
-            println(s"${roadsChanges._3.droppedSegmentIds.size} dropped roads")
-            println(s"${roadsChanges._3.adjustedMValues.size} adjusted m values")
-            println(s"${roadsChanges._3.newLinearLocations.size} new linear locations")
+            println(s"${roadsChanges._2.droppedSegmentIds.size} dropped roads")
+            println(s"${roadsChanges._2.adjustedMValues.size} adjusted m values")
+            println(s"${roadsChanges._2.newLinearLocations.size} new linear locations")
           } catch {
             case e: Exception => println("ERR! -> " + e.getMessage)
           }
