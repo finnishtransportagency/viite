@@ -87,10 +87,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     //TODO Will be implemented at VIITE-1542
     //RoadAddressDAO.getUnaddressedRoadLinks(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
-    val (existingSegments, changedSegments, resultSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changeInfos)
+
+    val (ad, changesChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations,allRoadLinks,changeInfos)
+
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(
       allRoadLinks,
-      existingSegments++changedSegments
+      ad,
+      changesChangeSet
     )
 
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
@@ -395,7 +398,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           case 0 => Seq() //Doesn't need to reorder or to expire any link for this roadway
           case _ =>
             Map(roadwayNumber ->
-              (locations.filterNot(l => linearLocationsForRoadNumber.map(_.id).contains(l.id)) ++ linearLocationsForRoadNumber)
+              (locations ++ linearLocationsForRoadNumber)
                 .sortBy(_.orderNumber)
                 .foldLeft(Seq[LinearLocation]()) {
                   case (list, linearLocation) =>
@@ -409,7 +412,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     withDynTransaction {
       //Getting the linearLocations before the drop
-      val linearByRoadwayNumberGroup = linearLocationDAO.fetchByRoadways(changeSet.newLinearLocations.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
+      val linearByRoadwayNumber = linearLocationDAO.fetchByRoadways(changeSet.newLinearLocations.map(_.roadwayNumber).toSet)
+
+      val roadwayCheckSum = linearByRoadwayNumber.groupBy(_.roadwayNumber).mapValues(l => l.map(_.orderNumber).sum)
 
       //Expire linear locations
       linearLocationDAO.expireByIds(changeSet.droppedSegmentIds)
@@ -417,13 +422,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       //Update all the linear location measures
       linearLocationDAO.updateAll(changeSet.adjustedMValues, "adjustTopology")
 
-      //Create the new linear locations and update the road order
-      val orderedLinearLocations = sortRoadWayWithNewRoads(linearByRoadwayNumberGroup, changeSet.newLinearLocations)
+      val existingLinearLocations = linearByRoadwayNumber.filterNot(l => changeSet.droppedSegmentIds.contains(l.id))
+      val existingLinearLocationsGrouped = existingLinearLocations.groupBy(_.roadwayNumber)
 
-      val (toCreate, toUpdate) = orderedLinearLocations.values.flatten.partition(l => !linearByRoadwayNumberGroup.values.flatten.toSeq.map(_.id).contains(l.id))
-            linearLocationDAO.create(toCreate)
-            linearLocationDAO.expire(toUpdate.toSeq)
-            linearLocationDAO.create(toUpdate.map(_.copy(id = NewLinearLocation)))
+      //Create the new linear locations and update the road order
+      val orderedLinearLocations = sortRoadWayWithNewRoads(existingLinearLocationsGrouped, changeSet.newLinearLocations)
+
+      existingLinearLocationsGrouped.foreach{
+        case (roadwayNumber, existingLinearLocations) =>
+          val roadwayLinearLocations = orderedLinearLocations.getOrElse(roadwayNumber, Seq())
+          if(roadwayCheckSum.getOrElse(roadwayNumber, -1) != roadwayLinearLocations.map(_.orderNumber).sum)
+          {
+            linearLocationDAO.expireByIds(existingLinearLocations.map(_.id).toSet)
+            linearLocationDAO.create(roadwayLinearLocations)
+          }
+      }
+
+      linearLocationDAO.create(changeSet.newLinearLocations.map(l => l.copy(id = NewLinearLocation)))
+
       //TODO Implement the missing at user story VIITE-1596
     }
 
