@@ -1625,7 +1625,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             updateRoadAddressWithProjectLinks(updatedStatus, projectID)
           }
         }
-        roadAddressService.getFloatingAdresses().isEmpty
+        //roadAddressService.getFloatingAdresses().isEmpty
+        false
       case None =>
         logger.info(s"During status checking VIITE wasnt able to find TR_ID to project $projectID")
         appendStatusInfo(projectDAO.getRoadAddressProjectById(projectID).head, " Failed to find TR-ID ")
@@ -1747,13 +1748,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     // TODO What about termination? In this implementation termination is not handled.
     val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadwayId)
     val roadwaysToExpire = expiringRoadAddresses.values.flatMap(ex => {
-      groupedProjectLinks.get(ex.id) match {
+      groupedProjectLinks.get(ex.linearLocationId) match {
         case Some(pls) =>
           pls.headOption.map(pl => pl.roadwayId)
         case _ => None
       }
     })
-    if (!roadwaysToExpire.isEmpty) {
+    if (roadwaysToExpire.nonEmpty) {
       roadwayDAO.createHistory(roadwaysToExpire.toSet, projectLinks.head.startDate.get)
     }
   }
@@ -1804,14 +1805,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Creating history rows based on operation")
           val expiringRoadwayIds = replacements.map(pl => pl.roadwayId)
           createHistoryRows(projectLinks, expiringRoadAddressesFromReplacements)
-          //Expiring all old addresses by their ID
-          /*logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
-          roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
           val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
           logger.info(s"Updating the following terminated linkids to history ${terminatedLinkIds} ")
-          updateTerminationForHistory(terminatedLinkIds, splitReplacements)
+          //updateTerminationForHistory(terminatedLinkIds, splitReplacements)
           //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-          val created = RoadAddressDAO.create(newRoadAddressesWithHistory.map(_.copy(id = NewRoadAddress)))*/
+          roadwayDAO.create(newRoadwaysWithHistory.keys)
+          linearLocationDAO.create(newRoadwaysWithHistory.values.flatten)
           Some(s"road addresses created")
         } catch {
           case e: ProjectValidationException =>
