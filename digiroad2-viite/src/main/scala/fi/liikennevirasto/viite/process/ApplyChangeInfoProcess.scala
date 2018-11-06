@@ -169,9 +169,15 @@ object ApplyChangeInfoProcess {
     )
   }
 
-  private def filterOutOlderChanges(linearLocations: Seq[LinearLocation])(change: ChangeInfo): Boolean = {
-    val oldestLinearLocationTimestamp = linearLocations.map(_.adjustedTimestamp).min
-    change.vvhTimeStamp > oldestLinearLocationTimestamp
+  private def filterOutOlderChanges(linearLocations: Map[Long, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
+    //TODO check how to act when we have one totally newId (does not exist in current linear location) from changeInfo that doesnt have oldId associated
+    val changeLocations = linearLocations.getOrElse(change.oldId.getOrElse(change.newId.get), Seq())
+      if(changeLocations.isEmpty){
+        false
+      } else {
+        val oldestLinearLocationTimestamp = changeLocations.map(_.adjustedTimestamp).min
+        change.vvhTimeStamp > oldestLinearLocationTimestamp
+      }
   }
 
   private def filterOutChangesWithoutLinkIds(change: ChangeInfo) : Boolean = {
@@ -247,11 +253,12 @@ object ApplyChangeInfoProcess {
   private def filterOutChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
     val filterOperations: Seq[ChangeInfo => Boolean] = Seq(
       filterOutChangesWithoutLinkIds,
-      filterOutOlderChanges(linearLocations)
+      filterOutOlderChanges(linearLocations.groupBy(_.linkId))
     )
 
-    changes.
-      filter(change => filterOperations.forall(filterOperation => filterOperation(change)))
+    changes.filter(change =>
+          filterOperations.forall(filterOperation => filterOperation(change, linearLocations))
+    )
   }
 
   private def applyChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
