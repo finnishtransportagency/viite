@@ -1744,6 +1744,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
   def createHistoryRows(projectLinks: Seq[ProjectLink], expiringRoadAddresses: Map[Long, RoadAddress]) = {
+    // TODO What about termination? In this implementation termination is not handled.
     val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadwayId)
     val roadwaysToExpire = expiringRoadAddresses.values.flatMap(ex => {
       groupedProjectLinks.get(ex.id) match {
@@ -1753,7 +1754,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     })
     if (!roadwaysToExpire.isEmpty) {
-      roadwayDAO.updateEndDateById(roadwaysToExpire.toSet, projectLinks.head.startDate.get)
+      roadwayDAO.createHistory(roadwaysToExpire.toSet, projectLinks.head.startDate.get)
     }
   }
 
@@ -1801,6 +1802,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val newRoadwaysWithHistory = RoadwayFiller.fillRoadway(projectLinks, newRoadAddresses, expiringRoadAddressesFromReplacements.values.toSeq)
 
           logger.info(s"Creating history rows based on operation")
+          val expiringRoadwayIds = replacements.map(pl => pl.roadwayId)
           createHistoryRows(projectLinks, expiringRoadAddressesFromReplacements)
           //Expiring all old addresses by their ID
           /*logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
