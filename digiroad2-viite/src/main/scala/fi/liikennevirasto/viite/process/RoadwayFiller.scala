@@ -5,13 +5,14 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.NewRoadway
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, RoadAddress}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils.fillCPs
 import org.slf4j.LoggerFactory
 
 object RoadwayFiller {
 
   private val logger = LoggerFactory.getLogger(getClass)
+  private val roadwayAddressMapper = new RoadwayAddressMapper(new RoadwayDAO, new LinearLocationDAO)
 
   private def applyUnchanged(currentRoadAddresses: Seq[RoadAddress])(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     val unchangedLinks = projectLinks.filter(_.status == LinkStatus.UnChanged)
@@ -156,7 +157,7 @@ object RoadwayFiller {
     }.toSeq ++ newRoadAddresses.filterNot(ra => renumberedLinks.exists(_.linearLocationId == ra.linearLocationId))
   }
 
-  def fillRoadway(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress], currentRoadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+  def fillRoadway(projectLinks: Seq[ProjectLink], newRoadAddresses: Seq[RoadAddress], currentRoadAddresses: Seq[RoadAddress]): Map[Roadway, Seq[LinearLocation]] = {
     val fillOperations: Seq[(Seq[ProjectLink], Seq[RoadAddress]) => Seq[RoadAddress]] = Seq(
       applyUnchanged(currentRoadAddresses),
       applyNew,
@@ -172,8 +173,13 @@ object RoadwayFiller {
     }
     processedAddresses.groupBy(_.roadwayNumber).mapValues(addresses => {
       logger.info(s"Processing calibration points for roadway id ${addresses.head.roadwayNumber}")
-      setCalibrationPoints(addresses.sortBy(_.startAddrMValue))
-    }).values.flatten.toSeq
+      val orderedAddresses = addresses.sortBy(_.startAddrMValue)
+      val roadway = Roadway(NewRoadway, orderedAddresses.head.roadwayNumber, addresses.head.roadNumber, addresses.head.roadPartNumber, addresses.head.roadType, addresses.head.track, addresses.head.discontinuity,
+        addresses.head.startAddrMValue, addresses.last.endAddrMValue, reversed = false, startDate = addresses.head.startDate.get, endDate = addresses.head.endDate, createdBy = addresses.head.createdBy.get, addresses.head.roadName,
+        addresses.head.ely, addresses.head.terminated, addresses.head.validFrom.getOrElse(projectLinks.head.startDate.get), addresses.head.validTo)
+      val linearLocations = roadwayAddressMapper.mapLinearLocations(roadway, setCalibrationPoints(orderedAddresses))
+      (roadway, linearLocations)
+    }).values.toMap
   }
 
   private def assignNewRoadwayNumbers(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {

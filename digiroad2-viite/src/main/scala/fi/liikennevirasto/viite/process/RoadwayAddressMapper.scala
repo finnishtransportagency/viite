@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.viite.NewLinearLocation
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.{DateTime, LocalDateTime}
 
@@ -142,6 +143,23 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     //Set the discontinuity to the last road address
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadway.discontinuity)
+  }
+
+  def mapLinearLocations(roadway: Roadway, roadAddresses: Seq[RoadAddress]) : Seq[LinearLocation] = {
+    val groupedRoadAddresses = roadAddresses.groupBy(_.roadwayNumber)
+    val roadwayRoadAddresses = groupedRoadAddresses.getOrElse(roadway.roadwayNumber, throw new IllegalArgumentException("Any road addresses found that belongs to the given roadway"))
+    roadAddresses.sortBy(_.startAddrMValue).zip(1 to roadAddresses.size).
+      map{
+        case (address, key) =>
+          val calibrationPoints = address.calibrationPoints match {
+            case (None, None) => (None, None)
+            case (Some(_), None) => (Some(address.startAddrMValue), None)
+            case (None, Some(_)) => (None, Some(address.endAddrMValue))
+            case (Some(_), Some(_)) => (Some(address.startAddrMValue), Some(address.endAddrMValue))
+          }
+          LinearLocation(NewLinearLocation, key, address.linkId, address.startMValue, address.endMValue, address.sideCode, address.adjustedTimestamp,
+            calibrationPoints, address.floating, address.geometry, address.linkGeomSource, roadway.roadwayNumber, address.validFrom, address.validTo)
+      }
   }
 
   //TODO may be a good idea mode this method to road address service
