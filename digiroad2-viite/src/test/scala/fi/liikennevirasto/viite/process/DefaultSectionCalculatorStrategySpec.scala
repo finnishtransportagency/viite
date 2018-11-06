@@ -14,32 +14,31 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
   val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
 
-  //TODO Will be implemented at VIITE-1540
-  /*test("Test the correct assignation of the MValues and it's start directions") {
+  test("Test the correct assignation of the MValues and it's start directions") {
 
     val geomLeft1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
     val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
 
-    val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+    val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, false,
+      geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
       None, 86400L)
-    val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+    val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomLeft2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, false,
+      geomLeft2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false,
       None, 86400L)
 
     val geomRight1 = Seq(Point(10.0, 20.0), Point(20.0, 20.0))
     val geomRight2 = Seq(Point(20.0, 20.0), Point(30.0, 20.0))
 
-    val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
+    val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, false,
+      geomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 0, reversed = false,
       None, 86400L)
 
-    val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
+    val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      geomRight2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, false,
+      geomRight2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, 0, reversed = false,
       None, 86400L)
 
     val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
@@ -54,14 +53,14 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     val additionalGeomLeft1 = Seq(Point(40.0, 10.0), Point(30.0, 10.0))
     val additionalGeomRight1 = Seq(Point(40.0, 20.0), Point(30.0, 20.0))
 
-    val additionalProjectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+    val additionalProjectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      additionalGeomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeft1), 0L, 0, false,
+      additionalGeomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeft1), 0L, 0, 0, reversed = false,
       None, 86400L)
 
-    val additionalProjectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
+    val additionalProjectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12350L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      additionalGeomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRight1), 0L, 0, false,
+      additionalGeomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRight1), 0L, 0, 0, reversed = false,
       None, 86400L)
 
     val leftSideAdditionalProjectLinks = Seq(additionalProjectLinkLeft1)
@@ -79,14 +78,14 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     val additionalGeomLeftBefore = Seq(Point(10.0, 10.0), Point(0.0, 10.0))
     val additionalGeomRightBefore = Seq(Point(10.0, 20.0), Point(0.0, 20.0))
 
-    val additionalProjectLinkLeftBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, None, None,
+    val additionalProjectLinkLeftBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12351L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      additionalGeomLeftBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeftBefore), 0L, 0, false,
+      additionalGeomLeftBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeftBefore), 0L, 0, 0, reversed = false,
       None, 86400L)
 
-    val additionalProjectLinkRightBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, None, None,
+    val additionalProjectLinkRightBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12352L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      additionalGeomRightBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRightBefore), 0L, 0, false,
+      additionalGeomRightBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRightBefore), 0L, 0, 0, reversed = false,
       None, 86400L)
 
     val leftSideBeforeProjectLinks = Seq(additionalProjectLinkLeftBefore)
@@ -99,7 +98,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(p => p.sideCode.value).sorted) should be(true)
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
     findStartingPointsBefore should be((additionalGeomRightBefore.last, additionalGeomLeftBefore.last))
-  }*/
+  }
 
   def setUpSideCodeDeterminationTestData() = {
     //1st four cases, lines parallel to the axis
