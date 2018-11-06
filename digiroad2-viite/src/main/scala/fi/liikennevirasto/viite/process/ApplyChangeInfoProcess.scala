@@ -104,7 +104,7 @@ object ApplyChangeInfoProcess {
 
   private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
 
-    val applicableProjections = projections.filter(_.intercepts(linearLocation))
+    val applicableProjections = projections.filter(_.vvhTimeStamp > linearLocation.adjustedTimestamp).filter(_.intercepts(linearLocation))
 
     applicableProjections match {
       case Seq() =>
@@ -169,9 +169,9 @@ object ApplyChangeInfoProcess {
     )
   }
 
-  private def filterOutOlderChanges(linearLocations: Map[Long, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
+  private def filterOutOlderChanges(locations: Map[Long, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
     //TODO check how to act when we have one totally newId (does not exist in current linear location) from changeInfo that doesnt have oldId associated
-    val changeLocations = linearLocations.getOrElse(change.oldId.getOrElse(change.newId.get), Seq())
+    val changeLocations = locations.getOrElse(change.oldId.getOrElse(change.newId.get), Seq())
       if(changeLocations.isEmpty){
         false
       } else {
@@ -257,7 +257,7 @@ object ApplyChangeInfoProcess {
     )
 
     changes.filter(change =>
-          filterOperations.forall(filterOperation => filterOperation(change, linearLocations))
+          filterOperations.forall(filterOperation => filterOperation(change))
     )
   }
 
