@@ -754,7 +754,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
+  //Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
   def updateProjectLinkSdoGeometry(projectId: Long, username: String, onlyNotHandled: Boolean = false): Unit = {
     withDynTransaction {
       val linksGeometry = projectLinkDAO.getProjectLinksGeometry(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
@@ -791,7 +791,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  //TODO - This method will not be used now because we don't want to show suravage in project mode. It will be used in future
+  //This method will not be used now because we don't want to show suravage in project mode. It will be used in future
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
@@ -806,7 +806,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectLinks
   }
 
-  //TODO - Temporary method that will be replaced for getProjectLinksWithSuravage method
+  //Temporary method that will be replaced for getProjectLinksWithSuravage method
   def getProjectLinksWithoutSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
@@ -1254,7 +1254,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 roadAddresses.map(ra => (ra.roadNumber, ra.roadPartNumber)).distinct.lengthCompare(1) != 0) {
                 throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
               }
-              //TODO: Check that the numbering target road number + road part does not exist or is reserved to this project
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
               projectLinkDAO.updateProjectLinkNumbering(toUpdateLinks.map(_.id), linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity)
               roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
@@ -1418,8 +1417,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return optional error message, empty if no error
     */
   def publishProject(projectId: Long): PublishResult = {
-    // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
-    // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
     logger.info(s"Preparing to send Project ID: $projectId to TR")
     withDynTransaction {
       try {
@@ -1778,52 +1775,47 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1541")
-    //    if (newState != Saved2TR) {
-    //      logger.error(s" Project state not at Saved2TR")
-    //      throw new RuntimeException(s"Project state not at Saved2TR: $newState")
-    //    }
-    //    val project=projectDAO.getRoadAddressProjectById(projectID).get
-    //    val projectLinks=projectDAO.getProjectLinks(projectID)
-    //    if (projectLinks.isEmpty){
-    //      logger.error(s" There are no road addresses to update  , rollbacking update ${project.id}")
-    //      throw new InvalidAddressDataException(s"There are no road addresses to update , rollbacking update ${project.id}")
-    //    }
-    //    val (replacements, additions) = projectLinks.partition(_.roadwayId > 0)
-    //    logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
-    //    val expiringRoadAddressesFromReplacements = RoadAddressDAO.queryById(replacements.map(_.roadwayId).toSet, rejectInvalids = false).map(ra => ra.id -> ra).toMap
-    //    val expiringRoadAddresses = roadAddressHistoryCorrections(projectLinks) ++ expiringRoadAddressesFromReplacements
-    //    if (expiringRoadAddressesFromReplacements.size != replacements.map(_.roadwayId).toSet.size) {
-    //      logger.error(s" The number of roadways to expire does not match the project_links to insert")
-    //      throw new InvalidAddressDataException(s"The number of roadways to expire does not match the project_links to insert")
-    //    }
-    //    logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadwayId).toSet.size}")
-    //    projectDAO.moveProjectLinksToHistory(projectID)
-    //    logger.info(s"Moving project links to project link history.")
-    //    handleNewRoadNames(projectLinks, project)
-    //    try {
-    //      val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
-    //      val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
-    //        expiringRoadAddresses, project)
-    //
-    //      val newRoadAddressesWithHistory = RoadwayFiller.fillRoadway(projectLinks, newRoadAddresses, expiringRoadAddresses.values.toSeq)
-    //
-    //      logger.info(s"Creating history rows based on operation")
-    //      createHistoryRows(projectLinks, expiringRoadAddresses)
-    //      //Expiring all old addresses by their ID
-    //      logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
-    //      roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
-    //      val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
-    //      logger.info(s"Updating the following terminated linkids to history ${terminatedLinkIds} ")
-    //      updateTerminationForHistory(terminatedLinkIds, splitReplacements)
-    //      //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-    //      val created = RoadAddressDAO.create(newRoadAddressesWithHistory.map(_.copy(id = NewRoadAddress)))
-    //      Some(s"${created.size} road addresses created")
-    //    } catch {
-    //      case e: ProjectValidationException =>
-    //        logger.error("Failed to validate project message:" + e.getMessage)
-    //        Some(e.getMessage)
-    //    }
+        if (newState != Saved2TR) {
+          logger.error(s" Project state not at Saved2TR")
+          throw new RuntimeException(s"Project state not at Saved2TR: $newState")
+        }
+        val project = projectDAO.getRoadAddressProjectById(projectID).get
+        val projectLinks = projectLinkDAO.getProjectLinks(projectID)
+        if (projectLinks.isEmpty){
+          logger.error(s" There are no road addresses to update, rollbacking update ${project.id}")
+          throw new InvalidAddressDataException(s"There are no road addresses to update , rollbacking update ${project.id}")
+        }
+        val (replacements, additions) = projectLinks.partition(_.linearLocationId > 0)
+        logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
+        val expiringRoadAddressesFromReplacements = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.queryById(replacements.map(_.linearLocationId).toSet, rejectInvalids = false)).map(ra => ra.linearLocationId -> ra).toMap
+        //val expiringRoadAddresses = roadAddressHistoryCorrections(projectLinks) ++ expiringRoadAddressesFromReplacements
+        //logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.linearLocationId).toSet.size}")
+        projectLinkDAO.moveProjectLinksToHistory(projectID)
+        logger.info(s"Moving project links to project link history.")
+        handleNewRoadNames(projectLinks, project)
+        try {
+          val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
+          val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
+            expiringRoadAddressesFromReplacements, project)
+
+          val newRoadwaysWithHistory = RoadwayFiller.fillRoadway(projectLinks, newRoadAddresses, expiringRoadAddressesFromReplacements.values.toSeq)
+
+          logger.info(s"Creating history rows based on operation")
+          createHistoryRows(projectLinks, expiringRoadAddressesFromReplacements)
+          //Expiring all old addresses by their ID
+          /*logger.info(s"Expiring all old addresses by their ID included in ${project.id}")
+          roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
+          val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
+          logger.info(s"Updating the following terminated linkids to history ${terminatedLinkIds} ")
+          updateTerminationForHistory(terminatedLinkIds, splitReplacements)
+          //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
+          val created = RoadAddressDAO.create(newRoadAddressesWithHistory.map(_.copy(id = NewRoadAddress)))*/
+          Some(s"road addresses created")
+        } catch {
+          case e: ProjectValidationException =>
+            logger.error("Failed to validate project message:" + e.getMessage)
+            Some(e.getMessage)
+        }
   }
 
   def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject): Unit = {
@@ -1859,38 +1851,37 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def convertProjectLinkToRoadAddress(pl: ProjectLink, project: RoadAddressProject,
                                               source: Option[RoadAddress]): RoadAddress = {
-    throw new NotImplementedError("This implementation can be uncomment as soon as roadaddress link exists")
-    //    val geom = if (pl.geometry.nonEmpty) {
-    //      val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(pl.geometry, 0, pl.endMValue - pl.startMValue))
-    //      if (pl.sideCode == SideCode.TowardsDigitizing)
-    //        Seq(linkGeom._1, linkGeom._2)
-    //      else
-    //        Seq(linkGeom._2, linkGeom._1)
-    //    } else {
-    //      Seq()
-    //    }
-    //
-    //    val floatingReason = if (source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow) FloatingReason.ProjectToRoadAddress else NoFloating
-    //    val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewRoadAddress), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
-    //      pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-    //      pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.roadwayNumber).getOrElse(0))
-    //    pl.status match {
-    //      case UnChanged =>
-    //        if (source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely) {
-    //          roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
-    //        } else {
-    //          roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
-    //        }
-    //      case Transfer | Numbering =>
-    //        roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
-    //      case New =>
-    //        roadAddress.copy(startDate = Some(project.startDate))
-    //      case Terminated =>
-    //        roadAddress.copy(startDate = source.get.startDate, endDate = Some(project.startDate), terminated = Termination)
-    //      case _ =>
-    //        logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
-    //        throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
-    //    }
+        val geom = if (pl.geometry.nonEmpty) {
+          val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(pl.geometry, 0, pl.endMValue - pl.startMValue))
+          if (pl.sideCode == SideCode.TowardsDigitizing)
+            Seq(linkGeom._1, linkGeom._2)
+          else
+            Seq(linkGeom._2, linkGeom._1)
+        } else {
+          Seq()
+        }
+
+        val floatingReason = if (source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow) FloatingReason.ProjectToRoadAddress else NoFloating
+        val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewProjectLink), source.map(_.linearLocationId).getOrElse(NewLinearLocation), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
+          pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
+          pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.roadwayNumber).getOrElse(0), source.flatMap(_.validFrom), source.flatMap(_.validTo))
+        pl.status match {
+          case UnChanged =>
+            if (source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely) {
+              roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
+            } else {
+              roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
+            }
+          case Transfer | Numbering =>
+            roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
+          case New =>
+            roadAddress.copy(startDate = Some(project.startDate))
+          case Terminated =>
+            roadAddress.copy(startDate = source.get.startDate, endDate = Some(project.startDate), terminated = Termination)
+          case _ =>
+            logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
+            throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
+        }
   }
 
   /**
