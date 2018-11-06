@@ -165,7 +165,7 @@ object ApplyChangeInfoProcess {
     ).getOrElse(linearLocation.geometry)
 
     linearLocation.copy(
-      id = newId, linkId = projection.newLinkId, startMValue =  newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry,
+      id = newId, linkId = projection.newLinkId, startMValue =  newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry, adjustedTimestamp = projection.vvhTimeStamp,
       calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber))
     )
   }
