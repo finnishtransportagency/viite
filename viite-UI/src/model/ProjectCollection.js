@@ -22,6 +22,13 @@
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
     var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
+    var editedEndDistance = false;
+    var editedBeginDistance = false;
+
+    var resetEditedDistance = function() {
+        editedEndDistance = false;
+        editedBeginDistance = false;
+    };
 
     var projectLinks = function () {
       return _.flatten(fetchedProjectLinks);
@@ -116,6 +123,7 @@
     };
 
     this.revertLinkStatus = function () {
+      resetEditedDistance();
       var fetchedLinks = this.getAll();
       dirtyProjectLinkIds.forEach(function (dirtyLink) {
         _.filter(fetchedLinks, {linkId: dirtyLink.id}).forEach(function (fetchedLink) {
@@ -247,6 +255,7 @@
 
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
+        resetEditedDistance();
         var ids = dataJson.ids;
         if (dataJson.linkStatus === LinkStatus.New.value && ids.length === 0) {
           backend.createProjectLinks(dataJson, function (successObject) {
@@ -353,8 +362,8 @@
         return cl.endAddressM;
       }).last().value();
       var isNewRoad = changedLink.status === LinkStatus.New.value;
-
-      if (isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM)) {
+      var validUserEndAddress = !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
+      if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
         new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
             createOrUpdate(dataJson);
@@ -546,6 +555,7 @@
         links: links,
         coordinates: coordinates
       };
+      resetEditedDistance();
       backend.directionChangeNewRoadlink(dataJson, function (successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
@@ -570,6 +580,7 @@
         links: links,
         coordinates: coordinates
       };
+      resetEditedDistance();
       backend.directionChangeNewRoadlink(dataJson, function (successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
@@ -768,6 +779,14 @@
         map.getView().setCenter([errorCoordinates[0].x, errorCoordinates[0].y]);
         map.getView().setZoom(errorCoordinates[0].zoom);
       }
+    });
+
+    eventbus.on('projectLink:editedBeginDistance', function(){
+      editedBeginDistance = true;
+    });
+
+    eventbus.on('projectLink:editedEndDistance', function(){
+      editedEndDistance = true;
     });
 
     this.getCurrentProject = function () {
