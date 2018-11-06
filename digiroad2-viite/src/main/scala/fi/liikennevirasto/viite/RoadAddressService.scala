@@ -88,7 +88,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //TODO Will be implemented at VIITE-1542
     //RoadAddressDAO.getUnaddressedRoadLinks(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
 
-    val (ad, changesChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations,allRoadLinks,changeInfos)
+    val (ad, changesChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changeInfos)
 
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(
       allRoadLinks,
