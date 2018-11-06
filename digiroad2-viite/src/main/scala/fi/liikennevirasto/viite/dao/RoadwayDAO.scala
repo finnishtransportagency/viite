@@ -430,12 +430,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long]): Seq[Roadway] = {
+  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
         Seq()
       else
-        fetch(withRoadwayNumbers(roadwayNumbers))
+        fetch(withRoadwayNumbers(roadwayNumbers, withHistory))
     }
   }
 
@@ -608,18 +608,19 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where a.valid_to is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
-  private def withRoadwayNumbers(roadwayNumbers: Set[Long])(query: String): String = {
+  private def withRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false)(query: String): String = {
+    val endDateFilter = if (withHistory) "" else "and a.end_date is null"
     if (roadwayNumbers.size > 1000) {
       MassQuery.withIds(roadwayNumbers) {
         idTableName =>
           s"""
             $query
             join $idTableName i on i.id = a.ROADWAY_NUMBER
-            where a.valid_to is null and a.end_date is null
+            where a.valid_to is null $endDateFilter
           """.stripMargin
       }
     } else {
-      s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
+      s"""$query where a.valid_to is null $endDateFilter and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
     }
   }
 
@@ -1228,16 +1229,22 @@ class RoadwayDAO extends BaseDAO {
   //
   //
 
-  def updateEndDateById(ids: Set[Long], endDate: DateTime): Int = {
+  def createHistory(ids: Set[Long], endDate: DateTime, terminated: TerminationCode = TerminationCode.NoTermination): Int = {
     val query =
       s"""
-        UPDATE roadway SET end_date = TO_DATE('${endDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+        INSERT INTO roadway (id, roadway_number, road_number, road_part_number, TRACK, start_addr_m, end_addr_m,
+          reversed, discontinuity, start_date, end_date, created_by, road_type, ely, terminated)
+        SELECT ROADWAY_SEQ.nextval, roadway_number, road_number, road_part_number, TRACK, start_addr_m, end_addr_m,
+          reversed, discontinuity, start_date, TO_DATE('${endDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD'), created_by, road_type, ely, ${terminated.value}
+        FROM roadway
         WHERE valid_to IS NULL AND id IN (${ids.mkString(",")})
       """
-    if (ids.isEmpty)
+    if (ids.isEmpty) {
       0
-    else
+    } else {
       Q.updateNA(query).first
+      expireById(ids)
+    }
   }
 
   def expireById(ids: Set[Long]): Int = {
