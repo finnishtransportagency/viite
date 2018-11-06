@@ -1227,6 +1227,19 @@ class RoadwayDAO extends BaseDAO {
   //  }
   //
   //
+
+  def updateEndDateById(ids: Set[Long], endDate: DateTime): Int = {
+    val query =
+      s"""
+        UPDATE roadway SET end_date = TO_DATE('${endDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+        WHERE valid_to IS NULL AND id IN (${ids.mkString(",")})
+      """
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
+  }
+
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
@@ -1237,7 +1250,7 @@ class RoadwayDAO extends BaseDAO {
     else
       Q.updateNA(query).first
   }
-  //
+
   //  def expireRoadAddresses (sourceLinkIds: Set[Long]): AnyVal = {
   //    if (!sourceLinkIds.isEmpty) {
   //      val query =

@@ -1709,6 +1709,58 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test createHistoryRows When link is renumbered Then expire old roadway") {
+    runWithRollback {
+
+      // Create roadway
+      val linkId = 10000;
+      val oldEndAddr = 100
+      val roadway = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, 9999, 1, RoadType.PublicRoad,
+        Track.Combined, Discontinuity.Continuous, 0, oldEndAddr, false, DateTime.now().minusYears(10), None, "test",
+        Some("Test Road"), 1, TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
+      roadwayDAO.create(Seq(roadway))
+
+      // Create project link
+      val roadAddressLength = roadway.endAddrMValue - roadway.startAddrMValue
+      val projectId = Sequences.nextProjectId
+      val newLength = 110.123
+      val newEndAddr = 110
+      val projectLink = ProjectLink(Sequences.nextViitePrimaryKeySeqValue, roadway.roadNumber, roadway.roadPartNumber,
+        roadway.track, roadway.discontinuity, roadway.startAddrMValue, roadway.endAddrMValue + 10,
+        roadway.startAddrMValue, roadway.endAddrMValue, Some(DateTime.now().plusMonths(1)), None, Some("test"),
+        linkId, 0.0, newLength, SideCode.TowardsDigitizing,
+        (Some(ProjectLinkCalibrationPoint(linkId, 0, 0, CalibrationPointSource.RoadAddressSource)),
+          Some(ProjectLinkCalibrationPoint(linkId, newLength, newEndAddr, CalibrationPointSource.RoadAddressSource))),
+        FloatingReason.NoFloating, Seq(Point(0.0, 0.0, 0.0), Point(0.0, newLength, 0.0)), projectId, LinkStatus.Numbering,
+        roadway.roadType, LinkGeomSource.NormalLinkInterface, newLength, roadway.id, 1234, roadway.ely, false, None,
+        DateTime.now().minusMonths(10).getMillis(), roadway.roadwayNumber, roadway.roadName, Some(roadAddressLength),
+        Some(0), Some(newEndAddr), Some(roadway.track), Some(roadway.roadNumber), Some(roadway.roadPartNumber)
+      )
+
+      // Create expiring road addresses
+      val linearLocationId = 1234l
+      val oldLength = 100.1
+      val expiringRoadAddress = Map(roadway.id -> RoadAddress(roadway.id, linearLocationId, roadway.roadNumber,
+        roadway.roadPartNumber, roadway.roadType, roadway.track, roadway.discontinuity, roadway.startAddrMValue,
+        roadway.endAddrMValue, Some(roadway.startDate), None, Some(roadway.createdBy), linkId, 0, oldLength,
+        SideCode.TowardsDigitizing, DateTime.now().minusMonths(20).getMillis(),
+        (Some(CalibrationPoint(linkId, 0, 0)), Some(CalibrationPoint(linkId, oldLength, oldEndAddr))),
+        FloatingReason.NoFloating, Seq(Point(0.0, 0.0, 0.0), Point(0.0, oldLength, 0.0)), LinkGeomSource.NormalLinkInterface,
+        roadway.ely, roadway.terminated, roadway.roadwayNumber, Some(roadway.validFrom), None, roadway.roadName
+      ))
+
+      // Check before change
+      roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).isEmpty should be(false)
+
+      // Call the method to be tested
+      projectService.createHistoryRows(Seq(projectLink), expiringRoadAddress)
+
+      // Check results
+      roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).isEmpty should be(true)
+
+    }
+  }
+
   //TODO this will be implemented at VIITE-1541
 //  test("Check creation of new RoadAddress History entries") {
 //    var count = 0
