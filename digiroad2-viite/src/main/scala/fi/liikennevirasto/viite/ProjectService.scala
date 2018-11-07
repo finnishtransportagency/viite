@@ -1748,7 +1748,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     // TODO What about termination? In this implementation termination is not handled.
     val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadwayId)
     val roadwaysToExpire = expiringRoadAddresses.values.flatMap(ex => {
-      groupedProjectLinks.get(ex.linearLocationId) match {
+      groupedProjectLinks.get(ex.id) match { // ex.id = RoadAddress.id = roadwayId
         case Some(pls) =>
           pls.headOption.map(pl => pl.roadwayId)
         case _ => None
