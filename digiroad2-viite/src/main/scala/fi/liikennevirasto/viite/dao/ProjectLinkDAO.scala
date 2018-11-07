@@ -77,8 +77,23 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewRoadwayNumber, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
-  lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
-  lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+
+  lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false)=>
+      //reversed for both SideCodes
+      geometry.head
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.last
+  }
+  lazy val endPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.last
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.head
+  }
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
   def getEndPoints(direction: Vector3d) = {
@@ -148,6 +163,15 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case (Some(cp1), None) => cp1.source
       case (None, Some(cp1)) => cp1.source
       case (Some(cp1),Some(cp2)) => cp1.source
+    }
+  }
+
+  def hasCalibrationPointAt(addressMValue: Long): Boolean = {
+    calibrationPoints match {
+      case (None, None) => false
+      case (Some(cp1), None) => cp1.addressMValue == addressMValue
+      case (None, Some(cp1)) => cp1.addressMValue == addressMValue
+      case (Some(cp1), Some(cp2)) => cp1.addressMValue == addressMValue || cp2.addressMValue == addressMValue
     }
   }
 }
@@ -645,9 +669,9 @@ class ProjectLinkDAO {
          and project_link.status != ${LinkStatus.Terminated.value}
          """.as[Long].firstOption.getOrElse(0L)
       val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
-        s"TRACK = (CASE TRACK WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END) " +
+        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
+        s"reversed = (CASE reversed WHEN 0 THEN 1 WHEN 1 THEN 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
       Q.updateNA(updateProjectLink).execute
