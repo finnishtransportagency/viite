@@ -53,8 +53,7 @@
     var roadTypeDynamicField = function(){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field = '';
-      var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadTypeId' +
-          ''));
+      var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadTypeId'));
       var decodedRoadTypes = "";
       _.each(uniqRoadTypes, function(rt) {
           if (decodedRoadTypes.length === 0) {
