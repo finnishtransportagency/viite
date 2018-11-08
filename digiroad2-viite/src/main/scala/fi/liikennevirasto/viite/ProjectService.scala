@@ -1748,7 +1748,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     // TODO What about termination? In this implementation termination is not handled.
     val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadwayId)
     val roadwaysToExpire = expiringRoadAddresses.values.flatMap(ex => {
-      groupedProjectLinks.get(ex.id) match { // ex.id = RoadAddress.id = roadwayId
+      groupedProjectLinks.get(ex.id) match {
         case Some(pls) =>
           pls.headOption.map(pl => pl.roadwayId)
         case _ => None
@@ -1783,6 +1783,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         val project = projectDAO.getRoadAddressProjectById(projectID).get
         val projectLinks = projectLinkDAO.getProjectLinks(projectID)
+        val expiringRoadwayIds = projectLinks.map(pl => pl.roadwayId)
+        val roadwayChanges = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
         if (projectLinks.isEmpty){
           logger.error(s" There are no road addresses to update, rollbacking update ${project.id}")
           throw new InvalidAddressDataException(s"There are no road addresses to update , rollbacking update ${project.id}")
@@ -1800,17 +1802,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
             expiringRoadAddressesFromReplacements, project)
 
-          val newRoadwaysWithHistory = RoadwayFiller.fillRoadway(projectLinks, newRoadAddresses, expiringRoadAddressesFromReplacements.values.toSeq)
+          val currentRoadways = RoadwayFiller.fillRoadway(projectLinks, newRoadAddresses, expiringRoadAddressesFromReplacements.values.toSeq)
 
           logger.info(s"Creating history rows based on operation")
-          val expiringRoadwayIds = replacements.map(pl => pl.roadwayId)
+
           createHistoryRows(projectLinks, expiringRoadAddressesFromReplacements)
           val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
           logger.info(s"Updating the following terminated linkids to history ${terminatedLinkIds} ")
-          //updateTerminationForHistory(terminatedLinkIds, splitReplacements)
+          updateTerminationForHistory(terminatedLinkIds, splitReplacements)
           //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-          roadwayDAO.create(newRoadwaysWithHistory.keys)
-          linearLocationDAO.create(newRoadwaysWithHistory.values.flatten)
+          roadwayDAO.create(currentRoadways.keys)
+          val linearLocationsToInsert = currentRoadways.values.flatten.filterNot(location => expiringRoadAddressesFromReplacements.map(_._2.roadwayNumber).toSeq.contains(location.roadwayNumber))
+          linearLocationDAO.create(linearLocationsToInsert)
           Some(s"road addresses created")
         } catch {
           case e: ProjectValidationException =>

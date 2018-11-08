@@ -41,4 +41,8 @@ object Sequences {
   def nextProjectId: Long = {
     Queries.nextProjectId.as[Long].first
   }
+
+  def nextRoadwayChangeLink: Long = {
+    Queries.nextRoadwayChangeLink.as[Long].first
+  }
 }
