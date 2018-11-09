@@ -249,7 +249,7 @@ object TrackSectionOrder {
         }
         // Check if link direction needs to be turned and choose next point
         val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed) match {
-          case (false, false) | (true, true)=>
+          case (false, false) | (true, true) =>
             SideCode.AgainstDigitizing
           case (false, true) |  (true, false) =>
             SideCode.TowardsDigitizing

@@ -79,7 +79,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   extends BaseRoadAddress with PolyLine {
 
   lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
-    case (true, true) | (false, false)=>
+    case (true, true) | (false, false) =>
       //reversed for both SideCodes
       geometry.head
     case (true, false) | (false, true) =>
