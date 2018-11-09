@@ -536,7 +536,7 @@ class RoadwayDAO extends BaseDAO {
           a.id, a.ROADWAY_NUMBER, a.road_number, a.road_part_number, a.TRACK, a.start_addr_m, a.end_addr_m,
           a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.road_type, a.ely, a.terminated,
           a.valid_from, a.valid_to,
-          '' as road_name
+          (select rn.road_name from road_name rn where rn.road_number = a.road_number and rn.end_date is null and rn.valid_to is null) as road_name
         from ROADWAY a
       """
     val filteredQuery = queryFilter(query)
