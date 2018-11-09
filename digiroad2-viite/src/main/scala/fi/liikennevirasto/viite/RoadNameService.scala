@@ -120,7 +120,7 @@ class RoadNameService() {
         if (currentRoadNames.isEmpty) {
           val projectRoadNames = ProjectLinkNameDAO.get(roadNumber, projectID)
           if (projectRoadNames.isEmpty) {
-            return None
+            Some(Map("roadName" -> None, "isCurrent" -> false))
           }
           else {
             Some(Map("roadName" -> projectRoadNames.get.roadName, "isCurrent" -> false))
