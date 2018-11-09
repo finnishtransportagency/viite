@@ -282,7 +282,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     roadwaysSet.size should be (1)
     roadwaysSet.head should be (1L)
 
-    dateTimeDate should be > (now)
+    dateTimeDate should be >= (now)
   }
 
   test("Test getRoadAddress When the biggest address in section is greater than the parameter $addressM Then should filter out all the road addresses with start address less than $addressM") {
