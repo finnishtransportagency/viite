@@ -225,7 +225,7 @@
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
-        _.defer(function(){
+        _.defer(function() {
             $('#beginDistance').on("change", function(changedData) {
                 eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
             });

@@ -105,7 +105,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     // | Case
     val geom1 = Seq(Point(10.0, 10.0), Point(10.0, 20.0))
     // | Case
-    val geom2 = Seq(Point(10.0, 0.0) ,Point(10.0, 10.0))
+    val geom2 = Seq(Point(10.0, 0.0), Point(10.0, 10.0))
     //- Case
     val geom3 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
     // - Case

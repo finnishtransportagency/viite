@@ -782,10 +782,10 @@
       }
     });
 
-      eventbus.on('projectLink:editedBeginDistance', function(){
+      eventbus.on('projectLink:editedBeginDistance', function() {
           editedBeginDistance = true;
       });
-      eventbus.on('projectLink:editedEndDistance', function(){
+      eventbus.on('projectLink:editedEndDistance', function() {
           editedEndDistance = true;
       });
 

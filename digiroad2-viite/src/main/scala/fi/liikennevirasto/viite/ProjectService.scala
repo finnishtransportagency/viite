@@ -262,7 +262,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
           val project = projectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
           val existingProjectLinks = projectLinkDAO.getProjectLinksByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-          val reversed = if(existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
+          val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
 
           val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
             newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName, reversed)
@@ -1238,7 +1238,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
             case _ => false
           }
-          if(!calibrationPointIsPresent) {
+          if (!calibrationPointIsPresent) {
             val foundCalibrationPoint = CalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
             if (foundCalibrationPoint.isEmpty)
               CalibrationPointDAO.createCalibrationPoint(calibrationPoint)

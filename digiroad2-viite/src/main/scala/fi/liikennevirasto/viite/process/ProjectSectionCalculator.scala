@@ -34,7 +34,7 @@ object ProjectSectionCalculator {
     val (rightSide, otherSides) = others.partition(nl => nl.track == Track.RightSide)
     val (leftSide, combinedAndUnknown) = otherSides.partition(nl => nl.track == Track.LeftSide)
     //Should we have rightSide tracks only or leftSideTracks only then RESET the sideCodes of the "new"
-    val processedNewLinks = if (rightSide.nonEmpty && leftSide.isEmpty || rightSide.isEmpty && leftSide.nonEmpty)  {
+    val processedNewLinks = if (rightSide.nonEmpty && leftSide.isEmpty || rightSide.isEmpty && leftSide.nonEmpty) {
       logger.info(s"Only one track code detected, resetting side codes.")
       newLinks.map(p => p.copy(sideCode = SideCode.Unknown))
     } else {
@@ -55,7 +55,7 @@ object ProjectSectionCalculator {
 
   def assignTerminatedMValues(terminated: Seq[ProjectLink], nonTerminatedLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${terminated.size} links")
-    try{
+    try {
 
       val allProjectLinks = nonTerminatedLinks.filter(_.status != LinkStatus.New) ++ terminated
       val group = allProjectLinks.groupBy {
