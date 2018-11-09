@@ -158,12 +158,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
     val nonFloatingRoadAddresses = withDynTransaction {
       val linearLocations = linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
-      logger.info(s"Fetched ${linearLocations.size} linear locations")
-      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
-      logger.info(s"Fetched ${roadways.size} roadways")
-      val roadAddresses = roadwayAddressMapper.getRoadAddresses(roadways, linearLocations).filterNot(_.isFloating)
-      logger.info(s"Mapped ${roadAddresses.size} road addresses")
-      roadAddresses
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
     }
 
     nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
