@@ -546,7 +546,7 @@
       setFormDirty();
         if (event.target.id === "tie" && (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
           backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
-            if (!_.isUndefined(data.roadName)) {
+            if (data !== null) {
               roadNameField.val(data.roadName).change();
               if (data.isCurrent) {
                 roadNameField.prop('disabled', true);
