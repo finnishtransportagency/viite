@@ -122,7 +122,7 @@ trait RoadAddressMapper {
       case Some(addr) => if (addr.endAddrMValue == addrMax) endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
       case _ =>
     }
-    checkSingleSideCodeForLink(false, addresses.groupBy(_.linkId))
+    checkSingleSideCodeForLink(before = false, addresses.groupBy(_.linkId))
     if (!addresses.exists(_.startAddrMValue == addrMin))
       throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${addresses.map(_.startAddrMValue).min}")
     if (!addresses.exists(_.endAddrMValue == addrMax))
@@ -143,7 +143,7 @@ trait RoadAddressMapper {
       case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, addresses)
       case _ =>
     }
-    checkSingleSideCodeForLink(false, nonHistoric.groupBy(_.linkId))
+    checkSingleSideCodeForLink(before = false, nonHistoric.groupBy(_.linkId))
     val tracks = addresses.map(_.track).toSet
     if (tracks.size > 1)
       throw new IllegalArgumentException(s"Multiple track codes found ${tracks.mkString(", ")}")
@@ -201,12 +201,12 @@ trait RoadAddressMapper {
     * @param geom2 Goemetry 2
     * @return h2h distance, h2t distance sums
     */
-  def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
+  def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]): (Double, Double) = {
     (geom1.head.distance2DTo(geom2.head) + geom1.last.distance2DTo(geom2.last),
       geom1.last.distance2DTo(geom2.head) + geom1.head.distance2DTo(geom2.last))
   }
 
-  def minDistanceBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
+  def minDistanceBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]): Double = {
     val x = distancesBetweenEndPoints(geom1, geom2)
     Math.min(x._1, x._2)
   }
@@ -214,14 +214,14 @@ trait RoadAddressMapper {
   def isDirectionMatch(r: RoadAddressMapping): Boolean = {
     ((r.sourceStartM - r.sourceEndM) * (r.targetStartM - r.targetEndM)) > 0
   }
-  def withinTolerance(mValue1: Double, mValue2: Double) = {
+  def withinTolerance(mValue1: Double, mValue2: Double): Boolean = {
     Math.abs(mValue1 - mValue2) < MinAllowedRoadAddressLength
   }
 
   /**
     * Partitioning for transfer checks. Stops at calibration points, changes of road part etc.
     *
-    * @param roadAddresses
+    * @param roadAddresses RoadAddresses to be grouped in RoadwaySections
     * @return
     */
   protected def partition(roadAddresses: Iterable[RoadAddress]): Seq[RoadwaySection] = {

@@ -100,12 +100,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     findStartingPointsBefore should be((additionalGeomRightBefore.last, additionalGeomLeftBefore.last))
   }
 
-  def setUpSideCodeDeterminationTestData() = {
+  def setUpSideCodeDeterminationTestData(): Seq[ProjectLink] = {
     //1st four cases, lines parallel to the axis
     // | Case
     val geom1 = Seq(Point(10.0, 10.0), Point(10.0, 20.0))
     // | Case
-    val geom2 = Seq(Point(10.0, 0.0) ,Point(10.0, 10.0))
+    val geom2 = Seq(Point(10.0, 0.0), Point(10.0, 10.0))
     //- Case
     val geom3 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
     // - Case
@@ -116,14 +116,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     // / Case
     val geom6 = Seq(Point(20.0, 0.0), Point(10.0, 10.0))
     // \ Case
-    val geom7 = Seq( Point(0.0, 0.0), Point(10.0, 10.0))
+    val geom7 = Seq(Point(0.0, 0.0), Point(10.0, 10.0))
     // \ Case
     val geom8 = Seq(Point(10.0, 10.0), Point(0.0, 20.0))
-
-     val AA  = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
-      Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, 0, reversed = false,
-      None, 86400L)
 
     val projectLink1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 1L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
@@ -159,23 +154,24 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       None, 86400L)
     Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8).sortBy(_.linkId)
   }
-  test ("Check correct assignment of SideCode, EVERY SideCode should be TowardsDigitizing") {
+
+  test("Check correct assignment of SideCode, EVERY SideCode should be TowardsDigitizing") {
     val projectLinks = setUpSideCodeDeterminationTestData()
     projectLinks.foreach(p => {
       val assigned = defaultSectionCalculatorStrategy.assignMValues(Seq(p), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-      assigned.head.linkId should be (p.linkId)
-      assigned.head.geometry should be (p.geometry)
-      assigned.head.sideCode should be (SideCode.TowardsDigitizing)
+      assigned.head.linkId should be(p.linkId)
+      assigned.head.geometry should be(p.geometry)
+      assigned.head.sideCode should be(SideCode.TowardsDigitizing)
     })
   }
-  test ("Check correct assignment of SideCode, geometries inverted comparing to last test, EVERY SideCode should be AgainstDigitizing") {
+  test("Check correct assignment of SideCode, geometries inverted comparing to last test, EVERY SideCode should be AgainstDigitizing") {
     val projectLinks = setUpSideCodeDeterminationTestData()
     projectLinks.foreach(p => {
       val pl = p.copyWithGeometry(p.geometry.reverse)
       val assigned = defaultSectionCalculatorStrategy.assignMValues(Seq(pl), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-      assigned.head.linkId should be (pl.linkId)
-      assigned.head.geometry should be (pl.geometry)
-      assigned.head.sideCode should be (SideCode.AgainstDigitizing)
+      assigned.head.linkId should be(pl.linkId)
+      assigned.head.geometry should be(pl.geometry)
+      assigned.head.sideCode should be(SideCode.AgainstDigitizing)
     })
   }
 
