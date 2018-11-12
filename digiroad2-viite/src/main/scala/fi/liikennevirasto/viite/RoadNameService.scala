@@ -113,26 +113,26 @@ class RoadNameService() {
     }
   }
 
-  def getRoadNameByNumber(roadNumber: Long, projectID: Long): Option[Map[String, Any]] = {
+  def getRoadNameByNumber(roadNumber: Long, projectID: Long): Map[String, Any] = {
     try {
       withDynSession {
         val currentRoadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
         if (currentRoadNames.isEmpty) {
           val projectRoadNames = ProjectLinkNameDAO.get(roadNumber, projectID)
           if (projectRoadNames.isEmpty) {
-            Some(Map("roadName" -> None, "isCurrent" -> false))
+            Map("roadName" -> None, "isCurrent" -> false)
           }
           else {
-            Some(Map("roadName" -> projectRoadNames.get.roadName, "isCurrent" -> false))
+            Map("roadName" -> projectRoadNames.get.roadName, "isCurrent" -> false)
           }
         }
         else
-          Some(Map("roadName" -> currentRoadNames.head.roadName, "isCurrent" -> true))
+          Map("roadName" -> currentRoadNames.head.roadName, "isCurrent" -> true)
       }
     }
     catch {
-      case longParsingException: NumberFormatException => Some(Map("error" -> "Could not parse road number"))
-      case e if NonFatal(e) => Some(Map("error" -> "Unknown error"))
+      case longParsingException: NumberFormatException => Map("error" -> "Could not parse road number")
+      case e if NonFatal(e) => Map("error" -> "Unknown error")
     }
   }
 
