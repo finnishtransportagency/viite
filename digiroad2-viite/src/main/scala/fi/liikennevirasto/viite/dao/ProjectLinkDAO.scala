@@ -731,8 +731,11 @@ class ProjectLinkDAO {
       s"""SELECT pl.id FROM PROJECT_LINK pl WHERE
         project_id = $projectId $roadFilter $roadPartFilter $linkIdFilter"""
     val ids = Q.queryNA[Long](query).iterator.toSet
-    if (ids.nonEmpty)
+    if (ids.nonEmpty) {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
       deleteProjectLinks(ids)
+    }
     else
       0
   }
