@@ -221,11 +221,11 @@
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
-        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink) {
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
-        _.defer(function(){
+        _.defer(function() {
             $('#beginDistance').on("change", function(changedData) {
                 eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
             });
