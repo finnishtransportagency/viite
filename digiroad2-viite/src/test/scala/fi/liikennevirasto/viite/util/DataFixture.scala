@@ -126,10 +126,10 @@ object DataFixture {
     println()
   }
 
-  def updateRoadAddressesGeometry(): Unit = {
+  def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vVHClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.updateRoadAddressesGeometry(vvhClient)
+    dataImporter.updateLinearLocationGeometry(vvhClient)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
@@ -494,7 +494,7 @@ object DataFixture {
 //      case Some("fuse_multi_segment_road_addresses") =>
 //        combineMultipleSegmentsOnLinks()
       case Some("update_road_addresses_geometry") =>
-        updateRoadAddressesGeometry()
+        updateLinearLocationGeometry()
       case Some("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
       case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
