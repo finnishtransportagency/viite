@@ -1753,7 +1753,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).head.validTo should be(None)
 
       // Call the method to be tested
-      projectService.createHistoryRows(Seq(projectLink), roadAddressToHistory)
+      projectService.createHistoryRows(roadway.id, roadway, projectLink.startDate.get)
 
       // Check results
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).isEmpty should be(true)
@@ -1806,7 +1806,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).head.validTo should be(None)
 
       // Call the method to be tested
-      projectService.createHistoryRows(Seq(projectLink), roadAddressToHistory)
+      projectService.createHistoryRows(roadway.id, roadway, projectLink.startDate.get)
 
       // Check results
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).head.validTo should be(None)
