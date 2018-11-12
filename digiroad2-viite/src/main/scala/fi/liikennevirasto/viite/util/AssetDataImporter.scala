@@ -243,7 +243,7 @@ class AssetDataImporter {
       generateChunks(linkIds, 25000l)
     }
 
-  def updateRoadAddressesGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
+  def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
