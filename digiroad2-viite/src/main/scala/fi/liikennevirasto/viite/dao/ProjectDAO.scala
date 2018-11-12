@@ -207,8 +207,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   def hasCalibrationPointAt(addressMValue: Long): Boolean = {
     calibrationPoints match {
       case (None, None) => false
-      case (Some(cp1), None) => cp1.addressMValue == addressMValue
-      case (None, Some(cp1)) => cp1.addressMValue == addressMValue
+      case (Some(cp1), _) => cp1.addressMValue == addressMValue
+      case (_, Some(cp1)) => cp1.addressMValue == addressMValue
       case (Some(cp1), Some(cp2)) => cp1.addressMValue == addressMValue || cp2.addressMValue == addressMValue
     }
   }
