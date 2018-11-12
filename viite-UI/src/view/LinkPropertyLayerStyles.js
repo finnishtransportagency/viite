@@ -1,5 +1,7 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
+    //TODO delete file after 1534 EPIC story
+    /*
 
     var normalRoadAddressUnselectedRules = [
       new OpenLayersRule().where('roadLinkType').is(1).use({graphicZIndex: 0})
@@ -308,6 +310,6 @@
       getDatasetSpecificStyleMap: getDatasetSpecificStyleMap,
       getSpecificStyle: getSpecificStyle,
       renderFeatures: renderFeatures
-    };
+    };*/
   };
 })(this);
