@@ -657,8 +657,8 @@
     });
 
     me.redraw = function () {
-      var checkedBoxLayers = _.filter(layers, function(layer){
-          if((layer.get('name') === 'suravageRoadProjectLayer' || layer.get('name') === 'suravageProjectDirectionMarkerLayer') &&
+      var checkedBoxLayers = _.filter(layers, function(layer) {
+          if ((layer.get('name') === 'suravageRoadProjectLayer' || layer.get('name') === 'suravageProjectDirectionMarkerLayer') &&
               (!suravageRoadProjectLayer.getVisible() || !suravageProjectDirectionMarkerLayer.getVisible())){
             return false;
           } else
