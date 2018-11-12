@@ -501,24 +501,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
 
-    val (roadlinks, historyRoadlinks) = roadLinkService.getAllRoadLinksFromVVH(Set(linkId))
+    val roadlinks = roadLinkService.getCurrentAndSuravageRoadLinksFromVVH(Set(linkId))
 
-    val (floatingRoadAddress, roadAddresses) = withDynSession {
+    val roadAddresses = withDynSession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
 
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).partition(_.isFloating)
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
     }
 
-    //TODO this will need to be improved
-    val result = floatingRoadAddress.flatMap { ra =>
-      historyRoadlinks.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
-    } ++
-      roadAddresses.flatMap { ra =>
-        val roadLink = roadlinks.find(rl => rl.linkId == ra.linkId)
-        roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
-      }
-
-    result.filter(_.linkId == linkId)
+    RoadAddressFiller.fillTopology(roadlinks, roadAddresses).filter(_.linkId == linkId)
 
     //    val (addresses, missedRL) = withDynTransaction {
     //      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
