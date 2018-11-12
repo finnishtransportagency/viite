@@ -90,13 +90,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val (ad, changesChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changeInfos)
 
-    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(
+    val (adjustedLinearLocations, _) = RoadAddressFiller.adjustToTopology(
       allRoadLinks,
       ad,
       changesChangeSet
     )
 
-    eventbus.publish("roadAddress:persistChangeSet", changeSet)
+//    eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
     val roadAddresses = withDynSession {
       roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
