@@ -1203,13 +1203,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         userDefinedEndAddressM.map(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
-          val calibrationPointIsPresent = toUpdateLinks.find(ul => ul.projectId == projectId && ul.startAddrMValue == endSegment.startAddrMValue) match {
-            case Some(projectLink) => {
-              projectLink.hasCalibrationPointAt(calibrationPoint.addressMValue)
-            }
-            case _ => false
-          }
-          if (!calibrationPointIsPresent) {
+          val linkHasCalibrationPoint = toUpdateLinks.exists(pl => pl.hasCalibrationPointAt(calibrationPoint.addressMValue))
+
+          if (!linkHasCalibrationPoint) {
             val foundCalibrationPoint = CalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
             if (foundCalibrationPoint.isEmpty)
               CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
