@@ -240,8 +240,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           (ProjectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId")),
             ProjectDAO.getProjectLinksByProjectRoadPart(roadNumber, roadPartNumber, projectId))
         }
+        val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
         val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
-          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName, existingProjectLinks.forall(_.reversed))
+          newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName, reversed)
         }
         setProjectEly(projectId, roadEly) match {
           case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
@@ -1202,12 +1203,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         userDefinedEndAddressM.map(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
-          val foundCalibrationPoint = CalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
-          if (foundCalibrationPoint.isEmpty)
-            CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
-          else
-            CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, addressM.toDouble - endSegment.startMValue, addressM)
-          Seq(CalibrationPoint)
+          val linkHasCalibrationPoint = toUpdateLinks.exists(pl => pl.hasCalibrationPointAt(calibrationPoint.addressMValue))
+
+          if (!linkHasCalibrationPoint) {
+            val foundCalibrationPoint = CalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
+            if (foundCalibrationPoint.isEmpty)
+              CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
+            else
+              CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, addressM.toDouble - endSegment.startMValue, addressM)
+            Seq(CalibrationPoint)
+          } else
+            Seq.empty[CalibrationPoint]
+
         })
         linkStatus match {
           case LinkStatus.Terminated =>
