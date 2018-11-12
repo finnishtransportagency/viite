@@ -115,6 +115,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
+  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
+    throw new NotImplementedError("Implement RoadAddressService.getRoadAddressWithRoadNumberAddress")
+    //withDynSession {
+    //  RoadwayDAO.getRoadAddressByFilter(RoadwayDAO.withRoadNumberAddress(road, addrMValue))
+    //}
+  }
+
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
