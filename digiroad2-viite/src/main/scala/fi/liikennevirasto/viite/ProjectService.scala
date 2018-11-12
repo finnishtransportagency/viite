@@ -50,6 +50,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
+  val roadwayChangesDAO = new RoadwayChangesDAO
   val projectValidator = new ProjectValidator
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
@@ -830,7 +831,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getChangeProjectInTX(projectId: Long): Option[ChangeProject] = {
     try {
       if (recalculateChangeTable(projectId)) {
-        val roadwayChanges = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
         Some(ViiteTierekisteriClient.convertToChangeProject(roadwayChanges))
       } else {
         None
@@ -855,7 +856,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getRoadwayChangesAndSendToTR(projectId: Set[Long]): ProjectChangeStatus = {
     logger.info(s"Fetching all road address changes for projects: ${projectId.toString()}")
-    val roadwayChanges = RoadwayChangesDAO.fetchRoadwayChanges(projectId)
+    val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(projectId)
     prettyPrintLog(roadwayChanges)
     logger.info(s"Sending changes to TR")
     val sentObj = ViiteTierekisteriClient.sendChanges(roadwayChanges)
@@ -1455,8 +1456,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def setProjectDeltaToDB(projectDelta: Delta, projectId: Long): Boolean = {
-    RoadwayChangesDAO.clearRoadChangeTable(projectId)
-    RoadwayChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
+    roadwayChangesDAO.clearRoadChangeTable(projectId)
+    roadwayChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
   }
 
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: RoadAddressProject): ProjectLink = {
@@ -1622,7 +1623,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
           if (updatedStatus == Saved2TR) {
             logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
-            updateRoadAddressWithProjectLinks(updatedStatus, projectID)
+            updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
           }
         }
         //roadAddressService.getFloatingAdresses().isEmpty
@@ -1776,44 +1777,43 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     //    }).map(ra => ra.id -> ra).toMap
   }
 
-  def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
+  def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
         if (newState != Saved2TR) {
           logger.error(s" Project state not at Saved2TR")
           throw new RuntimeException(s"Project state not at Saved2TR: $newState")
         }
         val project = projectDAO.getRoadAddressProjectById(projectID).get
         val projectLinks = projectLinkDAO.getProjectLinks(projectID)
-        val expiringRoadwayIds = projectLinks.map(pl => pl.roadwayId)
-        val roadwayChanges = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
-        if (projectLinks.isEmpty){
-          logger.error(s" There are no road addresses to update, rollbacking update ${project.id}")
-          throw new InvalidAddressDataException(s"There are no road addresses to update , rollbacking update ${project.id}")
+        val allRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId))
+        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
+        val roadwayProjectLinkIds = roadwayChangesDAO.fetchRoadwayChangesLinks(projectID)
+        val mappedRoadwaysWithLinks = roadwayChanges.map{
+          change =>
+          val linksRelatedToChange = roadwayProjectLinkIds.find(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
+          val projectLinksInChange = projectLinks.filter(pl => linksRelatedToChange.contains(pl.id))
+            (change, projectLinksInChange)
         }
-        val (replacements, additions) = projectLinks.partition(_.linearLocationId > 0)
-        logger.info(s"Found ${projectLinks.length} project links from projectId: $projectID")
-        val expiringRoadAddressesFromReplacements = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.queryById(replacements.map(_.linearLocationId).toSet, rejectInvalids = false)).map(ra => ra.linearLocationId -> ra).toMap
-        //val expiringRoadAddresses = roadAddressHistoryCorrections(projectLinks) ++ expiringRoadAddressesFromReplacements
-        //logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.linearLocationId).toSet.size}")
+
+        if (projectLinks.isEmpty){
+          logger.error(s" There are no addresses to update, rollbacking update ${project.id}")
+          throw new InvalidAddressDataException(s"There are no addresses to update , rollbacking update ${project.id}")
+        }
+
         projectLinkDAO.moveProjectLinksToHistory(projectID)
         logger.info(s"Moving project links to project link history.")
         handleNewRoadNames(projectLinks, project)
         try {
-          val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
-          val newRoadAddresses = convertToRoadAddress(splitReplacements, pureReplacements, additions,
-            expiringRoadAddressesFromReplacements, project)
-
-          val currentRoadways = RoadwayFiller.fillRoadway(projectLinks, newRoadAddresses, expiringRoadAddressesFromReplacements.values.toSeq)
+          val currentRoadways = RoadwayFiller.fillRoadways(allRoadways, mappedRoadwaysWithLinks)
 
           logger.info(s"Creating history rows based on operation")
 
-          createHistoryRows(projectLinks, expiringRoadAddressesFromReplacements)
-          val terminatedLinkIds = pureReplacements.filter(pl => pl.status == Terminated).map(_.linkId).toSet
-          logger.info(s"Updating the following terminated linkids to history ${terminatedLinkIds} ")
-          updateTerminationForHistory(terminatedLinkIds, splitReplacements)
+          roadwayDAO.expireById(projectLinks.map(pl => pl.roadwayId).toSet)
+          linearLocationDAO.expireByRoadwayNumbers(projectLinks.map(_.roadwayNumber).toSet)
+//          createHistoryRows(projectLinks, expiringRoadAddressesFromReplacements)
+          //updateTerminationForHistory(terminatedLinkIds, splitReplacements)
           //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-          roadwayDAO.create(currentRoadways.keys)
-          val linearLocationsToInsert = currentRoadways.values.flatten.filterNot(location => expiringRoadAddressesFromReplacements.map(_._2.roadwayNumber).toSeq.contains(location.roadwayNumber))
-          linearLocationDAO.create(linearLocationsToInsert)
+          roadwayDAO.create(currentRoadways.map(_._1).flatten)
+          linearLocationDAO.create(currentRoadways.flatMap(_._2))
           Some(s"road addresses created")
         } catch {
           case e: ProjectValidationException =>

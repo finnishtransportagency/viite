@@ -57,7 +57,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
     RoadwayChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
       (o \\ "source").extract[RoadwayChangeSection], (o \\ "target").extract[RoadwayChangeSection],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
-      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), false)
+      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), reversed = false, 0)
 }, {
   case o: RoadwayChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
