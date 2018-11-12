@@ -52,7 +52,7 @@ case class RoadwayChangeSectionTR(roadNumber: Option[Long], trackCode: Option[Lo
                                   endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
 
 case class RoadwayChangeInfo(changeType: AddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
-                             discontinuity: Discontinuity, roadType: RoadType, reversed: Boolean)
+                             discontinuity: Discontinuity, roadType: RoadType, reversed: Boolean, orderInChangeTable: Long)
 case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime,
                                 changeInfo: RoadwayChangeInfo, projectStartDate: DateTime, rotatingTRId:Option[Long])
 case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: String, createdDate: Option[DateTime],
@@ -63,9 +63,9 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
                      targetStartAddressM:Option[Long], targetEndAddressM:Option[Long], targetDiscontinuity: Option[Int], targetRoadType: Option[Int],
                      sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
-                     rotatingTRId: Option[Long], reversed: Boolean)
+                     rotatingTRId: Option[Long], reversed: Boolean, orderInTable: Long)
 
-object RoadwayChangesDAO {
+class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
   val projectDAO = new ProjectDAO
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
@@ -104,12 +104,13 @@ object RoadwayChangesDAO {
       val sourceEly = r.nextLongOption
       val rotatingTRIdr = r.nextLongOption
       val reversed = r.nextBoolean
+      val orderInTable = r.nextLong
 
       ChangeRow(projectId, projectName:Option[String], createdBy:String, createdDate:Option[DateTime], startDate:Option[DateTime], modifiedBy:String, modifiedDate:Option[DateTime], targetEly:Long, changeType :Int, sourceRoadNumber:Option[Long],
         sourceTrackCode :Option[Long],sourceStartRoadPartNumber:Option[Long], sourceEndRoadPartNumber:Option[Long], sourceStartAddressM:Option[Long], sourceEndAddressM:Option[Long],
         targetRoadNumber:Option[Long], targetTrackCode:Option[Long], targetStartRoadPartNumber:Option[Long], targetEndRoadPartNumber:Option[Long], targetStartAddressM:Option[Long],
         targetEndAddressM:Option[Long], targetDiscontinuity: Option[Int], targetRoadType: Option[Int], sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
-        rotatingTRIdr:Option[Long], reversed: Boolean)
+        rotatingTRIdr:Option[Long], reversed: Boolean, orderInTable: Long)
     }
   }
 
@@ -126,7 +127,7 @@ object RoadwayChangesDAO {
   private def toRoadwayChangeInfo(row: ChangeRow) = {
     val source = toRoadwayChangeSource(row)
     val target = toRoadwayChangeRecipient(row)
-    RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)), RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)), row.reversed)
+    RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)), RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)), row.reversed, row.orderInTable)
   }
 
   // TODO: cleanup after modification dates and modified by are populated correctly
@@ -171,7 +172,7 @@ object RoadwayChangesDAO {
                 rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_TRACK,
                 rac.new_road_part_number, rac.new_road_part_number,
                 rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, rac.old_road_type,
-                rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed
+                rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed, rac.order_in_table
                 From ROADWAY_CHANGES rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
                 ORDER BY COALESCE(rac.new_road_number, rac.old_road_number), COALESCE(rac.new_road_part_number, rac.old_road_part_number),
@@ -180,7 +181,12 @@ object RoadwayChangesDAO {
     queryList(query)
   }
 
+  def fetchRoadwayChangesLinks (projectId: Long) : Seq[(Long, Long)] = {
+    Q.queryNA[(Long, Long)](s"""SELECT ORDER_IN_TABLE, PROJECT_LINK_ID FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""").list.map(x => x._1 -> x._2)
+  }
+
   def clearRoadChangeTable(projectId: Long): Unit = {
+    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE project_id = $projectId""".execute
     sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id = $projectId""".execute
   }
 
@@ -291,7 +297,7 @@ object RoadwayChangesDAO {
               "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed, order_in_table) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
             val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
-              "(project_id, order_number,project_link_id) values (?,?,?)")
+              "(project_id, order_in_table,project_link_id) values (?,?,?)")
 
             val terminated = ProjectDeltaCalculator.partition(delta.terminations)
             terminated.foreach(roadwaySection =>
@@ -316,6 +322,8 @@ object RoadwayChangesDAO {
 
             roadwayChangePS.executeBatch()
             roadwayChangePS.close()
+            roadWayChangesLinkPS.executeBatch()
+            roadWayChangesLinkPS.close()
             val endTime = System.currentTimeMillis()
             logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
             true

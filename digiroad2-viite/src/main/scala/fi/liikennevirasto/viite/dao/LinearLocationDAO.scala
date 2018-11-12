@@ -526,6 +526,17 @@ class LinearLocationDAO {
       Q.updateNA(query).first
   }
 
+  def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {
+    val query =
+      s"""
+        Update LINEAR_LOCATION Set valid_to = sysdate Where valid_to IS NULL and roadway_number in (${roadwayNumbers.mkString(",")})
+      """
+    if (roadwayNumbers.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
+  }
+
   def updateToFloating(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason,
                        createdBy: String = "setLinearLocationFloatingReason"): Unit = {
 

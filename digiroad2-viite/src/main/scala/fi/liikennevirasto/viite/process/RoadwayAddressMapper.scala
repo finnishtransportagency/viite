@@ -145,20 +145,18 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadway.discontinuity)
   }
 
-  def mapLinearLocations(roadway: Roadway, roadAddresses: Seq[RoadAddress]) : Seq[LinearLocation] = {
-    val groupedRoadAddresses = roadAddresses.groupBy(_.roadwayNumber)
-    val roadwayRoadAddresses = groupedRoadAddresses.getOrElse(roadway.roadwayNumber, throw new IllegalArgumentException("Any road addresses found that belongs to the given roadway"))
-    roadAddresses.sortBy(_.startAddrMValue).zip(1 to roadAddresses.size).
+  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]) : Seq[LinearLocation] = {
+    projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
       map{
-        case (address, key) =>
-          val calibrationPoints = address.calibrationPoints match {
+        case (projectLink, key) =>
+          val calibrationPoints = projectLink.calibrationPoints match {
             case (None, None) => (None, None)
-            case (Some(_), None) => (Some(address.startAddrMValue), None)
-            case (None, Some(_)) => (None, Some(address.endAddrMValue))
-            case (Some(_), Some(_)) => (Some(address.startAddrMValue), Some(address.endAddrMValue))
+            case (Some(_), None) => (Some(projectLink.startAddrMValue), None)
+            case (None, Some(_)) => (None, Some(projectLink.endAddrMValue))
+            case (Some(_), Some(_)) => (Some(projectLink.startAddrMValue), Some(projectLink.endAddrMValue))
           }
-          LinearLocation(NewLinearLocation, key, address.linkId, address.startMValue, address.endMValue, address.sideCode, address.adjustedTimestamp,
-            calibrationPoints, address.floating, address.geometry, address.linkGeomSource, roadway.roadwayNumber, address.validFrom, address.validTo)
+          LinearLocation(NewLinearLocation, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
+            calibrationPoints, projectLink.floating, projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
       }
   }
 
