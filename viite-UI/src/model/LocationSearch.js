@@ -49,7 +49,7 @@
      * @returns {*}
      */
     var getCoordinatesFromRoadAddress = function(road) {
-      return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section).then(function(roadData) {
+      return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section, road.distance).then(function(roadData) {
         var sortedRoad = _.sortBy(_.sortBy(roadData, function(addr){ return addr.track;} ), function(road){ return road.roadPartNumber; });
         var searchResult = roadLocationAPIResultParser(sortedRoad[0]);
         if (searchResult.length === 0) {

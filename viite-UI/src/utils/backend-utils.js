@@ -321,9 +321,8 @@
       });
     };
 
-    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, callback) {
-
-      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: 0}, callback);
+    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, distance, callback) {
+      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: distance}, callback);
     };
 
     this.removeProjectLinkSplit = function (data, success, errorCallback) {
