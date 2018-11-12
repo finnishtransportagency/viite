@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.util.{TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
+import fi.liikennevirasto.viite.dao._
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito.when
@@ -13,6 +13,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.RoadType
@@ -23,6 +24,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.DatabaseDef
 import slick.jdbc.StaticQuery.{interpolation, _}
 import slick.jdbc.{StaticQuery => Q}
+import org.mockito.ArgumentMatchers.any
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
   private val assetDataImporter = new AssetDataImporter {
@@ -48,6 +50,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
   val mockVVHFrozenTimeRoadLinkClient = MockitoSugar.mock[VVHFrozenTimeRoadLinkClientServicePoint]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+
+  val linearLocationDAO = new LinearLocationDAO
 
   /**
     * TODO Fix this so that it will roll back the changes made in database.
@@ -228,12 +232,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       // TODO Make own test for these
       // insertedRoadAddresses.foldLeft(Map.empty[Long, (Option[CalibrationPoint], Option[CalibrationPoint])])((map, ra) => map + (ra.startAddrMValue -> ra.calibrationPoints)) should equal(expectedCalibrationPointsForAET)
     }
-  }
+  }*/
 
   test("if the geometry is a loop then it should be updated") {
 
     val roadNumber = 9999999
-    val roadPartNumber = 1
     val linkId = 12345L
     val roadwayNumber = 123
     val geom1 = Seq(Point(9.9, 10.1), Point(20.0, 20.0))
@@ -244,12 +247,15 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     runWithRollback {
       //Road Objects
-      val ra = Seq(RoadAddress(RoadAddressDAO.getNextRoadwayId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
-        Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-        geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber),
-        RoadAddress(RoadAddressDAO.getNextRoadwayId, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 10L, 20L,
-          Some(DateTime.parse("1901-01-01")), None, Option("tester"), linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-          geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber))
+
+      val linearLocations = Seq(LinearLocation(Sequences.nextLinearLocationId, 1, linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 10000000000l,
+        (None, None), FloatingReason.NoFloating, geom1, LinkGeomSource.NormalLinkInterface,
+        roadwayNumber, Some(DateTime.parse("1901-01-01")), None),
+        LinearLocation(Sequences.nextLinearLocationId, 2, linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 10000000000l,
+          (None, None), FloatingReason.NoFloating, geom2, LinkGeomSource.NormalLinkInterface,
+          roadwayNumber, Some(DateTime.parse("1901-01-01")), None)
+      )
+
       val vvhRoadLinks = List(
         VVHRoadlink(linkId, 91, vvhGeom, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
       )
@@ -261,17 +267,18 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
       when(mockVVHClient.suravageData.fetchSuravageByLinkIds(any[Set[Long]])).thenReturn(Seq.empty[VVHRoadlink])
       when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
-      when(mockVVHClient.frozenTimeRoadLinkData) thenReturn (mockVVHFrozenTimeRoadLinkClient)
+      when(mockVVHClient.frozenTimeRoadLinkData) thenReturn mockVVHFrozenTimeRoadLinkClient
 
-      RoadAddressDAO.create(ra)
-      val addressesBeforeUpdate = RoadAddressDAO.fetchByLinkId(Set(linkId)).sortBy(_.endAddrMValue)
+//      RoadAddressDAO.create(ra)
+      linearLocationDAO.create(linearLocations)
+      val addressesBeforeUpdate = linearLocationDAO.fetchByLinkId(Set(linkId)).sortBy(_.orderNumber)
       addressesBeforeUpdate.head.geometry.equals(geom1) should be(true)
       addressesBeforeUpdate.last.geometry.equals(geom2) should be(true)
       assetDataImporter.updateRoadAddressesGeometry(mockVVHClient, s"AND ROAD_NUMBER = $roadNumber")
       val supposedGeom = GeometryUtils.truncateGeometry3D(vvhGeom, segmentStartMValue, segmentEndMValue).map(g => {
         Point(GeometryUtils.scaleToThreeDigits(g.x), GeometryUtils.scaleToThreeDigits(g.y), 0.0)
       })
-      val addressesAfterUpdate = RoadAddressDAO.fetchByLinkId(Set(linkId)).sortBy(_.endAddrMValue)
+      val addressesAfterUpdate = linearLocationDAO.fetchByLinkId(Set(linkId)).sortBy(_.orderNumber)
       addressesAfterUpdate.head.geometry.equals(supposedGeom) should be(true)
       addressesAfterUpdate.last.geometry.equals(supposedGeom) should be(true)
     }
@@ -281,5 +288,5 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   val dateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   def d(date: String): DateTime = {DateTime.parse(date, dateTimeFormatter)}
-*/
+
 }
