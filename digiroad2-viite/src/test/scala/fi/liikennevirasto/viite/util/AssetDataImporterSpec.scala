@@ -234,7 +234,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }*/
 
-  test("if the geometry is a loop then it should be updated") {
+  test("Test updateLinearLocationGeometry When geometry is a loop and is updated by roadNumber Then it should be updated") {
 
     val roadNumber = 9999999
     val linkId = 12345L
@@ -274,7 +274,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val addressesBeforeUpdate = linearLocationDAO.fetchByLinkId(Set(linkId)).sortBy(_.orderNumber)
       addressesBeforeUpdate.head.geometry.equals(geom1) should be(true)
       addressesBeforeUpdate.last.geometry.equals(geom2) should be(true)
-      assetDataImporter.updateRoadAddressesGeometry(mockVVHClient, s"AND ROAD_NUMBER = $roadNumber")
+      assetDataImporter.updateLinearLocationGeometry(mockVVHClient, s"AND ROAD_NUMBER = $roadNumber")
       val supposedGeom = GeometryUtils.truncateGeometry3D(vvhGeom, segmentStartMValue, segmentEndMValue).map(g => {
         Point(GeometryUtils.scaleToThreeDigits(g.x), GeometryUtils.scaleToThreeDigits(g.y), 0.0)
       })
