@@ -1626,7 +1626,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
           }
         }
-        //roadAddressService.getFloatingAdresses().isEmpty
         false
       case None =>
         logger.info(s"During status checking VIITE wasnt able to find TR_ID to project $projectID")
@@ -1745,36 +1744,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
-  def createHistoryRows(projectLinks: Seq[ProjectLink], expiringRoadAddresses: Map[Long, RoadAddress]) = {
-    // TODO What about termination? In this implementation termination is not handled.
-    val groupedProjectLinks = projectLinks.filter(pl => operationsLeavingHistory.contains(pl.status)).groupBy(_.roadwayId)
-    val roadwaysToExpire = expiringRoadAddresses.values.flatMap(ex => {
-      groupedProjectLinks.get(ex.id) match {
-        case Some(pls) =>
-          pls.headOption.map(pl => pl.roadwayId)
-        case _ => None
-      }
-    })
-    if (roadwaysToExpire.nonEmpty) {
-      roadwayDAO.createHistory(roadwaysToExpire.toSet, projectLinks.head.startDate.get)
-    }
-  }
-
-  /**
-    * Will check the road addresses for any whose startDate is the same as the startDates on the projectLinks, if any are found, then their ID's are returned to be expired
-    *
-    * @param projectLinks
-    * @return
-    */
-  def roadAddressHistoryCorrections(projectLinks: Seq[ProjectLink]): Map[Long, RoadAddress] = {
-    throw new NotImplementedError("This method probably will not be needed")
-    //    val roadAddresses = RoadAddressDAO.queryById(projectLinks.map(_.roadwayId).toSet, rejectInvalids = false)
-    //    val startDates = projectLinks.filter(_.startDate.isDefined).map(_.startDate.get)
-    //    roadAddresses.filter(ra => {
-    //      ra.startDate.isDefined && startDates.exists(startDate => {
-    //        startDate.getDayOfMonth() == ra.startDate.get.getDayOfMonth && startDate.getMonthOfYear() == ra.startDate.get.getMonthOfYear() && startDate.getYear() == ra.startDate.get.getYear()
-    //      })
-    //    }).map(ra => ra.id -> ra).toMap
+  def createHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime) = {
+    roadwayDAO.createHistory(Set(roadwayId), projectDate, roadway.terminated)
   }
 
   def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
@@ -1784,12 +1755,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         val project = projectDAO.getRoadAddressProjectById(projectID).get
         val projectLinks = projectLinkDAO.getProjectLinks(projectID)
-        val allRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId))
+        val allRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
         val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
         val roadwayProjectLinkIds = roadwayChangesDAO.fetchRoadwayChangesLinks(projectID)
         val mappedRoadwaysWithLinks = roadwayChanges.map{
           change =>
-          val linksRelatedToChange = roadwayProjectLinkIds.find(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
+          val linksRelatedToChange = roadwayProjectLinkIds.filter(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
           val projectLinksInChange = projectLinks.filter(pl => linksRelatedToChange.contains(pl.id))
             (change, projectLinksInChange)
         }
@@ -1807,12 +1778,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
           logger.info(s"Creating history rows based on operation")
 
-          roadwayDAO.expireById(projectLinks.map(pl => pl.roadwayId).toSet)
-          linearLocationDAO.expireByRoadwayNumbers(projectLinks.map(_.roadwayNumber).toSet)
-//          createHistoryRows(projectLinks, expiringRoadAddressesFromReplacements)
+          linearLocationDAO.expireByIds(projectLinks.map(_.linearLocationId).toSet)
+          allRoadways.map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
           //updateTerminationForHistory(terminatedLinkIds, splitReplacements)
           //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-          roadwayDAO.create(currentRoadways.map(_._1).flatten)
+          roadwayDAO.create(currentRoadways.flatMap(_._1))
           linearLocationDAO.create(currentRoadways.flatMap(_._2))
           Some(s"road addresses created")
         } catch {

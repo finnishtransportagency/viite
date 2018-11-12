@@ -49,6 +49,8 @@ class ProjectReservedPartDAO {
     */
   def removeReservedRoadPart(projectId: Long, reservedRoadPart: ProjectReservedPart): Unit = {
     time(logger, "Remove reserved road part") {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
       sqlu"""
            DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
            (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
