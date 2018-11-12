@@ -38,7 +38,7 @@
               eventbus.trigger('linkProperties:reselect');
             });
               map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-              map.getView().setZoom(12);
+              map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {
             console.log(response.reason);
           }
