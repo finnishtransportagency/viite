@@ -25,7 +25,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 // TODO This could be renamed to something else than asset...
-object AssetDataImporter {
+object DataImporter {
   sealed trait ImportDataSet {
     def database(): DatabaseDef
   }
@@ -55,7 +55,7 @@ object AssetDataImporter {
   }
 }
 
-class AssetDataImporter {
+class DataImporter {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val ds: DataSource = initDataSource
 
@@ -63,6 +63,10 @@ class AssetDataImporter {
 
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
+    val chunks = withDynSession{ fetchChunkLinkIds()}
+    chunks.par.foreach { p => f(p) }
+  }
 
   implicit object SetStruct extends SetParameter[STRUCT] {
     def apply(v: STRUCT, pp: PositionedParameters) {
@@ -243,44 +247,44 @@ class AssetDataImporter {
       generateChunks(linkIds, 25000l)
     }
 
+
   def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var changed = 0
-    val chunks = withDynSession{fetchChunkLinkIds()}
-      chunks.foreach {
-          case (min, max) =>
-            withDynTransaction {
-            val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
-            val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-            val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
-            val topologyLocation = unGroupedTopology.groupBy(_.linkId)
-            roadLinksFromVVH.foreach(roadLink => {
-              val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
-              segmentsOnViiteDatabase.foreach(segment => {
-                val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
-                if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
-                  val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
-                  val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
-                  val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
-                  val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
-                  if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
-                    (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
-                    ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
-                      (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
-                    updateGeometry(segment.id, newGeom)
-                    println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
-                    changed += 1
-                  } else {
-                    println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
-                  }
-                }
-              })
-            })
-        }
+    withLinkIdChunks {
+      case (min, max) =>
+        withDynTransaction {
+        val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
+        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
+        val topologyLocation = unGroupedTopology.groupBy(_.linkId)
+        roadLinksFromVVH.foreach(roadLink => {
+          val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
+          segmentsOnViiteDatabase.foreach(segment => {
+            val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+            if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
+              val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
+              val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
+              val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
+              val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
+              if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
+                (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
+                ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
+                  (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
+                updateGeometry(segment.id, newGeom)
+                println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
+                changed += 1
+              } else {
+                println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+              }
+            }
+          })
+        })
       }
-      println(s"Geometries changed count: $changed")
+    }
+    println(s"Geometries changed count: $changed")
   }
 
   def updateGeometry(linearLocationId: Long, geometry: Seq[Point]): Unit = {

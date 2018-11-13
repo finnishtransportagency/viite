@@ -15,7 +15,7 @@ import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.Inconsi
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
+import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.{DateTime, Period}
 
@@ -37,7 +37,7 @@ object DataFixture {
   }
 
 
-  val dataImporter = new AssetDataImporter
+  val dataImporter = new DataImporter
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }

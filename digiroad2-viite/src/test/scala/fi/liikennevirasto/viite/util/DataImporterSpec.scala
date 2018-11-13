@@ -26,11 +26,13 @@ import slick.jdbc.StaticQuery.{interpolation, _}
 import slick.jdbc.{StaticQuery => Q}
 import org.mockito.ArgumentMatchers.any
 
-class AssetDataImporterSpec extends FunSuite with Matchers {
-  private val assetDataImporter = new AssetDataImporter {
+class DataImporterSpec extends FunSuite with Matchers {
+  private val assetDataImporter = new DataImporter {
     override def withDynTransaction(f: => Unit): Unit = f
-
     override def withDynSession[T](f: => T): T = f
+    override def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
+      fetchChunkLinkIds().foreach { p => f(p) }
+    }
   }
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
