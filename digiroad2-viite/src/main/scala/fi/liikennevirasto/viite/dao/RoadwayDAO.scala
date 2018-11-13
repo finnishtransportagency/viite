@@ -434,8 +434,19 @@ class RoadwayDAO extends BaseDAO {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
         Seq()
-      else
-        fetch(withRoadwayNumbers(roadwayNumbers))
+      else {
+        if (roadwayNumbers.size > 1000)
+          MassQuery.withIds(roadwayNumbers) {
+            idTableName =>
+              fetch(query => s"""
+                $query
+                join $idTableName i on i.id = a.ROADWAY_NUMBER
+                where a.valid_to is null and a.end_date is null
+              """.stripMargin)
+          }
+        else
+          fetch(withRoadwayNumbers(roadwayNumbers))
+      }
     }
   }
 
@@ -609,18 +620,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbers(roadwayNumbers: Set[Long])(query: String): String = {
-    if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers) {
-        idTableName =>
-          s"""
-            $query
-            join $idTableName i on i.id = a.ROADWAY_NUMBER
-            where a.valid_to is null and a.end_date is null
-          """.stripMargin
-      }
-    } else {
       s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
-    }
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
