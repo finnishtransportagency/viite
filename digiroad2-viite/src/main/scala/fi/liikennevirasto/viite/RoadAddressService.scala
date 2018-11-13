@@ -88,15 +88,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //TODO Will be implemented at VIITE-1542
     //RoadAddressDAO.getUnaddressedRoadLinks(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
 
-    val (ad, changesChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changeInfos)
+    //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
+    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
 
-    val (adjustedLinearLocations, _) = RoadAddressFiller.adjustToTopology(
-      allRoadLinks,
-      ad,
-      changesChangeSet
-    )
-
-//    eventbus.publish("roadAddress:persistChangeSet", changeSet)
+    eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
     val roadAddresses = withDynSession {
       roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
