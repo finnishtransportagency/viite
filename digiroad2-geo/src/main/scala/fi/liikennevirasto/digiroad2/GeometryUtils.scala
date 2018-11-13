@@ -118,11 +118,11 @@ object GeometryUtils {
     }
   }
 
-  def to2DGeometry(p: Point) = {
+  def to2DGeometry(p: Point): Point = {
     p.copy(z = 0.0)
   }
 
-  def to2DGeometry(geom: Seq[Point]) = {
+  def to2DGeometry(geom: Seq[Point]): Seq[Point] = {
     geom.map(p => p.copy(z = 0.0))
   }
 
@@ -147,7 +147,7 @@ object GeometryUtils {
         segmentLength = segmentLength,
         mValue = -1 * clampedNegativeMValue)
     }
-    val targetIndex = projections.sortBy(_.distance).head.segmentIndex
+    val targetIndex = projections.minBy(_.distance).segmentIndex
     val distanceBeforeTarget = projections.take(targetIndex).map(_.segmentLength).sum
     distanceBeforeTarget + projections(targetIndex).mValue
   }
@@ -216,20 +216,21 @@ object GeometryUtils {
   /**
     * Check if segments overlap (not just barely touching)
     *
-    * @param segment1
-    * @param segment2
+    * @param segment1 First segment
+    * @param segment2 Second segment
     * @return
     */
-  def overlaps(segment1: (Double, Double), segment2: (Double, Double)) = {
+  def overlaps(segment1: (Double, Double), segment2: (Double, Double)): Boolean = {
     val (s1start, s1end) = order(segment1)
     val (s2start, s2end) = order(segment2)
     !(s1end <= s2start || s1start >= s2end) && // end of s1 is smaller than s2 or end of s1 is after start of s2 => false
       (s1start < s2end || s1end > s2start)                  // start of s1 is smaller => s1 must start before s2 ends
   }
   private def order(segment: (Double, Double)) = {
-    segment._1 > segment._2 match {
-      case true => segment.swap
-      case _ => segment
+    if (segment._1 > segment._2) {
+      segment.swap
+    } else {
+      segment
     }
   }
 
@@ -252,9 +253,10 @@ object GeometryUtils {
 
   def overlap(segment1: (Double, Double), segment2: (Double, Double)): Option[(Double, Double)] = {
     val (seg1, seg2) = (order(segment1), order(segment2))
-    overlaps(seg1, seg2) match {
-      case false => None
-      case true => Option(Math.max(seg1._1, seg2._1), Math.min(seg1._2, seg2._2))
+    if (overlaps(seg1, seg2)) {
+      Option(Math.max(seg1._1, seg2._1), Math.min(seg1._2, seg2._2))
+    } else {
+      None
     }
   }
 
@@ -323,9 +325,10 @@ object GeometryUtils {
       case 0 => None
       case _ =>
         val (head, last) = geometryEndpoints(geometries.head)
-        getAdjacent(head) match {
-          case true => Some(head)
-          case false => Some(last)
+        if (getAdjacent(head)) {
+          Some(head)
+        } else {
+          Some(last)
         }
     }
   }
@@ -425,7 +428,7 @@ object GeometryUtils {
   }
 
   def moveGeomToOrigin(geom: Seq[Point]): Seq[Point] = {
-    moveGeomToPoint(geom, Point(0.0, 0.0, 0.0))
+    moveGeomToPoint(geom, Point(0.0, 0.0))
   }
 
   def moveGeomToPoint(geom: Seq[Point], referencePoint: Point): Seq[Point] = {
@@ -434,12 +437,26 @@ object GeometryUtils {
   }
 
   /**
+    * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
+    * The measurement is taken after the geometries are reduced to the origin point.
+    * @param geom1 Geometry 1
+    * @param geom2 Goemetry 2
+    * @return h2h distance, h2t distance sums
+    */
+  def distancesBetweenEndPointsInOrigin(geom1: Seq[Point], geom2: Seq[Point]): (Double, Double) = {
+    val movedGeom1 = GeometryUtils.moveGeomToOrigin(geom1)
+    val movedGeom2 = GeometryUtils.moveGeomToOrigin(geom2)
+    (movedGeom1.head.distance2DTo(movedGeom2.head) + movedGeom1.last.distance2DTo(movedGeom2.last),
+      movedGeom1.last.distance2DTo(movedGeom2.head) + movedGeom1.head.distance2DTo(movedGeom2.last))
+  }
+
+  /**
     * Check if geometry is towards digitisation.
     *
     * - Starting point is south from the ending point
     * - In case of exactly horizontal starting and end points check if the starting point is east from the ending point
     *
-    * @param geometry
+    * @param geometry Geometry to be checked
     * @return
     */
   def isTowardsDigitisation(geometry: Seq[Point]): Boolean = {

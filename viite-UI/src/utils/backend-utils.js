@@ -2,6 +2,8 @@
   root.Backend = function () {
     var self = this;
     var loadingProject;
+    var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
+    var gettingRoadLinks;
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
@@ -23,6 +25,14 @@
     this.abortLoadingProject = (function () {
       if (loadingProject) {
         loadingProject.abort();
+      }
+    });
+
+    this.abortGettingRoadLinks = (function () {
+      if (gettingRoadLinks){
+        _.map(gettingRoadLinks.desc.args, function (r) {
+          r.abort();
+        });
       }
     });
 
@@ -200,7 +210,7 @@
         roadNumber: roadNumber,
         startPart: startPart,
         endPart: endPart,
-        projDate: projDate
+        projDate: convertDateToIso(projDate)
       })
         .then(function (x) {
           eventbus.trigger('roadPartsValidation:checkRoadParts', x);
@@ -380,7 +390,8 @@
       var deferred;
       var requests = new Bacon.Bus();
       var responses = requests.debounceImmediate(500).flatMapLatest(function (params) {
-        return Bacon.$.ajax(params, true);
+        gettingRoadLinks = Bacon.$.ajax(params, true);
+        return gettingRoadLinks;
       });
 
       return function () {
@@ -391,6 +402,10 @@
         requests.push(getParameters.apply(undefined, arguments));
         return deferred.promise();
       };
+    }
+
+    function convertDateToIso(date) {
+      return new Date(date.replace(finnishDatePattern,'$3-$2-$1')).toISOString();
     }
 
     //Methods for the UI Integrated Tests

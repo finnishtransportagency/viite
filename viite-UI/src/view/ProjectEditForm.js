@@ -88,11 +88,11 @@
         '<div class="input-unit-combination">' +
         '<select class="action-select" id="dropdown_0" size="1">'+
         '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
-        '<option disabled id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
-        '<option disabled id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
+        '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
+        '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
         '<option id="drop_0_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) +'>Uusi</option>'+
-        '<option disabled id="drop_0_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>Lakkautus</option>'+
-        '<option disabled id="drop_0_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>Numerointi</option>'+
+        '<option id="drop_0_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>Lakkautus</option>'+
+        '<option id="drop_0_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>Numerointi</option>'+
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
@@ -225,6 +225,14 @@
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
+        _.defer(function() {
+            $('#beginDistance').on("change", function(changedData) {
+                eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
+            });
+            $('#endDistance').on("change", function(changedData) {
+                eventbus.trigger('projectLink:editedEndDistance', changedData.target.value);
+            });
+        });
       });
 
       eventbus.on('projectLink:errorClicked', function(selected, errorMessage) {
@@ -266,6 +274,7 @@
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
+        selectedProjectLinkProperty.setCurrent([]);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
@@ -400,11 +409,12 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Terminated.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
@@ -431,11 +441,12 @@
           $('#roadTypeDropDown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Unchanged.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
@@ -445,11 +456,12 @@
             return dirty.status === LinkStatus.Transfer.value;
           }).concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Transfer.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
@@ -463,11 +475,12 @@
           $('#roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
+              'id': link.id,
               'linkId': link.linkId,
               'status': LinkStatus.Numbering.value,
               'roadLinkSource': link.roadLinkSource,
               'points': link.points,
-              'id': link.id
+              'linearLocationId': link.linearLocationId
             };
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
@@ -481,6 +494,11 @@
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
       });
+
+      rootElement.on('change', '#trackCodeDropdown', function () {
+        checkInputs('.project-');
+      });
+
 
       rootElement.on('change', '.form-group', function() {
         rootElement.find('.action-selected-field').prop("hidden", false);

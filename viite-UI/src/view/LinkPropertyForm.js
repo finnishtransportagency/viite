@@ -53,7 +53,7 @@
     var roadTypeDynamicField = function(){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field = '';
-      var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadLinkSource'));
+      var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadTypeId'));
       var decodedRoadTypes = "";
       _.each(uniqRoadTypes, function(rt) {
           if (decodedRoadTypes.length === 0) {
@@ -269,7 +269,7 @@
     };
 
     var template = function(firstSelectedLinkProperty, linkProperties) {
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadLinkSource) : roadTypeDynamicField();
+      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : staticField('ALKUETÄISYYS', linkProperties.startAddressM);
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
       return _.template('' +
@@ -306,7 +306,7 @@
     var templateFloating = function(firstSelectedLinkProperty, linkProperties) {
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadLinkSource) : roadTypeDynamicField();
+      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
       return _.template('' +
         '<header>' +
           title() +
@@ -339,7 +339,7 @@
     var templateFloatingEditMode = function(firstSelectedLinkProperty, linkProperties) {
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadLinkSource) : roadTypeDynamicField();
+      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
         '<header>' +
           title() +

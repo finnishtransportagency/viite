@@ -47,10 +47,11 @@
 
     var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection) {
     setupProjections();
-    fetch('components/WMTSCapabilities.xml', {credentials: "include"}).then(function(response) {
+      var url = 'rasteripalvelu/wmts/maasto?';
+      fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
-        var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
@@ -102,12 +103,12 @@
     return map;
   };
 
-    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection) {
-    var tileMaps = new TileMapCollection(arcConfig);
+    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection){
+      var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    var roadLayer = new RoadLayer3(map, models.roadCollection, models.selectedLinkProperty);
+    var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 

@@ -1,5 +1,5 @@
 (function(root) {
-  root.TileMapCollection = function(arcgisConfig) {
+  root.TileMapCollection = function(OAGGreyConfig) {
     var layerConfig = {
       // minResolution: ?,
       // maxResolution: ?,
@@ -79,14 +79,16 @@
           terrain: terrainMapLayer,
           propertyBorder : propertyBorderLayer
       };
-    if(arcgisConfig) {
-        var parser = new ol.format.WMTSCapabilities();
-        var result = parser.read(arcgisConfig);
-        var config = {layer: "Taustakartat_Harmaasavy"};
-        var options = ol.source.WMTS.optionsFromCapabilities(result, config);
-        var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
-        greyscaleLayer.set('name', 'greyScaleLayer');
-        tileMapLayers.greyscale = greyscaleLayer;
+
+    if(OAGGreyConfig) {
+      var parser = new ol.format.WMTSCapabilities();
+      var result = parser.read(OAGGreyConfig);
+      var config = {layer: 'liikennevirasto:PTP_Taustakartta_Harmaa', matrixSet:'EPSG:3067_PTP_JHS180'};
+      var options = ol.source.WMTS.optionsFromCapabilities(result, config);
+      options.urls= ['rasteripalvelu/wmts?'];
+      var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
+      greyscaleLayer.set('name', 'greyScaleLayer');
+      tileMapLayers.greyscale = greyscaleLayer;
     }
 
     var selectMap = function(tileMap) {

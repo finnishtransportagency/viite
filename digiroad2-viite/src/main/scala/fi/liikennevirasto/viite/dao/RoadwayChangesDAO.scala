@@ -66,7 +66,7 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
 
 object RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
-
+  val projectDAO = new ProjectDAO
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
   implicit val getAddressChangeType = GetResult[AddressChangeType](r=> AddressChangeType.apply(r.nextInt()))
@@ -259,7 +259,7 @@ object RoadwayChangesDAO {
 
     val startTime = System.currentTimeMillis()
     logger.info("Begin delta insertion in ChangeTable")
-    ProjectDAO.getRoadAddressProjectById(projectId) match {
+    projectDAO.getRoadAddressProjectById(projectId) match {
       case Some(project) =>
         project.ely match {
           case Some(ely) =>

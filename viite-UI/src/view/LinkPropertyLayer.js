@@ -751,7 +751,9 @@
         suravageMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
-        me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
+        //Exclude suravage layers from toggle
+        me.toggleLayersVisibility([roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
@@ -927,6 +929,7 @@
       simulatedRoadsLayer.getSource().clear();
       me.eventListener.listenToOnce(eventbus, 'roadLinks:fetched', function(){
         applicationModel.removeSpinner();
+        geometryChangedLayer.setVisible(true);
       });
     };
 
@@ -1029,13 +1032,12 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightReservedRoads', function(reservedOL3Features){
       var styledFeatures = _.map(reservedOL3Features, function(feature) {
-        feature.setStyle(projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()}));
+        feature.setStyle(roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: map.getView().getZoom()}));
         return feature;
       });
       if (applicationModel.getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
         reservedRoadLayer.getSource().addFeatures(styledFeatures);
       }
-      applicationModel.removeSpinner();
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:deselectFeaturesSelected', function(){

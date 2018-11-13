@@ -20,7 +20,7 @@ object ProjectDeltaCalculator {
   lazy private val logger = LoggerFactory.getLogger(getClass)
 
   def delta(project: RoadAddressProject): Delta = {
-    throw new NotImplementedError("Will be implemented at VIITE-1539")
+    throw new NotImplementedError("Will be implemented at VIITE-1541")
 //    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
 //    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
 //    val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadwayId).toSet,
@@ -114,7 +114,7 @@ object ProjectDeltaCalculator {
       pl1 match {
         case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.roadwayNumber != ra2.roadwayNumber) || (x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning) && ra1.roadwayNumber != ra2.roadwayNumber)
         case x: ProjectLink => {
-          val (sourceL, sourceR) = x.getCalibrationSources()
+          val (sourceL, sourceR) = x.getCalibrationSources
           (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) || x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning)) &&
             (sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource)
           }
@@ -145,7 +145,7 @@ object ProjectDeltaCalculator {
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
     val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
     val openBasedOnSource = hasCalibrationPoint && {
-      val (sourceL, sourceR) = r1.getCalibrationSources()
+      val (sourceL, sourceR) = r1.getCalibrationSources
       sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource
     }
     if (r1.endAddrMValue == r2.startAddrMValue)

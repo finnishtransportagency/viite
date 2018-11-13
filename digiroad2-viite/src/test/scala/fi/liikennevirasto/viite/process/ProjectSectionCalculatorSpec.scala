@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, _}
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.viite.util._
 import slick.driver.JdbcDriver.backend.Database
@@ -24,7 +24,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val roadAddressService: RoadAddressService {
-  } = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  } = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -47,7 +47,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   val projectId = 1
   val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
-    List.empty[ReservedRoadPart], None)
+    List.empty[ProjectReservedPart], None)
 
   //TODO will be implement at VIITE-1540
 //  test("MValues && AddressMValues && CalibrationPoints calculation for new road addresses") {

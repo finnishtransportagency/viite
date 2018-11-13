@@ -29,9 +29,9 @@ import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculato
 import fi.liikennevirasto.viite.util.StaticTestData
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -49,10 +49,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
+  val mockUnaddressedRoadLinkDAO = MockitoSugar.mock[UnaddressedRoadLinkDAO]
 
   val roadwayAddressMappper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayAddressMappper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, mockUnaddressedRoadLinkDAO, roadwayAddressMappper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -90,7 +91,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(vvhHistoryRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
 
-    val result = roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
+    val result = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
     verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
     verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
@@ -130,7 +131,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(vvhHistoryRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
 
-    val (floating, nonFloating) = roadAddressService.getRoadAddressLinksByLinkId(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq()).partition(_.floating)
+    val (floating, nonFloating) = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq()).partition(_.floating)
 
     floating.size should be (2)
     nonFloating.size should be (2)
@@ -250,7 +251,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     roadwaysSet.size should be (1)
     roadwaysSet.head should be (1L)
 
-    dateTimeDate should be > (now)
+    dateTimeDate should be >= (now)
   }
 
   test("Test getRoadAddress When the biggest address in section is greater than the parameter $addressM Then should filter out all the road addresses with start address less than $addressM") {
