@@ -16,6 +16,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var RoadClass = LinkValues.RoadClass;
     var SelectionType = LinkValues.SelectionType;
+    var RoadLinkType = LinkValues.RoadLinkType;
     var isNotEditingData = true;
     var isActiveLayer = false;
 
@@ -656,8 +657,8 @@
     });
 
     me.redraw = function () {
-      var checkedBoxLayers = _.filter(layers, function(layer){
-          if((layer.get('name') === 'suravageRoadProjectLayer' || layer.get('name') === 'suravageProjectDirectionMarkerLayer') &&
+      var checkedBoxLayers = _.filter(layers, function(layer) {
+          if ((layer.get('name') === 'suravageRoadProjectLayer' || layer.get('name') === 'suravageProjectDirectionMarkerLayer') &&
               (!suravageRoadProjectLayer.getVisible() || !suravageProjectDirectionMarkerLayer.getVisible())){
             return false;
           } else
@@ -729,7 +730,8 @@
       if (map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
         var addMarkersToLayer = function(links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
-            return projectLink.floating !== SelectionType.Floating.value && projectLink.anomaly !== Anomaly.NoAddressGiven.value && projectLink.anomaly !== Anomaly.GeometryChanged.value && (projectLink.sideCode === SideCode.AgainstDigitizing.value || projectLink.sideCode === SideCode.TowardsDigitizing.value);
+              var acceptedLinks = projectLink.id !== 0 || (projectLink.id === 0 && (projectLink.anomaly === Anomaly.NoAddressGiven.value || projectLink.roadLinkType === RoadLinkType.FloatingRoadLinkType.value));
+              return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value;
           });
           _.each(directionMarkers, function (directionLink) {
             marker = cachedMarker.createProjectMarker(directionLink);

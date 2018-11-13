@@ -22,7 +22,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       else
         None
 
-    val calibrationPoints = pl.toCalibrationPoints()
+    val calibrationPoints = pl.toCalibrationPoints
 
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
       pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, ConstructionType.UnknownConstructionType,
@@ -67,7 +67,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       else
         None
 
-    val calibrationPoints = projectLink.toCalibrationPoints()
+    val calibrationPoints = projectLink.toCalibrationPoints
 
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode,
       linkType, projectLink.roadType, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
