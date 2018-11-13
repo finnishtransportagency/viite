@@ -248,10 +248,10 @@ class AssetDataImporter {
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var changed = 0
-    withDynSession{
-    val chunks = fetchChunkLinkIds()
-      chunks.par.foreach {
+    val chunks = withDynSession{fetchChunkLinkIds()}
+      chunks.foreach {
           case (min, max) =>
+            withDynTransaction {
             val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
             val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
             val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)

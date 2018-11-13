@@ -247,7 +247,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segmentStartMValue = 0.0
     val segmentEndMValue = 10.0
 
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    runWithRollback {
       //Road Objects
 
       val linearLocations = Seq(LinearLocation(Sequences.nextLinearLocationId, 1, linkId, segmentStartMValue, segmentEndMValue, SideCode.TowardsDigitizing, 10000000000l,
