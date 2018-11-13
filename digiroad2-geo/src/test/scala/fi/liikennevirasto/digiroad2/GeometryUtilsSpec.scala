@@ -5,52 +5,52 @@ import org.joda.time.DateTime
 import org.scalatest._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
-  test("truncate empty geometry") {
+  test("Test truncateGeometry3D When using a empty geometry Then return a empty geometry") {
     val truncated = truncateGeometry3D(Nil, 10, 15)
     truncated should be (Nil)
   }
 
-  test("truncation fails when start measure is after end measure") {
+  test("Test truncateGeometry3D When start measure is after end measure Then return IllegalArgumentException") {
     an [IllegalArgumentException] should be thrownBy truncateGeometry3D(Nil, 15, 10)
   }
 
-  test("truncation fails on one point geometry") {
+  test("Test truncateGeometry3D When geometry has only 1 point Then return IllegalArgumentException") {
     an [IllegalArgumentException] should be thrownBy truncateGeometry3D(Seq(Point(0.0, 0.0)), 10, 15)
   }
 
-  test("truncate geometry from beginning") {
+  test("Test truncateGeometry3D When the truncation is at the start Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 6, 10)
     truncatedGeometry should be (Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
   }
 
-  test("truncate geometry from end") {
+  test("Test truncateGeometry3D When the truncation is at the end Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 0, 6)
     truncatedGeometry should be (Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
   }
 
-  test("truncate geometry from beginning and end") {
+  test("Test truncateGeometry3D When the truncation is both at the start and at the end Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 6)
     truncatedGeometry should be (Seq(Point(2.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
   }
 
-  test("truncate geometry where start and end point are on the same segment") {
+  test("Test truncateGeometry3D When the truncation limits are on the same segment Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 3)
     truncatedGeometry should be (Seq(Point(2.0, 0.0), Point(3.0, 0.0)))
   }
 
-  test("truncate geometry where start and end point are outside geometry") {
+  test("Test truncateGeometry3D When the truncation limits are outside of the geometry Then returns a empty geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 11.0, 15.0)
     truncatedGeometry should be(empty)
   }
 
-  test("splitting fails if measure is not within link segment") {
+  test("Test createSplit When the measure is outside the link segment Then return IllegalArgumentException") {
     val link1 = (0.0, 100.0)
     intercept[IllegalArgumentException] {
       createSplit(105.0, link1)
     }
   }
 
-  test("splitting one link speed limit") {
+  test("Test createSplit When the measure is withing the link segment Then return 2 new measures where one ends and another begins on the given measure") {
     val link1 = (0.0, 100.0)
     val (existingLinkMeasures, createdLinkMeasures) = createSplit(40.0, link1)
 
@@ -58,46 +58,46 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     createdLinkMeasures shouldBe(0.0, 40.0)
   }
 
-  test("subtract contained interval from intervals") {
+  test("Test subtractIntervalFromIntervals When we try to subtract a contained interval from intervals Then return the subtraction result.") {
     val result = subtractIntervalFromIntervals(Seq((3.0, 6.0)), (4.0, 5.0))
     result shouldBe Seq((3.0, 4.0), (5.0, 6.0))
   }
 
-  test("subtract outlying interval from intervals") {
+  test("Test subtractIntervalFromIntervals When we try to subtract a outlying interval from intervals Then return the subtraction result.") {
     val result = subtractIntervalFromIntervals(Seq((3.0, 6.0)), (1.0, 2.0))
     result shouldBe Seq((3.0, 6.0))
   }
 
-  test("subtract interval from beginning of intervals") {
+  test("Test subtractIntervalFromIntervals When we try to subtract a interval that lies in the beginning of the rest of the intervals Then return the subtraction result.") {
     val result = subtractIntervalFromIntervals(Seq((3.0, 6.0)), (2.0, 4.0))
     result shouldBe Seq((4.0, 6.0))
   }
 
-  test("subtract interval from end of intervals") {
+  test("Test subtractIntervalFromIntervals When we try to subtract a interval that lies in the ending of the rest of the intervals Then return the subtraction result.") {
     val result = subtractIntervalFromIntervals(Seq((3.0, 6.0)), (5.0, 7.0))
     result shouldBe Seq((3.0, 5.0))
   }
 
-  test("subtract containing interval from intervals") {
+  test("Test subtractIntervalFromIntervals When we try to subtract a interval that engulfs the rest of the intervals Then return a empty sequence.") {
     val result = subtractIntervalFromIntervals(Seq((3.0, 6.0)), (2.0, 7.0))
     result shouldBe Seq()
   }
 
-  test("Calculate linear reference point") {
+  test("Test calculatePointFromLinearReference When using a 0 to 1 X geometry and a 0.5 in measure Then return the point.") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val point: Point = calculatePointFromLinearReference(linkGeometry, 0.5).get
     point.x should be(0.5)
     point.y should be(0.0)
   }
 
-  test("Calculate linear reference point on three-point geometry") {
+  test("Test calculatePointFromLinearReference When using on three-point geometry and a 1.5 in measure Then return the point.") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
     val point: Point = calculatePointFromLinearReference(linkGeometry, 1.5).get
     point.x should be(1.0)
     point.y should be(0.5)
   }
 
-  test("Linear reference point on less than two-point geometry should be undefined") {
+  test("Test calculatePointFromLinearReference When using a undefined geometry and a 1.5 in measure Then the returned point should be None") {
     val linkGeometry = Nil
     val point: Option[Point] = calculatePointFromLinearReference(linkGeometry, 1.5)
     point should be(None)
