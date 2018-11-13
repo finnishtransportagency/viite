@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import org.slf4j.LoggerFactory
 
 //TODO The all class and specs can be deleted after VIITE-1537
-trait BaseRoasAddressMapper {
+trait BaseRoadAddressMapper {
 
   //TODO this is no longer needed
   //  /** Used when road address span is larger than mapping: road address must be split into smaller parts

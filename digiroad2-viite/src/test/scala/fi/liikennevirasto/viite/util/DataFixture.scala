@@ -250,7 +250,7 @@ object DataFixture {
 
         println ("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
         println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
-        if(roadLinks.nonEmpty) {
+        if (roadLinks.nonEmpty) {
           try {
 
             val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)

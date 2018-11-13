@@ -17,10 +17,10 @@ object ApplyChangeInfoProcess {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private case class Projection(oldLinkId: Long, newLinkId: Long, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long, orderIncrement: Int = 0)
-  {
+  private case class Projection(oldLinkId: Long, newLinkId: Long, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long, orderIncrement: Int = 0) {
     /**
       * Check if the given measure is equal the old start measure with {MaxAllowedMValueError} error margin allowed
+      *
       * @param measure The measure to be compared with old start measure
       * @return Returns true when the given measure match the old start measure
       */
@@ -30,6 +30,7 @@ object ApplyChangeInfoProcess {
 
     /**
       * Check if the given measure is equal the old end measure with {MaxAllowedMValueError} error margin allowed
+      *
       * @param measure The measure to be compared with old end measure
       * @return Returns true when the given measure match the old end measure
       */
@@ -39,6 +40,7 @@ object ApplyChangeInfoProcess {
 
     /**
       * Check if the linear location is intercepts the projection
+      *
       * @param linearLocation
       * @return
       */
@@ -49,7 +51,7 @@ object ApplyChangeInfoProcess {
 
   private def nonSupportedChange(change: ChangeInfo): Boolean = !isSupportedChange(change)
 
-  private def isSupportedChange(change: ChangeInfo): Boolean ={
+  private def isSupportedChange(change: ChangeInfo): Boolean = {
     Seq(
       CombinedModifiedPart, CombinedRemovedPart,
       LengthenedCommonPart, LengthenedNewPart,
@@ -62,7 +64,7 @@ object ApplyChangeInfoProcess {
     ((projection.oldEnd - projection.oldStart) * (projection.newEnd - projection.newStart)) < 0
   }
 
-  private def calculateNewMValuesAndSideCode(linearLocation: LinearLocation, projection: Projection) : (Double, Double, SideCode) = {
+  private def calculateNewMValuesAndSideCode(linearLocation: LinearLocation, projection: Projection): (Double, Double, SideCode) = {
     val oldLength = Math.abs(projection.oldEnd - projection.oldStart)
     val newLength = Math.abs(projection.newEnd - projection.newStart)
     val maxNewMeasure = Math.max(projection.newStart, projection.newEnd)
@@ -91,7 +93,7 @@ object ApplyChangeInfoProcess {
     }
 
     def checkExistingRoadLink(mappedRoadLinks: Map[Long, RoadLinkLike])(originalLinearLocation: LinearLocation, adjustedLinearLocations: Seq[LinearLocation]): Boolean = {
-      adjustedLinearLocations.forall(linearLocation =>  mappedRoadLinks.contains(linearLocation.linkId))
+      adjustedLinearLocations.forall(linearLocation => mappedRoadLinks.contains(linearLocation.linkId))
     }
 
     val filterOperations = Seq[(LinearLocation, Seq[LinearLocation]) => Boolean](
@@ -118,11 +120,11 @@ object ApplyChangeInfoProcess {
             val (news, existing) = adjustedLinearLocations.partition(_.id == NewLinearLocation)
             groupedProjections.flatMap {
               projection =>
-                existing.filter(projection.intercepts).map( l => projectLinearLocation(l, projection, mappedRoadLinks) )
+                existing.filter(projection.intercepts).map(l => projectLinearLocation(l, projection, mappedRoadLinks))
             } ++ news
         }
 
-        if(validateLinearLocation(linearLocation, linearLocations, mappedRoadLinks)) {
+        if (validateLinearLocation(linearLocation, linearLocations, mappedRoadLinks)) {
           val resultChangeSet = changeSet.copy(newLinearLocations = changeSet.newLinearLocations ++ linearLocations, droppedSegmentIds = changeSet.droppedSegmentIds + linearLocation.id)
 
           (linearLocations, resultChangeSet)
@@ -135,7 +137,7 @@ object ApplyChangeInfoProcess {
   private def projectLinearLocation(linearLocation: LinearLocation, projection: Projection, mappedRoadLinks: Map[Long, RoadLinkLike]): LinearLocation = {
 
     def decimalPlaces(number: Double, d: Int = 10): Int = {
-      if((number * d).toLong % 10 == 0) d else decimalPlaces(number, d*10)
+      if ((number * d).toLong % 10 == 0) d else decimalPlaces(number, d * 10)
     }
 
     val (newStartMeasure, newEndMeasure, newSideCode) = calculateNewMValuesAndSideCode(linearLocation, projection)
@@ -164,7 +166,7 @@ object ApplyChangeInfoProcess {
     ).getOrElse(linearLocation.geometry)
 
     linearLocation.copy(
-      id = newId, linkId = projection.newLinkId, startMValue =  newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry, adjustedTimestamp = projection.vvhTimeStamp,
+      id = newId, linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry, adjustedTimestamp = projection.vvhTimeStamp,
       calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber))
     )
   }
@@ -172,15 +174,15 @@ object ApplyChangeInfoProcess {
   private def filterOutOlderChanges(locations: Map[Long, Seq[LinearLocation]])(change: ChangeInfo): Boolean = {
     //TODO check how to act when we have one totally newId (does not exist in current linear location) from changeInfo that doesnt have oldId associated
     val changeLocations = locations.getOrElse(change.oldId.getOrElse(change.newId.get), Seq())
-      if(changeLocations.isEmpty){
-        false
-      } else {
-        val oldestLinearLocationTimestamp = changeLocations.map(_.adjustedTimestamp).min
-        change.vvhTimeStamp > oldestLinearLocationTimestamp
-      }
+    if (changeLocations.isEmpty) {
+      false
+    } else {
+      val oldestLinearLocationTimestamp = changeLocations.map(_.adjustedTimestamp).min
+      change.vvhTimeStamp > oldestLinearLocationTimestamp
+    }
   }
 
-  private def filterOutChangesWithoutLinkIds(change: ChangeInfo) : Boolean = {
+  private def filterOutChangesWithoutLinkIds(change: ChangeInfo): Boolean = {
     change.newId.nonEmpty || change.oldId.nonEmpty
   }
 
@@ -247,7 +249,7 @@ object ApplyChangeInfoProcess {
     val (shortenedChanges, nonShortened) = nonDividedChanges.partition(_.changeType.isShortenedChangeType)
     val (lengthenedChanges, nonLengthened) = nonShortened.partition(_.changeType.isLengthenedChangeType)
     generateDividedProjections(dividedChanges) ++ generateLengthenedProjections(lengthenedChanges) ++
-     generateShortenedProjections(shortenedChanges) ++ generateCombinedProjections(nonLengthened)
+      generateShortenedProjections(shortenedChanges) ++ generateCombinedProjections(nonLengthened)
   }
 
   private def filterOutChanges(linearLocations: Seq[LinearLocation], changes: Seq[ChangeInfo]): Seq[ChangeInfo] = {
@@ -257,7 +259,7 @@ object ApplyChangeInfoProcess {
     )
 
     changes.filter(change =>
-          filterOperations.forall(filterOperation => filterOperation(change))
+      filterOperations.forall(filterOperation => filterOperation(change))
     )
   }
 
@@ -278,7 +280,7 @@ object ApplyChangeInfoProcess {
     }
   }
 
-  def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]) :(Seq[LinearLocation], ChangeSet) = {
+  def applyChanges(linearLocations: Seq[LinearLocation], roadLinks: Seq[RoadLinkLike], changes: Seq[ChangeInfo]): (Seq[LinearLocation], ChangeSet) = {
 
     val filteredChanges = filterOutChanges(linearLocations, changes)
 
