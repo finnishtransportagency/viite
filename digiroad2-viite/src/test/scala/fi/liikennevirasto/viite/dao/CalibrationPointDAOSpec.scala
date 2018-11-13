@@ -49,7 +49,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
           1, 0, 208.951, 1610995, 0, 1)""".execute
   }
 
-  test("Creating calibrationPoints") {
+  test("Test createCalibrationPoint of calibration points When creating two calibrations points, Then they should be saved without any problems") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
@@ -60,7 +60,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Finding calibrationPoints") {
+  test("Test findCalibrationPointsOfRoad When adding calibrationPoints if should be returned in the findCalibrationPointById") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
@@ -72,9 +72,9 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       calibrationPoints.head.projectId should be (1)
       val roadCalibrationPoints = CalibrationPointDAO.findCalibrationPointsOfRoad(1,1)
       roadCalibrationPoints.size should be (2)
-      roadCalibrationPoints(0).id should not be (roadCalibrationPoints(1).id)
-      roadCalibrationPoints(0).segmentMValue should not be (roadCalibrationPoints(1).segmentMValue)
-      roadCalibrationPoints(0).addressMValue should not be (roadCalibrationPoints(1).addressMValue)
+      roadCalibrationPoints.head.id should not be roadCalibrationPoints(1).id
+      roadCalibrationPoints.head.segmentMValue should not be roadCalibrationPoints(1).segmentMValue
+      roadCalibrationPoints.head.addressMValue should not be roadCalibrationPoints(1).addressMValue
       val calibrationPointId = CalibrationPointDAO.createCalibrationPoint(2, 2, 1.1, 20)
       val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointById(calibrationPointId)
       foundCalibrationPoint.isEmpty should be (false)
@@ -86,12 +86,12 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Updating calibration points") {
+  test("Test updateSpecificCalibrationPointMeasures When updating calibration point by id Then it should be updated with success") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
       val id = CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      CalibrationPointDAO.updateSpecificCalibrationPointMeasures(id, 1.1, 30);
+      CalibrationPointDAO.updateSpecificCalibrationPointMeasures(id, 1.1, 30)
       val updatedCalibrationPoint = CalibrationPointDAO.findCalibrationPointById(id).get
       updatedCalibrationPoint.id should be (id)
       updatedCalibrationPoint.segmentMValue should be (1.1)
@@ -99,7 +99,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Removal of calibration points") {
+  test("Test removeSpecificCalibrationPoint When removing calibration pint by id Then it should be removed with success") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
@@ -110,7 +110,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Removal of ALL calibration points from a project") {
+  test("Test removeAllCalibrationPointsFromProject & removeAllCalibrationPointsFromRoad When removing all calibrations points by project or road Then it should be deleted with success") {
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       addTestProjects()
