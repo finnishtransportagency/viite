@@ -124,10 +124,10 @@ package object util {
       val linearLocationId = Sequences.nextLinearLocationId
       val endMeasure = end - start
       sqlu"""INSERT INTO ROADWAY VALUES ($roadwayId, 1000000000, $roadNumber, $roadPartNumber, $track, $start, $end, 0, ${discontinuity.value},
-            sysdate, NULL, 'test user', to_timestamp('16-OCT-18 12.03.19.999393000','DD-MON-RR HH24.MI.SSXFF','nls_numeric_characters=''. '''), 0, $ely, 0, sysdate, NULL)""".execute
+            sysdate, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-RR HH24.MI.SSXFF','nls_numeric_characters=''. '''), 0, $ely, 0, sysdate, NULL)""".execute
 
       sqlu""" INSERT INTO LINEAR_LOCATION VALUES ($linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, 0, 0, 1, 1539688528, 0, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY($start, 0, 0, 0, $end, 0, 0, $endMeasure)),
-            sysdate, null, 'test user', to_timestamp('16-OCT-18 12.03.19.999393000','DD-MON-RR HH24.MI.SSXFF','nls_numeric_characters=''. '''))""".execute
+            sysdate, null, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-RR HH24.MI.SSXFF','nls_numeric_characters=''. '''))""".execute
       (roadwayId, nextLinkId)
     }
 
