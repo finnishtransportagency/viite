@@ -11,11 +11,11 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -31,6 +31,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+  val projectReservedPartDAO = new ProjectReservedPartDAO
 
   def addTestProjects(): Unit = {
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
@@ -38,13 +39,13 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
   }
 
   def addProjectRoads(): Unit = {
-    ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser")
-    ProjectDAO.reserveRoadPart(2, 2, 1, "TestUser")
-    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,created_by,
-          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,'automatedtest',
+    projectReservedPartDAO.reserveRoadPart(1, 1, 1, "TestUser")
+    projectReservedPartDAO.reserveRoadPart(2, 2, 1, "TestUser")
+    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M,created_by,
+          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,1,1,'automatedtest',
           1, 0, 208.951, 1610995, 0, 1)""".execute
-    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,created_by,
-          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,'automatedtest',
+    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M, created_by,
+          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,1,1,'automatedtest',
           1, 0, 208.951, 1610995, 0, 1)""".execute
   }
 

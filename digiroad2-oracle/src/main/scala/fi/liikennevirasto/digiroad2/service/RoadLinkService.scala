@@ -522,4 +522,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val roadLinksVVH = vvhClient.complementaryData.fetchByLinkIds(linkIds) ++ roadLinks ++ roadLinksSuravage
     enrichRoadLinksFromVVH(roadLinksVVH)
   }
+
+  def getCurrentAndSuravageRoadLinksFromVVH(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
+    val roadLinks = if (frozenTimeVVHAPIServiceEnabled) vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) else vvhClient.roadLinkData.fetchByLinkIds(linkIds)
+    val roadLinksSuravage = vvhClient.suravageData.fetchSuravageByLinkIds(linkIds)
+    val roadLinksVVH = roadLinks ++ roadLinksSuravage
+    enrichRoadLinksFromVVH(roadLinksVVH)
+  }
 }

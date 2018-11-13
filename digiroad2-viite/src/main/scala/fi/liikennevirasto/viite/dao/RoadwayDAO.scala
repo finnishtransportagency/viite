@@ -30,7 +30,6 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
-
 sealed trait Discontinuity {
   def value: Int
 
@@ -159,6 +158,8 @@ object TerminationCode {
 //TODO this will only be used for road address
 trait BaseRoadAddress {
   def id: Long
+
+  def linearLocationId: Long
 
   def roadNumber: Long
 
@@ -341,6 +342,7 @@ class BaseDAO {
 }
 
 class RoadwayDAO extends BaseDAO {
+  val linearLocationDAO = new LinearLocationDAO
 
   /**
     * Fetch the roadway by the roadway number
@@ -352,9 +354,9 @@ class RoadwayDAO extends BaseDAO {
   def fetchByRoadwayNumber(roadwayNumber: Long, includeHistory: Boolean = false): Option[Roadway] = {
     time(logger, "Fetch roadway by roadway number") {
       if (includeHistory) {
-        fetch(withRoadwayNumber(roadwayNumber)).headOption
+        fetch(withRoadwayNumberEnded(roadwayNumber)).headOption
       } else {
-        fetch(withRoadwayNumberAndNotEnded(roadwayNumber)).headOption
+        fetch(withRoadwayNumber(roadwayNumber)).headOption
       }
     }
   }
@@ -422,12 +424,29 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
+    time(logger, "Fetch roadway by road number and part") {
+      fetch(withRoadAndPart(roadNumber, roadPart, withHistory, fetchOnlyEnd))
+    }
+  }
+
   def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long]): Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
         Seq()
-      else
-        fetch(withRoadwayNumbersAndNotEnded(roadwayNumbers))
+      else {
+        if (roadwayNumbers.size > 1000)
+          MassQuery.withIds(roadwayNumbers) {
+            idTableName =>
+              fetch(query => s"""
+                $query
+                join $idTableName i on i.id = a.ROADWAY_NUMBER
+                where a.valid_to is null and a.end_date is null
+              """.stripMargin)
+          }
+        else
+          fetch(withRoadwayNumbers(roadwayNumbers))
+      }
     }
   }
 
@@ -471,6 +490,12 @@ class RoadwayDAO extends BaseDAO {
   def fetchAllByBetweenDates(sinceDate: DateTime, untilDate: DateTime): Seq[Roadway] = {
     time(logger, "Fetch road address by dates") {
       fetch(withBetweenDates(sinceDate, untilDate))
+    }
+  }
+
+  def fetchAllByRoadwayId(roadwayIds: Seq[Long]): Seq[Roadway] = {
+    time(logger, "Fetch road ways by id") {
+      fetch(withRoadWayIds(roadwayIds))
     }
   }
 
@@ -519,23 +544,35 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withSection(roadNumber: Long, roadPartNumber: Long)(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK in (${tracks.mkString(",")})"""
   }
 
   private def withSectionAndTracks(roadNumber: Long, roadPartNumbers: Set[Long], tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number in (${roadPartNumbers.mkString(",")}) and TRACK in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number in (${roadPartNumbers.mkString(",")}) and TRACK in (${tracks.mkString(",")})"""
   }
 
   private def withRoadAndTracks(roadNumber: Long, tracks: Set[Track])(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber and TRACK in (${tracks.mkString(",")})"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and TRACK in (${tracks.mkString(",")})"""
   }
 
   private def withRoad(roadNumber: Long)(query: String): String = {
-    s"""$query where valid_to is null and road_number = $roadNumber"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber"""
+  }
+
+  private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
+    val historyFilter = if (!includeHistory)
+      " AND end_date is null"
+    else
+      ""
+
+    val endPart = if (fetchOnlyEnd) {
+      s" AND a.end_addr_m = (Select max(road.end_addr_m) from roadway road Where road.road_number = $roadNumber And road.road_part_number = $roadPart And (road.valid_to IS NULL AND road.end_date is null))"
+    } else ""
+    s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter $endPart"""
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
@@ -561,7 +598,7 @@ class RoadwayDAO extends BaseDAO {
       case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
       case _ => s""""""
     }
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
   }
 
   private def withSectionTrackAndAddresses(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
@@ -571,30 +608,19 @@ class RoadwayDAO extends BaseDAO {
       case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
       case _ => s""""""
     }
-    s"""$query where valid_to is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK = $track $addressFilter"""
+    s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber and TRACK = $track $addressFilter"""
   }
 
   private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
+    s"""$query where a.valid_to is null and end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
+  }
+
+  private def withRoadwayNumberEnded(roadwayNumber: Long)(query: String): String = {
     s"""$query where a.valid_to is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
-  private def withRoadwayNumberAndNotEnded(roadwayNumber: Long)(query: String): String = {
-    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
-  }
-
-  private def withRoadwayNumbersAndNotEnded(roadwayNumbers: Set[Long])(query: String): String = {
-    if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers) {
-        idTableName =>
-          s"""
-            $query
-            join $idTableName i on i.id = a.ROADWAY_NUMBER
-            where a.valid_to is null and a.end_date is null
-          """.stripMargin
-      }
-    } else {
+  private def withRoadwayNumbers(roadwayNumbers: Set[Long])(query: String): String = {
       s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
-    }
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
@@ -605,6 +631,10 @@ class RoadwayDAO extends BaseDAO {
   private def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     s"""$query where valid_to is null and start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
           AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
+  }
+
+  private def withRoadWayIds(roadwayIds: Seq[Long])(query: String): String = {
+    s"""$query where id in (${roadwayIds.mkString(",")}) and a.valid_to is null and a.end_date is null"""
   }
 
   private implicit val getRoadAddress: GetResult[Roadway] = new GetResult[Roadway] {
@@ -660,18 +690,18 @@ class RoadwayDAO extends BaseDAO {
   //    Q.queryNA[Int](query).firstOption
   //  }
   //
-  //  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
-  //    val query =
-  //      s"""
-  //          SELECT * FROM (
-  //            SELECT ra.road_part_number
-  //            FROM ROADWAY ra
-  //            WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
-  //            ORDER BY road_part_number DESC
-  //          ) WHERE ROWNUM < 2
-  //      """
-  //    Q.queryNA[Long](query).firstOption
-  //  }
+    def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
+      val query =
+        s"""
+            SELECT * FROM (
+              SELECT ra.road_part_number
+              FROM ROADWAY ra
+              WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
+              ORDER BY road_part_number DESC
+            ) WHERE ROWNUM < 2
+        """
+      Q.queryNA[Long](query).firstOption
+    }
 
 
   //  /**
@@ -700,47 +730,6 @@ class RoadwayDAO extends BaseDAO {
   //    }
   //  }
   //
-  //  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
-  //    time(logger, "Fetch road addresses by bounding box") {
-  //      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
-  //        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
-  //      val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
-  //
-  //      val floatingFilter = if (fetchOnlyFloating)
-  //        " and ra.floating > 0"
-  //      else
-  //        ""
-  //      val normalRoadsFilter = if (onlyNormalRoads)
-  //        " and ra.link_source = 1"
-  //      else
-  //        ""
-  //      val roadNumbersFilter = if (roadNumberLimits.nonEmpty)
-  //        withRoadNumbersFilter(roadNumberLimits)
-  //      else
-  //        ""
-  //
-  //
-  //      val query =
-  //        s"""
-  //        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.TRACK,
-  //        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-  //        ra.SIDE, ra.adjusted_timestamp,
-  //        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
-  //        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
-  //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
-  //        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
-  //        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2,
-  //        ra.link_source, ra.ely, ra.terminated, ra.roadway_number, ra.valid_to,
-  //        (SELECT rn.road_name FROM ROAD_NAME rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL) as road_name
-  //        from ROADWAY ra
-  //        where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
-  //          ra.terminated = 0 and
-  //          ra.valid_to is null and
-  //          ra.end_date is null
-  //      """
-  //      queryList(query)
-  //    }
-  //  }
   //
   //
   //  def dateTimeParse(string: String): DateTime = {
@@ -893,12 +882,13 @@ class RoadwayDAO extends BaseDAO {
   //  }
   //
   //
-  //  private def queryList(query: String): List[RoadAddress] = {
-  //    Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
-  //      case (_, roadAddressList) =>
-  //        roadAddressList.head
-  //    }.toList
-  //  }
+//  private def queryList(query: String): List[RoadAddress] = {
+//    throw new NotImplementedError()
+//    Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
+//      case (_, roadAddressList) =>
+//        roadAddressList.head
+//    }.toList
+//  }
   //
   //  def fetchPartsByRoadNumbers(boundingRectangle: BoundingRectangle, roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
   //    time(logger, "Fetch road addresses of road parts by road numbers") {
@@ -1237,16 +1227,16 @@ class RoadwayDAO extends BaseDAO {
   //  }
   //
   //
-  //  def expireById(ids: Set[Long]): Int = {
-  //    val query =
-  //      s"""
-  //          Update ROADWAY Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
-  //        """
-  //    if (ids.isEmpty)
-  //      0
-  //    else
-  //      Q.updateNA(query).first
-  //  }
+  def expireById(ids: Set[Long]): Int = {
+    val query =
+      s"""
+        Update ROADWAY Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
+      """
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
+  }
   //
   //  def expireRoadAddresses (sourceLinkIds: Set[Long]): AnyVal = {
   //    if (!sourceLinkIds.isEmpty) {
@@ -1342,16 +1332,16 @@ class RoadwayDAO extends BaseDAO {
   //    * @param startDate
   //    * @return
   //    */
-  //  def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
-  //    sql"""
-  //       select distinct ra.road_part_number
-  //              from ROADWAY ra
-  //              where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
-  //              AND END_DATE IS NULL
-  //              AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
-  //               = 1 and pl.status = 5)
-  //      """.as[Long].list
-  //  }
+    def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
+      sql"""
+         select distinct ra.road_part_number
+                from ROADWAY ra
+                where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
+                AND END_DATE IS NULL
+                AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
+                 = 1 and pl.status = 5)
+        """.as[Long].list
+    }
   //
   //  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment): Unit = {
   //    val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
@@ -1405,9 +1395,9 @@ class RoadwayDAO extends BaseDAO {
   //    }
   //  }
   //
-  //  def getNextRoadwayId: Long = {
-  //    Queries.nextRoadwayId.as[Long].first
-  //  }
+    def getNextRoadwayId: Long = {
+      Queries.nextRoadwayId.as[Long].first
+    }
   //
   //  implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
   //
@@ -1624,20 +1614,23 @@ class RoadwayDAO extends BaseDAO {
   //    if (Q.queryNA[Int](query).first>0) true else false
   //  }
   //
-  //  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
-  //  {
-  //    val query =
-  //      s"""SELECT r.id, r.link_id, r.end_addr_M, r.discontinuity, r.ely,
-  //                (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
-  //                (Select Max(ra.end_Date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
-  //                FROM ROADWAY r
-  //             INNER JOIN (Select  MAX(start_addr_m) as lol FROM ROADWAY rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
-  //             rm.valid_to is null AND rm.end_date is null AND TRACK in (0,1)) ra
-  //             on r.START_ADDR_M=ra.lol
-  //             WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
-  //             r.valid_to is null AND TRACK in (0,1)"""
-  //    Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
-  //  }
+
+  // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
+  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
+  {
+    val query =
+      s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
+                  (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
+                  (Select Max(ra.end_Date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
+                  FROM ROADWAY r
+                INNER JOIN LINEAR_LOCATION l on r.ROADWAY_NUMBER = l.ROADWAY_NUMBER
+               INNER JOIN (Select  MAX(rm.start_addr_m) as maxstartaddrm FROM ROADWAY rm WHERE rm.road_number=$roadNumber AND rm.road_part_number=$roadPart AND
+               rm.valid_to is null AND rm.end_date is null AND rm.TRACK in (0,1)) ra
+               on r.START_ADDR_M=ra.maxstartaddrm
+               WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
+               r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
+    Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
+  }
   //
   //  def setSubsequentTermination(linkIds: Set[Long]): Unit = {
   //    val roadAddresses = fetchByLinkId(linkIds, true, true).filter(_.terminated == NoTermination)

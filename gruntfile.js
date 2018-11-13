@@ -90,6 +90,17 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
+              context: '/viite/api-docs',
+              host: '127.0.0.1',
+              port: '8080',
+              https: false,
+              changeOrigin: true,
+              xforward: false,
+              rewrite: {
+                  '^/viite/api-docs': '/api-docs'
+              }
+          },
+          {
             context: '/arcgis',
             host: 'aineistot.esri.fi',
             https: true,
@@ -97,6 +108,14 @@ module.exports = function(grunt) {
             changeOrigin: true,
             xforward: false,
             headers: {referer: 'https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=jsapi'}
+          },
+          {
+            context: '/rasteripalvelu',
+            host: 'oag.liikennevirasto.fi',
+            port: '80',
+            https: false,
+            changeOrigin: true,
+            xforward: false
           },
           {
             context: '/wmts',

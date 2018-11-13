@@ -1,4 +1,4 @@
-  package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import org.scalatest.{FunSuite, Matchers}

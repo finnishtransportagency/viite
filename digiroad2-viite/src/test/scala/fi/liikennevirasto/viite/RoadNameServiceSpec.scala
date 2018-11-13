@@ -211,5 +211,4 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       result.right.get.size should be(2)
     }
   }
-
 }

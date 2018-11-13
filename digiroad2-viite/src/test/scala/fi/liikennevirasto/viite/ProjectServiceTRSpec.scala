@@ -14,7 +14,7 @@ import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.mockito.Mockito.reset
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -31,7 +31,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -47,6 +47,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     override def withDynTransaction[T](f: => T): T = f
   }
+  val projectDAO = new ProjectDAO
 
   after {
     reset(mockRoadLinkService)
@@ -93,8 +94,8 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val project = RoadAddressProject(1, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.now(), DateTime.now(), "info", List(
-          ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), None)
-      ProjectDAO.createRoadAddressProject(project)
+          ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), None)
+      projectDAO.createRoadAddressProject(project)
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(1,1,6,1,1,0,10.5,1,1,8) """.execute
       //Assuming that there is data to show
       val responses = projectService.getRoadwayChangesAndSendToTR(Set(1))
@@ -102,7 +103,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1541
 //  test("update ProjectStatus when TR saved") {
 //    val sent2TRState = ProjectState.apply(2) //notfinnished
 //    val savedState = ProjectState.apply(5)
@@ -117,7 +118,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
 //
 //  }
 
-  //TODO Will be implemented at VIITE-1539
+  //TODO Will be implemented at VIITE-1541
 //  test("Update to TRerror state") {
 //    val sent2TRState = ProjectState.apply(2) //notfinnished
 //    val savedState = ProjectState.apply(3)

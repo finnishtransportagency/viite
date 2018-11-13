@@ -47,11 +47,11 @@ object DataFixture {
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
 
-  private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits(2) printZeroAlways() appendHours() appendSeparator(":") appendMinutes() appendSuffix(":") appendSeconds() toFormatter
+  private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits (2) printZeroAlways() appendHours() appendSeparator (":") appendMinutes() appendSuffix (":") appendSeconds() toFormatter
 
   //private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
@@ -150,7 +150,7 @@ object DataFixture {
     val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO = new RoadNetworkDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
     OracleDatabase.withDynTransaction {
       val checker = new FloatingChecker(roadLinkService)
       val roads = checker.checkRoadNetwork(username)
@@ -161,7 +161,7 @@ object DataFixture {
     println()
   }
 
-  private def importComplementaryRoadAddress(): Unit ={
+  private def importComplementaryRoadAddress(): Unit = {
     println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
@@ -172,6 +172,7 @@ object DataFixture {
     println(s"complementary road address import completed at time: ${DateTime.now()}")
     println()
   }
+
   //TODO this can be deleted
   //  private def combineMultipleSegmentsOnLinks(): Unit = {
 //    println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
@@ -201,7 +202,7 @@ object DataFixture {
     ))
   }
 
-  private def importRoadAddressChangeTestData(): Unit ={
+  private def importRoadAddressChangeTestData(): Unit = {
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
@@ -268,32 +269,52 @@ object DataFixture {
     }
   }
 
-  private def updateProjectLinkGeom(): Unit = {
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressDAO = new RoadwayDAO
-    val linearLocationDAO = new LinearLocationDAO
-    val roadNetworkDAO = new RoadNetworkDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
-    val projectsIDs= projectService.getRoadAddressAllProjects.map(x=>x.id)
-    val projectCount=projectsIDs.size
-    var c=0
-    projectsIDs.foreach(x=>
-    {
-      c+=1
-      println("Updating Geometry for project " +c+ "/"+projectCount)
-      projectService.updateProjectLinkGeometry(x,"BJ")
-    })
+  //TODO Those processes are no longer needed
+//  private def updateProjectLinkGeom(): Unit = {
+//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+//    val roadAddressDAO = new RoadwayDAO
+//    val linearLocationDAO = new LinearLocationDAO
+//    val roadNetworkDAO = new RoadNetworkDAO
+//    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+//    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+//    val projectsIDs = projectService.getAllProjects.map(x => x.id)
+//    val projectCount = projectsIDs.size
+//    var c = 0
+//    projectsIDs.foreach(x => {
+//      c += 1
+//      println("Updating Geometry for project " + c + "/" + projectCount)
+//      projectService.updateProjectLinkGeometry(x, "BJ")
+//    })
+//
+//  }
+//
+//  private def updateProjectLinkSdoGeometry(): Unit = {
+//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+//    val roadAddressDAO = new RoadwayDAO
+//    val linearLocationDAO = new LinearLocationDAO
+//    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
+//    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+//
+//    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+//    val projectsIDs = projectService.getAllProjects.map(x => x.id)
+//    val projectCount = projectsIDs.size
+//    var c = 0
+//    projectsIDs.foreach(proj => {
+//      c += 1
+//      println("Updating Geometry for project " + c + "/" + projectCount)
+//      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
+//    })
+//
+//  }
 
-  }
-
+  //TODO this might not be needed anymore
   private def correctNullElyCodeProjects(): Unit = {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO = new RoadNetworkDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-    val projectService = new  ProjectService(roadAddressService,roadLinkService, new DummyEventBus)
+    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
     val startTime = DateTime.now()
     println(s"Starting project Ely code correct now")
     projectService.correctNullProjectEly()
@@ -502,12 +523,14 @@ object DataFixture {
         showFreezeInfo()*/
       case Some("update_road_address_link_source") =>
         updateRoadAddressGeometrySource()
-      case Some("update_project_link_geom") =>
-        updateProjectLinkGeom()
+//      case Some("update_project_link_geom") =>
+//        updateProjectLinkGeom()
+//      case Some("update_project_link_SDO_GEOMETRY") =>
+//        updateProjectLinkSdoGeometry()
       case Some("import_road_names") =>
         importRoadNames()
-      case Some("correct_null_ely_code_projects") => // TODO is this batch process still needed?
-        correctNullElyCodeProjects()
+      /*case Some("correct_null_ely_code_projects") => // TODO is this batch process still needed?
+        correctNullElyCodeProjects()*/
 //      case Some("check_lrm_position") =>
 //        checkLinearLocation()
 //      case Some("fuse_road_address_with_history") =>
@@ -526,6 +549,7 @@ object DataFixture {
   }
 
   case class TimeLine(addressLength: Long, addresses: Seq[RoadAddress])
+
   private def generateCommonIdChunks(ids: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
     val (chunks, _) = ids.foldLeft((Seq[Long](0), 0)) {
       case ((fchunks, index), linkId) =>

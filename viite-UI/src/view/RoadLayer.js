@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection, selectedLinkProperty) {
+  root.RoadLayer = function(map, roadCollection, selectedLinkProperty) {
 
     Layer.call(this, map);
     var me = this;
@@ -95,6 +95,7 @@
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
+        applicationModel.removeSpinner();
       } else {
         /*
          This could be implemented also with eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');

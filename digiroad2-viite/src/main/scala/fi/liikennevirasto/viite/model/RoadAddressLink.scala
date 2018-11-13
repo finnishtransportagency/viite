@@ -8,6 +8,7 @@ import fi.liikennevirasto.viite.RoadType
 
 trait RoadAddressLinkLike extends PolyLine {
   def id: Long
+  def linearLocationId: Long
   def linkId: Long
   def length: Double
   def administrativeClass: AdministrativeClass
@@ -45,6 +46,9 @@ case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geome
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
                            anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, floating: Boolean = false) extends RoadAddressLinkLike {
+  def floatingAsInt = {
+    if (floating) 1 else 0
+  }
 }
 
 sealed trait Anomaly {

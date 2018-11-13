@@ -53,6 +53,8 @@ package object viite {
 
   val NewRoadNameId: Long = -1000L
 
+  val NewProjectLink: Long = -1000L
+
   val MaxDistanceForConnectedLinks = 0.1
 
   /* Used for small jumps on discontinuity or self-crossing tracks */
@@ -114,6 +116,7 @@ package object viite {
   val trUnreachableMessage = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
     s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon. "
   val genericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
+  val projectNotWritable = s"Projekti ei ole enää muokattavissa"
 
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
@@ -127,6 +130,27 @@ package object viite {
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
   val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering)
+
+  val defaultProjectEly = -1L
+
+  def parseStringGeometry(geomString: String): Seq[Point] = {
+    if (geomString.nonEmpty)
+      toGeometry(geomString)
+    else
+      Seq()
+  }
+
+  def toGeometry(geometryString: String): Seq[Point] = {
+    def toBD(s: String): Double = {
+      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
+    val pointRegex = raw"\[[^\]]*]".r
+    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
+    pointRegex.findAllIn(geometryString).map {
+      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
+      case regex(x, y, _) => Point(toBD(x), toBD(y))
+    }.toSeq
+  }
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
@@ -143,32 +167,6 @@ package object viite {
 
   def isRamp(r: BaseRoadAddress): Boolean = {
     isRamp(r.roadNumber, r.track.value)
-  }
-
-  def toGeomString(geometry: Seq[Point]): String = {
-    def toBD(d: Double): String = {
-      val zeroEndRegex = """(\.0+)$""".r
-      val lastZero = """(\.[0-9])0*$""".r
-      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
-      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) } )
-    }
-    geometry.map(p =>
-      (if (p.z != 0.0)
-        Seq(p.x, p.y, p.z)
-      else
-        Seq(p.x, p.y)).map(toBD).mkString("[", ",","]")).mkString(",")
-  }
-
-  def toGeometry(geometryString: String): Seq[Point] = {
-    def toBD(s: String): Double = {
-      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
-    }
-    val pointRegex = raw"\[[^\]]*]".r
-    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
-    pointRegex.findAllIn(geometryString).map {
-      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
-      case regex(x, y, _) => Point(toBD(x), toBD(y))
-    }.toSeq
   }
 
   object CombineMaps {

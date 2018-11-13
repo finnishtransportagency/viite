@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.ReservedRoadPart
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.{Delta, ReNumeration, Transferred, Unchanged}
@@ -21,6 +20,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+  val projectDAO = new ProjectDAO
 
   def addprojects(): Unit = {
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
@@ -30,9 +30,9 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
   test("confirm data fetching"){
     runWithRollback{
       //inserts one case
-      val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val addresses = List(ProjectReservedPart(5:Long, 203:Long, 203:Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val project = RoadAddressProject(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses, None)
-      ProjectDAO.createRoadAddressProject(project)
+      projectDAO.createRoadAddressProject(project)
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(100,1,6,1,1,0,10.5,1,1,8) """.execute
       val projectId = sql"""Select p.id From Project p Inner Join ROADWAY_CHANGES rac on p.id = rac.project_id""".as[Long].first
       val changesList = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
@@ -42,8 +42,8 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
   }
 
   test("confirm data insertion") {
-    val newProjectLink = ProjectLink(1, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0.0, 0.0,
-      SideCode.Unknown, (None, None), NoFloating, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 5, false,
+    val newProjectLink = ProjectLink(1, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0,
+      SideCode.Unknown, (None, None), NoFloating, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, false,
       None, 748800L)
     val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
