@@ -17,7 +17,7 @@ class ChangeTypeSpec extends FunSuite with Matchers {
     )
   }
 
-  test("Changes should belong to only one category") {
+  test("Test partition of changes When each group of different type changes should belong to one category type") {
     ChangeType.values.map(v => ChangeInfo(None, None, 1L, v.value, None, None, None, None)).foreach(ci => {
       val (group, othergroups) = allClasses(ci).partition(b => b)
       group.size should be (1)
