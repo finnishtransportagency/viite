@@ -171,7 +171,18 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
         }
 
-        val points = remainLinks.map(pl => pl.getEndPoints(direction))
+        val points = remainLinks.map(pl => {
+          val linkDirection = if(pl.sideCode != SideCode.Unknown) {
+            (Vector3d(0, 0, 0) + (pl.endPoint - pl.startingPoint)).normalize2D()
+          } else {
+            if(pl.geometry.head.y == pl.geometry.last.y) {
+              Vector3d(1.0, 0.0, 0.0)
+            } else {
+              Vector3d(0.0, 1.0, 0.0)
+            }
+          }
+          pl.getEndPoints(linkDirection)
+        })
 
         // Approximate estimate of the mid point: averaged over count, not link length
         // Calculation is done by summing the direction of the vector multiplied by 0.5 to the start point
