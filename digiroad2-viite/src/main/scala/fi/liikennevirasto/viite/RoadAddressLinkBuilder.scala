@@ -42,7 +42,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       case _ => roadAddress.roadType
     }
     RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, UnknownLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, UnknownLinkType, roadLink.constructionType, roadLink.linkSource, roadType, VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
@@ -169,43 +169,43 @@ object RoadType {
   }
 
   case object PublicRoad extends RoadType {
-    def value = 1;
+    def value = 1
 
     def displayValue = "Yleinen tie"
   }
 
   case object FerryRoad extends RoadType {
-    def value = 2;
+    def value = 2
 
     def displayValue = "Lauttaväylä yleisellä tiellä"
   }
 
   case object MunicipalityStreetRoad extends RoadType {
-    def value = 3;
+    def value = 3
 
     def displayValue = "Kunnan katuosuus"
   }
 
   case object PublicUnderConstructionRoad extends RoadType {
-    def value = 4;
+    def value = 4
 
     def displayValue = "Yleisen tien työmaa"
   }
 
   case object PrivateRoadType extends RoadType {
-    def value = 5;
+    def value = 5
 
     def displayValue = "Yksityistie"
   }
 
   case object UnknownOwnerRoad extends RoadType {
-    def value = 9;
+    def value = 9
 
     def displayValue = "Omistaja selvittämättä"
   }
 
   case object Unknown extends RoadType {
-    def value = 99;
+    def value = 99
 
     def displayValue = "Ei määritelty"
   }

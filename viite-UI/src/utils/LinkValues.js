@@ -122,6 +122,14 @@
         Unknown:                        {value:99, description:"Ei määritelty"}
     };
 
+    root.RoadLinkType = {
+        UnknownRoadLinkType:        {value: 0, description: "UnknownRoadLinkType"},
+        NormalRoadLinkType:         {value: 1, description: "NormalRoadLinkType"},
+        ComplementaryRoadLinkType:  {value: 3, description: "ComplementaryRoadLinkType"},
+        FloatingRoadLinkType:       {value: -1, description: "FloatingRoadLinkType"},
+        SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
+    };
+
     /*
     The meta key codes are browser dependant, in proper:
         Firefox: 224
