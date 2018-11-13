@@ -252,42 +252,43 @@ object DataFixture {
 
   }
 
-  private def updateProjectLinkGeom(): Unit = {
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressDAO = new RoadwayDAO
-    val linearLocationDAO = new LinearLocationDAO
-    val roadNetworkDAO = new RoadNetworkDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
-    val projectsIDs = projectService.getAllProjects.map(x => x.id)
-    val projectCount = projectsIDs.size
-    var c = 0
-    projectsIDs.foreach(x => {
-      c += 1
-      println("Updating Geometry for project " + c + "/" + projectCount)
-      projectService.updateProjectLinkGeometry(x, "BJ")
-    })
-
-  }
-
-  private def updateProjectLinkSdoGeometry(): Unit = {
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressDAO = new RoadwayDAO
-    val linearLocationDAO = new LinearLocationDAO
-    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-
-    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
-    val projectsIDs = projectService.getAllProjects.map(x => x.id)
-    val projectCount = projectsIDs.size
-    var c = 0
-    projectsIDs.foreach(proj => {
-      c += 1
-      println("Updating Geometry for project " + c + "/" + projectCount)
-      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
-    })
-
-  }
+  //TODO Those processes are no longer needed
+//  private def updateProjectLinkGeom(): Unit = {
+//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+//    val roadAddressDAO = new RoadwayDAO
+//    val linearLocationDAO = new LinearLocationDAO
+//    val roadNetworkDAO = new RoadNetworkDAO
+//    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+//    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+//    val projectsIDs = projectService.getAllProjects.map(x => x.id)
+//    val projectCount = projectsIDs.size
+//    var c = 0
+//    projectsIDs.foreach(x => {
+//      c += 1
+//      println("Updating Geometry for project " + c + "/" + projectCount)
+//      projectService.updateProjectLinkGeometry(x, "BJ")
+//    })
+//
+//  }
+//
+//  private def updateProjectLinkSdoGeometry(): Unit = {
+//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+//    val roadAddressDAO = new RoadwayDAO
+//    val linearLocationDAO = new LinearLocationDAO
+//    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
+//    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+//
+//    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
+//    val projectsIDs = projectService.getAllProjects.map(x => x.id)
+//    val projectCount = projectsIDs.size
+//    var c = 0
+//    projectsIDs.foreach(proj => {
+//      c += 1
+//      println("Updating Geometry for project " + c + "/" + projectCount)
+//      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
+//    })
+//
+//  }
 
   //TODO this might not be needed anymore
   private def correctNullElyCodeProjects(): Unit = {
@@ -505,10 +506,10 @@ object DataFixture {
         showFreezeInfo()
       case Some("update_road_address_link_source") =>
         updateRoadAddressGeometrySource()
-      case Some("update_project_link_geom") =>
-        updateProjectLinkGeom()
-      case Some("update_project_link_SDO_GEOMETRY") =>
-        updateProjectLinkSdoGeometry()
+//      case Some("update_project_link_geom") =>
+//        updateProjectLinkGeom()
+//      case Some("update_project_link_SDO_GEOMETRY") =>
+//        updateProjectLinkSdoGeometry()
       case Some("import_road_names") =>
         importRoadNames()
       /*case Some("correct_null_ely_code_projects") =>
