@@ -31,7 +31,7 @@ class DataImporterSpec extends FunSuite with Matchers {
     override def withDynTransaction(f: => Unit): Unit = f
     override def withDynSession[T](f: => T): T = f
     override def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
-      fetchChunkLinkIds().foreach { p => f(p) }
+      fetchChunkLinkIds().foreach { p => f(p._1,p._2) }
     }
   }
 

@@ -65,7 +65,7 @@ class DataImporter {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
     val chunks = withDynSession{ fetchChunkLinkIds()}
-    chunks.par.foreach { p => f(p) }
+    chunks.par.foreach { p => f(p._1, p._2) }
   }
 
   implicit object SetStruct extends SetParameter[STRUCT] {
