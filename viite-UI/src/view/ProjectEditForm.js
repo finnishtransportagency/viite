@@ -225,6 +225,14 @@
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
+        _.defer(function() {
+            $('#beginDistance').on("change", function(changedData) {
+                eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
+            });
+            $('#endDistance').on("change", function(changedData) {
+                eventbus.trigger('projectLink:editedEndDistance', changedData.target.value);
+            });
+        });
       });
 
       eventbus.on('projectLink:errorClicked', function(selected, errorMessage) {
