@@ -40,7 +40,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result
   }
 
-  test("Provide last edited date from VVH on road link modification date if there are no overrides") {
+  test("Test getRoadLinksFromVVH() When no overridden data on road links exists Then return last edited date from VVH on road link modification date") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -60,7 +60,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Check the correct return of a ViiteRoadLink By Municipality") {
+  test("Test getRoadLinksFromVVHByMunicipality() When supplying a specific municipality Id Then return the correct return of a ViiteRoadLink of that Municipality") {
     val municipalityId = 235
     val linkId = 2l
     val roadLink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -82,7 +82,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Verify if there are roadlinks from the complimentary geometry") {
+  test("Test getComplementaryRoadLinksFromVVH() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
     val municipalityId = 235
     val linkId = 2l
     val roadLink: VVHRoadlink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -105,7 +105,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Full municipality request includes both complementary and ordinary geometries") {
+  test("Test getCurrentAndComplementaryRoadLinksFromVVH() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
     val municipalityId = 235
     val linkId = Seq(1l, 2l)
     val roadLinks = linkId.map(id =>
@@ -134,7 +134,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Verify the returning of the correct VVHHistoryRoadLink"){
+  test("Test getRoadLinksHistoryFromVVH() When supplying a single linkId to query Then return the VVHHistoryRoadLink for the queried linkId "){
     val municipalityId = 235
     val linkId = 1234
     val firstRoadLink = new VVHHistoryRoadLink(linkId, municipalityId, Seq.empty, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, 0, 100, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
@@ -154,7 +154,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Should return roadlinks and complementary roadlinks") {
+  test("Test getRoadLinksAndComplementaryFromVVH() When submitting a specific bounding box and a municipality Then return regular roadlinks and complementary roadlinks that are in the bounding box and belong to said municipality.") {
 
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -189,7 +189,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("verify the output of change info") {
+  test("Test getChangeInfoFromVVHF() When defining a bounding box as a search area Then return the change infos for the links in the search area") {
     val oldLinkId = 1l
     val newLinkId = 2l
     val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000)
