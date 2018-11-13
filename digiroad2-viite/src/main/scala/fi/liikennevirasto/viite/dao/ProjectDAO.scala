@@ -123,7 +123,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
 
   def getEndPoints(direction: Vector3d) = {
-    if(sideCode == SideCode.Unknown) {
+    if (sideCode == SideCode.Unknown) {
       Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._2.toVector - ps._1.toVector))
     } else {
       (startingPoint, endPoint)
@@ -146,7 +146,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def addrMLength() = {
-    if(isSplit)
+    if (isSplit)
       endAddrMValue - startAddrMValue
     else
       roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
