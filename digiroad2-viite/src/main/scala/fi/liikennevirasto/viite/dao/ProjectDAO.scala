@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
+import java.sql.{Timestamp, Types}
 import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -363,7 +363,7 @@ object ProjectDAO {
           addressPS.setLong(11, pl.status.value)
           addressPS.setLong(12, pl.roadType.value)
           if (pl.roadAddressId == 0)
-            addressPS.setString(13, null)
+            addressPS.setNull(13, Types.BIGINT)
           else
             addressPS.setLong(13, pl.roadAddressId)
           if (pl.connectedLinkId.isDefined)
