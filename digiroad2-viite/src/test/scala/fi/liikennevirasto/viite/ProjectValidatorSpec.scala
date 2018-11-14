@@ -875,7 +875,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       error2.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
       val updatedProjectLinks = Seq(currentProjectLinks2.filter(_.status == LinkStatus.UnChanged).head.copy(status = LinkStatus.Transfer, roadPartNumber = 2L, discontinuity = EndOfRoad))
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
       val afterProjectLinks = projectLinkDAO.getProjectLinks(project.id)
 
       mockEmptyRoadAddressServiceCalls()
@@ -941,7 +941,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val updatedProjectLinks = Seq(currentProjectLinks.filter(_.status == LinkStatus.New).head.copy(roadPartNumber = 2L, discontinuity = EndOfRoad))
 
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
       val currentProjectLinks2 = projectLinkDAO.getProjectLinks(project.id)
 
       mockEmptyRoadAddressServiceCalls()
@@ -1010,7 +1010,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val updatedProjectLinks = Seq(currentProjectLinks.filter(_.status == LinkStatus.New).head.copy(roadPartNumber = 2L, discontinuity = EndOfRoad))
 
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
       val currentProjectLinks2 = projectLinkDAO.getProjectLinks(project.id)
 
       mockEmptyRoadAddressServiceCalls()
@@ -1444,7 +1444,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val projectLinks = projectLinkDAO.getProjectLinks(id, Some(LinkStatus.NotHandled))
       val updatedProjectLinks = Seq(projectLinks.head.copy(status = LinkStatus.Transfer)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged))
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
 
       mockEmptyRoadAddressServiceCalls()
 
@@ -1505,7 +1505,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       |---Transfer--->|---Unchanged--->|
        */
       val updatedProjectLinkToTransfer = Seq(projectLinks.head.copy(status = LinkStatus.Transfer, startAddrMValue = 10, endAddrMValue = 20)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged, startAddrMValue = 0, endAddrMValue = 10))
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinkToTransfer, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinkToTransfer, "U", roadAddresses)
       mockEmptyRoadAddressServiceCalls()
       val validationErrors1 = projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.getProjectLinks(project.id))
       validationErrors1.size shouldNot be(0)
@@ -1514,7 +1514,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
        |---Numbering--->|---Unchanged--->|
         */
       val updatedProjectLinkToNumbering = Seq(projectLinks.head.copy(status = LinkStatus.Numbering, startAddrMValue = 10, endAddrMValue = 20))
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinkToNumbering, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinkToNumbering, "U", roadAddresses)
       mockEmptyRoadAddressServiceCalls()
       val validationErrors2 = projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.getProjectLinks(project.id))
       validationErrors2.size shouldNot be(0)
@@ -1523,7 +1523,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
        |---Terminated--->|---Unchanged--->|
         */
       val updatedProjectLinkToTerminated = Seq(projectLinks.head.copy(status = LinkStatus.Terminated, startAddrMValue = 10, endAddrMValue = 20))
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinkToTerminated, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinkToTerminated, "U", roadAddresses)
       mockEmptyRoadAddressServiceCalls()
       val validationErrors3 = projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.getProjectLinks(project.id))
       validationErrors3.size shouldNot be(0)
@@ -1577,7 +1577,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val projectLinks = projectLinkDAO.getProjectLinks(id, Some(LinkStatus.NotHandled))
       val updatedProjectLinks = Seq(projectLinks.head.copy(status = LinkStatus.Transfer)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.UnChanged))
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
       mockEmptyRoadAddressServiceCalls()
       val validationErrors = projectValidator.validateProject(project, projectLinkDAO.getProjectLinks(project.id))
 
@@ -1646,7 +1646,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val projectLinks = projectLinkDAO.getProjectLinks(id).sortBy(_.startAddrMValue)
       val updatedProjectLinks = Seq(projectLinks.head.copy(status = LinkStatus.UnChanged)) ++ projectLinks.tail.map(pl => pl.copy(status = LinkStatus.Transfer))
-      projectLinkDAO.updateProjectLinksToDB(updatedProjectLinks, "U", roadAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
       mockEmptyRoadAddressServiceCalls()
       val validationErrors = projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.getProjectLinks(id))
       validationErrors.size should be(0)
