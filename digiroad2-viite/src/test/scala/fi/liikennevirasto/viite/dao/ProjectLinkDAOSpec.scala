@@ -80,7 +80,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   //TODO test coverage missing for ProjectLinkDAO methods:
   /**
-    * updateProjectLinksToDB VIITE-1540
+    * updateProjectLinks VIITE-1540
     * updateProjectLinksGeometry VIITE-1540
     * updateProjectLinkNumbering VIITE-1540
     * updateProjectLinksToTerminated VIITE1540
@@ -213,47 +213,36 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test both projectLinkDAO.getProjectLinksByIds() and projectLinkDAO.removeProjectLinksById() When supplying a empty list Then both methods should NOT throw an exception") {
+  test("Test getProjectLinksByIds and removeProjectLinksById When supplying a empty list Then both methods should NOT throw an exception") {
     projectLinkDAO.getProjectLinksByIds(Seq())
     projectLinkDAO.removeProjectLinksById(Set())
   }
 
-  //  test("Create reversed project link") {
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-  //      ProjectDAO.create(addresses.map(x => x.copy(reversed = true)))
-  //      val projectLinks = ProjectDAO.getProjectLinks(id)
-  //      projectLinks.count(x => x.reversed) should be(projectLinks.size)
-  //    }
-  //  }
+  test("Test updateProjectLinks When giving one new projectLink with new values Then it should update project link") {
+    runWithRollback {
+      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val header = projectLinks.head
+      val newRoadType = RoadType.FerryRoad
+      val newDiscontinuty = Discontinuity.ChangingELYCode
+      val newStartAddrMValue = header.startAddrMValue + 1
+      val newEndAddrMValue = header.endAddrMValue + 1
+      val newTrack = Track.Unknown
+      val newStatus = LinkStatus.Unknown
 
-//TODO Will be implemented at VIITE-1540
-//  test("update project link") {
-//    runWithRollback {
-//      val projectLinks = ProjectDAO.getProjectLinks(7081807)
-//      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.UnChanged, "test")
-//      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
-//      ProjectDAO.updateProjectLinksToDB(Seq(savedProjectLinks.sortBy(_.startAddrMValue).last.copy(status = LinkStatus.Terminated)), "tester")
-//      val terminatedLink = projectLinks.sortBy(_.startAddrMValue).last
-//      val updatedProjectLinks = ProjectDAO.getProjectLinks(7081807).filter(link => link.id == terminatedLink.id)
-//      val updatedLink = updatedProjectLinks.head
-//      updatedLink.status should be(LinkStatus.Terminated)
-//      updatedLink.discontinuity should be(Discontinuity.Continuous)
-//      updatedLink.startAddrMValue should be(savedProjectLinks.sortBy(_.startAddrMValue).last.startAddrMValue)
-//      updatedLink.endAddrMValue should be(savedProjectLinks.sortBy(_.startAddrMValue).last.endAddrMValue)
-//      updatedLink.track should be(savedProjectLinks.sortBy(_.startAddrMValue).last.track)
-//      updatedLink.roadType should be(savedProjectLinks.sortBy(_.startAddrMValue).last.roadType)
-//    }
-//  }
+      val modifiedProjectLinks = Seq(header.copy(roadType = newRoadType, discontinuity = newDiscontinuty, startAddrMValue = newStartAddrMValue, endAddrMValue = newEndAddrMValue, track = newTrack, status = newStatus))
+      projectLinkDAO.updateProjectLinks(modifiedProjectLinks, "test", Seq())
 
-//  test("Empty list will not throw an exception") {
-//    projectLinkDAO.getProjectLinksByIds(Seq())
-//    projectLinkDAO.removeProjectLinksById(Set())
-//  }
+      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+
+      updatedProjectLink.roadType should be (newRoadType)
+      updatedProjectLink.discontinuity should be (newDiscontinuty)
+      updatedProjectLink.startAddrMValue should be (newStartAddrMValue)
+      updatedProjectLink.endAddrMValue should be (newEndAddrMValue)
+      updatedProjectLink.track should be (newTrack)
+      updatedProjectLink.status should be (newStatus)
+
+    }
+  }
 
   //TODO will be implement at VIITE-1540
 //  test("Change road address direction") {
