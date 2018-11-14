@@ -821,6 +821,55 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  // fetchPreviousRoadPartNumber
+
+  test("Test fetchPreviousRoadPartNumber When non-existing road number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchPreviousRoadPartNumber(nonExistingRoadNumber, roadPartNumber2) should be(None)
+    }
+  }
+
+  test("Test fetchPreviousRoadPartNumber When non-existing road part number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchPreviousRoadPartNumber(roadNumber1, nonExistingRoadPartNumber) should be(None)
+    }
+  }
+
+  test("Test fetchPreviousRoadPartNumber When same road part number as first Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchPreviousRoadPartNumber(roadNumber1, roadPartNumber1) should be(None)
+    }
+  }
+
+  test("Test fetchPreviousRoadPartNumber When next road part number Then return previous road part number") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchPreviousRoadPartNumber(roadNumber1, roadPartNumber2).get should be(roadPartNumber1)
+    }
+  }
+
+  test("Test fetchPreviousRoadPartNumber When gap in road part numbers Then return previous road part number") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 3)))
+      dao.fetchPreviousRoadPartNumber(roadNumber1, 3).get should be(roadPartNumber1)
+    }
+  }
+
+  test("Test fetchPreviousRoadPartNumber When next road part number with history Then return previous road part number") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 3),
+        testRoadway1.copy(roadPartNumber = 2, endDate = Some(DateTime.now().minusYears(1)))))
+      dao.fetchPreviousRoadPartNumber(roadNumber1, 3).get should be(roadPartNumber1)
+    }
+  }
+
+  // getRoadPartInfo
+
+  // TODO
+
   // getValidRoadParts
 
   test("Test getValidRoadParts When non-existing road number Then return empty list") {
