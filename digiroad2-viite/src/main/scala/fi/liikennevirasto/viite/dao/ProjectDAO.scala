@@ -337,53 +337,60 @@ object ProjectDAO {
 
   def create(links: Seq[ProjectLink]): Seq[Long] = {
     time(logger, "Create project links") {
-      val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
-        "road_number, road_part_number, " +
-        "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-        "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry, " +
-        "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-      val (ready, idLess) = links.partition(_.id != NewRoadAddress)
-      val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
-      val projectLinks = ready ++ idLess.zip(plIds).map(x =>
-        x._1.copy(id = x._2)
-      )
-      projectLinks.toList.foreach { case (pl) =>
-        addressPS.setLong(1, pl.id)
-        addressPS.setLong(2, pl.projectId)
-        addressPS.setLong(3, pl.roadNumber)
-        addressPS.setLong(4, pl.roadPartNumber)
-        addressPS.setLong(5, pl.track.value)
-        addressPS.setLong(6, pl.discontinuity.value)
-        addressPS.setLong(7, pl.startAddrMValue)
-        addressPS.setLong(8, pl.endAddrMValue)
-        addressPS.setString(9, pl.createdBy.orNull)
-        addressPS.setDouble(10, CalibrationCode.getFromAddress(pl).value)
-        addressPS.setLong(11, pl.status.value)
-        addressPS.setLong(12, pl.roadType.value)
-        if (pl.roadAddressId == 0)
-          addressPS.setString(13, null)
-        else
-          addressPS.setLong(13, pl.roadAddressId)
-        if (pl.connectedLinkId.isDefined)
-          addressPS.setLong(14, pl.connectedLinkId.get)
-        else
-          addressPS.setString(14, null)
-        addressPS.setLong(15, pl.ely)
-        addressPS.setBoolean(16, pl.reversed)
-        addressPS.setString(17, toGeomString(pl.geometry))
-        addressPS.setLong(18, pl.linkId)
-        addressPS.setLong(19, pl.sideCode.value)
-        addressPS.setDouble(20, pl.startMValue)
-        addressPS.setDouble(21, pl.endMValue)
-        addressPS.setDouble(22, pl.linkGeometryTimeStamp)
-        addressPS.setInt(23, pl.linkGeomSource.value)
-        addressPS.setInt(24, pl.calibrationPointsSourcesToDB().value)
-        addressPS.addBatch()
+      try {
+        val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
+          "road_number, road_part_number, " +
+          "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
+          "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry, " +
+          "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
+          "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        val (ready, idLess) = links.partition(_.id != NewRoadAddress)
+        val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
+        val projectLinks = ready ++ idLess.zip(plIds).map(x =>
+          x._1.copy(id = x._2)
+        )
+        projectLinks.toList.foreach { case (pl) =>
+          addressPS.setLong(1, pl.id)
+          addressPS.setLong(2, pl.projectId)
+          addressPS.setLong(3, pl.roadNumber)
+          addressPS.setLong(4, pl.roadPartNumber)
+          addressPS.setLong(5, pl.track.value)
+          addressPS.setLong(6, pl.discontinuity.value)
+          addressPS.setLong(7, pl.startAddrMValue)
+          addressPS.setLong(8, pl.endAddrMValue)
+          addressPS.setString(9, pl.createdBy.orNull)
+          addressPS.setDouble(10, CalibrationCode.getFromAddress(pl).value)
+          addressPS.setLong(11, pl.status.value)
+          addressPS.setLong(12, pl.roadType.value)
+          if (pl.roadAddressId == 0)
+            addressPS.setString(13, null)
+          else
+            addressPS.setLong(13, pl.roadAddressId)
+          if (pl.connectedLinkId.isDefined)
+            addressPS.setLong(14, pl.connectedLinkId.get)
+          else
+            addressPS.setString(14, null)
+          addressPS.setLong(15, pl.ely)
+          addressPS.setBoolean(16, pl.reversed)
+          addressPS.setString(17, toGeomString(pl.geometry))
+          addressPS.setLong(18, pl.linkId)
+          addressPS.setLong(19, pl.sideCode.value)
+          addressPS.setDouble(20, pl.startMValue)
+          addressPS.setDouble(21, pl.endMValue)
+          addressPS.setDouble(22, pl.linkGeometryTimeStamp)
+          addressPS.setInt(23, pl.linkGeomSource.value)
+          addressPS.setInt(24, pl.calibrationPointsSourcesToDB().value)
+          addressPS.addBatch()
+        }
+        addressPS.executeBatch()
+        addressPS.close()
+        projectLinks.map(_.id)
+      } catch {
+        case ex: Exception => {
+          logger.debug("Project links: "+links)
+          throw ex
+        }
       }
-      addressPS.executeBatch()
-      addressPS.close()
-      projectLinks.map(_.id)
     }
   }
 
