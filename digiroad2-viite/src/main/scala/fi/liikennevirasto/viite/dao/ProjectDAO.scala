@@ -114,7 +114,7 @@ class ProjectDAO {
     }
   }
 
-  def getProjectStatus(projectID: Long): Option[ProjectState] = {
+  def fetchProjectStatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
             FROM project
@@ -150,7 +150,7 @@ class ProjectDAO {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
-  def getProjectsWithWaitingTRStatus: List[Long] = {
+  def fetchProjectIdsWithWaitingTRStatus: List[Long] = {
     val query =
       s"""
          SELECT id
@@ -160,7 +160,7 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
-  def getProjectsWithSendingToTRStatus: List[Long] = {
+  def fetchProjectIdsWithSendingToTRStatus: List[Long] = {
     val query =
       s"""
          SELECT id
@@ -170,7 +170,7 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
-  def uniqueName(projectId: Long, projectName: String): Boolean = {
+  def isUniqueName(projectId: Long, projectName: String): Boolean = {
     val query =
       s"""
          SELECT *
@@ -191,6 +191,7 @@ class ProjectDAO {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo, coordX, coordY, zoom) =>
 
         val projectState = ProjectState.apply(state)
+        //TODO when we have removed the project_link_history table we could start doing a inner join instead of doing a second query for reserved parts
         val reservedRoadParts = if (projectState == Saved2TR)
           projectReservedPartDAO.fetchHistoryRoadParts(id).distinct
         else

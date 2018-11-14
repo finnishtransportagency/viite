@@ -169,7 +169,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap1)
       projectDAO.create(rap2)
       rap1.name should be (rap2.name)
-      projectDAO.uniqueName(rap1.id, rap1.name) should be (true)
+      projectDAO.isUniqueName(rap1.id, rap1.name) should be (true)
     }
   }
 
@@ -186,11 +186,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test getProjectsWithWaitingTRStatus When project is sent to TR Then projects waiting TR response should be increased") {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val waitingCountP = projectDAO.getProjectsWithWaitingTRStatus.length
+      val waitingCountP = projectDAO.fetchProjectIdsWithWaitingTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(reservedPart), None, None)
         projectDAO.create(rap)
-      val waitingCountNow = projectDAO.getProjectsWithWaitingTRStatus.length
+      val waitingCountNow = projectDAO.fetchProjectIdsWithWaitingTRStatus.length
       waitingCountNow - waitingCountP should be(1)
     }
   }
@@ -201,7 +201,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(), None, None)
       projectDAO.create(rap)
       projectDAO.updateProjectStatus(id, ProjectState.Saved2TR)
-      projectDAO.getProjectStatus(id) should be(Some(ProjectState.Saved2TR))
+      projectDAO.fetchProjectStatus(id) should be(Some(ProjectState.Saved2TR))
     }
   }
 
@@ -249,11 +249,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test getProjectsWithSendingToTRStatus When there is one project in SendingToTR status Then should return that one project") {
     val address = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val waitingCountP = projectDAO.getProjectsWithSendingToTRStatus.length
+      val waitingCountP = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.SendingToTR, List.empty[ProjectReservedPart], None, None)
       projectDAO.create(rap)
-      val waitingCountNow = projectDAO.getProjectsWithSendingToTRStatus.length
+      val waitingCountNow = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
       waitingCountNow - waitingCountP should be(1)
     }
   }

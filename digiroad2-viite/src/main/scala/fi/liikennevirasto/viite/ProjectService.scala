@@ -184,7 +184,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def projectWritableCheck(projectId: Long): Option[String] = {
-    projectDAO.getProjectStatus(projectId) match {
+    projectDAO.fetchProjectStatus(projectId) match {
       case Some(projectState) =>
         if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
           return None
@@ -660,7 +660,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
           case Some(errMsg) => throw new IllegalStateException(errMsg)
           case None => {
-            if (projectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)) {
+            if (projectDAO.isUniqueName(roadAddressProject.id, roadAddressProject.name)) {
               val storedProject = projectDAO.fetchById(roadAddressProject.id).get
               val removed = storedProject.reservedParts.filterNot(part =>
                 roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
@@ -714,7 +714,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (roadAddressProject.id != 0)
       throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")
     withDynTransaction {
-      if (projectDAO.uniqueName(roadAddressProject.id, roadAddressProject.name)) {
+      if (projectDAO.isUniqueName(roadAddressProject.id, roadAddressProject.name)) {
         val savedProject = createProject(roadAddressProject)
         saveProjectCoordinates(savedProject.id, calculateProjectCoordinates(savedProject.id))
         savedProject
@@ -971,7 +971,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     })
 
     val fetchProjectLinksF = Future(withDynSession {
-      val projectState = projectDAO.getProjectStatus(projectId)
+      val projectState = projectDAO.fetchProjectStatus(projectId)
       if (projectState.isDefined && projectState.get == Saved2TR)
         projectLinkDAO.getProjectLinksHistory(projectId).groupBy(_.linkId)
       else
@@ -1581,7 +1581,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def getProjectsPendingInTR: Seq[Long] = {
     withDynSession {
-      projectDAO.getProjectsWithWaitingTRStatus
+      projectDAO.fetchProjectIdsWithWaitingTRStatus
     }
   }
 
@@ -1607,14 +1607,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getProjectState(projectId: Long): Option[ProjectState] = {
     withDynTransaction {
-      projectDAO.getProjectStatus(projectId)
+      projectDAO.fetchProjectStatus(projectId)
     }
   }
 
   private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
     projectDAO.getRotatingTRProjectId(projectID).headOption match {
       case Some(trId) =>
-        projectDAO.getProjectStatus(projectID).map { currentState =>
+        projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
           logger.info(s"Retrived TR status: ${trProjectState.getOrElse(None)}")
@@ -1977,7 +1977,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def getProjectsWaitingForTR(): Seq[Long] = {
     withDynSession {
-      projectDAO.getProjectsWithSendingToTRStatus
+      projectDAO.fetchProjectIdsWithSendingToTRStatus
     }
   }
 
