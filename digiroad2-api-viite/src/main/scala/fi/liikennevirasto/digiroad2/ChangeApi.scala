@@ -83,7 +83,7 @@ class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet 
                 "createdBy" -> road.createdBy,
                 "modifiedAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
                 "createdAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
-                "changeType" -> extractChangeType(since, road.isExpire(), road.validFrom)
+                "changeType" -> extractChangeType(since, road.isExpire, road.validFrom)
               )
           )
         }

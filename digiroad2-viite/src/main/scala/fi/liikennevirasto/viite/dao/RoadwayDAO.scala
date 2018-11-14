@@ -276,7 +276,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
     (Math.min(addrA, addrB), Math.max(addrA, addrB))
   }
 
-  def isExpire(): Boolean = {
+  def isExpire: Boolean = {
     validFrom.getOrElse(throw new IllegalStateException("The valid from should be set before call isExpire method")).isAfterNow ||
       validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
   }
@@ -700,7 +700,8 @@ class RoadwayDAO extends BaseDAO {
             SELECT * FROM (
               SELECT ra.road_part_number
               FROM ROADWAY ra
-              WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
+              WHERE road_number = $roadNumber AND road_part_number < $current
+                AND valid_to IS NULL AND end_date IS NULL
               ORDER BY road_part_number DESC
             ) WHERE ROWNUM < 2
         """
