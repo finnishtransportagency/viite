@@ -280,8 +280,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllByRoadwayId When existing roadway ids Then return the current roadways") {
     runWithRollback {
-      val roadwayId1 = Sequences.nextRoadwayId
-      val roadwayId2 = Sequences.nextRoadwayId
+      val roadwayId1 = dao.getNextRoadwayId
+      val roadwayId2 = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
       val roadways = dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
@@ -583,7 +583,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllRoadAddressErrors When fetch excluding history Then return addresses with errors") {
     runWithRollback {
-      val roadwayId = Sequences.nextRoadwayId
+      val roadwayId = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId), testRoadway2, testRoadway3))
       val linearLocationDAO = new LinearLocationDAO
       val linearLocationId = Sequences.nextLinearLocationId
@@ -600,7 +600,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
     runWithRollback {
-      val roadwayId = Sequences.nextRoadwayId
+      val roadwayId = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2010-01-01"))), testRoadway2, testRoadway3))
       val linearLocationDAO = new LinearLocationDAO
       val linearLocationId = Sequences.nextLinearLocationId
@@ -806,9 +806,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val roadNetworkDAO = new RoadNetworkDAO
       roadNetworkDAO.createPublishedRoadNetwork
       val roadNetworkVersionId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
-      val roadwayId1 = Sequences.nextRoadwayId
-      val roadwayId2 = Sequences.nextRoadwayId
-      val roadwayId3 = Sequences.nextRoadwayId
+      val roadwayId1 = dao.getNextRoadwayId
+      val roadwayId2 = dao.getNextRoadwayId
+      val roadwayId3 = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway3.copy(id = roadwayId3)))
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId1)
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
@@ -874,8 +874,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test expireById When existing roadway ids Then return 2 and roadways are expired") {
     runWithRollback {
-      val roadwayId1 = Sequences.nextRoadwayId
-      val roadwayId2 = Sequences.nextRoadwayId
+      val roadwayId1 = dao.getNextRoadwayId
+      val roadwayId2 = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
       val roadways = dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
@@ -1211,14 +1211,14 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   //  private def createRoadAddress8888(startDate: Option[DateTime], endDate: Option[DateTime] = None): Unit = {
   //    RoadAddressDAO.create(
   //      Seq(
-  //        RoadAddress(Sequences.nextRoadwayId, 8888, 1, RoadType.PublicRoad, Track.Combined,
+  //        RoadAddress(dao.getNextRoadwayId, 8888, 1, RoadType.PublicRoad, Track.Combined,
   //          Discontinuity.Continuous, 0, 35, startDate, endDate,
   //          Option("TestUser"), 8888888, 0, 35, SideCode.TowardsDigitizing,
   //          0, (None, None), NoFloating, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8, NoTermination, 0)))
   //  }
   //
   //  private def createTerminatedRoadAddress7777(startDate: Option[DateTime]): Unit = {
-  //    val roadwayId = Sequences.nextRoadwayId
+  //    val roadwayId = dao.getNextRoadwayId
   //    RoadAddressDAO.create(
   //      Seq(
   //        RoadAddress(roadwayId, 7777, 1, RoadType.PublicRoad, Track.Combined,
