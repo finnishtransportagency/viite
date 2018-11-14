@@ -149,7 +149,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test updateProjectCoordinates When  Then ") {
+  test("Test updateProjectCoordinates When using a recently created project Then the zoom level of the project should be the updated one.") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(id, ProjectState.Incomplete, List(), None, None)
@@ -161,7 +161,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test uniqueName When  Then ") {
+  test("Test uniqueName When creating two different project with different names Then  the check for the uniqueness should return true.") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap1 =  dummyRoadAddressProject(id, ProjectState.Incomplete, List(), None, None)
