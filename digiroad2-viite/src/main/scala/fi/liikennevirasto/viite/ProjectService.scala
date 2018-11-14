@@ -1242,7 +1242,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             // Fetching road addresses in order to obtain the original addressMValues, since we may not have those values
             // on project_link table, after previous recalculations
             resetLinkValues(toUpdateLinks)
-            projectLinkDAO.updateProjectLinksToTerminated(toUpdateLinks.map(_.id).toSet, userName)
+            projectLinkDAO.updateProjectLinksStatus(toUpdateLinks.map(_.id).toSet, LinkStatus.Terminated, userName)
 
           case LinkStatus.Numbering =>
             if (toUpdateLinks.nonEmpty) {

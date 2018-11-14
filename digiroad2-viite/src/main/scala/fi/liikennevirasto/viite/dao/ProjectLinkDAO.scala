@@ -60,7 +60,7 @@ object LinkStatus {
   }
 }
 
-case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue: Double, override val  addressMValue: Long, source: CalibrationPointSource = UnknownSource)
+case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, source: CalibrationPointSource = UnknownSource)
   extends BaseCalibrationPoint {
 
   def toCalibrationPoint: CalibrationPoint = {
@@ -557,11 +557,11 @@ class ProjectLinkDAO {
           """.execute
   }
 
-  def updateProjectLinkNumbering(projectlinkIds: Seq[Long], linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
+  def updateProjectLinkNumbering(ids: Seq[Long], linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart" +
-        s"WHERE ID IN ${projectlinkIds.mkString("(", ",", ")")} AND STATUS != ${LinkStatus.Terminated.value}"
+        s"WHERE ID IN ${ids.mkString("(", ",", ")")} AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
 
       val updateLastLinkWithDiscontinuity =
@@ -589,21 +589,11 @@ class ProjectLinkDAO {
     }
   }
 
-  def updateProjectLinksStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+  def updateProjectLinksStatus(ids: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-    projectLinkIds.grouped(500).foreach {
+    ids.grouped(500).foreach {
       grp =>
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' " +
-          s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
-        Q.updateNA(sql).execute
-    }
-  }
-
-  def updateProjectLinksToTerminated(projectLinkIds: Set[Long], userName: String): Unit = {
-    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-    projectLinkIds.grouped(500).foreach {
-      grp =>
-        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${LinkStatus.Terminated.value}, MODIFIED_BY='$user' " +
           s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
         Q.updateNA(sql).execute
     }

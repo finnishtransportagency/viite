@@ -1,13 +1,15 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.{NewRoadway, RoadType}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
@@ -35,10 +37,12 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayDAO = new RoadwayDAO
+  val linearLocationDAO = new LinearLocationDAO
 
   private val roadNumber1 = 5
   private val roadNumber2 = 6
@@ -80,13 +84,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   //TODO test coverage missing for ProjectLinkDAO methods:
   /**
-    * updateProjectLinks VIITE-1540
-    * updateProjectLinksGeometry VIITE-1540
-    * updateProjectLinkNumbering VIITE-1540
-    * updateProjectLinksToTerminated VIITE1540
-    * updateAddrMValues VIITE-1540
-    * updateProjectLinks VIITE-1540
-    * updateProjectLinkValues VIITE-1540
     * getElyFromProjectLinks VIITE-1543
     * getProjectLinksHistory VIITE-1543
     * getProjectLinksByConnectedLinkId VIITE-1543
@@ -244,99 +241,119 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
-//  test("Change road address direction") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses)
-//      val (psidecode, linkid) = sql"select SIDE, ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[(Long, Long)].first
-//      psidecode should be(2)
-//      ProjectDAO.reverseRoadPartDirection(id, 5, 203)
-//      val nsidecode = sql"select SIDE from PROJECT_LINK WHERE id=$linkid".as[Int].first
-//      nsidecode should be(3)
-//      ProjectDAO.reverseRoadPartDirection(id, 5, 203)
-//      val bsidecode = sql"select SIDE from PROJECT_LINK WHERE id=$linkid".as[Int].first
-//      bsidecode should be(2)
-//    }
-//  }
+    test("Test updateProjectLinksGeometry When giving one link with updated geometry Then it should be updated") {
+      runWithRollback {
+        val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+        val header = projectLinks.head
+        val newGeometry = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
 
-  //TODO will be implement at VIITE-1540
-//  test("update ProjectLinkgeom") {
-//    //Creation of Test road
-//    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.reserveRoadPart(id, 5, 203, "TestUser")
-//      ProjectDAO.create(addresses)
-//      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-//      val projectlinksWithDummyGeom = ProjectDAO.getProjectLinks(id).map(x=>x.copy(geometry = Seq(Point(1,1,1),Point(2,2,2),Point(1,2))))
-//      ProjectDAO.updateProjectLinksGeometry(projectlinksWithDummyGeom,"test")
-//      val updatedProjectlinks=ProjectDAO.getProjectLinks(id)
-//      updatedProjectlinks.head.geometry.size should be (3)
-//      updatedProjectlinks.head.geometry should be (Stream(Point(1.0,1.0,1.0), Point(2.0,2.0,2.0), Point(1.0,2.0,0.0)))
-//    }
-//  }
+        val modifiedProjectLinks = Seq(header.copy(geometry = newGeometry))
+        projectLinkDAO.updateProjectLinksGeometry(modifiedProjectLinks, "test")
 
-  //  test("check the removal of project links") {
-  //    val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      ProjectDAO.reserveRoadPart(id, address.roadNumber, address.roadPartNumber, rap.createdBy)
-  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-  //      ProjectDAO.create(addresses)
-  //      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-  //      val projectLinks = ProjectDAO.getProjectLinks(id)
-  //      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet) should be(projectLinks.size)
-  //      ProjectDAO.getProjectLinks(id).nonEmpty should be(false)
-  //    }
-  //  }
+        val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+        updatedProjectLink.geometry should be (newGeometry)
+      }
+    }
 
-  //TODO will be implement at VIITE-1540
-  //  // Tests now also for VIITE-855 - accidentally removing all links if set is empty
-  //  test("Update project link status and remove zero links") {
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-  //      ProjectDAO.create(addresses)
-  //      val projectLinks = ProjectDAO.getProjectLinks(id)
-  //      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Terminated, "test")
-  //      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
-  //      updatedProjectLinks.head.status should be(LinkStatus.Terminated)
-  //      ProjectDAO.removeProjectLinksByLinkId(id, Set())
-  //      ProjectDAO.getProjectLinks(id).size should be(updatedProjectLinks.size)
-  //    }
-  //  }
+  test("Test updateProjectLinkNumbering When giving one link with updated road number and part Then it should be updated") {
+    runWithRollback {
+      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val header = projectLinks.head
+      val newRoadNumber = 1
+      val newRoadPartNumber = 5
+      projectReservedPartDAO.reserveRoadPart(7081807, newRoadNumber, newRoadPartNumber, "test")
+      projectLinkDAO.updateProjectLinkNumbering(Seq(header.id), header.status, newRoadNumber, newRoadPartNumber, "test", header.discontinuity.value)
 
-  //TODO will be implement at VIITE-1540
-  //  test("Update project link to reversed") {
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-  //      ProjectDAO.create(addresses)
-  //      val projectLinks = ProjectDAO.getProjectLinks(id)
-  //      projectLinks.count(x => !x.reversed) should be(projectLinks.size)
-  //      val maxM = projectLinks.map(_.endAddrMValue).max
-  //      val reversedprojectLinks = projectLinks.map(x => x.copy(reversed = true, status=Transfer,
-  //        startAddrMValue = maxM-x.endAddrMValue, endAddrMValue = maxM-x.startAddrMValue))
-  //      ProjectDAO.updateProjectLinksToDB(reversedprojectLinks, "testuset")
-  //      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
-  //      updatedProjectLinks.count(x => x.reversed) should be(updatedProjectLinks.size)
-  //    }
-  //  }
+      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      updatedProjectLink.roadNumber should be (newRoadNumber)
+      updatedProjectLink.roadPartNumber should be (newRoadPartNumber)
+    }
+  }
+
+  test("Test updateProjectLinksStatus When giving one link with updated road number and part Then it should be updated") {
+    runWithRollback {
+      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val header = projectLinks.head
+      val newRoadNumber = 1
+      val newRoadPartNumber = 5
+      projectLinkDAO.updateProjectLinksStatus(Set(header.id), LinkStatus.Terminated, "test")
+
+      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      updatedProjectLink.status should be (LinkStatus.Terminated)
+    }
+  }
+
+  test("Test updateAddrMValues When giving one link with updated road number and part Then it should be updated") {
+    runWithRollback {
+      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val header = projectLinks.head
+      val newStartAddrMValues = 0
+      val newEndAddrMValues = 100
+      projectLinkDAO.updateAddrMValues(header.copy(startAddrMValue = newStartAddrMValues, endAddrMValue = newEndAddrMValues))
+
+      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      updatedProjectLink.startAddrMValue should be (newStartAddrMValues)
+      updatedProjectLink.endAddrMValue should be (newEndAddrMValues)
+    }
+  }
+
+  test("Test updateProjectLinkValues When giving one link with updated values and new geometry Then it should be updated") {
+    runWithRollback {
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val linearLocationId = 1
+      val raId = Sequences.nextRoadwayId
+
+      val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+        0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
+
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+        (Some(0l), Some(10l)), FloatingReason.NoFloating, Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplimentaryLinkInterface,
+        roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
+
+      roadwayDAO.create(Seq(roadway))
+      linearLocationDAO.create(Seq(linearLocation))
+
+      val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, List.empty, None, None)
+      projectDAO.createRoadAddressProject(rap)
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectId+1, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationId = linearLocation.id)
+      )
+      projectLinkDAO.create(projectLinks)
+
+      val header = projectLinkDAO.getProjectLinks(projectId).head
+      val roadNumber = 1
+      val roadPartNumber = 1
+      val roadType = RoadType.PublicRoad
+      val track = Track.Combined
+      val discontinuity = Discontinuity.Continuous
+      val startAddrMValue, startMValue = 0
+      val endAddrMValue, endMValue = 100
+      val side = SideCode.TowardsDigitizing
+      val geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
+
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, rap.createdBy)
+
+      val roadAddress = RoadAddress(raId, linearLocationId, roadNumber, roadPartNumber,  roadType, track,
+        discontinuity, startAddrMValue, endAddrMValue, Some(DateTime.now), None, None, 12345, startMValue, endMValue, side, 1542205983000L, (None, None),
+        NoFloating, geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 1, Some(DateTime.now), None, None)
+
+      projectLinkDAO.updateProjectLinkValues(projectId, roadAddress, updateGeom = true)
+
+      val updatedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val updatedProjectLink = updatedProjectLinks.filter(link => link.id == projectLinks.head.id).head
+      updatedProjectLink.roadNumber should be (roadNumber)
+      updatedProjectLink.roadPartNumber should be (roadPartNumber)
+      updatedProjectLink.track should be (track)
+      updatedProjectLink.discontinuity should be (discontinuity)
+      updatedProjectLink.roadType should be (roadType)
+      updatedProjectLink.startAddrMValue should be (startAddrMValue)
+      updatedProjectLink.endAddrMValue should be (endAddrMValue)
+      updatedProjectLink.startMValue should be (startMValue)
+      updatedProjectLink.endMValue should be (endMValue)
+      updatedProjectLink.sideCode should be (side)
+      updatedProjectLink.geometry should be (geometry)
+    }
+  }
 
 }
