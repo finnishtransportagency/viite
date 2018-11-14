@@ -96,50 +96,21 @@ class ProjectDAO {
       """.execute
   }
 
-  def fetchById(projectId: Long): Option[Project] = {
-    time(logger, "Get road address project by id") {
-      val where = s""" where id =$projectId"""
-      val query =
-        s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
-           add_info, ely, status_info, coord_x, coord_y, zoom
-           FROM project $where"""
-      Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String], Double, Double, Int)](query).list.map {
-        case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
-        ely, statusInfo, coordX, coordY, zoom) if ely.contains(-1L) =>
-          Project(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-            addInfo, projectReservedPartDAO.fetchReservedRoadParts(id), statusInfo, None, Some(ProjectCoordinates(coordX, coordY, zoom)))
-        case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
-        ely, statusInfo, coordX, coordY, zoom) =>
-          Project(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-            addInfo, projectReservedPartDAO.fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
-      }.headOption
+  def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
+    time(logger, "Fetch project by id") {
+      if(withNullElyFilter)
+        fetch(query => s"""$query where id =$projectId and ely is null""").headOption
+      else
+        fetch(query => s"""$query where id =$projectId""").headOption
     }
   }
 
-  def getProjects(projectId: Long = 0, withNullElyFilter: Boolean = false): List[Project] = {
-    time(logger, "Get road address projects") {
-      val filter = projectId match {
-        case 0 => if (withNullElyFilter) s""" where ELY IS NULL """ else ""
-        case _ => if (withNullElyFilter) s""" where id =$projectId AND ELY IS NULL """ else s""" where id =$projectId """
-      }
-
-      val query =
-        s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
-            add_info, status_info, ely, coord_x, coord_y, zoom
-           FROM project $filter order by ely nulls first, name, id """
-      Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
-        case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) => {
-          val projectState = ProjectState.apply(state)
-          val reservedRoadParts = if (projectState == Saved2TR)
-            projectReservedPartDAO.fetchHistoryRoadParts(id).distinct
-          else if (projectId != 0)
-            projectReservedPartDAO.fetchReservedRoadParts(id).distinct
-          else
-            Seq()
-          Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date,
-            modifiedDate, addInfo, reservedRoadParts, statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
-        }
-      }
+  def fetchAll(withNullElyFilter: Boolean = false): Seq[Project] = {
+    time(logger, s"Fetch all projects with null ely filter setted to $withNullElyFilter") {
+      if(withNullElyFilter)
+        fetch(query => s"""$query where where ely is null order by ely nulls first, name, id""")
+      else
+        fetch(query => s"""$query order by ely nulls first, name, id""")
     }
   }
 
@@ -208,5 +179,25 @@ class ProjectDAO {
        """
     val projects = Q.queryNA[Long](query).list
     projects.isEmpty || projects.contains(projectId)
+  }
+
+  private def fetch(queryFilter: String => String): Seq[Project] = {
+    val query =
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
+           add_info, ely, status_info, coord_x, coord_y, zoom
+           FROM project"""
+
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String], Double, Double, Int)](queryFilter(query)).list.map {
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo, coordX, coordY, zoom) =>
+
+        val projectState = ProjectState.apply(state)
+        val reservedRoadParts = if (projectState == Saved2TR)
+          projectReservedPartDAO.fetchHistoryRoadParts(id).distinct
+        else
+          projectReservedPartDAO.fetchReservedRoadParts(id).distinct
+
+        Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
+          addInfo, reservedRoadParts, statusInfo, if (ely.contains(-1L)) None else ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+    }
   }
 }

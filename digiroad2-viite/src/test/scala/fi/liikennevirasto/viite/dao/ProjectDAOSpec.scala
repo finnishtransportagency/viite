@@ -35,6 +35,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
   val roadwayDAO = new RoadwayDAO
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
@@ -85,7 +86,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     * uniqueName
     */
 
-  test("Test getProjectsWithGivenLinkId When adding some project links for two existing projects Then outcome size of projects for that given linkId should be equal in number") {
+  test("Test fetchAllIdsByLinkId When adding some project links for two existing projects Then outcome size of projects for that given linkId should be equal in number") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
 
@@ -130,7 +131,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectStateInfo When project info is updated Then project info should change") {
     runWithRollback {
-      val projectListSize = projectDAO.getProjects().length
+      val projectListSize = projectDAO.fetchAll().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], ely = None, coordinates = None)
       projectDAO.create(rap)
@@ -172,7 +173,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test createRoadAddressProject When having valid data and empty parts Then should create project without any reserved part") {
+  test("Test create When having valid data and empty parts Then should create project without any reserved part") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, Seq(), Some(8L), None)
@@ -204,7 +205,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test updateRoadAddressProject When Update project info Then should update the project infos such as project name, additional info, startDate") {
+  test("Test update When Update project info Then should update the project infos such as project name, additional info, startDate") {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -225,11 +226,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test getRoadAddressProjects When adding one new project Then outcome size of projects should be bigger than before") {
     runWithRollback {
-      val projectListSize = projectDAO.getProjects().length
+      val projectListSize = projectDAO.fetchAll().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None, None)
       projectDAO.create(rap)
-      val projectList = projectDAO.getProjects()
+      val projectList = projectDAO.fetchAll()
       projectList.length - projectListSize should be(1)
     }
   }

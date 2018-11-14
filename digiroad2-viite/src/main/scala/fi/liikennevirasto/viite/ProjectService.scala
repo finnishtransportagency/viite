@@ -725,14 +725,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getSingleProjectById(projectId: Long): Option[Project] = {
-    withDynTransaction {
-      projectDAO.getProjects(projectId).headOption
+    withDynSession {
+      projectDAO.fetchById(projectId)
     }
   }
 
   def getAllProjects: Seq[Project] = {
-    withDynTransaction {
-      projectDAO.getProjects()
+    withDynSession {
+      projectDAO.fetchAll()
     }
   }
 
@@ -1377,14 +1377,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def removeRotatingTRId(projectId: Long): Option[String] = {
     withDynSession {
-      val projects = projectDAO.getProjects(projectId)
+      val project = projectDAO.fetchById(projectId)
       val rotatingTR_Id = projectDAO.getRotatingTRProjectId(projectId)
       projectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
       val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.head + "]"
-      if (projects.isEmpty)
+      if (project.isEmpty)
         return Some("Projektia ei löytynyt")
-      val project = projects.head
-      appendStatusInfo(project, addedStatus)
+      appendStatusInfo(project.get, addedStatus)
     }
     None
   }
@@ -1565,8 +1564,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): (ProjectState) = {
     if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
       logger.info(s"Status update is needed as Project Current status (${currentStatus}) differs from TR Status(${newStatus})")
-      val projects = projectDAO.getProjects(projectId)
-      if (projects.nonEmpty && newStatus == ProjectState.ErrorInTR) {
+      val project = projectDAO.fetchById(projectId)
+      if (project.nonEmpty && newStatus == ProjectState.ErrorInTR) {
         // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
         logger.info(s"Writing error message and clearing old TR_ID: ($errorMessage)")
         projectDAO.updateProjectStateInfo(errorMessage, projectId)
@@ -1934,7 +1933,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def correctNullProjectEly(): Unit = {
     withDynSession {
       //Get all the projects with non-existent ely code
-      val nullElyProjects = projectDAO.getProjects(withNullElyFilter = true)
+      val nullElyProjects = projectDAO.fetchAll(withNullElyFilter = true)
       nullElyProjects.foreach(project => {
         //Get all the reserved road parts of said projects
         val reservedRoadParts = projectReservedPartDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
