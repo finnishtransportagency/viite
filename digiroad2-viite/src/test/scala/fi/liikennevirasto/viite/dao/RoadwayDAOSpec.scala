@@ -27,21 +27,25 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   val dao = new RoadwayDAO
 
   private val nonExistingRoadNumber = -9999
+  private val nonExistingRoadPartNumber = -9999
   private val roadNumber1 = 990
   private val roadNumber2 = 993
+  private val roadPartNumber1 = 1
+  private val roadPartNumber2 = 2
 
+  private val nonExistingRoadwayId = -9999l
   private val nonExistingRoadwayNumber = -9999l
   private val roadwayNumber1 = 1000000000l
   private val roadwayNumber2 = 2000000000l
   private val roadwayNumber3 = 3000000000l
 
-  val testRoadway1 = Roadway(NewRoadway, roadwayNumber1, roadNumber1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+  val testRoadway1 = Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-  val testRoadway2 = Roadway(NewRoadway, roadwayNumber2, roadNumber1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+  val testRoadway2 = Roadway(NewRoadway, roadwayNumber2, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     100, 200, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-  val testRoadway3 = Roadway(NewRoadway, roadwayNumber3, roadNumber2, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+  val testRoadway3 = Roadway(NewRoadway, roadwayNumber3, roadNumber2, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   // fetchByRoadwayNumber
@@ -186,11 +190,50 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  // fetchAllByRoadAndPart
+
+  test("Test fetchAllByRoadAndPart When non-existing road number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadAndPart(nonExistingRoadNumber, testRoadway1.roadPartNumber).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadAndPart When non-existing road part number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadAndPart(roadNumber1, nonExistingRoadPartNumber).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadAndPart When existing road and road part number Then return roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = roadPartNumber1), testRoadway3))
+      val roadways = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.size should be(2)
+    }
+  }
+
+  test("Test fetchAllByRoadAndPart When existing road and road part number with history Then return roadways") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = roadPartNumber1, endDate = Some(DateTime.now())), testRoadway3))
+      val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1, withHistory = false)
+      roadwaysWithoutHistory.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadwaysWithoutHistory.size should be(1)
+      val roadways = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1, withHistory = true)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.size should be(2)
+    }
+  }
+
   // fetchAllByRoadAndTracks
 
   test("Test fetchAllByRoadAndTracks When non-existing road number Then return None") {
     runWithRollback {
-      dao.create(List(testRoadway1, testRoadway2))
+      dao.create(List(testRoadway1))
       dao.fetchAllByRoadAndTracks(nonExistingRoadNumber, Set(Track.Combined)).size should be(0)
     }
   }
@@ -209,12 +252,41 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchAllByRoadAndTracks When existing road number and road part number Then return roadways") {
+  test("Test fetchAllByRoadAndTracks When existing road number and track Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1), testRoadway3))
       val roadways = dao.fetchAllByRoadAndTracks(roadNumber1, Set(Track.Combined))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.size should be(2)
+    }
+  }
+
+  // fetchAllByRoadwayId
+
+  test("Test fetchAllByRoadwayId When empty roadway ids Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.fetchAllByRoadwayId(Seq()).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadwayId When non-existing roadway ids Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.fetchAllByRoadwayId(Seq(nonExistingRoadwayId)).size should be(0)
+    }
+  }
+
+  test("Test fetchAllByRoadwayId When existing roadway ids Then return the current roadways") {
+    runWithRollback {
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadwayId2 = Sequences.nextRoadwayId
+      dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
+      val roadways = dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2))
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
       roadways.size should be(2)
     }
   }
