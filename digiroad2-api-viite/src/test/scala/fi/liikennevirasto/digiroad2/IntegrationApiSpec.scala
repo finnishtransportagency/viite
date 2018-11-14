@@ -41,7 +41,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     integrationApi.clearCache()
   }
 
-  test("Should require correct authentication", Tag("db")) {
+  test("Test get() and getWithBasicUserAuth() When using no credentials or wrong credentials Then return status code 401.", Tag("db")) {
     get("/road_address") {
       status should equal(401)
     }
@@ -50,7 +50,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Get road address requires municipality number") {
+  test("Test getWithBasicUserAuth() When asking for the road addresses by municipality but 1st not defining it and 2nd with it Then return status code 400 for the 1st and status code 200 for the 2nd.") {
     getWithBasicUserAuth("/road_address", "kalpa", "kalpa") {
       status should equal(400)
     }
@@ -59,7 +59,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("encode road address") {
+  test("Test integrationApi.roadAddressLinksToApi() When supliying a simple Road Address Link Then return a Sequence of a String to Value mappings that represent the Road Address Link.") {
     val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
     val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), Municipality,
@@ -87,7 +87,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
   }
 
-  test("geometryWKTForLinearAssets provides proper geometry") {
+  test("Test integrationApi.geometryWKT() When using a 3D sequence of points and a start and end measures that fit in the geometry Then return a proper geometry in LineString format.") {
     val (header, returnTxt) =
       integrationApi.geometryWKT(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5)), 0L, 6L)
     header should be ("geometryWKT")
@@ -98,31 +98,31 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     Option(new DateTime(year, month, day, 0, 0, 0))
   }
 
-  test("Missing since parameter should return error") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames but missing the Since parameter Then returns status code 400") {
     getWithBasicUserAuth("/roadnames/changes", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
-  test("Empty since parameter should return error") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it no value Then returns status code 400") {
     getWithBasicUserAuth("/roadnames/changes?since=", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
-  test("Incorrect since parameter should return error") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it a incorrect value Then returns status code 400") {
     getWithBasicUserAuth("/roadnames/changes?since=abc", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
-  test("Incorrect date format in since parameter should return error") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it a incorrect value Then returns status code 400") {
     getWithBasicUserAuth("/roadnames/changes?since=1.1.2018", "kalpa", "kalpa") {
       status should equal(400)
     }
   }
 
-  test("No updated road names, Content-Type should be application/json and response should be empty array") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since but with no data to return Then returns status code 200 and a empty array as the response body.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     getWithBasicUserAuth("/roadnames/changes?since=9999-01-01", "kalpa", "kalpa") {
       status should equal(200)
@@ -131,7 +131,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("One update (new road), response should contain one road name") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since but with 1 update to 1 road Then returns status code 200 and a filled array with the info for the road.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
@@ -145,7 +145,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Road name change") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with many updates to return to 1 road Then returns status code 200 and a filled array with the info for the updates.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
@@ -165,7 +165,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Road name change for two roads") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with many updates to return to 2 roads Then returns status code 200 and a filled array with the info for the updates.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
@@ -191,7 +191,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("No updated road names from /roadnames/changes, Content-Type should be application/json and response should be empty array") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with no updates to any road Then returns status code 200 and the returning array should be empty.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
     getWithBasicUserAuth("/roadnames/changes?since=9999-01-01&until=9999-01-01", "kalpa", "kalpa") {
       status should equal(200)
@@ -200,7 +200,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("One update (new road), response should contain one road name from /roadnames/changes") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with 1 change to a single road Then returns status code 200 and the returning array should contain that road info.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
@@ -214,7 +214,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Road name change between from /roadnames/changes") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with some changes to a single road Then returns status code 200 and the returning array should contain the multiple road info.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
@@ -234,7 +234,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Road name change for two roads from /roadnames/changes") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with some changes to multiple roads Then returns status code 200 and the returning array should contain the multiple road info.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
