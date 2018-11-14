@@ -184,7 +184,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
 
-  private def projectWritableCheck(projectId: Long): Option[String] = {
+  def projectWritableCheck(projectId: Long): Option[String] = {
     projectDAO.getProjectStatus(projectId) match {
       case Some(projectState) =>
         if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
@@ -1756,7 +1756,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         val project = projectDAO.getRoadAddressProjectById(projectID).get
         val projectLinks = projectLinkDAO.getProjectLinks(projectID)
-        val allRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
+        val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
+        val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).map(roadway => (roadway.id, roadway)).toMap
         val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
         val roadwayProjectLinkIds = roadwayChangesDAO.fetchRoadwayChangesLinks(projectID)
         val mappedRoadwaysWithLinks = roadwayChanges.map{
@@ -1775,16 +1776,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         logger.info(s"Moving project links to project link history.")
         handleNewRoadNames(projectLinks, project)
         try {
-          val currentRoadways = RoadwayFiller.fillRoadways(allRoadways, mappedRoadwaysWithLinks)
-
+          val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedRoadwaysWithLinks)
           logger.info(s"Creating history rows based on operation")
-
-          linearLocationDAO.expireByIds(projectLinks.map(_.linearLocationId).toSet)
-          allRoadways.map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
+          linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
+          (currentRoadways ++ historyRoadways).map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
           //updateTerminationForHistory(terminatedLinkIds, splitReplacements)
           //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-          roadwayDAO.create(currentRoadways.flatMap(_._1))
-          linearLocationDAO.create(currentRoadways.flatMap(_._2))
+          roadwayDAO.create(generatedRoadways.flatMap(_._1))
+          linearLocationDAO.create(generatedRoadways.flatMap(_._2))
           Some(s"road addresses created")
         } catch {
           case e: ProjectValidationException =>
