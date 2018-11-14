@@ -821,6 +821,41 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  // getValidRoadParts
+
+  test("Test getValidRoadParts When non-existing road number Then return empty list") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.getValidRoadParts(nonExistingRoadNumber, testRoadway1.startDate).size should be(0)
+    }
+  }
+
+  test("Test getValidRoadParts When too early start date Then return empty list") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.getValidRoadParts(roadNumber1, testRoadway1.startDate.minusDays(1)).size should be(0)
+    }
+  }
+
+  test("Test getValidRoadParts When existing road number and exactly same start date Then return road part numbers") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      val roadPartNumbers = dao.getValidRoadParts(roadNumber1, testRoadway1.startDate)
+      roadPartNumbers.size should be(1)
+      roadPartNumbers.head should be(testRoadway1.roadPartNumber)
+    }
+  }
+
+  test("Test getValidRoadParts When existing road number and later start date Then return road part numbers") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      val roadPartNumbers = dao.getValidRoadParts(roadNumber1, testRoadway1.startDate.plusDays(1))
+      roadPartNumbers.size should be(2)
+      roadPartNumbers.contains(roadPartNumber1) should be(true)
+      roadPartNumbers.contains(roadPartNumber2) should be(true)
+    }
+  }
+
   // expireById
 
   test("Test expireById When empty ids Then return 0") {
