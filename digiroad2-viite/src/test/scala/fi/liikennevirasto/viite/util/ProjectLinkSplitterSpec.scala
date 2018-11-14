@@ -74,37 +74,37 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Intersection point for simple case") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(0.0, 0.0), (10.0, 0.0)] and Segment2 [(0.0, 1.0), (10.0, -1.0)] Then returns (5.0, 0.0).") {
     ProjectLinkSplitter.intersectionPoint((Point(0.0, 0.0), Point(10.0, 0.0)), (Point(0.0, 1.0), Point(10.0, -1.0))) should be (Some(Point(5.0, 0.0)))
   }
 
-  test("Intersection is not a point for parallel") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(10.0, 2.0), (0.0, 1.0)] and Segment2 [(0.0, 1.0), (10.0, 2.0)], the segments are overlapping Then returns None.") {
     ProjectLinkSplitter.intersectionPoint((Point(10.0, 2.0), Point(0.0, 1.0)), (Point(0.0, 1.0), Point(10.0, 2.0))) should be (None)
   }
 
-  test("Intersection point not found for parallel") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(0.0, 1.5), (10.0, 2.5)] and Segment2 [(0.0, 1.0), (10.0, 2.0)], the segments are parallel Then returns None.") {
     ProjectLinkSplitter.intersectionPoint((Point(0.0, 1.5), Point(10.0, 2.5)), (Point(0.0, 1.0), Point(10.0, 2.0))) should be (None)
   }
 
-  test("Intersection point for vertical segment") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(5.0, 0.0), (5.0, 10.0)] and Segment2 [(0.0, 1.0), (10.0, -1.0)] Then returns (5.0, 0.0).") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0, 10.0)), (Point(0.0, 1.0), Point(10.0, -1.0))) should be (Some(Point(5.0, 0.0)))
   }
 
-  test("Intersection point for two vertical segments") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(5.0, 0.0), (5.0, 10.0)] and Segment2 [(5.0, 0.0), (5.0, 5.0)] then repeat but adding 1 to Point1 of Segment1 Then both should return None.") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0, 10.0)), (Point(5.0, 0.0), Point(5.0, 5.0))) should be (None)
     ProjectLinkSplitter.intersectionPoint((Point(6.0, 0.0), Point(6.0, 10.0)), (Point(5.0, 0.0), Point(5.0, 5.0))) should be (None)
   }
 
-  test("Intersection point for nearly vertical segments") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(5.0, 0.0), (5.0005, 10.0)] and Segment2 [(5.0, 0.0), (4.9995, 5.0)] Then return (5.0, 0.0).") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0005, 10.0)), (Point(5.0, 0.0), Point(4.9995, 5.0))) should be (Some(Point(5.0, 0.0)))
   }
 
-  test("Intersection point, second parameter is vertical") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 with both X and Y components and Segment2 fully vertical Then return the confirmation that there is an interception.") {
     ProjectLinkSplitter.intersectionPoint((Point(4.5, 10.041381265149107), Point(5.526846871753764, 16.20246249567169)),
       (Point(5.0, 10.0), Point(5.0, 16.0))).isEmpty should be (false)
   }
 
-  test("Intersection point for equal nearly vertical segments") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using nearly vertical segments Then return the interception point when applicable.") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0005, 10.0)), (Point(5.0, 0.0), Point(5.0005, 5.0))) should be (Some(Point(5.0, 0.0)))
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0005, 10.0)), (Point(5.0, 11.0), Point(5.0005, 15.0))) should be (None)
   }
