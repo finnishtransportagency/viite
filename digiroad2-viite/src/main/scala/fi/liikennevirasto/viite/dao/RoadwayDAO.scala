@@ -1,32 +1,27 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
-
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
@@ -321,24 +316,6 @@ class BaseDAO {
 
   val basicDateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  protected def dateTimeParse(string: String): DateTime = {
-    formatter.parseDateTime(string)
-  }
-
-  protected def optDateTimeParse(string: String): Option[DateTime] = {
-    try {
-      if (string == null || string == "")
-        None
-      else
-        Some(DateTime.parse(string, formatter))
-    } catch {
-      case ex: Exception => None
-    }
-  }
-
-  protected def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
-    dateTime.map(dt => new Timestamp(dt.getMillis))
-  }
 }
 
 class RoadwayDAO extends BaseDAO {
@@ -438,7 +415,8 @@ class RoadwayDAO extends BaseDAO {
         if (roadwayNumbers.size > 1000)
           MassQuery.withIds(roadwayNumbers) {
             idTableName =>
-              fetch(query => s"""
+              fetch(query =>
+                s"""
                 $query
                 join $idTableName i on i.id = a.ROADWAY_NUMBER
                 where a.valid_to is null and a.end_date is null
@@ -624,7 +602,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbers(roadwayNumbers: Set[Long])(query: String): String = {
-      s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
+    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: String): String = {
@@ -694,9 +672,9 @@ class RoadwayDAO extends BaseDAO {
   //    Q.queryNA[Int](query).firstOption
   //  }
   //
-    def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
-      val query =
-        s"""
+  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
+    val query =
+      s"""
             SELECT * FROM (
               SELECT ra.road_part_number
               FROM ROADWAY ra
@@ -705,8 +683,8 @@ class RoadwayDAO extends BaseDAO {
               ORDER BY road_part_number DESC
             ) WHERE ROWNUM < 2
         """
-      Q.queryNA[Long](query).firstOption
-    }
+    Q.queryNA[Long](query).firstOption
+  }
 
 
   //  /**
@@ -887,13 +865,13 @@ class RoadwayDAO extends BaseDAO {
   //  }
   //
   //
-//  private def queryList(query: String): List[RoadAddress] = {
-//    throw new NotImplementedError()
-//    Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
-//      case (_, roadAddressList) =>
-//        roadAddressList.head
-//    }.toList
-//  }
+  //  private def queryList(query: String): List[RoadAddress] = {
+  //    throw new NotImplementedError()
+  //    Q.queryNA[RoadAddress](query).list.groupBy(_.id).map {
+  //      case (_, roadAddressList) =>
+  //        roadAddressList.head
+  //    }.toList
+  //  }
   //
   //  def fetchPartsByRoadNumbers(boundingRectangle: BoundingRectangle, roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
   //    time(logger, "Fetch road addresses of road parts by road numbers") {
@@ -1242,6 +1220,7 @@ class RoadwayDAO extends BaseDAO {
     else
       Q.updateNA(query).first
   }
+
   //
   //  def expireRoadAddresses (sourceLinkIds: Set[Long]): AnyVal = {
   //    if (!sourceLinkIds.isEmpty) {
@@ -1337,8 +1316,8 @@ class RoadwayDAO extends BaseDAO {
   //    * @param startDate
   //    * @return
   //    */
-    def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
-      sql"""
+  def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
+    sql"""
          select distinct ra.road_part_number
                 from ROADWAY ra
                 where road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
@@ -1346,7 +1325,8 @@ class RoadwayDAO extends BaseDAO {
                 AND ra.road_part_number NOT IN (select distinct pl.road_part_number from project_link pl where (select count(distinct pl2.status) from project_link pl2 where pl2.road_part_number = ra.road_part_number and pl2.road_number = ra.road_number)
                  = 1 and pl.status = 5)
         """.as[Long].list
-    }
+  }
+
   //
   //  def updateLinearLocation(linearLocationAdjustment: LinearLocationAdjustment): Unit = {
   //    val (startM, endM) = (linearLocationAdjustment.startMeasure, linearLocationAdjustment.endMeasure)
@@ -1400,9 +1380,10 @@ class RoadwayDAO extends BaseDAO {
   //    }
   //  }
   //
-    def getNextRoadwayId: Long = {
-      Queries.nextRoadwayId.as[Long].first
-    }
+  def getNextRoadwayId: Long = {
+    Queries.nextRoadwayId.as[Long].first
+  }
+
   //
   //  implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
   //
