@@ -821,6 +821,36 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  // expireById
+
+  test("Test expireById When empty ids Then return 0") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.expireById(Set()) should be(0)
+    }
+  }
+
+  test("Test expireById When non-existing ids Then return 0") {
+    runWithRollback {
+      dao.create(List(testRoadway1, testRoadway2))
+      dao.expireById(Set(nonExistingRoadwayId)) should be(0)
+    }
+  }
+
+  test("Test expireById When existing roadway ids Then return 2 and roadways are expired") {
+    runWithRollback {
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadwayId2 = Sequences.nextRoadwayId
+      dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
+      val roadways = dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2))
+      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.size should be(2)
+      dao.expireById(Set(roadwayId1, roadwayId2)) should be(2)
+      dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2)).size should be(0)
+    }
+  }
+
   //TODO will be implemented at VIITE-1552
   //  test("insert road address m-values overlap") {
   //    runWithRollback {
