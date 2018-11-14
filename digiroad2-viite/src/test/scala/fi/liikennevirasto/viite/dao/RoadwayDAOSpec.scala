@@ -25,6 +25,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   }
 
   val dao = new RoadwayDAO
+  val linearLocationDAO = new LinearLocationDAO
 
   private val nonExistingRoadNumber = -9999
   private val nonExistingRoadPartNumber = -9999
@@ -47,6 +48,10 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   val testRoadway3 = Roadway(NewRoadway, roadwayNumber3, roadNumber2, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+
+  val testLinearLocation1 = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+    (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
+    roadwayNumber1)
 
   // fetchByRoadwayNumber
 
@@ -585,14 +590,10 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayId = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId), testRoadway2, testRoadway3))
-      val linearLocationDAO = new LinearLocationDAO
-      val linearLocationId = Sequences.nextLinearLocationId
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
-        testRoadway1.roadwayNumber)
-      linearLocationDAO.create(List(linearLocation))
+      val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
+      linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, AddressError.InconsistentLrmHistory)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory)
       val errors = dao.fetchAllRoadAddressErrors()
       errors.size should be > 0
     }
@@ -602,14 +603,10 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayId = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2010-01-01"))), testRoadway2, testRoadway3))
-      val linearLocationDAO = new LinearLocationDAO
-      val linearLocationId = Sequences.nextLinearLocationId
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
-        testRoadway1.roadwayNumber)
-      linearLocationDAO.create(List(linearLocation))
+      val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
+      linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId, AddressError.InconsistentLrmHistory)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory)
       val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
       errors.size should be > 0
     }
@@ -868,7 +865,37 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   // getRoadPartInfo
 
-  // TODO
+  test("Test getRoadPartInfo When non-existing road number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.getRoadPartInfo(nonExistingRoadNumber, roadPartNumber1) should be(None)
+    }
+  }
+
+  test("Test getRoadPartInfo When non-existing road part number Then return None") {
+    runWithRollback {
+      dao.create(List(testRoadway1))
+      dao.getRoadPartInfo(roadNumber1, nonExistingRoadPartNumber) should be(None)
+    }
+  }
+
+  test("Test getRoadPartInfo When existing road and road part number Then return info") {
+    runWithRollback {
+      val roadwayId = dao.getNextRoadwayId
+      dao.create(List(testRoadway1.copy(id = roadwayId)))
+      val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
+      linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
+
+      val info = dao.getRoadPartInfo(roadNumber1, roadPartNumber1).getOrElse(fail)
+      info._1 should be(roadwayId)
+      info._2 should be(testLinearLocation1.linkId)
+      info._3 should be(testRoadway1.endAddrMValue)
+      info._4 should be(testRoadway1.discontinuity.value)
+      info._5 should be(testRoadway1.ely)
+      info._6.getOrElse(fail) should be(testRoadway1.startDate)
+      info._7 should be(None)
+    }
+  }
 
   // getValidRoadParts
 
