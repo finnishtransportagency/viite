@@ -276,7 +276,7 @@ class RoadwayChangesDAO {
       roadwayChangePS.setLong(20, nextChangeOrderLink)
       roadwayChangePS.addBatch()
 
-      oldRoadwaySection.projectLinks.foreach{
+      newRoadwaySection.projectLinks.foreach{
         pl =>
           roadWayChangesLinkPS.setLong(1, projectId)
           roadWayChangesLinkPS.setLong(2, nextChangeOrderLink)
@@ -303,7 +303,6 @@ class RoadwayChangesDAO {
             terminated.foreach(roadwaySection =>
               addToBatch(roadwaySection, ely, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
             )
-
 
             val news = ProjectDeltaCalculator.partition(delta.newRoads)
             news.foreach(roadwaySection => addToBatch(roadwaySection, ely, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
