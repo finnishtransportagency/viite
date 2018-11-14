@@ -10,7 +10,7 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
 
   val provider = new OracleUserProvider
 
-  test("create and get user") {
+  test("Test OracleUserProvider.getUser() and OracleUserProvider.createUser() Whe trying to find a specific user name and creating a user for that user name Then getUser() should return None before creating and the user after creating it.") {
     executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'");
     provider.getUser(TestUserName) shouldBe (None)
     provider.createUser(TestUserName, Configuration(north = Some(1000)))
