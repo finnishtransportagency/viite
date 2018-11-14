@@ -61,7 +61,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     (Option.empty[ProjectLinkCalibrationPoint], Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectLinkSource)))
   }
 
-  test("Multiple transfers on single road part") {
+  test("Test ProjectDeltaCalculator.partition When executing multiple transfers on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val transfer1 = (0 to 10).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
     val transfer2 = (12 to 15).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
     val mapping =
@@ -73,7 +73,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Unchanged + transfer + transfer") {
+  test("Test ProjectDeltaCalculator.partition When executing a Unchanged and 2 transfer on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val addresses = (0 to 10).map(i => createRoadAddress(i * 10, 10L))
     val addresses2 = (11 to 21).map(i => createRoadAddress(i * 10, 10L)).map(a => a.copy(roadPartNumber = 206, startAddrMValue = a.startAddrMValue - 110L,
       endAddrMValue = a.endAddrMValue - 110L))
@@ -95,7 +95,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     start205.map(x => (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)) should be(Some((0L, 0L, 110L, 110L)))
   }
 
-  test("Numbering operation") {
+  test("Test ProjectDeltaCalculator.partition When executing a numbering operation on single road part Then returns the correct From RoadSection -> To RoadSection mapping with the new road number/road part number.") {
     val addresses = (0 to 10).map(i => createRoadAddress(i * 10, 10L))
     val numberingLinks = addresses.map(a => (a, a.copy(roadNumber = 12345, roadPartNumber = 1))).map(x => (x._1, toProjectLink(project, LinkStatus.Numbering)(x._2)))
 
@@ -111,7 +111,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     correctRoadNumber.map(x => (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)) should be(Some((0L, 0L, 110L, 110L)))
   }
 
-  test("2 track termination + transfer") {
+  test("Test ProjectDeltaCalculator.partition When executing a termination and a transfer operation on a single, 2 tracked road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
     val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.head), toProjectLink(project, LinkStatus.Terminated)(addresses2.head))
@@ -139,7 +139,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     })
   }
 
-  test("unchanged + 2 track termination + different roadwayNumbers, roadwayNumbers should not be considered on partition") {
+  test("Test ProjectDeltaCalculator.partition When executing a unchanged operation and terminating 2 different tracks, the links have different roadwayNumbers Then returns the correct From RoadSection -> To RoadSection mapping, roadways are not considered.") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
     val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
@@ -160,7 +160,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     })
   }
 
-  test("unchanged + 2 track termination + transfer") {
+  test("Test ProjectDeltaCalculator.partition When executing a unchanged, a 2 track termination and a transfer operation on a single road part with 2 tracks Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
     val terminations = Seq(addresses(4), addresses(5), addresses2(5), addresses2(6)).map(t => {
@@ -228,7 +228,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     })
   }
 
-  test("unchanged with road type change in between + new") {
+  test("Test ProjectDeltaCalculator.partition When executing a unchanged and a road type change operation on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L)).map(ra =>
       if (ra.id > 50)
         ra
@@ -333,7 +333,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //    }
   //  }
 
-  test("road with ely change") {
+  test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's ELY value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new ELY is in effect.") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L))
     val links = addresses.filter(_.endAddrMValue < 61).map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))))
     val partitioned = ProjectDeltaCalculator.partition(links)
@@ -345,7 +345,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     to.ely should be(5)
   }
 
-  test("road with discontinuity change") {
+  test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's Discontinuity value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new Discontinuity is in effect.") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L))
     val links = addresses.map(a => {
       if (a.endAddrMValue == 60) {
@@ -368,7 +368,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     })
   }
 
-  test("Multiple transfers with reversal and discontinuity") {
+//                                                                              DEVASTATING AND DEFENSIVE DEEP STRIKES
+  test("Test ProjectDeltaCalculator.partition When executing Multiple transfers with reversal and discontinuity change operations Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
       createTransferProjectLink(1524, 502).copy(reversed = true)),
       (createRoadAddress(502, 1524),
@@ -385,7 +386,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Partitioner should separate links containing calibration points whose origin is ProjectLink") {
+  test("Test ProjectDeltaCalculator.partition When executing Unchanged operations on project links that have calibration points on the origin Then returns the correct From RoadSection -> To RoadSection mapping being careful to separate links containing said calibration points." ) {
     val addresses = (0 to 9).map(i => {
       createRoadAddress(i * 2, 2L)
     })
