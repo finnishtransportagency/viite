@@ -397,7 +397,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         )
       }
       val adjusted = ProjectSectionCalculator.assignMValues(geomToLinks)
-      projectLinkDAO.updateProjectLinksToDB(adjusted, "-", Seq())
+      projectLinkDAO.updateProjectLinks(adjusted, "-", Seq())
 
       reset(mockRoadLinkService)
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())

@@ -515,7 +515,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.saveProject(project.copy(reservedParts = Seq(
         ProjectReservedPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, isDirty = true))))
       val projectLinks = projectLinkDAO.getProjectLinks(id)
-      projectLinkDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Transfer, "test")
+      projectLinkDAO.updateProjectLinksStatus(projectLinks.map(x => x.id).toSet, LinkStatus.Transfer, "test")
       mockForProject(id)
       projectService.changeDirection(id, 5, 207, projectLinks.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)), ProjectCoordinates(0, 0, 0), "test") should be(None)
       val updatedProjectLinks = projectLinkDAO.getProjectLinks(id)
@@ -1550,9 +1550,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val part1Track2Links = projectLinks.filter(pl => part1track2.contains(pl.linkId)).map(_.id).toSet
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(projectLinks.filter(pl => part1track1Links.contains(pl.linkId)).map(toRoadLink))
-      projectLinkDAO.updateProjectLinks(part1track1Links, LinkStatus.UnChanged, "test")
+      projectLinkDAO.updateProjectLinksStatus(part1track1Links, LinkStatus.UnChanged, "test")
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
-      projectLinkDAO.updateProjectLinks(part1Track2Links, LinkStatus.UnChanged, "test")
+      projectLinkDAO.updateProjectLinksStatus(part1Track2Links, LinkStatus.UnChanged, "test")
 
       /**
         * Tranfering adjacents of part1 to part2
@@ -1668,9 +1668,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val part1Track2Links = projectLinks.filter(pl => part1track2.contains(pl.linkId)).map(_.id).toSet
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(projectLinks.filter(pl => part1track1Links.contains(pl.linkId)).map(toRoadLink))
-      projectLinkDAO.updateProjectLinks(part1track1Links, LinkStatus.UnChanged, "test")
+      projectLinkDAO.updateProjectLinksStatus(part1track1Links, LinkStatus.UnChanged, "test")
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(projectLinks.filter(pl => part1Track2Links.contains(pl.linkId)).map(toRoadLink))
-      projectLinkDAO.updateProjectLinks(part1Track2Links, LinkStatus.UnChanged, "test")
+      projectLinkDAO.updateProjectLinksStatus(part1Track2Links, LinkStatus.UnChanged, "test")
 
       val part2track1 = Set(12352L, 12353L)
       val part2track2 = Set(12354L, 12355L)
