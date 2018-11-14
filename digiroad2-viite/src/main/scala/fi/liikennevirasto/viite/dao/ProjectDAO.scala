@@ -387,7 +387,7 @@ object ProjectDAO {
         projectLinks.map(_.id)
       } catch {
         case ex: Exception => {
-          logger.debug("Project links: "+links)
+          logger.error("Project links: "+links)
           throw ex
         }
       }
