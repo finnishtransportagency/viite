@@ -501,7 +501,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
 
-    val roadlinks = roadLinkService.getCurrentAndSuravageRoadLinksFromVVH(Set(linkId))
+    val roadlinks = roadLinkService.getAllVisibleRoadLinksFromVVH(Set(linkId))
 
     val roadAddresses = withDynSession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
