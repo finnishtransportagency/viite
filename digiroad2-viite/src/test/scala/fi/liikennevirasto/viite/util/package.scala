@@ -114,7 +114,7 @@ package object util {
     * @return
     */
   def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roads: Seq[(Long, Long, String)] = Seq((1999L, 1L, "Test road")),
-                            discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, withRoadAddress: Boolean = true): (RoadAddressProject, Seq[ProjectLink]) = {
+                            discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, withRoadAddress: Boolean = true): (Project, Seq[ProjectLink]) = {
 
     val projectId = Sequences.nextViitePrimaryKeySeqValue
 
@@ -142,9 +142,9 @@ package object util {
       }
     }
 
-    val project = RoadAddressProject(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+    val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(ely), None)
-    projectDAO.createRoadAddressProject(project)
+    projectDAO.create(project)
 
     val links =
       roads.flatMap {
@@ -165,9 +165,9 @@ package object util {
 
   def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
     val id = Sequences.nextViitePrimaryKeySeqValue
-    val project = RoadAddressProject(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+    val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), None, Some(8), None)
-    projectDAO.createRoadAddressProject(project)
+    projectDAO.create(project)
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
       projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
     }
@@ -184,11 +184,11 @@ package object util {
       LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
 
-  def toTransition(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): (RoadAddress, ProjectLink) = {
+  def toTransition(project: Project, status: LinkStatus)(roadAddress: RoadAddress): (RoadAddress, ProjectLink) = {
     (roadAddress, toProjectLink(project, status)(roadAddress))
   }
 
-  def toProjectLink(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
+  def toProjectLink(project: Project, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
     if (status == LinkStatus.New) {
       ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
@@ -206,7 +206,7 @@ package object util {
     }
   }
 
-  def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
+  def toProjectLink(project: Project)(roadAddress: RoadAddress): ProjectLink = {
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
@@ -223,7 +223,7 @@ package object util {
       ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
   }
 
-  def backToProjectLink(project: RoadAddressProject)(rl: ProjectAddressLink): ProjectLink = {
+  def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
@@ -233,7 +233,7 @@ package object util {
       None, rl.vvhTimeStamp)
   }
 
-  def addressToProjectLink(project: RoadAddressProject)(rl: ProjectAddressLink): ProjectLink = {
+  def addressToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,

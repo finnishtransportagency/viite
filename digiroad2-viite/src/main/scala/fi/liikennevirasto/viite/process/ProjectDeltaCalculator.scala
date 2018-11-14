@@ -19,7 +19,7 @@ object ProjectDeltaCalculator {
   val checker = new ContinuityChecker(null) // We don't need road link service here
   lazy private val logger = LoggerFactory.getLogger(getClass)
 
-  def delta(project: RoadAddressProject): Delta = {
+  def delta(project: Project): Delta = {
     throw new NotImplementedError("Will be implemented at VIITE-1541")
 //    val projectLinksFetched = ProjectDAO.getProjectLinks(project.id)
 //    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))

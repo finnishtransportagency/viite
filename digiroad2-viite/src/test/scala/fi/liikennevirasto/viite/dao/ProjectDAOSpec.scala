@@ -53,8 +53,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   private val linearLocationId = 0
 
-  private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None): RoadAddressProject ={
-    RoadAddressProject(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("current status info"), ely, coordinates)
+  private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None): Project ={
+    Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("current status info"), ely, coordinates)
   }
 
   private def dummyRoadways: Seq[Roadway] = {
@@ -91,17 +91,17 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
       val projId1 = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(projId1, ProjectState.Incomplete, List(), None, None)
-      projectDAO.createRoadAddressProject(rap)
+      projectDAO.create(rap)
 
       val projId2 = Sequences.nextViitePrimaryKeySeqValue
       val rap2 =  dummyRoadAddressProject(projId2, ProjectState.Incomplete, List(), None, None)
-      projectDAO.createRoadAddressProject(rap2)
+      projectDAO.create(rap2)
 
       projectReservedPartDAO.reserveRoadPart(projId1, roadNumber1, roadPartNumber1, "TestUser")
       projectReservedPartDAO.reserveRoadPart(projId2, roadNumber2, roadPartNumber1, "TestUser")
 
-      val waitingCountP1 = projectDAO.getProjectsWithGivenLinkId(linkId1).length
-      val waitingCountP2 = projectDAO.getProjectsWithGivenLinkId(linkId2).length
+      val waitingCountP1 = projectDAO.fetchAllIdsByLinkId(linkId1).length
+      val waitingCountP2 = projectDAO.fetchAllIdsByLinkId(linkId2).length
 
       val projectLinkId1 = projId1 + 3
       val projectLinkId2 = projId1 + 4
@@ -110,8 +110,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
         dummyProjectLink(projectLinkId2, projId2, linkId2, roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
       )
       projectLinkDAO.create(projectLinks)
-      val waitingCountNow1 = projectDAO.getProjectsWithGivenLinkId(linkId1).length
-      val waitingCountNow2 = projectDAO.getProjectsWithGivenLinkId(linkId2).length
+      val waitingCountNow1 = projectDAO.fetchAllIdsByLinkId(linkId1).length
+      val waitingCountNow2 = projectDAO.fetchAllIdsByLinkId(linkId2).length
       waitingCountNow1 - waitingCountP1 should be(1)
       waitingCountNow2 - waitingCountP2 should be(1)
     }
@@ -133,17 +133,17 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val projectListSize = projectDAO.getProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], ely = None, coordinates = None)
-      projectDAO.createRoadAddressProject(rap)
-      projectDAO.getRoadAddressProjectById(id) match {
+      projectDAO.create(rap)
+      projectDAO.fetchById(id) match {
         case Some(project) =>
         project.statusInfo should be (Some("current status info"))
-        case None => None should be(RoadAddressProject)
+        case None => None should be(Project)
       }
       projectDAO.updateProjectStateInfo("updated info", id)
-      projectDAO.getRoadAddressProjectById(id) match {
+      projectDAO.fetchById(id) match {
         case Some(project) =>
         project.statusInfo should be (Some("updated info"))
-        case None => None should be(RoadAddressProject)
+        case None => None should be(Project)
       }
     }
   }
@@ -152,11 +152,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(id, ProjectState.Incomplete, List(), None, None)
-      projectDAO.createRoadAddressProject(rap)
-      projectDAO.getRoadAddressProjectById(id).get.coordinates.get.zoom should be(0)
+      projectDAO.create(rap)
+      projectDAO.fetchById(id).get.coordinates.get.zoom should be(0)
       val coordinates = ProjectCoordinates(0.0, 1.0, 4)
       projectDAO.updateProjectCoordinates(id, coordinates)
-      projectDAO.getRoadAddressProjectById(id).get.coordinates.get.zoom should be(4)
+      projectDAO.fetchById(id).get.coordinates.get.zoom should be(4)
     }
   }
 
@@ -165,8 +165,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap1 =  dummyRoadAddressProject(id, ProjectState.Incomplete, List(), None, None)
       val rap2 =  dummyRoadAddressProject(id+1, ProjectState.Incomplete, List(), None, None)
-      projectDAO.createRoadAddressProject(rap1)
-      projectDAO.createRoadAddressProject(rap2)
+      projectDAO.create(rap1)
+      projectDAO.create(rap2)
       rap1.name should be (rap2.name)
       projectDAO.uniqueName(rap1.id, rap1.name) should be (true)
     }
@@ -176,9 +176,9 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, Seq(), Some(8L), None)
-      projectDAO.createRoadAddressProject(rap)
-      projectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-      projectDAO.getRoadAddressProjectById(id).head.reservedParts.isEmpty should be(true)
+      projectDAO.create(rap)
+      projectDAO.fetchById(id).nonEmpty should be(true)
+      projectDAO.fetchById(id).head.reservedParts.isEmpty should be(true)
     }
   }
 
@@ -188,7 +188,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val waitingCountP = projectDAO.getProjectsWithWaitingTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(reservedPart), None, None)
-        projectDAO.createRoadAddressProject(rap)
+        projectDAO.create(rap)
       val waitingCountNow = projectDAO.getProjectsWithWaitingTRStatus.length
       waitingCountNow - waitingCountP should be(1)
     }
@@ -198,7 +198,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyRoadAddressProject(id, ProjectState.Sent2TR, List(), None, None)
-      projectDAO.createRoadAddressProject(rap)
+      projectDAO.create(rap)
       projectDAO.updateProjectStatus(id, ProjectState.Saved2TR)
       projectDAO.getProjectStatus(id) should be(Some(ProjectState.Saved2TR))
     }
@@ -209,16 +209,16 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List(), None, None)
-      val updatedRap = RoadAddressProject(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(reservedPart), None)
-      projectDAO.createRoadAddressProject(rap)
+      val updatedRap = Project(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(reservedPart), None)
+      projectDAO.create(rap)
       projectDAO.updateRoadAddressProject(updatedRap)
-      projectDAO.getRoadAddressProjectById(id) match {
+      projectDAO.fetchById(id) match {
         case Some(project) =>
           project.name should be("newname")
           project.additionalInfo should be("updated info")
           project.startDate should be(DateTime.parse("1901-01-02"))
           project.dateModified.getMillis should be > DateTime.parse("1901-01-03").getMillis + 100000000
-        case None => None should be(RoadAddressProject)
+        case None => None should be(Project)
       }
     }
   }
@@ -228,7 +228,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val projectListSize = projectDAO.getProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None, None)
-      projectDAO.createRoadAddressProject(rap)
+      projectDAO.create(rap)
       val projectList = projectDAO.getProjects()
       projectList.length - projectListSize should be(1)
     }
@@ -238,10 +238,10 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None, None)
-      projectDAO.createRoadAddressProject(rap)
-      projectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      projectDAO.create(rap)
+      projectDAO.fetchById(id).nonEmpty should be(true)
       projectDAO.updateProjectEly(id, 99)
-      projectDAO.getProjectEly(id).get should be(99)
+      projectDAO.fetchProjectElyById(id).get should be(99)
     }
   }
 
@@ -251,7 +251,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val waitingCountP = projectDAO.getProjectsWithSendingToTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyRoadAddressProject(id, ProjectState.SendingToTR, List.empty[ProjectReservedPart], None, None)
-      projectDAO.createRoadAddressProject(rap)
+      projectDAO.create(rap)
       val waitingCountNow = projectDAO.getProjectsWithSendingToTRStatus.length
       waitingCountNow - waitingCountP should be(1)
     }
