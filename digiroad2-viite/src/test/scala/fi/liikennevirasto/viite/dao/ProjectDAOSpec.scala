@@ -211,7 +211,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, List(), None, None)
       val updatedRap = Project(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(reservedPart), None)
       projectDAO.create(rap)
-      projectDAO.updateRoadAddressProject(updatedRap)
+      projectDAO.update(updatedRap)
       projectDAO.fetchById(id) match {
         case Some(project) =>
           project.name should be("newname")
