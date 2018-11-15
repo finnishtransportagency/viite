@@ -261,7 +261,7 @@ object ProjectDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextObjectOption()
+      val geom = r.nextObjectOption()
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -325,7 +325,7 @@ object ProjectDAO {
         val projectLinks = ready ++ idLess.zip(plIds).map(x =>
           x._1.copy(id = x._2)
         )
-        projectLinks.toList.foreach { case (pl) =>
+        projectLinks.toList.foreach { pl =>
 
           addressPS.setLong(1, pl.id)
           addressPS.setLong(2, pl.projectId)
