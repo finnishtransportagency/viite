@@ -1391,7 +1391,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val project = projectDAO.fetchById(projectId)
       val rotatingTR_Id = projectDAO.fetchTRIdByProjectId(projectId)
       projectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
-      val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.head + "]"
+      val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.get + "]"
       if (project.isEmpty)
         return Some("Projektia ei löytynyt")
       appendStatusInfo(project.get, addedStatus)
@@ -1623,7 +1623,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
-    projectDAO.fetchTRIdByProjectId(projectID).headOption match {
+    projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
         projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")

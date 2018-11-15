@@ -10,6 +10,10 @@ object Sequences {
     nextViitePrimaryKeyId.as[Long].first
   }
 
+  def nextViiteProjectId: Long = {
+    Queries.nextViiteProjectId.as[Long].first
+  }
+
   def nextRoadwayId: Long = {
     Queries.nextRoadwayId.as[Long].first
   }
