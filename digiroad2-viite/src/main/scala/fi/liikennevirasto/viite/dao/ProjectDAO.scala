@@ -342,6 +342,20 @@ object ProjectDAO {
     }
   }
 
+  //TODO delete when there is no longer needed. This is now need to script where we migrate PROJECT_LINK .GEOMETRY_STRING to .GEOMETRY
+  def updateHistoryGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
+    try {
+      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      sqlu"""
+        UPDATE PROJECT_LINK_HISTORY SET GEOMETRY = #$geometryQuery WHERE id = $id""".execute
+    } catch {
+      case e: Exception =>
+        println(e)
+        throw new RuntimeException("SQL Error: " + e.getMessage)
+    }
+  }
+
   def create(links: Seq[ProjectLink]): Seq[Long] = {
 
     time(logger, "Create project links") {
@@ -494,6 +508,15 @@ object ProjectDAO {
         sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
                 where #$filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M"""
           .as[(Long, String)].list.map(l => l._1 -> parseStringGeometry(l._2)).toMap
+    }
+  }
+
+  def getProjectHistoryLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Map[Long, Seq[Point]] = {
+    time(logger, "Get project links") {
+      val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
+      sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK_HISTORY
+                where #$filter PROJECT_LINK_HISTORY.PROJECT_ID = $projectId order by PROJECT_LINK_HISTORY.ROAD_NUMBER, PROJECT_LINK_HISTORY.ROAD_PART_NUMBER, PROJECT_LINK_HISTORY.END_ADDR_M"""
+        .as[(Long, String)].list.map(l => l._1 -> parseStringGeometry(l._2)).toMap
     }
   }
 
