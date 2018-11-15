@@ -8,9 +8,10 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.{parseStringGeometry, _}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
@@ -221,7 +222,7 @@ object ProjectDAO {
     s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
   PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE_CODE,
-  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.link_id, PROJECT_LINK.GEOMETRY,
+  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.LINK_ID, PROJECT_LINK.GEOMETRY,
   (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
   PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
@@ -291,7 +292,7 @@ object ProjectDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextStringOption()
+      val geom = r.nextObjectOption()
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -315,7 +316,7 @@ object ProjectDAO {
       val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
-        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, parseStringGeometry(geom.getOrElse("")), projectId,
+        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, OracleDatabase.loadJGeometryToGeometry(geom), projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId, geometryTimeStamp, roadName = Some(roadName),
         roadAddressLength = roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM = roadAddressStartAddrM, roadAddressEndAddrM = roadAddressEndAddrM, roadAddressTrack = roadAddressTrack,
@@ -323,75 +324,81 @@ object ProjectDAO {
     }
   }
 
-
-  private def parseStringGeometry(geomString: String): Seq[Point] = {
-    if (geomString.nonEmpty)
-      toGeometry(geomString)
-    else
-      Seq()
-  }
-
   private def listQuery(query: String) = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
+  //TODO delete when there is no longer needed. This is now need to script where we migrate PROJECT_LINK .GEOMETRY_STRING to .GEOMETRY
+  def updateGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
+    try {
+      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      sqlu"""
+        UPDATE PROJECT_LINK SET GEOMETRY = #$geometryQuery WHERE id = $id""".execute
+    } catch {
+      case e: Exception =>
+        println(e)
+        throw new RuntimeException("SQL Error: " + e.getMessage)
+    }
+  }
+
   def create(links: Seq[ProjectLink]): Seq[Long] = {
+
     time(logger, "Create project links") {
-      try {
-        val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
-          "road_number, road_part_number, " +
-          "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-          "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry, " +
-          "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-          "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-        val (ready, idLess) = links.partition(_.id != NewRoadAddress)
-        val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
-        val projectLinks = ready ++ idLess.zip(plIds).map(x =>
-          x._1.copy(id = x._2)
-        )
-        projectLinks.toList.foreach { case (pl) =>
-          addressPS.setLong(1, pl.id)
-          addressPS.setLong(2, pl.projectId)
-          addressPS.setLong(3, pl.roadNumber)
-          addressPS.setLong(4, pl.roadPartNumber)
-          addressPS.setLong(5, pl.track.value)
-          addressPS.setLong(6, pl.discontinuity.value)
-          addressPS.setLong(7, pl.startAddrMValue)
-          addressPS.setLong(8, pl.endAddrMValue)
-          addressPS.setString(9, pl.createdBy.orNull)
-          addressPS.setDouble(10, CalibrationCode.getFromAddress(pl).value)
-          addressPS.setLong(11, pl.status.value)
-          addressPS.setLong(12, pl.roadType.value)
-          if (pl.roadAddressId == 0)
-            addressPS.setNull(13, Types.BIGINT)
-          else
-            addressPS.setLong(13, pl.roadAddressId)
-          if (pl.connectedLinkId.isDefined)
-            addressPS.setLong(14, pl.connectedLinkId.get)
-          else
-            addressPS.setString(14, null)
-          addressPS.setLong(15, pl.ely)
-          addressPS.setBoolean(16, pl.reversed)
-          addressPS.setString(17, toGeomString(pl.geometry))
-          addressPS.setLong(18, pl.linkId)
-          addressPS.setLong(19, pl.sideCode.value)
-          addressPS.setDouble(20, pl.startMValue)
-          addressPS.setDouble(21, pl.endMValue)
-          addressPS.setDouble(22, pl.linkGeometryTimeStamp)
-          addressPS.setInt(23, pl.linkGeomSource.value)
-          addressPS.setInt(24, pl.calibrationPointsSourcesToDB().value)
-          addressPS.addBatch()
-        }
-        addressPS.executeBatch()
-        addressPS.close()
-        projectLinks.map(_.id)
-      } catch {
+      try {val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
+        "road_number, road_part_number, " +
+        "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
+        "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed, geometry, " +
+        "link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      val (ready, idLess) = links.partition(_.id != NewRoadAddress)
+      val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
+      val projectLinks = ready ++ idLess.zip(plIds).map(x =>
+        x._1.copy(id = x._2)
+      )
+      projectLinks.toList.foreach { pl =>
+        addressPS.setLong(1, pl.id)
+        addressPS.setLong(2, pl.projectId)
+        addressPS.setLong(3, pl.roadNumber)
+        addressPS.setLong(4, pl.roadPartNumber)
+        addressPS.setLong(5, pl.track.value)
+        addressPS.setLong(6, pl.discontinuity.value)
+        addressPS.setLong(7, pl.startAddrMValue)
+        addressPS.setLong(8, pl.endAddrMValue)
+        addressPS.setString(9, pl.createdBy.orNull)
+        addressPS.setDouble(10, CalibrationCode.getFromAddress(pl).value)
+        addressPS.setLong(11, pl.status.value)
+        addressPS.setLong(12, pl.roadType.value)
+        if (pl.roadAddressId == 0)
+          addressPS.setNull(13, Types.BIGINT)
+        else
+          addressPS.setLong(13, pl.roadAddressId)
+        if (pl.connectedLinkId.isDefined)
+          addressPS.setLong(14, pl.connectedLinkId.get)
+        else
+          addressPS.setString(14, null)
+        addressPS.setLong(15, pl.ely)
+        addressPS.setBoolean(16, pl.reversed)
+        addressPS.setObject(17, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
+        addressPS.setLong(18, pl.linkId)
+        addressPS.setLong(19, pl.sideCode.value)
+        addressPS.setDouble(20, pl.startMValue)
+        addressPS.setDouble(21, pl.endMValue)
+        addressPS.setDouble(22, pl.linkGeometryTimeStamp)
+        addressPS.setInt(23, pl.linkGeomSource.value)
+        addressPS.setInt(24, pl.calibrationPointsSourcesToDB().value)
+        addressPS.addBatch()
+      }
+      addressPS.executeBatch()
+      addressPS.close()
+      projectLinks.map(_.id)} catch {
         case ex: Exception => {
           logger.error("Project links: "+links)
           throw ex
         }
       }
     }
+
   }
 
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
@@ -428,7 +435,7 @@ object ProjectDAO {
         projectLinkPS.setInt(11, projectLink.status.value)
         projectLinkPS.setInt(12, projectLink.roadType.value)
         projectLinkPS.setInt(13, if (projectLink.reversed) 1 else 0)
-        projectLinkPS.setString(14, toGeomString(projectLink.geometry))
+        projectLinkPS.setObject(14, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
         projectLinkPS.setInt(15, projectLink.sideCode.value)
         projectLinkPS.setDouble(16, projectLink.startMValue)
         projectLinkPS.setDouble(17, projectLink.endMValue)
@@ -441,13 +448,13 @@ object ProjectDAO {
     }
   }
 
-
   def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
-    time(logger, "Update project links geometry") {
+    time(logger,
+      "Update project links geometry") {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ?, MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
 
       for (projectLink <- projectLinks) {
-        projectLinkPS.setString(1, toGeomString(projectLink.geometry))
+        projectLinkPS.setObject(1, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
         projectLinkPS.setString(2, modifier)
         projectLinkPS.setLong(3, projectLink.linkGeometryTimeStamp)
         projectLinkPS.setLong(4, projectLink.id)
@@ -478,6 +485,15 @@ object ProjectDAO {
         s"""$projectLinkHistoryQueryBase
                 where $filter (plh.PROJECT_ID = $projectId ) order by plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.END_ADDR_M """
       listQuery(query)
+    }
+  }
+
+  def getProjectLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Map[Long, Seq[Point]] = {
+    time(logger, "Get project links") {
+      val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
+        sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
+                where #$filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M"""
+          .as[(Long, String)].list.map(l => l._1 -> parseStringGeometry(l._2)).toMap
     }
   }
 
@@ -964,7 +980,9 @@ object ProjectDAO {
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true) = {
     time(logger, "Update project link values") {
 
-      val updateGeometry = if (updateGeom) s", GEOMETRY = '${toGeomString(roadAddress.geometry)}'" else s""
+      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
 
       val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, " +
         s" ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK_CODE = ${roadAddress.track.value}, " +

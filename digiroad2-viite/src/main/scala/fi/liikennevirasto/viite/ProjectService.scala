@@ -722,6 +722,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def updateProjectLinkSdoGeometry(projectId: Long, username: String, onlyNotHandled: Boolean = false): Unit = {
+    withDynTransaction {
+      val linksGeometry = ProjectDAO.getProjectLinksGeometry(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
+      println(s"Got ${linksGeometry.size} links from project $projectId")
+      linksGeometry.foreach(pl => ProjectDAO.updateGeometryStringToSdo(pl._1, pl._2))
+    }
+}
+
   /**
     * Check that road part is available for reservation and return the id of reserved road part table row.
     * Reservation must contain road number and road part number, other data is not used or saved.
