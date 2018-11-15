@@ -485,17 +485,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rap = Project(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
       runWithRollback {
         projectDAO.create(rap)
-        val emptyTrId = projectDAO.getRotatingTRProjectId(projectId)
+        val emptyTrId = projectDAO.fetchTRIdByProjectId(projectId)
         emptyTrId.isEmpty should be(true)
         val projectNone = projectDAO.fetchById(projectId)
         projectService.removeRotatingTRId(projectId)
         projectNone.head.statusInfo.getOrElse("").size should be(0)
-        projectDAO.addRotatingTRProjectId(projectId)
-        val trId = projectDAO.getRotatingTRProjectId(projectId)
+        projectDAO.assignNewProjectTRId(projectId)
+        val trId = projectDAO.fetchTRIdByProjectId(projectId)
         trId.nonEmpty should be(true)
         projectService.removeRotatingTRId(projectId)
         emptyTrId.isEmpty should be(true)
-        projectDAO.addRotatingTRProjectId(projectId)
+        projectDAO.assignNewProjectTRId(projectId)
         projectService.removeRotatingTRId(projectId)
         val project = projectDAO.fetchById(projectId).head
         project.status should be(ProjectState.Incomplete)
@@ -559,7 +559,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rap = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
       runWithRollback {
         projectDAO.create(rap)
-        projectDAO.addRotatingTRProjectId(projectId)
+        projectDAO.assignNewProjectTRId(projectId)
         projectService.updateProjectsWaitingResponseFromTR()
         val project = projectDAO.fetchById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
