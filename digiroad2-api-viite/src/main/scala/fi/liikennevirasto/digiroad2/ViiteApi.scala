@@ -46,7 +46,7 @@ case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], statu
 case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
                                             roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
                                             roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
-                                            coordinates: ProjectCoordinates, roadName: Option[String])
+                                            coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -160,9 +160,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadAddress/linkid/$linkId") {
       //TODO This process can be improved
-      val roadLinks = roadAddressService.getRoadAddressLink(linkId)
-      foldSegments(roadLinks)
-        .map(midPoint)
+      roadAddressService.getRoadAddressLink(linkId)
+        .map(midPoint).headOption
         .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
     }
   }
@@ -552,7 +551,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         if (projectService.validateLinkTrack(links.trackCode)) {
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.roadType, links.discontinuity, Some(links.roadEly), roadName = links.roadName) match {
+            links.roadType, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)

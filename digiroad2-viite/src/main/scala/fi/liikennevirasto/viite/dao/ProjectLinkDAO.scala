@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -61,9 +61,9 @@ object LinkStatus {
 }
 
 case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue: Double, override val  addressMValue: Long, source: CalibrationPointSource = UnknownSource)
-  extends BaseCalibrationPoint{
+  extends BaseCalibrationPoint {
 
-  def toCalibrationPoint(): CalibrationPoint = {
+  def toCalibrationPoint: CalibrationPoint = {
     CalibrationPoint(linkId, segmentMValue, addressMValue)
   }
 }
@@ -77,15 +77,38 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewRoadwayNumber, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
-  lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
-  lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+
+  lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.head
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.last
+  }
+  lazy val endPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.last
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.head
+  }
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
-  def copyWithGeometry(newGeometry: Seq[Point]) = {
+  def getEndPoints(direction: Vector3d): (Point, Point) = {
+    if (sideCode == SideCode.Unknown) {
+      Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
+    } else {
+      (startingPoint, endPoint)
+    }
+  }
+
+  def copyWithGeometry(newGeometry: Seq[Point]): ProjectLink = {
     this.copy(geometry = newGeometry)
   }
 
-  def addrAt(a: Double) = {
+  def addrAt(a: Double): Long = {
     val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
     sideCode match {
       case SideCode.AgainstDigitizing =>
@@ -96,18 +119,18 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     }
   }
 
-  def addrMLength() = {
-    if(isSplit)
+  def addrMLength(): Long = {
+    if (isSplit)
       endAddrMValue - startAddrMValue
     else
       roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
   }
 
-  def getFirstPoint(): Point = {
+  def getFirstPoint: Point = {
     if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
   }
 
-  def getLastPoint(): Point = {
+  def getLastPoint: Point = {
     if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
 
@@ -116,16 +139,16 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     coefficient * address
   }
 
-  def toCalibrationPoints(): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+  def toCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrationPoints match {
       case (None, None) => (Option.empty[CalibrationPoint], Option.empty[CalibrationPoint])
-      case (Some(cp1), None) => (Option(cp1.toCalibrationPoint()) ,Option.empty[CalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[CalibrationPoint], Option(cp1.toCalibrationPoint()))
-      case (Some(cp1),Some(cp2)) => (Option(cp1.toCalibrationPoint()), Option(cp2.toCalibrationPoint()))
+      case (Some(cp1), None) => (Option(cp1.toCalibrationPoint), Option.empty[CalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[CalibrationPoint], Option(cp1.toCalibrationPoint))
+      case (Some(cp1),Some(cp2)) => (Option(cp1.toCalibrationPoint), Option(cp2.toCalibrationPoint))
     }
   }
 
-  def getCalibrationSources():(Option[CalibrationPointSource],Option[CalibrationPointSource]) = {
+  def getCalibrationSources:(Option[CalibrationPointSource],Option[CalibrationPointSource]) = {
     calibrationPoints match {
       case (None, None) => (Option.empty[CalibrationPointSource], Option.empty[CalibrationPointSource])
       case (Some(cp1), None) => (Option(cp1.source) ,Option.empty[CalibrationPointSource])
@@ -134,12 +157,21 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     }
   }
 
-  def calibrationPointsSourcesToDB() = {
+  def calibrationPointsSourcesToDB(): CalibrationPointSource = {
     calibrationPoints match {
       case (None, None) => CalibrationPointSource.NoCalibrationPoint
       case (Some(cp1), None) => cp1.source
       case (None, Some(cp1)) => cp1.source
       case (Some(cp1),Some(cp2)) => cp1.source
+    }
+  }
+
+  def hasCalibrationPointAt(addressMValue: Long): Boolean = {
+    calibrationPoints match {
+      case (None, None) => false
+      case (Some(cp1), None) => cp1.addressMValue == addressMValue
+      case (None, Some(cp1)) => cp1.addressMValue == addressMValue
+      case (Some(cp1), Some(cp2)) => cp1.addressMValue == addressMValue || cp2.addressMValue == addressMValue
     }
   }
 }
@@ -210,7 +242,7 @@ class ProjectLinkDAO {
         	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """.stripMargin
 
-  implicit val getProjectLinkRow = new GetResult[ProjectLink] {
+  implicit val getProjectLinkRow: GetResult[ProjectLink] = new GetResult[ProjectLink] {
     def apply(r: PositionedResult) = {
       val projectLinkId = r.nextLong()
       val projectId = r.nextLong()
@@ -292,7 +324,7 @@ class ProjectLinkDAO {
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
         x._1.copy(id = x._2)
       )
-      projectLinks.toList.foreach { case pl =>
+      projectLinks.toList.foreach { pl =>
         addressPS.setLong(1, pl.id)
         addressPS.setLong(2, pl.projectId)
         addressPS.setLong(3, pl.roadNumber)
@@ -637,9 +669,9 @@ class ProjectLinkDAO {
          and project_link.status != ${LinkStatus.Terminated.value}
          """.as[Long].firstOption.getOrElse(0L)
       val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
-        s"TRACK = (CASE TRACK WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END) " +
+        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
+        s"reversed = (CASE reversed WHEN 0 THEN 1 WHEN 1 THEN 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
       Q.updateNA(updateProjectLink).execute
@@ -775,7 +807,7 @@ class ProjectLinkDAO {
     listQuery(query)
   }
 
-  implicit val getDiscontinuity = new GetResult[Option[Discontinuity]] {
+  implicit val getDiscontinuity: GetResult[Option[Discontinuity]] = new GetResult[Option[Discontinuity]] {
     def apply(r: PositionedResult) = {
       r.nextLongOption().map(l => Discontinuity.apply(l))
     }

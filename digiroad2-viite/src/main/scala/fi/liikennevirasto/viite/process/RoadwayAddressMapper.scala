@@ -5,11 +5,14 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.NewLinearLocation
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.{DateTime, LocalDateTime}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) {
+
+  private val logger = LoggerFactory.getLogger(getClass)
 
   /**
     * Recalculate address value of all the history road address calibration points
@@ -163,7 +166,9 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   //TODO may be a good idea mode this method to road address service
   def getRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
+
     val roadways = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
+
     roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 

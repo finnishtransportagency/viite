@@ -762,7 +762,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
         SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
-      val calibrationPoints = projectLink.toCalibrationPoints()
+      val calibrationPoints = projectLink.toCalibrationPoints
       val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, Some(""), Some("vvh_modified"),
         Map(), projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,

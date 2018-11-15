@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.viite.switchSideCode
-import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinearLocation, RoadAddress}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnectedLinks, MinAllowedRoadAddressLength}
 
@@ -39,16 +39,16 @@ object DefloatMapper extends RoadAddressMapper {
     }
   }
 
-  def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
+  def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[LinearLocationMapping] = {
     def formMapping(startSourceLink: RoadAddressLink, startSourceM: Double,
                     endSourceLink: RoadAddressLink, endSourceM: Double,
                     startTargetLink: RoadAddressLink, startTargetM: Double,
-                    endTargetLink: RoadAddressLink, endTargetM: Double): RoadAddressMapping = {
+                    endTargetLink: RoadAddressLink, endTargetM: Double): LinearLocationMapping = {
       if (startSourceM > endSourceM)
         formMapping(startSourceLink, endSourceM, endSourceLink, startSourceM,
           startTargetLink, endTargetM, endTargetLink, startTargetM)
       else
-        RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceLink.id, startSourceM,
+        LinearLocationMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceLink.id, startSourceM,
           if (startSourceLink.linkId == endSourceLink.linkId) endSourceM else Double.NaN,
           startTargetM,
           if (startTargetLink.linkId == endTargetLink.linkId) endTargetM else Double.NaN,
@@ -283,7 +283,7 @@ object DefloatMapper extends RoadAddressMapper {
     (orderedSources, extendChainByGeometry(Seq(), preSortedTargets, startingSideCode))
   }
 
-  def invalidMapping(roadAddressMapping: RoadAddressMapping): Boolean = {
+  def invalidMapping(roadAddressMapping: LinearLocationMapping): Boolean = {
     roadAddressMapping.sourceStartM.isNaN || roadAddressMapping.sourceEndM.isNaN ||
       roadAddressMapping.targetStartM.isNaN || roadAddressMapping.targetEndM.isNaN
   }
@@ -306,9 +306,9 @@ object DefloatMapper extends RoadAddressMapper {
   }
 }
 
-case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceId: Long, sourceStartM: Double, sourceEndM: Double,
-                              targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point],
-                              vvhTimeStamp: Option[Long] = None) {
+case class LinearLocationMapping(sourceLinkId: Long, targetLinkId: Long, sourceId: Long, sourceStartM: Double, sourceEndM: Double,
+                                 targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point],
+                                 vvhTimeStamp: Option[Long] = None) {
   override def toString: String = {
     s"$sourceLinkId -> $targetLinkId: $sourceStartM-$sourceEndM ->  $targetStartM-$targetEndM, $sourceGeom -> $targetGeom"
   }
@@ -317,16 +317,16 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceId: 
     * Test if this mapping matches the road address: Road address is on source link and overlap match is at least 99,9%
     * (overlap amount is the overlapping length divided by the smallest length)
     */
-  def matches(roadAddress: RoadAddress, allRoadAddresses: Seq[RoadAddress]): Boolean = {
+  def matches(linearLocation: LinearLocation, allLinearLocations: Seq[LinearLocation]): Boolean = {
     // Transfer floatings that have sourceId defined
-    if (allRoadAddresses.count(_.linkId == roadAddress.linkId) > 1 && sourceId > 0) {
-      sourceId == roadAddress.id
+    if (allLinearLocations.count(_.linkId == linearLocation.linkId) > 1 && sourceId > 0) {
+      sourceId == linearLocation.id
     }
     // Apply changes has always sourceId = 0
     else {
-      sourceLinkId == roadAddress.linkId &&
-        (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
-        GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
+      sourceLinkId == linearLocation.linkId &&
+        (vvhTimeStamp.isEmpty || linearLocation.adjustedTimestamp < vvhTimeStamp.get) &&
+        GeometryUtils.overlapAmount((linearLocation.startMValue, linearLocation.endMValue), (sourceStartM, sourceEndM)) > 0.001
     }
   }
 
