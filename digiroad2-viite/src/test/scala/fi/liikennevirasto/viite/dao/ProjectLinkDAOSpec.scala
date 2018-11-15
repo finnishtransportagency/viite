@@ -58,8 +58,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   private val linkId2 = 2000l
   private val linkId3 = 3000l
 
-  private val linearLocationId = 1
-
   private def dummyRoadways: Seq[Roadway] = {
     Seq(Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
       0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination),
@@ -84,8 +82,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   //TODO test coverage missing for ProjectLinkDAO methods:
   /**
-    * getElyFromProjectLinks VIITE-1543
-    * getProjectLinksHistory VIITE-1543
     * getProjectLinksByConnectedLinkId VIITE-1543
     * getProjectLinksByLinkIdAndProjectId VIITE-1543
     * getProjectLinksByProjectAndLinkId VIITE-1543
@@ -100,7 +96,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     * fetchFirstLink VIITE-1543
     * deleteProjectLinks VIITE-1543
     * removeProjectLinksByLinkIds VIITE-1543
-    * moveProjectLinksToHistory VIITE-1543
     * removeProjectLinksByProject VIITE-1543
     * removeProjectLinksByLinkId VIITE-1543
     * fetchSplitLinks VIITE-1543
@@ -362,6 +357,16 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val ely = projectLinks.head.ely
       val elyByProject = projectLinkDAO.getElyFromProjectLinks(projectId)
        ely should be (elyByProject.getOrElse(0))
+    }
+  }
+  test("Test moveProjectLinksToHistory and getProjectLinksHistory When trying to get ely by project Then it should be returned with success") {
+    runWithRollback {
+      val projectId = 7081807
+      projectLinkDAO.moveProjectLinksToHistory(projectId)
+      val projectLinks = projectLinkDAO.getProjectLinks(projectId)
+      projectLinks.isEmpty should be (true)
+      val projectLinksHistory = projectLinkDAO.getProjectLinksHistory(projectId)
+      projectLinksHistory.isEmpty should be (false)
     }
   }
 
