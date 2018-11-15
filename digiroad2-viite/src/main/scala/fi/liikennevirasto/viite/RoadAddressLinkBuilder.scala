@@ -95,7 +95,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
     val roadAddresses = roadLinkProjectIdTuple._2 match { //Check if project attribute has been initialized
       case (Some(projectId)) =>
         //TODO define and use projectService to fetch project links by linkId
-        projectLinkDAO.getProjectLinksByLinkIdAndProjectId(roadLink.linkId, projectId)
+        projectLinkDAO.getProjectLinksByLinkId(roadLink.linkId)
 
       case _ =>
         roadAddressService.getRoadAddressesByLinkIds(Set(roadLink.linkId), includeHistory = false)
