@@ -445,13 +445,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         case (oldLink, newLink) =>
           oldLink.startAddrMValue should be((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
-          val trackChangeCorrect = (oldLink.track, newLink.track) match {
-            case (Track.Combined, Track.Combined) => true
-            case (Track.RightSide, Track.LeftSide) => true
-            case (Track.LeftSide, Track.RightSide) => true
+          val sideCodeChangeCorrect = (oldLink.sideCode, newLink.sideCode) match {
+            case (SideCode.BothDirections, SideCode.BothDirections) => true
+            case (SideCode.AgainstDigitizing, SideCode.TowardsDigitizing) => true
+            case (SideCode.TowardsDigitizing, SideCode.AgainstDigitizing) => true
             case _ => false
           }
-          trackChangeCorrect should be(true)
+          sideCodeChangeCorrect should be (true)
       }
       linksFirst.id should be(changedLinksFirst.id)
       linksLast.id should be(changedLinksLast.id)
@@ -1233,7 +1233,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //      projectService.changeDirection(id, 75, 2, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)), "testuser") should be(None)
   //      val changedLinks = ProjectDAO.getProjectLinksByIds(links.map { l => l.id })
   //      changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
-  //      changedLinks.foreach(cl => cl.reversed should be(false))
+  //      changedLinks.foreach(cl => cl.reversed should be(true))
   //      val geom584 = StaticTestData.mappedGeoms(Seq(5176584L)).values.head
   //      val addProjectAddressLink584 = ProjectAddressLink(NewRoadway, 5176584, geom584, GeometryUtils.geometryLength(geom584),
   //        State, Motorway, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
@@ -1245,15 +1245,15 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //      projectService.addNewLinksToProject(Seq(backToProjectLink(rap)(addProjectAddressLink584).copy(status = LinkStatus.New)),
   //        id, "U", addProjectAddressLink584.linkId) should be(None)
   //
-  //      val linksAfter = ProjectDAO.getProjectLinks(id)
+  //      val linksAfter = ProjectDAO.getProjectLinks(id).sortBy(_.startAddrMValue)
   //      linksAfter should have size (links.size + 1)
   //      linksAfter.find(_.linkId == 5176512).get.sideCode should be(changedLinks.find(_.linkId == 5176512).get.sideCode)
   //      linksAfter.find(_.linkId == 5176552).get.sideCode should be(changedLinks.find(_.linkId == 5176552).get.sideCode)
-  //      linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(AgainstDigitizing))
-  //      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be(2004)
-  //      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be(893)
-  //      linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be(0)
-  //      linksAfter.find(_.linkId == 5176584).get.endAddrMValue should be(206)
+  //      linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be(Some(SideCode.TowardsDigitizing))
+  //      linksAfter.head.startAddrMValue should be(0)
+  //      linksAfter.head.endAddrMValue > linksAfter.head.startAddrMValue should be(true)
+  //      linksAfter.tail.head.startAddrMValue == linksAfter.head.endAddrMValue should be(true)
+  //      linksAfter.tail.head.endAddrMValue == linksAfter.tail.last.startAddrMValue should be(true)
   //    }
   //  }
 
@@ -1439,4 +1439,24 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //      ProjectDAO.getProjectLinks(rap.id).exists(_.status == LinkStatus.Transfer) should be (false)
   //    }
   //  }
+
+  test("Test projectService.updateProjectLinks() When the project link to update already has a calibration point associated with it Then no user defined calibration points should be created.") {
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val newLink = Seq(ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None), NoFloating,
+        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, 0, reversed = false,
+        None, 86400L))
+      val project = projectService.createRoadLinkProject(rap)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
+      val createdLink = projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      createdLink.get("success").get.asInstanceOf[Boolean] should be(true)
+      val updatedLink = projectLinkDAO.getProjectLinksByLinkIdAndProjectId(12345L, project.id)
+      projectService.updateProjectLinks(project.id, Set(updatedLink.head.id), Seq(), updatedLink.head.status, updatedLink.head.createdBy.get, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber, updatedLink.head.track.value, Some(updatedLink.head.endAddrMValue.toInt), updatedLink.head.roadType.value, updatedLink.head.discontinuity.value) should be(None)
+      val userDefinedCalibrationPoints = CalibrationPointDAO.fetchByRoadPart(project.id, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber)
+      userDefinedCalibrationPoints.size should be (0)
+    }
+  }
 }

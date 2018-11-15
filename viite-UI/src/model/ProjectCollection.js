@@ -22,6 +22,13 @@
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
     var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
+    var editedEndDistance = false;
+    var editedBeginDistance = false;
+
+    var resetEditedDistance = function() {
+        editedEndDistance = false;
+        editedBeginDistance = false;
+    };
 
     var projectLinks = function () {
       return _.flatten(fetchedProjectLinks);
@@ -116,6 +123,7 @@
     };
 
     this.revertLinkStatus = function () {
+      resetEditedDistance();
       var fetchedLinks = this.getAll();
       dirtyProjectLinkIds.forEach(function (dirtyLink) {
         _.filter(fetchedLinks, {linkId: dirtyLink.id}).forEach(function (fetchedLink) {
@@ -247,6 +255,7 @@
 
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
+        resetEditedDistance();
         var ids = dataJson.ids;
         if (dataJson.linkStatus === LinkStatus.New.value && ids.length === 0) {
           backend.createProjectLinks(dataJson, function (successObject) {
@@ -300,7 +309,7 @@
         }
       };
       var newAndOtherLinks = _.partition(changedLinks, function (l) {
-        return l.linearLocationId === 0;
+        return l.id === 0;
       });
       var newLinks = newAndOtherLinks[0];
       var otherLinks = newAndOtherLinks[1];
@@ -322,6 +331,11 @@
       var coordinates = applicationModel.getUserGeoLocation();
       var roadAddressProjectForm = $('#roadAddressProjectForm');
       var endDistance = $('#endDistance')[0];
+        var reversed = _.chain(changedLinks).map(function(c) {
+            return c.reversed;
+        }).reduceRight(function(a, b) {
+            return a || b;
+        }).value();
       var dataJson = {
         ids: ids,
         linkIds: linkIds,
@@ -336,7 +350,8 @@
         roadType: Number(roadAddressProjectForm.find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: endDistance !== undefined ? (!isNaN(Number(endDistance.value)) ? Number(endDistance.value) : null) : null,
         coordinates: coordinates,
-        roadName: roadAddressProjectForm.find('#roadName')[0].value
+        roadName: roadAddressProjectForm.find('#roadName')[0].value,
+        reversed: reversed
       };
       if (dataJson.trackCode === Track.Unknown.value) {
         new ModalConfirm("Tarkista ajoratakoodi");
@@ -348,8 +363,9 @@
       }).last().value();
       var isNewRoad = changedLink.status === LinkStatus.New.value;
 
-      if (isNewRoad && !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM)) {
-        new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
+      var validUserEndAddress = !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
+      if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
+          new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
             createOrUpdate(dataJson);
           },
@@ -540,6 +556,7 @@
         links: links,
         coordinates: coordinates
       };
+      resetEditedDistance();
       backend.directionChangeNewRoadlink(dataJson, function (successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
@@ -564,6 +581,7 @@
         links: links,
         coordinates: coordinates
       };
+      resetEditedDistance();
       backend.directionChangeNewRoadlink(dataJson, function (successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
@@ -764,7 +782,15 @@
       }
     });
 
-    this.getCurrentProject = function () {
+      eventbus.on('projectLink:editedBeginDistance', function() {
+          editedBeginDistance = true;
+      });
+      eventbus.on('projectLink:editedEndDistance', function() {
+          editedEndDistance = true;
+      });
+
+
+      this.getCurrentProject = function () {
       return currentProject;
     };
 
