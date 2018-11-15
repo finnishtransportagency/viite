@@ -4,7 +4,7 @@ import java.io.File
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.scalatest.{FunSuite, Matchers}
 
@@ -41,7 +41,7 @@ class JsonSerializerTest extends FunSuite with Matchers {
 
   test("testWriteReadCachedChanges") {
     val f = File.createTempFile("test", ".cache")
-    val changes = Seq(ChangeInfo(Option(1L), Option(2L), 3L, 4, Option(0.0), Option(1.0), Option(1.5), Option(2.5), 10L))
+    val changes = Seq(ChangeInfo(Option(1L), Option(2L), 3L, ChangeType.LengthenedNewPart, Option(0.0), Option(1.0), Option(1.5), Option(2.5), 10L))
     serializer.writeCache(f, changes) should be (true)
     val result = serializer.readCachedChanges(f)
     result should be (changes)

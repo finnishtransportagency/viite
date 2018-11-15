@@ -128,7 +128,7 @@ object Digiroad2Context {
     new RoadNetworkService
   }
 
-  lazy val roadNameService : RoadNameService ={
+  lazy val roadNameService : RoadNameService = {
     new RoadNameService
   }
 
