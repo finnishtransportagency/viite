@@ -290,10 +290,10 @@ object DataFixture {
     var c = 0
     projectsIDs.foreach(proj => {
       c += 1
-      println("Updating Geometry for project " + c + "/" + projectCount)
-      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
+      println("Updating History Geometry for project " + c + "/" + projectCount)
+      projectService.updateProjectHistoryLinkSdoGeometry(proj, "BJ")
     })
-
+  }
 
 
     private def correctNullElyCodeProjects(): Unit = {
