@@ -37,10 +37,8 @@
               models.selectedLinkProperty.open(response.linkId, response.id, true);
               eventbus.trigger('linkProperties:reselect');
             });
-            backend.getRoadAddressMiddlePoint(linkId, function (response) {
-                map.getView().setCenter([response.x, response.y]);
-                map.getView().setZoom(12);
-            });
+              map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+              map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {
             console.log(response.reason);
           }

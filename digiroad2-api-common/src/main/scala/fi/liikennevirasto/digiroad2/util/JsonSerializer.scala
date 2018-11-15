@@ -6,7 +6,7 @@ import java.nio.file.Files.copy
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, NodeType, VVHRoadNodes}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, NodeType, VVHRoadNodes}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
@@ -19,7 +19,7 @@ class JsonSerializer extends VVHSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
-  DiscontinuitySerializer + TrackSerializer + PointSerializer
+  DiscontinuitySerializer + TrackSerializer + PointSerializer + ChangeTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
     val json = new FileReader(file)
@@ -82,9 +82,14 @@ class JsonSerializer extends VVHSerializer {
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
-    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer
+    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer + ChangeTypeSerializer
 }
 
+case object ChangeTypeSerializer extends CustomSerializer[ChangeType](format => ( {
+  case JInt(changeType) => ChangeType.apply(changeType.toInt)
+}, {
+  case s: ChangeType => JInt(s.value)
+}))
 
 case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
   null

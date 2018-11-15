@@ -9,11 +9,12 @@
     getAssetZoomLevelIfNotCloser: function(zoom) {
       return zoom < 10 ? 10 : zoom;
     },
-    minZoomForAssets: 6,
-    minZoomForDirectionalMarkers: 11,
     minZoomForRoadLinks: 5,
-    minZoomForEditMode: 10,
+    minZoomForAssets: 6,
     minZoomLevelForCalibrationPoints: 8,
+    minZoomForEditMode: 10,
+    minZoomForDirectionalMarkers: 11,
+    minZoomForLinkSearch: 12,
     maxZoomLevel: 15
   };
 })();

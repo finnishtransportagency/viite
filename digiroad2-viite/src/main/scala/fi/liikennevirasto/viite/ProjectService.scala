@@ -124,7 +124,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def parsePreFillData(vvhRoadLinks: Seq[VVHRoadlink]): Either[String, PreFillInfo] = {
-    withDynSession{
+    withDynSession {
       if (vvhRoadLinks.isEmpty) {
         Left("Link could not be found in VVH")
       }
@@ -133,7 +133,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
           case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
             val roadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong)
-            Right(PreFillInfo(roadNumber, roadPartNumber, if( roadName.isEmpty) "" else roadName.get.roadName))
+            Right(PreFillInfo(roadNumber, roadPartNumber, if (roadName.isEmpty) "" else roadName.get.roadName))
           case _ => Left("Link does not contain valid prefill info")
         }
       }
@@ -262,9 +262,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             return Map("success" -> false,
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
           val project = projectDAO.getRoadAddressProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
+          val existingProjectLinks = projectLinkDAO.getProjectLinksByProjectRoadPart(roadNumber, roadPartNumber, projectId)
+          val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
 
           val projectLinks: Seq[ProjectLink] = linkIds.map { id =>
-            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName)
+            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName, reversed)
           }
           saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
           setProjectEly(projectId, roadEly) match {
@@ -419,8 +421,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def isReversed(originalSideCodes: Map[Long, SideCode])(projectLink: ProjectLink): Boolean = {
     originalSideCodes.get(projectLink.linearLocationId) match {
-      case Some(sideCode) if sideCode != projectLink.sideCode => true
-      case _ => false
+      case Some(sideCode) => sideCode != projectLink.sideCode
+      case _ => projectLink.reversed
     }
   }
 
@@ -1232,12 +1234,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         userDefinedEndAddressM.map(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
-          val foundCalibrationPoint = CalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
-          if (foundCalibrationPoint.isEmpty)
-            CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
-          else
-            CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, addressM.toDouble - endSegment.startMValue, addressM)
-          Seq(CalibrationPoint)
+          val calibrationPointIsPresent = toUpdateLinks.find(ul => ul.projectId == projectId && ul.startAddrMValue == endSegment.startAddrMValue) match {
+            case Some(projectLink) => {
+              projectLink.hasCalibrationPointAt(calibrationPoint.addressMValue)
+            }
+            case _ => false
+          }
+          if (!calibrationPointIsPresent) {
+            val foundCalibrationPoint = CalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
+            if (foundCalibrationPoint.isEmpty)
+              CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
+            else
+              CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, addressM.toDouble - endSegment.startMValue, addressM)
+            Seq(CalibrationPoint)
+          } else
+            Seq.empty[CalibrationPoint]
         })
         linkStatus match {
           case LinkStatus.Terminated =>
@@ -1472,12 +1483,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, roadNumber: Long,
                              roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, roadType: RoadType,
-                             ely: Long, roadName: String = ""): ProjectLink = {
+                             ely: Long, roadName: String = "", reversed: Boolean = false): ProjectLink = {
     ProjectLink(NewRoadway, roadNumber, roadPartNumber, trackCode, discontinuity,
       0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
       SideCode.Unknown, (None, None), floating = NoFloating, rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
-      0L, 0L, ely, reversed = false, None, rl.vvhTimeStamp, roadName = Some(roadName))
+      0L, 0L, ely, reversed, None, rl.vvhTimeStamp, roadName = Some(roadName))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: RoadAddressProject, splitOptions: SplitOptions): ProjectLink = {
@@ -1677,7 +1688,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case New =>
           Seq(RoadAddress(NewProjectLink, pl.linearLocationId, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
             pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), pl.linkId,
-            pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating,
+            pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.toCalibrationPoints, floating = NoFloating,
             pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewRoadwayNumber))
         case Transfer => // TODO if the whole roadway -segment is transferred, keep the original roadway_number, otherwise generate new ids for the different segments
           val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
@@ -1810,52 +1821,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val nameString = s"${existingLinkNames.map(_.roadNumber).mkString(",")}"
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
     }
-  }
-
-  def convertToRoadAddress(splitReplacements: Seq[ProjectLink], pureReplacements: Seq[ProjectLink], additions: Seq[ProjectLink],
-                           roadAddresses: Map[Long, RoadAddress], project: RoadAddressProject): Seq[RoadAddress] = {
-    splitReplacements.groupBy(_.linearLocationId).flatMap { case (id, seq) =>
-      createSplitRoadAddress(roadAddresses(id), seq, project)
-    }.toSeq ++
-      pureReplacements.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.linearLocationId))) ++
-      additions.map(pl => convertProjectLinkToRoadAddress(pl, project, roadAddresses.get(pl.linearLocationId))) ++
-      pureReplacements.flatMap(pl =>
-        setEndDate(roadAddresses(pl.linearLocationId), pl, None, project))
-  }
-
-  private def convertProjectLinkToRoadAddress(pl: ProjectLink, project: RoadAddressProject,
-                                              source: Option[RoadAddress]): RoadAddress = {
-        val geom = if (pl.geometry.nonEmpty) {
-          val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(pl.geometry, 0, pl.endMValue - pl.startMValue))
-          if (pl.sideCode == SideCode.TowardsDigitizing)
-            Seq(linkGeom._1, linkGeom._2)
-          else
-            Seq(linkGeom._2, linkGeom._1)
-        } else {
-          Seq()
-        }
-
-        val floatingReason = if (source.isDefined && source.get.validTo.isDefined && source.get.validTo.get.isBeforeNow) FloatingReason.ProjectToRoadAddress else NoFloating
-        val roadAddress = RoadAddress(source.map(_.id).getOrElse(NewProjectLink), source.map(_.linearLocationId).getOrElse(NewLinearLocation), pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
-          pl.startAddrMValue, pl.endAddrMValue, None, None, pl.createdBy, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-          pl.linkGeometryTimeStamp, pl.toCalibrationPoints(), floating = NoFloating, geom, pl.linkGeomSource, pl.ely, terminated = NoTermination, source.map(_.roadwayNumber).getOrElse(0), source.flatMap(_.validFrom), source.flatMap(_.validTo))
-        pl.status match {
-          case UnChanged =>
-            if (source.get.roadType == roadAddress.roadType && source.get.discontinuity == roadAddress.discontinuity && source.get.ely == roadAddress.ely) {
-              roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate, floating = floatingReason)
-            } else {
-              roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
-            }
-          case Transfer | Numbering =>
-            roadAddress.copy(startDate = Some(project.startDate), floating = floatingReason)
-          case New =>
-            roadAddress.copy(startDate = Some(project.startDate))
-          case Terminated =>
-            roadAddress.copy(startDate = source.get.startDate, endDate = Some(project.startDate), terminated = Termination)
-          case _ =>
-            logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
-            throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
-        }
   }
 
   /**

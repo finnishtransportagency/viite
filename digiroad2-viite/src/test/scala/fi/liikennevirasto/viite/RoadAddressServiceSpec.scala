@@ -24,7 +24,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.model.Anomaly.NoAddressGiven
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
+import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
 import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressFiller, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.StaticTestData
 import org.joda.time.DateTime
@@ -37,6 +37,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
+import fi.liikennevirasto.viite.Dummies._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -57,39 +58,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  private def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime]) = {
-    Roadway(0L, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "", None, 0L, NoTermination)
-  }
 
-  private def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
-    dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, NoFloating, LinkGeomSource.NormalLinkInterface)
-
-  private def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason): LinearLocation =
-    dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, floatingReason, LinkGeomSource.NormalLinkInterface)
-
-  private def dummyLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): LinearLocation ={
-    LinearLocation(roadwayNumber + orderNumber, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None), floatingReason,
-      Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, roadwayNumber)
-  }
-
-  private def dummyRoadAddress(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime],
-    linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource): RoadAddress =
-    dummyRoadAddress(roadwayNumber, roadNumber, roadPartNumber, startAddrM, endAddrM, startDate, endDate, linkId, startMValue, endMValue, NoFloating, linkGeomSource)
-
-  private def dummyRoadAddress(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime],
-                               linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): RoadAddress = {
-    RoadAddress(0L, 0L, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, startDate, endDate, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing,
-      0L, (None, None), floatingReason, Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, 0L, NoTermination, roadwayNumber, None, None, None)
-  }
-
-  private def dummyVvhHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): VVHHistoryRoadLink ={
-    val municipalityCode = 0
-    VVHHistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownConstructionType, HistoryLinkInterface, yCoordinates.sum)
-  }
-
-  private def dummyRoadLink(linkId: Long, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
-  }
 
   test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should return road addresses on normal and history road links") {
     val linearLocations = Seq(
@@ -282,7 +251,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     roadwaysSet.size should be (1)
     roadwaysSet.head should be (1L)
 
-    dateTimeDate should be > (now)
+    dateTimeDate should be >= (now)
   }
 
   test("Test getRoadAddress When the biggest address in section is greater than the parameter $addressM Then should filter out all the road addresses with start address less than $addressM") {
@@ -441,6 +410,41 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.head.linkId should be (123L)
     result.head.startMValue should be (0.0)
     result.head.endMValue should be (10.0)
+  }
+
+
+  test("Test sortRoadWayWithNewRoads When changeSet has new links Then update the order of all the roadway") {
+    val linearLocations = List(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 124L, startMValue = 0.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 125L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+    )
+    val newLinearLocations = List(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2.1, linkId = 1267L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3.1, linkId = 1268L, startMValue = 0.0, endMValue = 20.0)
+    )
+
+    val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
+    adjustedLinearLocations(1L).size should be (linearLocations.size + newLinearLocations.size)
+    adjustedLinearLocations(1L).find(_.linkId == 123L).get.orderNumber should be (1)
+    adjustedLinearLocations(1L).find(_.linkId == 124L).get.orderNumber should be (2)
+    adjustedLinearLocations(1L).find(_.linkId == 1267L).get.orderNumber should be (3)
+    adjustedLinearLocations(1L).find(_.linkId == 125L).get.orderNumber should be (4)
+    adjustedLinearLocations(1L).find(_.linkId == 1268L).get.orderNumber should be (5)
+    adjustedLinearLocations(1L).find(_.linkId == 126L).get.orderNumber should be (6)
+  }
+
+  test("Test sortRoadWayWithNewRoads When there are no linear locations to create Then should return empty list") {
+    val linearLocations = List(
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 124L, startMValue = 0.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 125L, startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+    )
+    val newLinearLocations = List()
+    val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
+    adjustedLinearLocations.size should be (0)
   }
 
 //  def runWithRollback[T](f: => T): T = {

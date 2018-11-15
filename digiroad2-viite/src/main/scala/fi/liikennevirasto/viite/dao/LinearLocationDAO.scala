@@ -63,12 +63,16 @@ object FloatingReason {
     def value = 7
   }
 
+  case object ChangeTypeNotSupported extends FloatingReason {
+    def value = 8
+  }
+
 }
 
 trait BaseLinearLocation {
   def id: Long
 
-  def orderNumber: Long
+  def orderNumber: Double
 
   def linkId: Long
 
@@ -130,8 +134,10 @@ trait BaseLinearLocation {
   }
 }
 
-// Note: Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class LinearLocation(id: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+// Notes:
+//  - Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
+//  - Order number is a Double in LinearLocation case class and Long on the database because when there is for example divided change type we need to add more linear locations
+case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                           adjustedTimestamp: Long, calibrationPoints: (Option[Long], Option[Long]) = (None, None),
                           floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource,
                           roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
@@ -213,7 +219,7 @@ class LinearLocationDAO {
         }
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
-        ps.setLong(3, location.orderNumber)
+        ps.setLong(3, location.orderNumber.toLong)
         ps.setLong(4, location.linkId)
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
@@ -400,6 +406,11 @@ class LinearLocationDAO {
     }
   }
 
+  /**
+    * Fetch all the linear locations inside roadways with the given link ids
+    * @param linkIds The given road link identifiers
+    * @return Returns all the filtered linear locations
+    */
   def fetchRoadwayByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
     time(logger, "Fetch all linear locations of a roadway by link id") {
       if (linkIds.isEmpty) {
@@ -717,6 +728,34 @@ class LinearLocationDAO {
         """
       queryList(query)
     }
+  }
+
+  def fetchCurrentLinearLocationsByEly(ely: Int):Seq[LinearLocation] = {
+    val query =
+      s"""
+          $selectFromLinearLocation
+          WHERE VALID_TO IS NULL AND ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY = $ely AND VALID_TO IS NULL AND END_DATE IS NULL)
+       """
+    queryList(query)
+  }
+
+  def fetchCurrentLinearLocations: Seq[LinearLocation] = {
+    val query =
+      s"""
+          $selectFromLinearLocation
+          WHERE VALID_TO IS NULL
+       """
+    queryList(query)
+  }
+
+  def fetchCurrentLinearLocationsByMunicipality(municipality: Int):Seq[LinearLocation] = {
+    val query =
+      s"""
+          $selectFromLinearLocation
+          WHERE VALID_TO IS NULL AND ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY =
+          (SELECT ELY_NRO FROM MUNICIPALITY WHERE ID = $municipality) AND VALID_TO IS NULL AND END_DATE IS NULL)
+       """
+    queryList(query)
   }
 
   def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
