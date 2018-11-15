@@ -314,14 +314,13 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(linearLocation))
 
       val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, List.empty, None, None)
-      projectDAO.createRoadAddressProject(rap)
+      projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
         dummyProjectLink(projectId+1, projectId, linkId1, roadway.id, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationId = linearLocation.id)
       )
       projectLinkDAO.create(projectLinks)
 
-      val header = projectLinkDAO.getProjectLinks(projectId).head
       val roadNumber = 1
       val roadPartNumber = 1
       val roadType = RoadType.PublicRoad
@@ -353,6 +352,16 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       updatedProjectLink.endMValue should be (endMValue)
       updatedProjectLink.sideCode should be (side)
       updatedProjectLink.geometry should be (geometry)
+    }
+  }
+
+  test("Test getElyFromProjectLinks When trying to get ely by project Then it should be returned with success") {
+    runWithRollback {
+      val projectId = 7081807
+      val projectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val ely = projectLinks.head.ely
+      val elyByProject = projectLinkDAO.getElyFromProjectLinks(projectId)
+       ely should be (elyByProject.getOrElse(0))
     }
   }
 
