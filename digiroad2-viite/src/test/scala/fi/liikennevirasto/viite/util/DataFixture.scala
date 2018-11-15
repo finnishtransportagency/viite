@@ -518,6 +518,8 @@ object DataFixture {
         updateProjectLinkGeom()
       case Some("update_project_link_SDO_GEOMETRY") =>
         updateProjectLinkSdoGeometry()
+      case Some("update_project_link_history_SDO_GEOMETRY") =>
+        updateProjectLinkHistorySdoGeometry()
       case Some("import_road_names") =>
         importRoadNames()
       case Some("correct_null_ely_code_projects") =>
