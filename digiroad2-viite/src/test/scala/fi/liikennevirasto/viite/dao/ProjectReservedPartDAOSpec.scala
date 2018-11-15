@@ -301,35 +301,6 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchByProjectRoadParts When using fetchByRoadPart for two different parts should return same amount of project link ids ") {
-    runWithRollback {
-      val roadwayIds = roadwayDAO.create(dummyRoadways)
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val projectLinkId1 = id + 1
-      val projectLinkId2 = id + 2
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-      projectDAO.create(rap)
-      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
-      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
-      val projectLinks = Seq(
-      dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false),
-      dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2,  0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
-      )
-      projectLinkDAO.create(projectLinks)
-      projectReservedPartDAO.roadPartReservedByProject(roadNumber1, roadPartNumber1) should be(Some("TestProject"))
-      projectReservedPartDAO.roadPartReservedByProject(roadNumber1, roadPartNumber2) should be(Some("TestProject"))
-      val reserved203 = projectLinkDAO.fetchByProjectRoadParts(Set((roadNumber1, roadPartNumber1)), id)
-      reserved203.nonEmpty should be (true)
-      val reserved205 = projectLinkDAO.fetchByProjectRoadParts(Set((roadNumber1, roadPartNumber2)), id)
-      reserved205.nonEmpty should be (true)
-      reserved203 shouldNot be (reserved205)
-      reserved203.toSet.intersect(reserved205.toSet) should have size 0
-      val reserved = projectLinkDAO.fetchByProjectRoadParts(Set((roadNumber1,roadPartNumber1), (roadNumber1, roadPartNumber2)), id)
-      reserved.map(_.id).toSet should be (reserved203.map(_.id).toSet ++ reserved205.map(_.id).toSet)
-      reserved should have size projectLinks.size
-    }
-  }
-
   //  test("roadpart reserved, fetched with and without filtering, and released by project test") {
   //    //Creation of Test road
   //    runWithRollback {

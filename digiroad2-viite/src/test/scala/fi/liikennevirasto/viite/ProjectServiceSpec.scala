@@ -1006,7 +1006,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       val createdLink = projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       createdLink("success").asInstanceOf[Boolean] should be(true)
-      val updatedLink = projectLinkDAO.getProjectLinksByLinkIdAndProjectId(12345L, project.id)
+      val updatedLink = projectLinkDAO.getProjectLinksByLinkId(12345L)
 
       projectService.updateProjectLinks(project.id, Set(updatedLink.head.id), Seq(), LinkStatus.New, "TestUserTwo", 9999, 2, 1, Some(30), 5L, 2) should be(None)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
@@ -1014,7 +1014,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       reservedParts.head.roadPartNumber should be(2)
       reservedParts.head.newDiscontinuity.get should be(Discontinuity.apply(2))
 
-      val link = projectLinkDAO.getProjectLinksByLinkIdAndProjectId(12345L, project.id).head
+      val link = projectLinkDAO.getProjectLinksByLinkId(12345L).head
       link.status should be(LinkStatus.New)
       link.discontinuity should be(Discontinuity.apply(2))
       link.track should be(Track.apply(1))
