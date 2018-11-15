@@ -20,6 +20,7 @@ object RoadAddressFiller {
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
                       adjustedMValues: Seq[LinearLocationAdjustment],
+                      newLinearLocations: Seq[LinearLocation],
                       //TODO check if this will be needed here at VIITE-1596
                       unaddressedRoadLink: Seq[UnaddressedRoadLink])
 
@@ -173,7 +174,7 @@ object RoadAddressFiller {
   }
 
   //TODO can also be done here the fuse of linear locations when thr roadway id of the linear location is the same and no calirabtion points in the middle
-  def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation]): (Seq[LinearLocation], ChangeSet) = {
+  def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation], initialChangeSet: ChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)): (Seq[LinearLocation], ChangeSet) = {
     time(logger, "Adjust linear location to topology") {
       val adjustOperations: Seq[(RoadLinkLike, Seq[LinearLocation], ChangeSet) => (Seq[LinearLocation], ChangeSet)] = Seq(
         dropSegmentsOutsideGeometry,
@@ -184,7 +185,6 @@ object RoadAddressFiller {
 
       val topologyMap = topology.groupBy(_.linkId)
       val linearLocationMap = linearLocations.groupBy(_.linkId)
-      val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty)
 
       linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
