@@ -127,7 +127,7 @@ class ProjectDAO {
   }
 
   def assignNewProjectTRId(projectId: Long): Unit = {
-    Q.updateNA(s"UPDATE PROJECT SET TR_ID = VIITE_PROJECT_SEQ.nextval WHERE ID= $projectId").execute
+    Q.updateNA(s"UPDATE PROJECT SET TR_ID = viite_project_seq.nextval WHERE ID= $projectId").execute
   }
 
   def removeProjectTRId(projectId: Long): Unit = {
@@ -142,8 +142,8 @@ class ProjectDAO {
     Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
   }
 
-  def fetchTRIdByProjectId(projectId: Long): Seq[Long] = {
-    Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list
+  def fetchTRIdByProjectId(projectId: Long): Option[Long] = {
+    Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list.headOption
   }
 
   def updateProjectStatus(projectID: Long, state: ProjectState) {
