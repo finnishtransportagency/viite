@@ -221,10 +221,18 @@
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
-        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink) {
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
+        _.defer(function() {
+            $('#beginDistance').on("change", function(changedData) {
+                eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
+            });
+            $('#endDistance').on("change", function(changedData) {
+                eventbus.trigger('projectLink:editedEndDistance', changedData.target.value);
+            });
+        });
       });
 
       eventbus.on('projectLink:errorClicked', function(selected, errorMessage) {
@@ -266,6 +274,8 @@
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
+        selectedProjectLinkProperty.setCurrent([]);
+        selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
@@ -480,6 +490,10 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
+      });
+
+      rootElement.on('change', '#trackCodeDropdown', function () {
+        checkInputs('.project-');
       });
 
       rootElement.on('change', '.form-group', function() {

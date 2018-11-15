@@ -26,7 +26,15 @@ object TrackSectionOrder {
     }
   }
 
+  /**
+    * Returns a mapping of the startPoint or endPoint and all adjacent BaseRoadAddresses to said point
+    * @param seq
+    * @tparam T
+    * @return
+    */
   def findOnceConnectedLinks[T <: BaseRoadAddress](seq: Iterable[T]): Map[Point, T] = {
+    //Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
+    //Then groups it by points and reduces the mapped values to the distinct BaseRoadAddresses
     val pointMap = seq.flatMap(l => {
       val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
       Seq(p1 -> l, p2 -> l)
@@ -240,7 +248,12 @@ object TrackSectionOrder {
             (getOppositeEnd(l.geometry, currentPoint), l, None)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed) match {
+          case (false, false) | (true, true)=>
+            SideCode.AgainstDigitizing
+          case (false, true) |  (true, false) =>
+            SideCode.TowardsDigitizing
+        }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
       }
     }

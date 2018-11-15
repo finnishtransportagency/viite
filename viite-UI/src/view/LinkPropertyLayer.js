@@ -68,6 +68,7 @@
 
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
+      name: 'geometryChangedLayer',
       style: function(feature) {
           return styler.generateStyleByFeature(feature.linkData, map.getView().getZoom());
       },
@@ -367,6 +368,8 @@
     map.on('click', function(event) {
       //The addition of the check for features on point and the selection mode
       // seem to fix the problem with the clicking on the empty map after being in the defloating process would allow a deselection and enabling of the menus
+      if (window.getSelection) {window.getSelection().removeAllRanges();} //removes selection from forms
+      else if (document.selection) {document.selection.empty();}
       var hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function(feature) {return feature;}));
       var nonSpecialSelectionType = !_.contains(applicationModel.specialSelectionTypes, applicationModel.getSelectionType().value);
       if (isActiveLayer){
@@ -772,7 +775,9 @@
         suravageMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
-        me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
+        //Exclude suravage layers from toggle
+        me.toggleLayersVisibility([roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
@@ -948,6 +953,7 @@
       simulatedRoadsLayer.getSource().clear();
       me.eventListener.listenToOnce(eventbus, 'roadLinks:fetched', function(){
         applicationModel.removeSpinner();
+        geometryChangedLayer.setVisible(true);
       });
     };
 

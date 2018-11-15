@@ -7,7 +7,7 @@
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
-        '<div class="legend-container"></div>' +
+        '<div class="legend-container no-copy"></div>' +
       '</div>');
 
     var administrativeClassLegend = $('' +
@@ -30,7 +30,7 @@
         '</div>' +
       '</div>');
 
-    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
+    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
 
     var floatingLegend = $('' +
       '<div class="legend-entry">' +
