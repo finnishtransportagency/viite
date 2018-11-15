@@ -30,11 +30,22 @@ object ProjectSectionCalculator {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
     val others = projectLinks.filterNot(_.status == LinkStatus.Terminated)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
+    //TODO: CHECK IF NECESSARY
+    val (rightSide, otherSides) = others.partition(nl => nl.track == Track.RightSide)
+    val (leftSide, combinedAndUnknown) = otherSides.partition(nl => nl.track == Track.LeftSide)
+    //Should we have rightSide tracks only or leftSideTracks only then RESET the sideCodes of the "new"
+    val processedNewLinks = if (rightSide.nonEmpty && leftSide.isEmpty || rightSide.isEmpty && leftSide.nonEmpty)  {
+      logger.info(s"Only one track code detected, resetting side codes.")
+      newLinks.map(p => p.copy(sideCode = SideCode.Unknown))
+    } else {
+      logger.info(s"Found both tracks, continuing.")
+      newLinks
+    }
     try {
 
       val calculator = RoadAddressSectionCalculatorContext.getStrategy(others)
       logger.info(s"${calculator.name} strategy")
-      calculator.assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints)
+      calculator.assignMValues(processedNewLinks, nonTerminatedLinks, userGivenCalibrationPoints)
 
     } finally {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")

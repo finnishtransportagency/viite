@@ -79,14 +79,15 @@
           terrain: terrainMapLayer,
           propertyBorder : propertyBorderLayer
       };
-    if(arcgisConfig) {
-        var parser = new ol.format.WMTSCapabilities();
-        var result = parser.read(arcgisConfig);
-        var config = {layer: "Taustakartat_Harmaasavy"};
-        var options = ol.source.WMTS.optionsFromCapabilities(result, config);
-        var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
-        greyscaleLayer.set('name', 'greyScaleLayer');
-        tileMapLayers.greyscale = greyscaleLayer;
+
+    if(arcgisConfig) { //check is not needed it, will almost always be true and checks old getcapabilities
+      var parser = new ol.format.WMTSCapabilities();
+      var result = parser.read(arcgisConfig);
+      var config = {layer: "Taustakartat_Harmaasavy"};
+      var options = ol.source.WMTS.optionsFromCapabilities(result, config);
+      var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
+      greyscaleLayer.set('name', 'greyScaleLayer');
+      tileMapLayers.greyscale = greyscaleLayer;
     }
 
     var selectMap = function(tileMap) {
