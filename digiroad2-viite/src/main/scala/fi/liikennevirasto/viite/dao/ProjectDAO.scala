@@ -126,11 +126,11 @@ class ProjectDAO {
     }
   }
 
-  def addRotatingTRProjectId(projectId: Long): Unit = {
+  def assignNewProjectTRId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = VIITE_PROJECT_SEQ.nextval WHERE ID= $projectId").execute
   }
 
-  def removeRotatingTRProjectId(projectId: Long): Unit = {
+  def removeProjectTRId(projectId: Long): Unit = {
     Q.updateNA(s"UPDATE PROJECT SET TR_ID = NULL WHERE ID= $projectId").execute
   }
 
@@ -142,7 +142,7 @@ class ProjectDAO {
     Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
   }
 
-  def getRotatingTRProjectId(projectId: Long): Seq[Long] = {
+  def fetchTRIdByProjectId(projectId: Long): Seq[Long] = {
     Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list
   }
 
@@ -191,7 +191,6 @@ class ProjectDAO {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo, coordX, coordY, zoom) =>
 
         val projectState = ProjectState.apply(state)
-        //TODO when we have removed the project_link_history table we could start doing a inner join instead of doing a second query for reserved parts
         val reservedRoadParts = if (projectState == Saved2TR)
           projectReservedPartDAO.fetchHistoryRoadParts(id).distinct
         else

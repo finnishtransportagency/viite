@@ -1378,7 +1378,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def removeRotatingTRId(projectId: Long): Option[String] = {
     withDynSession {
       val project = projectDAO.fetchById(projectId)
-      val rotatingTR_Id = projectDAO.getRotatingTRProjectId(projectId)
+      val rotatingTR_Id = projectDAO.fetchTRIdByProjectId(projectId)
       projectDAO.updateProjectStatus(projectId, ProjectState.Incomplete)
       val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.head + "]"
       if (project.isEmpty)
@@ -1407,7 +1407,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (appendMessage.nonEmpty)
           projectDAO.updateProjectStateInfo(appendMessage, project.id)
     }
-    projectDAO.removeRotatingTRProjectId(project.id)
+    projectDAO.removeProjectTRId(project.id)
   }
 
   /**
@@ -1425,7 +1425,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (!recalculateChangeTable(projectId)) {
           return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
         }
-        projectDAO.addRotatingTRProjectId(projectId) //Generate new TR_ID
+        projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID
         val trProjectStateMessage = getRoadwayChangesAndSendToTR(Set(projectId))
         if (trProjectStateMessage.status == ProjectState.Failed2GenerateTRIdInViite.value) {
           return PublishResult(validationSuccess = false, sendSuccess = false, Some(trProjectStateMessage.reason))
@@ -1612,7 +1612,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
-    projectDAO.getRotatingTRProjectId(projectID).headOption match {
+    projectDAO.fetchTRIdByProjectId(projectID).headOption match {
       case Some(trId) =>
         projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
