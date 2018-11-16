@@ -4,7 +4,7 @@ import java.sql.{Timestamp, Types}
 import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -141,6 +141,10 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     } else {
       (startingPoint, endPoint)
     }
+  }
+
+  def oppositeEndPoint(point: Point) : Point = {
+    if(GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
   }
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
