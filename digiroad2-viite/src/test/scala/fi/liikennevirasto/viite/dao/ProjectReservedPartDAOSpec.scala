@@ -293,7 +293,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018', 'DD.MM.YYYY'),'-',to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', 'DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-', to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
       projectReservedPartDAO.removeReservedRoadPart(projectId, roadNumber, roadPartNumber)
       projectReservedPartDAO.fetchReservedRoadParts(projectId).isEmpty should be (true)
@@ -305,7 +305,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018', 'DD.MM.YYYY'),'-',to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', 'DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-', to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
       projectReservedPartDAO.roadPartReservedTo(roadNumber, roadPartNumber).get._1 should be (projectId)
     }
@@ -316,7 +316,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018', 'DD.MM.YYYY'),'-', to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', 'DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-', to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
       projectReservedPartDAO.roadPartReservedByProject(roadNumber, roadPartNumber).get should be("Test Project")
     }
@@ -327,8 +327,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018', 'DD.MM.YYYY'),'-',to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', 'DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
-      sqlu"""INSERT INTO PROJECT_LINK_HISTORY VALUES (11111111, $projectId, 0, 1, $roadNumber, $roadPartNumber, 0, 10, 'Test', 'Test', to_date('01.01.2018', 'DD.MM.YYYY'), to_date('01.01.2018', 'DD.MM.YYYY'), 2, 3, 3, 123456,123458, null, 1, 0, null, 2, 0, 10, 99999, 1533576206000, 1, 2, null,0 ,10)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-',to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK_HISTORY VALUES (11111111, $projectId, 0, 1, $roadNumber, $roadPartNumber, 0, 10, 'Test', 'Test', to_date('01.01.2018','DD.MM.RRRR'), to_date('01.01.2018','DD.MM.RRRR'), 2, 3, 3, 123456,123458, null, 1, 0, null, 2, 0, 10, 99999, 1533576206000, 1, 2, null,0 ,10)""".execute
       val fetched = projectReservedPartDAO.fetchHistoryRoadParts(projectId)
       fetched.size should be (1)
       fetched.head.roadNumber should be (roadNumber)
@@ -341,7 +341,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018', 'DD.MM.YYYY'),'-',to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', 'DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-',to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
       val fetched = projectReservedPartDAO.fetchReservedRoadParts(projectId)
       fetched.size should be (1)
@@ -355,7 +355,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val projectId = 123
       val roadNumber = 99999
       val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','-',to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', 'DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-',to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
       val fetched = projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber)
       fetched.size should be (1)
@@ -371,9 +371,9 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         val projectId2 = 124
         val roadNumber = 99999
         val roadPartNumber = 1
-        sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018', 'DD.MM.YYYY'),'-', to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', null, null, 0, 0, 0)""".execute
+        sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-', to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
-        sqlu"""INSERT INTO PROJECT VALUES ($projectId2, 1, 'Test Project', 1, 'Test', to_date('01.01.2018', 'DD.MM.YYYY'),'-',to_date('01.01.2018', 'DD.MM.YYYY'), null, to_date('01.01.2018', 'DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
+        sqlu"""INSERT INTO PROJECT VALUES ($projectId2, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-',to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId2, 'Test')""".execute
       }
       error.getMessage.contains("PROJECT_RESERVED_ROAD_PART_PK") should be (true)
