@@ -226,7 +226,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     StaticTestData.roadLinkMocker(roadLinkTemplate)(linkIds)
   }
 
-  test("update project link status and check project status") {
+  test("Test projectService.updateProjectLinks() When using a recently created project Then project should become publishable after the update.") {
     var count = 0
     runWithRollback {
       val countCurrentProjects = projectService.getAllProjects
@@ -250,7 +250,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     } should have size (count - 1)
   }
 
-  test("update project link numbering and check project status") {
+  test("Test projectService.updateProjectLinks() When changing the project links numbering Then project should become publishable after the update and it's links should reflect the number change.") {
     var count = 0
 
     val roadLinks = Seq(
@@ -306,7 +306,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     templateLink.roadwayId should be(newLink.roadwayId)
   }
 
-  test("add nonexisting roadlink to project") {
+  test("Test projectService.addNewLinksToProject() When adding a nonexistent roadlink to project Then when querying for it it should return that one project link was entered.") {
     runWithRollback {
       val idr = roadwayDAO.getNextRoadwayId
       val id = Sequences.nextViitePrimaryKeySeqValue
