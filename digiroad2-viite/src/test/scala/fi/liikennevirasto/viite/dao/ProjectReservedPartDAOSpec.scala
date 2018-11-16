@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.SQLIntegrityConstraintViolationException
+
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
@@ -247,22 +249,6 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       }
     }
 
-  //TODO will be implemented at VIITE-1550
-  //  test("Fetching road addresses by bounding box should ignore start dates") {
-  //    runWithRollback {
-  //      val addressId = RoadAddressDAO.getNextRoadwayId
-  //      val futureDate = DateTime.now.plusDays(5)
-  //      val ra = Seq(RoadAddress(addressId, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(futureDate), None, Option("tester"), 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-  //        Seq(Point(1.0, 1.0), Point(1.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-  //      val returning = RoadAddressDAO.create(ra)
-  //      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
-  //      currentSize > 0 should be(true)
-  //      val bounding = BoundingRectangle(Point(0.0, 0.0), Point(10, 10))
-  //      val fetchedAddresses = RoadAddressDAO.fetchRoadAddressesByBoundingBox(bounding, false)
-  //      fetchedAddresses.exists(_.id == addressId) should be(true)
-  //    }
-  //  }
-
   test("Test reserveRoadPart When having reserved one project with that part Then should fetch it without any problems") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -301,49 +287,97 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  //  test("roadpart reserved, fetched with and without filtering, and released by project test") {
-  //    //Creation of Test road
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-  //      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-  //      ProjectDAO.create(addresses)
-  //      val project = ProjectDAO.roadPartReservedByProject(5, 203)
-  //      project should be(Some("TestProject"))
-  //      val reserved = ProjectDAO.fetchReservedRoadPart(5, 203)
-  //      reserved.nonEmpty should be(true)
-  //      ProjectDAO.fetchReservedRoadParts(id) should have size (1)
-  //      ProjectDAO.removeReservedRoadPart(id, reserved.get)
-  //      val projectAfter = ProjectDAO.roadPartReservedByProject(5, 203)
-  //      projectAfter should be(None)
-  //      ProjectDAO.fetchReservedRoadPart(5, 203).isEmpty should be(true)
-  //    }
-  //  }
 
-  //  test("fetch by road parts") {
-  //    //Creation of Test road
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-  //      ProjectDAO.createRoadAddressProject(rap)
-  //      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-  //      ProjectDAO.reserveRoadPart(id, 5, 205, rap.createdBy)
-  //      val addresses = (RoadAddressDAO.fetchByRoadPart(5, 203) ++ RoadAddressDAO.fetchByRoadPart(5, 205)).map(toProjectLink(rap))
-  //      ProjectDAO.create(addresses)
-  //      ProjectDAO.roadPartReservedByProject(5, 203) should be(Some("TestProject"))
-  //      ProjectDAO.roadPartReservedByProject(5, 205) should be(Some("TestProject"))
-  //      val reserved203 = ProjectDAO.fetchByProjectRoadParts(Set((5L, 203L)), id)
-  //      reserved203.nonEmpty should be (true)
-  //      val reserved205 = ProjectDAO.fetchByProjectRoadParts(Set((5L, 205L)), id)
-  //      reserved205.nonEmpty should be (true)
-  //      reserved203 shouldNot be (reserved205)
-  //      reserved203.toSet.intersect(reserved205.toSet) should have size (0)
-  //      val reserved = ProjectDAO.fetchByProjectRoadParts(Set((5L,203L), (5L, 205L)), id)
-  //      reserved.map(_.id).toSet should be (reserved203.map(_.id).toSet ++ reserved205.map(_.id).toSet)
-  //      reserved should have size (addresses.size)
-  //    }
-  //  }
+  test("Test removeReservedRoadPart When removing a existing reserved part Then should remove the road parts") {
+    runWithRollback {
+      val projectId = 123
+      val roadNumber = 99999
+      val roadPartNumber = 1
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+      projectReservedPartDAO.removeReservedRoadPart(projectId, roadNumber, roadPartNumber)
+      projectReservedPartDAO.fetchReservedRoadParts(projectId).isEmpty should be (true)
+    }
+  }
+
+  test("Test roadPartReservedTo When getting the road parts reserved Then should return the project that has the roads") {
+    runWithRollback {
+      val projectId = 123
+      val roadNumber = 99999
+      val roadPartNumber = 1
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+      projectReservedPartDAO.roadPartReservedTo(roadNumber, roadPartNumber).get._1 should be (projectId)
+    }
+  }
+
+  test("Test roadPartReservedByProject When road parts are reserved by project Then it should return the project name") {
+    runWithRollback {
+      val projectId = 123
+      val roadNumber = 99999
+      val roadPartNumber = 1
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+      projectReservedPartDAO.roadPartReservedByProject(roadNumber, roadPartNumber).get should be("Test Project")
+    }
+  }
+
+  test("Test fetchHistoryRoadParts When fetching road parts history Then it should return the reserved history") {
+    runWithRollback {
+      val projectId = 123
+      val roadNumber = 99999
+      val roadPartNumber = 1
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK_HISTORY VALUES (11111111, $projectId, 0, 1, $roadNumber, $roadPartNumber, 0, 10, 'Test', 'Test', '01.01.2018', '01.01.2018', 2, 3, 3, 123456,123458, null, 1, 0, null, 2, 0, 10, 99999, 1533576206000, 1, 2, null,0 ,10)""".execute
+      val fetched = projectReservedPartDAO.fetchHistoryRoadParts(projectId)
+      fetched.size should be (1)
+      fetched.head.roadNumber should be (roadNumber)
+      fetched.head.roadPartNumber should be (roadPartNumber)
+    }
+  }
+
+  test("Test fetchReservedRoadParts When finding reserved parts by project Then it should return the project reserved parts") {
+    runWithRollback {
+      val projectId = 123
+      val roadNumber = 99999
+      val roadPartNumber = 1
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+      val fetched = projectReservedPartDAO.fetchReservedRoadParts(projectId)
+      fetched.size should be (1)
+      fetched.head.roadNumber should be (roadNumber)
+      fetched.head.roadPartNumber should be (roadPartNumber)
+    }
+  }
+
+  test("Test fetchReservedRoadParts When finding reserved parts by road number and part Then it should return the project reserved parts") {
+    runWithRollback {
+      val projectId = 123
+      val roadNumber = 99999
+      val roadPartNumber = 1
+      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+      val fetched = projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber)
+      fetched.size should be (1)
+      fetched.head.roadNumber should be (roadNumber)
+      fetched.head.roadPartNumber should be (roadPartNumber)
+    }
+  }
+
+  test("Tetst reserveRoadPart When trying to reserve same road in two diferent projects Then should throw a SQLIntegrityConstraintViolationException exception") {
+    runWithRollback {
+      val error = intercept[SQLIntegrityConstraintViolationException] {
+        val projectId = 123
+        val projectId2 = 124
+        val roadNumber = 99999
+        val roadPartNumber = 1
+        sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+        sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
+        sqlu"""INSERT INTO PROJECT VALUES ($projectId2, 1, 'Test Project', 1, 'Test', '01.01.2018','-','01.01.2018', null, '01.01.2018', null, null, 0, 0, 0)""".execute
+        sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId2, 'Test')""".execute
+      }
+      error.getMessage.contains("PROJECT_RESERVED_ROAD_PART_PK") should be (true)
+    }
+  }
 
 }

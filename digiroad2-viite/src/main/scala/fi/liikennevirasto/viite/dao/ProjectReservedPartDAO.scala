@@ -213,12 +213,6 @@ class ProjectReservedPartDAO {
       SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
   }
 
-  def getReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
-    val query = s"""SELECT ID FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId AND
-            ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber"""
-    Q.queryNA[Long](query).list.head
-  }
-
   def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     time(logger, s"Check if the road part $roadNumber/$roadPartNumber is not available for the project $projectId") {
       val query =
