@@ -45,6 +45,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   val linearLocationDAO = new LinearLocationDAO
 
   private val roadNumber1 = 5
+  private val roadNumber2 = 6
 
   private val roadPartNumber1 = 1
   private val roadPartNumber2 = 2
@@ -54,12 +55,19 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   private val linkId1 = 1000l
   private val linkId2 = 2000l
+  private val linkId3 = 3000l
 
   private def dummyRoadways: Seq[Roadway] = {
     Seq(Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
       0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination),
       Roadway(NewRoadway, roadwayNumber2, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
         0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
+    )
+  }
+
+  private def splittedDummyRoadways: Seq[Roadway] = {
+    Seq(Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
     )
   }
 
@@ -79,8 +87,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   //TODO test coverage missing for ProjectLinkDAO methods:
   /**
-    * removeProjectLinksByLinkId VIITE-1543
-    * fetchSplitLinks VIITE-1543
     * removeProjectLinksByProjectAndRoadNumber VIITE-1543
     */
 
@@ -635,5 +641,70 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test removeProjectLinksByLinkId When creating two projectLinks and deleting them by linkId Then none should be returned") {
+    runWithRollback {
+      val roadwayIds = roadwayDAO.create(dummyRoadways)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId1 = id + 1
+      val projectLinkId2 = id + 2
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+      )
+      projectLinkDAO.create(projectLinks)
+      projectLinkDAO.removeProjectLinksByLinkId(id, Set(linkId1))
+      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), id)
+      result.size should be (0)
+    }
+  }
 
+  test("Test fetchSplitLinks When creating three projectLinks by splitted origin and fetching by linkId should get all of them") {
+    runWithRollback {
+      val roadwayIds = roadwayDAO.create(splittedDummyRoadways)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId1 = id + 1
+      val projectLinkId2 = id + 2
+      val projectLinkId3 = id + 3
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId3, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, false, 0),
+        dummyProjectLink(projectLinkId1, id, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 40, 0.0, 40.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, false, 0, Some(linkId1)),
+        dummyProjectLink(projectLinkId2, id, linkId3, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 40, 100, 0.0, 60.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, false, 0, Some(linkId1))
+      )
+      projectLinkDAO.create(projectLinks)
+      projectLinkDAO.fetchSplitLinks(id, linkId1)
+      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), Seq(linkId1, linkId2, linkId3), id)
+      result.size should be (3)
+    }
+  }
+
+  test("Test removeProjectLinksByProjectAndRoadNumber When creating two projectLinks and deleting roadNumber1 by project and road number Then link with roadNumber2 should be returned") {
+    runWithRollback {
+      val roadwayIds = roadwayDAO.create(dummyRoadways)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId1 = id + 1
+      val projectLinkId2 = id + 2
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber2, roadPartNumber2, rap.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+      )
+      projectLinkDAO.create(projectLinks)
+      projectLinkDAO.removeProjectLinksByProjectAndRoadNumber(id, roadNumber1, roadPartNumber1)
+      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(projectLinkId1, projectLinkId2), Seq(), id)
+      result.size should be (1)
+      result.head.linkId should be (linkId2)
+    }
+  }
+
+//  removeProjectLinksByProjectAndRoadNumber
 }
