@@ -78,13 +78,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed,
       connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
-  //TODO test coverage missing for ProjectDAO methods:
-  /**
-    * updateProjectStateInfo
-    * updateProjectCoordinates
-    * uniqueName
-    */
-
   test("Test fetchAllIdsByLinkId When adding some project links for two existing projects Then outcome size of projects for that given linkId should be equal in number") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
@@ -292,39 +285,4 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       waitingCountNow - waitingCountP should be(1)
     }
   }
-
-  //  test("Test createRoadAddressProject When having reserved part and links Then should return project links with geometry") {
-  //    val reservedParts = Seq(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-  //    runWithRollback {
-  //      val id = Sequences.nextViitePrimaryKeySeqValue
-  //      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, Some(8L), None)
-  //      projectDAO.createRoadAddressProject(rap)
-  //      val roadways = dummyRoadways()
-  //      roadwayDAO.create(roadways)
-  //      roadwayDAO.create(roadways)
-  //      val addresses = roadwayDAO.fetchAllByRoadAndPart(5, 203).map(toProjectLink(rap))
-  //      projectReservedPartDAO.reserveRoadPart(id, 5, 203, "TestUser")
-  //      projectLinkDAO.create(addresses)
-  //      projectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-  //      val projectlinks = projectLinkDAO.getProjectLinks(id)
-  //      projectlinks.length should be > 0
-  //      projectlinks.forall(_.status == LinkStatus.NotHandled) should be(true)
-  //      projectlinks.forall(_.geometry.size == 2) should be (true)
-  //      projectlinks.sortBy(_.endAddrMValue).map(_.geometry).zip(addresses.sortBy(_.endAddrMValue).map(_.geometry)).forall {case (x, y) => x == y}
-  //      projectLinkDAO.fetchFirstLink(id, 5, 203) should be(Some(projectlinks.minBy(_.startAddrMValue)))
-  //    }
-  //  }
-
-//  test("Test Create project with no reversed links") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses.map(x => x.copy(reversed = false)))
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//      projectLinks.count(x => x.reversed) should be(0)
-//    }
-//  }
 }
