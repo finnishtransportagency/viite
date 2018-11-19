@@ -60,7 +60,7 @@ trait BaseRoadAddressMapper {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadwayNumber))
     grouped.mapValues(v => combine(v.toSeq.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown, ra.ely, ra.reversed, ra.roadwayNumber)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown, ra.ely, ra.reversed, ra.roadwayNumber, Seq())
     ).toSeq
   }
 

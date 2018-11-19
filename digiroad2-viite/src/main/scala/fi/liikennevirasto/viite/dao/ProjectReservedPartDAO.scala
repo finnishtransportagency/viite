@@ -47,28 +47,26 @@ class ProjectReservedPartDAO {
     * @param projectId        Project's id
     * @param reservedRoadPart Road part to be removed
     */
-  def removeReservedRoadPart(projectId: Long, reservedRoadPart: ProjectReservedPart): Unit = {
+  def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     time(logger, "Remove reserved road part") {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
       sqlu"""
            DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
            (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
-           RA.ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND RA.ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}))
-           OR (ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
+           RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
+           OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber
            AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
            """.execute
       sqlu"""
-         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE id = ${reservedRoadPart.id}
+         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}
          """.execute
     }
   }
 
-  def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
-    sqlu"""
-         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}
-         """.execute
-  }
-
   def removeReservedRoadPartsByProject(projectId: Long): Unit = {
+    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
     sqlu"""
          DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId
          """.execute

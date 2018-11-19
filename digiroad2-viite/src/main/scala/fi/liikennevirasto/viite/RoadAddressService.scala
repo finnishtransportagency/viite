@@ -113,6 +113,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
+  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
+    throw new NotImplementedError("Implement RoadAddressService.getRoadAddressWithRoadNumberAddress")
+    //withDynSession {
+    //  RoadwayDAO.getRoadAddressByFilter(RoadwayDAO.withRoadNumberAddress(road, addrMValue))
+    //}
+  }
+
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
@@ -1106,160 +1113,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    if (!hasFloatings)
 //      eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
   }
-
-  //TODO this method is used for defloating process
-  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1537")
-//    def latestSegments(segments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-//      if (segments.exists(_.endDate == ""))
-//        segments.filter(_.endDate == "")
-//      else {
-//        val max = RoadAddressLinkBuilder.formatter.print(segments.map(s =>
-//          RoadAddressLinkBuilder.formatter.parseDateTime(s.endDate)).maxBy(_.toDate))
-//        segments.filter(_.endDate == max)
-//      }
-//    }
-//
-//    val mapping = DefloatMapper.createAddressMap(latestSegments(sources.sortBy(_.startMValue)), targets).filter(_.sourceLen > MinAllowedRoadAddressLength)
-//    if (mapping.exists(DefloatMapper.invalidMapping)) {
-//      throw new InvalidAddressDataException("Mapping failed to map following items: " +
-//        mapping.filter(DefloatMapper.invalidMapping).map(
-//          r => s"${r.sourceLinkId}: ${r.sourceStartM}-${r.sourceEndM} -> ${r.targetLinkId}: ${r.targetStartM}-${r.targetEndM}").mkString(", ")
-//      )
-//    }
-//    val sourceRoadAddresses = withDynSession {
-//      RoadAddressDAO.fetchByLinkId(sources.map(_.linkId).toSet, includeFloating = true, includeTerminated = false)
-//    }
-//
-//    val (currentSourceRoadAddresses, historySourceRoadAddresses) = sourceRoadAddresses.partition(ra => ra.endDate.isEmpty)
-//
-//    DefloatMapper.preTransferChecks(currentSourceRoadAddresses)
-//    val currentTargetRoadAddresses = DefloatMapper.adjustRoadAddresses(RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(currentSourceRoadAddresses.sortBy(_.startAddrMValue).flatMap(DefloatMapper.mapRoadAddresses(mapping, currentSourceRoadAddresses))), currentSourceRoadAddresses)
-//    DefloatMapper.postTransferChecks(currentTargetRoadAddresses.filter(_.endDate.isEmpty), currentSourceRoadAddresses)
-//
-//    val historyTargetRoadAddresses = historySourceRoadAddresses.groupBy(_.endDate).flatMap(group => {
-//      DefloatMapper.preTransferChecks(group._2)
-//      val targetHistory = DefloatMapper.adjustRoadAddresses(RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(group._2.flatMap(DefloatMapper.mapRoadAddresses(mapping, group._2))),group._2)
-//      targetHistory
-//    })
-//
-//    currentTargetRoadAddresses ++ historyTargetRoadAddresses
-  }
-
-  //TODO this can be removed
-//  def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long): Boolean = {
-//    try {
-//      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true)
-//      if (!roads.exists(_.isFloating)) {
-//        try {
-//          val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-//          assert(adjusted.size == roads.size)
-//          // Must not lose any
-//          val (changed, unchanged) = adjusted.partition(ra =>
-//            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-//          )
-//          logger.info(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-//          changed.foreach(addr => RoadAddressDAO.update(addr, None))
-//          return true
-//        } catch {
-//          case ex: InvalidAddressDataException => logger.error(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!", ex)
-//        }
-//      } else {
-//        logger.info(s"Not recalculating $roadNumber / $roadPartNumber because floating segments were found")
-//      }
-//    } catch {
-//      case a: Exception => logger.error(a.getMessage, a)
-//    }
-//    false
-//  }
-/*
-  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
-    }
-  }
-
-  def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumber(road, tracks))
-    }
-  }
-*/
-  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
-    throw new NotImplementedError("Implement RoadAddressService.getRoadAddressWithRoadNumberAddress")
-    //withDynSession {
-    //  RoadwayDAO.getRoadAddressByFilter(RoadwayDAO.withRoadNumberAddress(road, addrMValue))
-    //}
-  }
-/*
-  def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Seq[Long], tracks: Seq[Int]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumberParts(road, roadParts, tracks))
-    }
-  }
-
-  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
-    }
-  }
-
-  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
-    }
-  }
-
-  def getRoadAddressByLinkIds(linkIds: Set[Long], withFloating: Boolean): Seq[RoadAddress] = {
-    withDynTransaction {
-      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, includeHistory = false, includeTerminated = false)
-    }
-  }
-
-  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
-
-    val roadAddresses =
-      withDynTransaction {
-        RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
-      }
-
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
-    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-
-    roadAddresses.flatMap { roadAddress =>
-      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
-        ChangedRoadAddress(
-          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
-          link = roadLink
-        )
-      }
-    }
-  }
-
-  /**
-    * This will define what road_addresses should have a black outline according to the following rule:
-    * Address must have road type = 3 (MunicipalityStreetRoad)
-    * The length of all addresses in the same road number and road part number that posses road type = 3  must be
-    * bigger than the combined length of ALL the road numbers that have the same road number and road part number divided by 2.
-    *
-    * @param addresses Sequence of all road addresses that were fetched
-    * @return Sequence of road addresses properly tagged in order to get the
-    */
-  private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    time(logger, "Set the black underline") {
-      val typesForBlackUnderline = Set(RoadType.MunicipalityStreetRoad.value, RoadType.PrivateRoadType.value)
-      addresses.map(a => a.copy(blackUnderline = typesForBlackUnderline.contains(a.roadType.value)))
-    }
-  }
-  */
-
-  def setSubsequentTermination(linkIds: Set[Long]): Unit = {
-    val roadAddresses = getRoadAddressByLinkIds(linkIds/*, includeFloating = true, includeHistory = true*/).filter(_.terminated == NoTermination)
-    val roadways = roadwayDAO.fetchAllByRoadwayId(roadAddresses.map(_.id))
-    roadwayDAO.expireById(roadways.map(_.id).toSet)
-    roadwayDAO.create(roadways.map(ra => ra.copy(id = NewRoadway, terminated = Subsequent)))
-  }
-
 }
 
 sealed trait RoadClass {
