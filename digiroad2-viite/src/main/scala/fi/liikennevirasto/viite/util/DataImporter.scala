@@ -123,6 +123,8 @@ class DataImporter {
     withDynTransaction {
       sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute

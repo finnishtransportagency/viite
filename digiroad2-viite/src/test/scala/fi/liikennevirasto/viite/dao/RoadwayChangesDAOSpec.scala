@@ -35,7 +35,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       projectDAO.create(project)
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(100,1,6,1,1,0,10.5,1,1,8) """.execute
       val projectId = sql"""Select p.id From Project p Inner Join ROADWAY_CHANGES rac on p.id = rac.project_id""".as[Long].first
-      val changesList = RoadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+      val changesList = new RoadwayChangesDAO().fetchRoadwayChanges(Set(projectId))
       changesList.isEmpty should be(false)
       changesList.head.projectId should be(projectId)
     }
@@ -48,7 +48,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
-      RoadwayChangesDAO.insertDeltaToRoadChangeTable(delta, 1)
+      new RoadwayChangesDAO().insertDeltaToRoadChangeTable(delta, 1)
       sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.get should be(1)
     }
   }
