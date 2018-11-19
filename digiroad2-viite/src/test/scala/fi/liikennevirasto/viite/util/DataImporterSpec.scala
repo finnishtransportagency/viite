@@ -61,7 +61,7 @@ class DataImporterSpec extends FunSuite with Matchers {
   /**
     * TODO Fix error: ORA-01438: value larger than specified precision allowed for this column
     */
-  ignore("Should not have unaddressed road links") {
+  test("Should not have unaddressed road links") {
     val vvhRoadLinks = List(
       VVHRoadlink(1L, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     )
@@ -78,21 +78,21 @@ class DataImporterSpec extends FunSuite with Matchers {
 
     TestTransactions.runWithRollback() {
       val roadsToBeConverted = Seq(
-        //               TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                LOPPUPVM               MUUTOSPVM              -     ELY TIETYYPPI -, LINKID    KAYTTAJA      ALKUX             ALKUY              LOPPUX            LOPPUY             (LRMID)     AJORATAID  SIDE
-        ConversionAddress(25, 756,  22, 5,     1,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1L, Unknown),
-        ConversionAddress(25, 765,  22, 5,     1,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3L, Unknown),
-        ConversionAddress(25, 694,  22, 5,     1,  756,  0,   62,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2L, Unknown),
-        ConversionAddress(25, 694,  22, 5,     0,  756,  0,   62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2L, Unknown),
-        ConversionAddress(25, 694,  22, 5,     1,  756,  0,   62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2L, Unknown),
-        ConversionAddress(25, 694,  22, 5,     0,  756,  0,   62,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2L, Unknown),
-        ConversionAddress(25, 756,  22, 5,     0,  765,  62,  71,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1L, Unknown),
-        ConversionAddress(25, 756,  22, 5,     1,  765,  62,  71,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1L, Unknown),
-        ConversionAddress(53, 6221, 22, 5,     0,  6230, 62,  71,   Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1L, Unknown),
-        ConversionAddress(25, 6221, 22, 5,     0,  6230, 62,  71,   Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1L, Unknown),
-        ConversionAddress(25, 756,  22, 5,     0,  765,  62,  71,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1L, Unknown),
-        ConversionAddress(25, 765,  22, 5,     0,  810,  71,  116,  Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3L, Unknown),
-        ConversionAddress(53, 6230, 22, 5,     0,  6275, 71,  116,  Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3L, Unknown),
-        ConversionAddress(25, 6230, 22, 5,     0,  6275, 71,  116,  Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3L, Unknown)
+        //               TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                       LOPPUPVM                      MUUTOSPVM                    -    ELY  TIETYYPPI -  LINKID  KAYTTAJA  ALKUX             ALKUY              LOPPUX            LOPPUY         AJORATAID  SIDE
+        ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+        ConversionAddress(25, 765,  22, 5,    1,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+        ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+        ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+        ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+        ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+        ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+        ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+        ConversionAddress(53, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+        ConversionAddress(25, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+        ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+        ConversionAddress(25, 765,  22, 5,    0,  810,  71,  116,  Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+        ConversionAddress(53, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+        ConversionAddress(25, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown)
       )
 
       val importOptions = ImportOptions(false, false, 1510790400000L, "MOCK_CONVERSION", false)
@@ -103,6 +103,9 @@ class DataImporterSpec extends FunSuite with Matchers {
         }
         override def fetchValidAddressesFromConversionTable(minRoadwayNumber: Long, maxRoadwayNumber: Long): Seq[ConversionAddress] = {
           roadsToBeConverted
+        }
+        override def fetchAllExpiredAddressesFromConversionTable(): Seq[ConversionAddress] = {
+          Seq()
         }
       }
 
@@ -115,9 +118,9 @@ class DataImporterSpec extends FunSuite with Matchers {
       }
       dataImporter.importRoadAddressData(null, mockVVHClient, importOptions)
 
-      val insertedRoadAddresses = roadwayDAO.fetchByRoadwayNumber(3L, true)
+      val road_25_756 = roadwayDAO.fetchAllByRoadAndPart(25, 756, withHistory = true)
 
-      insertedRoadAddresses.size should be(14)
+      road_25_756.size should be(4)
     }
   }
 
