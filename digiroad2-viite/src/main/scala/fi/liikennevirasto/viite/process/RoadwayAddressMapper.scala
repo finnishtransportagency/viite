@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.viite.NewLinearLocation
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.{DateTime, LocalDateTime}
 import org.slf4j.LoggerFactory
@@ -147,19 +148,27 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadway.discontinuity)
   }
 
+  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]) : Seq[LinearLocation] = {
+    projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
+      map{
+        case (projectLink, key) =>
+          val calibrationPoints = projectLink.calibrationPoints match {
+            case (None, None) => (None, None)
+            case (Some(_), None) => (Some(projectLink.startAddrMValue), None)
+            case (None, Some(_)) => (None, Some(projectLink.endAddrMValue))
+            case (Some(_), Some(_)) => (Some(projectLink.startAddrMValue), Some(projectLink.endAddrMValue))
+          }
+          LinearLocation(NewLinearLocation, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
+            calibrationPoints, projectLink.floating, projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
+      }
+  }
+
   //TODO may be a good idea mode this method to road address service
   def getRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
-    //TODO check if this can be a improvement
-    //    val roadwayAddressesF = Future(roadAddressDAO.fetchByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet))
-    //
-    //    val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
-    //
-    //    val roadwayAddresses = Await.result(roadwayAddressesF, Duration.Inf)
-
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
 
     val roadways = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
-    logger.info(s"Fetched ${roadways.size} roadways")
+
     roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 

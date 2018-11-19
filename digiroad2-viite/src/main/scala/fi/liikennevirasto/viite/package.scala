@@ -129,7 +129,7 @@ package object viite {
   val DefaultLongitude = 6900000.0
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
-  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering)
+  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.Terminated)
 
   val defaultProjectEly = -1L
 
