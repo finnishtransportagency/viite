@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.SplitOptions
@@ -408,15 +409,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/sendToTR") {
     val projectID = (parsedBody \ "projectID").extract[Long]
     time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
-      //TODO VIITE-1541 multiple service calls should be in the service layer
-      /* val writableProjectService = projectWritable(projectID)
-       val sendStatus = writableProjectService.publishProject(projectID)
-       if (sendStatus.validationSuccess && sendStatus.sendSuccess)
-         Map("sendSuccess" -> true)
-       else if (sendStatus.errorMessage.getOrElse("").toLowerCase == failedToSendToTRMessage.toLowerCase) {
-         projectService.setProjectStatus(projectID, SendingToTR)
-         Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
-       } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))*/
+      val writableProjectService = projectService.projectWritableCheck(projectID)
+      if(writableProjectService.isEmpty){
+        val sendStatus = projectService.publishProject(projectID)
+        if (sendStatus.validationSuccess && sendStatus.sendSuccess)
+          Map("sendSuccess" -> true)
+        else if (sendStatus.errorMessage.getOrElse("").toLowerCase == failedToSendToTRMessage.toLowerCase) {
+          projectService.setProjectStatus(projectID, SendingToTR)
+          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
+        } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
+      }
+      else{
+        Map("sendSuccess" -> false, "errorMessage" -> writableProjectService.get)
+      }
     }
   }
 

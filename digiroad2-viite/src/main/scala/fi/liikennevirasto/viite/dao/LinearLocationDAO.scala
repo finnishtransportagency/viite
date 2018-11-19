@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
@@ -533,6 +532,17 @@ class LinearLocationDAO {
         Update LINEAR_LOCATION Set valid_to = sysdate Where valid_to IS NULL and link_id in (${linkIds.mkString(",")})
       """
     if (linkIds.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
+  }
+
+  def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {
+    val query =
+      s"""
+        Update LINEAR_LOCATION Set valid_to = sysdate Where valid_to IS NULL and roadway_number in (${roadwayNumbers.mkString(",")})
+      """
+    if (roadwayNumbers.isEmpty)
       0
     else
       Q.updateNA(query).first

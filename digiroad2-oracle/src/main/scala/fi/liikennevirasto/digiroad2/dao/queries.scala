@@ -19,6 +19,10 @@ object Queries {
 
   def nextRoadNetworkErrorId = sql"select ROAD_NETWORK_ERROR_SEQ.nextval from dual"
 
+  def nextProjectId = sql"select VIITE_PROJECT_SEQ.nextval from dual"
+
+  def nextRoadwayChangeLink = sql"select ROADWAY_CHANGE_LINK.nextval from dual"
+
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
   }
