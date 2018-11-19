@@ -184,7 +184,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
 
-  private def projectWritableCheck(projectId: Long): Option[String] = {
+  def projectWritableCheck(projectId: Long): Option[String] = {
     projectDAO.fetchProjectStatus(projectId) match {
       case Some(projectState) =>
         if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
@@ -1759,7 +1759,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.error(s" Project state not at Saved2TR")
           throw new RuntimeException(s"Project state not at Saved2TR: $newState")
         }
-        val project = projectDAO.getRoadAddressProjectById(projectID).get
+        val project = projectDAO.fetchById(projectID).get
         val projectLinks = projectLinkDAO.getProjectLinks(projectID)
         val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
         val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).map(roadway => (roadway.id, roadway)).toMap

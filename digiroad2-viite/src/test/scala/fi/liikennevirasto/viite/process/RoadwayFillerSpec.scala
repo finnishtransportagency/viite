@@ -17,9 +17,6 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-/**
-  * Created by marquesrf on 08-03-2018.
-  */
 class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
