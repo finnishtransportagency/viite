@@ -27,13 +27,6 @@ import slick.jdbc.{StaticQuery => Q}
 import org.mockito.ArgumentMatchers.any
 
 class DataImporterSpec extends FunSuite with Matchers {
-  private val dataImporter = new DataImporter {
-    override def withDynTransaction(f: => Unit): Unit = f
-    override def withDynSession[T](f: => T): T = f
-    override def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
-      fetchChunkLinkIds().foreach { p => f(p._1,p._2) }
-    }
-  }
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -55,72 +48,96 @@ class DataImporterSpec extends FunSuite with Matchers {
   val mockVVHFrozenTimeRoadLinkClient = MockitoSugar.mock[VVHFrozenTimeRoadLinkClientServicePoint]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
+  val dateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+  def d(date: String): DateTime = {DateTime.parse(date, dateTimeFormatter)}
+
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
 
-  /**
-    * TODO Fix error: ORA-01438: value larger than specified precision allowed for this column
-    */
-  test("Should not have unaddressed road links") {
-    val vvhRoadLinks = List(
-      VVHRoadlink(1L, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
-    )
-    when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
-    when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
-    when(mockVVHClient.frozenTimeRoadLinkData)thenReturn(mockVVHFrozenTimeRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
-    when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
-    when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
-    when(mockVVHSuravageClient.fetchSuravageByLinkIds(any[Set[Long]])).thenReturn(Seq())
-    when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIds(any[Set[Long]])).thenReturn(Seq())
+  val roadsToBeConverted = Seq(
+    //               TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                       LOPPUPVM                      MUUTOSPVM                    -    ELY  TIETYYPPI -  LINKID  KAYTTAJA  ALKUX             ALKUY              LOPPUX            LOPPUY         AJORATAID  SIDE
+    ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 765,  22, 5,    1,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+    ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(53, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 765,  22, 5,    0,  810,  71,  116,  Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+    ConversionAddress(53, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+    ConversionAddress(25, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown)
+  )
 
+  val expiredRoadsToBeConverted = Seq(
+    //               TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                       LOPPUPVM                      MUUTOSPVM                    LAKKAUTUSPVM                 ELY  TIETYYPPI -  LINKID  KAYTTAJA  ALKUX             ALKUY              LOPPUX            LOPPUY         AJORATAID  SIDE
+    ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2006")), Some(d("30.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 765,  22, 5,    1,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2006")), Some(d("30.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+    ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("01.03.2016")), None,                         Some(d("30.03.2006")), Some(d("30.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2006")), Some(d("08.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.1998")), Some(d("29.10.2008")), 1,  3,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.1998")), Some(d("29.10.2008")), 1,  3,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
+    ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2006")), Some(d("08.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.1998")), Some(d("29.10.2008")), 1,  3,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(53, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("29.10.1998")), Some(d("29.10.2008")), 1,  3,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("29.10.1998")), Some(d("29.10.2008")), 1,  3,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.1998")), Some(d("29.10.2008")), 1,  3,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
+    ConversionAddress(25, 765,  22, 5,    0,  810,  71,  116,  Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2006")), Some(d("08.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+    ConversionAddress(53, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("08.03.2006")), Some(d("08.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+    ConversionAddress(25, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("08.03.2006")), Some(d("08.03.2016")), 1,  3,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown)
+  )
+
+  val vvhRoadLinks = List(
+    VVHRoadlink(1L, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  )
+  when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
+  when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
+  when(mockVVHClient.frozenTimeRoadLinkData)thenReturn(mockVVHFrozenTimeRoadLinkClient)
+  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
+  when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
+  when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
+  when(mockVVHSuravageClient.fetchSuravageByLinkIds(any[Set[Long]])).thenReturn(Seq())
+  when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIds(any[Set[Long]])).thenReturn(Seq())
+
+  val importOptions = ImportOptions(false, false, 1510790400000L, "MOCK_CONVERSION", false)
+
+  val roadAddressImporter = new RoadAddressImporter(null, mockVVHClient, importOptions) {
+    override def fetchChunkLinkIdsFromConversionTable(): Seq[(Long, Long)] = {
+      Seq((0l, 3L))
+    }
+    override def fetchValidAddressesFromConversionTable(minRoadwayNumber: Long, maxRoadwayNumber: Long): Seq[ConversionAddress] = {
+      roadsToBeConverted
+    }
+    override def fetchAllExpiredAddressesFromConversionTable(): Seq[ConversionAddress] = {
+      expiredRoadsToBeConverted
+    }
+  }
+
+  val dataImporter = new DataImporter {
+    override def withDynTransaction(f: => Unit): Unit = f
+    override def withDynSession[T](f: => T): T = f
+    override def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
+      roadAddressImporter
+    }
+  }
+
+  test("Test importRoadAddressData When importing addresses Then they are saved in database") {
     TestTransactions.runWithRollback() {
-      val roadsToBeConverted = Seq(
-        //               TIE AOSA  AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                       LOPPUPVM                      MUUTOSPVM                    -    ELY  TIETYYPPI -  LINKID  KAYTTAJA  ALKUX             ALKUY              LOPPUX            LOPPUY         AJORATAID  SIDE
-        ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-        ConversionAddress(25, 765,  22, 5,    1,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
-        ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-        ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-        ConversionAddress(25, 694,  22, 5,    1,  756,  0,   62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-        ConversionAddress(25, 694,  22, 5,    0,  756,  0,   62,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
-        ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-        ConversionAddress(25, 756,  22, 5,    1,  765,  62,  71,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-        ConversionAddress(53, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-        ConversionAddress(25, 6221, 22, 5,    0,  6230, 62,  71,   Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-        ConversionAddress(25, 756,  22, 5,    0,  765,  62,  71,   Some(d("15.12.2005")), Some(d("30.10.2006")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-        ConversionAddress(25, 765,  22, 5,    0,  810,  71,  116,  Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
-        ConversionAddress(53, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.11.1963")), Some(d("31.12.1995")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
-        ConversionAddress(25, 6230, 22, 5,    0,  6275, 71,  116,  Some(d("01.01.1996")), Some(d("14.12.2005")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown)
-      )
 
-      val importOptions = ImportOptions(false, false, 1510790400000L, "MOCK_CONVERSION", false)
-
-      val roadAddressImporter = new RoadAddressImporter(null, mockVVHClient, importOptions) {
-        override def fetchChunkLinkIdsFromConversionTable(): Seq[(Long, Long)] = {
-          Seq((0l, 3L))
-        }
-        override def fetchValidAddressesFromConversionTable(minRoadwayNumber: Long, maxRoadwayNumber: Long): Seq[ConversionAddress] = {
-          roadsToBeConverted
-        }
-        override def fetchAllExpiredAddressesFromConversionTable(): Seq[ConversionAddress] = {
-          Seq()
-        }
-      }
-
-      val dataImporter = new DataImporter {
-        override def withDynTransaction(f: => Unit): Unit = f
-        override def withDynSession[T](f: => T): T = f
-        override def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
-          roadAddressImporter
-        }
-      }
       dataImporter.importRoadAddressData(null, mockVVHClient, importOptions)
 
       val road_25_756 = roadwayDAO.fetchAllByRoadAndPart(25, 756, withHistory = true)
+      road_25_756.size should be(8)
 
-      road_25_756.size should be(4)
+      val road_25_765 = roadwayDAO.fetchAllByRoadAndPart(25, 765, withHistory = true)
+      road_25_765.size should be(4)
+
     }
   }
 
@@ -290,9 +307,5 @@ class DataImporterSpec extends FunSuite with Matchers {
 //    }
 //
 //  }
-
-  val dateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-
-  def d(date: String): DateTime = {DateTime.parse(date, dateTimeFormatter)}
 
 }
