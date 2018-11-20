@@ -301,7 +301,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     })
   }
 
-//                                                                              DEVASTATING AND DEFENSIVE DEEP STRIKES
   test("Test ProjectDeltaCalculator.partition When executing Multiple transfers with reversal and discontinuity change operations Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
       createTransferProjectLink(1524, 502).copy(reversed = true)),
@@ -309,7 +308,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
     val mapping =
       ProjectDeltaCalculator.partition(transfer)
-    mapping should have size (2)
+    mapping should have size 2
     mapping.foreach { case (from, to) =>
       from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
       if (from.discontinuity != Continuous)
@@ -317,27 +316,5 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       else
         to.discontinuity should be(MinorDiscontinuity)
     }
-  }
-
-  test("Test ProjectDeltaCalculator.partition When executing Unchanged operations on project links that have calibration points on the origin Then returns the correct From RoadSection -> To RoadSection mapping being careful to separate links containing said calibration points." ) {
-    val addresses = (0 to 9).map(i => {
-      createRoadAddress(i * 2, 2L)
-    })
-    val projectLinksWithCp = addresses.map(a => {
-      val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
-      if (a.id == 10L)
-        (a, projectLink.copy(calibrationPoints = createCalibrationPoints(a)))
-      else
-        (a, projectLink)
-    })
-    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp)
-    partitionCp.size should be(2)
-    val firstSection = partitionCp.head
-    val secondSection = partitionCp.last
-    val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
-    firstSection._1.startMAddr should be(projectLinksWithCp.head._2.startAddrMValue)
-    firstSection._1.endMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.startMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
   }
 }
