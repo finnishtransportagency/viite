@@ -133,7 +133,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
   }
 
-  protected def fetchAllExpiredAddressesFromConversionTable(): Seq[ConversionAddress] = {
+  protected def fetchAllTerminatedAddressesFromConversionTable(): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
@@ -162,7 +162,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     result.zip(result.tail)
   }
 
-  protected def fetchChunkLinkIdsFromConversionTable(): Seq[(Long, Long)] = {
+  protected def fetchChunkRoadwayNumbersFromConversionTable(): Seq[(Long, Long)] = {
     //TODO Try to do the group in the query
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
@@ -172,7 +172,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   def importRoadAddress(): Unit = {
-    val chunks = fetchChunkLinkIdsFromConversionTable()
+    val chunks = fetchChunkRoadwayNumbersFromConversionTable()
     chunks.foreach {
       case (min, max) =>
         print(s"${DateTime.now()} - ")
@@ -185,8 +185,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         importAddresses(conversionAddressesFromChunk, conversionAddresses)
     }
 
-    val expiredAddresses = fetchAllExpiredAddressesFromConversionTable()
-    importExpiredAddresses(expiredAddresses)
+    val terminatedAddresses = fetchAllTerminatedAddressesFromConversionTable()
+    importTerminatedAddresses(terminatedAddresses)
   }
 
   private def importAddresses(validConversionAddressesInChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress]): Unit = {
@@ -273,13 +273,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadwayPs.close()
   }
 
-  private def importExpiredAddresses(expiredConversionAddresses: Seq[ConversionAddress]): Unit = {
-    val (expiredOldConversionAddresses, validExpiredConversionAddresses) = expiredConversionAddresses.partition(_.expirationDate.isEmpty)
-    val validExpiredMappedConversionAddresses = validExpiredConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate))
-    val expiredOldMappedConversionAddresses = expiredOldConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
+  private def importTerminatedAddresses(terminatedConversionAddresses: Seq[ConversionAddress]): Unit = {
+    val (terminatedOldConversionAddresses, validTerminatedConversionAddresses) = terminatedConversionAddresses.partition(_.expirationDate.isEmpty)
+    val validTerminatedMappedConversionAddresses = validTerminatedConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate))
+    val terminatedOldMappedConversionAddresses = terminatedOldConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
 
-    validExpiredMappedConversionAddresses.mapValues {
+    validTerminatedMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
     }.foreach {
@@ -293,7 +293,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         insertRoadway(roadwayPs, roadAddress)
     }
 
-    expiredOldMappedConversionAddresses.mapValues {
+    terminatedOldMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
     }.foreach {

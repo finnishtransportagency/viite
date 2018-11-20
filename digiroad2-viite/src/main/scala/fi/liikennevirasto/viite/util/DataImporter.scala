@@ -120,8 +120,8 @@ class DataImporter {
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                             importOptions: ImportOptions): Unit = {
 
+    sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
     withDynTransaction {
-      sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
@@ -154,12 +154,12 @@ class DataImporter {
             	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
             	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
             	AND ROADWAY.TRACK = rw.TRACK
-            	AND ROADWAY.ENd_date = rw.start_date
+            	AND ROADWAY.END_DATE = rw.start_date
             	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
 
-      sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
       roadwayResetter()
     }
+    sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
   }
 
   def roadwayResetter(): Unit = {
