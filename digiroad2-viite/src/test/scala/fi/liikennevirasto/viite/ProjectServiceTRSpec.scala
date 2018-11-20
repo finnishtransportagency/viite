@@ -89,7 +89,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("fetch project data and send it to TR") {
+  test("Test projectService.getRoadwayChangesAndSendToTR() When trying to send a roadway changes of a project to TR Then check for a affirmative response.") {
     assume(testConnection)
     runWithRollback {
       val project = Project(1, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
