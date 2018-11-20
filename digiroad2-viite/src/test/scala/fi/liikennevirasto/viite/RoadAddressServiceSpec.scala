@@ -486,7 +486,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //  }
 
   //  //TODO this will be implemented at VIITE-1551
-  test("Check for MTK-Class in integration API"){
+  test("Test roadAddressService.getAllByMunicipality() When asking for data for a specific municipality Then return all the Road addresses for that municipality."){
     val linearLocations = List(
       dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
       dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 0.0, endMValue = 20.0, FloatingReason.ManualFloating),
