@@ -1122,14 +1122,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction {
         projectWritableCheck(projectId) match {
-          case None => {
+          case None =>
             revertLinks(projectId, roadNumber, roadPartNumber, links, userName) match {
-              case None => {
+              case None =>
                 saveProjectCoordinates(projectId, coordinates)
                 None
-              }
               case Some(error) => Some(error)
-            }}
+            }
           case Some(error) => Some(error)
         }
       }
@@ -1200,10 +1199,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt),
             endAddrMValue = userDefinedEndAddressM.getOrElse(pl.endAddrMValue.toInt).toLong))
           if (linkIds.nonEmpty) {
-            addNewLinksToProject(sortRamps(newProjectLinks, linkIds), projectId, userName, linkIds.head, false)
+            addNewLinksToProject(sortRamps(newProjectLinks, linkIds), projectId, userName, linkIds.head, newTransaction = false)
           } else {
             val newSavedLinkIds = projectLinks.map(_.linkId)
-            addNewLinksToProject(sortRamps(newProjectLinks, newSavedLinkIds), projectId, userName, newSavedLinkIds.head, false)
+            addNewLinksToProject(sortRamps(newProjectLinks, newSavedLinkIds), projectId, userName, newSavedLinkIds.head, newTransaction = false)
           }
         } else if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
           projectReservedPartDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
@@ -1709,49 +1708,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     })
   }
 
-  // TODO
-  def updateTerminationForHistory(terminatedLinkIds: Set[Long], splitReplacements: Seq[ProjectLink]): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    withDynSession {
-//      roadAddressService.setSubsequentTermination(terminatedLinkIds)
-//      val mapping = RoadAddressSplitMapper.createAddressMap(splitReplacements)
-//      val splitTerminationLinkIds = mapping.map(_.sourceLinkId).toSet
-//      val splitCurrentRoadwayIds = splitReplacements.map(_.roadwayId).toSet
-//      val linkGeomSources = splitReplacements.map(pl => pl.linkId -> pl.linkGeomSource).toMap
-//      val addresses = roadAddressService.getRoadAddressesByLinkIds(splitTerminationLinkIds, includeFloating = true, includeHistory = true,
-//        includeTerminated = false, includeCurrent = false, splitCurrentRoadwayIds) // Do not include current ones as they're created separately with other project links
-//
-//      // TODO roadways instead of road addresses
-//      val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping, addresses)).map(ra =>
-//        ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination,
-//          linkGeomSource = linkGeomSources(ra.linkId)))
-//
-//      val roadwayIds = addresses.map(_.id)
-//      val roadwaysToBeExpired = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
-//      roadwayDAO.expireById(roadwayIds.toSet)
-//
-//      // TODO create Roadways with new terminated and linkGeomSource -values
-//      roadwayDAO.create(roadwaysToBeExpired.map(_.copy(id = NewRoadway, ...)))
-//    }
-  }
-
-  private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
-    projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.createdBy)).keys.map(rn =>
-      if (rn._2.nonEmpty) {
-        RoadName(NewRoadNameId, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
-      } else {
-        throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
-      }
-    ).toSeq
-  }
-
   /**
     * This will expire roadways (valid_to = null and end_date = project_date)
     *
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
-  def createHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime) = {
+  def createHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime): Int = {
     roadwayDAO.createHistory(Set(roadwayId), projectDate, roadway.terminated)
   }
 
@@ -1786,8 +1749,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Creating history rows based on operation")
           linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
           (currentRoadways ++ historyRoadways).map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
-          //updateTerminationForHistory(terminatedLinkIds, splitReplacements)
-          //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
           roadwayDAO.create(generatedRoadways.flatMap(_._1))
           linearLocationDAO.create(generatedRoadways.flatMap(_._2))
           Some(s"road addresses created")
@@ -1815,34 +1776,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (existingLinkNames.nonEmpty) {
       val nameString = s"${existingLinkNames.map(_.roadNumber).mkString(",")}"
       appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
-    }
-  }
-
-  /**
-    * Called for road addresses that are replaced by a new version at end date
-    *
-    * @param roadAddress
-    * @param pl
-    * @param vvhLink
-    * @return
-    */
-  private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink], project: RoadAddressProject): Option[RoadAddress] = {
-    pl.status match {
-      // terminated is created from the project link in convertProjectLinkToRoadAddress
-      case Terminated =>
-        None
-      // unchanged will get end_date if the road_type, discontinuity or ely code changes, otherwise we keep the same end_date
-      case UnChanged =>
-        if (roadAddress.roadType == pl.roadType && roadAddress.ely == pl.ely && roadAddress.discontinuity == pl.discontinuity) {
-          None
-        } else {
-          Some(roadAddress.copy(endDate = Some(project.startDate)))
-        }
-      case Transfer | Numbering =>
-        Some(roadAddress.copy(endDate = pl.startDate))
-      case _ =>
-        logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
-        throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
     }
   }
 
