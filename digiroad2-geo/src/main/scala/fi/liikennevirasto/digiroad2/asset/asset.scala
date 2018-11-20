@@ -137,7 +137,7 @@ object SideCode {
   case object BothDirections extends SideCode { def value = 1 }
   case object TowardsDigitizing extends SideCode { def value = 2 }
   case object AgainstDigitizing extends SideCode { def value = 3 }
-  case object Unknown extends SideCode { def value = 99 }
+  case object Unknown extends SideCode { def value = 9 }
 }
 
 trait TimeStamps {
