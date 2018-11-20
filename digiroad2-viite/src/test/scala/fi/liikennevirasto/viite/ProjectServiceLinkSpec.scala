@@ -321,7 +321,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("add two consecutive roadlinks to project road number & road part") {
+  test("Test projectService.addNewLinksToProject() When adding two consecutive roadlinks to project road number & road part Then check the correct insertion of the roadlinks.") {
     val roadLink = RoadLink(5175306, Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
@@ -374,7 +374,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Project link direction change") {
+  test("Test projectService.changeDirection() When issuing said command to a newly created project link in a newly created project Then check if the side code changed correctly.") {
     def prettyPrint(links: List[ProjectLink]) = {
 
       val sortedLinks = links.sortBy(_.id)
@@ -462,7 +462,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Adding new link in beginning and transfer the remaining") {
+  test("Test projectService.addNewLinksToProject() When adding new link in beginning and transfer the remaining Then find said project links when querying for them") {
     runWithRollback {
 
       val reservedRoadPart1 = ProjectReservedPart(164, 77, 35, Some(5405L), Some(Discontinuity.EndOfRoad), Some(8), newLength = None, newDiscontinuity = None, newEly = None)
@@ -526,7 +526,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Terminate link and new link in the beginning of road part, transfer to the rest of road part") {
+  test("Test projectService.updateProjectLinks() When terminating a link and aading a new link in the beginning of road part then transfer to the rest of road part Then check the changed road parts when querying for them.") {
     runWithRollback {
       val reservedRoadPart1 = ProjectReservedPart(3192, 77, 35, Some(3192), Some(Discontinuity.EndOfRoad), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
       val rap = Project(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2022-01-01"), DateTime.now(), "Some additional info", Seq(), None, None)
@@ -584,7 +584,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Numbering change on transfer operation with same road number") {
+  test("Test projectService.updateProjectLinks() When issuing a numbering change on transfer operation with same road number Then check if all the roads have proper m address values defined.") {
     runWithRollback {
       val address1 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 206).map(_.roadwayNumber).toSet))
       val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet))
@@ -628,7 +628,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Numbering change on transfer operation with different road number") {
+  test("Test projectService.updateProjectLinks() When issuing a numbering change on transfer operation with different road number Then check that thwe ammount of roads for one road number goes down and the other goes up.") {
     runWithRollback {
 
       val address1 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(11, 8).map(_.roadwayNumber).toSet)).sortBy(_.startAddrMValue)
@@ -663,7 +663,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Reserve road part, try to renumber it to the same number should produce an error") {
+  test("Test projectService.updateProjectLinks() When reserving a road part, try to renumber it to the same number Then it should produce an error.") {
     runWithRollback {
       reset(mockRoadLinkService)
       val addresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 201).map(_.roadwayNumber).toSet)).sortBy(_.startAddrMValue)
@@ -683,7 +683,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Create a roundabout addressing") {
+  test("Test projectService.createProjectLinks() When trying to create project links onto a roundabout Then check if the created project links are actually a roundabout.") {
     runWithRollback {
       val rap = Project(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser",
         DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
@@ -719,7 +719,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Create new road with track 2, update to track 0 should not crash") {
+  test("Test projectService.createProjectLinks() When creating a new road with track 2, then updating it to track 0 Then the whole process should not crash.") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2018-01-01"),
