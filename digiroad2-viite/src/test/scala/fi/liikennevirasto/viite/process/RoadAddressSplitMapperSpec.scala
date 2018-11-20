@@ -10,7 +10,8 @@ import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
 import org.scalatest.{FunSuite, Matchers}
 
 class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
-  test("Split mapping, simple case") {
+
+  test("Test RoadAddressSplitMapper.createAddressMap() When using 2 roads that are connected, 1 suravage and a regular one Then return the split result.") {
     val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 19L, 15L, 19L, None, None, None,
       123L, 15.0, 18.9, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(0.0, 15.0), Point(0.0, 18.9)), 1L,
       Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, 3.9, 1L, 1L, 1L, reversed = false, Some(456L), 8750L)
@@ -24,7 +25,7 @@ class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
     map.forall(m => m.sourceStartM == m.targetStartM && m.sourceEndM == m.targetEndM && m.sourceLinkId == 123L) should be (true)
   }
 
-  test("Split mapping, reverse case") {
+  test("Test RoadAddressSplitMapper.createAddressMap() When using 2 roads that are connected but the one that is the template and the one that is the suravage are switched from the last test Then return the split result.") {
     val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 3L, 19L, 3L, 19L, None, None, None,
       123L, 0.0, 15.0, SideCode.AgainstDigitizing, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 15.0)), 1L,
       Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, 15.0, 1L, 1L, 1L, reversed = false, Some(456L), 8750L)
@@ -38,7 +39,7 @@ class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
     map.forall(m => m.sourceStartM == m.targetStartM && m.sourceEndM == m.targetEndM && m.sourceLinkId == 123L) should be (true)
   }
 
-  test("Split mapping, changing digitization direction case") {
+  test("Test RoadAddressSplitMapper.createAddressMap() When using 3 roads but there is a difference in the digitization between the template and the other 2 Then return the split result.") {
     val template = ProjectLink(1L, 1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 115L, 100L, 115L, None, None, None,
       123L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 15.0)), 1L,
       Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, 15.0, 1L, 1L, 1L, reversed = false, Some(456L), 8750L)
