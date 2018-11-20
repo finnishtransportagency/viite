@@ -2,48 +2,25 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.viite.util._
+import fi.liikennevirasto.viite.Dummies._
 
 class TrackSectionOrderSpec extends FunSuite with Matchers {
-  val projectId = 1
-  val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
-    "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
-    List.empty[ProjectReservedPart], None)
 
-  private def dummyProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
-    //TODO the road address now have the linear location id and as been setted to 1L
-    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, track, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-      geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+  private def toDummyProjectLink(id: Long, geom: Seq[Point], track: Track = Track.Combined) = {
+    dummyProjectLink(1L, 1L, track, Discontinuity.Continuous, 0, 10, Some(DateTime.now), status = LinkStatus.NotHandled, geometry = geom, linkId = id)
   }
 
-  test("check that orderProjectLinksTopologyByGeometry is not dependent on the links order") {
-    val idRoad0 = 0L //   >
-    val idRoad1 = 1L //     <
-    val idRoad2 = 2L //   >
-    val idRoad3 = 3L //     <
-    //TODO the road address now have the linear location id and as been setted to 1L
-    val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-      Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-    val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
-      Seq(Point(42, 14),Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-    val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
-      Seq(Point(42, 14), Point(75, 19.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-    val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating,
-      Seq(Point(103.0, 15.0),Point(75, 19.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+  test("Test orderProjectLinksTopologyByGeometry When is not dependent on the links order Then the links should be ordered") {
+    val projectLink0 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12345, 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(20.0, 10.0), Point(28, 15)))
+    val projectLink1 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12346, 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14),Point(28, 15)))
+    val projectLink2 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12347, 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14), Point(75, 19.2)))
+    val projectLink3 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L,0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12348, 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(103.0, 15.0),Point(75, 19.2)))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(20.0, 10.0), Point(20.0, 10.0)), list)
     // Test that the result is not dependent on the order of the links
@@ -52,7 +29,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     })
   }
 
-  test("combined track with one ill-fitting link direction after discontinuity") {
+  test("Test orderProjectLinksTopologyByGeometry When combined track with one ill-fitting link direction after discontinuity Then links should be on right order") {
     val points = Seq(Seq(Point(100,110), Point(75, 130), Point(50,159)),
       Seq(Point(50,160), Point(0, 110), Point(0,60)),
       Seq(Point(0,60), Point(-50, 80), Point(-100, 110)),
@@ -62,17 +39,14 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 3).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
-        g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100,110), Point(100,110)), list)
-    ordered.map(_.id) should be (Seq(0L, 1L, 2L, 3L))
+    ordered.map(_.linkId) should be (Seq(0L, 1L, 2L, 3L))
   }
 
-  test("roundabout with Towards facing starting link") {
+  test("Test mValueRoundabout When roundabout with Towards facing starting link Then side code should be different") {
     val points = Seq(Seq(Point(150.00, 110.00),Point(146.19, 129.13),Point(135.36, 145.36)),
       Seq(Point(135.36, 145.36),Point(119.13, 156.19),Point(100.00, 160.00)),
       Seq(Point(100.00, 160.00),Point(80.87, 156.19),Point(64.64, 145.36)),
@@ -86,11 +60,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
-        g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      dummyProjectLink(5, 1,Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
     TrackSectionOrder.isRoundabout(list.init) should be (false)
@@ -102,7 +73,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     result.head.geometry should be (list.head.geometry)
   }
 
-  test("invalid roundabout geometry throws exception") {
+  test("Test isRoundabout When invalid roundabout geometry Then throws exception") {
     val points = Seq(Seq(Point(150.00, 110.00),Point(146.19, 129.13),Point(135.36, 145.36)),
       Seq(Point(135.36, 145.36),Point(119.13, 156.19),Point(100.00, 160.00)),
       Seq(Point(100.00, 160.00),Point(80.87, 156.19),Point(80, 140)),
@@ -116,11 +87,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
-        g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
     intercept[InvalidGeometryException] {
@@ -128,7 +96,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     }
   }
 
-  test("roundabout with Against facing starting link") {
+  test("Test mValueRoundabout When roundabout with Against facing starting link Then side code should be different") {
     val points = Seq(Seq(Point(100.00, 160.00),Point(80.87, 156.19),Point(64.64, 145.36)),
       Seq(Point(64.64, 145.36),Point(53.81, 129.13),Point(50.00, 110.00)),
       Seq(Point(50.00, 110.00),Point(53.81, 90.87),Point(64.64, 74.64)),
@@ -143,11 +111,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
-        g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
     TrackSectionOrder.isRoundabout(list.init) should be (false)
@@ -159,7 +124,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     result.head.geometry should be (list.head.geometry)
   }
 
-  test("Ramp doesn't pass as a roundabout") {
+  test("Test isRoundabout When ramp doesn't pass as a roundabout Then it is not a roundabout") {
     val points = Seq(Seq(Point(150.00, 40.00),Point(100.00, 160.00),Point(80.87, 156.19),Point(64.64, 145.36)),
       Seq(Point(64.64, 145.36),Point(53.81, 129.13),Point(50.00, 110.00)),
       Seq(Point(50.00, 110.00),Point(53.81, 90.87),Point(90.0, 74.64)),
@@ -170,16 +135,13 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    //TODO the road address now have the linear location id and as been setted to 1L
     val list = geom.zip(0 to 7).map{ case (g, id) =>
-      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1l, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), NoFloating,
-        g, LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     list.permutations.forall(l => !TrackSectionOrder.isRoundabout(l)) should be (true)
   }
 
-  test("Pick the most in right project link on orderProjectLinksTopologyByGeometry") {
+  test("Test orderProjectLinksTopologyByGeometry When choosing the project link Then it should pick the most in right") {
     //                                 (25,15)
     //                                  / |
     //                                /   |
@@ -190,9 +152,9 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //   |---------0L---------|-----1L----|
     //(10,10)            (20,10)       (30,10)
     val projectLinks = List(
-      dummyProjectLink(1L, Seq(Point(20, 10), Point(30, 10))),
-      dummyProjectLink(0L, Seq(Point(10, 10), Point(15, 10), Point(20, 10))),
-      dummyProjectLink(2L, Seq(Point(20, 10), Point(25, 15), Point(30, 10)))
+      toDummyProjectLink(1L, Seq(Point(20, 10), Point(30, 10))),
+      toDummyProjectLink(0L, Seq(Point(10, 10), Point(15, 10), Point(20, 10))),
+      toDummyProjectLink(2L, Seq(Point(20, 10), Point(25, 15), Point(30, 10)))
     )
 
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(10, 10), Point(10, 10)), projectLinks)
@@ -200,7 +162,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     ordered.map(_.linkId) should be (List(0L, 1L, 2L))
   }
 
-  test("Pick the forward when there is more than 2 connected links on orderProjectLinksTopologyByGeometry") {
+  test("Test orderProjectLinksTopologyByGeometry When choosing two connected links Then pick the most forward one") {
     //                                            3L
     //                                   /|------------------|
     //                              2L /  |
@@ -217,13 +179,13 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //
 
     val projectLinks = List(
-      dummyProjectLink(1L, Seq(Point(2, 1), Point(2, 3), Point(2, 6)), Track.LeftSide),
-      dummyProjectLink(2L, Seq(Point(2, 6), Point(3, 7), Point(4, 8)), Track.LeftSide),
-      dummyProjectLink(3L, Seq(Point(4, 8), Point(6, 8), Point(8, 8)), Track.LeftSide),
-      dummyProjectLink(4L, Seq(Point(4, 4), Point(4, 6), Point(4, 8)), Track.RightSide),
-      dummyProjectLink(5L, Seq(Point(4, 4), Point(6, 4), Point(8, 4)), Track.RightSide),
-      dummyProjectLink(6L, Seq(Point(4, 1), Point(4, 2), Point(4, 4)), Track.RightSide),
-      dummyProjectLink(7L, Seq(Point(2, 6), Point(3, 5), Point(4, 4)), Track.RightSide)
+      toDummyProjectLink(1L, Seq(Point(2, 1), Point(2, 3), Point(2, 6)), Track.LeftSide),
+      toDummyProjectLink(2L, Seq(Point(2, 6), Point(3, 7), Point(4, 8)), Track.LeftSide),
+      toDummyProjectLink(3L, Seq(Point(4, 8), Point(6, 8), Point(8, 8)), Track.LeftSide),
+      toDummyProjectLink(4L, Seq(Point(4, 4), Point(4, 6), Point(4, 8)), Track.RightSide),
+      toDummyProjectLink(5L, Seq(Point(4, 4), Point(6, 4), Point(8, 4)), Track.RightSide),
+      toDummyProjectLink(6L, Seq(Point(4, 1), Point(4, 2), Point(4, 4)), Track.RightSide),
+      toDummyProjectLink(7L, Seq(Point(2, 6), Point(3, 5), Point(4, 4)), Track.RightSide)
     )
 
     val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(4, 1), Point(2, 1)), projectLinks)
@@ -232,7 +194,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     leftOrdered.map(_.linkId) should be(List(1L, 2L, 3L))
   }
 
-  test("Pick the once connected when there is any with the same track code on orderProjectLinksTopologyByGeometry") {
+  test("Test orderProjectLinksTopologyByGeometry When choosing the once connected Then there is any with the same track code on ordered list") {
     //                                 3l         4L
     //                             |--------|-----------|
     //                             |        |
@@ -242,10 +204,10 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //                             -        -
 
     val projectLinks = List(
-      dummyProjectLink(1L, Seq(Point(1, 1), Point(1, 2), Point(1, 4)), Track.LeftSide),
-      dummyProjectLink(2L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.RightSide),
-      dummyProjectLink(3L, Seq(Point(1, 4), Point(2, 4), Point(3, 4)), Track.Combined),
-      dummyProjectLink(4L, Seq(Point(3, 4), Point(4, 4), Point(50, 4)), Track.Combined)
+      toDummyProjectLink(1L, Seq(Point(1, 1), Point(1, 2), Point(1, 4)), Track.LeftSide),
+      toDummyProjectLink(2L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.RightSide),
+      toDummyProjectLink(3L, Seq(Point(1, 4), Point(2, 4), Point(3, 4)), Track.Combined),
+      toDummyProjectLink(4L, Seq(Point(3, 4), Point(4, 4), Point(50, 4)), Track.Combined)
     )
 
     val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(3, 1), Point(1, 1)), projectLinks)
@@ -254,7 +216,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     leftOrdered.map(_.linkId) should be(List(1L, 3L, 4L))
   }
 
-  test("Pick the same track when there is 2 connected links with only one with same track code on orderProjectLinksTopologyByGeometry") {
+  test("Test orderProjectLinksTopologyByGeometry When choosing the same track when there is 2 connected Then links with only one with same track code should be picked") {
     //                             -        -
     //                             |        |
     //                          3L |        | 4l
@@ -264,10 +226,10 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //                        1L        2L
 
     val projectLinks = List(
-      dummyProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.Combined),
-      dummyProjectLink(2L, Seq(Point(3, 1), Point(4, 1), Point(5, 1)), Track.Combined),
-      dummyProjectLink(3L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.LeftSide),
-      dummyProjectLink(4L, Seq(Point(5, 1), Point(5, 3), Point(5, 4)), Track.RightSide)
+      toDummyProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.Combined),
+      toDummyProjectLink(2L, Seq(Point(3, 1), Point(4, 1), Point(5, 1)), Track.Combined),
+      toDummyProjectLink(3L, Seq(Point(3, 1), Point(3, 2), Point(3, 4)), Track.LeftSide),
+      toDummyProjectLink(4L, Seq(Point(5, 1), Point(5, 3), Point(5, 4)), Track.RightSide)
     )
 
     val (rightOrdered, leftOrdered) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(1, 1), Point(1, 1)), projectLinks)
