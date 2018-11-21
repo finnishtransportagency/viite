@@ -182,6 +182,7 @@ class DataImporter {
     new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
 
+  // TODO This is not used and should probably be removed.
   def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
@@ -204,6 +205,7 @@ class DataImporter {
     Seq(roadAddressA, roadAddressB)
   }
 
+  // TODO This is not used and probably should be removed.
   def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
     println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
     sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
