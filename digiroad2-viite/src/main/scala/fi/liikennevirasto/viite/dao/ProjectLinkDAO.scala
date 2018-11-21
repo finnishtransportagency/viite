@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -96,12 +96,17 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
-  def getEndPoints(direction: Vector3d): (Point, Point) = {
+  def getEndPoints() = {
     if (sideCode == SideCode.Unknown) {
+      val direction = if(geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
       Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
     } else {
       (startingPoint, endPoint)
     }
+  }
+
+  def oppositeEndPoint(point: Point) : Point = {
+    if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
   }
 
   def copyWithGeometry(newGeometry: Seq[Point]): ProjectLink = {
