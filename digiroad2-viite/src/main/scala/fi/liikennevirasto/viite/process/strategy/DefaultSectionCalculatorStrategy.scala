@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
@@ -97,8 +96,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
-    val rightLinks = newLinks.filter(_.track != Track.LeftSide) ++ oldLinks.filter(_.track != Track.LeftSide)
-    val rightPoints = TrackSectionOrder.findOnceConnectedLinks(rightLinks).keys
     if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
       (rightStartPoint, rightStartPoint)
     else {
