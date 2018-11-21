@@ -144,7 +144,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def oppositeEndPoint(point: Point) : Point = {
-    if(GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
+    if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
   }
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
