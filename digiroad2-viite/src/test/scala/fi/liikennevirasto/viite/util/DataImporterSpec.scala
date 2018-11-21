@@ -30,7 +30,7 @@ class DataImporterSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
-  
+
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]

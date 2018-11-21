@@ -24,7 +24,6 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
-// TODO This could be renamed to something else than asset...
 object DataImporter {
   sealed trait ImportDataSet {
     def database(): DatabaseDef
