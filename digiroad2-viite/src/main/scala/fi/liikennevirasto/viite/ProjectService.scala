@@ -1625,7 +1625,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         false
       case None =>
-        logger.info(s"During status checking VIITE wasnt able to find TR_ID to project $projectID")
+        logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(projectDAO.getRoadAddressProjectById(projectID).head, " Failed to find TR-ID ")
         false
     }
@@ -1737,10 +1737,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         handleNewRoadNames(projectLinks, project)
         try {
           val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedRoadwaysWithLinks)
+          val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewRoadway).map(_.id)
           logger.info(s"Creating history rows based on operation")
           linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
-          (currentRoadways ++ historyRoadways).map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
-          roadwayDAO.create(generatedRoadways.flatMap(_._1))
+          (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
+          roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway))
           linearLocationDAO.create(generatedRoadways.flatMap(_._2))
           Some(s"road addresses created")
         } catch {
