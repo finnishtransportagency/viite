@@ -164,6 +164,27 @@ class DataImporterSpec extends FunSuite with Matchers {
 
       val roadways = sql"""select a.id from ROADWAY a""".as[Long].list
       roadways.size should be (18)
+
+      // Check linear locations
+      val linearLocations = linearLocationDAO.fetchByRoadways(Set(1, 2, 3, 4, 5))
+      linearLocations.size should be(3)
+      linearLocations.foreach(l => l.linkId should be(1))
+      linearLocations.foreach(l => l.sideCode should be(SideCode.Unknown))
+      linearLocations.foreach(l => l.orderNumber should be(1.0 +- 0.00001))
+      linearLocations.foreach(l => l.floating should be(FloatingReason.NoFloating))
+      linearLocations.foreach(l => l.startCalibrationPoint should be(None))
+      linearLocations.foreach(l => l.endCalibrationPoint should be(None))
+      linearLocations.foreach(l => l.linkGeomSource should be(LinkGeomSource.NormalLinkInterface))
+      val linearLocation1 = linearLocations.filter(l => l.roadwayNumber == 1).head
+      val linearLocation2 = linearLocations.filter(l => l.roadwayNumber == 2).head
+      val linearLocation3 = linearLocations.filter(l => l.roadwayNumber == 3).head
+      linearLocation1.startMValue should be(64.138 +- 0.001)
+      linearLocation2.startMValue should be(0.0 +- 0.001)
+      linearLocation3.startMValue should be(73.448 +- 0.001)
+      linearLocation1.endMValue should be(73.448 +- 0.001)
+      linearLocation2.endMValue should be(64.138 +- 0.001)
+      linearLocation3.endMValue should be(120.0 +- 0.001)
+
     }
     withDynSession {
       sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
