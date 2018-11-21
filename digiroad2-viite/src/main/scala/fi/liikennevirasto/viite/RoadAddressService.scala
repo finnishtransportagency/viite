@@ -300,8 +300,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   /**
     * Gets all the road addresses in between the given linear location.
-    * - If only given the start measure, will return all the road addresses with the start measure equal or greater than ${startMOption}
-    * - If only given the end measure, will return all the road addresses with end measure equal or less than ${endMOption}
+    * - If only given the start measure, will return all the road addresses with the start and end measure in between ${startMOption} or start measure equal or greater than ${startMOption}
+    * - If only given the end measure, will return all the road addresses with the start and end measure in between ${endMOption} or end measure equal or less than ${endMOption}
     * - If any of the measures are given, will return all the road addresses on the given road link id
     *
     * @param linkId       The link identifier of the linear location
@@ -318,9 +318,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         case (Some(startM), Some(endM)) =>
           roadAddresses.filter(ra => ra.linkId == linkId && ra.isBetweenMeasures(startM, endM))
         case (Some(startM), _) =>
-          roadAddresses.filter(ra => ra.linkId == linkId && ra.startMValue >= startM)
+          roadAddresses.filter(ra => ra.linkId == linkId && (ra.startMValue >= startM || ra.isBetweenMeasures(startM)))
         case (_, Some(endM)) =>
-          roadAddresses.filter(ra => ra.linkId == linkId && ra.endMValue <= endM)
+          roadAddresses.filter(ra => ra.linkId == linkId && (ra.endMValue <= endM || ra.isBetweenMeasures(endM)))
         case _ =>
           roadAddresses.filter(ra => ra.linkId == linkId)
       }
