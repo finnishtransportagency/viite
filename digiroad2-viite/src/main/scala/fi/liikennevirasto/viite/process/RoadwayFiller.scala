@@ -76,7 +76,9 @@ object RoadwayFiller {
       val roadways =
         if(changeSource.roadNumber == changeTarget.roadNumber && changeSource.startRoadPartNumber == changeTarget.startRoadPartNumber && changeSource.trackCode == changeTarget.trackCode &&
           (projectLinksInRoadway.last.endAddrMValue - projectLinksInRoadway.head.startAddrMValue) == (currentRoadway.endAddrMValue - currentRoadway.startAddrMValue)){
-          generateNewRoadwaysWithHistory(changeSource, changeTarget, projectLinksInRoadway, currentRoadway, newRoadwayNumber = false, change)
+          Seq(Roadway(NewRoadway, currentRoadway.roadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
+            projectLinks.head.startAddrMValue, projectLinks.last.endAddrMValue, projectLinks.head.reversed, projectLinks.head.startDate.get, None, createdBy = projectLinks.head.createdBy.get, currentRoadway.roadName,
+            changeTarget.ely.get, NoTermination))
         }
         else {
           generateNewRoadwaysWithHistory(changeSource, changeTarget, projectLinksInRoadway, currentRoadway, newRoadwayNumber = true, change)
