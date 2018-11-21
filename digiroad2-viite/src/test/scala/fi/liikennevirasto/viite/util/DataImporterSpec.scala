@@ -4,7 +4,6 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.Unknown
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Mockito.when
@@ -25,14 +24,13 @@ class DataImporterSpec extends FunSuite with Matchers {
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  def runWithRollback[T](f: => T): T = {
+  def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val t = f
+      f
       dynamicSession.rollback()
-      t
     }
   }
-
+  
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
@@ -110,18 +108,15 @@ class DataImporterSpec extends FunSuite with Matchers {
     override def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
       roadAddressImporter
     }
+    override def disableRoadwayTriggers: Unit = {}
+    override def enableRoadwayTriggers: Unit = {}
     override def roadwayResetter(): Unit = {}
   }
 
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
-
-  // TODO Rollback doesn't work yet
   test("Test importRoadAddressData When importing addresses Then they are saved in database") {
+    withDynSession {
+      sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
+    }
     runWithRollback {
 
       dataImporter.importRoadAddressData(null, mockVVHClient, importOptions)
@@ -169,6 +164,9 @@ class DataImporterSpec extends FunSuite with Matchers {
 
       val roadways = sql"""select a.id from ROADWAY a""".as[Long].list
       roadways.size should be (18)
+    }
+    withDynSession {
+      sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
     }
   }
 
