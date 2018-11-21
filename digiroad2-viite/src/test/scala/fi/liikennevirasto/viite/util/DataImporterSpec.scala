@@ -48,8 +48,8 @@ class DataImporterSpec extends FunSuite with Matchers {
 
   val roadsToBeConverted = Seq(
     //            TIE AOSA AJR JATKUU AET LET   ALKU LOPPU ALKUPVM                       LOPPUPVM                      MUUTOSPVM                    -    ELY  TIETYYPPI -  LINKID  KAYTTAJA  ALKUX             ALKUY              LOPPUX            LOPPUY         AJORATAID  SIDE
-    ConversionAddress(25, 22, 1, 5, 756,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown),
-    ConversionAddress(25, 22, 1, 5, 765,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown),
+    ConversionAddress(25, 22, 1, 5, 756,  765,  62,  71,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 1, Unknown, CalibrationCode.AtBeginning),
+    ConversionAddress(25, 22, 1, 5, 765,  810,  71,  116,  Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 3, Unknown, CalibrationCode.AtEnd),
     ConversionAddress(25, 22, 1, 5, 694,  756,  0,   62,   Some(d("01.03.2016")), None,                         Some(d("30.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
     ConversionAddress(25, 22, 0, 5, 694,  756,  0,   62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None, 1,  1,        0, 1L, "ajrpilkont", Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
     ConversionAddress(25, 22, 1, 5, 694,  756,  0,   62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None, 1,  1,        0, 1L, "TR",         Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), 2, Unknown),
@@ -172,8 +172,6 @@ class DataImporterSpec extends FunSuite with Matchers {
       linearLocations.foreach(l => l.sideCode should be(SideCode.Unknown))
       linearLocations.foreach(l => l.orderNumber should be(1.0 +- 0.00001))
       linearLocations.foreach(l => l.floating should be(FloatingReason.NoFloating))
-      linearLocations.foreach(l => l.startCalibrationPoint should be(None))
-      linearLocations.foreach(l => l.endCalibrationPoint should be(None))
       linearLocations.foreach(l => l.linkGeomSource should be(LinkGeomSource.NormalLinkInterface))
       val linearLocation1 = linearLocations.filter(l => l.roadwayNumber == 1).head
       val linearLocation2 = linearLocations.filter(l => l.roadwayNumber == 2).head
@@ -184,6 +182,12 @@ class DataImporterSpec extends FunSuite with Matchers {
       linearLocation1.endMValue should be(73.448 +- 0.001)
       linearLocation2.endMValue should be(64.138 +- 0.001)
       linearLocation3.endMValue should be(120.0 +- 0.001)
+      linearLocation1.startCalibrationPoint.get should be(756)
+      linearLocation1.endCalibrationPoint should be(None)
+      linearLocation2.startCalibrationPoint should be(None)
+      linearLocation2.endCalibrationPoint should be(None)
+      linearLocation3.startCalibrationPoint should be(None)
+      linearLocation3.endCalibrationPoint.get should be(810)
 
     }
     withDynSession {
