@@ -106,13 +106,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
       val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks)
 
-
       if (leftPoints.isEmpty)
         throw new InvalidAddressDataException("Missing left track starting points")
 
       val direction = rightStartPoint - pl.oppositeEndPoint(rightStartPoint)
 
-      val possiblePoints = (rightStartPoint, leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p =>  p._1.distance2DTo(rightStartPoint))._1)
+      val possiblePoints = (rightStartPoint, leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p => p._1.distance2DTo(rightStartPoint))._1)
 
       if (leftPoints.isEmpty)
         throw new InvalidAddressDataException("Missing left track starting points")
@@ -176,7 +175,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
           (p - Point(0, 0)).scale(1.0 / points.size) + x
         }
-        TrackSectionOrder.findOnceConnectedLinks(remainLinks).minBy( p => direction.dot(p._1.toVector - midPoint))
+        TrackSectionOrder.findOnceConnectedLinks(remainLinks).minBy(p => direction.dot(p._1.toVector - midPoint))
       }
 
     )
