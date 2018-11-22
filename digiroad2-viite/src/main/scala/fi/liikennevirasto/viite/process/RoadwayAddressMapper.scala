@@ -148,9 +148,9 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadway.discontinuity)
   }
 
-  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]) : Seq[LinearLocation] = {
+  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
     projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
-      map{
+      map {
         case (projectLink, key) =>
           val calibrationPoints = projectLink.calibrationPoints match {
             case (None, None) => (None, None)
