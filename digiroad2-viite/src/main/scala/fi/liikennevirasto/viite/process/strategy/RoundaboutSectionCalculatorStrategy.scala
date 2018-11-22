@@ -33,7 +33,7 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
             pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
           case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
             val calibrationPoints = toCalibrationPoints(pl.linkId, Some(s.head), None)
-            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints,pl.linearLocationId))
+            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
           case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
             val calibrationPoints = toCalibrationPoints(pl.linkId, None, Some(s.head))
             pl.copy(endAddrMValue = s.head.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
