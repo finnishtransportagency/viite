@@ -16,6 +16,45 @@ object TrackSectionOrder {
   private val LeftVector = Vector3d(1.0, 0.0, -1.0)
   private val ForwardVector = Vector3d(0.0, 1.0, 0.0)
 
+
+  def orderProjectLinkChainConnectedPoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
+
+    case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
+
+    def recursiveFindNearest(projectLinkChain: ProjectLinkChain, others: Seq[ProjectLink]) : ProjectLinkChain = {
+      def mapDistances(p: Point)(pl: ProjectLink) = {
+        val (sP, eP) = GeometryUtils.geometryEndpoints(pl.geometry)
+        val (sD, eD) = (sP.distance2DTo(p), eP.distance2DTo(p))
+        (pl, sP, eP, sD, eD, Math.min(sD, eD))
+      }
+
+      val startMinDistance = others.map(mapDistances(projectLinkChain.startPoint)).minBy(_._6)
+      val endMinDistance = others.map(mapDistances(projectLinkChain.startPoint)).minBy(_._6)
+
+      val(pl, sP, eP, sD, eD, minD) = Seq(startMinDistance, endMinDistance).minBy(pl => pl._6)
+
+      val result = if(startMinDistance._6 < endMinDistance._6)
+        projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ pl, endPoint = if(minD == sD) eP else sP)
+      else
+        projectLinkChain.copy(sortedProjectLinks = pl +: projectLinkChain.sortedProjectLinks, startPoint = if(minD == sD) eP else sP)
+
+      val next = others.tail
+
+      if(next.isEmpty)
+        result
+      else
+        recursiveFindNearest(result, next)
+    }
+
+    if(projectLinks.size == 1){
+      val (p1, p2) = GeometryUtils.geometryEndpoints(projectLinks.head.geometry)
+      Map(p1 -> projectLinks.head, p2 -> projectLinks.head)
+    } else {
+      val projectLinkChain = recursiveFindNearest(ProjectLinkChain(Seq(projectLinks.head), projectLinks.head.startingPoint, projectLinks.head.endPoint), projectLinks.tail)
+      Map(projectLinkChain.startPoint -> projectLinkChain.sortedProjectLinks.head, projectLinkChain.endPoint -> projectLinkChain.sortedProjectLinks.last)
+    }
+  }
+
   def RotationMatrix(tangent: Vector3d): Matrix = {
     if (Math.abs(tangent.x) <= fi.liikennevirasto.viite.Epsilon)
       Matrix(Seq(Seq(0.0, -1.0), Seq(1.0, 0.0)))
