@@ -94,8 +94,6 @@
             new StyleRule().where('roadClass').is(97).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
             new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
-            new StyleRule().where('administrativeClass').is('Municipality').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round', width: 14}}),
-            new StyleRule().where('administrativeClass').is('Private').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round', width: 14}}),
             new StyleRule().where('roadClass').is(12).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(99).and('roadLinkSource').isNot(3).use({stroke: {color: '#A4A4A2', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(99).and('anomaly').is(1).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
@@ -127,6 +125,11 @@
             new StyleRule().where('roadClass').is(99).and('roadLinkSource').is(3).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
         ];
 
+        var borderRules = [
+            new StyleRule().where('administrativeClass').is('Municipality').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round', width: 14}}),
+            new StyleRule().where('administrativeClass').is('Private').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round', width: 14}})
+        ];
+
         var roadLinkStyle = new StyleRuleProvider({});
         roadLinkStyle.addRules(strokeRules);
         roadLinkStyle.addRules(strokeWidthRules);
@@ -136,6 +139,10 @@
         overlayStyle.addRules(fillRules);
         overlayStyle.addRules(fillWidthRules);
 
+
+        var borderStyle = new StyleRuleProvider({});
+        borderStyle.addRules(borderRules);
+
         var getRoadLinkStyle = function () {
             return roadLinkStyle;
         };
@@ -143,10 +150,14 @@
             return overlayStyle;
         };
 
+        var getBorderStyle = function(){
+            return borderStyle;
+        };
+
         return {
             getOverlayStyle:getOverlayStyle,
-            getRoadLinkStyle: getRoadLinkStyle
-
+            getRoadLinkStyle: getRoadLinkStyle,
+            getBorderStyle: getBorderStyle
         };
     };
 })(this);
