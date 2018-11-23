@@ -177,19 +177,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
 
   def isWritableState(projectId: Long): Boolean = {
-      projectWritableCheck(projectId) match {
+      projectWritableCheckInSession(projectId) match {
         case Some(_) => false
         case None => true
       }
   }
 
-  def projectWritableCheck(projectId: Long): Option[String] = {
+  def projectWritableCheckInSession(projectId: Long): Option[String] = {
     projectDAO.getProjectStatus(projectId) match {
       case Some(projectState) =>
         if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
+    }
+  }
+
+  def projectWritableCheck(projectId: Long): Option[String] = {
+    withDynSession {
+      projectWritableCheckInSession(projectId)
     }
   }
 
@@ -379,7 +385,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
-        projectWritableCheck(projectId) match {
+        projectWritableCheckInSession(projectId) match {
           case None =>
             if (projectLinkDAO.countLinksByStatus(projectId, roadNumber, roadPartNumber, Set(UnChanged.value, NotHandled.value)) > 0)
               return Some(ErrorReversingUnchangedLinks)
@@ -1115,7 +1121,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], coordinates: ProjectCoordinates, userName: String): Option[String] = {
     try {
       withDynTransaction {
-        projectWritableCheck(projectId) match {
+        projectWritableCheckInSession(projectId) match {
           case None =>
             revertLinks(projectId, roadNumber, roadPartNumber, links, userName) match {
               case None =>
