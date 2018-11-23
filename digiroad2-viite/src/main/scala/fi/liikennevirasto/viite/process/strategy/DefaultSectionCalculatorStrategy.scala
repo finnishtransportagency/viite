@@ -110,14 +110,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       
       val direction = rightStartPoint - pl.oppositeEndPoint(rightStartPoint)
 
-      println("******************************************")
-
-      leftPoints.foreach{
-        p =>
-          println(""+p._1.y.toInt+","+p._1.x.toInt+"")
-      }
-
-      println("******************************************")
       (rightStartPoint, leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p =>  p._1.distance2DTo(rightStartPoint))._1)
     }
   }
