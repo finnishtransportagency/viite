@@ -17,41 +17,45 @@ object TrackSectionOrder {
   private val ForwardVector = Vector3d(0.0, 1.0, 0.0)
 
 
-  def orderProjectLinkChainConnectedPoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
+  /**
+    *
+    * @param projectLinks
+    * @return
+    */
+  def findChainEndpoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
 
     case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
 
-    def recursiveFindNearest(projectLinkChain: ProjectLinkChain, others: Seq[ProjectLink]) : ProjectLinkChain = {
+    def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]) : ProjectLinkChain = {
+
       def mapDistances(p: Point)(pl: ProjectLink) = {
         val (sP, eP) = GeometryUtils.geometryEndpoints(pl.geometry)
         val (sD, eD) = (sP.distance2DTo(p), eP.distance2DTo(p))
         (pl, sP, eP, sD, eD, Math.min(sD, eD))
       }
 
-      val startPoinrMinDistance = others.map(mapDistances(projectLinkChain.startPoint)).minBy(_._6)
-      val endPointMinDistance = others.map(mapDistances(projectLinkChain.endPoint)).minBy(_._6)
+      val startPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.startPoint)).minBy(_._6)
+      val endPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.endPoint)).minBy(_._6)
 
-      //val(pl, sP, eP, sD, eD, minD) = Seq(startPoinrMinDistance, endPointMinDistance).minBy(pl => pl._6)
-
-      val (result, next) = if(startPoinrMinDistance._6 > endPointMinDistance._6){
+      val (result, next) = if(startPointMinDistance._6 > endPointMinDistance._6){
         val (pl, sP, eP, sD, eD, minD) = endPointMinDistance
-        (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ pl, endPoint = if(minD == sD) eP else sP), others.filterNot(pli => pli.id == pl.id))
+        (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ pl, endPoint = if(minD == sD) eP else sP), unprocessed.filterNot(pli => pli.id == pl.id))
       } else {
-        val (pl, sP, eP, sD, eD, minD) = startPoinrMinDistance
-        (projectLinkChain.copy(sortedProjectLinks = pl +: projectLinkChain.sortedProjectLinks, startPoint = if(minD == sD) eP else sP), others.filterNot(pli => pli.id == pl.id))
+        val (pl, sP, eP, sD, eD, minD) = startPointMinDistance
+        (projectLinkChain.copy(sortedProjectLinks = pl +: projectLinkChain.sortedProjectLinks, startPoint = if(minD == sD) eP else sP), unprocessed.filterNot(pli => pli.id == pl.id))
       }
 
       if(next.isEmpty)
         result
       else
-        recursiveFindNearest(result, next)
+        recursiveFindNearestProjectLinks(result, next)
     }
 
     if(projectLinks.size == 1){
       val (p1, p2) = GeometryUtils.geometryEndpoints(projectLinks.head.geometry)
       Map(p1 -> projectLinks.head, p2 -> projectLinks.head)
     } else {
-      val projectLinkChain = recursiveFindNearest(ProjectLinkChain(Seq(projectLinks.head), projectLinks.head.geometry.head, projectLinks.head.geometry.last), projectLinks.tail)
+      val projectLinkChain = recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(projectLinks.head), projectLinks.head.geometry.head, projectLinks.head.geometry.last), projectLinks.tail)
       Map(projectLinkChain.startPoint -> projectLinkChain.sortedProjectLinks.head, projectLinkChain.endPoint -> projectLinkChain.sortedProjectLinks.last)
     }
   }
