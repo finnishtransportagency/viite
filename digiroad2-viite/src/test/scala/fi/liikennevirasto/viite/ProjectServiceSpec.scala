@@ -1812,10 +1812,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).head.validTo should be(None)
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).head.endDate should be(None)
 
-      // TODO In case of termination old roadway row must be expired and new one must be created with end date and termination code 1.
-      // Also previous history rows must get termination code 2 (old ones expired and new history rows must be created).
-      // Should we do it in createHistoryRows -method or somewhere else?
-
     }
   }
 
