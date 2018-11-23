@@ -18,9 +18,11 @@ object TrackSectionOrder {
 
 
   /**
+    * Find the end points of a continuous or discontinuous project link chain.
+    * When the chain has a discontinuous the project links will be order by proximity.
     *
-    * @param projectLinks
-    * @return
+    * @param projectLinks The project link sequence
+    * @return Return a map with end point and the related project link
     */
   def findChainEndpoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
 
