@@ -1,4 +1,5 @@
 FROM node:alpine
+RUN apk --update add openjdk7-jre
 ARG JENKINS_UID=1000
 RUN adduser -D -S -u $JENKINS_UID jenkins
 RUN npm install grunt -g
