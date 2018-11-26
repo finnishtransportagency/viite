@@ -96,26 +96,20 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
-    val rightLinks = newLinks.filter(_.track != Track.LeftSide) ++ oldLinks.filter(_.track != Track.LeftSide)
-    val rightPoints = TrackSectionOrder.findOnceConnectedLinks(rightLinks).keys
+
     if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
       (rightStartPoint, rightStartPoint)
     else {
       // Get left track non-connected points and find the closest to right track starting point
       val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-      val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks)
-
+      val leftPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
       if (leftPoints.isEmpty)
         throw new InvalidAddressDataException("Missing left track starting points")
 
       val direction = rightStartPoint - pl.oppositeEndPoint(rightStartPoint)
 
-      val possiblePoints = (rightStartPoint, leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p =>  p._1.distance2DTo(rightStartPoint))._1)
-
-      if (leftPoints.isEmpty)
-        throw new InvalidAddressDataException("Missing left track starting points")
-      possiblePoints
+      (rightStartPoint, leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p =>  p._1.distance2DTo(rightStartPoint))._1)
     }
   }
 
