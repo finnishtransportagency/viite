@@ -38,6 +38,10 @@ pipeline {
                         "grunt deploy --target=${get_environment()?.trim()}"
                     ].join(" && ")
 
+                    STAGE_BACKEND_BUILD_CMD = [
+                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly"
+                    ].join(" && ")
+
                 }
             }
         }
@@ -114,8 +118,7 @@ pipeline {
                 }
             }
             steps {
-                //sh STAGE_SBT_BUILD_CMD
-				echo "Running backend build... (skipped for now)"
+                sh STAGE_BACKEND_BUILD_CMD
             }
             //post {
             //    failure {
