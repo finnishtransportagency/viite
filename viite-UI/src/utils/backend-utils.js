@@ -4,6 +4,7 @@
     var loadingProject;
     var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
     var gettingRoadLinks;
+    moment.locale('fi');
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
@@ -321,9 +322,8 @@
       });
     };
 
-    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, callback) {
-
-      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: 0}, callback);
+    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, distance, callback) {
+      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: distance}, callback);
     };
 
     this.removeProjectLinkSplit = function (data, success, errorCallback) {
@@ -405,7 +405,7 @@
     }
 
     function convertDateToIso(date) {
-      return new Date(date.replace(finnishDatePattern,'$3-$2-$1')).toISOString();
+      return moment(date, 'DD.MM.YYYY').toISOString();
     }
 
     //Methods for the UI Integrated Tests
