@@ -114,10 +114,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
-    throw new NotImplementedError("Implement RoadAddressService.getRoadAddressWithRoadNumberAddress")
-    //withDynSession {
-    //  RoadwayDAO.getRoadAddressByFilter(RoadwayDAO.withRoadNumberAddress(road, addrMValue))
-    //}
+    withDynSession {
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllByRoadNumberAndValue(road, addressMValue = addrMValue).map(_.roadwayNumber).toSet))
+    }
   }
 
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
@@ -467,7 +466,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
     val roadwayAddresses =
       withDynSession {
-        roadwayDAO.fetchAllByBetweenDates(sinceDate, untilDate)
+        roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)
       }
 
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
