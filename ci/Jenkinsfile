@@ -60,14 +60,14 @@ pipeline {
                     )
                 }
             }
-            post {
-                failure {
+            //post {
+            //    failure {
                     //slackSend(
                     //    color: "danger",
                     //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
                     //)
-                }
-            }
+            //    }
+            //}
         }
         stage("Build: Frontend") {
             agent {
@@ -86,14 +86,14 @@ pipeline {
                 //sh STAGE_FRONTEND_BUILD_CMD
 				echo "Running frontend BUILD... (skipped for now)"
             }
-            post {
-                failure {
+            //post {
+            //    failure {
                     //slackSend(
                     //    color: "danger",
                     //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
                     //)
-                }
-            }
+            //    }
+            //}
         }
 		stage("Build: Backend") {
             agent {
@@ -112,14 +112,14 @@ pipeline {
                 //sh STAGE_SBT_BUILD_CMD
 				echo "Running backend build... (skipped for now)"
             }
-            post {
-                failure {
+            //post {
+            //    failure {
                     //slackSend(
                     //    color: "danger",
                     //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
                     //)
-                }
-            }
+            //    }
+            //}
         }
         stage("Publish") {
             agent any
@@ -133,14 +133,14 @@ pipeline {
                 //sh STAGE_PUBLISH_CMD
 				echo "Running publish... (skipped for now)"
             }
-            post {
-                failure {
+            //post {
+            //    failure {
                     //slackSend(
                     //    color: "danger",
                     //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
                     //)
-                }
-            }
+            //    }
+            //}
         }
        stage("Deploy") {
             agent any
@@ -154,23 +154,23 @@ pipeline {
 				//sh STAGE_DEPLOY_CMD
 				echo "Running deploy... (skipped for now)"
             }
-             post {
-                failure {
+            //post {
+            //    failure {
                     //slackSend(
                     //    color: "danger",
                     //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
                     //)
-                }
-            }
+            //    }
+            //}
         }
     }
-    post {
-        always {
+    //post {
+    //    always {
             //slackSend(
             //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
             //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
             //)
             deleteDir()
-        }
-    }
+    //    }
+    //}
 }
