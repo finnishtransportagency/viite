@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao.AddressChangeType.{Termination, Transfer}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -521,7 +521,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(project.id, Set(), transferLinks.map(_.linkId), LinkStatus.Transfer, "Test", 77, 35, 0, Option.empty[Int]) should be(None)
 
       val (resultNew, resultTransfer) = projectLinkDAO.getProjectLinks(project.id).partition(_.status == LinkStatus.New)
-      resultTransfer.head.calibrationPoints._1 should be(None)
+      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5171040,97.373,427,RoadAddressSource)))
+      resultTransfer.head.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(5171040,0.0,531,RoadAddressSource)))
       allLinks.size should be(resultNew.size + resultTransfer.size)
     }
   }

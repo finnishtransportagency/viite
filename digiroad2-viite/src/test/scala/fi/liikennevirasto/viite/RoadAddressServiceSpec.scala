@@ -84,7 +84,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
 
     //Road Link service mocks
     when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[Long]])).thenReturn(Future(Seq.empty))
@@ -124,7 +124,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
 
     //Road Link service mocks
     when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[Long]])).thenReturn(Future(Seq.empty))
@@ -154,7 +154,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
 
     val (floating, nonFloating) = roadAddressService.getRoadAddressesWithLinearGeometry(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq()).partition(_.floating)
 
@@ -287,7 +287,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
     val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L, Some(0.0), Some(9.999))
@@ -310,7 +310,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
     val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L, None, None)
@@ -333,7 +333,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
     val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L, Some(10.0), None)
@@ -356,7 +356,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
     val result = roadAddressService.getRoadAddressWithLinkIdAndMeasure(linkId = 123L, None, Some(10.0))
@@ -401,7 +401,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
     val result = roadAddressService.getRoadAddressByLinkIds(Set(123L))
