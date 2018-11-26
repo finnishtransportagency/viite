@@ -62,10 +62,10 @@ pipeline {
             }
             post {
                 failure {
-                    slackSend(
-                        color: "danger",
-                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    )
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
                 }
             }
         }
@@ -88,10 +88,10 @@ pipeline {
             }
             post {
                 failure {
-                    slackSend(
-                        color: "danger",
-                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    )
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
                 }
             }
         }
@@ -114,10 +114,10 @@ pipeline {
             }
             post {
                 failure {
-                    slackSend(
-                        color: "danger",
-                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    )
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
                 }
             }
         }
@@ -135,10 +135,10 @@ pipeline {
             }
             post {
                 failure {
-                    slackSend(
-                        color: "danger",
-                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
-                    )
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    //)
                 }
             }
         }
@@ -156,20 +156,20 @@ pipeline {
             }
              post {
                 failure {
-                    slackSend(
-                        color: "danger",
-                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
-                    )
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    //)
                 }
             }
         }
     }
     post {
         always {
-            slackSend(
-                color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
-                message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
-            )
+            //slackSend(
+            //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
+            //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
+            //)
             deleteDir()
         }
     }
