@@ -32,7 +32,7 @@ pipeline {
 
                     STAGE_FRONTEND_BUILD_CMD = [
                         "cd viite-UI",
-                        "mkdir tmp"
+                        "mkdir tmp",
                         "npm install",
                         "export TMPDIR=/home/jenkins/viite-UI/tmp",
                         "yarn install"
