@@ -49,7 +49,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ProjectReservedPart], None)
 
-  //TODO will be implement at VIITE-1540
   test("MValues && AddressMValues && CalibrationPoints calculation for new road addresses") {
     runWithRollback {
       val idRoad0 = 0L
@@ -105,7 +104,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("Mvalues calculation for complex case") {
     runWithRollback {
       val idRoad0 = 0L //   |
@@ -174,7 +172,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("Mvalues calculation for against digitization case") {
     runWithRollback {
       val idRoad0 = 0L //   |
@@ -244,7 +241,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("New addressing calibration points, mixed directions") {
     runWithRollback {
       val idRoad0 = 0L //   >
@@ -280,7 +276,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("determineMValues Tracks 0+1+2") {
     runWithRollback {
       def trackMap(pl: ProjectLink) = {
@@ -308,7 +303,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("determineMValues one link") {
     runWithRollback {
       val projectLink0T = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
@@ -329,7 +323,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("determineMValues missing other track - exception is thrown and links are returned as-is") {
     runWithRollback {
       val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
@@ -347,7 +340,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("determineMValues incompatible digitization on tracks is accepted and corrected") {
     runWithRollback {
       val idRoad0 = 0L //   R<
@@ -379,7 +371,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("determineMValues different track lengths are adjusted") {
     runWithRollback {
       // Left track = 89.930 meters
@@ -420,7 +411,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("determineMValues calibration points are cleared") {
     runWithRollback {
       // Left track = 85.308 meters
@@ -456,7 +446,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("Track sections are combined to start from the same position") {
     runWithRollback {
       // Left track = 85.308 meters
@@ -480,7 +469,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("Unchanged + New project links are calculated properly") {
     runWithRollback {
       val idRoad0 = 0L //   U>
@@ -507,7 +495,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("Unchanged + Terminated links are calculated properly") {
     runWithRollback {
       val idRoad0 = 0L //   U>
@@ -533,7 +520,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("Project section calculator test for new + transfer") {
     runWithRollback {
       val idRoad0 = 0L // T
@@ -561,7 +547,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         r.endAddrMValue should be(projectLink0.endAddrMValue + maxAddr - projectLink3.endAddrMValue)
       }
       output.filter(_.id == idRoad3).foreach { r =>
-        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, 10.399999999999999, 44, ProjectLinkSource)))
+        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, 10.4, 44, ProjectLinkSource)))
         r.startAddrMValue should be(maxAddr + projectLink3.startAddrMValue - projectLink3.endAddrMValue)
         r.endAddrMValue should be(maxAddr)
       }
@@ -570,7 +556,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("validate if there is a calibration point when has MinorDiscontinuity at end of address and start of next one with 2 tracks (Left and Right)") {
     runWithRollback{
       // Left track = 85.308 meters
@@ -607,7 +592,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with 2 tracks (Left and Right)") {
     runWithRollback {
       // Left track = 85.308 meters
@@ -644,7 +628,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("validate if there is a calibration point when has MinorDiscontinuity at end of address and start of next one with track Combined") {
     runWithRollback {
       // Combined track = 85.308 meters with MinorDiscontinuity
@@ -671,7 +654,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with track Combined") {
     runWithRollback {
       // Combined track = 85.308 meters with Discontinuous
@@ -698,7 +680,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO will be implement at VIITE-1540
   test("When projects links ends on a right and left track section calculator for new + transfer should have the same end address") {
     runWithRollback {
       val idRoad6 = 6L // N   /
