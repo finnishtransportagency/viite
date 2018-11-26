@@ -237,13 +237,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     withDynSession {
       val roadways = trackOption match {
         case Some(track) =>
-          roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
+          if(addressM != 0)
+            roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
+          else
+            roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, None)
         case _ =>
-          roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
+          if(addressM != 0)
+            roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
+          else
+            roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, None)
       }
 
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-      roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
+      if(addressM != 0)
+        roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      else Seq(roadAddresses.head)
     }
   }
 
