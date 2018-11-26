@@ -1,4 +1,5 @@
 package fi.liikennevirasto.viite.process
+
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
@@ -12,7 +13,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.{Subsequent, Termination}
 import org.joda.time.DateTime
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -27,6 +28,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       t
     }
   }
+
   val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -62,7 +64,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  test("roadwayNumbers: Unchanged addresses with new Road Type in the middle"){
+  test("roadwayNumbers: Unchanged addresses with new Road Type in the middle") {
     withDynTransaction {
       val roadways = Map(
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None))
@@ -109,7 +111,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("roadwayNumbers: New addresses with new Road Type between") {
-    withDynTransaction{
+    withDynTransaction {
       val changeInfos = Seq(
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
@@ -124,7 +126,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous,  RoadType.apply(5), reversed = false, 3)
+          Continuous, RoadType.apply(5), reversed = false, 3)
       )
 
       val projectLinks = Seq(
@@ -134,17 +136,17 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val changes = Seq(
-        (ProjectRoadwayChange(0L, Some("projectName"), 8,  "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0)), Seq(projectLinks.head)),
-        (ProjectRoadwayChange(0L, Some("projectName"), 8,  "Test", DateTime.now(), changeInfos(1), DateTime.now(), Some(0)), Seq(projectLinks(1))),
-        (ProjectRoadwayChange(0L, Some("projectName"), 8,  "Test", DateTime.now(), changeInfos(2), DateTime.now(), Some(0)), Seq(projectLinks(2)))
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0)), Seq(projectLinks.head)),
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(1), DateTime.now(), Some(0)), Seq(projectLinks(1))),
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), DateTime.now(), Some(0)), Seq(projectLinks(2)))
       )
 
       val result = RoadwayFiller.fillRoadways(Map[Long, Roadway](), Map[Long, Roadway](), changes)
-      result.size should be (3)
-      result.head._1.size should be (1)
-      result(1)._1.size should be (1)
-      result(2)._1.size should be (1)
-      result.map(_._1.head.roadwayNumber).distinct.size should be (3)
+      result.size should be(3)
+      result.head._1.size should be(1)
+      result(1)._1.size should be(1)
+      result(2)._1.size should be(1)
+      result.map(_._1.head.roadwayNumber).distinct.size should be(3)
     }
   }
 
@@ -182,7 +184,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
       result(1)._1.size should be(1)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
-      result(1)._1.head.terminated should be (Termination)
+      result(1)._1.head.terminated should be(Termination)
     }
   }
 
@@ -218,7 +220,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.size should be(2)
       result.head._1.size should be(1)
       result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
-      result.head._1.head.terminated should be (Termination)
+      result.head._1.head.terminated should be(Termination)
       result(1)._1.size should be(2)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
     }
@@ -254,7 +256,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val projectLinks = Seq(
         dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = RoadType.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), endDate= Some(DateTime.now()),  status = LinkStatus.Terminated, roadType = RoadType.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = LinkStatus.Terminated, roadType = RoadType.apply(1)),
         dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 500L, Some(DateTime.now()), status = LinkStatus.New, roadType = RoadType.apply(1)),
         dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 500L, 600L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = RoadType.apply(1))
       )
@@ -274,8 +276,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Terminated
       result(1)._1.size should be(1)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
-      result(1)._1.head.terminated should be (Termination)
-      result(1)._1.head.endDate.isDefined should be (true)
+      result(1)._1.head.terminated should be(Termination)
+      result(1)._1.head.endDate.isDefined should be(true)
       //New
       result(2)._1.size should be(1)
       result(2)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
@@ -310,8 +312,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
       result.size should be(1)
       result.head._1.size should be(2)
-      result.head._1.head.roadwayNumber should be (roadways.head._2.roadwayNumber)
-      result.head._1.head.endDate.isDefined should be (true)
+      result.head._1.head.roadwayNumber should be(roadways.head._2.roadwayNumber)
+      result.head._1.head.endDate.isDefined should be(true)
       result.head._1.head.roadwayNumber should be(result.head._1.last.roadwayNumber)
     }
   }
@@ -345,11 +347,11 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val result = RoadwayFiller.fillRoadways(roadways, historyRoadways, changes)
       result.size should be(1)
       result.head._1.size should be(2)
-      result.head._1.head.roadwayNumber should be (roadways.head._2.roadwayNumber)
-      result.head._1.last.roadwayNumber should be (roadways.head._2.roadwayNumber)
-      result.head._1.last.endDate.isDefined should be (true)
-      result.head._1.head.terminated should be (Termination)
-      result.head._1.last.terminated should be (Subsequent)
+      result.head._1.head.roadwayNumber should be(roadways.head._2.roadwayNumber)
+      result.head._1.last.roadwayNumber should be(roadways.head._2.roadwayNumber)
+      result.head._1.last.endDate.isDefined should be(true)
+      result.head._1.head.terminated should be(Termination)
+      result.head._1.last.terminated should be(Subsequent)
     }
   }
 }

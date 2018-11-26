@@ -267,6 +267,10 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
       (rangeStartMeasure < startMValue && rangeEndMeasure > endMValue)
   }
 
+  def isBetweenMeasures(measure: Double): Boolean = {
+    startMValue < measure && endMValue > measure
+  }
+
   def addressBetween(a: Double, b: Double): (Long, Long) = {
     val (addrA, addrB) = (addrAt(a), addrAt(b))
     (Math.min(addrA, addrB), Math.max(addrA, addrB))

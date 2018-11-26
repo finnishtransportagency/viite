@@ -1749,7 +1749,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       //createHistoryRows method expires the history rows for the roadway
       roadwayDAO.fetchAllByRoadwayNumbers(Set(roadway.roadwayNumber), withHistory = true).isEmpty should be (true)
 
-
     }
   }
 
