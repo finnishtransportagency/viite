@@ -35,7 +35,7 @@ pipeline {
                         "mkdir tmp",
                         "npm install",
                         "export TMPDIR=/home/jenkins/viite-UI/tmp",
-                        "yarn install"
+                        "yarn install",
                         "grunt deploy --target=${get_environment()?.trim()}"
                     ].join(" && ")
 
