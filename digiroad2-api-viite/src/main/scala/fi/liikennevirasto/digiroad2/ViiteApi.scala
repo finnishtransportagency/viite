@@ -473,15 +473,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/") {
-    val roadNumber = params("roadNumber").toLong
-    val startPart = params("startPart").toLong
-    val endPart = params("endPart").toLong
-    val projDate = DateTime.parse(params("projDate"))
-    time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
-      projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
-        case Left(err) => Map("success" -> err)
-        case Right(reservedRoadParts) =>  Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+    try {
+      val roadNumber = params("roadNumber").toLong
+      val startPart = params("startPart").toLong
+      val endPart = params("endPart").toLong
+      val projDate = DateTime.parse(params("projDate"))
+      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
+        projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
+          case Left(err) => Map("success" -> err)
+          case Right(reservedRoadParts) => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
         }
+      }
+    } catch {
+      case e: IllegalArgumentException => Map("success" -> e.getMessage)
     }
   }
 
