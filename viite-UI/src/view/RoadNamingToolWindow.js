@@ -75,11 +75,11 @@
             });
         };
 
-        var retroactivelyAddDatePickers = function () {
+        var retroactivelyAddDatePickers = function (originalStartDate) {
             var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder])');
             inputs.each(function (index, input) {
                 if (input.dataset.roadid == newId) {
-                    var datePicker = dateutil.addSingleDatePicker($(input));
+                    var datePicker = _.isUndefined(originalStartDate) ? dateutil.addSingleDatePicker($(input)) : dateutil.addSingleDatePickerWithStartDate($(input), originalStartDate);
                 }
             });
             $('.pika-single.is-bound').css("width", "auto");
@@ -123,7 +123,7 @@
             if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0))
                 monthLength[1] = 29;
 
-            var dateValidation = (dates.futureDateSinceCurrent.isAfter(dates.fieldDate) || dates.futureDateSinceOriginal.isAfter(dates.fieldDate)) && dates.pastDate.isSameOrBefore(dates.fieldDate);
+            var dateValidation = dates.futureDateSinceCurrent.isAfter(dates.fieldDate) && dates.pastDate.isSameOrBefore(dates.fieldDate);
             var sizeValidation = splitDateString.length === 3 && _.last(splitDateString).length === 4;
             var dayValidation = day > 0 && day <= monthLength[month - 1];
             var monthValidation = month > 0 && month <= 12;
@@ -247,7 +247,7 @@
                         var newEndDateInput = $('.form-control[data-roadId=' + newId + '][data-fieldName=endDate]');
                         newEndDateInput.val(FINNISH_HINT_TEXT);
                         newEndDateInput.prop("readonly", true);
-                        retroactivelyAddDatePickers();
+                        retroactivelyAddDatePickers(originalStartDate);
                         toggleSaveButton();
                         $('.form-control').on("input", editEvent);
                         $('.date-picker-input').on("change", editEvent);

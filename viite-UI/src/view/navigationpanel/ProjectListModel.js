@@ -220,7 +220,7 @@
           $('[id*="open-project"]').click(function (event) {
             var button = $(this);
             if (parseInt(button.attr("data-projectStatus")) === projectStatus.SendingToTR.value) {
-              new GenericConfirmPopup("Avaamalla tämän projektin sen tila muuttuu Keskeneräiseksi. Haluatko varmasti avata sen?", {
+              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä lähetetään Tierekisteriin. Haluatko avata sen?", {
                 successCallback: function () {
                   triggerOpening(event, button);
                 },
