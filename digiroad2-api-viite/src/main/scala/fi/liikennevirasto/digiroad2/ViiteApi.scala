@@ -753,7 +753,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       (roadNumber, projectID) match {
         case (Some(rNumber), Some(projectID)) => {
           try {
-            roadNameService.getRoadNameByNumber(rNumber, projectID)
+            roadNameService.getRoadNameByNumber(rNumber, projectID).getOrElse("{}")
           } catch {
             case e: Exception => Map("success" -> false, "errorMessage" -> e.getMessage)
           }

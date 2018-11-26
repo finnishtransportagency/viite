@@ -17,11 +17,11 @@ import org.joda.time.DateTime
 
 object Dummies {
 
-  def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime]) : Roadway = {
+  def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime]): Roadway = {
     Roadway(0L, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "", None, 0L, NoTermination)
   }
 
-  def dummyRoadwayChangeSection(roadNumber: Option[Long], roadPartNumber: Option[Long], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], roadType: Option[RoadType] = Some(RoadType.PublicRoad), discontinuity: Option[Discontinuity], ely: Option[Long])= {
+  def dummyRoadwayChangeSection(roadNumber: Option[Long], roadPartNumber: Option[Long], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], roadType: Option[RoadType] = Some(RoadType.PublicRoad), discontinuity: Option[Discontinuity], ely: Option[Long]) = {
     RoadwayChangeSection(roadNumber, track, roadPartNumber, roadPartNumber, startAddressM, endAddressM, roadType, discontinuity, ely)
   }
 
@@ -60,7 +60,7 @@ object Dummies {
                        endMValue: Long = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, roadType: RoadType = RoadType.PublicRoad) = {
     ProjectLink(0L, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startAddrM, endAddrM, startDate, endDate,
       Some(""), linkId, startMValue, endMValue, sideCode, (None, None), NoFloating, Seq(), projectId,
-      status, roadType, geometryLength = 0, roadwayId = 0, linearLocationId =  0, ely =  8, reversed = false, linkGeometryTimeStamp = 0)
+      status, roadType, geometryLength = 0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, linkGeometryTimeStamp = 0)
   }
 
   def dummyVvhHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): VVHHistoryRoadLink = {
