@@ -1,4 +1,4 @@
 FROM node:alpine
 ARG JENKINS_UID=1000
-RUN adduser -u $JENKINS_UID jenkins
+RUN adduser -D -S -u $JENKINS_UID jenkins
 RUN chown -R jenkins /home/jenkins
