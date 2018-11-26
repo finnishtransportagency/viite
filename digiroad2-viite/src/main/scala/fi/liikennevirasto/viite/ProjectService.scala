@@ -760,15 +760,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  //Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
-  def updateProjectLinkSdoGeometry(projectId: Long, username: String, onlyNotHandled: Boolean = false): Unit = {
-    withDynTransaction {
-      val linksGeometry = projectLinkDAO.getProjectLinksGeometry(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
-      println(s"Got ${linksGeometry.size} links from project $projectId")
-      linksGeometry.foreach(pl => projectLinkDAO.updateGeometryStringToSdo(pl._1, pl._2))
-    }
-  }
-
   /**
     * Check that road part is available for reservation and return the id of reserved road part table row.
     * Reservation must contain road number and road part number, other data is not used or saved.
@@ -1784,21 +1775,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }.orElse {
       projectDAO.updateProjectEly(currentProjectId, newEly)
       None
-    }
-  }
-
-  def correctNullProjectEly(): Unit = {
-    withDynSession {
-      //Get all the projects with non-existent ely code
-      val nullElyProjects = projectDAO.getProjects(withNullElyFilter = true)
-      nullElyProjects.foreach(project => {
-        //Get all the reserved road parts of said projects
-        val reservedRoadParts = projectReservedPartDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
-        //Find the lowest m-Address Value of the reserved road parts
-        val reservedRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(reservedRoadParts.head.roadNumber, reservedRoadParts.head.roadPartNumber).minBy(_.endAddrMValue)
-        //Use this part ELY code and set it on the project
-        projectDAO.updateProjectEly(project.id, reservedRoadAddresses.ely)
-      })
     }
   }
 
