@@ -17,7 +17,7 @@ object TrackSectionOrder {
   private val ForwardVector = Vector3d(0.0, 1.0, 0.0)
 
 
-  def orderProjectLinkChainConnectedPoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
+  def findChainEndpoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
 
     case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
 
