@@ -1,6 +1,6 @@
 def get_environment() {
-    if (env.BRANCH_NAME.startsWith("master")) { return "Staging" }
-    return "Testing"
+    //if (env.BRANCH_NAME.startsWith("master")) { return "Staging" }
+    return "Staging"
 }
 
 def get_pollSCM_trigger() {
@@ -153,7 +153,7 @@ pipeline {
             when {
                 beforeAgent true
                 expression {
-                    get_environment().equals("devtest")
+                    get_environment().equals("Staging")
                 }
             }
             steps {
