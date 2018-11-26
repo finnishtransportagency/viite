@@ -104,7 +104,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("update ProjectStatus when TR saved") {
-    val sent2TRState = ProjectState.apply(2) //notfinnished
+    val sent2TRState = ProjectState.apply(2)
     val savedState = ProjectState.apply(5)
     val projectId = 0
     val addresses = List(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -114,11 +114,10 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
       val stateAfterCheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "", saved.id)
       stateAfterCheck.description should be(ProjectState.Saved2TR.description)
     }
-
   }
 
   test("Update to TRerror state") {
-    val sent2TRState = ProjectState.apply(2) //notfinnished
+    val sent2TRState = ProjectState.apply(2)
     val savedState = ProjectState.apply(3)
     val projectId = 0
     val addresses = List(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
