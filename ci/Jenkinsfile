@@ -31,10 +31,9 @@ pipeline {
                 script {
 
                     STAGE_FRONTEND_BUILD_CMD = [
-                        "cd viite-UI",
                         "mkdir tmp",
                         "npm install",
-                        "export TMPDIR=/home/jenkins/viite-UI/tmp",
+                        "export TMPDIR=/home/jenkins/tmp",
                         "yarn install",
                         "grunt deploy --target=${get_environment()?.trim()}"
                     ].join(" && ")
