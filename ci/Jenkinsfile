@@ -1,6 +1,6 @@
 def get_environment() {
     //if (env.BRANCH_NAME.startsWith("master")) { return "Staging" }
-    return "Staging"
+    return "staging"
 }
 
 def get_pollSCM_trigger() {
@@ -30,8 +30,14 @@ pipeline {
             steps {
                 script {
 
-
-                    echo "Running SETUP... (skipped for now)"
+                    STAGE_FRONTEND_BUILD_CMD = [
+                        "cd viite-UI",
+                        "mkdir tmp"
+                        "npm install",
+                        "export TMPDIR=/home/jenkins/viite-UI/tmp",
+                        "yarn install"
+                        "grunt deploy --target=${get_environment()?.trim()}"
+                    ].join(" && ")
 
                 }
             }
@@ -84,8 +90,7 @@ pipeline {
                 }
             }
             steps {
-                //sh STAGE_FRONTEND_BUILD_CMD
-				echo "Running frontend BUILD... (skipped for now)"
+                sh STAGE_FRONTEND_BUILD_CMD
             }
             //post {
             //    failure {
