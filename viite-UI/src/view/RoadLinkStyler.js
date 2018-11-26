@@ -126,8 +126,12 @@
         ];
 
         var borderRules = [
-            new StyleRule().where('administrativeClass').is('Municipality').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round', width: 14}}),
-            new StyleRule().where('administrativeClass').is('Private').and('roadClass').isNot(7).and('roadClass').isNot(8).and('roadClass').isNot(9).and('roadClass').isNot(99).use({stroke: {color: '#1E1E1E', lineCap: 'round', width: 14}})
+            new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 9 }}),
+            new StyleRule().where('zoomLevel').is(6).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 10 }}),
+            new StyleRule().where('zoomLevel').isIn([7, 8, 9]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 11 }}),
+            new StyleRule().where('zoomLevel').isIn([10, 11]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 12 }}),
+            new StyleRule().where('zoomLevel').isIn([12, 13]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 13 }}),
+            new StyleRule().where('zoomLevel').isIn([14, 15]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 14 }})
         ];
 
         var roadLinkStyle = new StyleRuleProvider({});
