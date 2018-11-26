@@ -1,10 +1,10 @@
 def get_environment() {
-    if (BRANCH_NAME.startsWith("master")) { return "Staging" }
+    if (env.BRANCH_NAME.startsWith("master")) { return "Staging" }
     return "Testing"
 }
 
 def get_pollSCM_trigger() {
-    if (BRANCH_NAME.equals("master")) { return "* * * * *" }
+    if (env.BRANCH_NAME.equals("master")) { return "* * * * *" }
     return ""
 }
 
