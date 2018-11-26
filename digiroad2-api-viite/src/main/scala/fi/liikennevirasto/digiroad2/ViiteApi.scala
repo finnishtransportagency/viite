@@ -770,9 +770,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for api/viite/roadlinks/roadaddress/$roadNumber/$roadPartNumber") {
       (roadNumber, roadPartNumber) match {
         case (Some(road), Some(part)) =>
-          roadAddressService.getRoadAddress(road, part, addrMValue.getOrElse(0), None) // TODO Check if fix after merge is correct
+          roadAddressService.getRoadAddress(road, part, addrMValue.getOrElse(0), None)
         case (Some(road), _) =>
-          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue) // TODO Implement service method
+          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue)
         case _ => BadRequest("Missing road number from URL")
       }
     }
