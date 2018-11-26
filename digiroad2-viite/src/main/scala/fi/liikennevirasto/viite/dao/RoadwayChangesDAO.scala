@@ -172,7 +172,7 @@ class RoadwayChangesDAO {
                 rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_TRACK,
                 rac.new_road_part_number, rac.new_road_part_number,
                 rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, rac.old_road_type,
-                rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed, rac.order_in_table
+                rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed, rac.ROADWAY_CHANGE_ID
                 From ROADWAY_CHANGES rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
                 ORDER BY COALESCE(rac.new_road_number, rac.old_road_number), COALESCE(rac.new_road_part_number, rac.old_road_part_number),
@@ -182,7 +182,7 @@ class RoadwayChangesDAO {
   }
 
   def fetchRoadwayChangesLinks (projectId: Long) : Seq[(Long, Long)] = {
-    Q.queryNA[(Long, Long)](s"""SELECT ORDER_IN_TABLE, PROJECT_LINK_ID FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""").list.map(x => x._1 -> x._2)
+    Q.queryNA[(Long, Long)](s"""SELECT ROADWAY_CHANGE_ID, PROJECT_LINK_ID FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""").list.map(x => x._1 -> x._2)
   }
 
   def clearRoadChangeTable(projectId: Long): Unit = {
@@ -294,10 +294,10 @@ class RoadwayChangesDAO {
             val roadwayChangePS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES " +
               "(project_id, change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
               "old_TRACK,new_TRACK,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
-              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed, order_in_table) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed, roadway_change_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
             val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
-              "(project_id, order_in_table,project_link_id) values (?,?,?)")
+              "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
 
             val terminated = ProjectDeltaCalculator.partition(delta.terminations)
             terminated.foreach(roadwaySection =>

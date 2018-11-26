@@ -1705,8 +1705,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
-  def createHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime): Int = {
-    roadwayDAO.createHistory(Set(roadwayId), projectDate, roadway.terminated)
+  def expireHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime): Int = {
+    roadwayDAO.expireHistory(Set(roadwayId), projectDate, roadway.terminated)
   }
 
   def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
@@ -1740,7 +1740,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewRoadway).map(_.id)
           logger.info(s"Creating history rows based on operation")
           linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
-          (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
+          (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1, roadway._2, project.startDate))
           roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway))
           linearLocationDAO.create(generatedRoadways.flatMap(_._2))
           Some(s"road addresses created")
