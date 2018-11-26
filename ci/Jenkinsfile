@@ -87,9 +87,6 @@ pipeline {
 				echo "Running frontend BUILD... (skipped for now)"
             }
             post {
-                always {
-                    echo "Running frontend tests... (skipped for now)"
-                }
                 failure {
                     slackSend(
                         color: "danger",
@@ -116,9 +113,6 @@ pipeline {
 				echo "Running backend build... (skipped for now)"
             }
             post {
-                always {
-                    echo "Running backend tests... (skipped for now)"
-                }
                 failure {
                     slackSend(
                         color: "danger",
