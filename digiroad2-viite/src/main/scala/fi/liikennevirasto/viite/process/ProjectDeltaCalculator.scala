@@ -221,10 +221,8 @@ object ProjectDeltaCalculator {
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[ProjectLink]): Seq[RoadAddressSection] = {
-    val grouped1 = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
-
-    val grouped =
-      grouped1.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
+      .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayId)
     ).toSeq
