@@ -33,8 +33,8 @@
     roadLayer.set('name', 'roadLayer');
 
     function vectorLayerStyle(feature) {
-      return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+      return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
     }
 
     var loadFeatures = function (features) {
@@ -86,7 +86,7 @@
     });
 
     var handleRoadsVisibility = function () {
-      roadLayer.setVisible(applicationModel.getRoadVisibility() && Math.abs(map.getView().getZoom()) >= zoomlevels.minZoomForRoadLinks);
+      roadLayer.setVisible(applicationModel.getRoadVisibility() && Math.trunc(map.getView().getZoom()) >= zoomlevels.minZoomForRoadLinks);
     };
 
     this.refreshMap = function (mapState) {
