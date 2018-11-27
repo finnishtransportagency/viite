@@ -43,7 +43,7 @@ pipeline {
                     ].join(" && ")
 
                     STAGE_BACKEND_BUILD_CMD = [
-                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly | i"
+                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly"
                     ].join(" && ")
 
                 }
