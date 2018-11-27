@@ -473,15 +473,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/") {
-    val roadNumber = params("roadNumber").toLong
-    val startPart = params("startPart").toLong
-    val endPart = params("endPart").toLong
-    val projDate = DateTime.parse(params("projDate"))
-    time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
-      projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
-        case Left(err) => Map("success" -> err)
-        case Right(reservedRoadParts) =>  Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+    try {
+      val roadNumber = params("roadNumber").toLong
+      val startPart = params("startPart").toLong
+      val endPart = params("endPart").toLong
+      val projDate = DateTime.parse(params("projDate"))
+      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
+        projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
+          case Left(err) => Map("success" -> err)
+          case Right(reservedRoadParts) => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
         }
+      }
+    } catch {
+      case e: IllegalArgumentException => Map("success" -> e.getMessage)
     }
   }
 
@@ -768,11 +772,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val roadPartNumber = params.get("part").map(_.toLong)
     val addrMValue = params.get("addrMValue").map(_.toLong)
     time(logger, s"GET request for api/viite/roadlinks/roadaddress/$roadNumber/$roadPartNumber") {
-      (roadNumber, roadPartNumber) match {
-        case (Some(road), Some(part)) =>
-          roadAddressService.getRoadAddress(road, part, addrMValue.getOrElse(0), None) // TODO Check if fix after merge is correct
-        case (Some(road), _) =>
-          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue) // TODO Implement service method
+      (roadNumber, roadPartNumber,addrMValue) match {
+        case (Some(road), Some(part), None) =>
+          roadAddressService.getRoadAddressWithRoadNumberParts(road, Set(part), Set(Track.Combined, Track.LeftSide, Track.RightSide))
+        case (Some(road), Some(part), Some(addrM)) =>
+          roadAddressService.getRoadAddress(road, part, addrM, None)
+        case (Some(road), _, _) =>
+          roadAddressService.getRoadAddressWithRoadNumberAddress(road, addrMValue)
         case _ => BadRequest("Missing road number from URL")
       }
     }
