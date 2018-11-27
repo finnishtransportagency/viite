@@ -16,14 +16,14 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.FloatingReason.{NewAddressGiven, NoFloating}
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectState._
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadwayDAO, _}
-import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.{CalibrationPointsUtils, ProjectLinkSplitter, SplitOptions, SplitResult}
+import fi.liikennevirasto.viite.util.{ProjectLinkSplitter, SplitOptions, SplitResult}
 import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -155,7 +155,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       checkRoadPartsExist(roadNumber, startPart, endPart) match {
         case None => checkRoadPartsReservable(roadNumber, startPart, endPart) match {
           case Left(err) => Left(err)
-          case Right(reservedRoadParts) => {
+          case Right(reservedRoadParts) =>
             if (reservedRoadParts.isEmpty) {
               Right(reservedRoadParts)
             } else {
@@ -164,7 +164,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 case None => Right(reservedRoadParts)
               }
             }
-          }
         }
         case Some(error) => Left(error)
       }
@@ -178,19 +177,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
 
   def isWritableState(projectId: Long): Boolean = {
-      projectWritableCheck(projectId) match {
+      projectWritableCheckInSession(projectId) match {
         case Some(_) => false
         case None => true
       }
   }
 
-  def projectWritableCheck(projectId: Long): Option[String] = {
+  def projectWritableCheckInSession(projectId: Long): Option[String] = {
     projectDAO.fetchProjectStatus(projectId) match {
       case Some(projectState) =>
         if (projectState == ProjectState.Incomplete || projectState == ProjectState.ErrorInViite || projectState == ProjectState.ErrorInTR)
           return None
         Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
       case None => Some("Projektia ei löytynyt") //project could not be found
+    }
+  }
+
+  def projectWritableCheck(projectId: Long): Option[String] = {
+    withDynSession {
+      projectWritableCheckInSession(projectId)
     }
   }
 
@@ -231,11 +236,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       seq
   }
 
-  private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String) = {
+  private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String): Unit = {
     ProjectLinkNameDAO.get(roadNumber, projectId) match {
       case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
       case _ =>
-        val existingRoadName = RoadNameDAO.getLatestRoadName(roadNumber).headOption
+        val existingRoadName = RoadNameDAO.getLatestRoadName(roadNumber)
         ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
     }
   }
@@ -271,12 +276,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
           setProjectEly(projectId, roadEly) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-            case None => {
-              addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, false) match {
+            case None =>
+              addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, newTransaction = false) match {
                 case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-                case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId, false))
+                case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
               }
-            }
           }
         case Some(error) => Map("success" -> false, "errorMessage" -> error)
       }
@@ -381,8 +385,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
-        projectWritableCheck(projectId) match {
-          case None => {
+        projectWritableCheckInSession(projectId) match {
+          case None =>
             if (projectLinkDAO.countLinksByStatus(projectId, roadNumber, roadPartNumber, Set(UnChanged.value, NotHandled.value)) > 0)
               return Some(ErrorReversingUnchangedLinks)
             val continuity = projectLinkDAO.getProjectLinksContinuityCodes(projectId, roadNumber, roadPartNumber)
@@ -408,7 +412,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
             saveProjectCoordinates(projectId, coordinates)
             None
-          }
           case Some(error) => Some(error)
         }
       }
@@ -580,9 +583,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                         splitOptions: SplitOptions): Option[String] = {
     withDynTransaction {
       writableWithValidTrack(projectId, track) match {
-        case None => {
+        case None =>
           saveProjectCoordinates(projectId, coordinates)
-          splitSuravageLinkInTX(linkId, username, splitOptions) }
+          splitSuravageLinkInTX(linkId, username, splitOptions)
         case Some(error) => Some(error)
       }
     }
@@ -633,7 +636,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (errorMessage.nonEmpty) {
       errorMessage
     } else {
-      splitResultOption.map {
+      splitResultOption.foreach {
         splitResult =>
           val splitLinks = splitResult.toSeqWithAllTerminated
           projectLinkDAO.removeProjectLinksByLinkId(splitOptions.projectId, splitLinks.map(_.linkId).toSet)
@@ -645,7 +648,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getProjectLinksInBoundingBox(bbox: BoundingRectangle, projectId: Long): (Seq[ProjectLink]) = {
+  def getProjectLinksInBoundingBox(bbox: BoundingRectangle, projectId: Long): Seq[ProjectLink] = {
     val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(bbox, Set()).map(rl => rl.linkId -> rl).toMap
     projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), roadLinks.keys.toSeq, projectId).filter(_.status == LinkStatus.NotHandled)
   }
@@ -663,7 +666,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       if (isWritableState(roadAddressProject.id)) {
         validateProjectDate(roadAddressProject.reservedParts, roadAddressProject.startDate) match {
           case Some(errMsg) => throw new IllegalStateException(errMsg)
-          case None => {
+          case None =>
             if (projectDAO.isUniqueName(roadAddressProject.id, roadAddressProject.name)) {
               val storedProject = projectDAO.fetchById(roadAddressProject.id).get
               val removed = storedProject.reservedParts.filterNot(part =>
@@ -684,7 +687,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             } else {
               throw new NameExistsException(s"Nimellä ${roadAddressProject.name} on jo olemassa projekti. Muuta nimeä.")
             }
-          }
         }
       } else {
         throw new IllegalStateException(projectNotWritable)
@@ -755,15 +757,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           linkGeometryTimeStamp = time)
       }
       projectLinkDAO.updateProjectLinksGeometry(updatedProjectLinks, username)
-    }
-  }
-
-  //Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
-  def updateProjectLinkSdoGeometry(projectId: Long, username: String, onlyNotHandled: Boolean = false): Unit = {
-    withDynTransaction {
-      val linksGeometry = projectLinkDAO.getProjectLinksGeometry(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
-      println(s"Got ${linksGeometry.size} links from project $projectId")
-      linksGeometry.foreach(pl => projectLinkDAO.updateGeometryStringToSdo(pl._1, pl._2))
     }
   }
 
@@ -846,7 +839,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def prettyPrintLog(roadwayChanges: List[ProjectRoadwayChange]) = {
+  def prettyPrintLog(roadwayChanges: List[ProjectRoadwayChange]): Unit = {
     roadwayChanges.groupBy(a => (a.projectId, a.projectName, a.projectStartDate, a.ely)).foreach(g => {
       val (projectId, projectName, projectStartDate, projectEly) = g._1
       val changes = g._2
@@ -1062,16 +1055,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchRoadwayByLinkId(modifiedLinkIds))
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
-        case Some(mod) if mod.geometry.nonEmpty => {
+        case Some(mod) if mod.geometry.nonEmpty =>
           checkAndReserve(projectDAO.fetchById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
           val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
           projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
-        }
-        case _ => {
+
+        case _ =>
           checkAndReserve(projectDAO.fetchById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
-        }
       })
 
     revertRoadName(projectId, roadNumber)
@@ -1099,7 +1091,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def toReservedRoadPart(roadNumber: Long, roadPartNumber: Long, ely: Long): ProjectReservedPart = {
     ProjectReservedPart(0L, roadNumber, roadPartNumber,
       None, None, Some(ely),
-      None, None, None, None, false)
+      None, None, None, None)
   }
 
 
@@ -1121,15 +1113,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], coordinates: ProjectCoordinates, userName: String): Option[String] = {
     try {
       withDynTransaction {
-        projectWritableCheck(projectId) match {
-          case None => {
+        projectWritableCheckInSession(projectId) match {
+          case None =>
             revertLinks(projectId, roadNumber, roadPartNumber, links, userName) match {
-              case None => {
+              case None =>
                 saveProjectCoordinates(projectId, coordinates)
                 None
-              }
               case Some(error) => Some(error)
-            }}
+            }
           case Some(error) => Some(error)
         }
       }
@@ -1200,10 +1191,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt),
             endAddrMValue = userDefinedEndAddressM.getOrElse(pl.endAddrMValue.toInt).toLong))
           if (linkIds.nonEmpty) {
-            addNewLinksToProject(sortRamps(newProjectLinks, linkIds), projectId, userName, linkIds.head, false)
+            addNewLinksToProject(sortRamps(newProjectLinks, linkIds), projectId, userName, linkIds.head, newTransaction = false)
           } else {
             val newSavedLinkIds = projectLinks.map(_.linkId)
-            addNewLinksToProject(sortRamps(newProjectLinks, newSavedLinkIds), projectId, userName, newSavedLinkIds.head, false)
+            addNewLinksToProject(sortRamps(newProjectLinks, newSavedLinkIds), projectId, userName, newSavedLinkIds.head, newTransaction = false)
           }
         } else if (!project.isReserved(newRoadNumber, newRoadPartNumber)) {
           projectReservedPartDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
@@ -1230,9 +1221,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
           val calibrationPointIsPresent = toUpdateLinks.find(ul => ul.projectId == projectId && ul.startAddrMValue == endSegment.startAddrMValue) match {
-            case Some(projectLink) => {
+            case Some(projectLink) =>
               projectLink.hasCalibrationPointAt(calibrationPoint.addressMValue)
-            }
             case _ => false
           }
           if (!calibrationPointIsPresent) {
@@ -1437,7 +1427,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it =>
-            setProjectStatus(projectId, Sent2TR, false)
+            setProjectStatus(projectId, Sent2TR, withSession = false)
             logger.info(s"Sending to TR successful: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
 
@@ -1449,14 +1439,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
       } catch {
         //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
-        case ioe@(_: IOException | _: ClientProtocolException) => {
+        case ioe@(_: IOException | _: ClientProtocolException) =>
           projectDAO.updateProjectStatus(projectId, SendingToTR)
           PublishResult(validationSuccess = false, sendSuccess = false, Some(trUnreachableMessage))
-        }
-        case NonFatal(_) => {
+        case NonFatal(_) =>
           projectDAO.updateProjectStatus(projectId, ErrorInViite)
           PublishResult(validationSuccess = false, sendSuccess = false, Some(genericViiteErrorMessage))
-        }
       }
     }
   }
@@ -1506,7 +1494,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (record.roadwayNumber, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
 
     if (groupedRoadAddresses.size > 1) {
-      return links
+      links
     }
     else {
       if (linkIds.lengthCompare(1) != 0)
@@ -1566,9 +1554,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): (ProjectState) = {
+  def updateProjectStatusIfNeeded(currentStatus: ProjectState, newStatus: ProjectState, errorMessage: String, projectId: Long): ProjectState = {
     if (currentStatus.value != newStatus.value && newStatus != ProjectState.Unknown) {
-      logger.info(s"Status update is needed as Project Current status (${currentStatus}) differs from TR Status(${newStatus})")
+      logger.info(s"Status update is needed as Project Current status ($currentStatus) differs from TR Status($newStatus)")
       val project = projectDAO.fetchById(projectId)
       if (project.nonEmpty && newStatus == ProjectState.ErrorInTR) {
         // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
@@ -1634,7 +1622,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         false
       case None =>
-        logger.info(s"During status checking VIITE wasnt able to find TR_ID to project $projectID")
+        logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(projectDAO.fetchById(projectID).head, " Failed to find TR-ID ")
         false
     }
@@ -1708,50 +1696,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     })
   }
 
-  // TODO
-  def updateTerminationForHistory(terminatedLinkIds: Set[Long], splitReplacements: Seq[ProjectLink]): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    withDynSession {
-//      roadAddressService.setSubsequentTermination(terminatedLinkIds)
-//      val mapping = RoadAddressSplitMapper.createAddressMap(splitReplacements)
-//      val splitTerminationLinkIds = mapping.map(_.sourceLinkId).toSet
-//      val splitCurrentRoadwayIds = splitReplacements.map(_.roadwayId).toSet
-//      val linkGeomSources = splitReplacements.map(pl => pl.linkId -> pl.linkGeomSource).toMap
-//      val addresses = roadAddressService.getRoadAddressesByLinkIds(splitTerminationLinkIds, includeFloating = true, includeHistory = true,
-//        includeTerminated = false, includeCurrent = false, splitCurrentRoadwayIds) // Do not include current ones as they're created separately with other project links
-//
-//      // TODO roadways instead of road addresses
-//      val splitAddresses = addresses.flatMap(RoadAddressSplitMapper.mapRoadAddresses(mapping, addresses)).map(ra =>
-//        ra.copy(terminated = if (splitTerminationLinkIds.contains(ra.linkId)) Subsequent else NoTermination,
-//          linkGeomSource = linkGeomSources(ra.linkId)))
-//
-//      val roadwayIds = addresses.map(_.id)
-//      val roadwaysToBeExpired = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
-//      roadwayDAO.expireById(roadwayIds.toSet)
-//
-//      // TODO create Roadways with new terminated and linkGeomSource -values
-//      roadwayDAO.create(roadwaysToBeExpired.map(_.copy(id = NewRoadway, ...)))
-//    }
-  }
-
-  private def getRoadNamesFromProjectLinks(projectLinks: Seq[ProjectLink]): Seq[RoadName] = {
-    projectLinks.groupBy(pl => (pl.roadNumber, pl.roadName, pl.startDate, pl.endDate, pl.createdBy)).keys.map(rn =>
-      if (rn._2.nonEmpty) {
-        RoadName(NewRoadNameId, rn._1, rn._2.get, rn._3, rn._4, rn._3, createdBy = rn._5.getOrElse(""))
-      } else {
-        throw new RuntimeException(s"Road name is not defined for road ${rn._1}")
-      }
-    ).toSeq
-  }
-
   /**
     * This will expire roadways (valid_to = null and end_date = project_date)
     *
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
-  def createHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime) = {
-    roadwayDAO.createHistory(Set(roadwayId), projectDate, roadway.terminated)
+  def expireHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime): Int = {
+    roadwayDAO.expireHistory(Set(roadwayId), projectDate, roadway.terminated)
   }
 
   def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
@@ -1782,12 +1734,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         handleNewRoadNames(projectLinks, project)
         try {
           val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedRoadwaysWithLinks)
+          val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewRoadway).map(_.id)
           logger.info(s"Creating history rows based on operation")
           linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
-          (currentRoadways ++ historyRoadways).map(roadway => createHistoryRows(roadway._1, roadway._2, project.startDate))
-          //updateTerminationForHistory(terminatedLinkIds, splitReplacements)
-          //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-          roadwayDAO.create(generatedRoadways.flatMap(_._1))
+          (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1, roadway._2, project.startDate))
+          roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway))
           linearLocationDAO.create(generatedRoadways.flatMap(_._2))
           Some(s"road addresses created")
         } catch {
@@ -1817,34 +1768,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  /**
-    * Called for road addresses that are replaced by a new version at end date
-    *
-    * @param roadAddress
-    * @param pl
-    * @param vvhLink
-    * @return
-    */
-  private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink], project: Project): Option[RoadAddress] = {
-    pl.status match {
-      // terminated is created from the project link in convertProjectLinkToRoadAddress
-      case Terminated =>
-        None
-      // unchanged will get end_date if the road_type, discontinuity or ely code changes, otherwise we keep the same end_date
-      case UnChanged =>
-        if (roadAddress.roadType == pl.roadType && roadAddress.ely == pl.ely && roadAddress.discontinuity == pl.discontinuity) {
-          None
-        } else {
-          Some(roadAddress.copy(endDate = Some(project.startDate)))
-        }
-      case Transfer | Numbering =>
-        Some(roadAddress.copy(endDate = pl.startDate))
-      case _ =>
-        logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
-        throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
-    }
-  }
-
   def setProjectEly(currentProjectId: Long, newEly: Long): Option[String] = {
     getProjectEly(currentProjectId).filterNot(_ == newEly).map { currentProjectEly =>
       logger.info(s"The project can not handle multiple ELY areas (the project ELY range is $currentProjectEly). Recording was discarded.")
@@ -1852,21 +1775,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }.orElse {
       projectDAO.updateProjectEly(currentProjectId, newEly)
       None
-    }
-  }
-
-  def correctNullProjectEly(): Unit = {
-    withDynSession {
-      //Get all the projects with non-existent ely code
-      val nullElyProjects = projectDAO.fetchAll(withNullElyFilter = true)
-      nullElyProjects.foreach(project => {
-        //Get all the reserved road parts of said projects
-        val reservedRoadParts = projectReservedPartDAO.fetchReservedRoadParts(project.id).filterNot(_.ely == 0)
-        //Find the lowest m-Address Value of the reserved road parts
-        val reservedRoadAddresses = roadAddressService.getRoadAddressWithRoadAndPart(reservedRoadParts.head.roadNumber, reservedRoadParts.head.roadPartNumber).minBy(_.endAddrMValue)
-        //Use this part ELY code and set it on the project
-        projectDAO.updateProjectEly(project.id, reservedRoadAddresses.ely)
-      })
     }
   }
 
@@ -1894,13 +1802,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val listOfProjects = getProjectsWaitingForTR
     logger.info(s"Found ${listOfProjects.size} projects")
     for (projectId <- listOfProjects) {
-      logger.info(s"Trying to publish project: ${projectId}")
+      logger.info(s"Trying to publish project: $projectId")
       publishProject(projectId)
     }
 
   }
 
-  private def getProjectsWaitingForTR(): Seq[Long] = {
+  private def getProjectsWaitingForTR: Seq[Long] = {
     withDynSession {
       projectDAO.fetchProjectIdsWithSendingToTRStatus
     }

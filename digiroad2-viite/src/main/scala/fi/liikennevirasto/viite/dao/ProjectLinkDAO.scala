@@ -1,22 +1,19 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
 import java.util.Date
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
-import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, Saved2TR}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -102,6 +99,10 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     } else {
       (startingPoint, endPoint)
     }
+  }
+
+  def oppositeEndPoint(point: Point) : Point = {
+    if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
   }
 
   def copyWithGeometry(newGeometry: Seq[Point]): ProjectLink = {
@@ -297,20 +298,6 @@ class ProjectLinkDAO {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
-  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
-  def updateGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
-    try {
-      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
-      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
-      sqlu"""
-        UPDATE PROJECT_LINK SET GEOMETRY = #$geometryQuery WHERE id = $id""".execute
-    } catch {
-      case e: Exception =>
-        println(e)
-        throw new RuntimeException("SQL Error: " + e.getMessage)
-    }
-  }
-
   def create(links: Seq[ProjectLink]): Seq[Long] = {
     time(logger, "Create project links") {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
@@ -494,16 +481,6 @@ class ProjectLinkDAO {
         s"""$projectLinkQueryBase
                 where PROJECT_LINK.link_id = $projectLinkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
-    }
-  }
-
-  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
-  def getProjectLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Map[Long, Seq[Point]] = {
-    time(logger, "Get project links") {
-      val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
-      sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
-                where #$filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M"""
-        .as[(Long, String)].list.map(l => l._1 -> parseStringGeometry(l._2)).toMap
     }
   }
 
@@ -745,7 +722,7 @@ class ProjectLinkDAO {
       sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE,
             ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
             MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY,
-            REVERSED, GEOMETRY_STRING, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
+            REVERSED, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
             LINK_SOURCE, CALIBRATION_POINTS_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M
           FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
     sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute

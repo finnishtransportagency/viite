@@ -211,4 +211,12 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       result.right.get.size should be(2)
     }
   }
+
+  test("Test RoadNameService.getRoadNameByNumber() When no name exists for a specific road number Then it should return a formatted response instead of None") {
+    runWithRollback {
+      val result = roadNameService.getRoadNameByNumber(99999, 99999)
+      result.get("roadName").isDefined should be (true)
+      result.get("roadName").get should be (None)
+    }
+  }
 }

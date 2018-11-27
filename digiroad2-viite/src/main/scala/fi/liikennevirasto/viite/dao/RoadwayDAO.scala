@@ -16,7 +16,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.model.RoadAddressLinkLike
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -267,6 +267,10 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
       (rangeStartMeasure < startMValue && rangeEndMeasure > endMValue)
   }
 
+  def isBetweenMeasures(measure: Double): Boolean = {
+    startMValue < measure && endMValue > measure
+  }
+
   def addressBetween(a: Double, b: Double): (Long, Long) = {
     val (addrA, addrB) = (addrAt(a), addrAt(b))
     (Math.min(addrA, addrB), Math.max(addrA, addrB))
@@ -408,6 +412,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllByRoadNumberAndValue(roadNumber: Long, roadPart: Option[Long] = None, track: Option[Track] = None, addressMValue: Option[Long] = None) : Seq[Roadway] = {
+    time(logger, "Fetch roadway by road number and part with mValue") {
+      fetch(withRoadNumber(roadNumber, roadPart, track, addressMValue))
+    }
+  }
+
   def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
@@ -453,8 +463,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  // TODO Could this be renamed to fetchAllByDateRange?
-  def fetchAllByBetweenDates(sinceDate: DateTime, untilDate: DateTime): Seq[Roadway] = {
+  def fetchAllByDateRange(sinceDate: DateTime, untilDate: DateTime): Seq[Roadway] = {
     time(logger, "Fetch road address by dates") {
       fetch(withBetweenDates(sinceDate, untilDate))
     }
@@ -544,6 +553,23 @@ class RoadwayDAO extends BaseDAO {
       s" AND a.end_addr_m = (Select max(road.end_addr_m) from roadway road Where road.road_number = $roadNumber And road.road_part_number = $roadPart And (road.valid_to IS NULL AND road.end_date is null))"
     } else ""
     s"""$query where valid_to is null AND road_number = $roadNumber AND Road_Part_Number = $roadPart $historyFilter $endPart"""
+  }
+
+  private def withRoadNumber(road: Long, roadPart: Option[Long], track: Option[Track], mValue: Option[Long])(query: String): String = {
+    val roadPartFilter = roadPart match {
+      case Some(p) => s" AND ra.road_part_number = $p"
+      case None => ""
+    }
+    val trackFilter = track match {
+      case Some(t) => s"  AND ra.TRACK = $t"
+      case None => ""
+    }
+    val mValueFilter = mValue match {
+      case Some(v) => s" AND ra.start_addr_M <= $v AND ra.end_addr_M > $v"
+      case None => ""
+    }
+
+    query + s" WHERE ra.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter "
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
@@ -663,7 +689,7 @@ class RoadwayDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  def createHistory(ids: Set[Long], endDate: DateTime, terminated: TerminationCode = TerminationCode.NoTermination): Int = {
+  def expireHistory(ids: Set[Long], endDate: DateTime, terminated: TerminationCode = TerminationCode.NoTermination): Int = {
     if (ids.isEmpty) {
       0
     } else {

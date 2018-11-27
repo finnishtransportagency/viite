@@ -35,7 +35,8 @@
                 8:'#fc6da0',         //Jalka tai pyörätie
                 9:'#fc6da0',         //Talvitie
                 10:'#fc6da0',        //Polku
-                11:'#888888'         //Muu tieverkko
+                11:'#888888',         //Muu tieverkko
+                12:'#FF55DD'         //Yksityistie, talvitie tai polku
             };
 
         var directionMarkerColor= function(roadLink){
