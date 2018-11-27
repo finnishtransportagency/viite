@@ -925,10 +925,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val normalLinks = regularLinks.filterNot(l => projectLinks.exists(_.linkId == l.linkId))
 
-    val missedRL = withDynTransaction {
-        val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- projectLinks.map(_.linkId).toSet
-        roadAddressService.fetchUnaddressedRoadLinksByLinkIds(missingLinkIds)
-      }.groupBy(_.linkId)
     val fetchUnaddressedRoadLinkEndTime = System.currentTimeMillis()
     logger.info("Fetch unaddressed road links and floating linear locations completed in %d ms".format(fetchUnaddressedRoadLinkEndTime - fetchUnaddressedRoadLinkStartTime))
 

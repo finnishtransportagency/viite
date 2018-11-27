@@ -755,13 +755,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectID = params.get("projectID").map(_.toLong)
     time(logger, s"GET request for /roadlinks/roadname/$roadNumber/$projectID") {
       (roadNumber, projectID) match {
-        case (Some(rNumber), Some(projectID)) => {
+        case (Some(rNumber), Some(projectID)) =>
           try {
             roadNameService.getRoadNameByNumber(rNumber, projectID)
           } catch {
             case e: Exception => Map("success" -> false, "errorMessage" -> e.getMessage)
           }
-        }
         case _ => BadRequest("Missing road number from URL")
       }
     }
