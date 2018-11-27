@@ -67,8 +67,8 @@
       source: geometryChangedVector,
       name: 'geometryChangedLayer',
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
       },
       zIndex: RoadZIndex.GeometryChangedLayer.value
     });
@@ -130,8 +130,8 @@
       source: pickRoadsLayerVector,
       name: 'pickRoadsLayer',
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
       }
     });
     pickRoadsLayer.set('name', 'pickRoadsLayer');
@@ -140,8 +140,8 @@
       source: simulationVector,
       name: 'simulatedRoadsLayer',
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
       }
     });
     simulatedRoadsLayer.set('name', 'simulatedRoadsLayer');
@@ -151,8 +151,8 @@
       source: suravageRoadLayerVector,
       name: 'suravageRoadLayer',
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
       }
     });
     suravageRoadLayer.set('name', 'suravageRoadLayer');
@@ -162,8 +162,8 @@
       source: historicRoadsVector,
       name: 'historicRoadsLayer',
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
       },
       zIndex: RoadZIndex.HistoricRoadLayer.value
     });
@@ -200,8 +200,8 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
       }
     });
 
@@ -243,8 +243,8 @@
     var zoomDoubleClickListener = function(event) {
       if (isActiveLayer)
         _.defer(function(){
-          if (selectedLinkProperty.get().length === 0 && Math.abs(map.getView().getZoom()) <= 13) {
-            map.getView().setZoom(Math.abs(map.getView().getZoom() + 1));
+          if (selectedLinkProperty.get().length === 0 && Math.trunc(map.getView().getZoom()) <= 13) {
+            map.getView().setZoom(Math.trunc(map.getView().getZoom() + 1));
           }
         });
     };
@@ -278,8 +278,8 @@
       },
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature) {
-          return [roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())}),
-              roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.abs(map.getView().getZoom())})];
+          return [roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())}),
+              roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:Math.trunc(map.getView().getZoom())})];
       }
     });
     selectSingleClick.set('name','selectSingleClickInteractionLPL');
@@ -441,7 +441,7 @@
         if (feature.linkData.gapTransfering) {
           feature.linkData.gapTransfering = false;
           feature.linkData.anomaly = feature.linkData.prevAnomaly;
-          var unknownRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.abs(map.getView().getZoom())});
+          var unknownRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.trunc(map.getView().getZoom())});
           feature.setStyle(unknownRoadStyle);
         }
       });
@@ -505,14 +505,14 @@
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
       me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, suravageMarkerLayer, directionMarkerLayer, calibrationPointLayer]);
 
-      if(Math.abs(map.getView().getZoom()) >= zoomlevels.minZoomForAssets) {
+      if(Math.trunc(map.getView().getZoom()) >= zoomlevels.minZoomForAssets) {
 
         var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
           return roadlink.floating !== SelectionType.Floating.value && roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
         });
         _.each(directionRoadMarker, function(directionlink) {
           var marker = cachedMarker.createMarker(directionlink);
-          if(Math.abs(map.getView().getZoom()) > zoomlevels.minZoomForDirectionalMarkers)
+          if(Math.trunc(map.getView().getZoom()) > zoomlevels.minZoomForDirectionalMarkers)
             directionMarkerLayer.getSource().addFeature(marker);
         });
 
@@ -533,7 +533,7 @@
         });
         _.each(suravageRoadMarkers, function(directionLink) {
           var marker = cachedMarker.createMarker(directionLink);
-          if(Math.abs(map.getView().getZoom()) > zoomlevels.minZoomForDirectionalMarkers)
+          if(Math.trunc(map.getView().getZoom()) > zoomlevels.minZoomForDirectionalMarkers)
             suravageMarkerLayer.getSource().addFeature(marker);
         });
 
@@ -581,7 +581,7 @@
         });
 
         //Removed the need to check if the buttons are active in order to draw calibration points.
-        if (Math.abs(map.getView().getZoom()) >= zoomlevels.minZoomLevelForCalibrationPoints) {
+        if (Math.trunc(map.getView().getZoom()) >= zoomlevels.minZoomLevelForCalibrationPoints) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             var calMarker = new CalibrationPoint(actualPoint);
@@ -598,7 +598,7 @@
     this.refreshView = function() {
       //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.reset();
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()), Math.abs(map.getView().getZoom()));
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()), Math.trunc(map.getView().getZoom()));
       suravageRoadLayer.changed();
       roadLayer.layer.changed();
     };
@@ -807,7 +807,7 @@
           simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
           var marker = cachedMarker.createMarker(feature.linkData);
-          if (Math.abs(map.getView().getZoom()) > zoomlevels.minZoomForDirectionalMarkers) {
+          if (Math.trunc(map.getView().getZoom()) > zoomlevels.minZoomForDirectionalMarkers) {
             simulatedRoadsLayer.getSource().addFeature(marker);
           }
         });
@@ -963,7 +963,7 @@
 
                 feature.linkData.prevAnomaly = feature.linkData.anomaly;
                 feature.linkData.gapTransfering = true;
-                var greenRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.abs(map.getView().getZoom())});
+                var greenRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.trunc(map.getView().getZoom())});
             feature.setStyle(greenRoadStyle);
             features.push(feature);
           }
@@ -1000,7 +1000,7 @@
 
                   feature.linkData.prevAnomaly = feature.linkData.anomaly;
                   feature.linkData.gapTransfering = true;
-                  var greenRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.abs(map.getView().getZoom())});
+                  var greenRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.trunc(map.getView().getZoom())});
               feature.setStyle(greenRoadStyle);
               features.push(feature);
               roadCollection.addPreMovedRoadAddresses(feature.data);
@@ -1026,13 +1026,13 @@
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightSelectedProject', function(featureLinkId) {
       setGeneralOpacity(0.2);
       var boundingBox = map.getView().calculateExtent(map.getSize());
-      var zoomLevel = Math.abs(map.getView().getZoom());
+      var zoomLevel = Math.trunc(map.getView().getZoom());
       roadCollection.findReservedProjectLinks(boundingBox, zoomLevel, featureLinkId);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:highlightReservedRoads', function(reservedOL3Features){
       var styledFeatures = _.map(reservedOL3Features, function(feature) {
-        feature.setStyle(roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.abs(map.getView().getZoom())}));
+        feature.setStyle(roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: Math.trunc(map.getView().getZoom())}));
         return feature;
       });
       if (applicationModel.getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
@@ -1250,8 +1250,8 @@
     };
 
     me.eventListener.listenTo(eventbus, 'linkProperty:fetch', function() {
-      map.getView().setZoom(Math.round(Math.abs(map.getView().getZoom())));
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','),Math.abs(map.getView().getZoom()) + 1);
+      map.getView().setZoom(Math.round(Math.trunc(map.getView().getZoom())));
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','),Math.trunc(map.getView().getZoom()) + 1);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:activateInteractions', function(){
@@ -1278,7 +1278,7 @@
 
     me.eventListener.listenTo(eventbus, 'linkProperty:fetchHistoryLinks', function(date){
       roadCollection.setDate(date);
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()), Math.abs(map.getView().getZoom()));
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()), Math.trunc(map.getView().getZoom()));
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:unselected', function() {
@@ -1347,7 +1347,7 @@
         setGeneralOpacity(1);
         showLayer();
         _.defer(function(){
-          roadCollection.fetch(map.getView().calculateExtent(map.getSize()), Math.abs(map.getView().getZoom()));
+          roadCollection.fetch(map.getView().calculateExtent(map.getSize()), Math.trunc(map.getView().getZoom()));
         });
       }
       me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
