@@ -9,6 +9,10 @@
     getAssetZoomLevelIfNotCloser: function(zoom) {
       return zoom < 10 ? 10 : zoom;
     },
+    getViewZoom: function(map) {
+      return Math.round(map.getView().getZoom());
+    } ,
+
     minZoomForRoadLinks: 5,
     minZoomForAssets: 6,
     minZoomLevelForCalibrationPoints: 8,
