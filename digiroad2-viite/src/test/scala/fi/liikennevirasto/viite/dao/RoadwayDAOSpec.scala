@@ -534,21 +534,21 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllByBetweenDates When non-existing dates Then return None") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2))
-      dao.fetchAllByBetweenDates(DateTime.parse("1800-01-01"), DateTime.parse("1800-02-01")).size should be(0)
+      dao.fetchAllByDateRange(DateTime.parse("1800-01-01"), DateTime.parse("1800-02-01")).size should be(0)
     }
   }
 
   test("Test fetchAllByBetweenDates When existing dates but later date first Then return None") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3))
-      dao.fetchAllByBetweenDates(DateTime.parse("2000-01-02"), DateTime.parse("2000-01-01")).size should be(0)
+      dao.fetchAllByDateRange(DateTime.parse("2000-01-02"), DateTime.parse("2000-01-01")).size should be(0)
     }
   }
 
   test("Test fetchAllByBetweenDates When existing dates (start date same than end date) Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3))
-      val roadways = dao.fetchAllByBetweenDates(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
+      val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(1)
@@ -558,7 +558,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllByBetweenDates When existing dates Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3.copy(startDate = DateTime.parse("2000-01-02"))))
-      val roadways = dao.fetchAllByBetweenDates(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-02"))
+      val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-02"))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(1)
@@ -568,7 +568,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllByBetweenDates When existing dates and one too early Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3.copy(startDate = DateTime.parse("1999-12-31"))))
-      val roadways = dao.fetchAllByBetweenDates(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
+      val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(0)
@@ -578,7 +578,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllByBetweenDates When existing dates and one too late Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3.copy(startDate = DateTime.parse("2000-01-02"))))
-      val roadways = dao.fetchAllByBetweenDates(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
+      val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
       roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(0)

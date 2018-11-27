@@ -114,10 +114,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
-    throw new NotImplementedError("Implement RoadAddressService.getRoadAddressWithRoadNumberAddress")
-    //withDynSession {
-    //  RoadwayDAO.getRoadAddressByFilter(RoadwayDAO.withRoadNumberAddress(road, addrMValue))
-    //}
+    withDynSession {
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllByRoadNumberAndValue(road, addressMValue = addrMValue).map(_.roadwayNumber).toSet))
+    }
   }
 
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
@@ -238,13 +237,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     withDynSession {
       val roadways = trackOption match {
         case Some(track) =>
-          roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
+          if (addressM != 0)
+            roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
+          else
+            roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, None)
         case _ =>
-          roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
+          if (addressM != 0)
+            roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
+          else
+            roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, None)
       }
 
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-      roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
+      if (addressM > 0)
+        roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      else Seq(roadAddresses.head)
     }
   }
 
@@ -296,9 +303,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   // TODO Implement fetching with floating
   def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
-    if (withFloating) {
-      throw new NotImplementedError("Fetching with floating not implemented.")
-    }
     withDynSession {
       val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -307,8 +311,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   /**
     * Gets all the road addresses in between the given linear location.
-    * - If only given the start measure, will return all the road addresses with the start measure equal or greater than ${startMOption}
-    * - If only given the end measure, will return all the road addresses with end measure equal or less than ${endMOption}
+    * - If only given the start measure, will return all the road addresses with the start and end measure in between ${startMOption} or start measure equal or greater than ${startMOption}
+    * - If only given the end measure, will return all the road addresses with the start and end measure in between ${endMOption} or end measure equal or less than ${endMOption}
     * - If any of the measures are given, will return all the road addresses on the given road link id
     *
     * @param linkId       The link identifier of the linear location
@@ -325,9 +329,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         case (Some(startM), Some(endM)) =>
           roadAddresses.filter(ra => ra.linkId == linkId && ra.isBetweenMeasures(startM, endM))
         case (Some(startM), _) =>
-          roadAddresses.filter(ra => ra.linkId == linkId && ra.startMValue >= startM)
+          roadAddresses.filter(ra => ra.linkId == linkId && (ra.startMValue >= startM || ra.isBetweenMeasures(startM)))
         case (_, Some(endM)) =>
-          roadAddresses.filter(ra => ra.linkId == linkId && ra.endMValue <= endM)
+          roadAddresses.filter(ra => ra.linkId == linkId && (ra.endMValue <= endM || ra.isBetweenMeasures(endM)))
         case _ =>
           roadAddresses.filter(ra => ra.linkId == linkId)
       }
@@ -468,7 +472,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
     val roadwayAddresses =
       withDynSession {
-        roadwayDAO.fetchAllByBetweenDates(sinceDate, untilDate)
+        roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)
       }
 
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)

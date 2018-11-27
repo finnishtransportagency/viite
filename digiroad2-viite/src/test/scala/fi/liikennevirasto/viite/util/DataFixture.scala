@@ -1,25 +1,19 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.Timestamp
 import java.util.Properties
-
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
-import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.InconsistentLrmHistory
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
-import org.joda.time.{DateTime, Period}
-
+import org.joda.time.DateTime
 import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
@@ -58,38 +52,6 @@ object DataFixture {
 
 //  private lazy val numberThreads: Int = 2
   private lazy val numberThreads: Int = 6
-
-  //TODO this can be deleted
-//  private def loopRoadParts(roadNumber: Int): Unit = {
-//    var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
-//    while (partNumberOpt.nonEmpty) {
-//      val partNumber = partNumberOpt.get
-//      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber, includeFloating = true)
-//      try {
-//        val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-//        assert(adjusted.lengthCompare(roads.size) == 0) // Must not lose any
-//        val (changed, unchanged) = adjusted.partition(ra =>
-//          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-//        )
-//        println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-//        changed.foreach(addr => RoadAddressDAO.update(addr, None))
-//      } catch {
-//        case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $partNumber contains invalid address data - part skipped !!!")
-//          ex.printStackTrace()
-//      }
-//      partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
-//    }
-//  }
-//
-//  def recalculate():Unit = {
-//    OracleDatabase.withDynTransaction {
-//      var roadNumberOpt = RoadAddressDAO.fetchNextRoadNumber(0)
-//      while (roadNumberOpt.nonEmpty) {
-//        loopRoadParts(roadNumberOpt.get)
-//        roadNumberOpt = RoadAddressDAO.fetchNextRoadNumber(roadNumberOpt.get)
-//      }
-//    }
-//  }
 
   private def toIntNumber(value: Any): Int = {
     try {
@@ -137,7 +99,7 @@ object DataFixture {
 
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
-    val vVHClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     dataImporter.updateLinearLocationGeometry(vvhClient)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
@@ -174,30 +136,7 @@ object DataFixture {
     println()
   }
 
-  //TODO this can be deleted
-  //  private def combineMultipleSegmentsOnLinks(): Unit = {
-//    println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
-//    OracleDatabase.withDynTransaction {
-//      OracleDatabase.setSessionLanguage()
-//      RoadAddressDAO.getAllValidRoadNumbers().foreach(road => {
-//        val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
-//        val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
-//        roadAddresses.foreach { case (linkId, list) =>
-//          val currReplacement = replacements(linkId)
-//          if (list.lengthCompare(currReplacement.size) != 0) {
-//            val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
-//            val created = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
-//            RoadAddressDAO.remove(removed)
-//            if (created.nonEmpty)
-//              RoadAddressDAO.create(created, created.head.createdBy, Some("Automatic_merged"))
-//          }
-//        }
-//      })
-//    }
-//    println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
-//  }
-
-  private def importRoadNames() {
+  private def importRoadNames(): Unit = {
     SqlScriptRunner.runViiteScripts(List(
       "roadnames.sql"
     ))
@@ -270,59 +209,6 @@ object DataFixture {
     }
   }
 
-  //TODO Those processes are no longer needed
-//  private def updateProjectLinkGeom(): Unit = {
-//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-//    val roadAddressDAO = new RoadwayDAO
-//    val linearLocationDAO = new LinearLocationDAO
-//    val roadNetworkDAO = new RoadNetworkDAO
-//    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-//    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
-//    val projectsIDs = projectService.getAllProjects.map(x => x.id)
-//    val projectCount = projectsIDs.size
-//    var c = 0
-//    projectsIDs.foreach(x => {
-//      c += 1
-//      println("Updating Geometry for project " + c + "/" + projectCount)
-//      projectService.updateProjectLinkGeometry(x, "BJ")
-//    })
-//
-//  }
-//
-//  private def updateProjectLinkSdoGeometry(): Unit = {
-//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-//    val roadAddressDAO = new RoadwayDAO
-//    val linearLocationDAO = new LinearLocationDAO
-//    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-//    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-//
-//    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
-//    val projectsIDs = projectService.getAllProjects.map(x => x.id)
-//    val projectCount = projectsIDs.size
-//    var c = 0
-//    projectsIDs.foreach(proj => {
-//      c += 1
-//      println("Updating Geometry for project " + c + "/" + projectCount)
-//      projectService.updateProjectLinkSdoGeometry(proj, "BJ")
-//    })
-//
-//  }
-
-  //TODO this might not be needed anymore
-  private def correctNullElyCodeProjects(): Unit = {
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressDAO = new RoadwayDAO
-    val linearLocationDAO = new LinearLocationDAO
-    val roadNetworkDAO = new RoadNetworkDAO
-    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-    val projectService = new ProjectService(roadAddressService, roadLinkService, new DummyEventBus)
-    val startTime = DateTime.now()
-    println(s"Starting project Ely code correct now")
-    projectService.correctNullProjectEly()
-    println(s"Project Ely's correct in  ${hms.print(new Period(startTime, DateTime.now()))}")
-  }
-
-
   private def updateRoadAddressGeometrySource(): Unit = {
     throw new NotImplementedError("Will be implemented at VIITE-1554")
 
@@ -358,80 +244,6 @@ object DataFixture {
 //    }
 
   }
-
-  //TODO check if this will continue to be needed
-//  def checkLinearLocation(): Unit = {
-//    OracleDatabase.withDynTransaction {
-//      val roadwayNumbers = RoadAddressDAO.getRoadwayNumbersFromRoadAddress
-//      println(s"Found a total of ${roadwayNumbers.size} roadway ids")
-//      val chunks = generateCommonIdChunks(roadwayNumbers, 1000)
-//      chunks.par.foreach {
-//        case (min, max) =>
-//          println(s"Processing roadway ids from $min to $max")
-//          val roads = RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadwayNumbers(min, max))
-//          roads.groupBy(_.roadwayNumber).foreach { group =>
-//            val dateTimeLines = group._2.map(_.startDate).distinct
-//
-//            val mappedTimeLines: Seq[TimeLine] = dateTimeLines.flatMap {
-//              date =>
-//                val groupedAddresses: Seq[TimeLine] = group._2.groupBy(g => (g.roadNumber, g.roadPartNumber)).map { roadAddresses =>
-//                  val filteredAdresses: Seq[RoadAddress] = roadAddresses._2.filter { ra => ra.validTo.isEmpty && (date.get.getMillis >= ra.startDate.get.getMillis) && (ra.endDate.isEmpty || date.get.getMillis < ra.endDate.get.getMillis) }
-//                  val addrLength = filteredAdresses.map(_.endAddrMValue).sum - filteredAdresses.map(_.startAddrMValue).sum
-//                  TimeLine(addrLength, filteredAdresses)
-//                }.filter(_.addresses.nonEmpty).toSeq
-//                groupedAddresses
-//            }
-//
-//            val roadErrors = if (mappedTimeLines.size > 1) {
-//              val errors: Set[RoadAddress] = mappedTimeLines.sliding(2).flatMap { case Seq(first, second) => {
-//                if (first.addressLength != second.addressLength) {
-//                  first.addresses.toSet
-//                }
-//                else {
-//                  Set.empty[RoadAddress]
-//                }
-//              }
-//              }.toSet
-//              errors
-//            } else {
-//              Set.empty[RoadAddress]
-//            }
-//            println(s"Found ${roadErrors.size} errors for roadway_number ${group._2.head.roadwayNumber}")
-//            val lastVersion = getLatestRoadNetworkVersionId
-//
-//            roadErrors.filter { road =>
-//              val error = RoadNetworkDAO.getRoadNetworkError(road.id, InconsistentLrmHistory)
-//              error.isEmpty || error.get.network_version != lastVersion
-//            }.foreach(error => RoadNetworkDAO.addRoadNetworkError(error.id, InconsistentLrmHistory.value))
-//          }
-//      }
-//    }
-//  }
-
-  //TODO check if this will be needed
-//  def fuseRoadAddressWithHistory(): Unit = {
-//
-//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-//    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
-//    val elyCodes = OracleDatabase.withDynSession {
-//      MunicipalityDAO.getMunicipalityMapping.values.toSet
-//    }
-//
-//    elyCodes.foreach(ely => {
-//      println(s"Going to fuse roads for ely $ely")
-//      val roads = OracleDatabase.withDynSession {
-//        RoadAddressDAO.getRoadAddressByEly(ely)
-//      }
-//      println(s"Got ${roads.size} addresses for ely $ely")
-//      val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roads)
-//      val kept = fusedRoadAddresses.map(_.id).toSet
-//      val removed = roads.map(_.id).toSet.diff(kept)
-//      val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
-//      println(s"Fusing ${roadAddressesToRegister.size} roads for ely $ely")
-//      if (roadAddressesToRegister.nonEmpty)
-//        roadAddressService.mergeRoadAddressHistory(RoadAddressMerge(removed, roadAddressesToRegister))
-//    })
-//  }
 
   /*private def showFreezeInfo(): Unit = {
     println("Road link geometry freeze is active; exiting without changes")
@@ -509,8 +321,6 @@ object DataFixture {
         showFreezeInfo()*/
       case Some("update_missing") =>
         updateUnaddressedRoadLink()
-//      case Some("fuse_multi_segment_road_addresses") =>
-//        combineMultipleSegmentsOnLinks()
       case Some("update_road_addresses_geometry") =>
         updateLinearLocationGeometry()
       case Some("import_road_address_change_test_data") =>
@@ -524,48 +334,19 @@ object DataFixture {
         showFreezeInfo()*/
       case Some("update_road_address_link_source") =>
         updateRoadAddressGeometrySource()
-//      case Some("update_project_link_geom") =>
-//        updateProjectLinkGeom()
-//      case Some("update_project_link_SDO_GEOMETRY") =>
-//        updateProjectLinkSdoGeometry()
       case Some("import_road_names") =>
         importRoadNames()
-      /*case Some("correct_null_ely_code_projects") => // TODO is this batch process still needed?
-        correctNullElyCodeProjects()*/
-//      case Some("check_lrm_position") =>
-//        checkLinearLocation()
-//      case Some("fuse_road_address_with_history") =>
-//        fuseRoadAddressWithHistory()
       case Some("test") =>
         tearDown()
         setUpTest()
         importMunicipalityCodes()
 
-      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | recalculate_addresses | update_missing " +
-        "| find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
-        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data " +
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | correct_null_ely_code_projects | import_road_names " +
-        "| fuse_road_address_with_history | check_lrm_position | revert_overlapped_road_addresses")
+      case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
+        "| find_floating_road_addresses | import_complementary_road_address " +
+        "| update_road_addresses_geometry | import_road_address_change_test_data " +
+        "| apply_change_information_to_road_address_links | update_road_address_link_source | import_road_names ")
     }
   }
 
   case class TimeLine(addressLength: Long, addresses: Seq[RoadAddress])
-
-  private def generateCommonIdChunks(ids: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
-    val (chunks, _) = ids.foldLeft((Seq[Long](0), 0)) {
-      case ((fchunks, index), linkId) =>
-        if (index > 0 && index % chunkNumber == 0) {
-          (fchunks ++ Seq(linkId), index + 1)
-        } else {
-          (fchunks, index + 1)
-        }
-    }
-    val result = if (chunks.last == ids.last) {
-      chunks
-    } else {
-      chunks ++ Seq(ids.last)
-    }
-
-    result.zip(result.tail)
-  }
 }
