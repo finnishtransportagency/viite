@@ -422,13 +422,13 @@ class ProjectLinkDAO {
     }
   }
 
-  def getElyFromProjectLinks(projectId:Long): Option[Long]= {
+  def fetchElyFromProjectLinks(projectId:Long): Option[Long]= {
     val query =
       s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROWNUM < 2"""
     Q.queryNA[Long](query).firstOption
   }
 
-  def getProjectLinksHistory(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinksHistory(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project history links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"plh.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
@@ -438,7 +438,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
@@ -449,7 +449,7 @@ class ProjectLinkDAO {
   }
 
   //TODO: support for bigger queries than 1000 ids
-  def getProjectLinksByIds(ids: Iterable[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByIds(ids: Iterable[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
       if (ids.isEmpty)
         List()
@@ -462,7 +462,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByConnectedLinkId(connectedIds: Seq[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByConnectedLinkId(connectedIds: Seq[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by connected link ids") {
       if (connectedIds.isEmpty) {
         List()
@@ -475,7 +475,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
+  def fetchProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
     time(logger, "Get project links by link id and project id") {
       val query =
         s"""$projectLinkQueryBase
@@ -484,7 +484,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
       val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.LINEAR_LOCATION_ID in (${ids.mkString(",")})""" else ""
       val query =
@@ -495,7 +495,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+  def fetchProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
     if (projectLinkIds.isEmpty && linkIds.isEmpty) {
       List()
     } else {
@@ -509,7 +509,20 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByProjectRoadPart(road: Long, part: Long, projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinksByLinkId(linkIds: Seq[Long]): Seq[ProjectLink] = {
+    if (linkIds.isEmpty) {
+      List()
+    } else {
+      val linkIdsFilter =  s" PROJECT_LINK.LINK_ID IN (${linkIds.mkString(",")})"
+      val query =
+        s"""$projectLinkQueryBase
+                where $linkIdsFilter
+                order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
+  def fetchProjectLinksByProjectRoadPart(road: Long, part: Long, projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project links by project road part") {
       val filter = if (linkStatusFilter.isEmpty) "" else s" PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
