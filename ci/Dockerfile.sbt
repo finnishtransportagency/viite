@@ -6,4 +6,4 @@ RUN mkdir /home/jenkins/.ivy
 RUN mkdir /home/jenkins/.sbt
 COPY config/repositories /home/jenkins/.sbt/repositories
 RUN chown -R jenkins /home/jenkins
-RUN curl http://livibuild04.vally.local/nexus/repository/3rdparty/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar
+RUN curl http://livibuild04.vally.local/nexus/repository/ivy-releases/org.scala-sbt/sbt/0.13.5/jars
