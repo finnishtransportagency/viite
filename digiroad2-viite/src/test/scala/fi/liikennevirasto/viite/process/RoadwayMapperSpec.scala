@@ -17,7 +17,7 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
   val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
 
-  test("Should map current roadway linear location into road addresses"){
+  test("Test roadwayAddressMapper.mapRoadAddresses() When giving it regular, current linear locations and roadways Then return the mapping of them in the form of Road Addresses."){
     val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
     val roadwayNumber = 12L
@@ -52,7 +52,7 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     roadAddress3.discontinuity should be (Discontinuity.Discontinuous)
   }
 
-  test("Should map history roadway linear location into road addresses"){
+  test("Test roadwayAddressMapper.mapRoadAddresses() When giving it regular, history linear locations and roadways Then return the mapping of them in the form of Road Addresses."){
     val roadwayAddressMapper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
     val roadwayNumber = 12L
