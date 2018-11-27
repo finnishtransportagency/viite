@@ -4,6 +4,7 @@
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
     var selectedProjectLink = false;
+    var editedNameByUser = false;
     var LinkSources = LinkValues.LinkGeomSource;
     var formCommon = new FormCommon('');
 
@@ -178,17 +179,17 @@
 
     var fillDistanceValues = function (selectedLinks) {
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
-        $('#beginDistance').val(selectedLinks[0].startAddressM);
-        $('#endDistance').val(selectedLinks[0].endAddressM);
+        $('#beginDistance').prop("disabled", false).val(selectedLinks[0].startAddressM);
+        $('#endDistance').prop("disabled", false).val(selectedLinks[0].endAddressM);
       } else {
         var orderedByStartM = _.sortBy(selectedLinks, function (l) {
           return l.startAddressM;
         });
         if (orderedByStartM[0].calibrationCode === CalibrationCode.AtBeginning.value) {
-          $('#beginDistance').val(orderedByStartM[0].startAddressM);
+          $('#beginDistance').prop("disabled", false).val(orderedByStartM[0].startAddressM);
         }
         if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === CalibrationCode.AtEnd.value) {
-          $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          $('#endDistance').prop("disabled", false).val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
           endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].endAddressM;
         }
       }
@@ -555,6 +556,7 @@
         if (event.target.id === "tie" && (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
           backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
             if (!_.isUndefined(data.roadName)) {
+              editedNameByUser = false;
               roadNameField.val(data.roadName).change();
               if (data.isCurrent) {
                 roadNameField.prop('disabled', true);
@@ -563,8 +565,9 @@
               }
               checkInputs('.project-');
             } else {
-              if (roadNameField.prop('disabled')) {
+              if (roadNameField.prop('disabled') || !editedNameByUser) {
                 $('#roadName').val('').change();
+                editedNameByUser = false;
               }
               roadNameField.prop('disabled', false);
             }
@@ -574,6 +577,7 @@
 
         rootElement.on('keyup, input', '#roadName', function () {
             checkInputs('.project-');
+            editedNameByUser = $('#roadName').val !== '';
         });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
