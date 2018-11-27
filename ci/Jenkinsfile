@@ -97,7 +97,7 @@ pipeline {
                 }
             }
             steps {
-                sh STAGE_FRONTEND_BUILD_CMD
+                //sh STAGE_FRONTEND_BUILD_CMD
             }
             //post {
             //    failure {
