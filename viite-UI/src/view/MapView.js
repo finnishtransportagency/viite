@@ -54,7 +54,7 @@
     };
 
     eventbus.on('application:initialized layer:fetched', function() {
-      var zoom = Math.trunc(map.getView().getZoom());
+      var zoom = Math.round(map.getView().getZoom());
       applicationModel.setZoomLevel(zoom);
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
         showAssetZoomDialog();
@@ -76,7 +76,7 @@
     eventbus.on('coordinates:selected', function(position) {
       if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
         map.getView().setCenter([position.lon, position.lat]);
-        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(Math.trunc(map.getView().getZoom())));
+        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(Math.round(map.getView().getZoom())));
       } else {
         instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
       }
@@ -99,7 +99,7 @@
     }, this);
 
     map.on('moveend', function() {
-      applicationModel.refreshMap(Math.trunc(map.getView().getZoom()), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      applicationModel.refreshMap(Math.round(map.getView().getZoom()), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
       setCursor(applicationModel.getSelectedTool());
     });
 

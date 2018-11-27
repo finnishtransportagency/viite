@@ -142,7 +142,7 @@
 
     new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
 
-    applicationModel.refreshMap(Math.trunc(map.getView().getZoom()), map.getLayers().getArray()[0].getExtent());
+    applicationModel.refreshMap(Math.round(map.getView().getZoom()), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };

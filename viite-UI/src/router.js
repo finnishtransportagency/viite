@@ -128,7 +128,7 @@
         }
         var newCenter = map.getView().getCenter();
         if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
-          applicationModel.refreshMap(Math.trunc(map.getView().getZoom()), map.getLayers().getArray()[0].getExtent(), newCenter);
+          applicationModel.refreshMap(Math.round(map.getView().getZoom()), map.getLayers().getArray()[0].getExtent(), newCenter);
         }
       }
     });
