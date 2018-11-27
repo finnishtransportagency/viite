@@ -296,8 +296,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/project/roadaddress/linkid/:linkId") {
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /project/roadAddress/linkid/$linkId") {
-      //TODO This process can be improved and also it seems to have a bug when the project link is on top of a suravage
-      val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
+      val projectLinks = projectService.getProjectAddressLinksByLinkIds(Set(linkId))
       foldSegments(projectLinks)
         .map(midPoint)
         .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))

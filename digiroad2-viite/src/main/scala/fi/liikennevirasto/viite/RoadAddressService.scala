@@ -517,12 +517,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     RoadAddressFiller.fillTopology(roadlinks, roadAddresses).filter(_.linkId == linkId)
 
-    //    val (addresses, missedRL) = withDynTransaction {
-    //      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
-    //        RoadAddressDAO.getUnaddressedRoadLinks(Set(linkId)))
-    //    }
-    //    processRoadAddresses(addresses, missedRL)
-
   }
 
   def sortRoadWayWithNewRoads(originalLinearLocationGroup: Map[Long, Seq[LinearLocation]], newLinearLocations: Seq[LinearLocation]): Map[Long, Seq[LinearLocation]] = {
