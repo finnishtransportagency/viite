@@ -7,7 +7,7 @@
       '</div>';
     container.append(element);
     container.find('.plus').click(function() {
-      var zoom=map.getView().getZoom();
+      var zoom=Math.abs(map.getView().getZoom());
       map.getView().animate({
         zoom: zoom + 1,
         duration: 150
@@ -15,7 +15,7 @@
     });
     container.find('.minus').click(function() {
       if (applicationModel.canZoomOut() && applicationModel.canZoomOutEditMode()) {
-        var zoom=map.getView().getZoom();
+        var zoom=Math.abs(map.getView().getZoom());
         map.getView().animate({
           zoom: zoom -1,
           duration: 150
