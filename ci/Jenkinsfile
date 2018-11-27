@@ -38,8 +38,12 @@ pipeline {
                         "grunt deploy --target=${get_environment()?.trim()}"
                     ].join(" && ")
 
+                    STAGE_FRONTEND_TEST_CMD = [
+                        "grunt test"
+                    ].join(" && ")
+
                     STAGE_BACKEND_BUILD_CMD = [
-                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly"
+                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly | i"
                     ].join(" && ")
 
                 }
