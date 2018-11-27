@@ -17,8 +17,8 @@ import org.joda.time.DateTime
 
 object Dummies {
 
-  def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime]): Roadway = {
-    Roadway(0L, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "", None, 0L, NoTermination)
+  def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime], roadwayId: Long = 0L): Roadway = {
+    Roadway(roadwayId, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "user", None, 0L, NoTermination)
   }
 
   def dummyRoadwayChangeSection(roadNumber: Option[Long], roadPartNumber: Option[Long], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], roadType: Option[RoadType] = Some(RoadType.PublicRoad), discontinuity: Option[Discontinuity], ely: Option[Long]) = {
