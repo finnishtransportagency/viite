@@ -58,7 +58,6 @@ pipeline {
             steps {
                 script {
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
-                    echo "Running publish... (skipped for now) ${no_proxy}"
                     def build_args = [
                         "--build-arg http_proxy=${http_proxy}",
                         "--build-arg https_proxy=${http_proxy}",
