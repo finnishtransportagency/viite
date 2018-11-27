@@ -98,6 +98,7 @@ pipeline {
             }
             steps {
                 //sh STAGE_FRONTEND_BUILD_CMD
+                echo "Running frontend build... (skipped for now)"
             }
             //post {
             //    failure {
