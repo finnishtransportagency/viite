@@ -655,7 +655,6 @@ class ProjectValidator {
     val allProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
 
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
-//      throw new NotImplementedError("Will be implemented at VIITE-1540")
       // This code means that this road part (of a ramp) should be connected to a roundabout
       val endPoints = pls.map(endPoint).map(p => (p.x, p.y)).unzip
       val boundingBox = BoundingRectangle(Point(endPoints._1.min,
