@@ -37,4 +37,12 @@ object Sequences {
   def nextRoadNetworkErrorSeqValue: Long = {
     Queries.nextRoadNetworkErrorId.as[Long].first
   }
+
+  def nextProjectId: Long = {
+    Queries.nextProjectId.as[Long].first
+  }
+
+  def nextRoadwayChangeLink: Long = {
+    Queries.nextRoadwayChangeLink.as[Long].first
+  }
 }

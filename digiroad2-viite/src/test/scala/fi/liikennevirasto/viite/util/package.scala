@@ -160,7 +160,7 @@ package object util {
       }
     roads.groupBy(_._1).foreach(road => ProjectLinkNameDAO.create(projectId, road._1, road._2.head._3))
     projectLinkDAO.create(links)
-    (project, projectLinkDAO.getProjectLinks(projectId))
+    (project, projectLinkDAO.fetchProjectLinks(projectId))
   }
 
   def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {

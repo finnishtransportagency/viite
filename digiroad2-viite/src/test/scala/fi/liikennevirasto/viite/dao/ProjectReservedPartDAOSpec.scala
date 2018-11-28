@@ -294,7 +294,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val reserved = projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1)
       reserved.nonEmpty should be(true)
       projectReservedPartDAO.fetchReservedRoadParts(id) should have size 1
-      projectReservedPartDAO.removeReservedRoadPart(id, reserved.get)
+      projectReservedPartDAO.removeReservedRoadPart(id, reserved.get.roadNumber, reserved.get.roadPartNumber)
       val projectAfter = projectReservedPartDAO.roadPartReservedByProject(roadNumber1, roadPartNumber1)
       projectAfter should be(None)
       projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1).isEmpty should be(true)

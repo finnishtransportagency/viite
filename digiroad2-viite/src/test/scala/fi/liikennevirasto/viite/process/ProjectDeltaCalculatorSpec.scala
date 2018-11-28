@@ -58,7 +58,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
   private def createCalibrationPoints(a: RoadAddress): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    (Option.empty[ProjectLinkCalibrationPoint], Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectLinkSource)))
+    (Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectLinkSource)), Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectLinkSource)))
   }
 
   test("Multiple transfers on single road part") {
@@ -266,7 +266,83 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     })
   }
 
-  //TODO Will be implemented at VIITE-1541
+  test("road with ely change") {
+    val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L))
+    val links = addresses.filter(_.endAddrMValue < 61).map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))))
+    val partitioned = ProjectDeltaCalculator.partition(links)
+    partitioned.size should be(1)
+    val (fr, to) = partitioned.head
+    fr.startMAddr should be(to.startMAddr)
+    fr.endMAddr should be(to.endMAddr)
+    fr.ely should be(8)
+    to.ely should be(5)
+  }
+
+  test("road with discontinuity change") {
+    val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L))
+    val links = addresses.map(a => {
+      if (a.endAddrMValue == 60) {
+        (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
+      } else {
+        toTransition(project, LinkStatus.UnChanged)(a)
+      }
+    })
+    val partitioned = ProjectDeltaCalculator.partition(links)
+    partitioned.size should be(2)
+    partitioned.foreach(x => {
+      val (fr, to) = x
+      if (fr.startMAddr == 0) {
+        fr.discontinuity should be(Discontinuity.Continuous)
+        to.discontinuity should be(Discontinuity.MinorDiscontinuity)
+      } else {
+        fr.discontinuity should be(Discontinuity.Continuous)
+        to.discontinuity should be(Discontinuity.Continuous)
+      }
+    })
+  }
+
+  test("Multiple transfers with reversal and discontinuity") {
+    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
+      createTransferProjectLink(1524, 502).copy(reversed = true)),
+      (createRoadAddress(502, 1524),
+        createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
+    val mapping =
+      ProjectDeltaCalculator.partition(transfer)
+    mapping should have size (2)
+    mapping.foreach { case (from, to) =>
+      from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
+      if (from.discontinuity != Continuous)
+        to.discontinuity should be(Continuous)
+      else
+        to.discontinuity should be(MinorDiscontinuity)
+    }
+  }
+
+  test("Partitioner should separate links containing calibration points whose origin is ProjectLink") {
+    val addresses = (0 to 9).map(i => {
+      createRoadAddress(i * 2, 2L)
+    })
+    val projectLinksWithCp = addresses.map(a => {
+      val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
+      if (a.id == 10L)
+        (a, projectLink.copy(calibrationPoints = createCalibrationPoints(a)))
+      else if(a.id > 10L)
+        (a, projectLink.copy(roadPartNumber = projectLink.roadPartNumber + 1))
+      else
+        (a, projectLink)
+    })
+    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp)
+    partitionCp.size should be(2)
+    val firstSection = partitionCp.head
+    val secondSection = partitionCp.last
+    val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
+    firstSection._1.startMAddr should be(projectLinksWithCp.head._2.startAddrMValue)
+    firstSection._1.endMAddr should be(cutPoint.endAddrMValue)
+    secondSection._1.startMAddr should be(cutPoint.endAddrMValue)
+    secondSection._1.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
+  }
+
+  //TODO Will be implemented when split is implemented
   //  test("Calculate delta for split suravage link") {
   //    runWithRollback {
   //      val reservationId = Sequences.nextViitePrimaryKeySeqValue
@@ -333,77 +409,4 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //    }
   //  }
 
-  test("road with ely change") {
-    val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L))
-    val links = addresses.filter(_.endAddrMValue < 61).map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))))
-    val partitioned = ProjectDeltaCalculator.partition(links)
-    partitioned.size should be(1)
-    val (fr, to) = partitioned.head
-    fr.startMAddr should be(to.startMAddr)
-    fr.endMAddr should be(to.endMAddr)
-    fr.ely should be(8)
-    to.ely should be(5)
-  }
-
-  test("road with discontinuity change") {
-    val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L))
-    val links = addresses.map(a => {
-      if (a.endAddrMValue == 60) {
-        (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(discontinuity = Discontinuity.MinorDiscontinuity)))
-      } else {
-        toTransition(project, LinkStatus.UnChanged)(a)
-      }
-    })
-    val partitioned = ProjectDeltaCalculator.partition(links)
-    partitioned.size should be(2)
-    partitioned.foreach(x => {
-      val (fr, to) = x
-      if (fr.startMAddr == 0) {
-        fr.discontinuity should be(Discontinuity.Continuous)
-        to.discontinuity should be(Discontinuity.MinorDiscontinuity)
-      } else {
-        fr.discontinuity should be(Discontinuity.Continuous)
-        to.discontinuity should be(Discontinuity.Continuous)
-      }
-    })
-  }
-
-  test("Multiple transfers with reversal and discontinuity") {
-    val transfer = Seq((createRoadAddress(0, 502).copy(discontinuity = MinorDiscontinuity),
-      createTransferProjectLink(1524, 502).copy(reversed = true)),
-      (createRoadAddress(502, 1524),
-        createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
-    val mapping =
-      ProjectDeltaCalculator.partition(transfer)
-    mapping should have size (2)
-    mapping.foreach { case (from, to) =>
-      from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
-      if (from.discontinuity != Continuous)
-        to.discontinuity should be(Continuous)
-      else
-        to.discontinuity should be(MinorDiscontinuity)
-    }
-  }
-
-  test("Partitioner should separate links containing calibration points whose origin is ProjectLink") {
-    val addresses = (0 to 9).map(i => {
-      createRoadAddress(i * 2, 2L)
-    })
-    val projectLinksWithCp = addresses.map(a => {
-      val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
-      if (a.id == 10L)
-        (a, projectLink.copy(calibrationPoints = createCalibrationPoints(a)))
-      else
-        (a, projectLink)
-    })
-    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp)
-    partitionCp.size should be(2)
-    val firstSection = partitionCp.head
-    val secondSection = partitionCp.last
-    val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
-    firstSection._1.startMAddr should be(projectLinksWithCp.head._2.startAddrMValue)
-    firstSection._1.endMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.startMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
-  }
 }
