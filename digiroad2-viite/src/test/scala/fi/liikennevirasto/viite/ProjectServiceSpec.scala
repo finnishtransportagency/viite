@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
-import fi.liikennevirasto.viite.Dummies.{dummyLinearLocation, dummyRoadLink, dummyRoadway, dummyVvhHistoryRoadLink, dummyProjectLink}
+import fi.liikennevirasto.viite.Dummies.{dummyLinearLocation, dummyProjectLink, dummyRoadLink, dummyRoadway, dummyVvhHistoryRoadLink}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
@@ -23,7 +23,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, En
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.liikennevirasto.viite.dao.{LinkStatus, RoadwayDAO, _}
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadwayAddressMapper}
 import org.joda.time.DateTime
@@ -31,7 +31,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{when, _}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -56,6 +56,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val unaddressedRoadLinkDAO = new UnaddressedRoadLinkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
+  val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
+  val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
+  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
 
   val properties: Properties = {
     val props = new Properties()
@@ -64,6 +68,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+
   val roadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, unaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
@@ -1825,91 +1830,94 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  //TODO this will be implemented at VIITE-1541
-//    // Based on the "Terminate then transfer" test, this one checks for
-//  test("Provoke a IOException or ClientProtocolException exception when publishing a project and then check if the project state is changed to 9") {
-//
-//      var count = 0
-//      val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
-//        99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"),
-//        Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
-//      runWithRollback {
-//        val countCurrentProjects = projectService.getRoadAddressAllProjects
-//        val id = 0
-//        val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")),
-//          Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-//        val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
-//          "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", Seq(), None)
-//        val savedProject = projectService.createRoadLinkProject(roadAddressProject)
-//        mockForProject(savedProject.id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(savedProject)))
-//        projectService.saveProject(savedProject.copy(reservedParts = addresses))
-//        val countAfterInsertProjects = projectService.getRoadAddressAllProjects
-//        count = countCurrentProjects.size + 1
-//        countAfterInsertProjects.size should be(count)
-//        projectService.allLinksHandled(savedProject.id) should be(false)
-//        val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
-//        val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-//        val linkIds207 = partitioned._1.map(_.linkId).toSet
-//        reset(mockRoadLinkService)
-//        when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
-//          toMockAnswer(projectLinks, roadLink)
-//        )
-//        projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-//        projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-//        projectService.allLinksHandled(savedProject.id) should be(true)
-//        val changeProjectOpt = projectService.getChangeProject(savedProject.id)
-//        projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
-//        // This will result in a NonFatal exception being thrown and caught inside the publish, making the update of the project for the state ErrorInViite
-//        // If the tests ever get a way to have TR connectivity then this needs to be somewhat addressed
-//        projectService.publishProject(savedProject.id)
-//        val currentProjectStatus = ProjectDAO.getProjectStatus(savedProject.id)
-//        currentProjectStatus.isDefined should be(true)
-//        currentProjectStatus.get.value should be(ProjectState.SendingToTR.value)
-//      }
-//
-//    }
+  test("Provoke a IOException or ClientProtocolException exception when publishing a project and then check if the project state is changed to 9") {
+    var count = 0
+    val roadNumber = 5L
+    val part = 207L
+    val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
+      99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"),
+      Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
+    runWithRollback {
+      val countCurrentProjects = projectService.getAllProjects
+      val id = 0
+      val addresses = List(ProjectReservedPart(5: Long, roadNumber: Long, part: Long, Some(5L), Some(Discontinuity.apply("jatkuva")),
+        Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+      val project = Project(id, ProjectState.Incomplete, "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info", Seq(), None, ely = Some(8L))
+      val savedProject = projectService.createRoadLinkProject(project)
+
+
+        mockForProject(savedProject.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(roadNumber, part)).map(toProjectLink(savedProject)))
+
+        projectService.saveProject(savedProject.copy(reservedParts = addresses))
+        val countAfterInsertProjects = projectService.getAllProjects
+        count = countCurrentProjects.size + 1
+        countAfterInsertProjects.size should be(count)
+        projectService.allLinksHandled(savedProject.id) should be(false)
+        val projectLinks = projectLinkDAO.getProjectLinks(savedProject.id)
+        val partitioned = projectLinks.partition(_.roadPartNumber == part)
+        val linkIds207 = partitioned._1.map(_.linkId).toSet
+        reset(mockRoadLinkService)
+        when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+        when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
+          toMockAnswer(projectLinks, roadLink)
+        )
+        projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int]) should be(None)
+        projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
+        projectService.allLinksHandled(savedProject.id) should be(true)
+
+        projectService.updateProjectLinks(project.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
+//         This will result in a IO exception being thrown and caught inside the publish, making the update of the project for the state SendingToTR
+//         If the tests ever get a way to have TR connectivity then this needs to be somewhat addressed
+
+      projectService.publishProject(savedProject.id)
+        val currentProjectStatus = projectDAO.fetchProjectStatus(savedProject.id)
+        currentProjectStatus.isDefined should be(true)
+        currentProjectStatus.get.value should be(ProjectState.SendingToTR.value)
+      }
+
+  }
+
+  test("Check correct roadName assignment via ProjectLinkName") {
+    val roadNumber = 5L
+    val roadPartNumber = 207L
+    val testRoadName = "forTestingPurposes"
+    runWithRollback {
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1971-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val projectId = project.id
+
+      mockForProject(projectId, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(
+        ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
+      val projectLinks = projectLinkDAO.getProjectLinks(projectId)
+      ProjectLinkNameDAO.create(projectId, roadNumber, testRoadName)
+
+      projectService.fillRoadNames(projectLinks.head).roadName.get should be(testRoadName)
+    }
+  }
 
   //TODO this will be implemented at VIITE-1541
-//  test("Check correct roadName assignment via ProjectLinkName") {
-//    val roadNumber = 5L
-//    val roadPartNumber = 207L
-//    val testRoadName = "forTestingPurposes"
-//    runWithRollback {
-//      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-//        Seq(), None)
-//      val project = projectService.createRoadLinkProject(rap)
-//      val id = project.id
-//      mockForProject(id, RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(project)))
-//      projectService.saveProject(project.copy(reservedParts = Seq(
-//        ReservedRoadPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//      ProjectLinkNameDAO.create(id, roadNumber, testRoadName)
-//
-//      projectService.fillRoadNames(projectLinks.head).roadName.get should be(testRoadName)
-//    }
-//  }
+  /*test("Check correct roadName assignment via RoadNameDao") {
+    val roadNumber = 5L
+    val roadPartNumber = 207L
+    val testRoadName = "forTestingPurposes"
+    runWithRollback {
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val id = project.id
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(
+        ReservedRoadPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
+      val projectLinks = ProjectDAO.getProjectLinks(id)
 
-  //TODO this will be implemented at VIITE-1541
-//  test("Check correct roadName assignment via RoadNameDao") {
-//    val roadNumber = 5L
-//    val roadPartNumber = 207L
-//    val testRoadName = "forTestingPurposes"
-//    runWithRollback {
-//      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-//        Seq(), None)
-//      val project = projectService.createRoadLinkProject(rap)
-//      val id = project.id
-//      mockForProject(id, RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(project)))
-//      projectService.saveProject(project.copy(reservedParts = Seq(
-//        ReservedRoadPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
-//      val projectLinks = ProjectDAO.getProjectLinks(id)
-//
-//      projectService.fillRoadNames(projectLinks.head).roadName.get should be(RoadNameDAO.getLatestRoadName(roadNumber).get.roadName)
-//    }
-//  }
+      projectService.fillRoadNames(projectLinks.head).roadName.get should be(RoadNameDAO.getLatestRoadName(roadNumber).get.roadName)
+    }
+  }*/
 
   //TODO this will be implemented at VIITE-1541
 //  test("Check correct roadName assignment via the name on the project link") {
