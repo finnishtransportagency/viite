@@ -146,7 +146,7 @@ object ProjectDeltaCalculator {
   }
 
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
-    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
+    val hasCalibrationPoint = r1.hasCalibrationPointAt(CalibrationCode.AtEnd)
     val openBasedOnSource = hasCalibrationPoint && {
       val (sourceL, sourceR) = r1.getCalibrationSources
       sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource
