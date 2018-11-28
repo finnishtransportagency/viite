@@ -298,20 +298,6 @@ class ProjectLinkDAO {
     Q.queryNA[ProjectLink](query).iterator.toSeq
   }
 
-  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
-  def updateGeometryStringToSdo(id: Long, geometry: Seq[Point]): Unit = {
-    try {
-      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
-      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
-      sqlu"""
-        UPDATE PROJECT_LINK SET GEOMETRY = #$geometryQuery WHERE id = $id""".execute
-    } catch {
-      case e: Exception =>
-        println(e)
-        throw new RuntimeException("SQL Error: " + e.getMessage)
-    }
-  }
-
   def create(links: Seq[ProjectLink]): Seq[Long] = {
     time(logger, "Create project links") {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
@@ -436,13 +422,13 @@ class ProjectLinkDAO {
     }
   }
 
-  def getElyFromProjectLinks(projectId:Long): Option[Long]= {
+  def fetchElyFromProjectLinks(projectId:Long): Option[Long]= {
     val query =
       s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROWNUM < 2"""
     Q.queryNA[Long](query).firstOption
   }
 
-  def getProjectLinksHistory(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinksHistory(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project history links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"plh.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
@@ -452,7 +438,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
@@ -463,7 +449,7 @@ class ProjectLinkDAO {
   }
 
   //TODO: support for bigger queries than 1000 ids
-  def getProjectLinksByIds(ids: Iterable[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByIds(ids: Iterable[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
       if (ids.isEmpty)
         List()
@@ -476,7 +462,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByConnectedLinkId(connectedIds: Seq[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByConnectedLinkId(connectedIds: Seq[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by connected link ids") {
       if (connectedIds.isEmpty) {
         List()
@@ -489,7 +475,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
+  def fetchProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
     time(logger, "Get project links by link id and project id") {
       val query =
         s"""$projectLinkQueryBase
@@ -498,17 +484,7 @@ class ProjectLinkDAO {
     }
   }
 
-  //TODO Needed for VIITE-1591 batch to import all VARCHAR geometry into Sdo_Geometry collumn. Remove after apply batch
-  def getProjectLinksGeometry(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Map[Long, Seq[Point]] = {
-    time(logger, "Get project links") {
-      val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
-      sql"""SELECT ID, GEOMETRY_STRING FROM PROJECT_LINK
-                where #$filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M"""
-        .as[(Long, String)].list.map(l => l._1 -> parseStringGeometry(l._2)).toMap
-    }
-  }
-
-  def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
       val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.LINEAR_LOCATION_ID in (${ids.mkString(",")})""" else ""
       val query =
@@ -519,7 +495,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+  def fetchProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
     if (projectLinkIds.isEmpty && linkIds.isEmpty) {
       List()
     } else {
@@ -533,7 +509,20 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByProjectRoadPart(road: Long, part: Long, projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinksByLinkId(linkIds: Seq[Long]): Seq[ProjectLink] = {
+    if (linkIds.isEmpty) {
+      List()
+    } else {
+      val linkIdsFilter =  s" PROJECT_LINK.LINK_ID IN (${linkIds.mkString(",")})"
+      val query =
+        s"""$projectLinkQueryBase
+                where $linkIdsFilter
+                order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
+  def fetchProjectLinksByProjectRoadPart(road: Long, part: Long, projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project links by project road part") {
       val filter = if (linkStatusFilter.isEmpty) "" else s" PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
@@ -764,19 +753,24 @@ class ProjectLinkDAO {
       s"""SELECT pl.id FROM PROJECT_LINK pl WHERE
         project_id = $projectId $roadFilter $roadPartFilter $linkIdFilter"""
     val ids = Q.queryNA[Long](query).iterator.toSet
-    if (ids.nonEmpty)
+    if (ids.nonEmpty) {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
       deleteProjectLinks(ids)
+    }
     else
       0
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit = {
       sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE,
-              ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
-               MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY,
-                REVERSED, GEOMETRY, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
-                 LINK_SOURCE, CALIBRATION_POINTS_SOURCE
+            ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
+            MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY,
+            REVERSED, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
+            LINK_SOURCE, CALIBRATION_POINTS_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M
           FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""".execute
   }
