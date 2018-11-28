@@ -22,15 +22,15 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       scalacOptions ++= Seq("-unchecked", "-feature"),
-      resolvers ++= Seq(
+      resolvers := Seq(Classpaths.typesafeReleases,
         "osgeo" at "http://download.osgeo.org/webdav/geotools/",
-        Classpaths.typesafeReleases,
         "opengeo" at "http://repo.opengeo.org/"),
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % "1.2",
         "joda-time" % "joda-time" % "2.2",
         "com.typesafe.akka" %% "akka-actor" % "2.3.2",
-        "org.geotools" % "gt-graph" % "13.1",
+        "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "org.geotools" % "gt-graph" % "19.0",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
       )
     )
