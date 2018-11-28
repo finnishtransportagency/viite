@@ -124,6 +124,19 @@ trait TrackCalculatorStrategy {
       assignValues(right, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(right), userDefinedCalibrationPoint))
   }
 
+  /**
+    * Return the calculated values of the start and end addresses of both left and right links depending of the link status:
+    *
+    * L: Transfer, R: Transfer OR L: Unchanged, R: Unchanged =>  return the Average between two address measures.
+    * L: Unchanged, R: WTV OR L: Transfer, R: WTV => Start and end of the left links
+    * L: WTV, R: Unchanged OR L: WTV, R: Transfer => Start and end of the right links
+    * None of the above => if it exists return the address measure of the user defined calibration point, if not then return the Average between two address measures.
+    *
+    * @param leftLink
+    * @param rightLink
+    * @param userCalibrationPoint
+    * @return
+    */
   protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
                                 userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
 
@@ -153,6 +166,7 @@ trait TrackCalculatorStrategy {
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
 
+    // Find a calibration point annexed to the projectLink Id
     val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
 
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
