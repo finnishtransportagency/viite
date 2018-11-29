@@ -56,7 +56,6 @@ pipeline {
                 }
             }
             steps {
-                sh "ci/create-volume.sh"
                 script {
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
                     def build_args = [
