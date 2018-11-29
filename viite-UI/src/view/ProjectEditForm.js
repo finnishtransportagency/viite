@@ -144,6 +144,10 @@
           filled = false;
         }
       }
+
+      var trackCodeDropdown = $('#trackCodeDropdown')[0];
+      filled = filled && !_.isUndefined(trackCodeDropdown) && !_.isUndefined(trackCodeDropdown.value) && trackCodeDropdown.value !== '99';
+
       if (filled) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
