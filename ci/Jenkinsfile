@@ -57,6 +57,7 @@ pipeline {
             }
             steps {
                 script {
+					sh(returnStdout: true, script: "./ci/create-volume.sh")
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
                     def build_args = [
                         "--build-arg http_proxy=${http_proxy}",
