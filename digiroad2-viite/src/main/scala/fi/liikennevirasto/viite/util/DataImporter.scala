@@ -215,12 +215,14 @@ class DataImporter {
     val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val roadAddressDAO = new RoadwayDAO
+    val roadwayDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-    val service = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
-    RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
-    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
+    val projectLinkDAO = new ProjectLinkDAO
+    val service = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus)
+    val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
+    roadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
+    roadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     val municipalities = OracleDatabase.withDynTransaction {
       sqlu"""DELETE FROM UNADDRESSED_ROAD_LINK""".execute
       println("Old address data cleared")

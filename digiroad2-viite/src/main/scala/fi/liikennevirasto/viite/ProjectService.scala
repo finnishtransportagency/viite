@@ -7,7 +7,7 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -54,6 +54,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   val projectValidator = new ProjectValidator
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
+  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
 
   /**
     *
@@ -382,7 +383,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Seq[LinkToRevert], coordinates: ProjectCoordinates, username: String): Option[String] = {
-    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
+    roadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
         projectWritableCheckInSession(projectId) match {
@@ -795,7 +796,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val fetch = fetchBoundingBoxF(boundingRectangle, projectId, roadNumberLimits, municipalities, everything, publicRoads)
     val suravageList = withDynSession {
       Await.result(fetch.suravageF, Duration.Inf)
-        .map(x => (x, Some(projectId))).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
+        .map(x => (x, Some(projectId))).map(roadAddressLinkBuilder.buildSuravageRoadAddressLink)
     }
     val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads, fetch)
     val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
@@ -988,7 +989,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val nonProjectAddresses = addresses.filterNot(a => projectLinks.contains(a._1))
 
     val nonProjectLinks = nonProjectAddresses.values.flatten.toSeq.map { address =>
-      address.linkId -> RoadAddressLinkBuilder.build(address)
+      address.linkId -> roadAddressLinkBuilder.build(address)
     }.toMap
 
     logger.info("Build road addresses completed in %d ms".format(System.currentTimeMillis() - buildStartTime))

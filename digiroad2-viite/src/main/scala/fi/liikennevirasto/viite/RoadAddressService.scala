@@ -32,6 +32,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, new ProjectLinkDAO)
+
   /**
     * Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
     * See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
@@ -165,7 +167,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
     }
 
-    nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
+    nonFloatingRoadAddresses.map(roadAddressLinkBuilder.build)
   }
 
   def getRoadAddressesByLinkIds(linkIds: Seq[Long]) = {
@@ -208,7 +210,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     roadAddresses.flatMap { ra =>
       //TODO check if the floating are needed
       val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
-      roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
+      roadLink.map(rl => roadAddressLinkBuilder.build(rl, ra))
     }
   }
 
@@ -411,58 +413,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  // TODO
-  def getRoadAddressesByLinkIds(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true, includeCurrent: Boolean = true,
-                    filterIds: Set[Long] = Set()): List[RoadAddress] = {
-    throw new NotImplementedError()
-//      if (linkIds.size > 1000 || filterIds.size > 1000) {
-//        return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
-//      }
-//      val linkIdString = linkIds.mkString(",")
-//      val where = if (linkIds.isEmpty) {
-//        return List()
-//      } else {
-//        s""" where ra.link_id in ($linkIdString)"""
-//      }
-//      val floating = if (!includeFloating)
-//        "AND ra.floating='0'"
-//      else
-//        ""
-//      val history = if (!includeHistory)
-//        "AND ra.end_date is null"
-//      else
-//        ""
-//      val current = if (!includeCurrent)
-//        "AND ra.end_date is not null"
-//      else
-//        ""
-//      val idFilter = if (filterIds.nonEmpty)
-//        s"AND ra.id not in ${filterIds.mkString("(", ",", ")")}"
-//      else
-//        ""
-//
-//      val valid = if (!includeTerminated) {
-//        "AND ra.terminated = 0"
-//      } else {
-//        ""
-//      }
-//
-//      val query =
-//        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-//        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-//        (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
-//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-//        $where $floating $history $current $valid $idFilter and t.id < t2.id and
-//           valid_to is null
-//      """
-//      queryList(query)
-  }
-
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
       val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -644,9 +594,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   //  }
 
   private def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
+    val fusedRoadAddresses = roadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
     fusedRoadAddresses.map(ra => {
-      RoadAddressLinkBuilder.build(rl, ra)
+      roadAddressLinkBuilder.build(rl, ra)
     })
   }
 
@@ -863,7 +813,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     if (roadLinks.isEmpty) {
       throw new InvalidAddressDataException(s"Can't find road link for target link id $linkId")
     } else {
-      RoadAddressLinkBuilder.build(roadLinks.head, UnaddressedRoadLink(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven, Seq.empty[Point]))
+      roadAddressLinkBuilder.build(roadLinks.head, UnaddressedRoadLink(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven, Seq.empty[Point]))
     }
   }
 
