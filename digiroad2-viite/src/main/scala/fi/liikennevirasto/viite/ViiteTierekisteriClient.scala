@@ -175,7 +175,7 @@ object ViiteTierekisteriClient {
     loadedKeyString
   }
 
-  def convertToChangeProject(changeData: List[ProjectRoadwayChange]): ChangeProject= {
+  def convertToChangeProject(changeData: List[ProjectRoadwayChange]): ChangeProject = {
     val projects = changeData.map(cd => {
       convertChangeDataToChangeProject(cd)
     })
