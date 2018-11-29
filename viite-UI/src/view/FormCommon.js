@@ -53,16 +53,16 @@
         '</div>';
     };
 
-    var replaceAddressInfo = function(backend, selectedProjectLink) {
+    var replaceAddressInfo = function(backend, selectedProjectLink, currentProjectId) {
         var roadNameField = $('#roadName');
         if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
-        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
+        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             if(response.roadName !== ''){
                 roadNameField.val(response.roadName);
-                roadNameField.prop('disabled', true);
+                roadNameField.prop('disabled', response.roadNameSource === "roadName");
                 $('.project-form button.update').prop("disabled", false);
             }
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)

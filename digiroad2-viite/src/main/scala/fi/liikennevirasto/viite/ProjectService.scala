@@ -35,7 +35,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String)
+case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String, nameSource: String)
 
 case class LinkToRevert(id: Long, linkId: Long, status: Long, geometry: Seq[Point])
 
@@ -115,11 +115,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def fetchPreFillFromVVH(linkId: Long): Either[String, PreFillInfo] = {
-    parsePreFillData(roadLinkService.getVVHRoadlinks(Set(linkId), useFrozenVVHLinks))
+  def fetchPreFillFromVVH(linkId: Long, projectId: Long): Either[String, PreFillInfo] = {
+    parsePreFillData(roadLinkService.getVVHRoadlinks(Set(linkId), useFrozenVVHLinks), projectId)
   }
 
-  def parsePreFillData(vvhRoadLinks: Seq[VVHRoadlink]): Either[String, PreFillInfo] = {
+  def parsePreFillData(vvhRoadLinks: Seq[VVHRoadlink], projectId: Long = -1000): Either[String, PreFillInfo] = {
     withDynSession {
       if (vvhRoadLinks.isEmpty) {
         Left("Link could not be found in VVH")
@@ -128,8 +128,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val vvhLink = vvhRoadLinks.head
         (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
           case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
-            val roadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong)
-            Right(PreFillInfo(roadNumber, roadPartNumber, if (roadName.isEmpty) "" else roadName.get.roadName))
+            val preFilledRoadName =
+              RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
+                case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, "roadName" )
+                case _ => ProjectLinkNameDAO.get(roadNumber.toLong, projectId) match {
+                case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, "projectLink")
+                case _ => PreFillInfo(roadNumber, roadPartNumber, "", "")
+                }
+              }
+            Right(preFilledRoadName)
           case _ => Left("Link does not contain valid prefill info")
         }
       }
