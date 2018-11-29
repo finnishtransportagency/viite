@@ -113,7 +113,7 @@ pipeline {
             agent {
                 docker {
                     image "viite-backend-sbt"
-                    args '-v viite-ivy-releases4:/root/.ivy2'
+                    args '-v $HOME/.ivy2:/root/.ivy2'
                     reuseNode true
                 }
             }
