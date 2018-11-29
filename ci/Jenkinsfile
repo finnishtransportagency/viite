@@ -113,7 +113,7 @@ pipeline {
             agent {
                 docker {
                     image "viite-backend-sbt"
-                    args '-v viite-ivy-releases:/root/.ivy'
+                    args '-v viite-ivy-releases4:/root/.ivy2'
                     reuseNode true
                 }
             }
@@ -178,13 +178,13 @@ pipeline {
             //}
         }
     }
-    //post {
-    //    always {
+    post {
+        always {
             //slackSend(
             //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
             //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
             //)
-    //        deleteDir()
-    //    }
-    //}
+            deleteDir()
+        }
+    }
 }
