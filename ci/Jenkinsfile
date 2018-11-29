@@ -114,6 +114,7 @@ pipeline {
             agent {
                 docker {
                     image "viite-backend-sbt"
+                    args '-v viite-ivy-releases:/home/jenkins/.ivy'
                     reuseNode true
                 }
             }
