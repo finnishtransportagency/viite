@@ -409,4 +409,40 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //    }
   //  }
 
+  //TODO this will be implemented at VIITE-1541
+  //  test("Calculate delta for project") {
+  //    var count = 0
+  //    val roadlink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
+  //      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+  //      InUse, NormalLinkInterface)
+  //    runWithRollback {
+  //      val countCurrentProjects = projectService.getRoadAddressAllProjects
+  //      val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5L, 205L, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
+  //      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
+  //      val saved = projectService.createRoadLinkProject(roadAddressProject)
+  //      mockForProject(saved.id, RoadAddressDAO.fetchByRoadPart(5, 205).map(toProjectLink(saved)))
+  //      val changed = saved.copy(reservedParts = addresses)
+  //      projectService.saveProject(changed)
+  //      val countAfterInsertProjects = projectService.getRoadAddressAllProjects
+  //      val projectLinks = ProjectDAO.fetchByProjectRoadPart(5, 205, saved.id)
+  //      projectLinks.nonEmpty should be(true)
+  //      count = countCurrentProjects.size + 1
+  //      countAfterInsertProjects.size should be(count)
+  //      sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value} Where PROJECT_ID = ${saved.id}""".execute
+  //      val terminations = ProjectDeltaCalculator.delta(saved).terminations
+  //      terminations should have size (projectLinks.size)
+  //      sqlu"""UPDATE Project_link set status = ${LinkStatus.New.value} Where PROJECT_ID = ${saved.id}""".execute
+  //      val newCreations = ProjectDeltaCalculator.delta(saved).newRoads
+  //      newCreations should have size (projectLinks.size)
+  //      val sections = ProjectDeltaCalculator.partition(terminations)
+  //      sections should have size (2)
+  //      sections.exists(_.track == Track.LeftSide) should be(true)
+  //      sections.exists(_.track == Track.RightSide) should be(true)
+  //      sections.groupBy(_.endMAddr).keySet.size should be(1)
+  //    }
+  //    runWithRollback {
+  //      projectService.getRoadAddressAllProjects
+  //    } should have size (count - 1)
+  //  }
+
 }
