@@ -130,6 +130,12 @@
         Unknown:                        {value:99, description:"Ei määritelty"}
     };
 
+    root.RoadNameSource = {
+        UnknownSource:              {value: -1, source: "Unknown Source"},
+        ProjectLinkSource:          {value: 0, source: "Project Link Source"},
+        RoadAddressSource:          {value: 1, source: "Road Name Source"}
+    };
+
     /*
     The meta key codes are browser dependant, in proper:
         Firefox: 224
