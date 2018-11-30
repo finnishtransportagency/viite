@@ -58,9 +58,9 @@ pipeline {
             steps {
                 script {
                     def statusCode = sh(returnStdout: true, script: "docker volume inspect viite-ivy-releases-${get_environment()?.trim()}").trim()
-                    //if (statusCode != 0 ){
-                    //    sh(script:"docker volume create viite-ivy-releases-${get_environment()?.trim()}", returnStatus:false)
-                    //}
+                    if (statusCode != 0 ){
+                        sh(script:"docker volume create viite-ivy-releases-${get_environment()?.trim()}", returnStatus:false)
+                    }
                     echo "Running publish... (skipped for now) ${statusCode}"
 
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
