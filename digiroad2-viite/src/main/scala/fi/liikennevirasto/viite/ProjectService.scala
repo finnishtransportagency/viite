@@ -1611,7 +1611,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
-          logger.info(s"Retrived TR status: ${trProjectState.getOrElse(None)}")
+          logger.info(s"Retrieved TR status: ${trProjectState.getOrElse(None)}")
           val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
           val errorMessage = getTRErrorMessage(trProjectState)
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
