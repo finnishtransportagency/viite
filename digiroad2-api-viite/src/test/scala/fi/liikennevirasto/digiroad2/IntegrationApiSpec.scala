@@ -116,7 +116,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it a incorrect value Then returns status code 400") {
+  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it a incorrect date Then returns status code 400") {
     getWithBasicUserAuth("/roadnames/changes?since=1.1.2018", "kalpa", "kalpa") {
       status should equal(400)
     }
