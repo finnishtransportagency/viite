@@ -318,30 +318,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Partitioner should separate links containing calibration points whose origin is ProjectLink") {
-    val addresses = (0 to 9).map(i => {
-      createRoadAddress(i * 2, 2L)
-    })
-    val projectLinksWithCp = addresses.map(a => {
-      val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
-      if (a.id == 10L)
-        (a, projectLink.copy(calibrationPoints = createCalibrationPoints(a)))
-      else if(a.id > 10L)
-        (a, projectLink.copy(roadPartNumber = projectLink.roadPartNumber + 1))
-      else
-        (a, projectLink)
-    })
-    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp)
-    partitionCp.size should be(2)
-    val firstSection = partitionCp.head
-    val secondSection = partitionCp.last
-    val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
-    firstSection._1.startMAddr should be(projectLinksWithCp.head._2.startAddrMValue)
-    firstSection._1.endMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.startMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
-  }
-
   //TODO Will be implemented when split is implemented
   //  test("Calculate delta for split suravage link") {
   //    runWithRollback {
