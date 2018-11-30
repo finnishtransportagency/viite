@@ -295,12 +295,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
            0,87,1,2)""".execute
     ProjectDAO.reserveRoadPart(projectId, 1, 1, "TestUser")
     sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
-          START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROAD_ADDRESS_ID, GEOMETRY,
-          link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) VALUES
+          START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, ROAD_ADDRESS_ID,
+          link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source, GEOMETRY) VALUES
           (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',
-          TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0, $raId,
-          ${fi.liikennevirasto.viite.toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))},
-          1, 2, 0.0, 87.0, 0, 1)""".execute
+          TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0, $raId, 1, 2, 0.0, 87.0, 0, 1, #${fi.liikennevirasto.viite.toGeom(Seq(Point(0, 0), Point(0, 45.3), Point(0, 87)))})""".execute
     ProjectDAO.getRoadAddressProjectById(projectId).get
   }
 

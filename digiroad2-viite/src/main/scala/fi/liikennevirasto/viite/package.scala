@@ -166,6 +166,11 @@ package object viite {
         Seq(p.x, p.y)).map(toBD).mkString("[", ",","]")).mkString(",")
   }
 
+  def toGeom(geometry: Seq[Point]): String = {
+    val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
+    s"""MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"""
+  }
+
   def toGeometry(geometryString: String): Seq[Point] = {
     def toBD(s: String): Double = {
       BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble

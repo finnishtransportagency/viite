@@ -1371,10 +1371,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       noErrors.size should be(0)
 
       //Should return MAJOR DISCONTINUITY to both Project Links, part number = 1
-      val originalGeom = projectLinks.filter(_.roadPartNumber == 2L).head.geometry
       val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
-      val discontinuousGeomString = "'" + toGeomString(Seq(Point(40.0, 50.0), Point(60.0, 70.0))) + "'"
-      sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = ${discontinuousGeomString} Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
+      val discontinuousGeomString = toGeom(Seq(Point(40.0, 50.0), Point(60.0, 70.0)))
+      sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = #${discontinuousGeomString} Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
       val errorsAtEnd = ProjectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
         if (pl.roadPartNumber == 2L)
           pl.copyWithGeometry(discontinuousGeom)
