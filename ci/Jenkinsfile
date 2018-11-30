@@ -60,7 +60,7 @@ pipeline {
                     def statusCode = sh(script: "docker volume inspect viite-ivy-releases-${get_environment()?.trim()}", returnStatus: true)
                     if (statusCode != 0 ){
                         echo "Creating .... ${statusCode}"
-                        sh(script:"docker volume create --name=viite-ivy-releases-${get_environment()?.trim()} --opt o=size=1gb", returnStatus:false)
+                        sh(script:"docker volume create viite-ivy-releases-${get_environment()?.trim()}", returnStatus:false)
                     }
                     echo "Running publish... (skipped for now) ${statusCode}"
 
