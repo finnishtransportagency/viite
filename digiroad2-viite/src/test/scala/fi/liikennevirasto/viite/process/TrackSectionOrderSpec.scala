@@ -2,18 +2,34 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.viite.Dummies._
+import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.util.toProjectLink
 
 class TrackSectionOrderSpec extends FunSuite with Matchers {
 
   private def toDummyProjectLink(id: Long, geom: Seq[Point], track: Track = Track.Combined) = {
     dummyProjectLink(1L, 1L, track, Discontinuity.Continuous, 0, 10, Some(DateTime.now), status = LinkStatus.NotHandled, geometry = geom, linkId = id)
+  }
+
+  val projectId = 1
+  val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
+    "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
+    List.empty[ProjectReservedPart], None)
+
+  private def generateProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
+    //TODO the road address now have the linear location id and as been setted to 1L
+    toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, track, Continuous,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+      geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
 
   test("Test orderProjectLinksTopologyByGeometry When is not dependent on the links order Then the links should be ordered") {
@@ -244,12 +260,12 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //                   |-----------|-----------|        |----------|---------|        |----------|--------|
     //                        1L          2L                   3L         4L               5L        6L
     val projectLinks = List(
-      toDummyProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.LeftSide),
-      toDummyProjectLink(2L, Seq(Point(3, 1), Point(4, 1)), Track.LeftSide),
-      toDummyProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined),
-      toDummyProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined),
-      toDummyProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.LeftSide),
-      toDummyProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.LeftSide)
+      generateProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.LeftSide),
+      generateProjectLink(2L, Seq(Point(3, 1), Point(4, 1)), Track.LeftSide),
+      generateProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined),
+      generateProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined),
+      generateProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.LeftSide),
+      generateProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.LeftSide)
     )
     val endPoints = TrackSectionOrder.findChainEndpoints(projectLinks)
     endPoints.size should be (2)
