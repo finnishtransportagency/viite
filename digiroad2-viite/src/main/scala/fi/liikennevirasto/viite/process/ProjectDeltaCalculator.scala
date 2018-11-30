@@ -24,7 +24,7 @@ object ProjectDeltaCalculator {
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
   def delta(project: Project): Delta = {
-    val projectLinksFetched = projectLinkDAO.getProjectLinks(project.id)
+    val projectLinksFetched = projectLinkDAO.fetchProjectLinks(project.id)
     val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber, l.roadPartNumber))
     val currentRoadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllByRoadwayId(projectLinksFetched.map(_.roadwayId)).map(_.roadwayNumber).toSet))
     val currentAddresses = currentRoadAddresses.map(ra => ra.linearLocationId -> ra).toMap
@@ -146,7 +146,7 @@ object ProjectDeltaCalculator {
   }
 
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
-    val hasCalibrationPoint = (!r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtEnd)) || (r1.reversed && r1.hasCalibrationPointAt(CalibrationCode.AtBeginning))
+    val hasCalibrationPoint = r1.hasCalibrationPointAt(CalibrationCode.AtEnd)
     val openBasedOnSource = hasCalibrationPoint && {
       val (sourceL, sourceR) = r1.getCalibrationSources
       sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource

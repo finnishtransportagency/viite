@@ -2,6 +2,8 @@ package fi.liikennevirasto.viite.dao
 
 import java.util.Date
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -93,8 +95,9 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
-  def getEndPoints(direction: Vector3d): (Point, Point) = {
+  def getEndPoints() = {
     if (sideCode == SideCode.Unknown) {
+      val direction = if(geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
       Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
     } else {
       (startingPoint, endPoint)
@@ -422,13 +425,13 @@ class ProjectLinkDAO {
     }
   }
 
-  def getElyFromProjectLinks(projectId:Long): Option[Long]= {
+  def fetchElyFromProjectLinks(projectId:Long): Option[Long]= {
     val query =
       s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROWNUM < 2"""
     Q.queryNA[Long](query).firstOption
   }
 
-  def getProjectLinksHistory(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinksHistory(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project history links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"plh.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
@@ -438,7 +441,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+  def fetchProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
@@ -449,7 +452,7 @@ class ProjectLinkDAO {
   }
 
   //TODO: support for bigger queries than 1000 ids
-  def getProjectLinksByIds(ids: Iterable[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByIds(ids: Iterable[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
       if (ids.isEmpty)
         List()
@@ -462,7 +465,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByConnectedLinkId(connectedIds: Seq[Long]): Seq[ProjectLink] = {
+  def fetchProjectLinksByConnectedLinkId(connectedIds: Seq[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by connected link ids") {
       if (connectedIds.isEmpty) {
         List()
@@ -495,7 +498,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def getProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+  def fetchProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
     if (projectLinkIds.isEmpty && linkIds.isEmpty) {
       List()
     } else {
@@ -505,6 +508,29 @@ class ProjectLinkDAO {
         s"""$projectLinkQueryBase
                 where PROJECT_LINK.PROJECT_ID = $projectId $idsFilter $linkIdsFilter
                 order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
+  def fetchProjectLinksByLinkId(linkIds: Seq[Long]): Seq[ProjectLink] = {
+    if (linkIds.isEmpty) {
+      List()
+    } else {
+      val linkIdsFilter =  s" PROJECT_LINK.LINK_ID IN (${linkIds.mkString(",")})"
+      val query =
+        s"""$projectLinkQueryBase
+                where $linkIdsFilter
+                order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
+  def fetchProjectLinksByProjectRoadPart(road: Long, part: Long, projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
+    time(logger, "Get project links by project road part") {
+      val filter = if (linkStatusFilter.isEmpty) "" else s" PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
+      val query =
+        s"""$projectLinkQueryBase
+                where $filter PROJECT_LINK.ROAD_NUMBER = $road and PROJECT_LINK.ROAD_PART_NUMBER = $part AND PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }

@@ -101,7 +101,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectLinkDAO.create(Seq(projectLink))
       val (originalStartAddrM, originalEndStartAddrM) = (projectLink.originalStartAddrMValue, projectLink.originalEndAddrMValue)
       projectLinkDAO.updateAddrMValues(projectLink.copy(startAddrMValue = 200, endAddrMValue = 300))
-      val returnedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       returnedProjectLinks.size should be(1)
       returnedProjectLinks.head.originalStartAddrMValue should be(originalStartAddrM)
       returnedProjectLinks.head.originalEndAddrMValue should be(originalEndStartAddrM)
@@ -119,7 +119,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val projectLinks = Seq(dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
-      val returnedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       returnedProjectLinks.count(x => x.reversed) should be(0)
     }
   }
@@ -140,9 +140,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       projectDAO.fetchById(id).nonEmpty should be(true)
-      val returnedProjectLinks = projectLinkDAO.getProjectLinks(id)
+      val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       projectLinkDAO.removeProjectLinksById(returnedProjectLinks.map(_.id).toSet) should be(returnedProjectLinks.size)
-      projectLinkDAO.getProjectLinks(id).nonEmpty should be(false)
+      projectLinkDAO.fetchProjectLinks(id).nonEmpty should be(false)
     }
   }
 
@@ -161,11 +161,11 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber1, 100, 200, 100.0, 200.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
-      val returnedProjectLinks = projectLinkDAO.getProjectLinks(id)
+      val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       val biggestProjectLink = returnedProjectLinks.maxBy(_.endAddrMValue)
       projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(returnedProjectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test", 2, None)
       projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test", 2, Some(2))
-      val savedProjectLinks = projectLinkDAO.getProjectLinks(id)
+      val savedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       savedProjectLinks.count(_.roadType.value == 2) should be(savedProjectLinks.size)
       savedProjectLinks.count(_.discontinuity.value == 2) should be(1)
       savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be(biggestProjectLink.id)
@@ -187,19 +187,19 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks.map(x => x.copy(reversed = true)))
-      val returnedProjectLinks = projectLinkDAO.getProjectLinks(id)
+      val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
       returnedProjectLinks.count(x => x.reversed) should be(projectLinks.size)
     }
   }
 
   test("Test getProjectLinksByIds and removeProjectLinksById When supplying a empty list Then both methods should NOT throw an exception") {
-    projectLinkDAO.getProjectLinksByIds(Seq())
+    projectLinkDAO.fetchProjectLinksByIds(Seq())
     projectLinkDAO.removeProjectLinksById(Set())
   }
 
   test("Test updateProjectLinks When giving one new projectLink with new values Then it should update project link") {
     runWithRollback {
-      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
       val newRoadType = RoadType.FerryRoad
       val newDiscontinuty = Discontinuity.ChangingELYCode
@@ -211,7 +211,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val modifiedProjectLinks = Seq(header.copy(roadType = newRoadType, discontinuity = newDiscontinuty, startAddrMValue = newStartAddrMValue, endAddrMValue = newEndAddrMValue, track = newTrack, status = newStatus))
       projectLinkDAO.updateProjectLinks(modifiedProjectLinks, "test", Seq())
 
-      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
 
       updatedProjectLink.roadType should be(newRoadType)
       updatedProjectLink.discontinuity should be(newDiscontinuty)
@@ -225,28 +225,28 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectLinksGeometry When giving one link with updated geometry Then it should be updated") {
     runWithRollback {
-      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
       val newGeometry = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
 
       val modifiedProjectLinks = Seq(header.copy(geometry = newGeometry))
       projectLinkDAO.updateProjectLinksGeometry(modifiedProjectLinks, "test")
 
-      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
       updatedProjectLink.geometry should be(newGeometry)
     }
   }
 
   test("Test updateProjectLinkNumbering When giving one link with updated road number and part Then it should be updated") {
     runWithRollback {
-      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
       val newRoadNumber = 1
       val newRoadPartNumber = 5
       projectReservedPartDAO.reserveRoadPart(7081807, newRoadNumber, newRoadPartNumber, "test")
       projectLinkDAO.updateProjectLinkNumbering(Seq(header.id), header.status, newRoadNumber, newRoadPartNumber, "test", header.discontinuity.value)
 
-      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
       updatedProjectLink.roadNumber should be(newRoadNumber)
       updatedProjectLink.roadPartNumber should be(newRoadPartNumber)
     }
@@ -254,26 +254,26 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectLinksStatus When giving one link with updated road number and part Then it should be updated") {
     runWithRollback {
-      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
       val newRoadNumber = 1
       val newRoadPartNumber = 5
       projectLinkDAO.updateProjectLinksStatus(Set(header.id), LinkStatus.Terminated, "test")
 
-      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
       updatedProjectLink.status should be(LinkStatus.Terminated)
     }
   }
 
   test("Test updateAddrMValues When giving one link with updated road number and part Then it should be updated") {
     runWithRollback {
-      val projectLinks = projectLinkDAO.getProjectLinks(7081807)
+      val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
       val newStartAddrMValues = 0
       val newEndAddrMValues = 100
       projectLinkDAO.updateAddrMValues(header.copy(startAddrMValue = newStartAddrMValues, endAddrMValue = newEndAddrMValues))
 
-      val updatedProjectLink = projectLinkDAO.getProjectLinks(7081807).filter(link => link.id == header.id).head
+      val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
       updatedProjectLink.startAddrMValue should be(newStartAddrMValues)
       updatedProjectLink.endAddrMValue should be(newEndAddrMValues)
     }
@@ -321,7 +321,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
       projectLinkDAO.updateProjectLinkValues(projectId, roadAddress, updateGeom = true)
 
-      val updatedProjectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       val updatedProjectLink = updatedProjectLinks.filter(link => link.id == projectLinks.head.id).head
       updatedProjectLink.roadNumber should be(roadNumber)
       updatedProjectLink.roadPartNumber should be(roadPartNumber)
@@ -340,9 +340,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   test("Test getElyFromProjectLinks When trying to get ely by project Then it should be returned with success") {
     runWithRollback {
       val projectId = 7081807
-      val projectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       val ely = projectLinks.head.ely
-      val elyByProject = projectLinkDAO.getElyFromProjectLinks(projectId)
+      val elyByProject = projectLinkDAO.fetchElyFromProjectLinks(projectId)
       ely should be(elyByProject.getOrElse(0))
     }
   }
@@ -350,9 +350,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val projectId = 7081807
       projectLinkDAO.moveProjectLinksToHistory(projectId)
-      val projectLinks = projectLinkDAO.getProjectLinks(projectId)
+      val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       projectLinks.isEmpty should be(true)
-      val projectLinksHistory = projectLinkDAO.getProjectLinksHistory(projectId)
+      val projectLinksHistory = projectLinkDAO.fetchProjectLinksHistory(projectId)
       projectLinksHistory.isEmpty should be(false)
     }
   }
@@ -382,7 +382,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
 
-      val connectedLinks = projectLinkDAO.getProjectLinksByConnectedLinkId(Seq(connectedId))
+      val connectedLinks = projectLinkDAO.fetchProjectLinksByConnectedLinkId(Seq(connectedId))
       connectedLinks.size should be(projectLinks.size)
     }
   }
@@ -443,8 +443,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
 
-      val result1 = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(projectLinks.head.id), Seq(), projectId)
-      val result2 = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), projectId)
+      val result1 = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(projectLinks.head.id), Seq(), projectId)
+      val result2 = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), projectId)
       result1.size should be(result2.size)
       result1.head.linkId should be(linkId1)
     }
@@ -536,7 +536,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
       val side = projectLinks.head.sideCode
       projectLinkDAO.reverseRoadPartDirection(projectId, roadNumber1, roadPartNumber1)
-      val result1 = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(projectLinks.head.id), Seq(), projectId)
+      val result1 = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(projectLinks.head.id), Seq(), projectId)
       side should not be result1.head.sideCode
 
       result1.head.linkId should be(linkId1)
@@ -613,7 +613,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksById(Set(projectLinkId1))
-      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), id)
+      val result = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), id)
       result.size should be (projectLinks.size - 1)
       result.head.id should be (projectLinkId2)
     }
@@ -635,7 +635,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksByProject(id)
-      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), id)
+      val result = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), id)
       result.size should be (0)
     }
   }
@@ -656,7 +656,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksByLinkId(id, Set(linkId1))
-      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), id)
+      val result = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(), Seq(linkId1), id)
       result.size should be (0)
     }
   }
@@ -678,7 +678,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.fetchSplitLinks(id, linkId1)
-      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(), Seq(linkId1, linkId2, linkId3), id)
+      val result = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(), Seq(linkId1, linkId2, linkId3), id)
       result.size should be (3)
     }
   }
@@ -699,7 +699,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksByProjectAndRoadNumber(id, roadNumber1, roadPartNumber1)
-      val result = projectLinkDAO.getProjectLinksByProjectAndLinkId(Set(projectLinkId1, projectLinkId2), Seq(), id)
+      val result = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(projectLinkId1, projectLinkId2), Seq(), id)
       result.size should be (1)
       result.head.linkId should be (linkId2)
     }
