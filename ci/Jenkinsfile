@@ -57,10 +57,9 @@ pipeline {
             }
             steps {
                 script {
-                    my_vol = "viite-ivy-releases-${get_environment()?.trim()}"
-                    def statusCode = sh(script:"docker volume inspect ${my_vol}", returnStatus:true)
+                    def statusCode = sh(script:"docker volume inspect viite-ivy-releases-${get_environment()?.trim()}", returnStatus:true)
                     if ($statusCode != 0 ){
-                        sh(script:"docker volume create ${my_vol}", returnStatus:false)
+                        sh(script:"docker volume create viite-ivy-releases-${get_environment()?.trim()}", returnStatus:false)
                     }
 
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
