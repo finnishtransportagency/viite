@@ -57,6 +57,10 @@ pipeline {
             }
             steps {
                 script {
+                    def my_vol = "viite-ivy-releases-${get_environment()?.trim()}"
+                    def statusCode = sh(script:“docker volume inspect ${my_vol}“, returnStatus:true)
+                    if [ $statusCode != 0 ] { sh(script:“docker volume create ${my_vol}“, returnStatus:false) }
+
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
                     def build_args = [
                         "--build-arg http_proxy=${http_proxy}",
@@ -113,7 +117,7 @@ pipeline {
             agent {
                 docker {
                     image "viite-backend-sbt"
-                    args '-v $HOME/.ivy2:/root/.ivy2'
+                    args "-v ${my_vol}:/root/.ivy2"
                     reuseNode true
                 }
             }
