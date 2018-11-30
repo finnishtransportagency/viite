@@ -160,8 +160,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
                 case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource )
                 case _ => ProjectLinkNameDAO.get(roadNumber.toLong, projectId) match {
-                case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource)
-                case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource)
+                  case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource)
+                  case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource)
                 }
               }
             Right(preFilledRoadName)
