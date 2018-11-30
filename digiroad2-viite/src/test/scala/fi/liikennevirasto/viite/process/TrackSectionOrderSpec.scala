@@ -244,12 +244,12 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     //                   |-----------|-----------|        |----------|---------|        |----------|--------|
     //                        1L          2L                   3L         4L               5L        6L
     val projectLinks = List(
-      dummyProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.LeftSide),
-      dummyProjectLink(2L, Seq(Point(3, 1), Point(4, 1)), Track.LeftSide),
-      dummyProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined),
-      dummyProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined),
-      dummyProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.LeftSide),
-      dummyProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.LeftSide)
+      toDummyProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.LeftSide),
+      toDummyProjectLink(2L, Seq(Point(3, 1), Point(4, 1)), Track.LeftSide),
+      toDummyProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined),
+      toDummyProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined),
+      toDummyProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.LeftSide),
+      toDummyProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.LeftSide)
     )
     val endPoints = TrackSectionOrder.findChainEndpoints(projectLinks)
     endPoints.size should be (2)
