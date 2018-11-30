@@ -1,6 +1,7 @@
 (function (root) {
   root.FormCommon = function(prefix) {
     var Track = LinkValues.Track;
+    var RoadNameSource = LinkValues.RoadNameSource;
 
       var title = function (titleName) {
           if (!titleName)
@@ -62,7 +63,7 @@
             $('#osa').val(response.roadPartNumber);
             if(response.roadName !== ''){
                 roadNameField.val(response.roadName);
-                roadNameField.prop('disabled', true);
+                roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
                 $('.project-form button.update').prop("disabled", false);
             }
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)

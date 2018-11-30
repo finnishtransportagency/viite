@@ -34,7 +34,35 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String)
+sealed trait RoadNameSource {
+  def value: Long
+  def sourceName: String
+}
+
+object RoadNameSource {
+  val values = Set(UnknownSource, ProjectLinkSource, RoadAddressSource)
+
+  def apply (value: Long): RoadNameSource = {
+    values.find(_.value == value).getOrElse(UnknownSource)
+  }
+
+  case object UnknownSource extends RoadNameSource {
+    def value = -1
+    def sourceName = "Unknown Source"
+  }
+  case object ProjectLinkSource extends RoadNameSource {
+    def value = 0
+    def sourceName = "Project Link Source"
+  }
+
+  case object RoadAddressSource extends RoadNameSource {
+    def value = 1
+    def sourceName = "Road Name Source"
+  }
+
+}
+
+case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String, roadNameSource: RoadNameSource)
 
 case class LinkToRevert(id: Long, linkId: Long, status: Long, geometry: Seq[Point])
 
@@ -123,7 +151,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     parsePreFillData(roadLinkService.getVVHRoadlinks(Set(linkId)))
   }
 
-  def parsePreFillData(vvhRoadLinks: Seq[VVHRoadlink]): Either[String, PreFillInfo] = {
+  def parsePreFillData(vvhRoadLinks: Seq[VVHRoadlink], projectId: Long = -1000): Either[String, PreFillInfo] = {
     withDynSession {
       if (vvhRoadLinks.isEmpty) {
         Left("Link could not be found in VVH")
@@ -132,8 +160,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val vvhLink = vvhRoadLinks.head
         (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
           case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
-            val roadName = RoadNameDAO.getLatestRoadName(roadNumber.toLong)
-            Right(PreFillInfo(roadNumber, roadPartNumber, if (roadName.isEmpty) "" else roadName.get.roadName))
+            val preFilledRoadName =
+              RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
+                case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource )
+                case _ => ProjectLinkNameDAO.get(roadNumber.toLong, projectId) match {
+                case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource)
+                case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource)
+                }
+              }
+            Right(preFilledRoadName)
           case _ => Left("Link does not contain valid prefill info")
         }
       }
