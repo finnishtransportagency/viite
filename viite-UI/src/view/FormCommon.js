@@ -101,9 +101,10 @@
       return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">'+label+'</label>';
     };
 
-    var addSmallInputNumber = function(id, value){
+    var addSmallInputNumber = function(id, value, isDisabled){
       //Validate only number characters on "onkeypress" including TAB and backspace
-      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
+      var disabled = isDisabled ? ' disabled ': '';
+      return '<input '+ disabled+ ' type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
         '" class="'+prefix+'form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
@@ -252,9 +253,9 @@
         '</div>' +
         '<div class="'+prefix+'form-group">' +
         '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
-        addSmallInputNumber('beginDistance', '--') +
+        addSmallInputNumber('beginDistance', '--', true) +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
-        addSmallInputNumber('endDistance', '--') +
+        addSmallInputNumber('endDistance', '--', true) +
         '<span id="manualCPWarning" class="manualCPWarningSpan">!</span>' +
         '</div></div>';
     };

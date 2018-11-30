@@ -100,9 +100,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageRoadLinks
 
-    //TODO Will be implemented at VIITE-1542
-    //RoadAddressDAO.getUnaddressedRoadLinks(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
-
     //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
 
@@ -170,7 +167,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     nonFloatingRoadAddresses.map(roadAddressLinkBuilder.build)
   }
 
-  def getRoadAddressesByLinkIds(linkIds: Seq[Long]) = {
+  def getRoadAddressesByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
     val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
     roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
   }
@@ -469,12 +466,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     RoadAddressFiller.fillTopology(roadlinks, roadAddresses).filter(_.linkId == linkId)
-
-    //    val (addresses, missedRL) = withDynTransaction {
-    //      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
-    //        RoadAddressDAO.getUnaddressedRoadLinks(Set(linkId)))
-    //    }
-    //    processRoadAddresses(addresses, missedRL)
 
   }
 

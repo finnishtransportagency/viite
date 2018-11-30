@@ -334,7 +334,7 @@ class ProjectValidator {
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
     val (splitLinks, nonSplitLinks) = pl.partition(_.isSplit)
     val splitIds = splitLinks.flatMap(s => Seq(s.connectedLinkId.get, s.linkId))
-    val connectedSplitLinks = projectLinkDAO.getProjectLinksByConnectedLinkId(splitIds)
+    val connectedSplitLinks = projectLinkDAO.fetchProjectLinksByConnectedLinkId(splitIds)
     val (ids, points) = (nonSplitLinks ++ connectedSplitLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty) {
       Some(ValidationErrorDetails(id, validationError, ids,
@@ -652,10 +652,9 @@ class ProjectValidator {
     */
   def checkRoadContinuityCodes(project: Project, roadProjectLinks: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
 
-    val allProjectLinks = projectLinkDAO.getProjectLinks(project.id)
+    val allProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
 
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
-//      throw new NotImplementedError("Will be implemented at VIITE-1540")
       // This code means that this road part (of a ramp) should be connected to a roundabout
       val endPoints = pls.map(endPoint).map(p => (p.x, p.y)).unzip
       val boundingBox = BoundingRectangle(Point(endPoints._1.min,
