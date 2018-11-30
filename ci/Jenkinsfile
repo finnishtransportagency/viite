@@ -57,7 +57,7 @@ pipeline {
             }
             steps {
                 script {
-                    def my_vol = "viite-ivy-releases-${get_environment()?.trim()}"
+                    my_vol = "viite-ivy-releases-${get_environment()?.trim()}"
                     def statusCode = sh(script:"docker volume inspect ${my_vol}", returnStatus:true)
                     if ($statusCode != 0 ){
                         sh(script:"docker volume create ${my_vol}", returnStatus:false)
