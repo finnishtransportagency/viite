@@ -695,7 +695,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber2, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
         dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber2, roadNumber2, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.removeProjectLinksByProjectAndRoadNumber(id, roadNumber1, roadPartNumber1)
