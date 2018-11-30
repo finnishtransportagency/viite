@@ -1731,7 +1731,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Check creation of new RoadAddress History entries") {
+  test("Test expireHistoryRows When expiring one roadway by id Then it should be expired by validTo date") {
     runWithRollback {
 
       val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
@@ -1759,7 +1759,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Road names should not have valid road name for any roadnumber after TR response") {
+  test("Test Road names should not have valid road name for any roadnumber after TR response") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 66666, 'ROAD TEST', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
@@ -1781,7 +1781,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Provoke a IOException or ClientProtocolException exception when publishing a project and then check if the project state is changed to 9") {
+  test("Test publishProject When sending changes to TR and provoking a IOException exception when publishing a project Then check if the project state is changed to 9") {
     var count = 0
     val roadNumber = 5L
     val part = 207L
@@ -1829,7 +1829,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   }
 
-  test("Check correct roadName assignment via ProjectLinkName") {
+  test("Test fillRoadNames When creating one project link for one new road name Then method should get the road name of the created project links") {
     val roadNumber = 5L
     val roadPartNumber = 207L
     val testRoadName = "forTestingPurposes"
@@ -1850,29 +1850,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Check correct roadName assignment via RoadNameDao") {
+  test("Test fillRoadNames When creating one project link for one new road name Then through RoadNameDao the road name of the created project links should be same as the latest one") {
     val roadNumber = 5L
     val roadPartNumber = 207L
-    val testRoadName = "forTestingPurposes"
-    runWithRollback {
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None)
-      val project = projectService.createRoadLinkProject(rap)
-      val id = project.id
-      mockForProject(project.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project)))
-      projectService.saveProject(project.copy(reservedParts = Seq(
-        ProjectReservedPart(0L, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
-      val projectLinks = projectLinkDAO.getProjectLinks(id)
-
-      projectService.fillRoadNames(projectLinks.head).roadName.get should be(RoadNameDAO.getLatestRoadName(roadNumber).get.roadName)
-    }
-  }
-
-  test("Check correct roadName assignment via the name on the project link") {
-    val roadNumber = 5L
-    val roadPartNumber = 207L
-    val testRoadName = "forTestingPurposes"
     runWithRollback {
       val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info",
@@ -1884,64 +1864,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(0L), Some(Continuous), Some(8L), None, None, None, None, true))))
       val projectLinks = projectLinkDAO.getProjectLinks(id)
 
-      projectService.fillRoadNames(projectLinks.head.copy(roadNumber = 9999L, roadName = Option(testRoadName))).roadName.get should be(testRoadName)
+      projectService.fillRoadNames(projectLinks.head).roadName.get should be(RoadNameDAO.getLatestRoadName(roadNumber).get.roadName)
     }
   }
 
-  test("If the suplied, old, road address has a valid_to < sysdate then the outputted, new, road addresses are floating") {
-    val road = 5L
-    val roadPart = 205L
-    val origStartM = 1024L
-    val origEndM = 1547L
-    val linkId = 1049L
-    val endM = 520.387
-    val suravageLinkId = 5774839L
-
-    runWithRollback {
-
-    val linearLocationId = Sequences.nextLinearLocationId
-    val user = Some("user")
-    val project = Project(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
-      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
-
-    // Original road address: 1024 -> 1547
-    val roadAddress = RoadAddress(1L, linearLocationId, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, Some(DateTime.now().minusYears(10)),
-      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
-
-    val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, 0, 0, Some(DateTime.now()), None, user,
-      0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
-      -1L, null, PublicRoad, null, 0.0, 1L, linearLocationId, 8L, reversed = false, None, 748800L)
-    val transferAndNew = Seq(
-
-      // Transferred road address: 1028 -> 1128
-      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, linkId = suravageLinkId,
-        startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = LinkStatus.Transfer,
-        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
-
-      // New road address: 1128 -> 1205
-      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, linkId = suravageLinkId,
-        startMValue = 99.384, endMValue = 176.495, geometry = Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)), status = LinkStatus.New,
-        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 77.111, connectedLinkId = Some(linkId)),
-
-      // Terminated road address: 1124 -> 1547
-      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, linkId = linkId,
-        startMValue = 99.384, endMValue = endM, geometry = Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)), status = LinkStatus.Terminated,
-        linkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength = endM - 99.384, connectedLinkId = Some(suravageLinkId))
-
-    )
-    val yesterdayDate = Option(DateTime.now().plusDays(-1))
-    val result = projectService.createSplitRoadAddress(roadAddress.copy(validTo = yesterdayDate), transferAndNew, project)
-    result should have size 4
-    result.count(_.terminated == TerminationCode.Termination) should be(1)
-    result.count(_.startDate == roadAddress.startDate) should be(2)
-    result.count(_.startDate.get == project.startDate) should be(2)
-    result.count(_.endDate.isEmpty) should be(2)
-//    result.filter(res => res.terminated == TerminationCode.NoTermination && res.roadwayNumber != -1000).forall(_.isFloating) should be(true)
-    }
-  }
-
-  test("road name should not be saved saved on TR success response if road number > 70.000 and it has no name") {
+  test("Test getLatestRoadName When having no road name for given road number Then road name should not be saved on TR success response if road number > 70.000 (even though it has no name)") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
@@ -1960,7 +1887,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("road name exists on TR success response") {
+  test("Test getLatestRoadName road name exists on TR success response") {
       runWithRollback {
         val projectId = Sequences.nextViitePrimaryKeySeqValue
         sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 66666, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
@@ -1979,14 +1906,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
     }
 
-  test("road name is saved on TR success response") {
+  test("Test getLatestRoadName When existing TR success response Then the road name should be saved") {
       runWithRollback {
         val projectId = Sequences.nextViitePrimaryKeySeqValue
         sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
         sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86)""".execute
         sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
-        val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
         projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectId)
 
         val project = projectService.getSingleProjectById(projectId)
@@ -1996,7 +1922,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
     }
 
-  test("road name is saved on TR success response - multiple names") {
+  test("Test getLatestRoadName When existing TR success response Then multiple names should be saved") {
       runWithRollback {
         val projectId = Sequences.nextViitePrimaryKeySeqValue
         sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
@@ -2019,7 +1945,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
     }
 
-  test("Unchanged with termination test, repeats termination update, checks calibration points are cleared and moved to correct positions") {
+  test("Test getProjectLinks When doing some operations (Unchanged with termination test, repeats termination update), Then the calibration points are cleared and moved to correct positions") {
     var count = 0
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -2069,7 +1995,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
-  test("Transfer and then terminate") {
+  test("Test getProjectLinks When doing some operations (Transfer and then Terminate), Then the calibration points are cleared and moved to correct positions") {
       var count = 0
       val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -2130,7 +2056,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     }
 
-  test("Terminate then transfer") {
+  test("Test getProjectLinks When doing some operations (Terminate then transfer), Then the calibration points are cleared and moved to correct positions") {
       var count = 0
       val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -2244,4 +2170,58 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
      linksAfterRevert.map(_.geometry).contains(geomAfterRevert) should be(true)
    }
  }
+
+  //TODO remove after cleaning all floating code
+  /*test("If the suplied, old, road address has a valid_to < sysdate then the outputted, new, road addresses are floating") {
+    val road = 5L
+    val roadPart = 205L
+    val origStartM = 1024L
+    val origEndM = 1547L
+    val linkId = 1049L
+    val endM = 520.387
+    val suravageLinkId = 5774839L
+
+    runWithRollback {
+
+    val linearLocationId = Sequences.nextLinearLocationId
+    val user = Some("user")
+    val project = Project(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+
+    // Original road address: 1024 -> 1547
+    val roadAddress = RoadAddress(1L, linearLocationId, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, Some(DateTime.now().minusYears(10)),
+      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
+
+    val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, 0, 0, Some(DateTime.now()), None, user,
+      0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
+      -1L, null, PublicRoad, null, 0.0, 1L, linearLocationId, 8L, reversed = false, None, 748800L)
+    val transferAndNew = Seq(
+
+      // Transferred road address: 1028 -> 1128
+      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, linkId = suravageLinkId,
+        startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = LinkStatus.Transfer,
+        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
+
+      // New road address: 1128 -> 1205
+      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, linkId = suravageLinkId,
+        startMValue = 99.384, endMValue = 176.495, geometry = Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)), status = LinkStatus.New,
+        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 77.111, connectedLinkId = Some(linkId)),
+
+      // Terminated road address: 1124 -> 1547
+      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, linkId = linkId,
+        startMValue = 99.384, endMValue = endM, geometry = Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)), status = LinkStatus.Terminated,
+        linkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength = endM - 99.384, connectedLinkId = Some(suravageLinkId))
+
+    )
+    val yesterdayDate = Option(DateTime.now().plusDays(-1))
+    val result = projectService.createSplitRoadAddress(roadAddress.copy(validTo = yesterdayDate), transferAndNew, project)
+    result should have size 4
+    result.count(_.terminated == TerminationCode.Termination) should be(1)
+    result.count(_.startDate == roadAddress.startDate) should be(2)
+    result.count(_.startDate.get == project.startDate) should be(2)
+    result.count(_.endDate.isEmpty) should be(2)
+    result.filter(res => res.terminated == TerminationCode.NoTermination && res.roadwayNumber != -1000).forall(_.isFloating) should be(true)
+    }
+  }*/
 }
