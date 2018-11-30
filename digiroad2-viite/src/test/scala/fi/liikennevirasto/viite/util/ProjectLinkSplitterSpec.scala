@@ -450,11 +450,11 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
       val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
-      val templateGeom = toGeomString(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
+      val templateGeom = toGeom(Seq(Point(0, 0), Point(0, 45.3), Point(0, 123.5), Point(0.5, 140)))
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
       sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
             start_Measure,end_Measure,Link_id,side_code)
-            VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, $templateGeom,
+            VALUES (${Sequences.nextViitePrimaryKeySeqValue},$projectId,0,0,1,1,0,87,'testuser',TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'), 0, #$templateGeom,
             0,87,1,2)""".execute
 
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
@@ -484,19 +484,9 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       ral.constructionType, ral.roadLinkSource)
   }
 
-  def toGeomString(geometry: Seq[Point]): String = {
-    def toBD(d: Double): String = {
-      val zeroEndRegex = """(\.0+)$""".r
-      val lastZero = """(\.[0-9])0*$""".r
-      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
-      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) })
-    }
-
-    geometry.map(p =>
-      (if (p.z != 0.0)
-        Seq(p.x, p.y, p.z)
-      else
-        Seq(p.x, p.y)).map(toBD).mkString("[", ",", "]")).mkString(",")
+  def toGeom(geometry: Seq[Point]): String = {
+    val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
+    s"""MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"""
   }
 
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
