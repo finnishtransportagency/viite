@@ -53,6 +53,9 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case 99 => roadLink.attributes.getOrElse(TrackCode, projectLink.track.value).asInstanceOf[Number].intValue()
       case _ => projectLink.track.value
     }
+
+    val sideCode = if (projectLink.reversed) SideCode.switch(projectLink.sideCode) else projectLink.sideCode
+
     val roadName = projectLink.roadName.getOrElse("")
     val municipalityCode = roadLink.municipalityCode
 
@@ -71,7 +74,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode,
       linkType, projectLink.roadType, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
-      projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
+      projectLink.startMValue, projectLink.endMValue, sideCode,
       calibrationPoints._1, calibrationPoints._2,
       Anomaly.None, projectLink.status, projectLink.roadwayId, projectLink.linearLocationId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
       originalGeometry

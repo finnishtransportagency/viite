@@ -86,12 +86,12 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         val geometryLength = linearLocation.endMValue - linearLocation.startMValue
         val (stCalibration, enCalibration) = linearLocation.calibrationPoints
 
+        val sideCode = if (roadway.reversed) SideCode.switch(linearLocation.sideCode) else linearLocation.sideCode
         val calibrationPoints = (
-          stCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength, address)),
-          enCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength, address))
+          stCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (sideCode == SideCode.TowardsDigitizing) 0 else geometryLength, address)),
+          enCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (sideCode == SideCode.AgainstDigitizing) 0 else geometryLength, address))
         )
 
-        val sideCode = if (roadway.reversed) SideCode.switch(linearLocation.sideCode) else linearLocation.sideCode
         RoadAddress(roadway.id, linearLocation.id, roadway.roadNumber, roadway.roadPartNumber, roadway.roadType, roadway.track, Discontinuity.Continuous, st, en,
           Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, sideCode,
           linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.floating, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.terminated,
