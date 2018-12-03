@@ -663,8 +663,7 @@ class ProjectLinkDAO {
          """.as[Long].firstOption.getOrElse(0L)
       val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-//       commented since the logic of checking SIDE should take REVERSED in account
-        // s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
+        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
         s"reversed = (CASE reversed WHEN 0 THEN 1 WHEN 1 THEN 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
