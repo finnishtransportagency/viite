@@ -1,8 +1,10 @@
 package fi.liikennevirasto.viite
 
+import java.time.LocalDate
+
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.viite.dao.{RoadName, RoadNameDAO}
+import fi.liikennevirasto.viite.dao.{ProjectLinkNameDAO, RoadName, RoadNameDAO}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FunSuite, Matchers}
@@ -217,6 +219,20 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       val result = roadNameService.getRoadNameByNumber(99999, 99999)
       result.get("roadName").isDefined should be (true)
       result.get("roadName").get should be (None)
+    }
+  }
+
+  test("Test RoadNameService.getRoadNameByNumber() Should return the inserted road name") {
+    runWithRollback {
+
+      val name: String = "TEST ROAD NAME"
+      val roadNumber = 26070
+      val projectId = 6159179
+      sqlu"""Insert into ROAD_NAMES (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('26070','TEST ROAD NAME',CURRENT_DATE,NULL,CURRENT_DATE,null,'GA',CURRENT_DATE)""".execute
+
+      val result = roadNameService.getRoadNameByNumber(roadNumber, projectId)
+      result.get("roadName").isDefined should be (true)
+      result.get("roadName").get should be (name)
     }
   }
 }
