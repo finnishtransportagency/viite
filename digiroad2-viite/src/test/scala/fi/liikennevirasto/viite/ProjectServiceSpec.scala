@@ -829,7 +829,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.parsePrefillData() When road name data exists both in Project Link Name table and Road_Names table Then return the correct info with road name pre filled and the correct sources, in this case RoadAddressSource") {
+  test("Test projectService.parsePrefillData() When road name data exists both in Project Link Name table and Road_Name table Then return the correct info with road name pre filled and the correct sources, in this case RoadAddressSource") {
     runWithRollback{
 
       val user = Some("user")
@@ -839,7 +839,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
 
-      sqlu"""INSERT INTO ROAD_NAMES VALUES (ROAD_NAME_SEQ.nextval, 100, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
+      sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 100, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
       sqlu""" Insert into project_link_name values (VIITE_GENERAL_SEQ.nextval, ${project.id}, 100, 'TestRoadName_Project_Link')""".execute
 
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
