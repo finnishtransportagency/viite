@@ -79,7 +79,7 @@
       zIndex: RoadZIndex.VectorLayer.value
     });
 
-    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer];
+    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, suravageRoadProjectLayer, suravageProjectDirectionMarkerLayer];
 
     var getSelectedId = function (selected) {
       if (!_.isUndefined(selected.id) && selected.id > 0) {
@@ -187,7 +187,7 @@
     };
 
     var selectDoubleClick = new ol.interaction.Select({
-      layer: [projectLinkLayer],
+      layer: [projectLinkLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.doubleClick,
       style: function(feature) {
           if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value) {
