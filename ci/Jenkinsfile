@@ -43,8 +43,7 @@ pipeline {
                     ].join(" && ")
 
                     STAGE_BACKEND_BUILD_CMD = [
-                        "export JAVA_OPTS='$JAVA_OPTS -Dhttp.proxyHost=${sbt_proxy.getHost()} -Dhttp.proxyPort=${sbt_proxy.getPort()} -Dhttp.nonProxy=${no_proxy.replace(',','|')}'",
-                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly"
+                        "./sbt -Djava.net.useSystemProxies=true -Ddigiroad2.env=${get_environment()?.trim()} assembly"
                     ].join(" && ")
 
                 }
