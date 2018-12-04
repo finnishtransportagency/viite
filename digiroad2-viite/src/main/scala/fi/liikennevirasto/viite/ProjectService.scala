@@ -1715,6 +1715,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         projectLinkDAO.moveProjectLinksToHistory(projectID)
         logger.info(s"Moving project links to project link history.")
         handleNewRoadNames(projectLinks, project)
+        handleTerminatedRoadwayChanges(roadwayChanges)
         try {
           val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedRoadwaysWithLinks)
           val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewRoadway).map(_.id)
@@ -1729,6 +1730,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             logger.error("Failed to validate project message:" + e.getMessage)
             Some(e.getMessage)
         }
+  }
+
+  def handleTerminatedRoadwayChanges(roadwayChanges: List[ProjectRoadwayChange]) = {
+    roadwayChanges.foreach(rwc => {
+      if(rwc.changeInfo.changeType.equals(AddressChangeType.Termination)) {
+        val roadNumberOptional = rwc.changeInfo.source.roadNumber
+        if(roadNumberOptional.isDefined) {
+          val roadNumber = roadNumberOptional.get
+          val roadNumberSet = Set(roadNumber)
+          val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadNumberSet)
+          if(roadways.isEmpty) {
+            RoadNameDAO.expireByRoadNumber(roadNumberSet, rwc.projectStartDate.getMillis)
+          }
+        }
+      }
+    })
   }
 
   def handleNewRoadNames(projectLinks: Seq[ProjectLink], project: RoadAddressProject): Unit = {

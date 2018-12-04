@@ -227,4 +227,10 @@ object RoadNameDAO {
     roadNamesPS.executeBatch()
     roadNamesPS.close()
   }
+
+  def getByRoadNumberWithValidTo(roadNumber: Long): Seq[RoadName] = {
+    val query =
+      s"""$roadsNameQueryBase Where road_number = $roadNumber """
+    queryList(query)
+  }
 }
