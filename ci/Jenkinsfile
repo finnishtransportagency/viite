@@ -41,7 +41,7 @@ pipeline {
                     STAGE_FRONTEND_TEST_CMD = [
                         "grunt test"
                     ].join(" && ")
-                    import java.net.URI # add this import
+                    import java.net.URI 
                     def sbt_proxy = new URI(http_proxy)
 
                     STAGE_BACKEND_BUILD_CMD = [
