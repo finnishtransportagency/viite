@@ -1757,7 +1757,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadNumber = 9999
       val name = "TEST ROAD NAME"
 
-      // INSERT ROAD_NAME TO TEST
       val roadnames = Seq(
         RoadName(99999, roadNumber, name, startDate = Some(DateTime.now()), endDate = Some(DateTime.now()), createdBy = "Test"),
         RoadName(99998, roadNumber, name, startDate = Some(DateTime.now()), endDate = Some(DateTime.now()), createdBy = "Test"),
@@ -1793,10 +1792,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       // Method to be tested
       projectService.handleTerminatedRoadwayChanges(changes)
 
-      val roadNames = RoadNameDAO.getByRoadNumberWithValidTo(roadNumber)
+      val roadNames = RoadNameDAO.getAllByRoadNumber(roadNumber)
       roadNames.foreach(rn => {
-        rn.validTo.isDefined should be (true)
-        rn.validTo.get.toLocalDate should be (projectStartTime.toLocalDate)
+        rn.endDate.isDefined should be (true)
+        rn.endDate.get.toLocalDate should be (projectStartTime.toLocalDate)
       })
 
     }

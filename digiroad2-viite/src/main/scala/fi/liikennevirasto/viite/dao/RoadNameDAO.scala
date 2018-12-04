@@ -156,6 +156,11 @@ object RoadNameDAO {
     Q.updateNA(query).first
   }
 
+  def expire(id: Long, username: String) = {
+    val query = s"""Update ROAD_NAME Set valid_to = sysdate, created_by = '${username}' where id = $id"""
+    Q.updateNA(query).first
+  }
+
   def update(id: Long, fields: Map[String, String], user: User) = {
     val roadNumber = fields.get("roadNumber")
     val roadName = fields.get("roadName")
@@ -226,11 +231,5 @@ object RoadNameDAO {
     roadNamesPS.addBatch()
     roadNamesPS.executeBatch()
     roadNamesPS.close()
-  }
-
-  def getByRoadNumberWithValidTo(roadNumber: Long): Seq[RoadName] = {
-    val query =
-      s"""$roadsNameQueryBase Where road_number = $roadNumber """
-    queryList(query)
   }
 }

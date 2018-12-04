@@ -1741,7 +1741,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val roadNumberSet = Set(roadNumber)
           val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadNumberSet)
           if(roadways.isEmpty) {
-            RoadNameDAO.expireByRoadNumber(roadNumberSet, rwc.projectStartDate.getMillis)
+            val roadNames = RoadNameDAO.getAllByRoadNumber(roadNumber)
+            if(roadNames.nonEmpty) {
+              val roadName = roadNames.head
+              RoadNameDAO.expire(roadName.id, rwc.user)
+              val newRoadName = roadName.copy(createdBy = rwc.user, endDate = Some(rwc.projectStartDate))
+              RoadNameDAO.create(Seq(newRoadName))
+            }
           }
         }
       }
