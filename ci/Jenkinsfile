@@ -62,6 +62,8 @@ pipeline {
                         echo "Creating .... ${statusCode}"
                         sh(script:"docker volume create viite-ivy-releases-${get_environment()?.trim()}", returnStatus:false)
                     }
+                    curl -I http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.pom
+
                     echo "Running publish... (skipped for now) ${statusCode}"
 
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
