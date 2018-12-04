@@ -989,7 +989,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Future(
         if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
         else Seq()),
-      roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, municipalities)
+      Future(roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, municipalities))
     )
   }
 
