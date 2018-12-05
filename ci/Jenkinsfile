@@ -45,8 +45,8 @@ pipeline {
                     def sbt_proxy = new URI(http_proxy)
 
                     STAGE_BACKEND_BUILD_CMD = [
-                        "export JAVA_OPTS='''${env.JAVA_OPTS} -Dhttp.proxyHost=172.17.208.16 -Dhttp.proxyPort=8085 -Dhttp.nonProxy=127.0.0.1'''",
-                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly"
+                        "export JAVA_OPTS='''${env.JAVA_OPTS} -Dhttp.proxyHost=172.17.208.16 -Dhttp.proxyPort=8085 -Dhttp.nonProxy=.vally.local'''",
+                        "./sbt JAVA_OPTS='''-Dhttp.proxyHost=172.17.208.16 -Dhttp.proxyPort=8085 -Dhttp.nonProxy=.vally.local''' -Ddigiroad2.env=${get_environment()?.trim()} assembly"
                     ].join(" && ")
 
                 }
