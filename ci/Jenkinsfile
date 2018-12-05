@@ -44,10 +44,15 @@ pipeline {
                     ].join(" && ")
                     def sbt_proxy = new URI(http_proxy)
 
+                    def java_opts = [
+                    	"-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                    	"-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                    	"-Dhttp.nonProxyHosts=*.vally.local",
+                    	"-DproxySet=true"
+                    ].join(" ")
+
                     STAGE_BACKEND_BUILD_CMD = [
-                        "cat /usr/share/sbt/conf/sbtconfig.txt",
-                        "curl -L http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.pom",
-                        "./sbt -Ddigiroad2.env=${get_environment()?.trim()} assembly"
+                        "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly"
                     ].join(" && ")
 
                 }
