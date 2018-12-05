@@ -116,9 +116,7 @@ object OracleDatabase {
     val dim = 4
     val srid = 3067
     val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
-    val halp = JGeometry.createLinearLineString(ordinates, dim, srid)
-    //TODO: added for debbugings
-      JGeometry.store(halp, oracleConn)
+    JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
   }
 
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
@@ -127,6 +125,17 @@ object OracleDatabase {
     if (geom.nonEmpty) {
       val jgeom: JGeometry = JGeometry.load(geom.get)
       jgeom.getOrdinatesArray.toList.sliding(3, 3).toList.map(p => Point(p.head, p.tail.head, p.last))
+    } else {
+      Seq()
+    }
+  }
+
+  def loadJGeometryToGeometry2D(geometry: Option[Object]): Seq[Point] = {
+    // Convert STRUCT into geometry
+    val geom = geometry.map(g => g.asInstanceOf[STRUCT])
+    if (geom.nonEmpty) {
+      val jgeom: JGeometry = JGeometry.load(geom.get)
+      jgeom.getOrdinatesArray.toList.sliding(2, 2).toList.map(p => Point(p.head, p.tail.head))
     } else {
       Seq()
     }

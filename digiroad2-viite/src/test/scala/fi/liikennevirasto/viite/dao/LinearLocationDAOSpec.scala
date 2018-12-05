@@ -755,7 +755,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   }
 
 
-    test("whatching purposes") {
+    test("Test linearLocationDAO.create() and linearLocationDAO.fetchByRoadways() When inserting a multi point geometry Then return said linear location with the multi point geometry.") {
       runWithRollback {
         val newGeom = Seq(
           Point(0,0,0),
@@ -765,10 +765,10 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
           Point(20,20,0),
           Point(25,25,0)
         )
-        val testLL = testLinearLocation.copyWithGeometry(newGeom)
-        linearLocationDAO.create(Seq(testLL))
-        val testdata = linearLocationDAO.fetchByRoadways(Set(testLL.roadwayNumber))
-        println(testdata)
+        val linearLocationToInsert = testLinearLocation.copyWithGeometry(newGeom)
+        linearLocationDAO.create(Seq(linearLocationToInsert))
+        val fetchedLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
+        fetchedLinearLocation.head.geometry should be (newGeom)
       }
     }
 

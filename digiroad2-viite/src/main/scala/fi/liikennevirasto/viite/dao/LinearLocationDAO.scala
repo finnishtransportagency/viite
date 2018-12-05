@@ -173,7 +173,7 @@ class LinearLocationDAO {
   val selectFromLinearLocation =
     """
     select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
+      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, loc.geometry,
       loc.valid_from, loc.valid_to
     from LINEAR_LOCATION loc cross join
       TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t cross join
@@ -245,7 +245,6 @@ class LinearLocationDAO {
         cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
         values (${location.id}, ${roadwayNumber}, ${location.orderNumber.toLong}, ${location.linkId}, ${location.startMValue}, ${location.endMValue}, ${location.sideCode.value}, ${null}, ${null}, ${location.linkGeomSource.value}, ${location.adjustedTimestamp}, ${location.floating.value},
         ${testingPurposes}, ${'-'})"""
-        println(sqlString)
         ps.addBatch()
     }
     ps.executeBatch()
@@ -271,15 +270,12 @@ class LinearLocationDAO {
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
       val floating = r.nextInt()
-      val x1 = r.nextDouble()
-      val y1 = r.nextDouble()
-      val x2 = r.nextDouble()
-      val y2 = r.nextDouble()
+      val geom = r.nextObjectOption()
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (calStartM, calEndM), FloatingReason.apply(floating), Seq(Point(x1, y1), Point(x2, y2)),
+        (calStartM, calEndM), FloatingReason.apply(floating), OracleDatabase.loadJGeometryToGeometry2D(geom),
         LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
