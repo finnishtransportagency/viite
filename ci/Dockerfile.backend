@@ -4,7 +4,7 @@ ENV SCALA_VERSION 2.11.7
 ENV SBT_VERSION 0.13.5
 
 ARG JENKINS_UID=1000
-RUN adduser -u ${JENKINS_UID} jenkins
+RUN adduser -D -S -u ${JENKINS_UID} jenkins
 
 #Create scala sbt folders
 RUN mkdir /home/jenkins && \
