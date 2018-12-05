@@ -87,7 +87,7 @@
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
-        '<select class="action-select" id="dropdown_0" size="1">'+
+        '<select class="action-select" id="dropDown_0" size="1">'+
         '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
         '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
         '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
@@ -350,8 +350,8 @@
 
       var saveChanges = function(){
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        var statusDropdown_0 =$('#dropdown_0').val();
-        var statusDropdown_1 = $('#dropdown_1').val();
+        var statusDropdown_0 =$('#dropDown_0').val();
+        var statusDropdown_1 = $('#dropDown_1').val();
 
         var objectDropdown_0 = _.find(LinkStatus, function(obj){
           return obj.description === statusDropdown_0;
@@ -403,7 +403,7 @@
         saveChanges();
       });
 
-      rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
+      rootElement.on('change', '#roadAddressProjectForm #dropDown_0', function() {
         $('#tie').prop('disabled',false);
         $('#osa').prop('disabled',false);
         $('#trackCodeDropdown').prop('disabled',false);
@@ -553,7 +553,7 @@
       });
 
       rootElement.on('change input', '.form-control.small-input', function (event) {
-      var dropdown_0 = $('#dropdown_0');
+      var dropdown_0 = $('#dropDown_0');
       var roadNameField =$('#roadName');
       checkInputs('.project-');
       setFormDirty();

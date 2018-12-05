@@ -39,9 +39,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
       it('check split form data', function () {
         expect( $('.cut').attr('class')).to.be.a('string', 'action cut active');
         expect($('#roadAddressProjectFormCut').html()).not.to.have.length(0);
-        expect($('#dropdown_0')[0].value).to.be.a('String', 'Transfer');
-        expect($('#dropdown_1')[0].value).to.be.a('String', 'New');
-        expect($('#dropdown_2')[0].value).to.be.a('String', 'Terminated');
+        expect($('#dropDown_0')[0].value).to.be.a('String', 'Transfer');
+        expect($('#dropDown_1')[0].value).to.be.a('String', 'New');
+        expect($('#dropDown_2')[0].value).to.be.a('String', 'Terminated');
         expect($('#tie')[0].value).to.equal('16081');
         expect($('#osa')[0].value).to.equal('1');
         expect($('#trackCodeDropdown')[0].value).to.equal('0');
