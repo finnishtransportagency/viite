@@ -161,7 +161,7 @@ object RoadNameDAO {
     Q.updateNA(query).first
   }
 
-  def update(id: Long, fields: Map[String, String], user: User) = {
+  def update(id: Long, fields: Map[String, String]) = {
     val roadNumber = fields.get("roadNumber")
     val roadName = fields.get("roadName")
     val startDate = fields.get("startDate")

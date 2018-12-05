@@ -1758,9 +1758,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val name = "TEST ROAD NAME"
 
       val roadnames = Seq(
-        RoadName(99999, roadNumber, name, startDate = Some(DateTime.now()), endDate = Some(DateTime.now()), createdBy = "Test"),
-        RoadName(99998, roadNumber, name, startDate = Some(DateTime.now()), endDate = Some(DateTime.now()), createdBy = "Test"),
-        RoadName(99997, roadNumber, name, startDate = Some(DateTime.now()), endDate = Some(DateTime.now()), createdBy = "Test")
+        RoadName(99999, roadNumber, name, startDate = Some(DateTime.now()), createdBy = "Test")
       )
       RoadNameDAO.create(roadnames)
 

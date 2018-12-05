@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import java.io.IOException
 import java.sql.SQLException
-import java.util.Date
+import java.util.{Date, Locale}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
@@ -1732,7 +1732,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
   }
 
-  def handleTerminatedRoadwayChanges(roadwayChanges: List[ProjectRoadwayChange]) = {
+  def handleTerminatedRoadwayChanges(roadwayChanges: Seq[ProjectRoadwayChange]) = {
     roadwayChanges.foreach(rwc => {
       if(rwc.changeInfo.changeType.equals(AddressChangeType.Termination)) {
         val roadNumberOptional = rwc.changeInfo.source.roadNumber
@@ -1743,10 +1743,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           if(roadways.isEmpty) {
             val roadNames = RoadNameDAO.getAllByRoadNumber(roadNumber)
             if(roadNames.nonEmpty) {
-              val roadName = roadNames.head
-              RoadNameDAO.expire(roadName.id, rwc.user)
-              val newRoadName = roadName.copy(createdBy = rwc.user, endDate = Some(rwc.projectStartDate))
-              RoadNameDAO.create(Seq(newRoadName))
+              val roadNameOpt = roadNames.find(rn => rn.endDate.isEmpty && rn.validTo.isEmpty)
+              if(roadNameOpt.isDefined){
+                val roadName = roadNameOpt.get
+                RoadNameDAO.update(roadName.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
+              }
             }
           }
         }
