@@ -1,7 +1,7 @@
 FROM alpine
 
 ENV SCALA_VERSION 2.11.7
-ENV SBT_VERSION 0.13.0
+ENV SBT_VERSION 0.13.5
 
 ARG JENKINS_UID=1000
 RUN adduser -u ${JENKINS_UID} jenkins
@@ -9,7 +9,8 @@ RUN adduser -u ${JENKINS_UID} jenkins
 #Create scala sbt folders
 RUN mkdir /home/jenkins && \
     mkdir /home/jenkins/.m2 && \
-    mkdir /home/jenkins/.ivy
+    mkdir /home/jenkins/.ivy && \
+    mkdir /home/jenkins/.sbt
 
 #Updates and bash
 RUN apk update && apk upgrade && \
@@ -28,4 +29,7 @@ RUN wget --no-verbose "https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSI
 
 ENV PATH "/home/jenkins/sbt/bin:$PATH"
 ENV PATH "/home/jenkins/scala-$SCALA_VERSION/bin:$PATH"
+
+COPY config/repositories /home/jenkins/.sbt/repositories
+RUN chown -R jenkins /home/jenkins
 

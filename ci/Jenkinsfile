@@ -66,12 +66,6 @@ pipeline {
             }
             steps {
                 script {
-                    def statusCode = sh(script: "docker volume inspect viite-ivy-releases-${get_environment()?.trim()}", returnStatus: true)
-                    if (statusCode != 0 ){
-                        echo "Creating .... ${statusCode}"
-                        sh(script:"docker volume create viite-ivy-releases-${get_environment()?.trim()}", returnStatus:false)
-                    }
-
 
                     echo "Running publish... (skipped for now) ${statusCode}"
 
@@ -88,7 +82,7 @@ pipeline {
                     )
                     docker.build(
                         "viite-backend-sbt",
-                        "${build_args} -f ci/Dockerfile.sbt ci"
+                        "${build_args} -f ci/Dockerfile.backend ci"
                     )
                 }
             }
