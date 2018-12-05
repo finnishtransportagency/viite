@@ -521,7 +521,8 @@
       };
 
       var clickHandler = function (evt) {
-        if (applicationModel.getSelectedTool() === 'Cut') {
+
+        if (applicationModel.getSelectedTool() === 'Cut' && suravageLayer.getVisible()) {
           $('.wrapper').remove();
           removeCutterMarkers();
           self.cut(evt);
@@ -569,7 +570,7 @@
         if (!closestSuravageLink) {
           return;
         }
-        if (isWithinCutThreshold(closestSuravageLink.distance)) {
+        if (suravageRoadProjectLayer.getVisible() && isWithinCutThreshold(closestSuravageLink.distance)) {
           moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
         } else {
           removeFeaturesByType('cutter-crosshair');
