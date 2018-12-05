@@ -112,7 +112,7 @@ object OracleDatabase {
   }
 
   def createJGeometry(points: Seq[Point], con: java.sql.Connection): STRUCT = {
-    val ordinates = points.flatMap(p => Seq(p.x, p.y, p.z)).toArray
+    val ordinates = points.flatMap(p => Seq(p.x, p.y)).toArray
     val dim = 4
     val srid = 3067
     val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
