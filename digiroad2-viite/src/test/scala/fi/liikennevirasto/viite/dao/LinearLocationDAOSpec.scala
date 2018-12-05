@@ -755,20 +755,21 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   }
 
 
-  test("whatching purposes") {
-    runWithRollback {
-      val newGeom = Seq(
-        Point(0,0,0), Point(5,5,0),
-        Point(5,5,0), Point(5,5,0),
-        Point(10,10,0), Point(15,15,0),
-        Point(15,15,0), Point(20,20,0),
-        Point(20,20,0), Point(25,25,0)
-      )
-      val testLL = testLinearLocation.copyWithGeometry(newGeom)
-      linearLocationDAO.create(Seq(testLL))
-      val testdata = linearLocationDAO.fetchByRoadways(Set(testLL.roadwayNumber))
-      println(testdata)
+    test("whatching purposes") {
+      runWithRollback {
+        val newGeom = Seq(
+          Point(0,0,0),
+          Point(5,5,0),
+          Point(10,10,0),
+          Point(15,15,0),
+          Point(20,20,0),
+          Point(25,25,0)
+        )
+        val testLL = testLinearLocation.copyWithGeometry(newGeom)
+        linearLocationDAO.create(Seq(testLL))
+        val testdata = linearLocationDAO.fetchByRoadways(Set(testLL.roadwayNumber))
+        println(testdata)
+      }
     }
-  }
 
 }
