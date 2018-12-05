@@ -116,7 +116,9 @@ object OracleDatabase {
     val dim = 4
     val srid = 3067
     val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
-      JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
+    val halp = JGeometry.createLinearLineString(ordinates, dim, srid)
+    //TODO: added for debbugings
+      JGeometry.store(halp, oracleConn)
   }
 
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {

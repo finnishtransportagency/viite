@@ -201,7 +201,7 @@ class LinearLocationDAO {
       """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
         cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
+        ?, ?)""")
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
@@ -217,6 +217,9 @@ class LinearLocationDAO {
         } else {
           location.roadwayNumber
         }
+        //TODO: added 4 debuggings
+        val testingPurposes = OracleDatabase.createJGeometry(location.geometry, dynamicSession.conn)
+
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber.toLong)
@@ -235,14 +238,14 @@ class LinearLocationDAO {
         ps.setInt(10, location.linkGeomSource.value)
         ps.setLong(11, location.adjustedTimestamp)
         ps.setInt(12, location.floating.value)
-        val (p1, p2) = (location.geometry.head, location.geometry.last)
-        ps.setDouble(13, p1.x)
-        ps.setDouble(14, p1.y)
-        ps.setDouble(15, location.startMValue)
-        ps.setDouble(16, p2.x)
-        ps.setDouble(17, p2.y)
-        ps.setDouble(18, location.endMValue)
-        ps.setString(19, if (createdBy == null) "-" else createdBy)
+        ps.setObject(13, testingPurposes)
+        ps.setString(14, if (createdBy == null) "-" else createdBy)
+        //TODO:Added 4 debuggings
+        val sqlString = s"""insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
+        cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
+        values (${location.id}, ${roadwayNumber}, ${location.orderNumber.toLong}, ${location.linkId}, ${location.startMValue}, ${location.endMValue}, ${location.sideCode.value}, ${null}, ${null}, ${location.linkGeomSource.value}, ${location.adjustedTimestamp}, ${location.floating.value},
+        ${testingPurposes}, ${'-'})"""
+        println(sqlString)
         ps.addBatch()
     }
     ps.executeBatch()
