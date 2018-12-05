@@ -45,6 +45,7 @@ pipeline {
                     def sbt_proxy = new URI(http_proxy)
 
                     STAGE_BACKEND_BUILD_CMD = [
+                        "curl -L http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.pom",
                         "./sbt SBT_OPTS='''-Dhttp.proxyHost=172.17.208.16 -Dhttp.proxyPort=8085 -Dhttp.nonProxy=*.vally.local''' -Ddigiroad2.env=${get_environment()?.trim()} assembly"
                     ].join(" && ")
 
