@@ -1734,17 +1734,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def handleTerminatedRoadwayChanges(roadwayChanges: Seq[ProjectRoadwayChange]) = {
     roadwayChanges.foreach(rwc => {
-      if(rwc.changeInfo.changeType.equals(AddressChangeType.Termination)) {
+      if (rwc.changeInfo.changeType.equals(AddressChangeType.Termination)) {
         val roadNumberOptional = rwc.changeInfo.source.roadNumber
-        if(roadNumberOptional.isDefined) {
+        if (roadNumberOptional.isDefined) {
           val roadNumber = roadNumberOptional.get
           val roadNumberSet = Set(roadNumber)
           val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadNumberSet)
-          if(roadways.isEmpty) {
+          if (roadways.isEmpty) {
             val roadNames = RoadNameDAO.getAllByRoadNumber(roadNumber)
-            if(roadNames.nonEmpty) {
+            if (roadNames.nonEmpty) {
               val roadNameOpt = roadNames.find(rn => rn.endDate.isEmpty && rn.validTo.isEmpty)
-              if(roadNameOpt.isDefined){
+              if (roadNameOpt.isDefined) {
                 val roadName = roadNameOpt.get
                 RoadNameDAO.update(roadName.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
               }
