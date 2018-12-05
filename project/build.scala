@@ -24,7 +24,7 @@ object Digiroad2Build extends Build {
       scalacOptions ++= Seq("-unchecked", "-feature"),
       resolvers := Seq(Classpaths.typesafeReleases,
         "osgeo" at "http://download.osgeo.org/webdav/geotools/",
-        "opengeo" at "http://repo.opengeo.org/"),
+        "opengeo" at "http://download.osgeo.org/webdav/geotools/"),
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % "1.2",
         "joda-time" % "joda-time" % "2.2",
