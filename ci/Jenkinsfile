@@ -30,7 +30,6 @@ pipeline {
             }
             steps {
                 script {
-                curl -L http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.pom
 
                     STAGE_FRONTEND_BUILD_CMD = [
                         "mkdir tmp",
