@@ -126,7 +126,7 @@
 
     var dropdownOption = function (index) {
       return '<div class="input-unit-combination">' +
-        '<select class="split-form-control" id="dropDown_' + index + '" hidden size="1">' +
+        '<select class="split-form-control" id="splitDropDown_' + index + '" hidden size="1">' +
         '<option disabled id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
         '<option disabled id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.New.description + '" value="' + LinkStatus.New.description + '" hidden>Uusi</option>' +
@@ -158,28 +158,28 @@
         return !_.isUndefined(l.status) && l.status == statusCode;
       }));
       if (statusCode === LinkStatus.Unchanged.value) {
-        $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
+        $("#splitDropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
         if (fireChange)
-          $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected').change();
-        else $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected');
+          $("#splitDropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected').change();
+        else $("#splitDropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.Transfer.value) {
-        $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
+        $("#splitDropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
         if (fireChange)
-          $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
-        else $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected');
+          $("#splitDropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
+        else $("#splitDropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.New.value) {
-        $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").prop('disabled', false).prop('hidden', false);
+        $("#splitDropDown_1 option[value=" + LinkStatus.New.description + "]").prop('disabled', false).prop('hidden', false);
         if (fireChange)
-          $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected').change();
-        else $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected');
+          $("#splitDropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected').change();
+        else $("#splitDropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.Terminated.value) {
-        $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").prop('disabled', false).prop('hidden', false);
+        $("#splitDropDown_2 option[value=" + LinkStatus.Terminated.description + "]").prop('disabled', false).prop('hidden', false);
         if (fireChange)
-          $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected').change();
-        else $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected');
+          $("#splitDropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected').change();
+        else $("#splitDropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected');
       }
       // Set discontinuity from A/B unless it is continuous (defaults to Continuous if both are Continuous)
       if (!_.isUndefined(link.discontinuity) && link.discontinuity !== 5 && (link.marker == 'A' || link.marker == 'B'))
@@ -288,9 +288,10 @@
       var saveChanges = function () {
         currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        var statusDropdown_0 = $('#dropDown_0').val();
-        var statusDropdown_1 = $('#dropDown_1').val();
-        switch (statusDropdown_0) {
+        var splitDropDown0 = $('#splitDropDown_0')[0].value;
+        var splitDropDown1 = $('#splitDropDown_1')[0].value;
+          
+        switch (splitDropDown0) {
           case LinkStatus.Revert.description : {
             var separated = _.partition(selectedProjectLink, function (link) {
               return isReSplitMode;
@@ -305,7 +306,7 @@
             break;
           }
           default: {
-            projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty().concat(selectedProjectLink), statusDropdown_0, statusDropdown_1);
+            projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty().concat(selectedProjectLink), splitDropDown0, splitDropDown1);
           }
         }
         selectedProjectLinkProperty.setDirty(false);
@@ -338,19 +339,19 @@
         saveChanges();
       });
 
-      rootElement.on('change', '#roadAddressProjectFormCut #dropDown_0', function () {
+      rootElement.on('change', '#roadAddressProjectFormCut #splitDropDown_0', function () {
         selectedProjectLinkProperty.setDirty(true);
         eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
         var disabled = false;
         if (this.value == LinkStatus.Unchanged.description) {
-          $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
+          $("#splitDropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
           disabled = true;
           $('#tie').val(currentSplitData.roadNumber);
           $('#osa').val(currentSplitData.roadPartNumber);
           $('#trackCodeDropdown').val(currentSplitData.trackCode);
         }
         else if (this.value == LinkStatus.Transfer.description) {
-          $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
+          $("#splitDropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
           disabled = false;
         }
         $('#tie').prop('disabled', disabled);
