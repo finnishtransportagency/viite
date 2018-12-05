@@ -185,7 +185,7 @@
         var suravageVisibleCheckbox = $('#suravageVisibleCheckbox')[0];
         if (layer === 'roadAddressProject') {
           if (suravageVisibleCheckbox) {
-            $('#suravageVisibleCheckbox')[0].checked = true;
+            $('#suravageVisibleCheckbox')[0].checked = false;
             $('#suravageVisibleCheckbox')[0].disabled = false;
           }
           eventbus.trigger('suravageProjectRoads:toggleVisibility', false);

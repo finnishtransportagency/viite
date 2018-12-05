@@ -126,7 +126,7 @@
 
     var dropdownOption = function (index) {
       return '<div class="input-unit-combination">' +
-        '<select class="split-form-control" id="dropdown_' + index + '" hidden size="1">' +
+        '<select class="split-form-control" id="dropDown_' + index + '" hidden size="1">' +
         '<option disabled id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
         '<option disabled id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.New.description + '" value="' + LinkStatus.New.description + '" hidden>Uusi</option>' +
@@ -215,6 +215,16 @@
         $('#feature-attributes').find('.new-road-address').prop("hidden", false);
       });
 
+        rootElement.on('keyup, input', '#roadName', function () {
+            formCommon.checkInputs('.split-');
+        });
+
+        // rootElement.on('change', '#trackCodeDropdown', function () {
+        //     checkInputs('.project-');
+        // });
+
+        // rootElement.on('change input', '.form-control.small-input', function (event) { }
+
       eventbus.on('roadAddress:projectFailed', function () {
         applicationModel.removeSpinner();
       });
@@ -278,8 +288,8 @@
       var saveChanges = function () {
         currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        var statusDropdown_0 = $('#dropdown_0').val();
-        var statusDropdown_1 = $('#dropdown_1').val();
+        var statusDropdown_0 = $('#dropDown_0').val();
+        var statusDropdown_1 = $('#dropDown_1').val();
         switch (statusDropdown_0) {
           case LinkStatus.Revert.description : {
             var separated = _.partition(selectedProjectLink, function (link) {
@@ -328,7 +338,7 @@
         saveChanges();
       });
 
-      rootElement.on('change', '#roadAddressProjectFormCut #dropdown_0', function () {
+      rootElement.on('change', '#roadAddressProjectFormCut #dropDown_0', function () {
         selectedProjectLinkProperty.setDirty(true);
         eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
         var disabled = false;
@@ -354,7 +364,7 @@
         rootElement.find('.action-selected-field').prop("hidden", false);
       });
 
-      rootElement.on('click', ' .split-form button.cancelLink', function () {
+      rootElement.on('click', '.split-form button.cancelLink', function () {
         cancelChanges();
       });
 
@@ -374,7 +384,7 @@
           $('footer').html(projectChangesButton);
       });
 
-      rootElement.on('keyup', '.split-form-control.small-input', function () {
+      rootElement.on('keyup change input', '.split-form-control.small-input', function () {
         formCommon.checkInputs('.split-');
       });
 
