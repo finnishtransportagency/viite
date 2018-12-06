@@ -50,7 +50,8 @@
           roadPartNumber: selected[0].roadPartNumber,
           trackCode: selected[0].trackCode,
           a: selected[0],
-          b: selected[1]
+          b: selected[1],
+          c: selected[2]
         };
       var selection = selectedSplitData(selected, currentSplitData);
       var roadLinkSources = _.chain(selected).map(function(s) {
