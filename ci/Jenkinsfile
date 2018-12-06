@@ -55,7 +55,7 @@ pipeline {
 
                     STAGE_BACKEND_BUILD_CMD = [
                         "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                        "cd /home/jenkins/",
+                        "cd /home/jenkins/dist",
                         "ls -l"
                     ].join(" && ")
 
@@ -104,7 +104,7 @@ pipeline {
                 docker {
                     image "viite-frontend-node"
                     reuseNode true
-                    //args "-v /data1/jenkins/workspace/viite/Deploy-Staging/tmp:/home/jenkins/tmp"
+                    args "-v /data1/jenkins/workspace/viite/Deploy-Staging/dist:/home/jenkins/dist"
                 }
             }
             when {
@@ -131,6 +131,7 @@ pipeline {
                 docker {
                     image "viite-backend-sbt"
                     reuseNode true
+                    args "-v /data1/jenkins/workspace/viite/Deploy-Staging/dist:/home/jenkins/dist"
                 }
             }
             when {
