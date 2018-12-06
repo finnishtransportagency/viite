@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.{Timestamp, Types}
+import java.sql.{PreparedStatement, Timestamp, Types}
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
@@ -218,7 +218,8 @@ class LinearLocationDAO {
           location.roadwayNumber
         }
         //TODO: added 4 debuggings
-        val testingPurposes = OracleDatabase.createJGeometry(location.geometry, dynamicSession.conn)
+        val steppedGeom = GeometryUtils.createStepGeometry(location.geometry, Seq.empty[Point], location.startMValue, location.endMValue)
+        val stepJGeom = OracleDatabase.createRoadsJGeometry(steppedGeom, dynamicSession.conn, location.endMValue)
 
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
@@ -238,13 +239,8 @@ class LinearLocationDAO {
         ps.setInt(10, location.linkGeomSource.value)
         ps.setLong(11, location.adjustedTimestamp)
         ps.setInt(12, location.floating.value)
-        ps.setObject(13, testingPurposes)
+        ps.setObject(13, stepJGeom)
         ps.setString(14, if (createdBy == null) "-" else createdBy)
-        //TODO:Added 4 debuggings
-        val sqlString = s"""insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
-        cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
-        values (${location.id}, ${roadwayNumber}, ${location.orderNumber.toLong}, ${location.linkId}, ${location.startMValue}, ${location.endMValue}, ${location.sideCode.value}, ${null}, ${null}, ${location.linkGeomSource.value}, ${location.adjustedTimestamp}, ${location.floating.value},
-        ${testingPurposes}, ${'-'})"""
         ps.addBatch()
     }
     ps.executeBatch()

@@ -21,14 +21,20 @@ object GeometryUtils {
     measure >= interval._1 && measure <= interval._2
   }
 
-  def createStepGeometry(originalGeometry: Seq[Point], processedGeometry: Seq[Point], startMeasure: Double, maxLength: Double, step: Double = 100.0): Seq[Point] = {
+  def createStepGeometry(originalGeometry: Seq[Point], processedGeometry: Seq[Point] = Seq.empty[Point], startMeasure: Double, maxLength: Double, step: Double = 100.0): Seq[Point] = {
+    def roundPoint(p: Point): Point = {
+      Point(roundN(p.x), roundN(p.y), roundN(p.z))
+    }
+    def roundN(n:Double): Double = {
+      BigDecimal(n).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
     if(startMeasure + step >= maxLength ) {
       val finalTruncatedGeom = geometryEndpoints(truncateGeometry2D(originalGeometry, startMeasure, maxLength))
-      processedGeometry++Seq(finalTruncatedGeom._1, finalTruncatedGeom._2).diff(processedGeometry)
+      processedGeometry++Seq(roundPoint(finalTruncatedGeom._1), roundPoint(finalTruncatedGeom._2)).diff(processedGeometry)
     }
     else {
       val currentTruncatedGeom = geometryEndpoints(truncateGeometry2D(originalGeometry, startMeasure, startMeasure + step))
-      createStepGeometry(originalGeometry, processedGeometry++Seq(currentTruncatedGeom._1, currentTruncatedGeom._2).diff(processedGeometry) ,startMeasure + step , maxLength, step)
+      createStepGeometry(originalGeometry, processedGeometry++Seq(roundPoint(currentTruncatedGeom._1), roundPoint(currentTruncatedGeom._2)).diff(processedGeometry) ,startMeasure + step , maxLength, step)
     }
   }
 

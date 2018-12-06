@@ -119,6 +119,14 @@ object OracleDatabase {
     JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
   }
 
+  def createRoadsJGeometry(points: Seq[Point], con: java.sql.Connection, endmValue:Double): STRUCT = {
+    val ordinates = points.flatMap(p => Seq(p.x, p.y, p.z, endmValue)).toArray
+    val dim = 4
+    val srid = 3067
+    val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
+    JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
+  }
+
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
     // Convert STRUCT into geometry
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])
@@ -135,7 +143,7 @@ object OracleDatabase {
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])
     if (geom.nonEmpty) {
       val jgeom: JGeometry = JGeometry.load(geom.get)
-      jgeom.getOrdinatesArray.toList.sliding(2, 2).toList.map(p => Point(p.head, p.tail.head))
+      jgeom.getOrdinatesArray.toList.sliding(4, 4).toList.map(p => Point(p.head, p.tail.head))
     } else {
       Seq()
     }

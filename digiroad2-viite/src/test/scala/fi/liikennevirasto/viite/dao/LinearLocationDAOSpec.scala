@@ -5,7 +5,7 @@ import java.sql.BatchUpdateException
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
@@ -765,10 +765,10 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
           Point(20,20,0),
           Point(25,25,0)
         )
-        val linearLocationToInsert = testLinearLocation.copyWithGeometry(newGeom)
+        val linearLocationToInsert = testLinearLocation.copy(geometry = newGeom, endMValue = GeometryUtils.geometryLength(newGeom))
         linearLocationDAO.create(Seq(linearLocationToInsert))
         val fetchedLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
-        fetchedLinearLocation.head.geometry should be (newGeom)
+        fetchedLinearLocation.head.geometry should be (GeometryUtils.createStepGeometry(linearLocationToInsert.geometry, Seq.empty[Point], linearLocationToInsert.startMValue, linearLocationToInsert.endMValue))
       }
     }
 
