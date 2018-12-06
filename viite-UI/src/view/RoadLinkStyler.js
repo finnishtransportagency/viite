@@ -80,9 +80,9 @@
         ];
 
         var strokeRules = [
-            new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'butt'}}),
-            new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FFD76A',  lineCap: 'butt'}}),
-            new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FFD76A',  lineCap: 'butt'}}),
+            new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'square'}}),
+            new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FFD76A',  lineCap: 'square'}}),
+            new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FFD76A',  lineCap: 'square'}}),
             new StyleRule().where('roadClass').is(4).use({stroke: {color: '#0011BB',  lineCap: 'butt'}}),
             new StyleRule().where('roadClass').is(5).use({stroke: {color: '#33CCCC',  lineCap: 'butt'}}),
             new StyleRule().where('roadClass').is(6).use({stroke: {color: '#E01DD9',  lineCap: 'butt'}}),
@@ -102,9 +102,9 @@
         ];
 
         var fillRules = [
-            new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'butt'}}),
-            new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FF6600',  lineCap: 'butt'}}),
-            new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FF9933',  lineCap: 'butt'}}),
+            new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'square'}}),
+            new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FF6600',  lineCap: 'square'}}),
+            new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FF9933',  lineCap: 'square'}}),
             new StyleRule().where('roadClass').is(4).use({stroke: {color: '#0011BB',  lineCap: 'butt'}}),
             new StyleRule().where('roadClass').is(5).use({stroke: {color: '#33CCCC',  lineCap: 'butt'}}),
             new StyleRule().where('roadClass').is(6).use({stroke: {color: '#E01DD9',  lineCap: 'butt'}}),
@@ -126,12 +126,12 @@
         ];
 
         var borderRules = [
-            new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 9 }}),
-            new StyleRule().where('zoomLevel').is(6).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 10 }}),
-            new StyleRule().where('zoomLevel').isIn([7, 8, 9]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 11 }}),
-            new StyleRule().where('zoomLevel').isIn([10, 11]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 12 }}),
-            new StyleRule().where('zoomLevel').isIn([12, 13]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 13 }}),
-            new StyleRule().where('zoomLevel').isIn([14, 15]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 14 }})
+            new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'butt', stroke: {width: 8 }}),
+            new StyleRule().where('zoomLevel').is(6).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'butt', stroke: {width: 9 }}),
+            new StyleRule().where('zoomLevel').isIn([7, 8, 9]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'butt', stroke: {width: 10 }}),
+            new StyleRule().where('zoomLevel').isIn([10, 11]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'butt', stroke: {width: 11 }}),
+            new StyleRule().where('zoomLevel').isIn([12, 13]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'butt', stroke: {width: 12 }}),
+            new StyleRule().where('zoomLevel').isIn([14, 15]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'butt', stroke: {width: 13 }})
         ];
 
         var roadLinkStyle = new StyleRuleProvider({});
