@@ -18,6 +18,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
   * Created by alapeijario on 14.9.2017.
   */
 class GuestimateGeometryForMissingLinksSpec extends FunSuite with Matchers {
+  /*
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       f
@@ -109,5 +110,5 @@ class GuestimateGeometryForMissingLinksSpec extends FunSuite with Matchers {
     link3.geometry should be (Seq(Point(0,20),Point(0,30)))
     link4.geometry should be (Seq(Point(0,30),Point(0,40)))
     link5.geometry should be (Seq(Point(0,40),Point(0,50)))
-  }
+  }*/
 }

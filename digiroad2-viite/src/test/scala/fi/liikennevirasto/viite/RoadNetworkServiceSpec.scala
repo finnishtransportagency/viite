@@ -15,6 +15,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
+  val roadNetworkDAO = new RoadNetworkDAO
   def runWithRollback[T](f: => T): T = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val t = f
@@ -23,7 +24,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
     }
   }
 
-//TODO Will be implemented at VIITE-1543
+//TODO Will be implemented once the new implementation for road network is done
 //  test("validate network with valid road"){
 //    runWithRollback {
 //      RoadNetworkDAO.createPublishedRoadNetwork

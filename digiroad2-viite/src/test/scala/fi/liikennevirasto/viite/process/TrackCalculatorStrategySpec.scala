@@ -11,7 +11,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
-  test("Test correct assignment strategy when dealing with operation changes in tracks") {
+  test("Test TrackCalculatorContext.getNextStrategy() When dealing with operation changes in tracks Then return the correct strategy: LinkStatusChangeTrackCalculatorStrategy") {
 
     val geomLeft1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
     val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))

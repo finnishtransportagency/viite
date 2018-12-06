@@ -74,42 +74,42 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Intersection point for simple case") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(0.0, 0.0), (10.0, 0.0)] and Segment2 [(0.0, 1.0), (10.0, -1.0)] Then returns (5.0, 0.0).") {
     ProjectLinkSplitter.intersectionPoint((Point(0.0, 0.0), Point(10.0, 0.0)), (Point(0.0, 1.0), Point(10.0, -1.0))) should be (Some(Point(5.0, 0.0)))
   }
 
-  test("Intersection is not a point for parallel") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(10.0, 2.0), (0.0, 1.0)] and Segment2 [(0.0, 1.0), (10.0, 2.0)], the segments are overlapping Then returns None.") {
     ProjectLinkSplitter.intersectionPoint((Point(10.0, 2.0), Point(0.0, 1.0)), (Point(0.0, 1.0), Point(10.0, 2.0))) should be (None)
   }
 
-  test("Intersection point not found for parallel") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(0.0, 1.5), (10.0, 2.5)] and Segment2 [(0.0, 1.0), (10.0, 2.0)], the segments are parallel Then returns None.") {
     ProjectLinkSplitter.intersectionPoint((Point(0.0, 1.5), Point(10.0, 2.5)), (Point(0.0, 1.0), Point(10.0, 2.0))) should be (None)
   }
 
-  test("Intersection point for vertical segment") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(5.0, 0.0), (5.0, 10.0)] and Segment2 [(0.0, 1.0), (10.0, -1.0)] Then returns (5.0, 0.0).") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0, 10.0)), (Point(0.0, 1.0), Point(10.0, -1.0))) should be (Some(Point(5.0, 0.0)))
   }
 
-  test("Intersection point for two vertical segments") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(5.0, 0.0), (5.0, 10.0)] and Segment2 [(5.0, 0.0), (5.0, 5.0)] then repeat but adding 1 to Point1 of Segment1 Then both should return None.") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0, 10.0)), (Point(5.0, 0.0), Point(5.0, 5.0))) should be (None)
     ProjectLinkSplitter.intersectionPoint((Point(6.0, 0.0), Point(6.0, 10.0)), (Point(5.0, 0.0), Point(5.0, 5.0))) should be (None)
   }
 
-  test("Intersection point for nearly vertical segments") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 [(5.0, 0.0), (5.0005, 10.0)] and Segment2 [(5.0, 0.0), (4.9995, 5.0)] Then return (5.0, 0.0).") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0005, 10.0)), (Point(5.0, 0.0), Point(4.9995, 5.0))) should be (Some(Point(5.0, 0.0)))
   }
 
-  test("Intersection point, second parameter is vertical") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using Segment1 with both X and Y components and Segment2 fully vertical Then return the confirmation that there is an interception.") {
     ProjectLinkSplitter.intersectionPoint((Point(4.5, 10.041381265149107), Point(5.526846871753764, 16.20246249567169)),
       (Point(5.0, 10.0), Point(5.0, 16.0))).isEmpty should be (false)
   }
 
-  test("Intersection point for equal nearly vertical segments") {
+  test("Test ProjectLinkSplitter.intersectionPoint() When using nearly vertical segments Then return the interception point when applicable.") {
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0005, 10.0)), (Point(5.0, 0.0), Point(5.0005, 5.0))) should be (Some(Point(5.0, 0.0)))
     ProjectLinkSplitter.intersectionPoint((Point(5.0, 0.0), Point(5.0005, 10.0)), (Point(5.0, 11.0), Point(5.0005, 15.0))) should be (None)
   }
 
-  test("Geometry boundaries test") {
+  test("Test ProjectLinkSplitter.geometryToBoundaries() When using a regular geometry Then return the correct boundaries that said geometry translate to.") {
     val geom = Seq(Point(5.0, 0.0), Point(5.0, 10.0), Point(6.0, 16.0), Point(9.0, 20.0), Point(14.0, 18.0), Point(16.0, 6.0))
     val (left, right) = ProjectLinkSplitter.geometryToBoundaries(geom)
     left.size should be (geom.size)
@@ -122,7 +122,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Intersection find to boundaries test") {
+  test("Test ProjectLinkSplitter.geometryToBoundaries() When using 2 geometries that intercept but the findIntersection cannot find it Then return a possible interception point for them using the left boundary") {
     val geom = Seq(Point(5.0, 0.0), Point(5.0, 10.0), Point(6.0, 16.0), Point(9.0, 20.0), Point(14.0, 18.0), Point(16.0, 6.0))
     val (left, right) = ProjectLinkSplitter.geometryToBoundaries(geom)
     val template = Seq(Point(5.0, 0.0), Point(5.0, 10.0), Point(5.0, 16.0), Point(4.0, 20.0))
@@ -135,7 +135,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Intersection find to boundaries test on right boundary") {
+  test("Test ProjectLinkSplitter.geometryToBoundaries() When using 2 geometries that intercept but the findIntersection cannot find it Then return a possible interception point for them using the right boundary.") {
     val geom = Seq(Point(5.0, 0.0), Point(5.0, 10.0), Point(6.0, 16.0), Point(9.0, 20.0), Point(14.0, 18.0), Point(16.0, 6.0))
     val (left, right) = ProjectLinkSplitter.geometryToBoundaries(geom)
     val template = Seq(Point(5.0, 0.0), Point(5.0, 10.0), Point(5.5, 13.0), Point(10.0, 15.0))
@@ -148,7 +148,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Matching geometry test") {
+  test("Test ProjectLinkSplitter.findMatchingGeometrySegment() When using a geometry with a slight difference from a specific template Then return a geometry that fits the template.") {
     val geom = Seq(Point(5.0, 0.0), Point(5.0, 10.0), Point(6.0, 16.0), Point(9.0, 20.0), Point(14.0, 18.0), Point(16.0, 6.0))
     val geomT = Seq(Point(5.0, 0.0), Point(5.0, 10.0), Point(5.0, 16.0), Point(4.0, 20.0))
     val suravage = VVHRoadlink(1234L, 0, geom, State, TrafficDirection.BothDirections, FeatureClass.AllOthers)
@@ -166,7 +166,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Matching geometry test for differing digitization directions") {
+  test("Test ProjectLinkSplitter.findMatchingGeometrySegment() When using a geometry with a slight difference and having differing digitization directions from a specific template Then return a geometry that fits the template.") {
     val geom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 0.8))
     val geomT = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(17.0, -0.5), Point(20.0, -2.0)).reverse
     val suravage = VVHRoadlink(1234L, 0, geom, State, TrafficDirection.BothDirections, FeatureClass.AllOthers)
@@ -184,7 +184,22 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Split aligning project links") {
+  test("Test ProjectLinkSplitter.findMatchingGeometrySegment() When using geometries that are only touching each other  Then the return should be None.") {
+    val template = ProjectLink(452389, 77, 14, Combined, Continuous, 4286, 4612, 4286, 4612, None, None, None, 6138625, 0.0, 327.138,
+      TowardsDigitizing, (None, Some(ProjectLinkCalibrationPoint(6138625, 327.138, 4612, ProjectLinkSource))), NoFloating, List(Point(445417.266, 7004142.049, 0.0),
+        Point(445420.674, 7004144.679, 0.0), Point(445436.147, 7004155.708, 0.0), Point(445448.743, 7004164.052, 0.0),
+        Point(445461.586, 7004172.012, 0.0), Point(445551.316, 7004225.769, 0.0), Point(445622.099, 7004268.174, 0.0),
+        Point(445692.288, 7004310.224, 0.0), Point(445696.301, 7004312.628, 0.0)), 452278, NotHandled, PublicRoad,
+      NormalLinkInterface, 327.13776793597697, 295486, 295487, 9L, false, None, 85088L)
+    val suravage = ProjectLink(-1000, 0, 0, Unknown, Continuous, 0, 0, 0, 0, None, None, Some("silari"), 499972931, 0.0, 313.38119201522017,
+      TowardsDigitizing, (None, None), NoFloating, List(Point(445186.594, 7003930.051, 0.0), Point(445278.988, 7004016.523, 0.0),
+        Point(445295.313, 7004031.801, 0.0), Point(445376.923, 7004108.181, 0.0), Point(445391.041, 7004120.899, 0.0),
+        Point(445405.631, 7004133.071, 0.0), Point(445417.266, 7004142.049, 0.0)), 452278, New, UnknownOwnerRoad,
+      SuravageLinkInterface, 313.38119201522017, 0, 0, 9L, false, None, 85088L)
+    ProjectLinkSplitter.findMatchingGeometrySegment(suravage, template) should be (None)
+  }
+
+  test("Test ProjectLinkSplitter.split() When sending 3 project links, 2 of them identical, the other one has a light difference Then return the aligned split result.") {
     val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 0.8))
     val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 1.5), Point(20.0, 4.8))
     val rGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 0.8))
@@ -211,7 +226,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     splitA.discontinuity should be (Continuous)
   }
 
-  test("Split aligning project links with 2 template roadlinks with same linkId") {
+  test("Test ProjectLinkSplitter.split() When using project links with 2 template roadlinks with same linkId Then return the aligned split result.") {
     val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(20.0, 0.0))
     val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(21.0, 0.0))
     val t2Geom = Seq(Point(19.9, 0.0), Point(23, 0.0), Point(25.0, 0.0))
@@ -243,7 +258,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     splitA.discontinuity should be (Continuous)
   }
 
-  test("Incorrect digitization of link should not affect calculation") {
+  test("Test ProjectLinkSplitter.split() When using project links with incorrect digitization Then return the aligned split result, independently of the digitization.") {
     val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.6), Point(20.0, 0.1))
     val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 5.0), Point(20.0, 1.0)).reverse
     val rGeom = sGeom
@@ -277,7 +292,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Split opposing project links") {
+  test("Test ProjectLinkSplitter.split() When using oposing project links Then return the aligned split result.") {
     val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, -0.8)).reverse
     val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 4.8))
     val rGeom = tGeom
@@ -313,7 +328,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     }
   }
 
-  test("Split aligning project/suravage links joining at the end") {
+  test("Test ProjectLinkSplitter.split() When using project links that join at the end Then return the aligned split result.") {
     val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 3.8))
     val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 3.8))
     val rGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 3.8))
@@ -353,7 +368,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
 
   }
 
-  test("Split by suravage border -> uniq suravage link -> (Newlink length -> 0, Unchangedlink length -> original suravage length)") {
+  test("Test ProjectLinkSplitter.split() When splitting by suravage border -> uniq suravage link -> (Newlink length -> 0, Unchangedlink length -> original suravage length Then return the aligned split result.") {
     val sGeom = Seq(Point(480428.187, 7059183.911), Point(480441.534, 7059195.878), Point(480445.646, 7059199.566),
       Point(480451.056, 7059204.417), Point(480453.065, 7059206.218), Point(480456.611, 7059209.042), Point(480463.941, 7059214.747))
     val tGeom = Seq(Point(480428.187, 7059183.911), Point(480453.614, 7059206.710), Point(480478.813, 7059226.322),
@@ -388,7 +403,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     unChangedLink.endAddrMValue should be (terminatedLink.startAddrMValue)
   }
 
-  test("Split by suravage border -> uniq suravage link ->  (Newlink length -> original suravage length, Unchangedlink length -> 0)") {
+  test("Test ProjectLinkSplitter.split() When splitting by ssuravage border -> uniq suravage link ->  (Newlink length -> original suravage length, Unchangedlink length -> 0) Then return the aligned split result.") {
     val sGeom = Seq(Point(480428.187, 7059183.911), Point(480441.534, 7059195.878), Point(480445.646, 7059199.566),
       Point(480451.056, 7059204.417), Point(480453.065, 7059206.218), Point(480456.611, 7059209.042), Point(480463.941, 7059214.747))
     val tGeom = Seq(Point(480428.187, 7059183.911), Point(480453.614, 7059206.710), Point(480478.813, 7059226.322),
@@ -425,22 +440,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     GeometryUtils.geometryLength(newLink.geometry) should be (GeometryUtils.geometryLength(sGeom))
   }
 
-  test("Geometries that are only touching should not have matching geometry segment") {
-    val template = ProjectLink(452389, 77, 14, Combined, Continuous, 4286, 4612, 4286, 4612, None, None, None, 6138625, 0.0, 327.138,
-      TowardsDigitizing, (None, Some(ProjectLinkCalibrationPoint(6138625, 327.138, 4612, ProjectLinkSource))), NoFloating, List(Point(445417.266, 7004142.049, 0.0),
-        Point(445420.674, 7004144.679, 0.0), Point(445436.147, 7004155.708, 0.0), Point(445448.743, 7004164.052, 0.0),
-        Point(445461.586, 7004172.012, 0.0), Point(445551.316, 7004225.769, 0.0), Point(445622.099, 7004268.174, 0.0),
-        Point(445692.288, 7004310.224, 0.0), Point(445696.301, 7004312.628, 0.0)), 452278, NotHandled, PublicRoad,
-      NormalLinkInterface, 327.13776793597697, 295486, 295487, 9L, false, None, 85088L)
-    val suravage = ProjectLink(-1000, 0, 0, Unknown, Continuous, 0, 0, 0, 0, None, None, Some("silari"), 499972931, 0.0, 313.38119201522017,
-      TowardsDigitizing, (None, None), NoFloating, List(Point(445186.594, 7003930.051, 0.0), Point(445278.988, 7004016.523, 0.0),
-        Point(445295.313, 7004031.801, 0.0), Point(445376.923, 7004108.181, 0.0), Point(445391.041, 7004120.899, 0.0),
-        Point(445405.631, 7004133.071, 0.0), Point(445417.266, 7004142.049, 0.0)), 452278, New, UnknownOwnerRoad,
-      SuravageLinkInterface, 313.38119201522017, 0, 0, 9L, false, None, 85088L)
-    ProjectLinkSplitter.findMatchingGeometrySegment(suravage, template) should be (None)
-  }
-
-  test("Preview the split") {
+  test("Test ProjectLinkSplitter.split() When simulating a live split Then return the aligned split result.") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       val geom = Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
@@ -454,8 +454,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
       when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
-      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
-      projectDAO.createRoadAddressProject(rap)
+      val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None)
+      projectDAO.create(rap)
       val points = Seq(Point(0.0, 0.0, 0.0), Point(0.0, 45.3 ,0.0), Point(0.0, 123.5 ,0.0), Point(0.5, 140.0 ,0.0)).flatMap(p => Seq(p.x, p.y, p.z))
       val templateGeom = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
@@ -481,6 +481,71 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       splitB.head.startAddrMValue should be (splitA.head.endAddrMValue)
     }
   }
+
+  //TODO this will be implemented with SPLIT
+  //  test("split road address is splitting historic versions") {
+  //    runWithRollback {
+  //      val linearLocationId = 100L
+  //      val roadwayNumber = 1000000L
+  //      val road = 19999L
+  //      val roadPart = 205L
+  //      val origStartM = 0L
+  //      val origEndM = 102L
+  //      val origStartD = DateTime.now().minusYears(10)
+  //      val linkId = 1049L
+  //      val endM = 102.04
+  //      val suravageLinkId = 5774839L
+  //      val createdBy = "user"
+  //      val ely = 8L;
+  //      val roadway = Roadway(NewRoadway, roadwayNumber, road, roadPart, PublicRoad, Track.Combined, EndOfRoad, origStartM,
+  //        origEndM, false, origStartD, None, createdBy, None, ely, TerminationCode.NoTermination)
+  //      val linearLocation = LinearLocation(NewLinearLocation, 1, linkId, origStartM, origEndM, SideCode.TowardsDigitizing,
+  //        86400L, (Some(origStartM), Some(origEndM)), NoFloating, Seq(Point(1024.0, 0.0), Point(1024.0, 102.04)),
+  //        LinkGeomSource.NormalLinkInterface, roadwayNumber)
+  //      val roadAddressHistory = RoadAddress(NewRoadway, road, roadPart + 1, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM,
+  //        origStartD.map(_.minusYears(5)), origStartD.map(_.minusYears(15)),
+  //        None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+  //        LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
+  //      val roadwayHistory = Roadway(NewRoadway, road, roadPart + 1, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM,
+  //        origStartD.map(_.minusYears(5)), origStartD.map(_.minusYears(15)),
+  //        None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+  //        LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
+  //      val roadwayHistory2 = Roadway(NewRoadway, road, roadPart + 2, PublicRoad, Track.Combined, EndOfRoad, origStartM, origEndM,
+  //        origStartD.map(_.minusYears(15)), origStartD.map(_.minusYears(20)),
+  //        None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), NoFloating, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+  //        LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
+  //      val id = roadwayDAO.create(Seq(roadway)).head
+  //      roadwayDAO.create(Seq(roadwayHistory, roadwayHistory2))
+  //      val project = RoadAddressProject(-1L, Sent2TR, "split", createdBy.get, DateTime.now(), createdBy.get,
+  //        DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+  //      val unchangedAndNew = Seq(ProjectLink(2L, road, roadPart, Track.Combined, Continuous, origStartM, origStartM + 52L, Some(DateTime.now()), None, createdBy,
+  //        suravageLinkId, 0.0, 51.984, SideCode.TowardsDigitizing, (Some(ProjectLinkCalibrationPoint(linkId, 0.0, origStartM, UnknownSource)), None),
+  //        NoFloating, Seq(Point(1024.0, 0.0), Point(1024.0, 51.984)),
+  //        -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 51.984, id, 8L, false, Some(linkId), 85088L),
+  //        ProjectLink(3L, road, roadPart, Track.Combined, EndOfRoad, origStartM + 52L, origStartM + 177L, Some(DateTime.now()), None, createdBy,
+  //          suravageLinkId, 51.984, 176.695, SideCode.TowardsDigitizing, (None, Some(ProjectLinkCalibrationPoint(suravageLinkId, 176.695, origStartM + 177L, UnknownSource))),
+  //          NoFloating, Seq(Point(1024.0, 99.384), Point(1148.711, 99.4)),
+  //          -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 124.711, id, 8L, false, Some(linkId), 85088L),
+  //        ProjectLink(4L, 5, 205, Track.Combined, EndOfRoad, origStartM + 52L, origEndM, Some(DateTime.now()), None, createdBy,
+  //          linkId, 50.056, endM, SideCode.TowardsDigitizing, (None, Some(ProjectLinkCalibrationPoint(linkId, endM, origEndM, UnknownSource))), NoFloating,
+  //          Seq(Point(1024.0, 51.984), Point(1024.0, 102.04)),
+  //          -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 50.056, id, 8L, false, Some(suravageLinkId), 85088L))
+  //      projectService.updateTerminationForHistory(Set(), unchangedAndNew)
+  //      val suravageAddresses = RoadAddressDAO.fetchByLinkId(Set(suravageLinkId), true, true)
+  //      // Remove the current road address from list because it is not terminated by this procedure
+  //      val oldLinkAddresses = RoadAddressDAO.fetchByLinkId(Set(linkId), true, true, true, true, Set(id))
+  //      suravageAddresses.foreach { a =>
+  //        a.terminated should be(NoTermination)
+  //        a.endDate.nonEmpty || a.endAddrMValue == origStartM + 177L should be(true)
+  //        a.linkGeomSource should be(SuravageLinkInterface)
+  //      }
+  //      oldLinkAddresses.foreach { a =>
+  //        a.terminated should be(Subsequent)
+  //        a.endDate.nonEmpty should be(true)
+  //        a.linkGeomSource should be(NormalLinkInterface)
+  //      }
+  //    }
+  //  }
 
   private def toRoadLink(ral: RoadAddressLinkLike): RoadLink = {
     RoadLink(ral.linkId, ral.geometry, ral.length, ral.administrativeClass, 1,
