@@ -32,7 +32,6 @@ pipeline {
                 script {
 
                     STAGE_FRONTEND_BUILD_CMD = [
-                        "mkdir tmp",
                         "npm install",
                         "export TMPDIR=/home/jenkins/tmp",
                         "yarn install",
