@@ -1722,7 +1722,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Creating history rows based on operation")
           linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
           (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1, roadway._2, project.startDate))
-          roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway))
+          roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate, roadway.endDate,
+                                                                    roadway.validFrom, roadway.validTo, roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
           linearLocationDAO.create(generatedRoadways.flatMap(_._2))
           Some(s"road addresses created")
         } catch {
