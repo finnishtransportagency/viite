@@ -37,7 +37,7 @@ pipeline {
                         "export TMPDIR=/home/jenkins/tmp",
                         "yarn install",
                         "grunt deploy --target=${get_environment()?.trim()}",
-                        "cd /home/jenkins/tmp",
+                        "cd /home/jenkins/dist",
                         "ls -l"
                     ].join(" && ")
 
@@ -55,7 +55,7 @@ pipeline {
 
                     STAGE_BACKEND_BUILD_CMD = [
                         "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                        "cd /data1/jenkins/workspace/viite/Deploy-Staging/tmp",
+                        "cd /home/jenkins/",
                         "ls -l"
                     ].join(" && ")
 
