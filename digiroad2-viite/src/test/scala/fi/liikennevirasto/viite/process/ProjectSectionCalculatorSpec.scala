@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
@@ -45,11 +46,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   val projectId = 1
-  val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
+  val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
     List.empty[ProjectReservedPart], None)
 
-  test("MValues && AddressMValues && CalibrationPoints calculation for new road addresses") {
+  test("Test assignMValues When assigning values for new road addresses Then values should be properly assigned") {
     runWithRollback {
       val idRoad0 = 0L
       val idRoad1 = 1L
@@ -104,7 +105,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Mvalues calculation for complex case") {
+  test("Test assignMValues When assigning values for new road addresses in a complex case Then values should be properly assigned") {
     runWithRollback {
       val idRoad0 = 0L //   |
       val idRoad1 = 1L //  /
@@ -172,7 +173,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Mvalues calculation for against digitization case") {
+  test("Test assignMValues When giving against digitization case Then values should be properly assigned") {
     runWithRollback {
       val idRoad0 = 0L //   |
       val idRoad1 = 1L //  /
@@ -241,7 +242,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("New addressing calibration points, mixed directions") {
+  test("Test assignMValues When addressing calibration points and mixed directions Then values should be properly assigned") {
     runWithRollback {
       val idRoad0 = 0L //   >
       val idRoad1 = 1L //     <
@@ -276,7 +277,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("determineMValues Tracks 0+1+2") {
+  test("Test assignMValues When assigning values for Tracks 0+1+2 Then the result should not be dependent on the order of the links") {
     runWithRollback {
       def trackMap(pl: ProjectLink) = {
         pl.linkId -> (pl.track, pl.sideCode)
@@ -303,7 +304,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("determineMValues one link") {
+  test("Test assignMValues When giving one link Towards and one Against Digitizing Then calibrations points should be properly assigned") {
     runWithRollback {
       val projectLink0T = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), floating = NoFloating,
@@ -323,7 +324,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("determineMValues missing other track - exception is thrown and links are returned as-is") {
+  test("Test assignMValues When giving links without opposite track Then exception is thrown and links are returned as-is") {
     runWithRollback {
       val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), floating = NoFloating,
@@ -340,7 +341,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("determineMValues incompatible digitization on tracks is accepted and corrected") {
+  test("Test assignMValues When giving incompatible digitization on tracks Then the direction of left track is corrected to match the right track") {
     runWithRollback {
       val idRoad0 = 0L //   R<
       val idRoad1 = 1L //   R<
@@ -371,7 +372,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("determineMValues different track lengths are adjusted") {
+  test("Test assignMValues When giving links with different track lengths Then different track lengths are adjusted") {
     runWithRollback {
       // Left track = 89.930 meters
       val idRoad0 = 0L //   L>
@@ -411,7 +412,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("determineMValues calibration points are cleared") {
+  test("Test assignMValues When giving links in different tracks Then proper calibration points should be created for each track") {
     runWithRollback {
       // Left track = 85.308 meters
       val idRoad0 = 0L //   L>
@@ -446,7 +447,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Track sections are combined to start from the same position") {
+  test("Test assignMValues When track sections are combined to start from the same position Then tracks should still be different") {
     runWithRollback {
       // Left track = 85.308 meters
       val idRoad0 = 0L //   C>
@@ -469,7 +470,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Unchanged + New project links are calculated properly") {
+  test("Test assignMValues When giving created + unchanged links Then links should be calculated properly") {
     runWithRollback {
       val idRoad0 = 0L //   U>
       val idRoad1 = 1L //   U>
@@ -495,7 +496,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Unchanged + Terminated links are calculated properly") {
+  test("Test assignMValues When giving created + terminated links Then links should be calculated properly") {
     runWithRollback {
       val idRoad0 = 0L //   U>
       val idRoad1 = 1L //   U>
@@ -520,7 +521,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Project section calculator test for new + transfer") {
+  test("Test assignMValues When giving new + transfer links Then Project section calculator should assign values properly") {
     runWithRollback {
       val idRoad0 = 0L // T
       val idRoad1 = 1L // N
@@ -547,7 +548,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         r.endAddrMValue should be(projectLink0.endAddrMValue + maxAddr - projectLink3.endAddrMValue)
       }
       output.filter(_.id == idRoad3).foreach { r =>
-        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, 10.4, 44, ProjectLinkSource)))
+        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, Math.round(10.399999999999999*10.0)/10.0, 44, ProjectLinkSource)))
         r.startAddrMValue should be(maxAddr + projectLink3.startAddrMValue - projectLink3.endAddrMValue)
         r.endAddrMValue should be(maxAddr)
       }
@@ -556,7 +557,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("validate if there is a calibration point when has MinorDiscontinuity at end of address and start of next one with 2 tracks (Left and Right)") {
+  test("Test assignMValues When there is a MinorDiscontinuity at end of address Then start of next one with 2 tracks (Left and Right) should also have calibration points, 4 in total") {
     runWithRollback{
       // Left track = 85.308 meters
       val idRoad0 = 0L //   L>
@@ -592,7 +593,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with 2 tracks (Left and Right)") {
+  test("Test assignMValues When there is a Discontinuity at end of address Then start of next one with 2 tracks (Left and Right) should also have calibration points, 4 in total") {
     runWithRollback {
       // Left track = 85.308 meters
       val idRoad0 = 0L //   L>
@@ -628,7 +629,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("validate if there is a calibration point when has MinorDiscontinuity at end of address and start of next one with track Combined") {
+  test("Test assignMValues When there is a MinorDiscontinuity at end of address Then start of next one with 1 track (Combined) should also have calibration points, 4 in total") {
     runWithRollback {
       // Combined track = 85.308 meters with MinorDiscontinuity
       val idRoad0 = 0L //   C>
@@ -654,7 +655,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("validate if there is a calibration point when has Discontinuous at end of address and start of next one with track Combined") {
+  test("Test assignMValues When there is a Discontinuity at end of address Then start of next one with 1 track (Combined) should also have calibration points, 4 in total") {
     runWithRollback {
       // Combined track = 85.308 meters with Discontinuous
       val idRoad0 = 0L //   C>
@@ -680,7 +681,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("When projects links ends on a right and left track section calculator for new + transfer should have the same end address") {
+  test("Test assignMValues When projects links ends on a right and left track Then the section calculator for new + transfer should have the same end address") {
     runWithRollback {
       val idRoad6 = 6L // N   /
       val idRoad5 = 5L // T \
@@ -710,4 +711,70 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test assignTerminatedMValues When Terminating links on Left/Right tracks and different addrMValues Then they should be adjusted in order to have the same end address") {
+    runWithRollback {
+      val roadwayDAO = new RoadwayDAO
+      val linearLocationDAO = new LinearLocationDAO
+
+      val roadNumber1 = 990
+      val roadPartNumber1 = 1
+
+      val roadwayNumber1 = 1000000000l
+      val roadwayNumber2 = 2000000000l
+      val roadwayNumber3 = 3000000000l
+
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadwayId2 = roadwayId1 + 1
+      val roadwayId3 = roadwayId2 + 1
+      val linearLocationId1 = Sequences.nextLinearLocationId
+      val linearLocationId2 = linearLocationId1 + 1
+      val linearLocationId3 = linearLocationId2 + 1
+
+      val testRoadway1 = Roadway(roadwayId1, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 50, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+
+      val testRoadway2 = Roadway(roadwayId2, roadwayNumber2, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        50, 105, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+
+      val testRoadway3 = Roadway(roadwayId3, roadwayNumber3, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
+        50, 107, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 3"), 1, TerminationCode.NoTermination)
+
+
+      val linearLocation1 = LinearLocation(linearLocationId1, 1, 12345, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000l,
+        (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(50.0, 5.0)), LinkGeomSource.NormalLinkInterface,
+        roadwayNumber1)
+
+      val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346, 0.0, 55.0, SideCode.TowardsDigitizing, 10000000000l,
+        (None, Some(105)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(100.0, 10.0)), LinkGeomSource.NormalLinkInterface,
+        roadwayNumber2)
+
+      val linearLocation3 = LinearLocation(linearLocationId3, 1, 12347, 0.0, 57.0, SideCode.TowardsDigitizing, 10000000000l,
+        (None, Some(107)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), LinkGeomSource.NormalLinkInterface,
+        roadwayNumber3)
+
+      roadwayDAO.create(List(testRoadway1, testRoadway2, testRoadway3))
+
+      linearLocationDAO.create(List(linearLocation1, linearLocation2, linearLocation3))
+
+
+      val roadways = roadwayDAO.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2,roadwayId3))
+      val linearLocations = linearLocationDAO.queryById(Set(linearLocationId1, linearLocationId2, linearLocationId3))
+
+      val idRoad3 = 3L // T \
+      val idRoad2 = 2L // T   /
+      val idRoad1 = 1L // U  |
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad1, linearLocationId1, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 50L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 50.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+        Seq(Point(0.0, 5.0), Point(50.0, 5.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(0l), roadAddressEndAddrM = Some(50l), roadAddressTrack = Some(Track.Combined))
+
+      val projectLink2 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(idRoad2, linearLocationId2, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.RightSide, EndOfRoad, 50L, 105L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 55.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+        Seq(Point(50.0, 5.0), Point(100.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(50l), roadAddressEndAddrM = Some(105l), roadAddressTrack = Some(Track.RightSide))
+      val projectLink3 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(idRoad3, linearLocationId3, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.LeftSide, EndOfRoad, 50L, 107L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 57.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+        Seq(Point(50.0, 5.0), Point(100.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(50l), roadAddressEndAddrM = Some(107l), roadAddressTrack = Some(Track.LeftSide))
+
+      val projectLinks = ProjectSectionCalculator.assignTerminatedMValues(Seq(projectLink2, projectLink3), Seq(projectLink1))
+      projectLinks.filter(_.track == Track.LeftSide).head.endAddrMValue should be (projectLinks.filter(_.track == Track.RightSide).head.endAddrMValue)
+      projectLinks.filter(_.track == Track.LeftSide).head.endAddrMValue should be ((projectLink2.endAddrMValue+projectLink3.endAddrMValue)/2)
+    }
+  }
 }

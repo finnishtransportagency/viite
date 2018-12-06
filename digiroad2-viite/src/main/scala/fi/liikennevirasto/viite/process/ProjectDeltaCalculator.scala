@@ -23,7 +23,7 @@ object ProjectDeltaCalculator {
   val linearLocationDAO = new LinearLocationDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  def delta(project: RoadAddressProject): Delta = {
+  def delta(project: Project): Delta = {
     val projectLinksFetched = projectLinkDAO.fetchProjectLinks(project.id)
     val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber, l.roadPartNumber))
     val currentRoadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllByRoadwayId(projectLinksFetched.map(_.roadwayId)).map(_.roadwayNumber).toSet))
