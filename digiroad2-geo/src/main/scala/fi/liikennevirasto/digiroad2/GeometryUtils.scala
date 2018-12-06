@@ -21,6 +21,17 @@ object GeometryUtils {
     measure >= interval._1 && measure <= interval._2
   }
 
+  def createStepGeometry(originalGeometry: Seq[Point], processedGeometry: Seq[Point], startMeasure: Double, maxLength: Double, step: Double = 100.0): Seq[Point] = {
+    if(startMeasure + step >= maxLength ) {
+      val finalTruncatedGeom = geometryEndpoints(truncateGeometry2D(originalGeometry, startMeasure, maxLength))
+      processedGeometry++Seq(finalTruncatedGeom._1, finalTruncatedGeom._2).diff(processedGeometry)
+    }
+    else {
+      val currentTruncatedGeom = geometryEndpoints(truncateGeometry2D(originalGeometry, startMeasure, startMeasure + step))
+      createStepGeometry(originalGeometry, processedGeometry++Seq(currentTruncatedGeom._1, currentTruncatedGeom._2).diff(processedGeometry) ,startMeasure + step , maxLength, step)
+    }
+  }
+
   def truncateGeometry2D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
     truncateGeometry3D(geometry.map(p => to2DGeometry(p)), startMeasure, endMeasure)
   }

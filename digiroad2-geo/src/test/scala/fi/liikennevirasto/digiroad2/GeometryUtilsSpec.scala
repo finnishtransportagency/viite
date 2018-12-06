@@ -248,4 +248,20 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val geometry2 = List(Point(1.0, 1.0), Point(1.0, 0.0), Point(0.0, 0.0))
     geometryMoved(1.0)(geometry1, geometry2) should be (true)
   }
+
+
+  test("Test geometryUtils.createStepGeometry() When using a regular geometry, start and end values Then return the fully truncated geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(200.0, 200.0, 0.0),
+      Point(400.0, 400.0, 0.0),
+      Point(600.0, 600.0, 0.0),
+      Point(800.0, 800.0, 0.0),
+      Point(1000.0, 1000.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100 )
+    GeometryUtils.geometryEndpoints(stepGeom) should be (GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length > geometry.length should be (true)
+
+  }
 }
