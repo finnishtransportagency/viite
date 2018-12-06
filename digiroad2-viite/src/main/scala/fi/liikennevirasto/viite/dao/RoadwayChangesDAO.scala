@@ -282,7 +282,7 @@ class RoadwayChangesDAO {
       roadwayChangePS.setLong(20, nextChangeOrderLink)
       roadwayChangePS.addBatch()
 
-      newRoadwaySection.projectLinks.foreach {
+      oldRoadwaySection.projectLinks.foreach {
         pl =>
           roadWayChangesLinkPS.setLong(1, nextChangeOrderLink)
           roadWayChangesLinkPS.setLong(2, projectId)
