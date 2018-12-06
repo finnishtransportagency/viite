@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
-
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
@@ -12,10 +10,13 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.model.RoadAddressLinkLike
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
@@ -276,7 +277,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
     (Math.min(addrA, addrB), Math.max(addrA, addrB))
   }
 
-  def isExpire(): Boolean = {
+  def isExpire: Boolean = {
     validFrom.getOrElse(throw new IllegalStateException("The valid from should be set before call isExpire method")).isAfterNow ||
       validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
   }
@@ -321,24 +322,6 @@ class BaseDAO {
 
   val basicDateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  protected def dateTimeParse(string: String): DateTime = {
-    formatter.parseDateTime(string)
-  }
-
-  protected def optDateTimeParse(string: String): Option[DateTime] = {
-    try {
-      if (string == null || string == "")
-        None
-      else
-        Some(DateTime.parse(string, formatter))
-    } catch {
-      case ex: Exception => None
-    }
-  }
-
-  protected def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
-    dateTime.map(dt => new Timestamp(dt.getMillis))
-  }
 }
 
 class RoadwayDAO extends BaseDAO {
@@ -489,7 +472,11 @@ class RoadwayDAO extends BaseDAO {
 
   def fetchAllByRoadwayId(roadwayIds: Seq[Long]): Seq[Roadway] = {
     time(logger, "Fetch road ways by id") {
-      fetch(withRoadWayIds(roadwayIds))
+      if (roadwayIds.isEmpty) {
+        Seq()
+      } else {
+        fetch(withRoadWayIds(roadwayIds))
+      }
     }
   }
 
@@ -693,12 +680,13 @@ class RoadwayDAO extends BaseDAO {
             SELECT * FROM (
               SELECT ra.road_part_number
               FROM ROADWAY ra
-              WHERE road_number = $roadNumber AND road_part_number < $current AND valid_to IS NULL
+              WHERE road_number = $roadNumber AND road_part_number < $current
+                AND valid_to IS NULL AND end_date IS NULL
               ORDER BY road_part_number DESC
             ) WHERE ROWNUM < 2
         """
-      Q.queryNA[Long](query).firstOption
-    }
+    Q.queryNA[Long](query).firstOption
+  }
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
@@ -785,15 +773,15 @@ class RoadwayDAO extends BaseDAO {
   {
     val query =
       s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
-                  (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
-                  (Select Max(ra.end_Date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
-                  FROM ROADWAY r
-                INNER JOIN LINEAR_LOCATION l on r.ROADWAY_NUMBER = l.ROADWAY_NUMBER
-               INNER JOIN (Select  MAX(rm.start_addr_m) as maxstartaddrm FROM ROADWAY rm WHERE rm.road_number=$roadNumber AND rm.road_part_number=$roadPart AND
-               rm.valid_to is null AND rm.end_date is null AND rm.TRACK in (0,1)) ra
-               on r.START_ADDR_M=ra.maxstartaddrm
-               WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
-               r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
-    Q.queryNA[(Long,Long,Long,Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
+            (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
+            (Select Max(ra.end_Date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
+          FROM ROADWAY r
+            INNER JOIN LINEAR_LOCATION l on r.ROADWAY_NUMBER = l.ROADWAY_NUMBER
+            INNER JOIN (Select  MAX(rm.start_addr_m) as maxstartaddrm FROM ROADWAY rm WHERE rm.road_number=$roadNumber AND rm.road_part_number=$roadPart AND
+              rm.valid_to is null AND rm.end_date is null AND rm.TRACK in (0,1)) ra
+              on r.START_ADDR_M=ra.maxstartaddrm
+          WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
+            r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
+    Q.queryNA[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 }

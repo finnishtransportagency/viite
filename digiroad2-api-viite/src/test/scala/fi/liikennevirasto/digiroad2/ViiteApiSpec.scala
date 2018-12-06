@@ -15,13 +15,13 @@ import org.scalatra.test.scalatest.ScalatraSuite
 class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
-  test("Conversion from JSON to Road Address Project") {
+  test("Test json.extract[RoadAddressProjectExtractor] When sending a list of 1 road part link coded in a JSON format Then return the decoded Road Address Project list with 1 element.") {
     val str = "{\"id\":0,\"status\":1,\"name\":\"erwgerg\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"projectEly\":5,\"roadPartList\":[{\"roadPartNumber\":205,\"roadNumber\":5,\"ely\":5,\"roadLength\":6730,\"roadPartId\":30,\"discontinuity\":\"Jatkuva\"}],\"resolution\":8}"
     val json = parse(str)
     json.extract[RoadAddressProjectExtractor].roadPartList should have size(1)
   }
 
-  test("Conversion from extracted project with too long name is successful") {
+  test("Test json.extract[RoadAddressProjectExtractor] When sending am excessively big name in JSON format Then return the decoded name but with some loss of letters.") {
     val str = "{\"id\":0,\"projectEly\":5,\"status\":1,\"name\":\"ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"roadPartList\":[],\"resolution\":8}"
     val json = parse(str)
     val extracted = json.extract[RoadAddressProjectExtractor]
@@ -30,7 +30,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
     project.name should have length(32)
   }
 
-  test("Conversion of SplitOptions objects") {
+  test("Test json.extract[SplitOptions] When using a serialized version of a \"SplitObject\" data Then return the exact data that was encoded.") {
     val options = SplitOptions(Point(123,456,789), LinkStatus.New, LinkStatus.Terminated, 4L, 5L, Track.Combined,
       Discontinuity.MinorDiscontinuity, 9L, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, 4L, ProjectCoordinates(0, 1, 1))
     val s = Serialization.write(options)
@@ -39,7 +39,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
     read should be (options)
   }
 
-  test("Conversion of Point objects without z") {
+  test("Test json.extract[Point] When using a single point with a XY coordinate Then return exactly the point with the same XY coordinates that was sent..") {
     val point = Point(0.2,5.0)
     val str = "{\"x\":0.2,\"y\":5.0}"
     val json=parse(str)
