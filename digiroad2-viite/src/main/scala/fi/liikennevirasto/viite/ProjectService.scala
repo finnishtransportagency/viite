@@ -1753,13 +1753,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             // TRANSFERING OR NUMBERING TO A NEW ROADWAY
             if (srcExistingRoadways.nonEmpty) {
               // IF EXISTS SOURCE ROADWAY AND ROADNAME EXPIRE IT
-              val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
-              if (srcRoadNames.nonEmpty) {
-                val roadNameOpt = srcRoadNames.find(rn => rn.endDate.isEmpty && rn.validTo.isEmpty)
-                if (roadNameOpt.isDefined) {
-                  val roadName = roadNameOpt.get
-                  RoadNameDAO.update(roadName.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
-                }
+              val srcRoadName = RoadNameDAO.getLatestRoadName(srcRoadNumber)
+              if (srcRoadName.isDefined) {
+                RoadNameDAO.update(srcRoadName.get.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
               }
             }
             // CREATE NEW ROADNAME FOR TARGET ROADNUMBER
@@ -1771,13 +1767,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           } else {
             // TRANSFERING OR NUMBERING TO AN EXISTING ROADWAY
             // IF EXISTS SOURCE ROADWAY AND ROADNAME EXPIRE IT
-            val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
-            if (srcRoadNames.nonEmpty) {
-              val roadNameOpt = srcRoadNames.find(rn => rn.endDate.isEmpty && rn.validTo.isEmpty)
-              if (roadNameOpt.isDefined) {
-                val roadName = roadNameOpt.get
-                RoadNameDAO.update(roadName.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
-              }
+            val srcRoadName = RoadNameDAO.getLatestRoadName(srcRoadNumber)
+            if (srcRoadName.isDefined) {
+              RoadNameDAO.update(srcRoadName.get.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
             }
           }
         }
@@ -1796,13 +1788,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val roadNumberSet = Set(roadNumber)
           val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadNumberSet)
           if (roadways.isEmpty) {
-            val roadNames = RoadNameDAO.getAllByRoadNumber(roadNumber)
-            if (roadNames.nonEmpty) {
-              val roadNameOpt = roadNames.find(rn => rn.endDate.isEmpty && rn.validTo.isEmpty)
-              if (roadNameOpt.isDefined) {
-                val roadName = roadNameOpt.get
-                RoadNameDAO.update(roadName.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
-              }
+            val roadNameOpt = RoadNameDAO.getLatestRoadName(roadNumber)
+            if (roadNameOpt.isDefined) {
+              RoadNameDAO.update(roadNameOpt.get.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
             }
           }
         }
