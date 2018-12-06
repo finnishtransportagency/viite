@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
-import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
+import fi.liikennevirasto.viite.Dummies.{dummyRoadway, dummyRoadwayChangeSection}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
@@ -1754,7 +1754,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test handleNewRoadNames - Test if a new RoadName is created from a project link") {
     runWithRollback {
 
-      val roadNumber = 9999
+      val testRoadNumber = 9999
       val testName = "TEST ROAD NAME"
 
       val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -1764,18 +1764,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val changeInfos = List(
       RoadwayChangeInfo(AddressChangeType.New,
-      source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-      target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+      source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+      target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
       Continuous, RoadType.apply(1), reversed = false, 1),
 
       RoadwayChangeInfo(AddressChangeType.Unchanged,
-      source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-      target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+      source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+      target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
       Continuous, RoadType.apply(5), reversed = false, 2),
 
       RoadwayChangeInfo(AddressChangeType.Unchanged,
-      source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-      target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+      source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+      target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
       Continuous, RoadType.apply(5), reversed = false, 3)
       )
 
@@ -1787,14 +1787,240 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), projectStartTime, Some(0))
       )
 
-      ProjectLinkNameDAO.create(project.id, roadNumber, testName)
+      ProjectLinkNameDAO.create(project.id, testRoadNumber, testName)
 
       // Method to be tested
       projectService.handleNewRoadNames(changes)
 
-      ProjectLinkNameDAO.get(project.id, roadNumber) should be (None)
-      val roadnames = RoadNameDAO.getAllByRoadNumber(roadNumber)
-      roadnames.foreach(rn => rn.roadName should be (testName))
+      // Test if project link is removed from DB
+      ProjectLinkNameDAO.get(project.id, testRoadNumber) should be (None)
+
+      // Test if the new roadnames have the test road name & number
+      val roadnames = RoadNameDAO.getAllByRoadNumber(testRoadNumber)
+      roadnames.foreach(rn => {
+        rn.roadName should be (testName)
+        rn.roadNumber should be (testRoadNumber)
+      })
+    }
+  }
+
+  test("Test handleTerminatedRoadwayChanges - When a project has a Termination RoadWayChange then the RoadName(s) for that RoadNumber have to be expired") {
+    runWithRollback {
+
+      val roadNumber = 9999
+      val name = "TEST ROAD NAME"
+
+      val roadnames = Seq(
+        RoadName(99999, roadNumber, name, startDate = Some(DateTime.now()), createdBy = "Test")
+      )
+      RoadNameDAO.create(roadnames)
+
+      val changeInfos = List(
+        RoadwayChangeInfo(AddressChangeType.Termination,
+          source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1),
+
+        RoadwayChangeInfo(AddressChangeType.Unchanged,
+          source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 2),
+
+        RoadwayChangeInfo(AddressChangeType.Unchanged,
+          source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3)
+      )
+
+      val projectStartTime = DateTime.now();
+
+      val changes = List(
+        ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, projectStartTime, Some(0)),
+        ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(1), projectStartTime, Some(0)),
+        ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), projectStartTime, Some(0))
+      )
+
+      // Method to be tested
+      projectService.handleTerminatedRoadwayChanges(changes)
+
+      val roadNames = RoadNameDAO.getAllByRoadNumber(roadNumber)
+      roadNames.foreach(rn => {
+        rn.endDate.isDefined should be (true)
+        rn.endDate.get.toLocalDate should be (projectStartTime.toLocalDate)
+      })
+
+    }
+  }
+
+  test("Test handleTransferAndRenumeration: Transfer to new roadway - If source roadway exists expire its road name and create new road name for targer road number") {
+    runWithRollback {
+
+      val srcRoadNumber = 9998
+      val targetRoadNumber = 9999
+      val testName = "TEST ROAD NAME"
+
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
+
+      val roadnames = Seq(RoadName(99999, srcRoadNumber, testName, startDate = Some(DateTime.now()), createdBy = "Test"))
+      RoadNameDAO.create(roadnames)
+
+      val roadways = List(dummyRoadway(0L, srcRoadNumber, 0L, 0L, 0L, DateTime.now, Some(DateTime.now)))
+      roadwayDAO.create(roadways)
+
+      val changeInfos = List(
+        RoadwayChangeInfo(AddressChangeType.Transfer,
+          source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1)
+      )
+
+      val changes = List(
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
+      )
+      projectService.handleTransferAndRenumeration(changes)
+      ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
+      val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
+      srcRoadNames.foreach(rn => {
+        rn.endDate.isDefined should be(true)
+        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+      })
+      val targetRoadNames = RoadNameDAO.getAllByRoadNumber(targetRoadNumber)
+      targetRoadNames.foreach(rn => {
+        rn.roadNumber should be(targetRoadNumber)
+        rn.roadName should be(testName)
+      })
+    }
+  }
+
+  test("Test handleTransferAndRenumeration: Transfer to existing roadway - If source roadway exists expire its roadname") {
+    runWithRollback {
+
+      val srcRoadNumber = 9998
+      val targetRoadNumber = 9999
+      val testName = "TEST ROAD NAME"
+
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
+
+      val roadnames = Seq(RoadName(99999, srcRoadNumber, testName, startDate = Some(DateTime.now()), createdBy = "Test"))
+      RoadNameDAO.create(roadnames)
+
+      val roadways = List(
+        Roadway(0L, 0L, srcRoadNumber, 0L, RoadType.PublicRoad, Track.Combined, Continuous, 0L, 0L, false, DateTime.now, Some(DateTime.now), "dummy", None, 0L, NoTermination),
+        Roadway(-1L, 0L, targetRoadNumber, 0L, RoadType.PublicRoad, Track.Combined, Continuous, 0L, 0L, false, DateTime.now, Some(DateTime.now), "dummy", None, 0L, NoTermination)
+      )
+      roadwayDAO.create(roadways)
+
+      val changeInfos = List(
+        RoadwayChangeInfo(AddressChangeType.Transfer,
+          source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1)
+      )
+
+      val changes = List(
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
+      )
+      projectService.handleTransferAndRenumeration(changes)
+
+      val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
+      srcRoadNames.foreach(rn => {
+        rn.endDate.isDefined should be(true)
+        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+      })
+    }
+  }
+
+  test("Test handleTransferAndRenumeration: Renumeration to new roadway - If source roadway exists expire its road name and create new road name for targer road number") {
+    runWithRollback {
+
+      val srcRoadNumber = 9998
+      val targetRoadNumber = 9999
+      val testName = "TEST ROAD NAME"
+
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
+
+      val roadnames = Seq(RoadName(99999, srcRoadNumber, testName, startDate = Some(DateTime.now()), createdBy = "Test"))
+      RoadNameDAO.create(roadnames)
+
+      val roadways = List(dummyRoadway(0L, srcRoadNumber, 0L, 0L, 0L, DateTime.now, Some(DateTime.now)))
+      roadwayDAO.create(roadways)
+
+      val changeInfos = List(
+        RoadwayChangeInfo(AddressChangeType.ReNumeration,
+          source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1)
+      )
+
+      val changes = List(
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
+      )
+      projectService.handleTransferAndRenumeration(changes)
+      ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
+      val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
+      srcRoadNames.foreach(rn => {
+        rn.endDate.isDefined should be(true)
+        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+      })
+      val targetRoadNames = RoadNameDAO.getAllByRoadNumber(targetRoadNumber)
+      targetRoadNames.foreach(rn => {
+        rn.roadNumber should be(targetRoadNumber)
+        rn.roadName should be(testName)
+      })
+    }
+  }
+
+  test("Test handleTransferAndRenumeration: Renumeration to existing roadway - If source roadway exists expire its roadname") {
+    runWithRollback {
+
+      val srcRoadNumber = 9998
+      val targetRoadNumber = 9999
+      val testName = "TEST ROAD NAME"
+
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
+
+      val roadnames = Seq(RoadName(99999, srcRoadNumber, testName, startDate = Some(DateTime.now()), createdBy = "Test"))
+      RoadNameDAO.create(roadnames)
+
+      val roadways = List(
+        Roadway(0L, 0L, srcRoadNumber, 0L, RoadType.PublicRoad, Track.Combined, Continuous, 0L, 0L, false, DateTime.now, Some(DateTime.now), "dummy", None, 0L, NoTermination),
+        Roadway(-1L, 0L, targetRoadNumber, 0L, RoadType.PublicRoad, Track.Combined, Continuous, 0L, 0L, false, DateTime.now, Some(DateTime.now), "dummy", None, 0L, NoTermination)
+      )
+      roadwayDAO.create(roadways)
+
+      val changeInfos = List(
+        RoadwayChangeInfo(AddressChangeType.ReNumeration,
+          source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1)
+      )
+
+      val changes = List(
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
+      )
+      projectService.handleTransferAndRenumeration(changes)
+
+      val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
+      srcRoadNames.foreach(rn => {
+        rn.endDate.isDefined should be(true)
+        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+      })
     }
   }
 
