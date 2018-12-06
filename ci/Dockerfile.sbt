@@ -5,7 +5,7 @@ RUN mkdir /home/jenkins/.m2 && \
   mkdir /home/jenkins/.ivy2 && \
   mkdir /home/jenkins/.sbt && \
   mkdir /home/jenkins/package && \
-  mkdir /home/jenkins/package/viite-UI && \
+  mkdir /home/jenkins/package/viite-UI
 COPY config/repositories /home/jenkins/.sbt/repositories
 RUN wget http://mirrors.up.pt/pub/apache/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz && \
     tar xzf apache-maven-3.6.0-bin.tar.gz -C /home/jenkins
