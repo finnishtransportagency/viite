@@ -6,3 +6,4 @@ RUN mkdir /home/jenkins/package && \
     mkdir /home/jenkins/package/viite-UI
 RUN npm install grunt -g
 RUN chown -R jenkins /home/jenkins
+USER jenkins
