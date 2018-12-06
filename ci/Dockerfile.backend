@@ -30,5 +30,6 @@ ENV PATH "/home/jenkins/sbt/bin:$PATH"
 ENV PATH "/home/jenkins/scala-$SCALA_VERSION/bin:$PATH"
 
 COPY config/repositories /home/jenkins/.sbt/repositories
-RUN chown -R jenkins /home/jenkins
+RUN chown -R jenkins /home/jenkins && \
+    chmod 777 /home/jenkins
 
