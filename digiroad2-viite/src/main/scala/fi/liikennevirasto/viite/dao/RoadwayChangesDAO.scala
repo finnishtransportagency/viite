@@ -293,7 +293,7 @@ class RoadwayChangesDAO {
 
     val startTime = System.currentTimeMillis()
     logger.info("Begin delta insertion in ChangeTable")
-    projectDAO.getRoadAddressProjectById(projectId) match {
+    projectDAO.fetchById(projectId) match {
       case Some(project) =>
         project.ely match {
           case Some(ely) =>

@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRun
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
+import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.DateTime
 import scala.collection.parallel.immutable.ParSet
@@ -31,7 +31,8 @@ object DataFixture {
     props
   }
 
-  val dataImporter = new AssetDataImporter
+
+  val dataImporter = new DataImporter
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
@@ -96,10 +97,10 @@ object DataFixture {
     println()
   }
 
-  def updateRoadAddressesGeometry(): Unit = {
+  def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.updateRoadAddressesGeometry(vvhClient)
+    dataImporter.updateLinearLocationGeometry(vvhClient)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
@@ -208,6 +209,42 @@ object DataFixture {
     }
   }
 
+  private def updateRoadAddressGeometrySource(): Unit = {
+    throw new NotImplementedError("Will be implemented at VIITE-1554")
+
+    //    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+//
+//    //Get All Roads
+//    val roads: Seq[Long] =
+//      OracleDatabase.withDynTransaction {
+//        RoadAddressDAO.getAllValidRoadNumbers()
+//      }
+//
+//    //For each municipality get all VVH Roadlinks
+//    roads.par.foreach { road =>
+//      println("%d: Fetch road addresses for road #%d".format(road, road))
+//      OracleDatabase.withDynTransaction {
+//        val roadAddressSeq = RoadAddressDAO.fetchByRoad(road)
+//        // Floating addresses are ignored
+//        val linkIds = roadAddressSeq.map(_.linkId).toSet
+//        println("%d: %d address rows fetched on %d links".format(road, roadAddressSeq.size, linkIds.size))
+//        val cacLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIds)
+//          .map(rl => rl.linkId -> rl.linkSource).toMap
+//        // If not present in current and complementary, check the historic links, too
+//        val vvhHistoryLinks = roadLinkService.getRoadLinksHistoryFromVVH(linkIds -- cacLinks.keySet)
+//          .map(rl => rl.linkId -> LinkGeomSource.HistoryLinkInterface).toMap
+//        val vvhLinks = cacLinks ++ vvhHistoryLinks
+//        val updated = roadAddressSeq
+//          .filterNot(ra => vvhLinks.getOrElse(ra.linkId, ra.linkGeomSource) == ra.linkGeomSource)
+//          .count(ra =>
+//            RoadAddressDAO.updateLinkSource(ra.id, vvhLinks(ra.linkId))
+//          )
+//        println("%d: %d addresses updated".format(road, updated))
+//      }
+//    }
+
+  }
+
   /*private def showFreezeInfo(): Unit = {
     println("Road link geometry freeze is active; exiting without changes")
   }*/
@@ -285,7 +322,7 @@ object DataFixture {
       case Some("update_missing") =>
         updateUnaddressedRoadLink()
       case Some("update_road_addresses_geometry") =>
-        updateRoadAddressesGeometry()
+        updateLinearLocationGeometry()
       case Some("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
       /*case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
@@ -295,6 +332,8 @@ object DataFixture {
         applyChangeInformationToRoadAddressLinks(numThreads)
       /*case Some("update_road_address_link_source") if geometryFrozen =>
         showFreezeInfo()*/
+      case Some("update_road_address_link_source") =>
+        updateRoadAddressGeometrySource()
       case Some("import_road_names") =>
         importRoadNames()
       case Some("test") =>

@@ -18,7 +18,7 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Try to fetch a municipality and ely_nro values"){
+  test("Test getMunicipalityMapping When getting all municipalities Then should return some"){
     runWithRollback{
       val municipalityMap = MunicipalityDAO.getMunicipalityMapping
       municipalityMap.isEmpty should be(false)
@@ -27,7 +27,7 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Try to fetch a municipality and road maintainer values"){
+  test("Test getMunicipalityRoadMaintainers When getting all municipality road maintainers Then should return some"){
     runWithRollback{
       val municipalityRoadMaitainerMap = MunicipalityDAO.getMunicipalityRoadMaintainers
       municipalityRoadMaitainerMap.isEmpty should be(false)
@@ -37,7 +37,7 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
   }
 
 
-  test("Verify if the road maintainer is correct for a ElyNro value") {
+  test("Test if the road maintainer is correct for a ElyNro value When checking if road maintainer contains mapped municipalities Then it should be true") {
     runWithRollback{
       val municipalityMap = MunicipalityDAO.getMunicipalityMapping
       municipalityMap.isEmpty should be(false)
