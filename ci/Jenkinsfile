@@ -36,7 +36,9 @@ pipeline {
                         "npm install",
                         "export TMPDIR=/home/jenkins/tmp",
                         "yarn install",
-                        "grunt deploy --target=${get_environment()?.trim()}"
+                        "grunt deploy --target=${get_environment()?.trim()}",
+                        "cd /home/jenkins/tmp",
+                        "ls -l"
                     ].join(" && ")
 
                     STAGE_FRONTEND_TEST_CMD = [
@@ -52,7 +54,9 @@ pipeline {
                     ].join(" ")
 
                     STAGE_BACKEND_BUILD_CMD = [
-                        "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly"
+                        "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
+                        "cd /data1/jenkins/workspace/viite/Deploy-Staging/tmp",
+                        "ls -l"
                     ].join(" && ")
 
                 }
@@ -100,6 +104,7 @@ pipeline {
                 docker {
                     image "viite-frontend-node"
                     reuseNode true
+                    args "-v /data1/jenkins/workspace/viite/Deploy-Staging/tmp:/home/jenkins/tmp"
                 }
             }
             when {
@@ -125,7 +130,6 @@ pipeline {
             agent {
                 docker {
                     image "viite-backend-sbt"
-                    args "-v viite-ivy-releases-${get_environment()?.trim()}:/home/jenkins/.ivy2"
                     reuseNode true
                 }
             }
