@@ -73,7 +73,7 @@ pipeline {
                         "-Dpackaging=war",
                         "-DrepositoryId=nexus3",
                         "-Durl=http://livibuild04.vally.local/nexus/repository/viite/",
-                        "-Dfile=package/viite-assembly-0.1.0.war",
+                        "-Dfile=package/home/jenkins/package/viite-assembly-0.1.0.war",
                         "-q",
                         "--batch-mode"
                     ].join(" ")
