@@ -167,8 +167,8 @@ pipeline {
                 }
             }
             steps {
-                //sh STAGE_PUBLISH_CMD
-				echo "Running publish... (skipped for now)"
+                sh STAGE_PUBLISH_CMD
+				//echo "Running publish... (skipped for now)"
             }
             //post {
             //    failure {
