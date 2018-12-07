@@ -5,7 +5,7 @@ RUN mkdir /home/jenkins/.m2
 #    apk update && apk upgrade && \
 #    apk add openssh-client && \
 #    apk add git
-COPY confs/settings.xml /home/jenkins/.m2/settings.xml
+COPY config/settings.xml /home/jenkins/.m2/settings.xml
 RUN chown -R jenkins /home/jenkins
 #USER jenkins
 #RUN git config --global user.name "CI Jenkins" && git config --global user.email "no-reply@livibuild04.vally.local"
