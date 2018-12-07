@@ -108,7 +108,7 @@ pipeline {
                 docker {
                     image "viite-frontend-node"
                     reuseNode true
-                    args "-v /data1/jenkins/workspace/viite/Deploy-Staging/package:/home/jenkins/package"
+                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
