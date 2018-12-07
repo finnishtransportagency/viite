@@ -73,7 +73,7 @@ pipeline {
                         "-Dpackaging=war",
                         "-DrepositoryId=nexus3",
                         "-Durl=http://livibuild04.vally.local/nexus/repository/viite/",
-                        "-Dfile=viite-assembly-0.1.0.war"
+                        "-Dfile=/package/viite-assembly-0.1.0.war"
                     ].join(" ")
 
                 }
@@ -174,7 +174,7 @@ pipeline {
             //    }
             //}
         }
-        stage("Publish") {
+        stage("Package & Publish") {
             agent {
                 docker {
                     image "viite-maven-publish"
