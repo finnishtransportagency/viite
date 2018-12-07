@@ -59,12 +59,22 @@ pipeline {
                         "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar /home/jenkins/package/"
                     ].join(" && ")
 
-                    STAGE_PUBLISH_CMD = [
+                    STAGE_PACKAGE_CMD = [
                         "cd /home/jenkins/package/",
-                        "ls -l",
-                        "jar -cvf viite-assembly-0.1.0.war *",
-                        "ls -l"
+                        "jar -cvf viite-assembly-0.1.0.war *"
                     ].join(" && ")
+
+                    STAGE_PUBLISH_CMD = [
+                        "mvn deploy:deploy-file",
+                        "-DgroupId=fi.liikennevirasto.viite",
+                        "-DartifactId=viite-staging",
+                        "-Dversion=1.0.0",
+                        "-DgeneratePom=true",
+                        "-Dpackaging=war",
+                        "-DrepositoryId=nexus3",
+                        "-Durl=http://livibuild04.vally.local/nexus/repository/viite/",
+                        "-Dfile=viite-assembly-0.1.0.war"
+                    ].join(" ")
 
                 }
             }
@@ -178,6 +188,7 @@ pipeline {
                 }
             }
             steps {
+                sh STAGE_PACKAGE_CMD
                 sh STAGE_PUBLISH_CMD
 				//echo "Running publish... (skipped for now)"
             }
