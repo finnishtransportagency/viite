@@ -28,6 +28,10 @@ object GeometryUtils {
     def roundN(n:Double): Double = {
       BigDecimal(n).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
     }
+    if(originalGeometry.size == 1){
+      originalGeometry
+    }
+    else
     if(startMeasure + step >= maxLength ) {
       val finalTruncatedGeom = geometryEndpoints(truncateGeometry2D(originalGeometry, startMeasure, maxLength))
       processedGeometry++Seq(roundPoint(finalTruncatedGeom._1), roundPoint(finalTruncatedGeom._2)).diff(processedGeometry)
