@@ -37,6 +37,7 @@ pipeline {
                         "export TMPDIR=/home/jenkins/tmp",
                         "yarn install",
                         "grunt deploy --target=${get_environment()?.trim()}",
+                        "cp -r /home/jenkins/dist /home/jenkins/package/viite-UI/"
                         "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/node_modules /home/jenkins/package/viite-UI/",
                         "cd /home/jenkins/package/viite-UI",
                         "ls -l"
