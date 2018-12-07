@@ -407,6 +407,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllByRoadNumbers(roadNumbers: Seq[Long]): Seq[Roadway] = {
+    time(logger, "Fetch road ways by road number") {
+      fetch(withRoadNumbers(roadNumbers))
+    }
+  }
+
   def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
       fetch(withRoadAndPart(roadNumber, roadPart, withHistory, fetchOnlyEnd))
@@ -542,6 +548,10 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoad(roadNumber: Long)(query: String): String = {
     s"""$query where valid_to is null and end_date is null and road_number = $roadNumber"""
+  }
+
+  private def withRoadNumbers(roadNumbers: Seq[Long])(query: String): String = {
+    s"""$query where valid_to is null and road_number in (${roadNumbers.mkString(",")})"""
   }
 
   private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
@@ -720,9 +730,25 @@ class RoadwayDAO extends BaseDAO {
       """.as[Long].list
   }
 
-    def getNextRoadwayId: Long = {
-      Queries.nextRoadwayId.as[Long].first
-    }
+  def getValidRoadNumbers: List[Long] = {
+    sql"""
+       select distinct road_number
+              from ROADWAY
+              where valid_to IS NULL
+      """.as[Long].list
+  }
+
+  def getValidBetweenRoadNumbers(roadNumbers: (Int, Int)): List[Long] = {
+    sql"""
+       select distinct road_number
+              from ROADWAY
+              where valid_to IS NULL and road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}
+      """.as[Long].list
+  }
+
+  def getNextRoadwayId: Long = {
+    Queries.nextRoadwayId.as[Long].first
+  }
 
   def create(roadways: Iterable[Roadway]): Seq[Long] = {
     val roadwayPS = dynamicSession.prepareStatement(

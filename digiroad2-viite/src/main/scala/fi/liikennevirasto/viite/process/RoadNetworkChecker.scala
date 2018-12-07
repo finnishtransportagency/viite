@@ -4,15 +4,16 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
-import fi.liikennevirasto.viite.MaxMoveDistanceBeforeFloating
+import fi.liikennevirasto.viite.{MaxMoveDistanceBeforeFloating, RoadCheckOptions, RoadNetworkService}
 
 
-class FloatingChecker(roadLinkService: RoadLinkService) {
+class RoadNetworkChecker(roadLinkService: RoadLinkService) {
   private def pretty(ra: RoadAddress): String = {
     val (startM, endM) = (BigDecimal(ra.startMValue).setScale(3), BigDecimal(ra.endMValue).setScale(3))
     s"${ra.roadNumber}/${ra.roadPartNumber}/${ra.track.value}/${ra.startAddrMValue}-${ra.endAddrMValue} " +
       s"($startM - $endM, ${ra.sideCode})"
   }
+
   def checkRoadPart(roadNumber: Long)(roadPartNumber: Long): List[RoadAddress] = {
     throw new NotImplementedError("Will be implemented at VIITE-1538")
 //    def outsideOfGeometry(ra: RoadAddress, roadLinks: Seq[RoadLinkLike]): Boolean = {
@@ -58,11 +59,22 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   }
 
   def checkRoadNetwork(username: String = ""): List[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1538")
-//    val roadNumbers = RoadAddressDAO.getAllValidRoadNumbers()
-//    println(s"Got ${roadNumbers.size} roads")
-//    val groupSize = 1 + (roadNumbers.size - 1) / 4
-//    roadNumbers.sliding(groupSize, groupSize).toSeq.par.flatMap(l => l.flatMap(checkRoad)).toList
+    val roadNetworkService = new RoadNetworkService
+    val roadwayDAO = new RoadwayDAO
+    val roadways = roadwayDAO.getValidRoadNumbers
+    val chunks = generateChunks(roadways.asInstanceOf[Seq[Int]], 1000)
+
+    chunks.foreach {
+      case (min, max) =>
+
+        val roadNumbers = roadwayDAO.getValidBetweenRoadNumbers((min, max))
+
+        roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers))
+      //    val roadNumbers = RoadAddressDAO.getAllValidRoadNumbers()
+      //    println(s"Got ${roadNumbers.size} roads")
+      //    val groupSize = 1 + (roadNumbers.size - 1) / 4
+      //    roadNumbers.sliding(groupSize, groupSize).toSeq.par.flatMap(l => l.flatMap(checkRoad)).toList
+    }
   }
 
   /**
@@ -112,6 +124,24 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     }
     }
     movedRoadAddresses
+  }
+
+  private def generateChunks(roadNumbers: Seq[Int], chunkNumber: Long): Seq[(Int, Int)] = {
+    val (chunks, _) = roadNumbers.foldLeft((Seq[Int](0), 0)) {
+      case ((fchunks, index), roadNumber) =>
+        if (index > 0 && index % chunkNumber == 0) {
+          (fchunks ++ Seq(roadNumber), index + 1)
+        } else {
+          (fchunks, index + 1)
+        }
+    }
+    val result = if (chunks.last == roadNumbers.last) {
+      chunks
+    } else {
+      chunks ++ Seq(roadNumbers.last)
+    }
+
+    result.zip(result.tail)
   }
 
 }
