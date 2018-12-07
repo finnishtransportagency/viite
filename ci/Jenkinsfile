@@ -60,7 +60,7 @@ pipeline {
                     ].join(" && ")
 
                     STAGE_PUBLISH_CMD = [
-                        "cd /home/jenkins/package/",
+                        "cd viite-package-${get_environment()?.trim()}",
                         "jar -cvf viite-assembly-0.1.0.war *",
                         "ls -l"
                     ]
