@@ -282,7 +282,8 @@ class RoadwayChangesDAO {
       roadwayChangePS.setLong(20, nextChangeOrderLink)
       roadwayChangePS.addBatch()
 
-      oldRoadwaySection.projectLinks.foreach {
+      val projectLinksToAdd = if(oldRoadwaySection.projectLinks.isEmpty) newRoadwaySection.projectLinks else oldRoadwaySection.projectLinks
+      projectLinksToAdd.foreach {
         pl =>
           roadWayChangesLinkPS.setLong(1, nextChangeOrderLink)
           roadWayChangesLinkPS.setLong(2, projectId)
