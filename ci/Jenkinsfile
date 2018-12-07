@@ -60,7 +60,8 @@ pipeline {
                     ].join(" && ")
 
                     STAGE_PUBLISH_CMD = [
-                        "cd viite-package-${get_environment()?.trim()}",
+                        "cd /home/jenkins/package/",
+                        "ls -l",
                         "jar -cvf viite-assembly-0.1.0.war *",
                         "ls -l"
                     ].join(" && ")
@@ -93,6 +94,10 @@ pipeline {
                     docker.build(
                         "viite-backend-sbt",
                         "${build_args} -f ci/Dockerfile.sbt ci"
+                    )
+                    docker.build(
+                        "viite-maven-publish",
+                        "${build_args} -f ci/Dockerfile.maven ci"
                     )
                 }
             }
@@ -159,7 +164,13 @@ pipeline {
             //}
         }
         stage("Publish") {
-            agent any
+            agent {
+                docker {
+                    image "viite-maven-publish"
+                    reuseNode true
+                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
             when {
                 beforeAgent true
                 expression {
