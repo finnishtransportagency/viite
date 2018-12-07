@@ -38,7 +38,6 @@ pipeline {
                         "yarn install",
                         "grunt deploy --target=${get_environment()?.trim()}",
                         "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/node_modules /home/jenkins/package/viite-UI/",
-                        "cp -r /dist/ /home/jenkins/package/viite-UI/",
                         "cd /home/jenkins/package/viite-UI",
                         "ls -l"
                     ].join(" && ")
