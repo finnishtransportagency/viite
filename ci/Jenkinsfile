@@ -86,7 +86,7 @@ pipeline {
                 }
             }
             steps {
-                sh "cp /data1/ci/maven/* ci/confs/"
+                sh "cp /data1/ci/maven/* ci/config/"
                 script {
 
                     echo "Running publish... (skipped for now) "
