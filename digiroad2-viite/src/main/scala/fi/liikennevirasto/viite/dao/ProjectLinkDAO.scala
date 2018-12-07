@@ -59,7 +59,7 @@ object LinkStatus {
   }
 }
 
-case class ProjectLinkCalibrationPoint(linkId: Long, override val  segmentMValue: Double, override val  addressMValue: Long, source: CalibrationPointSource = UnknownSource)
+case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, source: CalibrationPointSource = UnknownSource)
   extends BaseCalibrationPoint {
 
   def toCalibrationPoint: CalibrationPoint = {
@@ -360,7 +360,7 @@ class ProjectLinkDAO {
 
   }
 
-  def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
+  def updateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
     time(logger, "Update project links") {
       val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
       val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
@@ -436,7 +436,7 @@ class ProjectLinkDAO {
       val filter = if (linkStatusFilter.isEmpty) "" else s"plh.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
         s"""$projectLinkHistoryQueryBase
-                where $filter (plh.PROJECT_ID = $projectId ) order by plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.END_ADDR_M """
+                where $filter plh.PROJECT_ID = $projectId order by plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.END_ADDR_M """
       listQuery(query)
     }
   }
@@ -446,7 +446,7 @@ class ProjectLinkDAO {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
       val query =
         s"""$projectLinkQueryBase
-                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where $filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }
@@ -478,7 +478,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def fetchProjectLinksByLinkIdAndProjectId(projectLinkId: Long, projectid:Long): Seq[ProjectLink] = {
+  def getProjectLinksByLinkId(projectLinkId: Long): Seq[ProjectLink] = {
     time(logger, "Get project links by link id and project id") {
       val query =
         s"""$projectLinkQueryBase
@@ -487,7 +487,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def fetchProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
+  def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
       val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.LINEAR_LOCATION_ID in (${ids.mkString(",")})""" else ""
       val query =
@@ -558,27 +558,16 @@ class ProjectLinkDAO {
     }
   }
 
-  def isRoadPartNotHandled(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
-    time(logger, "Is road part not handled") {
-      val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber " +
-        s"AND PROJECT_LINK.PROJECT_ID = $projectId AND PROJECT_LINK.STATUS = ${LinkStatus.NotHandled.value}"
-      val query =
-        s"""select PROJECT_LINK.ID from PROJECT_LINK
-                where $filter AND ROWNUM < 2 """
-      Q.queryNA[Long](query).firstOption.nonEmpty
-    }
-  }
-
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
     sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
   }
 
-  def updateProjectLinkNumbering(projectlinkIds: Seq[Long], linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
+  def updateProjectLinkNumbering(ids: Seq[Long], linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart" +
-        s"WHERE ID IN ${projectlinkIds.mkString("(", ",", ")")} AND STATUS != ${LinkStatus.Terminated.value}"
+        s"WHERE ID IN ${ids.mkString("(", ",", ")")} AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
 
       val updateLastLinkWithDiscontinuity =
@@ -606,21 +595,11 @@ class ProjectLinkDAO {
     }
   }
 
-  def updateProjectLinks(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+  def updateProjectLinksStatus(ids: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-    projectLinkIds.grouped(500).foreach {
+    ids.grouped(500).foreach {
       grp =>
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' " +
-          s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
-        Q.updateNA(sql).execute
-    }
-  }
-
-  def updateProjectLinksToTerminated(projectLinkIds: Set[Long], userName: String): Unit = {
-    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-    projectLinkIds.grouped(500).foreach {
-      grp =>
-        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${LinkStatus.Terminated.value}, MODIFIED_BY='$user' " +
           s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
         Q.updateNA(sql).execute
     }

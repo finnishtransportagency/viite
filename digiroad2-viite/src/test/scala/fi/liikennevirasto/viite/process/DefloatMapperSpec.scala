@@ -15,6 +15,7 @@ import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
 class DefloatMapperSpec extends FunSuite with Matchers{
+  /*
   val sources = Seq(
     createRoadAddressLink(193080L, 1021200L, Seq(Point(653051.929,6927199.581,105.14400000000023), Point(653031.198,6927221.85,105.55199999999604), Point(653011.425,6927242.865,105.92900000000373), Point(652995.475256991,6927260.328718615,106.23299510185589)), 4846L, 1L, 0, 4035, 4118, SideCode.AgainstDigitizing, Anomaly.None),
     createRoadAddressLink(233578L, 1021217L, Seq(Point(652995.475,6927260.329,106.2329999999929), Point(652988.767,6927267.695,106.42500000000291), Point(652983.363,6927272.531,106.53200000000652)), 4846L, 1L, 0, 4018, 4035, SideCode.AgainstDigitizing, Anomaly.None)
@@ -398,5 +399,5 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     RoadAddress(id, 1L, roadNumber, roadPartNumber, RoadType.Unknown, Track.apply(trackCode.toInt), Discontinuity.Continuous,
       startAddressM, endAddressM, Option(new DateTime(new Date())), None, None, linkId, 0, GeometryUtils.geometryLength(geom), sideCode, 0L,
       (None, None), floating, geom, LinkGeomSource.NormalLinkInterface, 1, NoTermination, 0)
-  }
+  }*/
 }

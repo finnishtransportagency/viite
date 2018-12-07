@@ -282,7 +282,7 @@ class RoadwayChangesDAO {
       roadwayChangePS.setLong(20, nextChangeOrderLink)
       roadwayChangePS.addBatch()
 
-      newRoadwaySection.projectLinks.foreach {
+      oldRoadwaySection.projectLinks.foreach {
         pl =>
           roadWayChangesLinkPS.setLong(1, nextChangeOrderLink)
           roadWayChangesLinkPS.setLong(2, projectId)
@@ -293,7 +293,7 @@ class RoadwayChangesDAO {
 
     val startTime = System.currentTimeMillis()
     logger.info("Begin delta insertion in ChangeTable")
-    projectDAO.getRoadAddressProjectById(projectId) match {
+    projectDAO.fetchById(projectId) match {
       case Some(project) =>
         project.ely match {
           case Some(ely) =>
