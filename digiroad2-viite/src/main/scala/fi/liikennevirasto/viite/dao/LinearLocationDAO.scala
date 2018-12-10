@@ -218,7 +218,11 @@ class LinearLocationDAO {
           location.roadwayNumber
         }
         //TODO: added 4 debuggings
-        val steppedGeom = GeometryUtils.createStepGeometry(location.geometry, Seq.empty[Point], location.startMValue, location.endMValue)
+        val steppedGeom = if (GeometryUtils.geometryLength(location.geometry) > 100) {
+          GeometryUtils.createStepGeometry(location.geometry, Seq.empty[Point], location.startMValue, location.endMValue)
+        } else {
+          location.geometry
+        }
         val stepJGeom = OracleDatabase.createRoadsJGeometry(steppedGeom, dynamicSession.conn, location.endMValue)
 
         ps.setLong(1, location.id)

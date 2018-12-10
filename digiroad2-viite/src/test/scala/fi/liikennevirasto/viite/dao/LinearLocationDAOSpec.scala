@@ -18,8 +18,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val linearLocationDAO = new LinearLocationDAO
   val roadwayDAO = new RoadwayDAO
 
-  val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-    (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
+  val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 300.0, SideCode.TowardsDigitizing, 10000000000l,
+    (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0), Point(0.0, 200.0), Point(0.0, 300.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -208,9 +208,10 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
+      val endMValue = GeometryUtils.geometryLength(testLinearLocation.geometry)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, endMValue = endMValue)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2, endMValue = endMValue)))
 
       val locations = linearLocationDAO.fetchByLinkId(Set(linkId1))
       locations.size should be(2)
@@ -425,7 +426,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated3.linkId should be(linkId3)
       updated3.endMValue should be(endM3)
       updated3.geometry.head.x should be(0.0)
-      updated3.geometry.head.y should be(0.0)
+      updated3.geometry.head.y should be(0.1)
       updated3.geometry.last.x should be(0.0)
       updated3.geometry.last.y should be(9999.9)
 
