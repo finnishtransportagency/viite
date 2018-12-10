@@ -1715,7 +1715,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     projectLinkDAO.moveProjectLinksToHistory(projectID)
     logger.info(s"Moving project links to project link history.")
-    //        handleNewRoadNames(projectLinks, project)
     try {
       val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedRoadwaysWithLinks)
       val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewRoadway).map(_.id)
