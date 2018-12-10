@@ -769,7 +769,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
         val linearLocationToInsert = testLinearLocation.copy(geometry = newGeom, endMValue = GeometryUtils.geometryLength(newGeom))
         linearLocationDAO.create(Seq(linearLocationToInsert))
         val fetchedLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
-        fetchedLinearLocation.head.geometry should be (GeometryUtils.createStepGeometry(linearLocationToInsert.geometry, Seq.empty[Point], linearLocationToInsert.startMValue, linearLocationToInsert.endMValue))
+        fetchedLinearLocation.head.geometry should be (linearLocationToInsert.geometry)
       }
     }
 
