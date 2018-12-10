@@ -609,7 +609,7 @@ class ProjectLinkDAO {
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true): Unit = {
 
     time(logger, "Update project link values") {
-      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z, roadAddress.endMValue))
       val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
 
