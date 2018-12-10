@@ -132,7 +132,7 @@ object OracleDatabase {
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])
     if (geom.nonEmpty) {
       val jgeom: JGeometry = JGeometry.load(geom.get)
-      jgeom.getOrdinatesArray.toList.sliding(4, 4).toList.map(p => Point(p.head, p.tail.head, p.last))
+      jgeom.getOrdinatesArray.toList.sliding(4, 4).toList.map(p => Point(p.head, p(1), p(2)))
     } else {
       Seq()
     }
