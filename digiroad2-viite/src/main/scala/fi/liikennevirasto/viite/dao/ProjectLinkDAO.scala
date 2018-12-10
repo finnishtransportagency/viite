@@ -264,7 +264,8 @@ class ProjectLinkDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextObjectOption()
+      val rawGeom = r.nextObjectOption()
+      val decodedGeom = OracleDatabase.loadJGeometryToGeometry(rawGeom)
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -289,7 +290,7 @@ class ProjectLinkDAO {
       val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate,
-        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, OracleDatabase.loadJGeometryToGeometry2D(geom), projectId,
+        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, decodedGeom, projectId,
         status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, NewRoadwayNumber, Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack,

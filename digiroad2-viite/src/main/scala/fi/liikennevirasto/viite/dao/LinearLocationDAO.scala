@@ -266,12 +266,13 @@ class LinearLocationDAO {
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
       val floating = r.nextInt()
-      val geom = r.nextObjectOption()
+      val rawGeom = r.nextObjectOption()
+      val decodedGeom = OracleDatabase.loadJGeometryToGeometry2D(rawGeom)
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (calStartM, calEndM), FloatingReason.apply(floating), OracleDatabase.loadJGeometryToGeometry2D(geom),
+        (calStartM, calEndM), FloatingReason.apply(floating), decodedGeom,
         LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }

@@ -29,7 +29,7 @@ object GeometryUtils {
       BigDecimal(n).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
     }
     if(originalGeometry.size == 1){
-      originalGeometry
+      originalGeometry.map(p => Point(roundN(p.x), roundN(p.y), roundN(p.z)))
     }
     else
     if(startMeasure + step >= maxLength ) {
@@ -488,6 +488,21 @@ object GeometryUtils {
     } else {
       false
     }
+  }
+
+  def toGeomString(geometry: Seq[Point]): String = {
+    def toBD(d: Double): String = {
+      val zeroEndRegex = """(\.0+)$""".r
+      val lastZero = """(\.[0-9])0*$""".r
+      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
+      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) })
+    }
+
+    geometry.map(p =>
+      (if (p.z != 0.0)
+        Seq(p.x, p.y, p.z)
+      else
+        Seq(p.x, p.y)).map(toBD).mkString("[", ",", "]")).mkString(",")
   }
 
 }

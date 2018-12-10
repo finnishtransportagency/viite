@@ -739,13 +739,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val roadPartNumber = 1
     val linkId = 12345L
     val roadwayNumber = 8000
+    val geom = Seq(Point(10.0, 10.0, 0.0), Point(350.0, 350.0, 0.0))
+    val endMValue = GeometryUtils.geometryLength(geom)
     runWithRollback {
       //Creation of Test road
       val id = Sequences.nextRoadwayId
-      val ra = Seq(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 1000L,
+      val ra = Seq(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, endMValue.toLong,
         reversed = false, DateTime.parse("1901-01-01"), None, "Tester", Option("test name"), 8L))
-      val ll = LinearLocation(0L, 1, linkId, 0, 1000L, SideCode.TowardsDigitizing, 123456, (None, None), floating = NoFloating,
-        Seq(Point(535605.272, 6982204.22, 85.90899999999965)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
+      val ll = LinearLocation(0L, 1, linkId, 0, endMValue, SideCode.TowardsDigitizing, 123456, (None, None), floating = NoFloating,
+        geom, LinkGeomSource.NormalLinkInterface, roadwayNumber)
       val rl = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
