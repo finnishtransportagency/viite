@@ -220,12 +220,6 @@
             formCommon.checkInputs('.split-');
         });
 
-        // rootElement.on('change', '#trackCodeDropdown', function () {
-        //     checkInputs('.project-');
-        // });
-
-        // rootElement.on('change input', '.form-control.small-input', function (event) { }
-
       eventbus.on('roadAddress:projectFailed', function () {
         applicationModel.removeSpinner();
       });
