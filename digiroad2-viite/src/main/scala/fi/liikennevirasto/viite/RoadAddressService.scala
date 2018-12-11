@@ -77,39 +77,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
-    //TODO check if this will continue to be needed or if it was something that
-//    def complementaryLinkFilter(roadAddressLink: RoadAddressLink) = {
-//      everything || publicRoads || roadNumberLimits.exists {
-//        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
-//      }
-//    }
-
     val boundingBoxResultF =
       for {
-        changeInfoF <- boundingBoxResult.changeInfoF
         roadLinksF <- boundingBoxResult.roadLinkF
         complementaryRoadLinksF <- boundingBoxResult.complementaryF
-        linearLocationsAndHistoryRoadLinksF <- boundingBoxResult.roadAddressResultF
         suravageRoadLinksF <- boundingBoxResult.suravageF
-      } yield (changeInfoF, roadLinksF, complementaryRoadLinksF, linearLocationsAndHistoryRoadLinksF, suravageRoadLinksF)
+      } yield (roadLinksF, complementaryRoadLinksF, suravageRoadLinksF)
 
-    val (changeInfos, roadLinks, complementaryRoadLinks, (linearLocations, historyRoadLinks), suravageRoadLinks) =
+    val (roadLinks, complementaryRoadLinks, suravageRoadLinks) =
       time(logger, "Fetch VVH bounding box data") {
         Await.result(boundingBoxResultF, Duration.Inf)
       }
+    withDynSession {
+      val linearLocations = linearLocationDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
+      val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageRoadLinks
 
-    val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageRoadLinks
+      //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
+      val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
 
-    //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
-    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
-
-    eventbus.publish("roadAddress:persistChangeSet", changeSet)
-
-    val roadAddresses = withDynSession {
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
+      eventbus.publish("roadAddress:persistChangeSet", changeSet)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
+      RoadAddressFiller.fillTopology(allRoadLinks, roadAddresses)
     }
-
-    RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
   def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
@@ -126,14 +115,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     }
 
-    val (floating, nonFloating) = linearLocations.partition(_.isFloating)
-
-    val floatingLinkIds = floating.map(_.linkId).toSet
+    val (_, nonFloating) = linearLocations.partition(_.isFloating)
     val nonFloatingLinkIds = nonFloating.map(_.linkId).toSet
 
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(nonFloatingLinkIds),
-      Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(floatingLinkIds))),
       Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds)),
       Future(Seq()),
       Future(Seq())
@@ -621,7 +607,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
       //Should fetch all the road types
-      Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
+      //Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
       Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
       Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set())),
       Future(roadLinkService.getSuravageLinksFromVVH(boundingRectangle, Set()))
@@ -1098,7 +1084,7 @@ case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 
 case class LinearLocationResult(current: Seq[LinearLocation], floating: Seq[LinearLocation])
 
-case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
+case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]],
                              roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[RoadLink]])
 
 case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
