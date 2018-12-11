@@ -6,6 +6,7 @@ object GeometryUtils {
 
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
+  final val DefaultStepLength = 100.0
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
@@ -21,7 +22,7 @@ object GeometryUtils {
     measure >= interval._1 && measure <= interval._2
   }
 
-  def createStepGeometry(originalGeometry: Seq[Point], processedGeometry: Seq[Point] = Seq.empty[Point], startMeasure: Double, maxLength: Double, step: Double = 100.0): Seq[Point] = {
+  def createStepGeometry(originalGeometry: Seq[Point], processedGeometry: Seq[Point] = Seq.empty[Point], startMeasure: Double, maxLength: Double, step: Double = DefaultStepLength): Seq[Point] = {
     def roundPoint(p: Point): Point = {
       Point(roundN(p.x), roundN(p.y), roundN(p.z))
     }

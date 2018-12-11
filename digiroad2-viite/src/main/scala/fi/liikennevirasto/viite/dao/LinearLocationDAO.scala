@@ -217,8 +217,8 @@ class LinearLocationDAO {
         } else {
           location.roadwayNumber
         }
-        //TODO: added 4 debuggings
-        val steppedGeom = if (GeometryUtils.geometryLength(location.geometry) > 100) {
+
+        val steppedGeom = if (GeometryUtils.geometryLength(location.geometry) > GeometryUtils.DefaultStepLength) {
           GeometryUtils.createStepGeometry(location.geometry, Seq.empty[Point], location.startMValue, location.endMValue)
         } else {
           location.geometry
