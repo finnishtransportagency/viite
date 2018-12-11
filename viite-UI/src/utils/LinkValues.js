@@ -131,7 +131,7 @@
     };
 
     root.RoadNameSource = {
-        UnknownSource:              {value: -1, description: "Unknown Source"},
+        UnknownSource:              {value: 99, description: "Unknown Source"},
         ProjectLinkSource:          {value: 0, description: "Project Link Source"},
         RoadAddressSource:          {value: 1, description: "Road Name Source"}
     };
