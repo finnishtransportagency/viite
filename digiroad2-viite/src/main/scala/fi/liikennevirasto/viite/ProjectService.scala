@@ -47,7 +47,7 @@ object RoadNameSource {
   }
 
   case object UnknownSource extends RoadNameSource {
-    def value = -1
+    def value = 99
     def sourceName = "Unknown Source"
   }
   case object ProjectLinkSource extends RoadNameSource {
