@@ -280,7 +280,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val reserved = projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1)
       reserved.nonEmpty should be(true)
       projectReservedPartDAO.fetchReservedRoadParts(id) should have size 1
-      projectReservedPartDAO.removeReservedRoadPart(id, reserved.get.roadNumber, reserved.get.roadPartNumber)
+      projectReservedPartDAO.removeReservedRoadPartAndChanges(id, reserved.get.roadNumber, reserved.get.roadPartNumber)
       val projectAfter = projectReservedPartDAO.roadPartReservedByProject(roadNumber1, roadPartNumber1)
       projectAfter should be(None)
       projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1).isEmpty should be(true)
@@ -295,7 +295,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val roadPartNumber = 1
       sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 1, 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-', to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
-      projectReservedPartDAO.removeReservedRoadPart(projectId, roadNumber, roadPartNumber)
+      projectReservedPartDAO.removeReservedRoadPartAndChanges(projectId, roadNumber, roadPartNumber)
       projectReservedPartDAO.fetchReservedRoadParts(projectId).isEmpty should be (true)
     }
   }
