@@ -3,11 +3,13 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
 import fi.liikennevirasto.viite.{MaxMoveDistanceBeforeFloating, RoadCheckOptions, RoadNetworkService}
-
+import org.slf4j.LoggerFactory
 
 class RoadNetworkChecker(roadLinkService: RoadLinkService) {
+  val logger = LoggerFactory.getLogger(getClass)
   private def pretty(ra: RoadAddress): String = {
     val (startM, endM) = (BigDecimal(ra.startMValue).setScale(3), BigDecimal(ra.endMValue).setScale(3))
     s"${ra.roadNumber}/${ra.roadPartNumber}/${ra.track.value}/${ra.startAddrMValue}-${ra.endAddrMValue} " +
@@ -58,22 +60,20 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
 //    }
   }
 
-  def checkRoadNetwork(username: String = ""): List[RoadAddress] = {
-    val roadNetworkService = new RoadNetworkService
-    val roadwayDAO = new RoadwayDAO
-    val roadways = roadwayDAO.getValidRoadNumbers
-    val chunks = generateChunks(roadways.asInstanceOf[Seq[Int]], 1000)
+  def checkRoadNetwork(username: String = "") = {
+    time(logger, "Started validation of road network..") {
+      val roadNetworkService = new RoadNetworkService
+      val roadwayDAO = new RoadwayDAO
+      val roadways = roadwayDAO.getValidRoadNumbers
+      val chunks = generateChunks(roadways.asInstanceOf[Seq[Int]], 1000)
 
-    chunks.foreach {
-      case (min, max) =>
+      chunks.foreach {
+        case (min, max) =>
 
-        val roadNumbers = roadwayDAO.getValidBetweenRoadNumbers((min, max))
+          val roadNumbers = roadwayDAO.getValidBetweenRoadNumbers((min, max))
 
-        roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers))
-      //    val roadNumbers = RoadAddressDAO.getAllValidRoadNumbers()
-      //    println(s"Got ${roadNumbers.size} roads")
-      //    val groupSize = 1 + (roadNumbers.size - 1) / 4
-      //    roadNumbers.sliding(groupSize, groupSize).toSeq.par.flatMap(l => l.flatMap(checkRoad)).toList
+          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers))
+      }
     }
   }
 

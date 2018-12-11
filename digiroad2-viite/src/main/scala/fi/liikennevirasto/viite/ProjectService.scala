@@ -1570,7 +1570,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Checking status for $project")
           checkAndUpdateProjectStatus(project)
         }) {
-          eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
+          eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), Seq()))
         } else {
           logger.info(s"Not going to check road network (status != Saved2TR)")
         }
