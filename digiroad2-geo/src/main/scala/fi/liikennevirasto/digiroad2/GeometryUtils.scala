@@ -22,13 +22,27 @@ object GeometryUtils {
     measure >= interval._1 && measure <= interval._2
   }
 
+  /**
+    * Applies the rounding up to a 3 decimal percision to every coordinate of a point.
+    * @param p Point
+    * @return
+    */
+  def roundPoint(p: Point): Point = {
+    Point(roundN(p.x), roundN(p.y), roundN(p.z))
+  }
+
+  /**
+    * Rounds the double up to a 3 decimal percision.
+    * @param n Double value to the rounded
+    * @return
+    */
+  def roundN(n:Double): Double = {
+    BigDecimal(n).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
+
+
   def createStepGeometry(originalGeometry: Seq[Point], processedGeometry: Seq[Point] = Seq.empty[Point], startMeasure: Double, maxLength: Double, step: Double = DefaultStepLength): Seq[Point] = {
-    def roundPoint(p: Point): Point = {
-      Point(roundN(p.x), roundN(p.y), roundN(p.z))
-    }
-    def roundN(n:Double): Double = {
-      BigDecimal(n).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
-    }
+
     if(originalGeometry.size == 1){
       originalGeometry.map(p => Point(roundN(p.x), roundN(p.y), roundN(p.z)))
     }

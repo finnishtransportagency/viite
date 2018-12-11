@@ -11,7 +11,7 @@ import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import oracle.spatial.geometry.JGeometry
 import oracle.sql.STRUCT
 
@@ -112,7 +112,7 @@ object OracleDatabase {
   }
 
   def createJGeometry(points: Seq[Point], con: java.sql.Connection): STRUCT = {
-    val ordinates = points.flatMap(p => Seq(p.x, p.y, 0.0, 0.0)).toArray
+    val ordinates = points.flatMap(p => Seq(GeometryUtils.roundN(p.x), GeometryUtils.roundN(p.y), 0.0, 0.0)).map(o => GeometryUtils.roundN(o)).toArray
     val dim = 4
     val srid = 3067
     val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -120,7 +120,7 @@ object OracleDatabase {
   }
 
   def createRoadsJGeometry(points: Seq[Point], con: java.sql.Connection, endMValue:Double): STRUCT = {
-    val ordinates = points.flatMap(p => Seq(p.x, p.y, p.z, endMValue)).toArray
+    val ordinates = points.flatMap(p => Seq(GeometryUtils.roundN(p.x), GeometryUtils.roundN(p.y), GeometryUtils.roundN(p.z), GeometryUtils.roundN(endMValue))).toArray
     val dim = 4
     val srid = 3067
     val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
