@@ -82,7 +82,7 @@ class RoadNetworkService {
       }
     }
 
-    withDynTransaction {
+//    withDynTransaction {
       try {
         val allRoads = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
         val roadways = allRoads.groupBy(g => (g.roadNumber, g.roadPartNumber, g.endDate))
@@ -144,7 +144,7 @@ class RoadNetworkService {
                     ExportLockDAO.delete
                   }
         }
-      }
+//      }
     }
 
   def getLatestPublishedNetworkDate : Option[DateTime] = {
