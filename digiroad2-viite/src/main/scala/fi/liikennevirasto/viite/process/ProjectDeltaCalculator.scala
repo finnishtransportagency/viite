@@ -37,7 +37,7 @@ object ProjectDeltaCalculator {
     Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
-  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress], connectedLink: Option[ProjectLink] = None) = {
+  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress], connectedLink: Option[ProjectLink] = None): Option[RoadAddress] = {
     // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
     if (!pl.isSplit) {
       ra
@@ -67,7 +67,7 @@ object ProjectDeltaCalculator {
     }
   }
 
-  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
+  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]): Seq[ProjectLink] = {
     val terminations = projectLinks.mapValues(pll =>
       pll.filter(_.status == LinkStatus.Terminated)
     )
@@ -75,7 +75,7 @@ object ProjectDeltaCalculator {
     terminations.values.flatten.toSeq
   }
 
-  private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
+  private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
     projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl =>
       adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId)).get -> pl)
   }
@@ -89,15 +89,15 @@ object ProjectDeltaCalculator {
         adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId)).get -> pl)
   }
 
-  private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
+  private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
     projectLinks.filter(_.status == LinkStatus.Numbering).map(pl => currentAddresses(pl.linearLocationId) -> pl)
   }
 
-  private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+  private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]): Seq[ProjectLink] = {
     projectLinks.values.flatten.filter(_.status == LinkStatus.New).toSeq
   }
 
-  private def validateTerminations(roadAddresses: Seq[BaseRoadAddress]) = {
+  private def validateTerminations(roadAddresses: Seq[BaseRoadAddress]): Unit = {
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
   }
@@ -116,11 +116,10 @@ object ProjectDeltaCalculator {
     else {
       pl1 match {
         case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.roadwayNumber != ra2.roadwayNumber) || (x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning) && ra1.roadwayNumber != ra2.roadwayNumber)
-        case x: ProjectLink => {
+        case x: ProjectLink =>
           val (sourceL, sourceR) = x.getCalibrationSources
           (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) || x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning)) &&
             (sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource)
-        }
       }
 
     }
@@ -283,19 +282,12 @@ object ProjectDeltaCalculator {
     }
   }
 
-  private def adjustTrackEndAddr(group: (Seq[RoadwaySection], Seq[RoadwaySection])): Seq[RoadwaySection] = {
-    group._1.zip(group._2).map {
-      case (e1, e2) =>
-        e1.copy(endMAddr = adjustAddressValues(e1.endMAddr + e2.endMAddr, e1.endMAddr, e1.track))
-    }
-  }
-
   def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): Map[RoadwaySection, RoadwaySection] = {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadwaySection] = {
       o.map(ra =>
         RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber,
-          transfers.map(_._2).filter(pl => pl.roadNumber == ra.roadNumber && pl.roadPartNumber == ra.roadPartNumber && pl.track == ra.track && pl.roadType == ra.roadType
+          transfers.map(_._2).filter(pl => ((pl.roadNumber == ra.roadNumber && pl.roadPartNumber == ra.roadPartNumber) || pl.roadwayNumber == ra.roadwayNumber) && pl.track == ra.track && pl.roadType == ra.roadType
             && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
     }
 

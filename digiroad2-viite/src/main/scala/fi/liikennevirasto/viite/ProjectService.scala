@@ -673,7 +673,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val removed = storedProject.reservedParts.filterNot(part =>
                 roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
                   rp.roadNumber == part.roadNumber))
-              removed.foreach(p => projectReservedPartDAO.removeReservedRoadPart(roadAddressProject.id, p.roadNumber, p.roadPartNumber))
+              removed.foreach(p => projectReservedPartDAO.removeReservedRoadPartAndChanges(roadAddressProject.id, p.roadNumber, p.roadPartNumber))
               removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
               addLinksToProject(roadAddressProject)
               val updatedProject = projectDAO.fetchById(roadAddressProject.id).get
@@ -1117,7 +1117,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def releaseRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, userName: String) = {
     if (projectLinkDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber).isEmpty) {
-      projectReservedPartDAO.removeReservedRoadPart(projectId, roadNumber, roadPartNumber)
+      projectReservedPartDAO.removeReservedRoadPartAndChanges(projectId, roadNumber, roadPartNumber)
     } else {
       val links = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
       revertLinks(links, userName)
@@ -1169,7 +1169,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val (toReplace, road, part) = isCompletelyNewPart(projectLinks)
         if (toReplace && linkStatus == New) {
           val reservedPart = projectReservedPartDAO.fetchReservedRoadPart(road, part).get
-          projectReservedPartDAO.removeReservedRoadPart(projectId, reservedPart.roadNumber, reservedPart.roadPartNumber)
+          projectReservedPartDAO.removeReservedRoadPartAndChanges(projectId, reservedPart.roadNumber, reservedPart.roadPartNumber)
           val newProjectLinks: Seq[ProjectLink] = projectLinks.map(pl => pl.copy(id = NewProjectLink,
             roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
             roadType = RoadType.apply(roadType.toInt), discontinuity = Discontinuity.apply(discontinuity.toInt),
@@ -1724,7 +1724,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1, roadway._2, project.startDate))
           roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate, roadway.endDate,
                                                                     roadway.validFrom, roadway.validTo, roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
-          linearLocationDAO.create(generatedRoadways.flatMap(_._2))
+          linearLocationDAO.create(generatedRoadways.flatMap(_._2), createdBy = project.createdBy)
           Some(s"road addresses created")
         } catch {
           case e: ProjectValidationException =>
