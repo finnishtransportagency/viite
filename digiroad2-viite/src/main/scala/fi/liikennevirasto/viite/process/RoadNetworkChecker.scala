@@ -71,7 +71,6 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
         case (min, max) =>
 
           val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
-          logger.info(s"processing the amount of ${roads.size}")
           roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads))
       }
     }
