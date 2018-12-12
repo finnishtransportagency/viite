@@ -86,10 +86,12 @@ class RoadNetworkService {
       try {
         val allRoads = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
         val roadways = allRoads.groupBy(g => (g.roadNumber, g.roadPartNumber, g.endDate))
-        roadways.values.par.foreach { roadway =>
+        roadways.par.foreach { group =>
+          val (sec, roadway) = group
 
           val (combined, leftSide, rightSide) = (roadway.filter(t => t.track == Track.Combined).sortBy(_.startAddrMValue), roadway.filter(t => t.track == Track.LeftSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track == Track.RightSide).sortBy(_.startAddrMValue))
           val roadwaysErrors = checkRoadways(combined, leftSide, rightSide)
+          logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${sec._1}")
 
           val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
 
@@ -99,8 +101,10 @@ class RoadNetworkService {
           val mappedCombined = combinedRoadways.map(r => r.id -> combinedLocations.get(r.roadwayNumber)).toMap
           val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> twoTrackLocations.get(r.roadwayNumber)).toMap
 
-          val linearLocationErrors = checkTwoTrackLinearLocations(mappedTwoTrack) ++ checkCombinedLinearLocations(mappedCombined)
-
+          val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
+          val combinedErrors = checkCombinedLinearLocations(mappedCombined)
+          val linearLocationErrors = twoTrackErrors ++ combinedErrors
+          logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${sec._1} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
 
           (roadwaysErrors ++ linearLocationErrors).foreach { e =>
             logger.info(s" Found error for roadway id ${e.id}, linear location id ${e.linearLocationId}")
