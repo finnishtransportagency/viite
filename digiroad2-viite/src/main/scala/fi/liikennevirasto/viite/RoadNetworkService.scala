@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import java.sql.SQLIntegrityConstraintViolationException
+import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -143,6 +143,7 @@ class RoadNetworkService {
         //        }
         } catch {
                   case e: SQLIntegrityConstraintViolationException => logger.info("A road network check is already running")
+                  case e: SQLException => logger.info("Sql exception went wrong")
                   case _: Exception => {
                     logger.error("Error during road address network check")
                     dynamicSession.rollback()
