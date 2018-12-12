@@ -49,12 +49,14 @@ class RoadNetworkService {
       //TODO add test for this with empty Seq[LinearLocation] for any given roadwayId key
       val allLocations = mapped.values.flatten.flatten.toSeq
 
-      val errors: Seq[RoadNetworkError] = mapped.map{ case(roadwayId, locations) =>
-        locations.getOrElse(Seq()).map{ loc =>
-          if(!allLocations.exists(l => (l.calibrationPoints._1 == loc.calibrationPoints._1) &&  l.id != loc.id)
+      val errors: Seq[RoadNetworkError] = mapped.flatMap{ case(roadwayId, locations) =>
+        val locationsError: Seq[LinearLocation] = locations.get.filter( loc =>
+          (!allLocations.exists(l => (l.calibrationPoints._1 == loc.calibrationPoints._1) &&  l.id != loc.id)
             || !allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._2) &&  l.id != loc.id))
-            RoadNetworkError(Sequences.nextRoadNetworkError, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), currNetworkVersion)
-        }.asInstanceOf[RoadNetworkError]
+        )
+        locationsError.map{loc =>
+          RoadNetworkError(Sequences.nextRoadNetworkError, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), currNetworkVersion)
+        }
       }.toSeq
       errors
     }
