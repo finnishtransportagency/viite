@@ -1588,7 +1588,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
+  private def checkAndUpdateProjectStatus(projectID: Long): Unit = {
     projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
         projectDAO.fetchProjectStatus(projectID).map { currentState =>
@@ -1604,11 +1604,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
           }
         }
-        false
+        val roadNumbers = projectLinkDAO.fetchRoadNumbersByProjectIdHistory(projectID)
+        val roadNetworkService = new RoadNetworkService
+        roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers))
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(projectDAO.fetchById(projectID).head, " Failed to find TR-ID ")
-        false
     }
   }
 

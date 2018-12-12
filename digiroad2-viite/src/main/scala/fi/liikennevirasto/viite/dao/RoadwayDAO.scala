@@ -738,6 +738,14 @@ class RoadwayDAO extends BaseDAO {
       """.as[Long].list
   }
 
+  def getValidRoadNumbersByProject(projectId: Long): List[Long] = {
+    sql"""
+       select distinct road_number
+              from ROADWAY
+              where valid_to IS NULL AND project
+      """.as[Long].list
+  }
+
   def getValidBetweenRoadNumbers(roadNumbers: (Long, Long)): List[Long] = {
     sql"""
        select distinct road_number
