@@ -32,12 +32,13 @@ class RoadNetworkService {
   def checkRoadAddressNetwork(options: RoadCheckOptions): Unit = {
     val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
 
-    def checkRoadways(c: Seq[Roadway], l: Seq[Roadway], r: Seq[Roadway]): Seq[RoadNetworkError] = {
-      val sectionLeft = c.zip(l.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
+    def checkRoadways(l: Seq[Roadway], r: Seq[Roadway]): Seq[RoadNetworkError] = {
+
+      val sectionLeft = l.zip(l.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
           checkAddressMValues(rws._1, rws._2, errors)
         )
 
-      val sectionRight = c.zip(r.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
+      val sectionRight = r.zip(r.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
         checkAddressMValues(rws._1, rws._2, errors)
       )
 
@@ -89,8 +90,8 @@ class RoadNetworkService {
         roadways.par.foreach { group =>
           val (section, roadway) = group
 
-          val (combined, leftSide, rightSide) = (roadway.filter(t => t.track == Track.Combined).sortBy(_.startAddrMValue), roadway.filter(t => t.track == Track.LeftSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track == Track.RightSide).sortBy(_.startAddrMValue))
-          val roadwaysErrors = checkRoadways(combined, leftSide, rightSide)
+          val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
+          val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
           logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
 
           val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
@@ -148,7 +149,6 @@ class RoadNetworkService {
                   case e: Exception => {
                     logger.error(e.getMessage)
                     dynamicSession.rollback()
-                    ExportLockDAO.delete
                   }
         }
 //      }
