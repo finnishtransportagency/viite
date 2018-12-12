@@ -67,11 +67,13 @@ class RoadNetworkService {
       val sortedLocations = allLocations.sortBy(_.orderNumber)
       val (first, last) = (sortedLocations.head, sortedLocations.last)
 
-      val errors: Seq[RoadNetworkError] = mapped.map{ case(roadwayId, locations) =>
-        locations.getOrElse(Seq()).map{ loc =>
-          if(!allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._1) && l.id != loc.id && l.id != last.id))
-            RoadNetworkError(Sequences.nextRoadNetworkError, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), currNetworkVersion)
-        }.asInstanceOf[RoadNetworkError]
+      val errors: Seq[RoadNetworkError] = mapped.flatMap{ case(roadwayId, locations) =>
+        val locationsError: Seq[LinearLocation] = locations.get.filter(loc =>
+          !allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._1) && l.id != loc.id && l.id != last.id)
+        )
+        locationsError.map{loc =>
+          RoadNetworkError(Sequences.nextRoadNetworkError, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), currNetworkVersion)
+        }
       }.toSeq
       errors
     }
