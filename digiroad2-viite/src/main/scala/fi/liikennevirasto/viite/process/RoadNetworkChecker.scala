@@ -64,15 +64,15 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
     time(logger, "Validation of road network") {
       val roadNetworkService = new RoadNetworkService
       val roadwayDAO = new RoadwayDAO
-      val roadways = roadwayDAO.getValidRoadNumbers
-      val chunks = generateChunks(roadways, 10)
+      val roadNumbers = roadwayDAO.getValidRoadNumbers
+      val chunks = generateChunks(roadNumbers, 100)
 
       chunks.foreach {
         case (min, max) =>
 
-          val roadNumbers = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
-          logger.info(s"processing the amount of ${roadNumbers.size}")
-          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers))
+          val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
+          logger.info(s"processing the amount of ${roads.size}")
+          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads))
       }
     }
   }

@@ -734,7 +734,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL
+              where valid_to IS NULL order by road_number
       """.as[Long].list
   }
 
