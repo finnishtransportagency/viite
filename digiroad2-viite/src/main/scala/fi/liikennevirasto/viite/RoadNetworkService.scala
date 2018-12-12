@@ -87,25 +87,26 @@ class RoadNetworkService {
         val allRoads = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
         val roadways = allRoads.groupBy(g => (g.roadNumber, g.roadPartNumber, g.endDate))
         roadways.par.foreach { group =>
-          val (sec, roadway) = group
+          val (section, roadway) = group
 
           val (combined, leftSide, rightSide) = (roadway.filter(t => t.track == Track.Combined).sortBy(_.startAddrMValue), roadway.filter(t => t.track == Track.LeftSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track == Track.RightSide).sortBy(_.startAddrMValue))
           val roadwaysErrors = checkRoadways(combined, leftSide, rightSide)
-          logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${sec._1}")
+          logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
 
           val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
 
-          println(s" start of fetch of linear locations")
+          logger.info(s" start of fetch of linear locations")
           val combinedLocations = linearLocationDAO.fetchByRoadways(combinedRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
           val twoTrackLocations = linearLocationDAO.fetchByRoadways(twoTrackRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
 
           val mappedCombined = combinedRoadways.map(r => r.id -> combinedLocations.get(r.roadwayNumber)).toMap
           val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> twoTrackLocations.get(r.roadwayNumber)).toMap
 
+          logger.info(s" start checking of linear locations")
           val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
           val combinedErrors = checkCombinedLinearLocations(mappedCombined)
           val linearLocationErrors = twoTrackErrors ++ combinedErrors
-          logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${sec._1} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+          logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
 
           (roadwaysErrors ++ linearLocationErrors).foreach { e =>
             logger.info(s" Found error for roadway id ${e.id}, linear location id ${e.linearLocationId}")
