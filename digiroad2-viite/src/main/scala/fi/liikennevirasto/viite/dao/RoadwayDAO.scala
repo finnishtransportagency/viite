@@ -738,7 +738,7 @@ class RoadwayDAO extends BaseDAO {
       """.as[Long].list
   }
 
-  def getValidBetweenRoadNumbers(roadNumbers: (Int, Int)): List[Long] = {
+  def getValidBetweenRoadNumbers(roadNumbers: (Long, Long)): List[Long] = {
     sql"""
        select distinct road_number
               from ROADWAY
