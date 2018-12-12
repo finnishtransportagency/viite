@@ -65,12 +65,12 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
       val roadNetworkService = new RoadNetworkService
       val roadwayDAO = new RoadwayDAO
       val roadways = roadwayDAO.getValidRoadNumbers
-      val chunks = generateChunks(roadways.asInstanceOf[Seq[Int]], 1000)
+      val chunks = generateChunks(roadways, 1000)
 
       chunks.foreach {
         case (min, max) =>
 
-          val roadNumbers = roadwayDAO.getValidBetweenRoadNumbers((min, max))
+          val roadNumbers = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
 
           roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers))
       }
@@ -126,8 +126,8 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
     movedRoadAddresses
   }
 
-  private def generateChunks(roadNumbers: Seq[Int], chunkNumber: Long): Seq[(Int, Int)] = {
-    val (chunks, _) = roadNumbers.foldLeft((Seq[Int](0), 0)) {
+  private def generateChunks(roadNumbers: List[Long], chunkNumber: Long): Seq[(Long, Long)] = {
+    val (chunks, _) = roadNumbers.foldLeft((Seq[Long](0), 0)) {
       case ((fchunks, index), roadNumber) =>
         if (index > 0 && index % chunkNumber == 0) {
           (fchunks ++ Seq(roadNumber), index + 1)
