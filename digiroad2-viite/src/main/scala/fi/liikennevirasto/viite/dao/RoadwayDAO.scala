@@ -551,7 +551,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadNumbers(roadNumbers: Seq[Long])(query: String): String = {
-    s"""$query where valid_to is null and road_number in (${roadNumbers.mkString(",")})"""
+    s"""$query where a.valid_to is null and a.road_number in (${roadNumbers.mkString(",")})"""
   }
 
   private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
