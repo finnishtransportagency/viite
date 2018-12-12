@@ -113,27 +113,25 @@
         ];
 
         var strokeRules = [
-            // THESE RULES DON'T NEED TO BE APPLIED HERE BEACUSE THEY WILL BE APPLIED BY THE FILLRULES
-
-            /* new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FFD76A',  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FFD76A',  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(4).use({stroke: {color: '#0011BB',  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(5).use({stroke: {color: '#33CCCC',  lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(6).use({stroke: {color: '#E01DD9',  lineCap: 'round'}}), */
+            new StyleRule().where('roadClass').is(6).use({stroke: {color: '#E01DD9',  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(7).use({stroke: {color: '#00CCDD',  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(8).use({stroke: {color: '#FC6DA0', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(9).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(10).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
-            /* new StyleRule().where('roadClass').is(11).use({stroke: {color: '#444444', lineCap: 'round'}}), */
+            new StyleRule().where('roadClass').is(11).use({stroke: {color: '#444444', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(12).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
-            /* new StyleRule().where('roadClass').is(97).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}), */
+            new StyleRule().where('roadClass').is(97).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
             new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(99).and('roadLinkSource').isNot(3).use({stroke: {color: '#A4A4A2', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(99).and('anomaly').is(1).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
-            /* new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}), */
-            /* new StyleRule().where('roadLinkSource').is(3).and('roadClass').is(99).use({stroke: {color: '#D3AFF6', lineCap: 'round'}}) */
+            new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}),
+            new StyleRule().where('roadLinkSource').is(3).and('roadClass').is(99).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
         ];
 
         var fillRules = [
