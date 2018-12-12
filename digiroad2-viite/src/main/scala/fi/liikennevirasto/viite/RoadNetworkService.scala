@@ -95,6 +95,7 @@ class RoadNetworkService {
 
           val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
 
+          println(s" start of fetch of linear locations")
           val combinedLocations = linearLocationDAO.fetchByRoadways(combinedRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
           val twoTrackLocations = linearLocationDAO.fetchByRoadways(twoTrackRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
 
