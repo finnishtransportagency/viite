@@ -145,8 +145,8 @@ class RoadNetworkService {
         } catch {
                   case e: SQLIntegrityConstraintViolationException => logger.info("A road network check is already running")
                   case e: SQLException => logger.info("Sql exception went wrong")
-                  case _: Exception => {
-                    logger.error("Error during road address network check")
+                  case e: Exception => {
+                    logger.error(e.getMessage)
                     dynamicSession.rollback()
                     ExportLockDAO.delete
                   }
