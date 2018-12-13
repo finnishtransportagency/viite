@@ -750,7 +750,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL and road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}
+              where valid_to IS NULL AND road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}
       """.as[Long].list
   }
 
