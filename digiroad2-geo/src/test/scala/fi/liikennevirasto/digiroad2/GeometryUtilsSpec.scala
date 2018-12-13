@@ -334,6 +334,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     stepGeom.length should be(2)
   }
 
+  // TODO This test might need some changes, since the middle point doesn't have to be exactly (50.0, 50.0)
   test("Test createStepGeometry When using a geometry with points distributed unequally and the length longer than the step Then return decimated geometry.") {
     val geometry = Seq(
       Point(0.0, 0.0, 0.0),
