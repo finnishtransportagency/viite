@@ -755,22 +755,21 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-
-    test("Test linearLocationDAO.create() and linearLocationDAO.fetchByRoadways() When inserting a multi point geometry Then return said linear location with the multi point geometry.") {
-      runWithRollback {
-        val newGeom = Seq(
-          Point(0,0,0),
-          Point(5,5,0),
-          Point(10,10,0),
-          Point(15,15,0),
-          Point(20,20,0),
-          Point(25,25,0)
-        )
-        val linearLocationToInsert = testLinearLocation.copy(geometry = newGeom, endMValue = GeometryUtils.geometryLength(newGeom))
-        linearLocationDAO.create(Seq(linearLocationToInsert))
-        val fetchedLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
-        fetchedLinearLocation.head.geometry should be (linearLocationToInsert.geometry)
-      }
+  test("Test linearLocationDAO.create() and linearLocationDAO.fetchByRoadways() When inserting a multi point geometry Then return said linear location with the multi point geometry.") {
+    runWithRollback {
+      val newGeom = Seq(
+        Point(0, 0, 0),
+        Point(5, 5, 0),
+        Point(10, 10, 0),
+        Point(15, 15, 0),
+        Point(20, 20, 0),
+        Point(25, 25, 0)
+      )
+      val linearLocationToInsert = testLinearLocation.copy(geometry = newGeom, endMValue = GeometryUtils.geometryLength(newGeom))
+      linearLocationDAO.create(Seq(linearLocationToInsert))
+      val fetchedLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
+      fetchedLinearLocation.head.geometry should be(linearLocationToInsert.geometry)
     }
+  }
 
 }
