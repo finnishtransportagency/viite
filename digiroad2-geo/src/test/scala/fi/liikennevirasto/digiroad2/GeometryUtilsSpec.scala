@@ -7,35 +7,35 @@ import org.scalatest._
 class GeometryUtilsSpec extends FunSuite with Matchers {
   test("Test truncateGeometry3D When using a empty geometry Then return a empty geometry") {
     val truncated = truncateGeometry3D(Nil, 10, 15)
-    truncated should be (Nil)
+    truncated should be(Nil)
   }
 
   test("Test truncateGeometry3D When start measure is after end measure Then return IllegalArgumentException") {
-    an [IllegalArgumentException] should be thrownBy truncateGeometry3D(Nil, 15, 10)
+    an[IllegalArgumentException] should be thrownBy truncateGeometry3D(Nil, 15, 10)
   }
 
   test("Test truncateGeometry3D When geometry has only 1 point Then return IllegalArgumentException") {
-    an [IllegalArgumentException] should be thrownBy truncateGeometry3D(Seq(Point(0.0, 0.0)), 10, 15)
+    an[IllegalArgumentException] should be thrownBy truncateGeometry3D(Seq(Point(0.0, 0.0)), 10, 15)
   }
 
   test("Test truncateGeometry3D When the truncation is at the start Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 6, 10)
-    truncatedGeometry should be (Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
+    truncatedGeometry should be(Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
   }
 
   test("Test truncateGeometry3D When the truncation is at the end Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 0, 6)
-    truncatedGeometry should be (Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
+    truncatedGeometry should be(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
   }
 
   test("Test truncateGeometry3D When the truncation is both at the start and at the end Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 6)
-    truncatedGeometry should be (Seq(Point(2.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
+    truncatedGeometry should be(Seq(Point(2.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
   }
 
   test("Test truncateGeometry3D When the truncation limits are on the same segment Then returns the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 3)
-    truncatedGeometry should be (Seq(Point(2.0, 0.0), Point(3.0, 0.0)))
+    truncatedGeometry should be(Seq(Point(2.0, 0.0), Point(3.0, 0.0)))
   }
 
   test("Test truncateGeometry3D When the truncation limits are outside of the geometry Then returns a empty geometry") {
@@ -163,95 +163,125 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
   }
 
   test("Test minimumDistance When measuring the distance from point (0.0, 0.0, 0.0) to segment ((-1.0, 1.0, 0.0), (1.0, 1.0, 0.0))Then return the calculated Minimum distance to line segment.") {
-    val distance = minimumDistance(Point(0,0,0), (Point(-1,1,0), Point(1,1,0)))
-    distance should be (1.0)
+    val distance = minimumDistance(Point(0, 0, 0), (Point(-1, 1, 0), Point(1, 1, 0)))
+    distance should be(1.0)
   }
 
   test("Test minimumDistance When measuring the distance from point (0.0, 0.0, 0.0) to segment ((-1.0, -1.0, 0.0), (-0.5, -0.5, 0.0))Then return the calculated Minimum distance to line segment.") {
-    val distance = minimumDistance(Point(0,0,0), (Point(-1,-1,0), Point(-.5,-.5,0)))
+    val distance = minimumDistance(Point(0, 0, 0), (Point(-1, -1, 0), Point(-.5, -.5, 0)))
     distance should be > .707
     distance should be < .70711
   }
 
   test("Test minimumDistance When measuring the distance from point (0, 0, 0) to the result of segmentByMinimumDistance of point (0,0,0) to (-1, -1, 0), (0, 0.9, 0), (1, 1, 0)) Then return the calculated Minimum distance to line segment." +
     "Get minimum distance from point to segment midpoint") {
-    val distance = minimumDistance(Point(0,0,0),
-      segmentByMinimumDistance(Point(0,0,0), Seq(Point(-1,1,0), Point(0,.9,0), Point(1,1,0))))
+    val distance = minimumDistance(Point(0, 0, 0),
+      segmentByMinimumDistance(Point(0, 0, 0), Seq(Point(-1, 1, 0), Point(0, .9, 0), Point(1, 1, 0))))
     distance should be(0.9)
   }
 
   test("Test overlaps WHen using a multitude of different pints Then return if they overlap or not.") {
-    overlaps((0.0, 0.1), (0.1,0.2)) should be(false)
-    overlaps((0.0, 0.15), (0.1,0.2)) should be(true)
-    overlaps((0.11, 0.15), (0.1,0.2)) should be(true)
-    overlaps((0.15, 0.11), (0.1,0.2)) should be(true)
-    overlaps((0.15, 0.21), (0.2,0.1)) should be(true)
-    overlaps((0.21, 0.01), (0.1,0.2)) should be(true)
-    overlaps((0.21, 0.01), (0.1,0.2)) should be(true)
-    overlaps((0.21, 0.22), (0.1,0.2)) should be(false)
-    overlaps((0.22, 0.21), (0.1,0.2)) should be(false)
+    overlaps((0.0, 0.1), (0.1, 0.2)) should be(false)
+    overlaps((0.0, 0.15), (0.1, 0.2)) should be(true)
+    overlaps((0.11, 0.15), (0.1, 0.2)) should be(true)
+    overlaps((0.15, 0.11), (0.1, 0.2)) should be(true)
+    overlaps((0.15, 0.21), (0.2, 0.1)) should be(true)
+    overlaps((0.21, 0.01), (0.1, 0.2)) should be(true)
+    overlaps((0.21, 0.01), (0.1, 0.2)) should be(true)
+    overlaps((0.21, 0.22), (0.1, 0.2)) should be(false)
+    overlaps((0.22, 0.21), (0.1, 0.2)) should be(false)
   }
 
   test("Test withinTolerance WHen using a multitude of combinations of points an tolerance values Then return if they are withing the tolerance value or not.") {
-    val p1 = Point(0,0)
-    val p2 = Point(1,1)
-    val p3 = Point(1.5,1.5)
-    val p4 = Point(1.01,.99)
-    withinTolerance(Seq(p1, p2), Seq(p1, p2), 0.0001) should be (true)
-    withinTolerance(Seq(p1, p2), Seq(p1, p3), 0.0001) should be (false)
-    withinTolerance(Seq(p1, p2), Seq(p2, p1), 0.0001) should be (false)
-    withinTolerance(Seq(p1, p2), Seq(p1, p3), 1.0001) should be (true)
-    withinTolerance(Seq(p1, p2), Seq(p1, p4), .0001) should be (false)
-    withinTolerance(Seq(p1, p2), Seq(p1, p4), .015) should be (true)
-    withinTolerance(Seq(p1), Seq(p1, p4), .0001) should be (false)
-    withinTolerance(Seq(), Seq(p1, p4), .0001) should be (false)
-    withinTolerance(Seq(p1), Seq(p1), .0001) should be (true)
-    withinTolerance(Seq(p1), Seq(), .0001) should be (false)
-    withinTolerance(Seq(), Seq(), .0001) should be (true)
+    val p1 = Point(0, 0)
+    val p2 = Point(1, 1)
+    val p3 = Point(1.5, 1.5)
+    val p4 = Point(1.01, .99)
+    withinTolerance(Seq(p1, p2), Seq(p1, p2), 0.0001) should be(true)
+    withinTolerance(Seq(p1, p2), Seq(p1, p3), 0.0001) should be(false)
+    withinTolerance(Seq(p1, p2), Seq(p2, p1), 0.0001) should be(false)
+    withinTolerance(Seq(p1, p2), Seq(p1, p3), 1.0001) should be(true)
+    withinTolerance(Seq(p1, p2), Seq(p1, p4), .0001) should be(false)
+    withinTolerance(Seq(p1, p2), Seq(p1, p4), .015) should be(true)
+    withinTolerance(Seq(p1), Seq(p1, p4), .0001) should be(false)
+    withinTolerance(Seq(), Seq(p1, p4), .0001) should be(false)
+    withinTolerance(Seq(p1), Seq(p1), .0001) should be(true)
+    withinTolerance(Seq(p1), Seq(), .0001) should be(false)
+    withinTolerance(Seq(), Seq(), .0001) should be(true)
   }
 
   test("Test truncateGeometry3D When using a 3 dimensional geometry Then return the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0, 0.0), Point(5.0, 0.0, 5.0), Point(10.0, 0.0, 2.0)), 6, 10)
-    truncatedGeometry.map(_.copy(z = 0.0)) should be (Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
+    truncatedGeometry.map(_.copy(z = 0.0)) should be(Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
   }
 
   test("Test truncateGeometry3D When using a 2 dimensional geometry Then return the truncated geometry") {
     val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 5.0), Point(0.0, 0.0), Point(5.0, 0.0)), 6, 10)
-    truncatedGeometry should be (Seq(Point(1.0, 0.0), Point(5.0, 0.0)))
+    truncatedGeometry should be(Seq(Point(1.0, 0.0), Point(5.0, 0.0)))
   }
 
-  test("Test geometryMoved When comparing geometries that are more than 1 meter apart at the geometry end Then return true."){
+  test("Test geometryMoved When comparing geometries that are more than 1 meter apart at the geometry end Then return true.") {
     val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
     val geometry2 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(5.0, 5.0))
-    geometryMoved(1.0)(geometry1, geometry2) should be (true)
+    geometryMoved(1.0)(geometry1, geometry2) should be(true)
   }
 
-  test("Test geometryMoved When comparing geometries that are more than 1 meter apart at the start Then return true."){
+  test("Test geometryMoved When comparing geometries that are more than 1 meter apart at the start Then return true.") {
     val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
     val geometry2 = List(Point(5.0, 1.0), Point(1.0, 0.0), Point(1.0, 1.0))
-    geometryMoved(1.0)(geometry1, geometry2) should be (true)
+    geometryMoved(1.0)(geometry1, geometry2) should be(true)
   }
 
-  test("Test geometryMoved When comparing geometries that are less than 1 meter apart Then return false."){
+  test("Test geometryMoved When comparing geometries that are less than 1 meter apart Then return false.") {
     val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
     val geometry2 = List(Point(0.5, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
-    geometryMoved(1.0)(geometry1, geometry2) should be (false)
+    geometryMoved(1.0)(geometry1, geometry2) should be(false)
   }
 
-  test("Test geometryMoved When comparing geometries that are the same Then return false."){
+  test("Test geometryMoved When comparing geometries that are the same Then return false.") {
     val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
     val geometry2 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
-    geometryMoved(1.0)(geometry1, geometry2) should be (false)
+    geometryMoved(1.0)(geometry1, geometry2) should be(false)
   }
 
-  test("Test geometryMoved When comparing 1 geometry to it's reversed state Then return true."){
+  test("Test geometryMoved When comparing 1 geometry to it's reversed state Then return true.") {
     val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
     val geometry2 = List(Point(1.0, 1.0), Point(1.0, 0.0), Point(0.0, 0.0))
-    geometryMoved(1.0)(geometry1, geometry2) should be (true)
+    geometryMoved(1.0)(geometry1, geometry2) should be(true)
   }
 
 
-  test("Test geometryUtils.createStepGeometry() When using a regular geometry, start and end values Then return the fully truncated geometry.") {
+  test("Test createStepGeometry When using a geometry with two points with 50 distance Then return unchanged geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(50.0, 50.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length == geometry.length should be(true)
+  }
+
+  test("Test createStepGeometry When using a geometry with two points with 100 distance Then return unchanged geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(100.0, 100.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length == geometry.length should be(true)
+  }
+
+  test("Test createStepGeometry When using a geometry with two points with 200 distance Then return unchanged geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(200.0, 200.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length == geometry.length should be(true)
+  }
+
+  test("Test createStepGeometry When using a geometry with points having longer gaps than the given step Then return unchanged geometry.") {
     val geometry = Seq(
       Point(0.0, 0.0, 0.0),
       Point(200.0, 200.0, 0.0),
@@ -260,9 +290,63 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
       Point(800.0, 800.0, 0.0),
       Point(1000.0, 1000.0, 0.0)
     )
-    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100 )
-    GeometryUtils.geometryEndpoints(stepGeom) should be (GeometryUtils.geometryEndpoints(geometry))
-    stepGeom.length > geometry.length should be (true)
-
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length == geometry.length should be(true)
   }
+
+  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length shorter than the step Then return decimated geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(20.0, 20.0, 0.0),
+      Point(40.0, 40.0, 0.0),
+      Point(50.0, 50.0, 0.0),
+      Point(90.0, 90.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length should be(2)
+  }
+
+  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length equals to step Then return decimated geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(20.0, 20.0, 0.0),
+      Point(40.0, 40.0, 0.0),
+      Point(50.0, 50.0, 0.0),
+      Point(100.0, 100.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length should be(2)
+  }
+
+  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length slightly longer than the step Then return decimated geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(20.0, 20.0, 0.0),
+      Point(40.0, 40.0, 0.0),
+      Point(50.0, 50.0, 0.0),
+      Point(110.0, 110.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom.length should be(2)
+  }
+
+  test("Test createStepGeometry When using a geometry with points distributed unequally and the length longer than the step Then return decimated geometry.") {
+    val geometry = Seq(
+      Point(0.0, 0.0, 0.0),
+      Point(20.0, 20.0, 0.0),
+      Point(40.0, 40.0, 0.0),
+      Point(50.0, 50.0, 0.0),
+      Point(190.0, 190.0, 0.0)
+    )
+    val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
+    GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
+    stepGeom(1).x should be (50.0)
+    stepGeom(1).y should be (50.0)
+    stepGeom.length should be(3)
+  }
+
 }
