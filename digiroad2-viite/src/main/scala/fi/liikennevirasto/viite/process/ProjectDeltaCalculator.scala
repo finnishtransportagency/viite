@@ -129,9 +129,9 @@ object ProjectDeltaCalculator {
       ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
-          case x: RoadAddress => x.copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
-          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
-          case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
+          case x: RoadAddress => x.copy(roadNumber = pl2.roadNumber, roadPartNumber = pl2.roadPartNumber, track = pl2.track , discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
+          case x: ProjectLink if x.reversed => x.copy(roadNumber = pl2.roadNumber, roadPartNumber = pl2.roadPartNumber, track = pl2.track, startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
+          case x: ProjectLink => x.copy(roadNumber = pl2.roadNumber, roadPartNumber = pl2.roadPartNumber, track = pl2.track, endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
         },
         pl1 match {
           case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
@@ -287,7 +287,7 @@ object ProjectDeltaCalculator {
       o.map(ra =>
         RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber,
-          transfers.map(_._2).filter(pl => ((pl.roadNumber == ra.roadNumber && pl.roadPartNumber == ra.roadPartNumber) || pl.roadwayNumber == ra.roadwayNumber) && pl.track == ra.track && pl.roadType == ra.roadType
+          transfers.map(_._2).filter(pl => (pl.roadNumber == ra.roadNumber && pl.roadPartNumber == ra.roadPartNumber) && pl.track == ra.track && pl.roadType == ra.roadType
             && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
     }
 
