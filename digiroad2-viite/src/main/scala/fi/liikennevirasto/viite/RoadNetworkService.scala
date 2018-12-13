@@ -65,6 +65,8 @@ class RoadNetworkService {
       //TODO add test for this with empty Seq[LinearLocation] for any given roadwayId key
       val allLocations = mapped.values.flatten.flatten.toSeq
       val sortedLocations = allLocations.sortBy(_.orderNumber)
+      if(sortedLocations.isEmpty)
+        logger.info(s"WARNING!!!!!!! Empty linear locations for some of those roadway ids ${mapped.keys.mkString(",")}")
       val (first, last) = (sortedLocations.head, sortedLocations.last)
 
       val errors: Seq[RoadNetworkError] = mapped.flatMap{ case(roadwayId, locations) =>
