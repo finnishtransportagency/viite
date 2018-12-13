@@ -65,7 +65,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
       val roadNetworkService = new RoadNetworkService
       val roadwayDAO = new RoadwayDAO
       val roadNumbers = roadwayDAO.getValidRoadNumbers
-      val chunks = generateChunks(roadNumbers, 100)
+      val chunks = generateChunks(roadNumbers, 1000)
 
       chunks.foreach {
         case (min, max) =>
