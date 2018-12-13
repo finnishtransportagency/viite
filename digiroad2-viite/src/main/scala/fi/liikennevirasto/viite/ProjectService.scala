@@ -1569,14 +1569,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         withDynTransaction {
           checkAndUpdateProjectStatus(project)
         }
-//        if (withDynTransaction {
-//          logger.info(s"Checking status for $project")
-//          checkAndUpdateProjectStatus(project)
-//        }) {
-//          eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), Seq()))
-//        } else {
-//          logger.info(s"Not going to check road network (status != Saved2TR)")
-//        }
       } catch {
         case t: SQLException => logger.error(s"SQL error while importing project: $project! Check if any roads have multiple valid names with out end dates ", t.getStackTrace)
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
@@ -1592,6 +1584,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def checkAndUpdateProjectStatus(projectID: Long): Unit = {
+
     projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
         projectDAO.fetchProjectStatus(projectID).map { currentState =>

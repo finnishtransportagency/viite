@@ -94,67 +94,37 @@ class RoadNetworkService {
       }
     }
 
-//    withDynTransaction {
       try {
         val allRoads = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
-        val roadways = allRoads.groupBy(g => (g.roadNumber, g.roadPartNumber, g.endDate))
-        roadways.par.foreach { group =>
-          val (section, roadway) = group
+        val roadways = allRoads.groupBy(g => (g.roadNumber, g.roadPartNumber))
+          roadways.par.foreach { group =>
+            val (section, roadway) = group
 
-          val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
-          val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
-          logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
+            val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
+            val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
+            logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
 
-          //terminated roadways dont have linear locations
-          val (combinedRoadways, twoTrackRoadways) = roadway.filter(_.terminated == TerminationCode.NoTermination).partition(_.track == Combined)
+            //terminated roadways dont have linear locations
+            val (combinedRoadways, twoTrackRoadways) = roadway.filter(_.terminated == TerminationCode.NoTermination).partition(_.track == Combined)
 
-          logger.info(s" start of fetch of linear locations")
-          val combinedLocations = linearLocationDAO.fetchByRoadways(combinedRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
-          val twoTrackLocations = linearLocationDAO.fetchByRoadways(twoTrackRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
+            logger.info(s" start of fetch of linear locations")
+            val combinedLocations = linearLocationDAO.fetchByRoadways(combinedRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
+            val twoTrackLocations = linearLocationDAO.fetchByRoadways(twoTrackRoadways.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
 
-          val mappedCombined = combinedRoadways.map(r => r.id -> combinedLocations.get(r.roadwayNumber)).toMap
-          val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> twoTrackLocations.get(r.roadwayNumber)).toMap
+            val mappedCombined = combinedRoadways.map(r => r.id -> combinedLocations.get(r.roadwayNumber)).toMap
+            val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> twoTrackLocations.get(r.roadwayNumber)).toMap
 
-          logger.info(s" start checking of linear locations")
-          val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
-          val combinedErrors = checkCombinedLinearLocations(mappedCombined)
-          val linearLocationErrors = twoTrackErrors ++ combinedErrors
-          logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+            logger.info(s" start checking of linear locations")
+            val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
+            val combinedErrors = checkCombinedLinearLocations(mappedCombined)
+            val linearLocationErrors = twoTrackErrors ++ combinedErrors
+            logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
 
-          (roadwaysErrors ++ linearLocationErrors).foreach { e =>
-            logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
-            roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
+            (roadwaysErrors ++ linearLocationErrors).foreach { e =>
+              logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
+              roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
+            }
           }
-        }
-
-        //  .groupBy(_.roadNumber).flatMap(road => {
-        //          val groupedRoadParts = road._2.groupBy(_.roadPartNumber).toSeq.sortBy(_._1)
-        //          val lastRoadAddress = groupedRoadParts.last._2.maxBy(_.startAddrMValue)
-        //          groupedRoadParts.map(roadPart => {
-        //            if (roadPart._2.last.roadPartNumber == lastRoadAddress.roadPartNumber && lastRoadAddress.discontinuity != Discontinuity.EndOfRoad) {
-        //              RoadNetworkDAO.addRoadNetworkError(lastRoadAddress.id, InconsistentTopology.value)
-        //            }
-        //            val sortedRoads = roadPart._2.sortBy(s => (s.track.value, s.startAddrMValue))
-        //            sortedRoads.zip(sortedRoads.tail).foreach(r => {
-        //              checkOverlapping(r._1, r._2)(sortedRoads)
-        //              checkTopology(r._1, r._2)(sortedRoads)
-        //            })
-        //            roadPart
-        //          })
-        //        })
-        //        if (!RoadNetworkDAO.hasRoadNetworkErrors) {
-        //          RoadNetworkDAO.expireRoadNetwork
-        //          RoadNetworkDAO.createPublishedRoadNetwork
-        //          allRoads.foreach(r => r._2.foreach(p => RoadNetworkDAO.createPublishedRoadway(RoadNetworkDAO.getLatestRoadNetworkVersion.get, p.id)))
-        //        }
-        //        ExportLockDAO.delete
-        //      } catch {
-        //        case e: SQLIntegrityConstraintViolationException => logger.info("A road network check is already running")
-        //        case _: Exception => {
-        //          logger.error("Error during road address network check")
-        //          dynamicSession.rollback()
-        //          ExportLockDAO.delete
-        //        }
         } catch {
                   case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
                   case e: SQLException => {
@@ -167,7 +137,6 @@ class RoadNetworkService {
                     dynamicSession.rollback()
                   }
         }
-//      }
     }
 
   def getLatestPublishedNetworkDate : Option[DateTime] = {
