@@ -71,8 +71,6 @@ class RoadNetworkService {
           Seq.empty[RoadNetworkError]
         else {
           val sortedLocations = allLocations.sortBy(_.orderNumber)
-          if (sortedLocations.isEmpty)
-            logger.info(s"WARNING!!!!!!! Empty linear locations for some of those roadway ids ${mapped.keys.mkString(",")}")
           val (first, last) = (sortedLocations.head, sortedLocations.last)
 
           val errors: Seq[RoadNetworkError] = mapped.flatMap { case (roadwayId, locations) =>
