@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadwayDAO}
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadNetworkDAO, RoadwayDAO}
 import fi.liikennevirasto.viite.{MaxMoveDistanceBeforeFloating, RoadCheckOptions, RoadNetworkService}
 import org.slf4j.LoggerFactory
 
@@ -63,15 +63,19 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
   def checkRoadNetwork(username: String = "") = {
     time(logger, "Validation of road network") {
       val roadNetworkService = new RoadNetworkService
+      val roadNetworkDAO = new RoadNetworkDAO
       val roadwayDAO = new RoadwayDAO
-      val roadNumbers = roadwayDAO.getValidRoadNumbers
-      val chunks = generateChunks(roadNumbers, 500)
 
-      chunks.foreach {
-        case (min, max) =>
-
-          val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
-          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads))
+      if(roadNetworkDAO.hasCurrentNetworkErrors){
+        logger.error(s"current network have errors")
+      } else {
+        val roadNumbers = roadwayDAO.getValidRoadNumbers
+        val chunks = generateChunks(roadNumbers, 500)
+        chunks.foreach {
+          case (min, max) =>
+            val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
+            roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads))
+        }
       }
     }
   }
