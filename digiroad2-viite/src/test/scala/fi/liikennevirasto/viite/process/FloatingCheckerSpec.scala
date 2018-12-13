@@ -6,10 +6,11 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress, TerminationCode}
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 
@@ -19,11 +20,12 @@ class FloatingCheckerSpec extends FunSuite with Matchers {
 
   test("Geometry subtracted by more than 1 meter should trigger floating check") {
     val geometry = Seq(Point(0.0, 0.0), Point(60.0, 0.0), Point(60.0, 9.844))
+    //TODO road address now have the linear location check this value here
     val roadAddressSeq = Seq(
-      RoadAddress(1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123, 0.0, 54.948,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, 54.948, 69.844,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      RoadAddress(1L, 1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123, 0.0, 54.948,
+        SideCode.TowardsDigitizing, 0L, (None, None), NoFloating, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+      RoadAddress(2L, 1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, 54.948, 69.844,
+        SideCode.TowardsDigitizing, 0L, (None, None), NoFloating, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
@@ -47,11 +49,12 @@ class FloatingCheckerSpec extends FunSuite with Matchers {
 
   test("Geometry subtracted by less than 1 meter should not trigger floating check") {
     val geometry = Seq(Point(0.0, 0.0), Point(60.0, 0.0), Point(60.0, 9.844))
+    //TODO road address now have the linear location check this value here
     val roadAddressSeq = Seq(
-      RoadAddress(1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123, 0.0, 54.948,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, 54.948, 69.844,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
+      RoadAddress(1L, 1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123, 0.0, 54.948,
+        SideCode.TowardsDigitizing, 0L, (None, None), NoFloating, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
+      RoadAddress(2L, 1L,  12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, 54.948, 69.844,
+        SideCode.TowardsDigitizing, 0L, (None, None), NoFloating, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
@@ -68,9 +71,10 @@ class FloatingCheckerSpec extends FunSuite with Matchers {
       Point(206731.52, 7035065.245, 1.745999999999185), Point(206721.382, 7035065.09, 1.7299999999959255), Point(206720.428, 7035057.438, 1.7550000000046566),
       Point(206725.112, 7035050.874, 1.6440000000002328), Point(206735.678, 7035047.871, 1.7489999999961583), Point(206744.672, 7035045.556, 2.25800000000163))
 
-    val roadAddressSeq = Seq(RoadAddress(411362, 12819, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 10, 92,
+    //TODO road address now have the linear location check this value here
+    val roadAddressSeq = Seq(RoadAddress(411362, 1L, 12819, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 10, 92,
       Some(DateTime.parse("2015-08-25T00:00:00.000+03:00")), None, Some("Automatic_merged"), 5515411, 0.0, 69.87700000000001,
-      SideCode.TowardsDigitizing, 1476392565000L, (None, None), false, roadLinkGeometry, LinkGeomSource.NormalLinkInterface, 4, TerminationCode.NoTermination, 0))
+      SideCode.TowardsDigitizing, 1476392565000L, (None, None), NoFloating, roadLinkGeometry, LinkGeomSource.NormalLinkInterface, 4, TerminationCode.NoTermination, 0))
 
     val link = RoadLink(6474047L, roadLinkGeometry, 69.87700000000001, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)

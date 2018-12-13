@@ -26,10 +26,10 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  val defaultChangeInfo=RoadAddressChangeInfo(AddressChangeType.apply(2),
-    RoadAddressChangeSection(None, None, None, None, None, None, None, None, None),
-    RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
-      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), false)
+  val defaultChangeInfo = RoadwayChangeInfo(AddressChangeType.apply(2),
+    RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
+    RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
+      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), false, 1)
 
   def getRestEndPoint: String = {
     val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
@@ -61,27 +61,27 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     }
   }
 
-  test("TR-connection Create test") {
+  test("Test ViiteTierekisteriClient.sendJsonMessage() When sending a ChangeProject Id = 0 meaning the project will not be added to TR Then return statusCode 201 and \"Created\" as the reason.") {
     assume(testConnection)
-    val message= ViiteTierekisteriClient.sendJsonMessage(ChangeProject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
+    val message = ViiteTierekisteriClient.sendJsonMessage(ChangeProject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
       defaultChangeInfo // projectid 0 wont be added to TR
     }))
-    message.projectId should be (0)
-    message.status should be (201)
-    message.reason should startWith ("Created")
+    message.projectId should be(0)
+    message.status should be(201)
+    message.reason should startWith("Created")
   }
 
-  test("Get project status from TR") {
+  test("Test ViiteTierekisteriClient.getProjectStatus() When asking for the test project ID (0) Then return a positive response object from TR") {
     assume(testConnection)
     val response = ViiteTierekisteriClient.getProjectStatus(0)
-    response == null should be (false)
+    response == null should be(false)
   }
 
-  test("Check that project_id is replaced with tr_id attribute") {
-    val change=ViiteTierekisteriClient.convertToChangeProject(List(ProjectRoadAddressChange(100L, Some("testproject"), 1, "user", DateTime.now(),defaultChangeInfo,DateTime.now(),Some(2))))
-    change.id should be (2)
+  test("Test ViiteTierekisteriClient.convertToChangeProject() When sending a default ProjectRoadwayChange Then check that project_id is replaced with tr_id attribute") {
+    val change = ViiteTierekisteriClient.convertToChangeProject(List(ProjectRoadwayChange(100L, Some("testproject"), 1, "user", DateTime.now(), defaultChangeInfo, DateTime.now(), Some(2))))
+    change.id should be(2)
   }
-  test("parse changeinforoadparts from json") {
+  test("Test extract[RoadwayChangeSection] When using a ChangeInfoRoadPart from a JSON string Then return the correctly formed RoadwayChangeSection object.") {
     val string = "{" +
       "\"tie\": 1," +
       "\"ajr\": 0," +
@@ -91,26 +91,26 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "\"let\": 1052" +
       "}"
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val cirp = parse(StringInput(string)).extract[RoadAddressChangeSection]
-    cirp.roadNumber should be (Some(1))
-    cirp.trackCode should be (Some(0))
-    cirp.startRoadPartNumber should be (Some(10))
-    cirp.startAddressM should be (Some(0))
-    cirp.endRoadPartNumber should be (Some(10))
-    cirp.endAddressM should be (Some(1052))
+    val cirp = parse(StringInput(string)).extract[RoadwayChangeSection]
+    cirp.roadNumber should be(Some(1))
+    cirp.trackCode should be(Some(0))
+    cirp.startRoadPartNumber should be(Some(10))
+    cirp.startAddressM should be(Some(0))
+    cirp.endRoadPartNumber should be(Some(10))
+    cirp.endAddressM should be(Some(1052))
   }
 
-  test("parse TRProjectStatus to and from json") {
+  test("Test extract[TRProjectStatus] When using a serialized TRProjectStatus object to JSON Then return the correctly encoded and decoded TRProjectStatus object.") {
     implicit val formats = DefaultFormats + TRProjectStatusSerializer
     val trps = TRProjectStatus(Some(1), Some(2), Some(3), Some(4), Some("status"), Some("name"), Some("change_date"),
       Some(5), Some("muutospvm"), Some("user"), Some("published_date"), Some(6), Some("error_message"), Some("start_time"),
       Some("end_time"), Some(7))
     val string = Serialization.write(trps).toString
     val trps2 = parse(StringInput(string)).extract[TRProjectStatus]
-    trps2 should be (trps)
+    trps2 should be(trps)
   }
 
-  test("Parse example messages TRStatus") {
+  test("Test extract[TRProjectStatus] When using a example JSON message representing the TRStatus Then return the correct TRStatus.") {
     implicit val formats = DefaultFormats + TRProjectStatusSerializer
     val string = "{\n\"id_tr_projekti\": 1162,\n\"projekti\": 1731,\n\"id\": 13255,\n\"tunnus\": 5,\n\"status\": \"T\"," +
       "\n\"name\": \"test\",\n\"change_date\": \"2017-06-01\",\n\"ely\": 1,\n\"muutospvm\": \"2017-05-15\",\n\"user\": \"user\"," +
@@ -118,7 +118,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "\n\"end_time\": \"2017-05-15\",\n\"error_code\": 0\n}"
     parse(StringInput(string)).extract[TRProjectStatus]
   }
-  test("Parse example messages ChangeInfo") {
+  test("Test extract[ChangeProject] When using a example JSON message representing the ChangeInfo Then return the correct ChangeInfo.") {
     implicit val formats = DefaultFormats + TRProjectStatusSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val string = "{\n\t\"id\": 8914,\n\t\"name\": \"Numerointi\",\n\t\"user\": \"user\",\n\t\"ely\": 9,\n\t\"change_date\": \"2017-06-01\"," +
       " \n\t\"change_info\":[ {\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
@@ -128,7 +128,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     parse(StringInput(string)).extract[ChangeProject]
   }
 
-  test("parse change project object back and forth") {
+  test("Test extract[ChangeProject] and ViiteTierekisteriClient.createJsonMessage() When coding and Decoding a ChangeProject object back and forth Then return the correct ChangeProject object after the coding/decoding process.") {
     implicit val formats = DefaultFormats + TRProjectStatusSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val string = "{\n\t\"id\": 8914,\n\t\"name\": \"Numerointi\",\n\t\"user\": \"user\",\n\t\"ely\": 9,\n\t\"change_date\": \"2017-06-01\"," +
       " \n\t\"change_info\":[ {\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
@@ -137,13 +137,13 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"road_type\": 821\n\t}]\n}"
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
     val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
-    parsedProject should be (reparsed)
-    reparsed.id should be (8914)
-    reparsed.changeDate should be ("2017-06-01")
+    parsedProject should be(reparsed)
+    reparsed.id should be(8914)
+    reparsed.changeDate should be("2017-06-01")
     reparsed.changeInfoSeq should have size (1)
   }
 
-  test("multiple changes in project") {
+  test("Test extract[ChangeProject] and ViiteTierekisteriClient.createJsonMessage() When coding and Decoding a ChangeProject object with multiple changes Then return the correct ChangeProject object after the coding/decoding process. ") {
     implicit val formats = DefaultFormats + TRProjectStatusSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val string = "{\n\t\"id\": 8914,\n\t\"name\": \"Numerointi\",\n\t\"user\": \"user\",\n\t\"ely\": 9,\n\t\"change_date\": \"2017-06-01\"," +
       " \n\t\"change_info\":[ {\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
@@ -153,15 +153,15 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "{\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
       "\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 3,\n\t\t\t\"aet\": 0,\n\t\t\t\"losa\": 3,\n\t\t\t\"let\": 95\n\t\t}," +
       "\n\t\t\"target\": {\n\t\t\t\"tie\": 11007,\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 1,\n\t\t\t\"aet\": 5511," +
-      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5606\n\t\t},\n\t\t\"continuity\": 1,\n\t\t\"road_type\": 821\n\t}"+
+      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5606\n\t\t},\n\t\t\"continuity\": 1,\n\t\t\"road_type\": 821\n\t}" +
       "]\n}"
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
     val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
-    parsedProject should be (reparsed)
+    parsedProject should be(reparsed)
     reparsed.changeInfoSeq should have size (2)
     val part2 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 2)
     val part3 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 3)
-    part2.nonEmpty should be (true)
-    part3.nonEmpty should be (true)
+    part2.nonEmpty should be(true)
+    part3.nonEmpty should be(true)
   }
 }

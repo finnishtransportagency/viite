@@ -11,11 +11,11 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -31,6 +31,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+  val projectReservedPartDAO = new ProjectReservedPartDAO
 
   def addTestProjects(): Unit = {
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
@@ -38,28 +39,28 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
   }
 
   def addProjectRoads(): Unit = {
-    ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser")
-    ProjectDAO.reserveRoadPart(2, 2, 1, "TestUser")
-    sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,created_by,
-          SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,'automatedtest',
+    projectReservedPartDAO.reserveRoadPart(1, 1, 1, "TestUser")
+    projectReservedPartDAO.reserveRoadPart(2, 2, 1, "TestUser")
+    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M,created_by,
+          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (1,1,1,0,1,1,1,1,1,1,'automatedtest',
           1, 0, 208.951, 1610995, 0, 1)""".execute
-    sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,created_by,
-          SIDE_CODE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,'automatedtest',
+    sqlu"""insert into project_link (id,project_id,TRACK,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M, original_start_addr_M, original_end_addr_M, created_by,
+          SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE) VALUES (2,2,1,0,2,1,1,1,1,1,'automatedtest',
           1, 0, 208.951, 1610995, 0, 1)""".execute
   }
 
-  test("Creating calibrationPoints") {
+  test("Test createCalibrationPoint of calibration points When creating two calibrations points, Then they should be saved without any problems") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
       CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
       CalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(viite.newCalibrationPointId, 2, 2, 1.1, 20))
-      val calibrationPointsAmmount = sql""" Select count(*) from CALIBRATION_POINT""".as[Long].first
+      val calibrationPointsAmmount = sql""" Select count(*) from PROJECT_CALIBRATION_POINT""".as[Long].first
       calibrationPointsAmmount should be (2)
     }
   }
 
-  test("Finding calibrationPoints") {
+  test("Test findCalibrationPointsOfRoad When adding calibrationPoints if should be returned in the findCalibrationPointById") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
@@ -71,9 +72,9 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       calibrationPoints.head.projectId should be (1)
       val roadCalibrationPoints = CalibrationPointDAO.findCalibrationPointsOfRoad(1,1)
       roadCalibrationPoints.size should be (2)
-      roadCalibrationPoints(0).id should not be (roadCalibrationPoints(1).id)
-      roadCalibrationPoints(0).segmentMValue should not be (roadCalibrationPoints(1).segmentMValue)
-      roadCalibrationPoints(0).addressMValue should not be (roadCalibrationPoints(1).addressMValue)
+      roadCalibrationPoints.head.id should not be roadCalibrationPoints(1).id
+      roadCalibrationPoints.head.segmentMValue should not be roadCalibrationPoints(1).segmentMValue
+      roadCalibrationPoints.head.addressMValue should not be roadCalibrationPoints(1).addressMValue
       val calibrationPointId = CalibrationPointDAO.createCalibrationPoint(2, 2, 1.1, 20)
       val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointById(calibrationPointId)
       foundCalibrationPoint.isEmpty should be (false)
@@ -85,12 +86,12 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Updating calibration points") {
+  test("Test updateSpecificCalibrationPointMeasures When updating calibration point by id Then it should be updated with success") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
       val id = CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      CalibrationPointDAO.updateSpecificCalibrationPointMeasures(id, 1.1, 30);
+      CalibrationPointDAO.updateSpecificCalibrationPointMeasures(id, 1.1, 30)
       val updatedCalibrationPoint = CalibrationPointDAO.findCalibrationPointById(id).get
       updatedCalibrationPoint.id should be (id)
       updatedCalibrationPoint.segmentMValue should be (1.1)
@@ -98,7 +99,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Removal of calibration points") {
+  test("Test removeSpecificCalibrationPoint When removing calibration pint by id Then it should be removed with success") {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
@@ -109,7 +110,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Removal of ALL calibration points from a project") {
+  test("Test removeAllCalibrationPointsFromProject & removeAllCalibrationPointsFromRoad When removing all calibrations points by project or road Then it should be deleted with success") {
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       addTestProjects()

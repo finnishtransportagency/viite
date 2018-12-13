@@ -1,20 +1,17 @@
 (function (root) {
   root.FormCommon = function(prefix) {
-    var ProjectStatus = LinkValues.ProjectStatus;
-    var LinkStatus = LinkValues.LinkStatus;
     var Track = LinkValues.Track;
-    var disabledInput = false;
 
-    var title = function(titleName) {
-      if (!titleName)
-        titleName = "Uusi tieosoiteprojekti";
-      return '<span class ="edit-mode-title">' + titleName +'</span>';
+      var title = function (titleName) {
+          if (!titleName)
+              titleName = "Uusi tieosoiteprojekti";
+          return '<span class ="edit-mode-title">' + titleName + '</span>';
     };
 
-    var titleWithEditingTool = function(project) {
-      return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class="btn-edit-project fas fa-pencil-alt"' +
-        'value="' + project.id + '"></i></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
+      var titleWithEditingTool = function (project) {
+          return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class="btn-edit-project fas fa-pencil-alt"' +
+              'value="' + project.id + '"></i></span>' +
+              '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
     var addRoadNameField = function (name, isBlocked) {
@@ -52,21 +49,21 @@
           roadTypeDropdown() + '<br>' +
           addSmallLabel('NIMI') +
           addRoadNameField(roadName, selected[0].roadNameBlocked) +
-        ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
+          ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
 
     var replaceAddressInfo = function(backend, selectedProjectLink) {
-      var roadNameField = $('#roadName');
-      if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 ) {
+        var roadNameField = $('#roadName');
+        if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
         backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             if(response.roadName !== ''){
-              roadNameField.val(response.roadName);
-              roadNameField.prop('disabled', true);
-              $('.project-form button.update').prop("disabled", false);
+                roadNameField.val(response.roadName);
+                roadNameField.prop('disabled', true);
+                $('.project-form button.update').prop("disabled", false);
             }
             if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
               $('#trackCodeDropdown').val("0");
@@ -104,9 +101,10 @@
       return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">'+label+'</label>';
     };
 
-    var addSmallInputNumber = function(id, value){
+    var addSmallInputNumber = function(id, value, isDisabled){
       //Validate only number characters on "onkeypress" including TAB and backspace
-      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
+      var disabled = isDisabled ? ' disabled ': '';
+      return '<input '+ disabled+ ' type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
         '" class="'+prefix+'form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
@@ -115,11 +113,11 @@
     };
 
     var addDiscontinuityDropdown = function(link){
-      if (link.endAddressM === 0) {
+        if (link.endAddressM === 0) {
         return '<select class="form-select-control" id="discontinuityDropdown" size="1" style="visibility: hidden">'+
           '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
           '</select>';
-      } else {
+        } else {
         return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
           '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
           '<option value="1" >1 Tien loppu</option>' +
@@ -133,10 +131,10 @@
 
     var addTrackCodeDropdown = function (trackDefaultValue, properties){
       var trackDefaultValueToShow = '';
-      if (trackDefaultValue === '') {
+        if (trackDefaultValue === '') {
         trackDefaultValue = Track.Unknown.value;
         trackDefaultValueToShow = '--';
-      } else {
+        } else {
         trackDefaultValueToShow = trackDefaultValue;
       }
 
@@ -204,12 +202,12 @@
     };
 
     var toggleAdditionalControls = function(){
-      $('#editProjectSpan').css('visibility', 'visible');
+        $('#editProjectSpan').css('visibility', 'visible');
       $('#closeProjectSpan').css('visibility', 'visible');
     };
 
     var hideEditAndCloseControls = function(){
-      $('#editProjectSpan').css('visibility', 'hidden');
+        $('#editProjectSpan').css('visibility', 'hidden');
       $('#closeProjectSpan').css('visibility', 'hidden');
     };
 
@@ -241,11 +239,10 @@
         '</div>');
     };
 
-    var sendRoadAddressChangeButton = function(localPrefix, projectData) {
-      var disabledInput = !_.isUndefined(projectData) && projectData.project.statusCode === ProjectStatus.ErroredInTR.value;
-      return '<div class="'+localPrefix+'form form-controls">' +
+    var sendRoadAddressChangeButton = function (localPrefix) {
+      return '<div class="' + localPrefix + 'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send" ' + (disabledInput ? 'disabled' : '') +'>Lähetä muutosilmoitus Tierekisteriin</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send"' + '>Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
@@ -256,9 +253,9 @@
         '</div>' +
         '<div class="'+prefix+'form-group">' +
         '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
-        addSmallInputNumber('beginDistance', '--') +
+        addSmallInputNumber('beginDistance', '--', true) +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
-        addSmallInputNumber('endDistance', '--') +
+        addSmallInputNumber('endDistance', '--', true) +
         '<span id="manualCPWarning" class="manualCPWarningSpan">!</span>' +
         '</div></div>';
     };
@@ -276,7 +273,7 @@
     };
 
     var coordButton = function(index, coordinates){
-      var html = '<button id=' + index + ' class="btn btn-primary projectErrorButton">Korjaa</button>';
+        var html = '<button id=' + index + ' class="btn btn-primary projectErrorButton">Korjaa</button>';
       return {index:index, html:html, coordinates:coordinates};
     };
 
@@ -334,7 +331,7 @@
       sendRoadAddressChangeButton: sendRoadAddressChangeButton,
       distanceValue: distanceValue,
       title: title,
-      titleWithEditingTool: titleWithEditingTool,
+        titleWithEditingTool: titleWithEditingTool,
       projectButtons: projectButtons,
       staticField: staticField,
       getProjectErrors:getProjectErrors

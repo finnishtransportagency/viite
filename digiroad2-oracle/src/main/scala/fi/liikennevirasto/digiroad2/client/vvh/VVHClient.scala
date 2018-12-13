@@ -7,6 +7,7 @@ import java.util
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.NameValuePair
@@ -64,7 +65,7 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
   val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
-case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
+case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: ChangeType,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
                       newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
   def isOldId(id: Long): Boolean = {
@@ -91,6 +92,38 @@ case class VVHRoadNodes(objectId: Long, geometry: Point, nodeId: Long, formOfNod
   */
 sealed trait ChangeType {
   def value: Int
+
+  def isShortenedChangeType: Boolean = {
+    ChangeType.apply(value) match {
+      case ShortenedCommonPart => true
+      case ShortenedRemovedPart => true
+      case _ => false
+    }
+  }
+
+  def isLengthenedChangeType: Boolean = {
+    ChangeType.apply(value) match {
+      case LengthenedCommonPart => true
+      case LengthenedNewPart => true
+      case _ => false
+    }
+  }
+
+  def isDividedChangeType: Boolean = {
+    ChangeType.apply(value) match {
+      case DividedNewPart => true
+      case DividedModifiedPart => true
+      case _ => false
+    }
+  }
+
+  def isCombinedChangeType: Boolean = {
+    ChangeType.apply(value) match {
+      case CombinedModifiedPart => true
+      case CombinedRemovedPart => true
+      case _ => false
+    }
+  }
 }
 
 object ChangeType {
@@ -101,14 +134,19 @@ object ChangeType {
   }
 
   case object Unknown extends ChangeType { def value = 0 }
+
   case object CombinedModifiedPart extends ChangeType { def value = 1 }
   case object CombinedRemovedPart extends ChangeType { def value = 2 }
+
   case object LengthenedCommonPart extends ChangeType { def value = 3 }
   case object LengthenedNewPart extends ChangeType { def value = 4 }
+
   case object DividedModifiedPart extends ChangeType { def value = 5 }
   case object DividedNewPart extends ChangeType { def value = 6 }
+
   case object ShortenedCommonPart extends ChangeType { def value = 7 }
   case object ShortenedRemovedPart extends ChangeType { def value = 8 }
+
   case object Removed extends ChangeType { def value = 11 }
   case object New extends ChangeType { def value = 12 }
   case object ReplacedCommonPart extends ChangeType { def value = 13 }
@@ -123,7 +161,7 @@ object ChangeType {
     * @return true, if this is a replacement
     */
   def isReplacementChange(changeInfo: ChangeInfo): Boolean = { // Where asset geo location should be replaced with another
-    ChangeType.apply(changeInfo.changeType) match {
+    changeInfo.changeType match {
       case CombinedModifiedPart => true
       case CombinedRemovedPart => true
       case LengthenedCommonPart => true
@@ -149,7 +187,7 @@ object ChangeType {
     * @return true, if this is an extension
     */
   def isExtensionChange(changeInfo: ChangeInfo): Boolean = { // Where asset geo location is a new extension (non-existing)
-    ChangeType.apply(changeInfo.changeType) match {
+    changeInfo.changeType match {
       case LengthenedNewPart => true
       case ReplacedNewPart => true
       case _ => false
@@ -163,7 +201,7 @@ object ChangeType {
     * @return true, if this is a removed segment
     */
   def isRemovalChange(changeInfo: ChangeInfo): Boolean = { // Where asset should be removed completely or partially
-    ChangeType.apply(changeInfo.changeType) match {
+    changeInfo.changeType match {
       case Removed => true
       case ReplacedRemovedPart => true
       case ShortenedRemovedPart => true
@@ -178,14 +216,14 @@ object ChangeType {
     * @return true, if this is a new segment
     */
   def isCreationChange(changeInfo: ChangeInfo): Boolean = { // Where asset geo location should be replaced with another
-    ChangeType.apply(changeInfo.changeType) match {
+    changeInfo.changeType match {
       case New => true
       case _ => false
     }
   }
 
   def isUnknownChange(changeInfo: ChangeInfo): Boolean = {
-    ChangeType.Unknown.value == changeInfo.changeType
+    ChangeType.Unknown == changeInfo.changeType
   }
 }
 
@@ -931,7 +969,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     val newStartMeasure = extractMeasure(attributes("NEW_START"))
     val newEndMeasure = extractMeasure(attributes("NEW_END"))
 
-    ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
+    ChangeInfo(oldId, newId, mmlId, ChangeType.apply(changeType), oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
   }
 
   def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[ChangeInfo] = {
@@ -969,14 +1007,24 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     * @return ChangeInfo for given links
     */
   def fetchByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
-    queryByLinkIds(linkIds)
+    queryByLinkIds(linkIds, "OLD_ID")
   }
 
-  protected def queryByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
+  /**
+    * Fetch change information where given link id is in the new_id list (source)
+    *
+    * @param linkIds Link ids to check as sources
+    * @return ChangeInfo for given links
+    */
+  def fetchByNewLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
+    queryByLinkIds(linkIds, "NEW_ID")
+  }
+
+  protected def queryByLinkIds(linkIds: Set[Long], field: String): Seq[ChangeInfo] = {
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(withFilter("OLD_ID", ids))
+      val definition = layerDefinition(withFilter(field, ids))
       val url = serviceUrl(definition, queryParameters(false))
       fetchFeaturesAndLog(url)
     }.toList

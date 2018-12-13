@@ -20,8 +20,7 @@
     };
 
     bindEvents();
-    window.applicationModel = new ApplicationModel([
-      selectedLinkProperty]);
+    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
 
     var linkGroups = groupLinks(selectedProjectLinkProperty);
 
@@ -48,10 +47,11 @@
 
     var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection) {
     setupProjections();
-    fetch('components/WMTSCapabilities.xml', {credentials: "include"}).then(function(response) {
+      var url = 'rasteripalvelu/wmts/maasto?';
+      fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
-        var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
@@ -60,6 +60,13 @@
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
+
+  $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
+    if (jqxhr.getAllResponseHeaders()) {
+      applicationModel.removeSpinner();
+      console.log("Request '" + settings.url + "' failed: " + thrownError);
+    }
+  });
 
   var createOpenLayersMap = function(startupParameters, layers) {
     var map = new ol.Map({
@@ -79,9 +86,9 @@
       condition: function(mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
         return (
-            originalEvent.shiftKey &&
-        !(originalEvent.metaKey || originalEvent.altKey) &&
-            !originalEvent.ctrlKey);
+          originalEvent.shiftKey &&
+          !(originalEvent.metaKey || originalEvent.altKey) &&
+          !originalEvent.ctrlKey);
       }
     });
     map.getInteractions().forEach(function(interaction) {
@@ -96,17 +103,16 @@
     return map;
   };
 
-    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection) {
-    var tileMaps = new TileMapCollection(arcConfig);
+    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection){
+      var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    var styler = new Styler();
-    var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
+    var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
-        var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
+    var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
-      new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -115,15 +121,16 @@
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)
+    });
 
     var mapPluginsContainer = jQuery('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
-    new TileMapSelector(mapPluginsContainer);
+    new TileMapSelector(mapPluginsContainer, applicationModel);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    // Show environment name next to Digiroad logo
+    // Show environment name next to Viite logo
     var notification = jQuery('#notification');
     notification.append(Environment.localizedName());
     notification.append(' Päivämäärä: ' + startupParameters.deploy_date);
@@ -135,7 +142,7 @@
 
     new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
 
-    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
+    applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };

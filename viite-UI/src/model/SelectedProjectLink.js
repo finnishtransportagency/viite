@@ -4,6 +4,7 @@
         var current = [];
         var me = this;
         var ids = [];
+        var featuresToKeep = [];
         var dirty = false;
         var splitSuravage = {};
         var LinkStatus = LinkValues.LinkStatus;
@@ -120,7 +121,7 @@
             dirty = value;
         };
 
-        var openShift = function(linkIds) {
+        var openCtrl = function(linkIds) {
             if (linkIds.length === 0) {
                 cleanIds();
                 close();
@@ -169,6 +170,22 @@
             return _.map(current, function(curr) {
                 return curr.getData();
             });
+        };
+
+        var getFeaturesToKeep = function(){
+          return featuresToKeep;
+        };
+
+        var addToFeaturesToKeep = function(data4Display){
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
+        };
+
+        var clearFeaturesToKeep = function() {
+          featuresToKeep = [];
         };
 
         var isSelected = function(linkId) {
@@ -242,7 +259,7 @@
         return {
             open: open,
             openWithErrorMessage: openWithErrorMessage,
-            openShift: openShift,
+            openCtrl: openCtrl,
             openSplit: openSplit,
             get: get,
             clean: clean,
@@ -251,6 +268,9 @@
             isSelected: isSelected,
             setCurrent: setCurrent,
             getCurrent: getCurrent,
+            getFeaturesToKeep: getFeaturesToKeep,
+            addToFeaturesToKeep: addToFeaturesToKeep,
+            clearFeaturesToKeep: clearFeaturesToKeep,
             isSplit: isSplit,
             isMultiLink: isMultiLink,
             isDirty: isDirty,

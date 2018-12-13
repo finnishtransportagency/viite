@@ -2,23 +2,53 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.viite.switchSideCode
-import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinearLocation, RoadAddress}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{MaxDistanceDiffAllowed, MaxDistanceForConnectedLinks, MinAllowedRoadAddressLength}
 
 object DefloatMapper extends RoadAddressMapper {
 
-  def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
+  def adjustRoadAddresses(roadway: Seq[RoadAddress], current: Seq[RoadAddress]): Seq[RoadAddress] = {
+    def overrideStartAddrM(ra: RoadAddress, address: Long) : RoadAddress = {
+      ra.copy(startAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = address)), ra.calibrationPoints._2))
+    }
+    def overrideEndAddrM(ra: RoadAddress, address: Long): RoadAddress = {
+      ra.copy(endAddrMValue = address, calibrationPoints = (ra.calibrationPoints._1, ra.calibrationPoints._2.map(_.copy(addressMValue = address))))
+    }
+    def overrideBothAddrM(ra: RoadAddress, startAddr: Long, endAddr: Long) : RoadAddress = {
+      ra.copy(startAddrMValue = startAddr, endAddrMValue = endAddr, calibrationPoints = (ra.calibrationPoints._1.map(_.copy(addressMValue = startAddr)), ra.calibrationPoints._2.map(_.copy(addressMValue = endAddr))))
+    }
+    def adjustTwo(address: (RoadAddress, RoadAddress)): RoadAddress = {
+      val (previousRoadAddress, nextRoadAddress) = address
+      if (previousRoadAddress.endAddrMValue != nextRoadAddress.startAddrMValue)
+        overrideStartAddrM(nextRoadAddress, previousRoadAddress.endAddrMValue)
+      else
+        nextRoadAddress
+    }
+    val (minAddr, maxAddr) = (current.map(_.startAddrMValue).min, current.map(_.endAddrMValue).max)
+
+    roadway.size match {
+      case 0 => Seq()
+      case 1 => Seq(overrideBothAddrM(roadway.head, minAddr, maxAddr))
+      case _ =>
+        val ordered = roadway.sortBy(ra => (ra.endAddrMValue, ra.startAddrMValue))
+        val overridden = ordered.head +: ordered.zip(ordered.tail).map(adjustTwo)
+        overrideStartAddrM(overridden.head, minAddr) +: overridden.init.tail :+ overrideEndAddrM(overridden.last, maxAddr)
+    }
+  }
+
+  def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[LinearLocationMapping] = {
     def formMapping(startSourceLink: RoadAddressLink, startSourceM: Double,
                     endSourceLink: RoadAddressLink, endSourceM: Double,
                     startTargetLink: RoadAddressLink, startTargetM: Double,
-                    endTargetLink: RoadAddressLink, endTargetM: Double): RoadAddressMapping = {
+                    endTargetLink: RoadAddressLink, endTargetM: Double): LinearLocationMapping = {
       if (startSourceM > endSourceM)
         formMapping(startSourceLink, endSourceM, endSourceLink, startSourceM,
           startTargetLink, endTargetM, endTargetLink, startTargetM)
       else
-        RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceM,
+        LinearLocationMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceLink.id, startSourceM,
           if (startSourceLink.linkId == endSourceLink.linkId) endSourceM else Double.NaN,
           startTargetM,
           if (startTargetLink.linkId == endTargetLink.linkId) endTargetM else Double.NaN,
@@ -38,7 +68,7 @@ object DefloatMapper extends RoadAddressMapper {
       else {
         val next = s.head
         val previousOpt = fused.headOption.filter(_.linkId == next.linkId)
-        if (previousOpt.nonEmpty) {
+        if (previousOpt.nonEmpty && !((previousOpt.get.endCalibrationPoint.isDefined && next.startCalibrationPoint.isDefined ) || (previousOpt.get.startCalibrationPoint.isDefined && next.endCalibrationPoint.isDefined))) {
           // At this point we know that the chain is continuous, all are on same road part and track and ordered
           val edited = previousOpt.get.copy(startAddressM = Math.min(previousOpt.get.startAddressM, next.startAddressM),
             endAddressM = Math.max(previousOpt.get.endAddressM, next.endAddressM),
@@ -59,20 +89,28 @@ object DefloatMapper extends RoadAddressMapper {
     }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
-    val joinedSource = fuseAddressByLinkId(orderedSource)
+    // VIITE-1469 We cannot merge road addresses anymore before mapping, because we can have the need to map multiple roadways as target
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
-    val targetCoeff = joinedSource.map(_.length).sum / orderedTarget.map(_.length).sum
-    val runningLength = (joinedSource.scanLeft(0.0)((len, link) => len+link.length) ++
-      orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
-    val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
-      val startSource = findStartLinearLocation(st, joinedSource)
-      val endSource = findEndLinearLocation(end, joinedSource, startSource._1.linkId)
-      val startTarget = findStartLinearLocation(st/targetCoeff, orderedTarget)
-      val endTarget = findEndLinearLocation(end/targetCoeff, orderedTarget, startTarget._1.linkId)
-      (startSource, endSource, startTarget, endTarget)}
+
+    /**
+      * TargetCoefficient =>
+      * Purpose of floating transfer is that source geometries are incorrect, so we should not trust in its geometry length, neither in its geometry
+      * And so TargetCoefficient should be calculated through mValues (!= geometryLength) relation coefficient.
+      */
+    val targetCoeff = orderedSource.map(s => s.endMValue - s.startMValue).sum / orderedTarget.map(t => t.endMValue - t.startMValue).sum
+    val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len + (link.endMValue - link.startMValue)) ++
+      orderedTarget.scanLeft(0.0)((len, link) => {
+        len + targetCoeff * (link.endMValue - link.startMValue)
+      })).map(setPrecision).distinct.sorted
+    val pairs = runningLength.zip(runningLength.tail).map { case (st, end) =>
+      val startSource = findStartLinearLocation(st, orderedSource)
+      val endSource = findEndLinearLocationSource(end, orderedSource, startSource._1.id)
+      val startTarget = findStartLinearLocation(st / targetCoeff, orderedTarget)
+      val endTarget = findEndLinearLocationTarget(end / targetCoeff, orderedTarget, startTarget._1.linkId)
+      (startSource, endSource, startTarget, endTarget)
+    }
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
-
 
   private def setPrecision(d: Double) = {
     BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
@@ -95,12 +133,28 @@ object DefloatMapper extends RoadAddressMapper {
     }
   }
 
-  private def findEndLinearLocation(mValue: Double, links: Seq[RoadAddressLink], linkId: Long): (RoadAddressLink, Double) = {
+  private def findEndLinearLocationSource(mValue: Double, links: Seq[RoadAddressLink], id: Long): (RoadAddressLink, Double) = {
+    if (links.isEmpty)
+      throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
+    val current = links.head
+    if (current.id != id)
+      findEndLinearLocationSource(mValue - current.length, links.tail, id)
+    else {
+      if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
+        (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
+      } else {
+        val dist = applySideCode(mValue, current.length, current.sideCode)
+        (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
+      }
+    }
+  }
+
+  private def findEndLinearLocationTarget(mValue: Double, links: Seq[RoadAddressLink], linkId: Long): (RoadAddressLink, Double) = {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
     if (current.linkId != linkId)
-      findEndLinearLocation(mValue - current.length, links.tail, linkId)
+      findEndLinearLocationTarget(mValue - current.length, links.tail, linkId)
     else {
       if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
         (current, setPrecision(applySideCode(mValue, mValue, current.sideCode)))
@@ -176,7 +230,7 @@ object DefloatMapper extends RoadAddressMapper {
       }
     }
 
-    def sortLinks(startingPoint: Point): Seq[RoadAddressLink] = {
+    def sortLinks(startingPoint: Point, orderedSources: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
       if (isRoundabout(targets)) {
         val initSortLinks = targets.sortBy(t => minDistanceBetweenEndPoints(Seq(startingPoint), t.geometry))
         val startEndLinks = initSortLinks.take(2) //Takes the start and end links
@@ -189,9 +243,27 @@ object DefloatMapper extends RoadAddressMapper {
       } else {
         // Partition target links by counting adjacency: anything that touches only the neighbor (and itself) is a starting or ending link
         val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
-        endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
+        val sortedEndingLinks = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry))
+        if (distanceOfRoadAddressLinks(orderedSources, sortedEndingLinks)) {
+          sortedEndingLinks.reverse ++ middleLinks
+        } else {
+          sortedEndingLinks ++ middleLinks
+        }
       }
     }
+
+      def distanceOfRoadAddressLinks(sourceLinks: Seq[RoadAddressLink], targetLinks: Seq[RoadAddressLink]): Boolean = {
+        val movedGeom1 = getMovedGeomForAddresses(sourceLinks)
+        val movedGeom2 = getMovedGeomForAddresses(targetLinks)
+        (minDistanceBetweenEndPoints(movedGeom1.head.geometry, movedGeom2.head.geometry) + minDistanceBetweenEndPoints(movedGeom1.last.geometry, movedGeom2.last.geometry)) >
+          (minDistanceBetweenEndPoints(movedGeom1.head.geometry, movedGeom2.last.geometry) + minDistanceBetweenEndPoints(movedGeom1.last.geometry, movedGeom2.head.geometry))
+      }
+
+    def getMovedGeomForAddresses(list: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+      val point = list.flatMap(_.geometry).minBy(p => p.distance2DTo(Point(0, 0)))
+      list.map(link => link.copy(geometry = link.geometry.map(p => p.minus(point))))
+    }
+
 
     val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
     val startingPoint = orderedSources.head.sideCode match {
@@ -203,7 +275,7 @@ object DefloatMapper extends RoadAddressMapper {
     if (hasIntersection(targets))
       throw new IllegalArgumentException("Non-contiguous road addressing")
 
-    val preSortedTargets = sortLinks(startingPoint)
+    val preSortedTargets = sortLinks(startingPoint, orderedSources)
     val startingSideCode = if (isDirectionMatch(orderedSources.head.geometry, preSortedTargets.head.geometry))
       orderedSources.head.sideCode
     else
@@ -211,7 +283,7 @@ object DefloatMapper extends RoadAddressMapper {
     (orderedSources, extendChainByGeometry(Seq(), preSortedTargets, startingSideCode))
   }
 
-  def invalidMapping(roadAddressMapping: RoadAddressMapping): Boolean = {
+  def invalidMapping(roadAddressMapping: LinearLocationMapping): Boolean = {
     roadAddressMapping.sourceStartM.isNaN || roadAddressMapping.sourceEndM.isNaN ||
       roadAddressMapping.targetStartM.isNaN || roadAddressMapping.targetEndM.isNaN
   }
@@ -234,20 +306,28 @@ object DefloatMapper extends RoadAddressMapper {
   }
 }
 
-case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStartM: Double, sourceEndM: Double,
-                              targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point],
-                              vvhTimeStamp: Option[Long] = None) {
+case class LinearLocationMapping(sourceLinkId: Long, targetLinkId: Long, sourceId: Long, sourceStartM: Double, sourceEndM: Double,
+                                 targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point],
+                                 vvhTimeStamp: Option[Long] = None) {
   override def toString: String = {
     s"$sourceLinkId -> $targetLinkId: $sourceStartM-$sourceEndM ->  $targetStartM-$targetEndM, $sourceGeom -> $targetGeom"
   }
+
   /**
     * Test if this mapping matches the road address: Road address is on source link and overlap match is at least 99,9%
     * (overlap amount is the overlapping length divided by the smallest length)
-   */
-  def matches(roadAddress: RoadAddress): Boolean = {
-    sourceLinkId == roadAddress.linkId &&
-      (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
-      GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
+    */
+  def matches(linearLocation: LinearLocation, allLinearLocations: Seq[LinearLocation]): Boolean = {
+    // Transfer floatings that have sourceId defined
+    if (allLinearLocations.count(_.linkId == linearLocation.linkId) > 1 && sourceId > 0) {
+      sourceId == linearLocation.id
+    }
+    // Apply changes has always sourceId = 0
+    else {
+      sourceLinkId == linearLocation.linkId &&
+        (vvhTimeStamp.isEmpty || linearLocation.adjustedTimestamp < vvhTimeStamp.get) &&
+        GeometryUtils.overlapAmount((linearLocation.startMValue, linearLocation.endMValue), (sourceStartM, sourceEndM)) > 0.001
+    }
   }
 
   val sourceDelta = sourceEndM - sourceStartM

@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process.strategy
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -28,11 +29,14 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
         userCalibrationPoints.filter(_.projectLinkId == pl.id) match {
           case s if s.size == 2 =>
             val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
-            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, Some(st), Some(en)))
+            val calibrationPoints = toCalibrationPoints(pl.linkId, Some(st), Some(en))
+            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
           case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
-            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, Some(s.head), None))
+            val calibrationPoints = toCalibrationPoints(pl.linkId, Some(s.head), None)
+            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
           case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
-            pl.copy(endAddrMValue = s.head.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, None, Some(s.head)))
+            val calibrationPoints = toCalibrationPoints(pl.linkId, None, Some(s.head))
+            pl.copy(endAddrMValue = s.head.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
           case _ =>
             pl.copy(calibrationPoints = (None, None))
         }

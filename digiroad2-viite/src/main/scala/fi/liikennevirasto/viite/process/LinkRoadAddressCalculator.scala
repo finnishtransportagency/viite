@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink, RoadAddress}
 
 trait LinkRoadAddressCalculator {
@@ -65,7 +66,7 @@ object LinkRoadAddressCalculator {
     roadAddress.endMValue - roadAddress.startMValue
   }
 
-  private def adjustGeometry[T <: BaseRoadAddress](segments: Seq[T], startingCP: CalibrationPoint, endingCP: CalibrationPoint): Seq[T] = {
+  private def adjustGeometry[T <: BaseRoadAddress](segments: Seq[T], startingCP: BaseCalibrationPoint, endingCP: BaseCalibrationPoint): Seq[T] = {
     val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
     val coefficient = (endingCP.addressMValue - startingCP.addressMValue) / newGeom.last._2
     segments.zip(newGeom).map {

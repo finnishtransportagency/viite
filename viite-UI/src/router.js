@@ -2,7 +2,6 @@
   root.URLRouter = function (map, backend, models) {
     var Router = Backbone.Router.extend({
       initialize: function () {
-        // Support legacy format for opening mass transit stop via ...#300289
 
         this.route(/^(\d+)$/, function (layer) {
           applicationModel.selectLayer(layer);
@@ -32,13 +31,17 @@
 
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
-        backend.getRoadLinkByLinkId(linkId, function (response) {
-          eventbus.once('roadLinks:afterDraw', function () {
-            models.selectedLinkProperty.open(response.linkId, response.id, true);
-            eventbus.trigger('linkProperties:reselect');
-          });
-          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-          map.getView().setZoom(12);
+        backend.getRoadAddressByLinkId(linkId, function (response) {
+          if (response.success) {
+            eventbus.once('roadLinks:afterDraw', function () {
+              models.selectedLinkProperty.open(response.linkId, response.id, true);
+              eventbus.trigger('linkProperties:reselect');
+            });
+              map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+              map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
+          } else {
+            console.log(response.reason);
+          }
         });
       },
 
@@ -55,6 +58,7 @@
 
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
+        eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
         var parsedProjectId = parseInt(projectId);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       },
@@ -111,16 +115,20 @@
         var baseUrl = 'roadAddressProject/' + project.id;
         var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
+        var initialCenter = map.getView().getCenter();
         if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
           applicationModel.selectLayer('linkProperty', false);
           map.getView().setCenter([project.coordX, project.coordY]);
           map.getView().setZoom(project.zoomLevel);
-        }
-        else if (typeof linkId !== 'undefined') {
+        } else if (typeof linkId !== 'undefined') {
           applicationModel.selectLayer('linkProperty', false);
-          backend.getRoadLinkByLinkId(linkId, function (response) {
+          backend.getProjectLinkByLinkId(linkId, function (response) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           });
+        }
+        var newCenter = map.getView().getCenter();
+        if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
+          applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
         }
       }
     });

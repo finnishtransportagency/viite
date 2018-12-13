@@ -32,6 +32,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
     describe('select cut tool and make a split', function () {
       before(function () {
         testHelpers.selectTool('Cut');
+        testHelpers.clickMap(openLayersMap, 480905.40280654473, 7058825.968613995);
         eventbus.trigger('map:clicked', {x: 480905.40280654473, y: 7058825.968613995});
       });
 
@@ -47,19 +48,22 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
         expect($('#discontinuityDropdown')[0].value).to.equal('5');
         expect($('#roadTypeDropDown')[0].value).to.equal('3');
       });
-    });
 
-    describe('cancel the split', function () {
-      before(function (done) {
-        eventbus.on('roadAddressProject:reOpenCurrent', function () {
-          done();
-        });
-        testHelpers.clickCancelButton();
+      describe('cancel the split', function () {
+          before(function (done) {
+              eventbus.on('roadAddressProject:enableInteractions', function () {
+                  done();
+              });
+              testHelpers.clickCancelButton();
+          });
+
+          it('verify that split form was cleared', function () {
+              expect($('.form-horizontal > label.highlighted').text()).to.equals('ALOITA VALITSEMALLA KOHDE KARTALTA.');
+          });
       });
 
-      it('verify that split form was cleared', function () {
-          expect($('#projectErrors').length).to.equal(0);
-      });
     });
+
+
   });
 });

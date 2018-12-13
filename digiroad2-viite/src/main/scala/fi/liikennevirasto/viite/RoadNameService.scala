@@ -50,7 +50,7 @@ class RoadNameService() {
               RoadName(NewRoadNameId, roadNumber, roadNameRow.name, Some(startDate), endDate, createdBy = user.username)
           }
 
-          RoadNameDAO.create(newRoadName)
+          RoadNameDAO.create(Seq(newRoadName))
       }
       None
     } catch {
@@ -91,15 +91,21 @@ class RoadNameService() {
     * @param since tells from which date roads are wanted
     * @return Returns error message as left and seq of road names as right
     */
-  def getUpdatedRoadNames(since: DateTime): Either[String, Seq[RoadName]] = {
-    withDynTransaction {
-      getUpdatedRoadNamesInTX(since)
+  def getUpdatedRoadNames(since: DateTime, until: Option[DateTime]): Either[String, Seq[RoadName]] = {
+    withDynSession {
+      try {
+        Right(RoadNameDAO.getUpdatedRoadNames(since, until))
+      } catch {
+        case e if NonFatal(e) =>
+          logger.error("Failed to fetch updated road names.", e)
+          Left(e.getMessage)
+      }
     }
   }
 
-  def getUpdatedRoadNamesInTX(since: DateTime): Either[String, Seq[RoadName]] = {
+  def getUpdatedRoadNamesInTX(since: DateTime, until: Option[DateTime]): Either[String, Seq[RoadName]] = {
     try {
-      Right(RoadNameDAO.getUpdatedRoadNames(since))
+      Right(RoadNameDAO.getUpdatedRoadNames(since, until))
     } catch {
       case e if NonFatal(e) =>
         logger.error("Failed to fetch updated road names.", e)
@@ -107,26 +113,26 @@ class RoadNameService() {
     }
   }
 
-  def getRoadNameByNumber(roadNumber: Long, projectID: Long): Option[Map[String, Any]] = {
+  def getRoadNameByNumber(roadNumber: Long, projectID: Long): Map[String, Any] = {
     try {
       withDynSession {
         val currentRoadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
         if (currentRoadNames.isEmpty) {
           val projectRoadNames = ProjectLinkNameDAO.get(roadNumber, projectID)
           if (projectRoadNames.isEmpty) {
-            return None
+            Map("roadName" -> None, "isCurrent" -> false)
           }
           else {
-            Some(Map("roadName" -> projectRoadNames.get.roadName, "isCurrent" -> false))
+            Map("roadName" -> projectRoadNames.get.roadName, "isCurrent" -> false)
           }
         }
         else
-          Some(Map("roadName" -> currentRoadNames.head.roadName, "isCurrent" -> true))
+          Map("roadName" -> currentRoadNames.head.roadName, "isCurrent" -> true)
       }
     }
     catch {
-      case longParsingException: NumberFormatException => Some(Map("error" -> "Could not parse road number"))
-      case e if NonFatal(e) => Some(Map("error" -> "Unknown error"))
+      case longParsingException: NumberFormatException => Map("error" -> "Could not parse road number")
+      case e if NonFatal(e) => Map("error" -> "Unknown error")
     }
   }
 

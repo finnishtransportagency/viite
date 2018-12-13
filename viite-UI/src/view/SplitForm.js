@@ -3,7 +3,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var SideCode = LinkValues.SideCode;
-    var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErroredInTR.value, LinkValues.ProjectStatus.Unknown.value];
+    var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
     var isReSplitMode = false;
     var currentProject = false;
     var currentSplitData = false;
@@ -53,6 +53,17 @@
           b: selected[1]
         };
       var selection = selectedSplitData(selected, currentSplitData);
+      var roadLinkSources = _.chain(selected).map(function(s) {
+          return s.roadLinkSource;
+      }).uniq().map(function(a) {
+        var linkGeom = _.find(LinkGeomSource, function (source) {
+              return source.value === parseInt(a);
+          });
+        if(_.isUndefined(linkGeom))
+          return LinkGeomSource.Unknown.descriptionFI;
+        else
+          return linkGeom.descriptionFI;
+      }).uniq().join(", ").value();
       return _.template('' +
         '<header>' +
         formCommon.title(project.name) +
@@ -62,6 +73,7 @@
         '<div class="edit-control-group project-choice-group">' +
         formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate) +
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
+        formCommon.staticField('Geometrian Lähde', roadLinkSources)+
         '<div class="split-form-group editable form-editable-roadAddressProject"> ' +
         selectionFormCutted(selection, selected, currentSplitData) +
         (isReSplitMode ? '' : formCommon.changeDirection(selected)) +
@@ -115,10 +127,10 @@
     var dropdownOption = function (index) {
       return '<div class="input-unit-combination">' +
         '<select class="split-form-control" id="dropdown_' + index + '" hidden size="1">' +
-        '<option id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
-        '<option id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
+        '<option disabled id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value="' + LinkStatus.Unchanged.description + '"  hidden>Ennallaan</option>' +
+        '<option disabled id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value="' + LinkStatus.Transfer.description + '" hidden>Siirto</option>' +
         '<option id="drop_' + index + '_' + LinkStatus.New.description + '" value="' + LinkStatus.New.description + '" hidden>Uusi</option>' +
-        '<option id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden>Lakkautus</option>' +
+        '<option disabled id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value="' + LinkStatus.Terminated.description + '" hidden>Lakkautus</option>' +
         '</select>' +
         '</div>';
     };
@@ -139,7 +151,7 @@
       return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
     };
 
-    var changeDropDownValue = function (statusCode,triggerChange) {
+    var changeDropDownValue = function (statusCode, triggerChange) {
       var fireChange = _.isUndefined(triggerChange) ? true : triggerChange;
       var rootElement = $('#feature-attributes');
       var link = _.first(_.filter(selectedProjectLink, function (l) {
@@ -147,25 +159,25 @@
       }));
       if (statusCode === LinkStatus.Unchanged.value) {
         $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").prop('disabled', false).prop('hidden', false);
-        if(fireChange)
+        if (fireChange)
           $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected').change();
         else $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.Transfer.value) {
         $("#dropDown_0 option[value=" + LinkStatus.Unchanged.description + "]").prop('disabled', false).prop('hidden', false);
-        if(fireChange)
+        if (fireChange)
           $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected').change();
         else $("#dropDown_0 option[value=" + LinkStatus.Transfer.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.New.value) {
         $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").prop('disabled', false).prop('hidden', false);
-        if(fireChange)
+        if (fireChange)
           $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected').change();
         else $("#dropDown_1 option[value=" + LinkStatus.New.description + "]").attr('selected', 'selected');
       }
       else if (statusCode == LinkStatus.Terminated.value) {
         $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").prop('disabled', false).prop('hidden', false);
-        if(fireChange)
+        if (fireChange)
           $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected').change();
         else $("#dropDown_2 option[value=" + LinkStatus.Terminated.description + "]").attr('selected', 'selected');
       }
@@ -269,8 +281,7 @@
         var statusDropdown_0 = $('#dropdown_0').val();
         var statusDropdown_1 = $('#dropdown_1').val();
         switch (statusDropdown_0) {
-          case LinkStatus.Revert.description :
-          {
+          case LinkStatus.Revert.description : {
             var separated = _.partition(selectedProjectLink, function (link) {
               return isReSplitMode;
             });
@@ -283,8 +294,7 @@
             }
             break;
           }
-          default:
-          {
+          default: {
             projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty().concat(selectedProjectLink), statusDropdown_0, statusDropdown_1);
           }
         }
@@ -295,7 +305,7 @@
 
       var cancelChanges = function () {
         selectedProjectLinkProperty.setDirty(false);
-        var hasSplit = _.some(selectedProjectLinkProperty.getCurrent(), function(links) {
+        var hasSplit = _.some(selectedProjectLinkProperty.getCurrent(), function (links) {
           return links.hasOwnProperty('connectedLinkId');
         });
         if (projectCollection.isDirty() || hasSplit) {

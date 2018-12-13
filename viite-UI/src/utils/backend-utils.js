@@ -2,6 +2,9 @@
   root.Backend = function () {
     var self = this;
     var loadingProject;
+    var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
+    var gettingRoadLinks;
+    moment.locale('fi');
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
@@ -12,17 +15,25 @@
       var year = params.year;
       if (!withHistory)
         return {
-          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
         };
       else
         return {
-          url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
+          url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
         };
     });
 
     this.abortLoadingProject = (function () {
       if (loadingProject) {
         loadingProject.abort();
+      }
+    });
+
+    this.abortGettingRoadLinks = (function () {
+      if (gettingRoadLinks){
+        _.map(gettingRoadLinks.desc.args, function (r) {
+          r.abort();
+        });
       }
     });
 
@@ -35,28 +46,46 @@
       };
     });
 
-      this.getProjectLinksById = _.throttle(function (projectId, callback) {
-          return $.getJSON('api/viite/project/links/' + projectId, function (data) {
-              return _.isFunction(callback) && callback(data);
-          });
-      }, 1000);
+    this.getProjectLinksById = _.throttle(function (projectId, callback) {
+      return $.getJSON('api/viite/project/links/' + projectId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
 
     this.revertChangesRoadlink = _.throttle(function (data, success, errorCallback) {
-        $.ajax({
-            contentType: "application/json",
-            type: "PUT",
-            url: "api/viite/roadlinks/roadaddress/project/revertchangesroadlink",
-            data: JSON.stringify(data),
-            dataType: "json",
-            success: success,
-            error: errorCallback
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/revertchangesroadlink",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: errorCallback
+      });
+    }, 1000);
+
+    this.getProjectLinkByLinkId = _.throttle(function (linkId, callback) {
+        return $.getJSON('api/viite/project/roadaddress/linkid/' + linkId, function (data) {
+            return _.isFunction(callback) && callback(data);
         });
     }, 1000);
 
-    this.getRoadLinkByLinkId = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/' + linkId, function (data) {
+    this.getRoadAddressByLinkId = _.throttle(function (linkId, callback) {
+        return $.getJSON('api/viite/roadaddress/linkid/' + linkId, function (data) {
+            return _.isFunction(callback) && callback(data);
+        });
+    }, 1000);
+
+    this.getRoadAddressById = _.throttle(function (id, callback) {
+      return $.getJSON('api/viite/roadaddress/' + id, function (data) {
         return _.isFunction(callback) && callback(data);
       });
+    }, 1000);
+
+    this.getRoadAddressMiddlePoint = _.throttle(function (linkId, callback) {
+      return $.getJSON('api/viite/roadlinks/midpoint/' + linkId, function (data) {
+        return _.isFunction(callback) && callback(data);
+        });
     }, 1000);
 
     this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
@@ -72,21 +101,21 @@
     }, 1000);
 
 
-      this.getRoadName =
-          _.debounce(function (roadNumber, projectID, callback) {
-              if (projectID !== 0 && roadNumber !== '') {
-                  return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
-                      return _.isFunction(callback) && callback(data);
-                  });
-              }
-              else{
-                $('#roadName').val('').change();
-                $('#roadName').prop('disabled', false);
-              }
-          }, 500);
+    this.getRoadName =
+      _.debounce(function (roadNumber, projectID, callback) {
+        if (projectID !== 0 && roadNumber !== '') {
+          return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
+            return _.isFunction(callback) && callback(data);
+          });
+        }
+        else {
+          $('#roadName').val('').change();
+          $('#roadName').prop('disabled', false);
+        }
+      }, 500);
 
 
-      this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
+    this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
       return $.getJSON('api/viite/roadlinks/adjacent?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });
@@ -99,7 +128,7 @@
     }, 1000);
 
     this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/multiSourceAdjacents?roadData=' + JSON.stringify(roadData), function (data) {
+      return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -150,7 +179,7 @@
       });
     }, 1000);
 
-    this.deleteRoadAddressProject = _.throttle(function (projectId, success, failure){
+    this.deleteRoadAddressProject = _.throttle(function (projectId, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "DELETE",
@@ -177,12 +206,12 @@
       });
     }, 1000);
 
-    this.checkIfRoadpartReserved = (function (roadNumber,startPart,endPart,projDate) {
+    this.checkIfRoadpartReserved = (function (roadNumber, startPart, endPart, projDate) {
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
         roadNumber: roadNumber,
         startPart: startPart,
         endPart: endPart,
-        projDate: projDate
+        projDate: convertDateToIso(projDate)
       })
         .then(function (x) {
           eventbus.trigger('roadPartsValidation:checkRoadParts', x);
@@ -213,6 +242,18 @@
       });
     }, 1000);
 
+    this.revertToFloating = _.throttle(function (data, linkId, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/tofloating/" + linkId,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    });
+
     this.getCutLine = _.throttle(function (data, success, error) {
       $.ajax({
         contentType: "application/json",
@@ -225,17 +266,17 @@
       });
     }, 1000);
 
-      this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
-          $.ajax({
-              contentType: "application/json",
-              type: "PUT",
-              url: "api/viite/project/reverse",
-              data: JSON.stringify(data),
-              dataType: "json",
-              success: success,
-              error: failure
-          });
-      }, 1000);
+    this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/project/reverse",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
 
     this.getRoadAddressProjects = _.throttle(function (callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function (data) {
@@ -247,13 +288,13 @@
       if (loadingProject) {
         loadingProject.abort();
       }
-        loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
+      loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
         return _.isFunction(callback) && callback(data);
       });
       return loadingProject;
     }, 1000);
 
-    this.getChangeTable = _.throttle(function (id,callback) {
+    this.getChangeTable = _.throttle(function (id, callback) {
       $.getJSON('api/viite/project/getchangetable/' + id, callback);
     }, 500);
 
@@ -276,12 +317,13 @@
     };
 
     this.getGeocode = function (address) {
-      return $.post("vkm/geocode", { address: address }).then(function (x) { return JSON.parse(x); });
+      return $.post("vkm/geocode", {address: address}).then(function (x) {
+        return JSON.parse(x);
+      });
     };
 
-    this.getCoordinatesFromRoadAddress = function (roadNumber, section, distance, lane) {
-      return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
-        .then(function (x) { return JSON.parse(x); });
+    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, distance, callback) {
+      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: distance}, callback);
     };
 
     this.removeProjectLinkSplit = function (data, success, errorCallback) {
@@ -306,35 +348,35 @@
     };
 
     this.getPreSplitedData = _.throttle(function (data, linkId, success, errorCallback) {
-        $.ajax({
-          contentType: "application/json",
-          type: "PUT",
-          url: "api/viite/project/presplit/" + linkId,
-          data: JSON.stringify(data),
-          dataType: "json",
-          success: success,
-          error: errorCallback
-        });
-      }, 1000);
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/project/presplit/" + linkId,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: errorCallback
+      });
+    }, 1000);
 
     this.saveProjectLinkSplit = _.throttle(function (data, linkId, success, errorCallback) {
-     $.ajax({
-       contentType: "application/json",
+      $.ajax({
+        contentType: "application/json",
         type: "PUT",
         url: "api/viite/project/split/" + linkId,
         data: JSON.stringify(data),
         dataType: "json",
-       success: success,
-       error: errorCallback
-     });
+        success: success,
+        error: errorCallback
+      });
     }, 1000);
 
     this.getFloatingRoadAddresses = function () {
-      return $.getJSON('api/viite/floatingRoadAddresses');
+      return $.getJSON('api/viite/roadaddress/floatings');
     };
 
     this.getRoadAddressErrors = function () {
-      return $.getJSON('api/viite/roadAddressErrors');
+      return $.getJSON('api/viite/roadaddress/errors');
     };
 
     function createCallbackRequestor(getParameters) {
@@ -348,15 +390,22 @@
       var deferred;
       var requests = new Bacon.Bus();
       var responses = requests.debounceImmediate(500).flatMapLatest(function (params) {
-        return Bacon.$.ajax(params, true);
+        gettingRoadLinks = Bacon.$.ajax(params, true);
+        return gettingRoadLinks;
       });
 
       return function () {
-        if (deferred) { deferred.reject(); }
+        if (deferred) {
+          deferred.reject();
+        }
         deferred = responses.toDeferred();
         requests.push(getParameters.apply(undefined, arguments));
         return deferred.promise();
       };
+    }
+
+    function convertDateToIso(date) {
+      return moment(date, 'DD.MM.YYYY').toISOString();
     }
 
     //Methods for the UI Integrated Tests
@@ -419,10 +468,6 @@
 
     var afterSave = false;
 
-    var resetAfterSave = function () {
-      afterSave = false;
-    };
-
     this.withRoadAddressProjects = function (returnData) {
       self.getRoadAddressProjects = function () {
         return returnData;
@@ -430,10 +475,10 @@
       return self;
     };
 
-      this.withLinkData = function (linkData, afterSaveLinkData) {
+    this.withLinkData = function (linkData, afterSaveLinkData) {
 
       var fetchedRoadLinkModels = function (fetchedRoadLinks) {
-       return _.map(fetchedRoadLinks, function (roadLinkGroup) {
+        return _.map(fetchedRoadLinks, function (roadLinkGroup) {
           return _.map(roadLinkGroup, function (roadLink) {
             return new mockedRoadLinkModel(roadLink);
           });
@@ -441,11 +486,11 @@
       };
       self.getRoadLinks = function (boundingBox, callback) {
         if (afterSave) {
-            callback(afterSaveLinkData);
+          callback(afterSaveLinkData);
         } else {
-            callback(linkData);
+          callback(linkData);
         }
-          eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
+        eventbus.trigger('roadLinks:fetched', afterSave ? fetchedRoadLinkModels(afterSaveLinkData) : fetchedRoadLinkModels(linkData));
       };
       return self;
     };
@@ -459,15 +504,17 @@
     };
 
     this.withStartupParameters = function (startupParameters) {
-      self.getStartupParametersWithCallback = function (callback) { callback(startupParameters); };
+      self.getStartupParametersWithCallback = function (callback) {
+        callback(startupParameters);
+      };
       return self;
     };
 
     this.withFloatingAdjacents = function (selectedFloatingData, selectedUnknownData) {
-        self.getFloatingAdjacent = function (linkData, callback) {
-            if (linkData.linkId === 1718151 || linkData.linkId === 1718152) {
+      self.getFloatingAdjacent = function (linkData, callback) {
+        if (linkData.linkId === 1718151 || linkData.linkId === 1718152) {
           callback(selectedFloatingData);
-            } else if (linkData.linkId === 500130202) {
+        } else if (linkData.linkId === 500130202) {
           callback(selectedUnknownData);
         } else {
           callback([]);
@@ -521,13 +568,6 @@
       return self;
     };
 
-    this.withSaveRoadAddressProject = function (returnData){
-      self.saveRoadAddressProject = function (){
-        return returnData;
-      };
-      return self;
-    };
-
     this.withCreateRoadAddressProject = function (returnData) {
       self.createRoadAddressProject = function (data, successCallback) {
         successCallback(returnData);
@@ -536,12 +576,20 @@
       return self;
     };
 
-    this.withGetRoadLinkByLinkId = function (returnData) {
-      self.getRoadLinkByLinkId = function (linkId, callback) {
-        callback(returnData);
-        return returnData;
-      };
-      return self;
+    this.withGetProjectLinkByLinkId = function (returnData) {
+        self.getProjectLinkByLinkId = function (linkId, callback) {
+            callback(returnData);
+            return returnData;
+        };
+        return self;
+    };
+
+    this.withGetRoadAddressByLinkId = function (returnData) {
+        self.getRoadAddressByLinkId = function (linkId, callback) {
+            callback(returnData);
+            return returnData;
+        };
+        return self;
     };
 
     this.withGetTargetAdjacent = function (returnData) {
@@ -560,47 +608,23 @@
       return self;
     };
 
-      this.getDummyRoadAddressesByRoadNumber = function (roadNumber, callback) {
-          //add API call here
-          var dummyReturnObject = [{
-              id: 0,
-              roadNumber: 12345,
-              roadNameFi: "AAAAAAA",
-              startDate: "22-06-2018",
-              endDate: "11-02-2000"
-          }, {
-              id: 1,
-              roadNumber: 12345,
-              roadNameFi: "AAAAAAA",
-              startDate: "22-06-2018",
-              endDate: ""
-          }, {
-              id: 2,
-              roadNumber: 123456,
-              roadNameFi: "BBBBBBBB",
-              startDate: "22-06-2018",
-              endDate: ""
-          }];
-          return callback(dummyReturnObject);
+    this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
+      return {
+        url: 'api/viite/roadnames?roadNumber=' + roadNumber
       };
+    });
 
-      this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
-          return {
-              url: 'api/viite/roadnames?roadNumber=' + roadNumber
-          };
+    this.saveRoadNamesChanges = _.throttle(function (roadNumber, data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadnames/" + roadNumber,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
       });
-
-      this.saveRoadNamesChanges = _.throttle(function (roadNumber, data, success, failure) {
-          $.ajax({
-              contentType: "application/json",
-              type: "PUT",
-              url: "api/viite/roadnames/" + roadNumber,
-              data: JSON.stringify(data),
-              dataType: "json",
-              success: success,
-              error: failure
-          });
-      }, 1000);
+    }, 1000);
 
   };
 }(this));

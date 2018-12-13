@@ -7,7 +7,7 @@
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
-        '<div class="legend-container"></div>' +
+        '<div class="legend-container no-copy"></div>' +
       '</div>');
 
     var administrativeClassLegend = $('' +
@@ -30,7 +30,7 @@
         '</div>' +
       '</div>');
 
-    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
+    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
 
     var floatingLegend = $('' +
       '<div class="legend-entry">' +
@@ -56,8 +56,7 @@
       [6, 'Numeroitu katu (40000-49999)'],
       [7, 'Ramppi tai kiertoliittymä (20001 - 39999)'],
       [8, 'Jalka- tai pyörätie (70001 - 89999, 90001 - 99999)'],
-      [9, 'Talvitie (60001 - 61999)'],
-      [10,'Polku (62001 - 62999)'],
+      [9, 'Yksityistie, talvitie tai polku (50001-62999)'],
       [11,'Muu tieverkko'],
       [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
       [99,'Tuntematon']
@@ -82,16 +81,16 @@
           '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
           '</div>';
     }).join('');
+
     var roadClassLegendEntries = _.map(roadClasses, function(roadClass) {
-      var defaultLegendEntry = roadClass[0] !== 98 ? '<div class="legend-entry">' +
-          '<div class="label">' + roadClass[1] + '</div>' +
-          '<div class="symbol linear linear-asset-' + roadClass[0] + '" />' +
-          '</div>' :
-          '<div class="legend-entry">' +
-          '<div class="label">' + roadClass[1] + '</div>' +
-          buildMultiColoredSegments() +
-          '</div>';
-      return defaultLegendEntry;
+      var defaultLegendEntry =
+        '<div class="legend-entry">' +
+          '<div class="label">' + roadClass[1] + '</div>';
+        if (roadClass[0] !== 98)
+          defaultLegendEntry += '<div class="symbol linear linear-asset-' + roadClass[0] + '" />';
+        else
+          defaultLegendEntry += buildMultiColoredSegments();
+      return defaultLegendEntry + '</div>';
     }).join('');
 
     var roadProjectOperations = function () {
@@ -132,7 +131,7 @@
 
     var Tool = function(toolName, icon) {
       var className = toolName.toLowerCase();
-      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
+      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).on('click', function() {
         executeOrShowConfirmDialog(function() {
           applicationModel.setSelectedTool(toolName);
         });

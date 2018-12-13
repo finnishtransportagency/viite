@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Date
+import java.sql.{Date, Timestamp}
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
@@ -9,7 +10,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
+import slick.jdbc.StaticQuery.interpolation
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
                     validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String)
 
@@ -17,7 +18,7 @@ case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Opt
 object RoadNameDAO {
   private val logger = LoggerFactory.getLogger(getClass)
   private val roadsNameQueryBase =  s"""select id,road_number,road_Name,start_date,end_date,valid_from,valid_To,created_By
-  from Road_Names"""
+  from ROAD_NAME"""
   implicit val getRoadNameRow = new GetResult[RoadName] {
     def apply(r: PositionedResult) = {
       val roadNameId = r.nextLong()
@@ -132,21 +133,16 @@ object RoadNameDAO {
     * @param since
     * @return
     */
-  def getUpdatedRoadNames(since: DateTime): Seq[RoadName] = {
-    if (since != null) {
-      val sinceString = since.toString("yyyy-MM-dd")
-      val query =
-        s"""
-        SELECT * FROM road_names
+  def getUpdatedRoadNames(since: DateTime, until: Option[DateTime]): Seq[RoadName] = {
+    val untilString = if (until.nonEmpty) s"AND CREATED_TIME <= to_timestamp('${new Timestamp(until.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+        sql"""
+        SELECT * FROM ROAD_NAME
         WHERE road_number IN (
-            SELECT DISTINCT road_number FROM road_names
-            WHERE valid_to IS NULL AND valid_from >= TO_DATE('${sinceString}', 'RRRR-MM-dd')
+            SELECT DISTINCT road_number FROM ROAD_NAME
+            WHERE valid_to IS NULL AND CREATED_TIME >= $since #$untilString
           ) AND valid_to IS NULL
-        ORDER BY road_number, start_date desc"""
-      queryList(query)
-    } else {
-      Seq.empty[RoadName]
-    }
+        ORDER BY road_number, start_date desc
+      """.as[RoadName].list
   }
 
   def getRoadNamesById(id: Long): Option[RoadName] = {
@@ -156,7 +152,7 @@ object RoadNameDAO {
   }
 
   def expire(id: Long, user: User) = {
-    val query = s"""Update ROAD_NAMES Set valid_to = sysdate, created_by = '${user.username}' where id = $id"""
+    val query = s"""Update ROAD_NAME Set valid_to = sysdate, created_by = '${user.username}' where id = $id"""
     Q.updateNA(query).first
   }
 
@@ -172,34 +168,34 @@ object RoadNameDAO {
     val endDateFilter = if (endDate.isDefined) s" end_date = to_date('${endDate.get}','dd.MM.YYYY') " else ""
 
     val filters = Seq(numberFilter, nameFilter, startDateFilter, endDateFilter).filterNot(_ == "")
-    val query = s"""Update ROAD_NAMES Set ${filters.mkString(",")} where id = $id"""
+    val query = s"""Update ROAD_NAME Set ${filters.mkString(",")} where id = $id"""
     Q.updateNA(query).first
   }
 
-  def create(roadName: RoadName): Long = {
-    val (endDateDefString, endDateValString) = if (roadName.endDate.nonEmpty) {
-      (s", end_date", s", ?")
-    } else ("", "")
-
-    val query = s"insert into ROAD_NAMES (id, road_number, road_name, start_date, valid_from, valid_to, created_by $endDateDefString) values " +
-      s"(?, ?, ?, ?, ?, ?, ? $endDateValString)"
+  def create(roadNames: Seq[RoadName]): Unit = {
+    val query = s"insert into ROAD_NAME (id, road_number, road_name, start_date, valid_from, valid_to, created_by, end_date) values " +
+      s"(?, ?, ?, ?, ?, ?, ? ,?)"
 
     val namesPS = dynamicSession.prepareStatement(query)
-    val nextId = Sequences.nextViitePrimaryKeySeqValue
-    namesPS.setLong(1, nextId)
-    namesPS.setLong(2, roadName.roadNumber)
-    namesPS.setString(3, roadName.roadName)
-    namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
-    namesPS.setDate(5, new Date(roadName.startDate.get.getMillis))
-    namesPS.setString(6, "")
-    namesPS.setString(7, roadName.createdBy)
-    if (roadName.endDate.nonEmpty) {
-      namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
-    }
-    namesPS.addBatch()
+
+    roadNames.foreach(roadName => {
+      val nextId = Sequences.nextViitePrimaryKeySeqValue
+      namesPS.setLong(1, nextId)
+      namesPS.setLong(2, roadName.roadNumber)
+      namesPS.setString(3, roadName.roadName)
+      namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
+      namesPS.setDate(5, new Date(new java.util.Date().getTime))
+      namesPS.setString(6, "")
+      namesPS.setString(7, roadName.createdBy)
+      if (roadName.endDate.nonEmpty) {
+        namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
+      } else {
+        namesPS.setString(8, "")
+      }
+      namesPS.addBatch()
+    })
     namesPS.executeBatch()
     namesPS.close()
-    nextId
   }
 
   /**
@@ -219,7 +215,7 @@ object RoadNameDAO {
 
   def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
     if (roadNumbers.isEmpty) return // dont even bother with empty set
-    val query = s" UPDATE  ROAD_NAMES  SET VALID_TO = ? WHERE VALID_TO IS NULL AND ROAD_NUMBER in (${qMarksGenerator(roadNumbers)})"
+    val query = s" UPDATE ROAD_NAME SET VALID_TO = ? WHERE VALID_TO IS NULL AND ROAD_NUMBER in (${qMarksGenerator(roadNumbers)})"
     val roadNamesPS = dynamicSession.prepareStatement(query)
     roadNamesPS.setDate(1, new Date(endDate))
     var index = 2

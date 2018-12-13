@@ -26,7 +26,7 @@
       eventbus.on('all', function(eventName, eventParams) {
         var excludedEvents = [
           'map:mouseMoved',
-          'map:moved',
+          'map:refresh',
           'map:clicked',
           'asset:saving',
           'asset:moved',
@@ -36,11 +36,7 @@
           var splitName = eventName.split(':');
           var category = splitName[0];
           var action = splitName[1];
-          if (eventName == 'speedLimits:massUpdateSucceeded') {
-            ga('send', 'event', category, action, '', eventParams);
-          } else {
-            ga('send', 'event', category, action);
-          }
+          ga('send', 'event', category, action);
         }
       });
     }

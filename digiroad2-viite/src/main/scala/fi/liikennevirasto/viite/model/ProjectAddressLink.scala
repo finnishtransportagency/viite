@@ -2,8 +2,6 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.service.RoadLinkType
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
 
@@ -13,7 +11,6 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def length: Double
   def administrativeClass: AdministrativeClass
   def linkType: LinkType
-  def roadLinkType: RoadLinkType
   def constructionType: ConstructionType
   def roadLinkSource: LinkGeomSource
   def roadType: RoadType
@@ -37,7 +34,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
   def status: LinkStatus
-  def roadAddressId: Long
+  def roadwayId: Long
   def connectedLinkId: Option[Long]
   def partitioningName: String
   def isSplit: Boolean
@@ -46,13 +43,13 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
 
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
-                              linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType,
+                              linkType: LinkType, constructionType: ConstructionType,
                               roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                               startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                              anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadAddressId: Long, reversed: Boolean = false,
-                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None, blackUnderline: Boolean = false) extends ProjectAddressLinkLike {
+                              anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false,
+                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"

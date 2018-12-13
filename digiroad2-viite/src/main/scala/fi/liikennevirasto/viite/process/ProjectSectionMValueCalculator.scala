@@ -51,7 +51,7 @@ object ProjectSectionMValueCalculator {
       val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
       pl.status match {
         case LinkStatus.New => addressValue
-        case LinkStatus.Transfer | LinkStatus.NotHandled => m + pl.addrMLength
+        case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Terminated => m + pl.addrMLength
         case LinkStatus.UnChanged | LinkStatus.Numbering => pl.endAddrMValue
         case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
       }
@@ -67,8 +67,24 @@ object ProjectSectionMValueCalculator {
         case UnChanged | Numbering => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
         case Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
         case New => a.copy(newLength = a.newLength + pl.geometryLength)
+        case Terminated => a
         case _ => throw new InvalidAddressDataException(s"Invalid status found at factor assignment ${pl.status}, linkId: ${pl.linkId}")
       }
+    }
+  }
+
+  def assignLinkValues(seq: Seq[ProjectLink], addrSt: Long): Seq[ProjectLink] = {
+    val newAddressValues = seq.scanLeft(addrSt) { case (m, pl) =>
+      pl.status match {
+        case LinkStatus.Terminated =>
+          if(pl.isSplit) m + pl.endAddrMValue - pl.startAddrMValue else m + pl.addrMLength
+        case LinkStatus.UnChanged | LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering =>
+          if(pl.isSplit) pl.endAddrMValue else pl.roadAddressEndAddrM.getOrElse(pl.endAddrMValue)
+        case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+      }
+    }
+    seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
+      pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
     }
   }
 }

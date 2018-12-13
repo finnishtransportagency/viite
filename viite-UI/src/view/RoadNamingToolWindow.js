@@ -2,8 +2,9 @@
     root.RoadNamingToolWindow = function (roadNameCollection) {
 
         var newId = -1000;
-      var yearLimit = 5;
+        var yearLimit = 5;
         var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
+        var defaultDateFormat = 'DD.MM.YYYY';
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
         nameToolSearchWindow.append('<button class="close btn-close" id="closeRoadNameTool">x</button>');
         nameToolSearchWindow.append('<div class="content">Tienimi</div>');
@@ -25,6 +26,7 @@
             '</div>');
 
         nameToolSearchWindow.append('<div id="road-list" style="width:810px; height:365px; overflow:auto;"></div>');
+        nameToolSearchWindow.append('<label class="content-new footnote-label"><span>Huom! Tallennetut muutokset päivittyvät Tierekisteriin tunnin sisällä.</span></label>');
 
         var staticFieldRoadNumber = function (dataField, roadId, fieldName) {
             var field;
@@ -62,7 +64,9 @@
             var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
             $('#road-list').append(saveButton);
             $('#saveChangedRoads').on('click', function (clickEvent) {
-                new GenericConfirmPopup("Tiellä on jo nimi. Haluatko varmasti muuttaa sen nimeä?", {
+                var saveMessage = ($('#newRoadName').length > 0 ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?" : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?");
+
+                new GenericConfirmPopup(saveMessage, {
                     successCallback: function () {
                         roadNameCollection.saveChanges();
                     },
@@ -72,14 +76,11 @@
             });
         };
 
-        var retroactivelyAddDatePickers = function () {
-            var minDate = roadNameCollection.getMinDate();
+        var retroactivelyAddDatePickers = function (originalStartDate) {
             var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder])');
             inputs.each(function (index, input) {
-                if(input.dataset.roadid == newId) {
-                    var datePicker = dateutil.addSingleDatePicker($(input));
-                    if (minDate)
-                        datePicker.setMinDate(minDate);
+                if (input.dataset.roadid == newId) {
+                    var datePicker = _.isUndefined(originalStartDate) ? dateutil.addSingleDatePicker($(input)) : dateutil.addSingleDatePickerWithStartDate($(input), originalStartDate);
                 }
             });
             $('.pika-single.is-bound').css("width", "auto");
@@ -98,16 +99,20 @@
             $('.modal-overlay').remove();
         }
 
-      var getDateObjects = function (fieldValue) {
-        var fieldDateString = fieldValue.split('.');
-        var fieldDate = new Date(fieldDateString[2], fieldDateString[1], fieldDateString[0]);
-        var futureDate = new Date();
-        futureDate.setFullYear(futureDate.getFullYear() + yearLimit);
-        return {'fieldDate': fieldDate, 'futureDate': futureDate};
+      var getDateObjects = function (fieldValue, originalStartDate) {
+        var fieldDateString = fieldValue.trim();
+
+        var fieldDate = moment(fieldDateString, defaultDateFormat);
+        var originalDate = moment(originalStartDate.trim(), defaultDateFormat);
+        var lowerStart = moment(originalStartDate.trim(), defaultDateFormat).add(1, 'days');
+        var upperLimitStart = moment(originalStartDate.trim(), defaultDateFormat).add(5, 'years');
+        var currentUpperLimit = moment().add(5, 'years');
+
+        return {'fieldDate': fieldDate, 'futureDateSinceCurrent': currentUpperLimit, 'pastDate': lowerStart, 'futureDateSinceOriginal': upperLimitStart};
       };
 
-        var isValidDate = function (dateString) {
-            var dates = getDateObjects(dateString);
+        var isValidDate = function (dateString, originalStartDate) {
+            var dates = getDateObjects(dateString, originalStartDate);
             var splitDateString = dateString.split(".");
 
             var day = parseInt(splitDateString[0], 10);
@@ -119,7 +124,7 @@
             if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0))
                 monthLength[1] = 29;
 
-            var dateValidation = dates.futureDate > dates.fieldDate;
+            var dateValidation = dates.futureDateSinceCurrent.isAfter(dates.fieldDate) && dates.pastDate.isSameOrBefore(dates.fieldDate);
             var sizeValidation = splitDateString.length === 3 && _.last(splitDateString).length === 4;
             var dayValidation = day > 0 && day <= monthLength[month - 1];
             var monthValidation = month > 0 && month <= 12;
@@ -132,7 +137,7 @@
                 !_.every($('input.form-control[data-fieldname="roadName"],input.form-control[data-fieldname="startDate"]'), function (element) {
                     var dateString = $(element).val();
                     if ($(element).attr('data-FieldName') === "startDate")
-                        return isValidDate(dateString);
+                        return isValidDate(dateString, $(element).closest("#newRoadName").attr("data-originalStartDate"));
                     else
                         return dateString !== '';
                 })
@@ -145,6 +150,7 @@
             var fieldName = target.attr("data-FieldName");
             var fieldValue = target.val();
             var originalRoadId = target.closest("#newRoadName").attr("data-originalRoadId");
+            var originalStartDate = target.closest("#newRoadName").attr("data-originalStartDate");
             switch (fieldName) {
                 case "roadName":
                     roadNameCollection.setRoadName(roadId, fieldValue);
@@ -155,7 +161,7 @@
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
 
-                    if (isValidDate(fieldValue))
+                    if (isValidDate(fieldValue, originalStartDate))
                         target.css('color', 'black');
                     else
                         target.css('color', 'red');
@@ -190,13 +196,14 @@
                 if (!_.isEmpty(roadData)) {
                     _.each(roadData, function (road) {
                         var writable = !road.endDate;
+                        var startDate = road.startDate ? road.startDate.format('DD.MM.YYYY') : '';
                         html += '<tr class="roadList-item">' +
                             '<td style="width: 150px;">' + staticFieldRoadNumber(road.roadNumber, road.id) + '</td>' +
                             '<td style="width: 250px;">' + staticFieldRoadList(road.name, writable, road.id, "roadName") + '</td>' +
-                            '<td style="width: 110px;">' + staticFieldRoadList(road.startDate ? road.startDate.format('DD.MM.YYYY') : '', false, road.id, "startDate") + '</td>' +
+                            '<td style="width: 110px;">' + staticFieldRoadList(startDate, false, road.id, "startDate") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.endDate ? road.endDate.format('DD.MM.YYYY') : '', writable, road.id, "endDate") + '</td>';
                         if (!road.endDate) {
-                            html += '<td>' + '<div id="plus_minus_buttons" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="new-road-name" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '">+</button></div>' + '</td>' +
+                            html += '<td>' + '<div id="plus_minus_buttons" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="new-road-name" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '" data-originalStartDate="' + startDate +'">+</button></div>' + '</td>' +
                                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
                         } else {
                             html += '<td>' + '<button class="project-open btn btn-new" style="visibility:hidden; alignment: right; margin-bottom:6px; margin-left: 70px" id="spaceFillerButton">+</button>' + '</td>' +
@@ -230,7 +237,8 @@
                         prevEndDateInput.prop("readonly", true);
 
                         var roadNumber = target.attr("data-roadNumber");
-                        $('#roadList-table').append('<tr class="roadList-item" id="newRoadName" data-originalRoadId ="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">' +
+                        var originalStartDate = target.attr("data-originalStartDate");
+                        $('#roadList-table').append('<tr class="roadList-item" id="newRoadName" data-originalRoadId ="' + originalRoadId + '" data-roadNumber="' + roadNumber + '" data-originalStartDate="' + originalStartDate + ' ">' +
                             '<td style="width: 150px;">' + staticFieldRoadNumber(roadNumber, newId) + '</td>' +
                             '<td style="width: 250px;">' + staticFieldRoadList("", true, newId, "roadName") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "startDate") + '</td>' +
@@ -240,7 +248,7 @@
                         var newEndDateInput = $('.form-control[data-roadId=' + newId + '][data-fieldName=endDate]');
                         newEndDateInput.val(FINNISH_HINT_TEXT);
                         newEndDateInput.prop("readonly", true);
-                        retroactivelyAddDatePickers();
+                        retroactivelyAddDatePickers(originalStartDate);
                         toggleSaveButton();
                         $('.form-control').on("input", editEvent);
                         $('.date-picker-input').on("change", editEvent);

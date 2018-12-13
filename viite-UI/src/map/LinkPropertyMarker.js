@@ -35,13 +35,14 @@
                 8:'#fc6da0',         //Jalka tai pyörätie
                 9:'#fc6da0',         //Talvitie
                 10:'#fc6da0',        //Polku
-                11:'#888888'         //Muu tieverkko
+                11:'#888888',         //Muu tieverkko
+                12:'#FF55DD'         //Yksityistie, talvitie tai polku
             };
 
         var directionMarkerColor= function(roadLink){
             if(roadLink.status === LinkValues.LinkStatus.New.value){
                 return '#ff55dd';
-            } else if (roadLink.roadLinkSource === LinkValues.LinkGeomSource.SuravageLinkInterface.value && roadLink.id === 0) {
+            } else if (roadLink.roadLinkSource === LinkValues.LinkGeomSource.SuravageLinkInterface.value && roadLink.linearLocationId === 0) {
                 return '#d3aff6';
             }
             else if (roadLink.roadClass in colorMap) {
@@ -70,11 +71,11 @@
             });
         };
 
-      if(roadlink.roadLinkType===-1) {
+      if(roadlink.floating === LinkValues.SelectionType.Floating.value) {
         box.setStyle(boxStyleFloat);
       } else if(roadlink.roadLinkSource===LinkValues.LinkGeomSource.SuravageLinkInterface.value){
         box.setStyle(boxStyleDirectional(roadlink));
-      } else if(roadlink.id===0 && roadlink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value){
+      } else if(roadlink.linearLocationId===0 && roadlink.roadClass === LinkValues.LinkGeomSource.Unknown.value){
         box.setStyle(boxStyleUnknown);
       } else {
         box.setStyle(boxStyleDirectional(roadlink));
@@ -84,11 +85,6 @@
       box.linkData = roadlink;
       return box;
     };
-
-      var getBounds = function(lon, lat) {
-          return [lon, lat, lat, lon];
-      };
-
 
       var calculateMiddlePoint = function(link){
       var points = _.map(link.points, function(point) {

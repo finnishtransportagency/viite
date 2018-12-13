@@ -9,46 +9,50 @@ import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
-import fi.liikennevirasto.viite.dao.MissingRoadAddress
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
+import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
+import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.FiniteDuration
-
-class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
-  def receive = {
-    case w: RoadLinkChangeSet => roadLinkService.updateRoadLinkChanges(w)
-    case _                    => println("linkPropertyUpdater: Received unknown message")
-  }
-}
+import scala.util.control.NonFatal
 
 class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[MissingRoadAddress]])
+    case w: ChangeSet => roadAddressService.updateChangeSet(w)
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
 }
 
-class RoadAddressMerger(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
-    case w: RoadAddressMerge => roadAddressService.mergeRoadAddress(w.asInstanceOf[RoadAddressMerge])
-    case _                    => println("roadAddressMerger: Received unknown message")
-  }
-}
+//class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
+//  def receive = {
+//    case w: Seq[any] => roadAddressService.createUnaddressedRoadLink(w.asInstanceOf[Seq[UnaddressedRoadLink]])
+//    case _                    => println("roadAddressUpdater: Received unknown message")
+//  }
+//}
+//
+//class RoadAddressMerger(roadAddressService: RoadAddressService) extends Actor {
+//  def receive = {
+//    case w: RoadAddressMerge => roadAddressService.mergeRoadAddress(w.asInstanceOf[RoadAddressMerge])
+//    case _                    => println("roadAddressMerger: Received unknown message")
+//  }
+//}
+//
+//class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Actor {
+//  def receive = {
+//    case w: Seq[any] => roadAddressService.saveAdjustments(w.asInstanceOf[Seq[LinearLocationAdjustment]])
+//    case _                    => println("roadAddressUpdater: Received unknown message")
+//  }
+//}
 
-class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
-    case w: Seq[any] => roadAddressService.saveAdjustments(w.asInstanceOf[Seq[LinearLocationAdjustment]])
-    case _                    => println("roadAddressUpdater: Received unknown message")
-  }
-}
-
-class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
-    case w: Set[any] => roadAddressService.checkRoadAddressFloating(w.asInstanceOf[Set[Long]])
-    case _                    => println("roadAddressUpdater: Received unknown message")
-  }
-}
+//TODO check if this is needed at VIITE-1538
+//class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
+//  def receive = {
+//    case w: Set[any] => roadAddressService.checkRoadAddressFloating(w.asInstanceOf[Set[Long]])
+//    case _                    => println("roadAddressUpdater: Received unknown message")
+//  }
+//}
 
 class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
   def receive = {
@@ -72,12 +76,14 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-
+  val logger = LoggerFactory.getLogger(getClass)
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
     try {
       projectService.updateProjectsWaitingResponseFromTR()
     } catch {
-      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
+      case  NonFatal(ex) =>
+        logger.error("Exception at TR checks:" + ex.getMessage)
+        System.err.println("Exception at TR checks: " + ex.getMessage)
     }
   }
 
@@ -90,37 +96,39 @@ object Digiroad2Context {
   }
 
 
-  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
-  eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
+
+
+//  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
+//  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistUnaddressedRoadLink")
+
+//  val roadAddressMerger = system.actorOf(Props(classOf[RoadAddressMerger], roadAddressService), name = "roadAddressMerger")
+//  eventbus.subscribe(roadAddressMerger, "roadAddress:mergeRoadAddress")
+
+//  val roadAddressAdjustment = system.actorOf(Props(classOf[RoadAddressAdjustment], roadAddressService), name = "roadAddressAdjustment")
+//  eventbus.subscribe(roadAddressAdjustment, "roadAddress:persistAdjustments")
+
+//  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
+//  eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
   val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
-  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
-
-  val roadAddressMerger = system.actorOf(Props(classOf[RoadAddressMerger], roadAddressService), name = "roadAddressMerger")
-  eventbus.subscribe(roadAddressMerger, "roadAddress:mergeRoadAddress")
-
-  val roadAddressAdjustment = system.actorOf(Props(classOf[RoadAddressAdjustment], roadAddressService), name = "roadAddressAdjustment")
-  eventbus.subscribe(roadAddressAdjustment, "roadAddress:persistAdjustments")
-
-  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
-  eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
+  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistChangeSet")
 
   val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, roadwayAddressMapper, eventbus)
   }
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new ProjectService(roadAddressService, roadLinkService, eventbus)
   }
 
   lazy val roadNetworkService: RoadNetworkService = {
     new RoadNetworkService
   }
 
-  lazy val roadNameService : RoadNameService ={
+  lazy val roadNameService : RoadNameService = {
     new RoadNameService
   }
 
@@ -146,6 +154,18 @@ object Digiroad2Context {
 
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
+  }
+
+  lazy val roadwayDAO: RoadwayDAO = {
+    new RoadwayDAO
+  }
+
+  lazy val linearLocationDAO: LinearLocationDAO = {
+    new LinearLocationDAO
+  }
+
+  lazy val roadwayAddressMapper: RoadwayAddressMapper = {
+    new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   }
 
   lazy val revision: String = {

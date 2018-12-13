@@ -39,13 +39,21 @@ package object viite {
 
   val MaxAdjustmentRange = 10L
 
-  val NewRoadAddress: Long = -1000L
+  val NewRoadway: Long = -1000L
 
-  val NewCommonHistoryId: Long = -1000L
+  val NewLinearLocation: Long = -1000L
+
+  val noRoadwayId: Long = 0L
+
+  val noReservedPartId: Long = 0L
+
+  val NewRoadwayNumber: Long = -1000L
 
   val newCalibrationPointId: Long = -1000L
 
   val NewRoadNameId: Long = -1000L
+
+  val NewProjectLink: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
 
@@ -79,8 +87,8 @@ package object viite {
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
   val ErrorInconsistentTopology = "Topology have inconsistent data."
   val ErrorInconsistentLrmHistory = "Lrm with inconsistent history."
-  val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia, ${EndOfRoad.description}, tieosan viimeiselle linkille."
-  val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi ${EndOfRoad.description}, vaikka tieosan jälkeen on olemassa tieosa."
+  val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
+  val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val MajorDiscontinuityFoundMessage = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val InsufficientTrackCoverageMessage = "Tieosalta puuttuu toinen ajorata. Numeroi molemmat ajoradat."
@@ -90,15 +98,16 @@ package object viite {
   val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
   val ConnectedDiscontinuousMessage = "Jatkuvalle linkille on määritelty epäjatkuvuus."
   val DifferingDiscontinuityCodesForTracks = "Tieosan lopussa on yhteensopimattomat jatkuvuuskoodit."
-  val ElyCodeChangeNotPresent = s"Tieosan päässä ei ole jatkuvuuskoodia ${ChangingELYCode.description}"
+  val ElyCodeChangeNotPresent = s"Tieosan päässä ei ole jatkuvuuskoodia" + s""" "${ChangingELYCode.description}" """ + s"(${ChangingELYCode.value})."
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosa on epäjatkuva tai linkille on määritelty virheellinen epäjatkuvuus."
   val RoadNotEndingInElyBorderMessage = "JATKUU-koodi virheellinen. Tieosa ei pääty ELY-rajalle."
   val RoadContinuesInAnotherElyMessage = "JATKUU-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
-  val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi Tien loppu. Muuta jatkuvuuskoodiksi Tien loppu (1) tieosoitteelle %s."
+  val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
+  val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
   val failedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui"
@@ -107,6 +116,7 @@ package object viite {
   val trUnreachableMessage = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
     s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon. "
   val genericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
+  val projectNotWritable = s"Projekti ei ole enää muokattavissa"
 
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
@@ -119,7 +129,28 @@ package object viite {
   val DefaultLongitude = 6900000.0
   val DefaultLatitude = 390000.0
   val DefaultZoomLevel = 2
-  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Terminated, LinkStatus.Numbering)
+  val operationsLeavingHistory = List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.Terminated)
+
+  val defaultProjectEly = -1L
+
+  def parseStringGeometry(geomString: String): Seq[Point] = {
+    if (geomString.nonEmpty)
+      toGeometry(geomString)
+    else
+      Seq()
+  }
+
+  def toGeometry(geometryString: String): Seq[Point] = {
+    def toBD(s: String): Double = {
+      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
+    val pointRegex = raw"\[[^\]]*]".r
+    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
+    pointRegex.findAllIn(geometryString).map {
+      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
+      case regex(x, y, _) => Point(toBD(x), toBD(y))
+    }.toSeq
+  }
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
@@ -136,32 +167,6 @@ package object viite {
 
   def isRamp(r: BaseRoadAddress): Boolean = {
     isRamp(r.roadNumber, r.track.value)
-  }
-
-  def toGeomString(geometry: Seq[Point]): String = {
-    def toBD(d: Double): String = {
-      val zeroEndRegex = """(\.0+)$""".r
-      val lastZero = """(\.[0-9])0*$""".r
-      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
-      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) } )
-    }
-    geometry.map(p =>
-      (if (p.z != 0.0)
-        Seq(p.x, p.y, p.z)
-      else
-        Seq(p.x, p.y)).map(toBD).mkString("[", ",","]")).mkString(",")
-  }
-
-  def toGeometry(geometryString: String): Seq[Point] = {
-    def toBD(s: String): Double = {
-      BigDecimal(s).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
-    }
-    val pointRegex = raw"\[[^\]]*]".r
-    val regex = raw"\[(\-?\d+\.?\d*),(\-?\d+\.?\d*),?(\-?\d*\.?\d*)?\]".r
-    pointRegex.findAllIn(geometryString).map {
-      case regex(x, y, z) if z != "" => Point(toBD(x), toBD(y), toBD(z))
-      case regex(x, y, _) => Point(toBD(x), toBD(y))
-    }.toSeq
   }
 
   object CombineMaps {

@@ -18,20 +18,12 @@
     };
 
     root.LinkGeomSource = {
-        NormalLinkInterface:        {value: 1, description: "NormalLinkInterface"},
-        ComplimentaryLinkInterface: {value: 2, description: "ComplimentaryLinkInterface"},
-        SuravageLinkInterface:      {value: 3, description: "SuravageLinkInterface"},
-        FrozenLinkInterface:        {value: 4, description: "FrozenLinkInterface"},
-        HistoryLinkInterface:       {value: 5, description: "HistoryLinkInterface"},
-        Unknown:                    {value: 99, description: "Unknown"}
-    };
-
-    root.RoadLinkType = {
-        UnknownRoadLinkType:        {value: 0, description: "UnknownRoadLinkType"},
-        NormalRoadLinkType:         {value: 1, description: "NormalRoadLinkType"},
-        ComplementaryRoadLinkType:  {value: 3, description: "ComplementaryRoadLinkType"},
-        FloatingRoadLinkType:       {value: -1, description: "FloatingRoadLinkType"},
-        SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
+        NormalLinkInterface:        {value: 1,  descriptionFI: "MML",            description: "NormalLinkInterface"},
+        ComplimentaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplimentaryLinkInterface"},
+        SuravageLinkInterface:      {value: 3,  descriptionFI: "Suravage",       description: "SuravageLinkInterface"},
+        FrozenLinkInterface:        {value: 4,  descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
+        HistoryLinkInterface:       {value: 5,  descriptionFI: "MML historia",   description: "HistoryLinkInterface"},
+        Unknown:                    {value: 99, descriptionFI: "Tuntematon",     description: "Unknown"}
     };
 
     root.ConstructionType = {
@@ -39,6 +31,12 @@
         UnderConstruction:          {value: 1, description: "UnderConstruction"},
         Planned:                    {value: 3, description: "Planned"},
         UnknownConstructionType:    {value: 99, description: "UnknownConstructionType"}
+    };
+
+    root.SelectionType = {
+        All:                        {value: 0, description: "all"},
+        Floating:                   {value: 1, description: "floating"},
+        Unknown:                    {value: 99, description: "unknown"}
     };
 
     root.RoadClass = {
@@ -52,6 +50,7 @@
         PedestrianAndBicyclesClass: {value: 8, description: "PedestrianAndBicyclesClass"},
         WinterRoadsClass:           {value: 9, description: "WinterRoadsClass"},
         PathsClass:                 {value: 10, description: "PathsClass"},
+        PrivateRoadClass:           {value: 12, description: "PrivateRoadClass"},
         NoClass:                    {value: 99, description: "NoClass"}
     };
 
@@ -59,7 +58,7 @@
         BothDirections:             {value: 2, description: "Molempiin suuntiin"},
         AgainstDigitizing:          {value: 3, description: "Digitointisuuntaa vastaan"},
         TowardsDigitizing:          {value: 4, description: "Digitointisuuntaan"},
-        UnknownDirection:           {value: 99, description: "Unknown Direction"}
+        UnknownDirection:           {value: 99, description: "Tuntemattomaan suuntaan"}
     };
 
     root.SideCode = {
@@ -80,17 +79,17 @@
         Closed:                     {value: 0, description: "Suljettu"},
         Incomplete:                 {value: 1, description: "Keskeneräinen"},
         Sent2TR:                    {value: 2, description: "Lähetetty tierekisteriin"},
-        ErroredInTR:                {value: 3, description: "Virhe tierekisterissä"},
+        ErrorInTR:                  {value: 3, description: "Virhe tierekisterissä"},
         TRProcessing:               {value: 4, description: "Tierekisterissä käsittelyssä"},
         Saved2TR:                   {value: 5, description: "Viety tierekisteriin"},
         Failed2GenerateTRIdInViite: {value: 6, description: "Tierekisteri ID:tä ei voitu muodostaa"},
         Deleted:                    {value: 7, description: "Poistettu projekti"},
         ErrorInViite:               {value: 8, description: "Virhe Viite-sovelluksessa"},
-        SendingToTR: {value: 9, description: "Lähettää Tierekisteriin"},
+        SendingToTR:                {value: 9, description: "Lähettää Tierekisteriin"},
         Unknown:                    {value: 99, description: "Tuntematon"}
     };
 
-    root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value, root.ProjectStatus.Sent2TR.value, root.ProjectStatus.ErroredInTR.value,
+    root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value, root.ProjectStatus.Sent2TR.value, root.ProjectStatus.ErrorInTR.value,
         root.ProjectStatus.TRProcessing.value, root.ProjectStatus.ErrorInViite.value, root.ProjectStatus.SendingToTR.value];
 
     root.Track = {
@@ -101,16 +100,34 @@
     };
 
     root.RoadZIndex = {
-      VectorLayer: {value: 1},
-      SuravageLayer: {value: 2},
-        AnomalousMarkerLayer:       {value: 3},
-        CalibrationPointLayer:      {value: 4},
+        VectorLayer:                {value: 1},
+        SuravageLayer:              {value: 4},
+        AnomalousMarkerLayer:       {value: 2},
+        CalibrationPointLayer:      {value: 3},
         GeometryChangedLayer:       {value: 5},
-        GreenLayer:                 {value: 10},
         ReservedRoadLayer:          {value: 6},
         HistoricRoadLayer:          {value: 7},
         DirectionMarkerLayer:       {value: 8},
+        GreenLayer:                 {value: 10},
         IndicatorLayer:             {value: 99}
+    };
+
+    root.RoadType = {
+        PublicRoad:                     {value:1, description:"Yleinen tie"},
+        FerryRoad:                      {value:2, description:"Lauttaväylä yleisellä tiellä"},
+        MunicipalityStreetRoad:         {value:3, description:"Kunnan katuosuus"},
+        PublicUnderConstructionRoad:    {value:4, description:"Yleisen tien työmaa"},
+        PrivateRoadType:                {value:5, description:"Yksityistie"},
+        UnknownOwnerRoad:               {value:9, description:"Omistaja selvittämättä"},
+        Unknown:                        {value:99, description:"Ei määritelty"}
+    };
+
+    root.RoadLinkType = {
+        UnknownRoadLinkType:        {value: 0, description: "UnknownRoadLinkType"},
+        NormalRoadLinkType:         {value: 1, description: "NormalRoadLinkType"},
+        ComplementaryRoadLinkType:  {value: 3, description: "ComplementaryRoadLinkType"},
+        FloatingRoadLinkType:       {value: -1, description: "FloatingRoadLinkType"},
+        SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
     };
 
     /*
@@ -124,6 +141,12 @@
     root.MetaKeyCodes = [91, 93, 224, 17];
 
     root.SelectKeyName = "ContextMenu";
+
+    root.UnknownRoadId = 0;
+
+    root.NewRoadId = -1000;
+
+    root.BlackUnderlineRoadTypes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
 
 })(window.LinkValues = window.LinkValues || {});
 

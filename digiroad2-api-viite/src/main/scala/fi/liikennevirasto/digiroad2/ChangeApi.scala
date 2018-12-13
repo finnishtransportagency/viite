@@ -42,11 +42,11 @@ class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet 
     }
   }
 
-  private def roadNumberToGeoJson(since: DateTime, changedRoadAddress: Seq[ChangedRoadAddress]) =
+  private def roadNumberToGeoJson(since: DateTime, changedRoadway: Seq[ChangedRoadAddress]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        changedRoadAddress.map { case ChangedRoadAddress(road, link) =>
+        changedRoadway.map { case ChangedRoadAddress(road, link) =>
           Map(
             "type" -> "Feature",
             "id" -> road.id,
@@ -83,7 +83,7 @@ class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet 
                 "createdBy" -> road.createdBy,
                 "modifiedAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
                 "createdAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
-                "changeType" -> extractChangeType(since, road.isExpire(), road.validFrom)
+                "changeType" -> extractChangeType(since, road.isExpire, road.validFrom)
               )
           )
         }

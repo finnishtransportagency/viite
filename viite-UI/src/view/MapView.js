@@ -17,7 +17,7 @@
       return zoomlevels.minZoomForAssets;
     };
 
-    var mapMovedHandler = function(mapState) {
+    var refreshMap = function(mapState) {
       if (mapState.zoom < minZoomForContent() && (isInitialized && mapState.hasZoomLevelChanged)) {
         showAssetZoomDialog();
       }
@@ -29,7 +29,7 @@
         geometry: new ol.geom.Point(position)
       });
 
-      //create the style of the icon of the 'Merkistse' Button
+      //create the style of the icon of the 'Merkitse' Button
       var styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
           src: 'images/center-marker.svg'
@@ -54,7 +54,7 @@
     };
 
     eventbus.on('application:initialized layer:fetched', function() {
-      var zoom = map.getView().getZoom();
+      var zoom = zoomlevels.getViewZoom(map);
       applicationModel.setZoomLevel(zoom);
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
         showAssetZoomDialog();
@@ -76,13 +76,13 @@
     eventbus.on('coordinates:selected', function(position) {
       if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
         map.getView().setCenter([position.lon, position.lat]);
-        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(map.getView().getZoom()));
+        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map)));
       } else {
         instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
       }
     }, this);
 
-    eventbus.on('map:moved', mapMovedHandler, this);
+    eventbus.on('map:refresh', refreshMap, this);
 
     eventbus.on('coordinates:marked', drawCenterMarker, this);
 
@@ -90,23 +90,16 @@
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
 
-      if (layerToBeHidden) layerToBeHidden.hide(map);
-      layerToBeShown.show(map);
+      if (layerToBeHidden) {
+        layerToBeHidden.hide(map);
+      }
+      if (applicationModel.getRoadVisibility()) layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
-        enableCtrlModifier = (layer === "roadAddressProject");
-    }, this);
-
-    eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
-      var layerToBeHidden = layers[previouslySelectedLayer];
-      var layerToBeShown = layers[layer];
-
-      if (layerToBeHidden) layerToBeHidden.hide(map);
-      layerToBeShown.show(map);
-      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
+      enableCtrlModifier = (layer === 'roadAddressProject');
     }, this);
 
     map.on('moveend', function() {
-      applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
       setCursor(applicationModel.getSelectedTool());
     });
 

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType._
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, MunicipalityDAO, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -124,17 +124,19 @@ trait AddressLinkBuilder {
   )
   }
 
+  // TODO Implement in VIITE-1536
   def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    if (roadAddresses.size == 1) {
-      roadAddresses
-    } else {
-      val groupedRoadAddresses = roadAddresses.groupBy(record =>
-        (record.commonHistoryId, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
-
-      groupedRoadAddresses.flatMap { case (_, record) =>
-        fuseRoadAddressInGroup(record.sortBy(_.startMValue))
-      }.toSeq
-    }
+    throw new NotImplementedError("The fuse process should use only linear location")
+//    if (roadAddresses.size == 1) {
+//      roadAddresses
+//    } else {
+//      val groupedRoadAddresses = roadAddresses.groupBy(record =>
+//        (record.roadwayNumber, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType, record.ely, record.terminated))
+//
+//      groupedRoadAddresses.flatMap { case (_, record) =>
+//        fuseRoadAddressInGroup(record.sortBy(_.startAddrMValue))
+//      }.toSeq
+//    }
   }
 
   /**
@@ -163,76 +165,92 @@ trait AddressLinkBuilder {
     * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
     */
   private def fuseTwo(nextSegment: RoadAddress, previousSegment: RoadAddress): Seq[RoadAddress] = {
+    throw new NotImplementedError("The fuse process should use only linear location")
 
-    // Test that at the road addresses lap at least partially or are connected (one extends another)
-    def addressConnected(nextSegment: RoadAddress, previousSegment: RoadAddress) = {
-      (nextSegment.startAddrMValue == previousSegment.endAddrMValue ||
-        previousSegment.startAddrMValue == nextSegment.endAddrMValue) ||
-        (nextSegment.startAddrMValue >= previousSegment.startAddrMValue &&
-          nextSegment.startAddrMValue <= previousSegment.endAddrMValue) ||
-        (previousSegment.startAddrMValue >= nextSegment.startAddrMValue &&
-          previousSegment.startAddrMValue <= nextSegment.endAddrMValue)
-    }
-
-    val cpNext = nextSegment.calibrationPoints
-    val cpPrevious = previousSegment.calibrationPoints
-
-    def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
-                      getValue: (Option[CalibrationPoint], Option[CalibrationPoint]) => Option[T]) = {
-      /*  Take the value from Calibration Point if available or then use the given operation
-          Starting calibration point from previous segment if available or then it's the starting calibration point for
-          the next segment. If neither, use the min or max operation given as an argument.
-          Similarily for ending calibration points. Cases where the calibration point truly is between segments is
-          left unprocessed.
-       */
-      getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue, rightMValue))
-    }
-
-    val tempId = fi.liikennevirasto.viite.NewRoadAddress
-
-    if (nextSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${nextSegment.linkId}, id = ${nextSegment.linkId}")
-    if (previousSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${previousSegment.linkId}, id = ${previousSegment.id}")
-
-    if (nextSegment.roadNumber == previousSegment.roadNumber &&
-      nextSegment.roadPartNumber == previousSegment.roadPartNumber &&
-      nextSegment.track.value == previousSegment.track.value &&
-      nextSegment.startDate == previousSegment.startDate &&
-      nextSegment.endDate == previousSegment.endDate &&
-      nextSegment.linkId == previousSegment.linkId &&
-      nextSegment.geometry.nonEmpty && previousSegment.geometry.nonEmpty && // Check if geometries are not empty
-      addressConnected(nextSegment, previousSegment) &&
-      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
-
-
-      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previousSegment.startAddrMValue, Math.min, (cpp, _) => cpp.map(_.addressMValue))
-      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previousSegment.endAddrMValue, Math.max, (_, cpn) => cpn.map(_.addressMValue))
-      val startMValue = getMValues[Double](nextSegment.startMValue, previousSegment.startMValue, Math.min, (_, _) => None)
-      val endMValue = getMValues[Double](nextSegment.endMValue, previousSegment.endMValue, Math.max, (_, _) => None)
-
-      val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-        val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
-        val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
-        (left.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) endMValue else startMValue)),
-          right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else endMValue)))
-      }
-
-      if (nextSegment.sideCode.value != previousSegment.sideCode.value && GeometryUtils.geometryLength(previousSegment.geometry) != 0 && GeometryUtils.geometryLength(nextSegment.geometry) != 0)
-        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
-      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geometry.head, nextSegment.geometry.last), startMValue, endMValue)
-      val discontinuity = {
-        if (nextSegment.endMValue > previousSegment.endMValue) {
-          nextSegment.discontinuity
-        } else
-          previousSegment.discontinuity
-      }
-
-      Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
-        discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.createdBy,
-        nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
-        calibrationPoints, floating = false, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
-        nextSegment.commonHistoryId))
-
-    } else Seq(nextSegment, previousSegment)
+//    // Test that at the road addresses lap at least partially or are connected (one extends another)
+//    def addressConnected(nextSegment: RoadAddress, previousSegment: RoadAddress) = {
+//      (nextSegment.startAddrMValue == previousSegment.endAddrMValue ||
+//        previousSegment.startAddrMValue == nextSegment.endAddrMValue) ||
+//        (nextSegment.startAddrMValue >= previousSegment.startAddrMValue &&
+//          nextSegment.startAddrMValue <= previousSegment.endAddrMValue) ||
+//        (previousSegment.startAddrMValue >= nextSegment.startAddrMValue &&
+//          previousSegment.startAddrMValue <= nextSegment.endAddrMValue)
+//    }
+//
+//    def getCalibrationPoints = {
+//      /*  If the road addresses have a calibration in between check if one of the road addresses have
+//          the same start and end addresses, if so the calibration point of the road address with same addresses
+//          should be ignored
+//       */
+//      val cpNextSegment = nextSegment.calibrationPoints
+//      val cpPreviousSegment = previousSegment.calibrationPoints
+//      if (cpNextSegment._1.isDefined && cpPreviousSegment._2.isDefined) {
+//        (
+//          if (cpPreviousSegment._2.get.addressMValue != previousSegment.startAddrMValue) cpPreviousSegment else (cpPreviousSegment._1, None),
+//          if (cpNextSegment._1.get.addressMValue != nextSegment.endAddrMValue) cpNextSegment else (None, cpNextSegment._2)
+//        )
+//      } else {
+//        (cpNextSegment, cpPreviousSegment)
+//      }
+//    }
+//
+//    val (cpNext, cpPrevious) = getCalibrationPoints
+//
+//    def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
+//                      getValue: (Option[CalibrationPoint], Option[CalibrationPoint]) => Option[T]) = {
+//      /*  Take the value from Calibration Point if available or then use the given operation
+//          Starting calibration point from previous segment if available or then it's the starting calibration point for
+//          the next segment. If neither, use the min or max operation given as an argument.
+//          Similarily for ending calibration points. Cases where the calibration point truly is between segments is
+//          left unprocessed.
+//       */
+//      getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue, rightMValue))
+//    }
+//
+//    val tempId = fi.liikennevirasto.viite.NewRoadAddress
+//
+//    if (nextSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${nextSegment.linkId}, id = ${nextSegment.linkId}")
+//    if (previousSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${previousSegment.linkId}, id = ${previousSegment.id}")
+//
+//    if (nextSegment.roadNumber == previousSegment.roadNumber &&
+//      nextSegment.roadPartNumber == previousSegment.roadPartNumber &&
+//      nextSegment.track.value == previousSegment.track.value &&
+//      nextSegment.startDate == previousSegment.startDate &&
+//      nextSegment.endDate == previousSegment.endDate &&
+//      nextSegment.linkId == previousSegment.linkId &&
+//      nextSegment.geometry.nonEmpty && previousSegment.geometry.nonEmpty && // Check if geometries are not empty
+//      addressConnected(nextSegment, previousSegment) &&
+//      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
+//
+//      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previousSegment.startAddrMValue, Math.min, (cpp, _) => cpp.map(_.addressMValue))
+//      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previousSegment.endAddrMValue, Math.max, (_, cpn) => cpn.map(_.addressMValue))
+//      val startMValue = getMValues[Double](nextSegment.startMValue, previousSegment.startMValue, Math.min, (_, _) => None)
+//      val endMValue = getMValues[Double](nextSegment.endMValue, previousSegment.endMValue, Math.max, (_, _) => None)
+//
+//      val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+//        val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
+//        val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
+//        (left.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) Math.abs(endMValue - startMValue) else startMValue)),
+//          right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else Math.abs(endMValue - startMValue))))
+//      }
+//
+//      if (nextSegment.sideCode.value != previousSegment.sideCode.value && GeometryUtils.geometryLength(previousSegment.geometry) != 0 && GeometryUtils.geometryLength(nextSegment.geometry) != 0)
+//        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
+//      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geometry.head, nextSegment.geometry.last), startMValue, endMValue)
+//      val discontinuity = {
+//        if (nextSegment.endMValue > previousSegment.endMValue) {
+//          nextSegment.discontinuity
+//        } else
+//          previousSegment.discontinuity
+//      }
+//
+//      Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, nextSegment.roadType, nextSegment.track,
+//        discontinuity, startAddrMValue, endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.createdBy,
+//        nextSegment.linkId, startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp,
+//        calibrationPoints, floating = nextSegment.floating, combinedGeometry, nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated,
+//        nextSegment.roadwayNumber))
+//
+//    } else Seq(nextSegment, previousSegment)
 
   }
 }

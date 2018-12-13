@@ -6,32 +6,32 @@
       externalGraphic: "images/calibration-point.svg"
     };
     var firstCustomCalibrationPointValue=4;
-    var createCalibrationPointMarker = function() {
-      var markerGraphics = _.clone(defaultMarkerGraphics);
-      var marker =  new ol.Feature({
-          geometry: new ol.geom.Point([data.points.x, data.points.y])
-      }
-      );
+    var createCalibrationPointMarker = function () {
+      if (!_.isUndefined(data.points)) {
+        var marker = new ol.Feature({
+            geometry: new ol.geom.Point([data.points.x, data.points.y])
+          }
+        );
+        
+        var calibrationPointMarkerStyle = new ol.style.Style({
+          image: new ol.style.Icon({
+            src: "images/calibration-point.svg",
+            anchor: [0.5, 1]
+          })
+        });
 
-
-    var calibrationPointMarkerStyle = new ol.style.Style({
-      image: new ol.style.Icon({
-        src: "images/calibration-point.svg",
-        anchor: [0.5, 1]
-      })
-    });
-
-      var calibrationPointMarkerStylecustom = new ol.style.Style({
-        image: new ol.style.Icon({
+        var calibrationPointMarkerStylecustom = new ol.style.Style({
+          image: new ol.style.Icon({
             src: "images/custom-calibration-point.svg",
-          anchor: [0.5, 1]
-        })
-      });
-      if(data.calibrationCode<=firstCustomCalibrationPointValue)
-        marker.setStyle(calibrationPointMarkerStyle);
-      else
-        marker.setStyle(calibrationPointMarkerStylecustom);
-      return marker;
+            anchor: [0.5, 1]
+          })
+        });
+        if (data.calibrationCode <= firstCustomCalibrationPointValue)
+          marker.setStyle(calibrationPointMarkerStyle);
+        else
+          marker.setStyle(calibrationPointMarkerStylecustom);
+        return marker;
+      }
     };
 
     var getMarker = function(shouldCreate) {

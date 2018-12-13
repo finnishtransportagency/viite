@@ -26,7 +26,7 @@ case class TRStatusResponse(id_tr_projekti:Option[Long], projekti:Option[Long], 
                             job_number:Option[Long], error_message:Option[String], start_time:Option[String],
                             end_time:Option[String], error_code:Option[Int])
 
-case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
+case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadwayChangeInfo])
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
 case class TRErrorResponse(error_message:String)
 
@@ -37,7 +37,7 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
     ChangeProject(o.values("id").asInstanceOf[BigInt].longValue(), o.values("name").asInstanceOf[String],
       o.values("user").asInstanceOf[String], o.values("ely").asInstanceOf[BigInt].intValue(),
       o.values("change_date").asInstanceOf[String],
-      (o \\ "change_info").extract[Seq[RoadAddressChangeInfo]])
+      (o \\ "change_info").extract[Seq[RoadwayChangeInfo]])
 }, {
   case o: ChangeProject =>
     implicit val formats = DefaultFormats + ChangeInfoItemSerializer
@@ -51,17 +51,17 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
     )
 }))
 
-case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeInfo](format => ({
+case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo](format => ({
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    RoadAddressChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
-      (o \\ "source").extract[RoadAddressChangeSection], (o \\ "target").extract[RoadAddressChangeSection],
+    RoadwayChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
+      (o \\ "source").extract[RoadwayChangeSection], (o \\ "target").extract[RoadwayChangeSection],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
-      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), false)
+      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), reversed = false, 0)
 }, {
-  case o: RoadAddressChangeInfo =>
+  case o: RoadwayChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val emptySection = RoadAddressChangeSectionTR(None, None, None, None, None, None)
+    val emptySection = RoadwayChangeSectionTR(None, None, None, None, None, None)
     o.changeType match {
       case New =>
         JObject(
@@ -136,7 +136,7 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
       JField("error_code", s.errorCode.map(l => JInt(BigInt.apply(l))).orNull))
 }))
 
-case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressChangeSection](format => ( {
+case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadwayChangeSection](format => ( {
   case o: JObject =>
     def jIntToLong(jInt: Any): Long = {
       jInt.asInstanceOf[BigInt].longValue()
@@ -144,10 +144,10 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressCh
     val map = o.values
     val (road, track, startPart, stm, endPart, enm) =
       (map.get("tie"), map.get("ajr"), map.get("aosa"), map.get("aet"), map.get("losa"), map.get("let"))
-    RoadAddressChangeSection(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
+    RoadwayChangeSection(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
       stm.map(jIntToLong), enm.map(jIntToLong), None, None, None)
 }, {
-  case s: RoadAddressChangeSection =>
+  case s: RoadwayChangeSection =>
     JObject(JField("tie", s.roadNumber.map(l => JInt(BigInt.apply(l))).orNull),
       JField("ajr", s.trackCode.map(l => JInt(BigInt.apply(l))).orNull),
       JField("aosa", s.startRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),
@@ -175,7 +175,7 @@ object ViiteTierekisteriClient {
     loadedKeyString
   }
 
-  def convertToChangeProject(changeData: List[ProjectRoadAddressChange]): ChangeProject= {
+  def convertToChangeProject(changeData: List[ProjectRoadwayChange]): ChangeProject = {
     val projects = changeData.map(cd => {
       convertChangeDataToChangeProject(cd)
     })
@@ -188,7 +188,7 @@ object ViiteTierekisteriClient {
   }
   private val nullRotatingTRProjectId = -1
 
-  private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
+  private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
     ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
@@ -205,7 +205,7 @@ object ViiteTierekisteriClient {
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
-  def sendChanges(changes: List[ProjectRoadAddressChange]): ProjectChangeStatus = {
+  def sendChanges(changes: List[ProjectRoadwayChange]): ProjectChangeStatus = {
     val projectChange=convertToChangeProject(changes)
     if (projectChange.id==nullRotatingTRProjectId)
       return ProjectChangeStatus(changes.head.projectId,ProjectState.Failed2GenerateTRIdInViite.value,"Could not generate required TR ID")

@@ -1,7 +1,7 @@
 (function(root) {
   var RoadLinkModel = function(data) {
     var selected = false;
-    var original = _.clone(data);
+    var original = _.cloneDeep(data);
 
     var getId = function() {
       return data.roadLinkId || data.linkId;
@@ -56,7 +56,7 @@
     };
   };
 
-  root.RoadCollection = function(backend, LinkVals) {
+  root.RoadCollection = function(backend) {
       var currentAllRoadLinks = [];
       var unknownRoadLinkGroups = [];
       var currentZoom = -1;
@@ -72,7 +72,8 @@
     var changedIds = [];
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
-    var LinkType = LinkValues.RoadLinkType;
+    var SelectionType = LinkValues.SelectionType;
+    var Anomaly = LinkValues.Anomaly;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -80,7 +81,7 @@
 
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks().concat(suravageRoadLinks()), function(roadLink) {
-        return roadLink.isSelected() && roadLink.getData().anomaly === 0;
+        return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
       });
     };
 
@@ -106,10 +107,10 @@
     };
 
       eventbus.on("linkProperties:drawUnknowns", function () {
-          fetchProcess(currentAllRoadLinks, currentZoom, true);
+        fetchProcess(currentAllRoadLinks, currentZoom, true);
       });
 
-      var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknows) {
+      var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
           var selectedLinkIds = _.map(getSelectedRoadLinks(), function(roadLink) {
               return roadLink.getId();
           });
@@ -119,18 +120,17 @@
               });
           });
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
-              var isUnknownGroup = _.every(model, function (mod) {
+              return _.every(model, function (mod) {
                   var modData = mod.getData();
                   return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
               });
-              return isUnknownGroup;
           });
           unknownRoadLinkGroups = fetched[0];
-          var includeUnknowns = _.isUndefined(drawUnknows) && !drawUnknows;
-          if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && (applicationModel.getSelectionType() !== 'unknown'))) {
-              roadLinkGroups = fetched[1];
+          var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
+          if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
+            setRoadLinkGroups(fetched[1]);
           } else {
-              roadLinkGroups = fetchedRoadLinkModels;
+            setRoadLinkGroups(fetchedRoadLinkModels);
           }
 
           if (!_.isEmpty(getSelectedRoadLinks())) {
@@ -144,11 +144,11 @@
           }
 
           historicRoadLinks = _.filter(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && !groupLinkTypeFilter(group, SelectionType.Floating.value);
           });
 
           floatingRoadLinks = _.filter(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, LinkType.FloatingRoadLinkType);
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, SelectionType.Floating.value);
           });
 
           roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group) {
@@ -160,18 +160,18 @@
           var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataSourceFilter(group, LinkSource.SuravageLinkInterface);
           });
-          roadLinkGroups = nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks);
-          eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknows) && drawUnknows), selectedLinkIds);
+        setRoadLinkGroups(nonSuravageRoadLinkGroups.concat(suravageRoadAddresses[0]).concat(floatingRoadLinks));
+          eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
-          if (suravageRoadAddresses[1].length !== 0)
-              eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[1]);
+          if (suravageRoadAddresses[0].length !== 0)
+              eventbus.trigger('suravageRoadLinks:fetched', suravageRoadAddresses[0]);
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
           }
-          if (!_.isUndefined(drawUnknows) && drawUnknows) {
+          if (!_.isUndefined(drawUnknowns) && drawUnknowns) {
               eventbus.trigger('linkProperties:unknownsTreated');
           }
       };
@@ -215,20 +215,6 @@
     var suravageRoadLinks = function() {
       return _.flatten(roadLinkGroupsSuravage);
     };
-    this.getRoadsForMassTransitStops = function() {
-      return _.chain(roadLinks())
-        .filter(function(roadLink) {
-          return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass != "Unknown");
-        })
-        .map(function(roadLink) {
-          return roadLink.getData();
-        })
-        .value();
-    };
-
-    this.getRoadLinkByLinkId = function (linkId) {
-      return _.find(_.flatten(roadLinkGroups), function(road) { return road.getId() === linkId; });
-    };
 
     this.getAll = function() {
       return _.map(roadLinks(), function(roadLink) {
@@ -242,12 +228,21 @@
       });
     };
 
-    this.getAllTmp = function(){
-      return tmpRoadAddresses;
-    };
-
     this.getTmpRoadLinkGroups = function () {
       return tmpRoadLinkGroups;
+    };
+
+    this.getTmpByLinkId = function(ids) {
+      var segments = _.filter(tmpRoadLinkGroups, function (road){
+        return road.getData().linkId == ids;
+      });
+      return segments;
+    };
+
+    this.getTmpById = function(ids) {
+      return _.map(ids, function(id) {
+        return _.find(tmpRoadLinkGroups, function(road) { return road.getData().id === id; });
+      });
     };
 
     this.get = function(ids) {
@@ -263,32 +258,13 @@
       return segments;
     };
 
-    this.getById = function(ids) {
-      return _.map(ids, function(id) {
-        return _.find(roadLinks(), function(road) { return road.getData().id === id; });
-      });
-    };
-
-    this.getSuravageByLinkId = function(ids) {
-      var segments = _.filter(suravageRoadLinks(), function (road){
-        return road.getData().linkId == ids;
+    this.getByLinearLocationId = function(id) {
+      var segments = _.filter(roadLinks(), function (road){
+        return road.getData().linearLocationId == id;
       });
       return segments;
     };
 
-    this.getSuravageById = function(ids) {
-      return _.map(ids, function(id) {
-        return _.find(suravageRoadLinks(), function(road) { return road.getData().id === id; });
-      });
-    };
-
-    this.getGroup = function(id) {
-      return _.find(roadLinkGroups, function(roadLinkGroup) {
-        return _.some(roadLinkGroup, function(roadLink) {
-          return roadLink.getId() === id;
-        });
-      });
-    };
     this.getGroupByLinkId = function (linkId) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
@@ -297,27 +273,10 @@
       });
     };
 
-    this.getSuravageGroupByLinkId = function (linkId) {
-      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
-        return _.some(roadLinkGroup, function(roadLink) {
-          return roadLink.getData().linkId === linkId;
-        });
-      });
-    };
-
-
-    this.getGroupById = function (id) {
+    this.getGroupByLinearLocationId = function (linearLocationId) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
-          return roadLink.getData().id === id;
-        });
-      });
-    };
-
-    this.getSuravageGroupById = function (id) {
-      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
-        return _.some(roadLinkGroup, function(roadLink) {
-          return roadLink.getData().id === id;
+          return roadLink.getData().linearLocationId === linearLocationId;
         });
       });
     };
@@ -336,8 +295,8 @@
       changedIds = ids;
     };
 
-    this.getChangedIds = function (){
-      return changedIds;
+    var setRoadLinkGroups = function(groups) {
+      roadLinkGroups = groups;
     };
 
     this.reset = function(){
@@ -354,10 +313,6 @@
       tmpNewRoadAddresses = tmp;
     };
 
-    this.getNewTmpRoadAddresses = function(){
-      return tmpNewRoadAddresses;
-    };
-
     this.resetNewTmpRoadAddresses = function(){
       tmpNewRoadAddresses = [];
     };
@@ -366,20 +321,8 @@
       preMovedRoadAddresses.push(ra);
     };
 
-    this.getPreMovedRoadAddresses = function(){
-      return preMovedRoadAddresses;
-    };
-
     this.resetPreMovedRoadAddresses = function(){
       preMovedRoadAddresses = [];
-    };
-
-    var roadIsOther = function(road){
-      return  0 === road.roadNumber && 0 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
-    };
-
-    var roadIsUnknown = function(road){
-      return  0 === road.roadNumber && 1 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
     };
     
     this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
@@ -394,7 +337,7 @@
           var feature = new ol.Feature({
             geometry: new ol.geom.LineString(points)
           });
-            feature.linkData = road;
+          feature.linkData = road;
           feature.projectId = projectId;
           return feature;
         });

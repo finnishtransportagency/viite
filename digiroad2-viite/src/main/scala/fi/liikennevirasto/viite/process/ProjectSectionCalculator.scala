@@ -1,13 +1,14 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.{SideCode}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing}
-import fi.liikennevirasto.digiroad2.util.{Track}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.{RampsMaxBound, RampsMinBound, RoadType}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.strategy.RoadAddressSectionCalculatorContext
+import fi.liikennevirasto.viite.process.strategy.{RoadAddressSectionCalculatorContext, TrackCalculatorContext}
 import org.slf4j.LoggerFactory
 
 
@@ -27,22 +28,132 @@ object ProjectSectionCalculator {
     */
   def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
-    val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
+    val others = projectLinks.filterNot(_.status == LinkStatus.Terminated)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
+    //This will reset the side codes if we only have one only track code on all project links (that are not combined)
+    val (rightSide, otherSides) = others.partition(nl => nl.track == Track.RightSide)
+    val (leftSide, combinedAndUnknown) = otherSides.partition(nl => nl.track == Track.LeftSide)
+    //Should we have rightSide tracks only or leftSideTracks only then RESET the sideCodes of the "new"
+    val processedNewLinks = if (rightSide.nonEmpty && leftSide.isEmpty || rightSide.isEmpty && leftSide.nonEmpty) {
+      logger.info(s"Only one track code detected, resetting side codes.")
+      newLinks.map(p => p.copy(sideCode = SideCode.Unknown))
+    } else {
+      logger.info(s"Found both tracks, continuing.")
+      newLinks
+    }
     try {
 
       val calculator = RoadAddressSectionCalculatorContext.getStrategy(others)
       logger.info(s"${calculator.name} strategy")
-      calculator.assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+      calculator.assignMValues(processedNewLinks, nonTerminatedLinks, userGivenCalibrationPoints)
 
     } finally {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")
     }
   }
+
+
+  def assignTerminatedMValues(terminated: Seq[ProjectLink], nonTerminatedLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
+    logger.info(s"Starting MValue assignment for ${terminated.size} links")
+    try {
+
+      val allProjectLinks = nonTerminatedLinks.filter(_.status != LinkStatus.New) ++ terminated
+      val group = allProjectLinks.groupBy {
+        pl => (pl.roadAddressRoadNumber.getOrElse(pl.roadNumber), pl.roadAddressRoadPart.getOrElse(pl.roadPartNumber))
+      }
+
+      group.flatMap { case (part, projectLinks) =>
+        try {
+          calculateSectionAddressValues(part, projectLinks)
+        } catch {
+          case ex: InvalidAddressDataException =>
+            logger.info(s"Can't calculate terminated road/road part ${part._1}/${part._2}: " + ex.getMessage)
+            terminated
+          case ex: NoSuchElementException =>
+            logger.info("Delta terminated calculation failed: " + ex.getMessage, ex)
+            terminated
+          case ex: NullPointerException =>
+            logger.info("Delta terminated calculation failed (NPE)", ex)
+            terminated
+          case ex: Throwable =>
+            logger.info("Delta terminated calculation not possible: " + ex.getMessage)
+            terminated
+        }
+      }.toSeq
+
+    } finally {
+      logger.info(s"Finished MValue assignment for ${terminated.size} links")
+    }
+  }
+
+  private def calculateSectionAddressValues(part: (Long, Long), projectLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
+
+    def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
+      val pl = s.head
+      TrackSection(pl.roadNumber, pl.roadPartNumber, pl.roadAddressTrack.get, s.map(_.geometryLength).sum, s)
+    }
+
+    def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
+      if (seq.isEmpty)
+        throw new InvalidAddressDataException("Missing track")
+      val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.roadAddressTrack.get != pl2.roadAddressTrack.get}
+      seq.foldLeft(Seq(Seq[ProjectLink]())) { case (tracks, pl) =>
+        if (changePoints.exists(_._2 == pl)) {
+          Seq(Seq(pl)) ++ tracks
+        } else {
+          Seq(tracks.head ++ Seq(pl)) ++ tracks.tail
+        }
+      }.reverse.map(fromProjectLinks)
+    }
+
+    def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+      val track = seq.headOption.map(_.roadAddressTrack.get).getOrElse(Track.Unknown)
+      val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.get == track)
+      (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+    }
+
+    def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+      if (rightLinks.isEmpty && leftLinks.isEmpty) {
+        (Seq(), Seq())
+      } else {
+        val (firstRight, restRight) = getContinuousTrack(rightLinks)
+        val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
+
+        if (firstRight.isEmpty || firstLeft.isEmpty)
+          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+
+        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
+        val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
+
+        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
+
+        val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, Map())
+
+        (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
+      }
+    }
+
+    val left = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.RightSide).sortBy(_.roadAddressStartAddrM)
+    val right = projectLinks.filter(pl => pl.roadAddressTrack.getOrElse(pl.track) != Track.LeftSide).sortBy(_.roadAddressStartAddrM)
+    if (left.isEmpty || right.isEmpty) {
+      Seq[ProjectLink]()
+    } else {
+      val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
+      val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
+      val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
+      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(rightAdjusted), groupIntoSections(leftAdjusted))
+      calculatedSections.flatMap { sec =>
+        if (sec.right == sec.left)
+          sec.right.links
+        else
+          sec.right.links ++ sec.left.links
+      }.filter(_.status == LinkStatus.Terminated)
+    }
+  }
 }
 
-case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long, reversed: Boolean, commonHistoryId: Long) {
+case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
+                          startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
   def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
@@ -56,8 +167,8 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
       // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart) &&
-      // and same common history
-      ra.commonHistoryId == commonHistoryId
+      // and same roadway
+      ra.roadwayNumber == roadwayNumber
   }
 }
 
@@ -96,6 +207,7 @@ case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLen
     else
       SideCode.apply(5 - right.links.head.sideCode.value)
   }
+
   lazy val addressStartGeometry: Point = sideCode match {
     case AgainstDigitizing => endGeometry
     case _ => startGeometry

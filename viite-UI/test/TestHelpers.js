@@ -100,7 +100,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
         .withProjectLinks(data.projectLinks)
         .withGetProjectsWithLinksById(data.projectsWithLinks)
         .withRoadAddressProjects(data.projects)
-        .withGetRoadLinkByLinkId(data.roadLinkById)
+        .withGetRoadAddressByLinkId(data.roadLinkById)
+        .withGetProjectLinkByLinkId(data.roadLinkById)
         .withCreateRoadAddressProject(data.createRoadAddressProject)
         .withPreSplitData(data.splitData)
         .withRoadAddressCreation();
@@ -116,6 +117,10 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
 
     var clickValintaButton = function(){
       $('.link-properties button.continue').click();
+    };
+
+    var clickVisibleCloseConfirmPopup = function(){
+      $('.btn.close:visible').click();
     };
 
     var clickMap = function(map, longitude, latitude) {
@@ -324,6 +329,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       clickOpenProjectButton: clickOpenProjectButton,
       clickNewProjectButton: clickNewProjectButton,
       clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
+      clickVisibleCloseConfirmPopup: clickVisibleCloseConfirmPopup,
       clickEnabledSaveButton: clickEnabledSaveButton,
       clickMap: clickMap,
       getLineStringFeatures: getLineStringFeatures,

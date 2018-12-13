@@ -1,5 +1,5 @@
-(function(root) {
-  root.ApplicationModel = function(models) {
+(function (root) {
+  root.ApplicationModel = function (models) {
     var zoom = {
       level: undefined
     };
@@ -17,30 +17,30 @@
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
-    var selectionType = 'all';
-    var sessionUser = '';
+    var selectionType = LinkValues.SelectionType.All;
+    var sessionUsername = '';
+    var sessionUserRoles = '';
+    var specialSelectionTypes = [LinkValues.SelectionType.Floating.value, LinkValues.SelectionType.Unknown.value];
 
-    var getSelectionType = function (){
-      return selectionType;
-    };
 
-    var getContinueButtons = function(){
+    var getContinueButtons = function () {
       return continueButton;
     };
 
-    var toggleSelectionTypeAll = function () {
-      selectionType = 'all';
+    var getSelectionType = function () {
+      return selectionType;
     };
 
-    var toggleSelectionTypeFloating = function(){
-      selectionType = 'floating';
+    var setSelectionType = function (type) {
+      selectionType = type;
     };
 
-    var toggleSelectionTypeUnknown = function (){
-      selectionType = 'unknown';
+    var selectionTypeIs = function (type) {
+      if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
+        return selectionType.value === type.value;
     };
 
-    var setReadOnly = function(newState) {
+    var setReadOnly = function (newState) {
       if (readOnly !== newState) {
         readOnly = newState;
         setActiveButtons(false);
@@ -48,42 +48,58 @@
         eventbus.trigger('application:readOnly', newState);
       }
     };
-    var setActiveButtons = function(newState){
-      if(activeButtons !== newState){
+
+    var setActiveButtons = function (newState) {
+      if (activeButtons !== newState) {
         activeButtons = newState;
         eventbus.trigger('application:activeButtons', newState);
       }
     };
 
-    var setProjectFeature = function(featureLinkID){
+    var setProjectFeature = function (featureLinkID) {
       projectFeature = featureLinkID;
     };
 
-    var setProjectButton = function(newState){
-      if(projectButton !== newState){
+    var setProjectButton = function (newState) {
+      if (projectButton !== newState) {
         projectButton = newState;
       }
     };
-    var setOpenProject = function(newState){
-      if(openProject !== newState){
+
+    var setOpenProject = function (newState) {
+      if (openProject !== newState) {
         openProject = newState;
       }
     };
 
-    var setContinueButton = function(newState){
-      if(continueButton !== newState){
+    var setContinueButton = function (newState) {
+      if (continueButton !== newState) {
         continueButton = newState;
         eventbus.trigger('application:pickActive', newState);
       }
     };
 
     var roadTypeShown = true;
-    var isDirty = function() {
-      return _.any(models, function(model) { return model.isDirty(); });
+
+    var isDirty = function () {
+      return _.any(models, function (model) {
+        return model.isDirty();
+      });
     };
-    var setZoomLevel = function(level) {
-      zoom.level = level;
+
+    var setZoomLevel = function (level) {
+      zoom.level = Math.round(level);
     };
+
+    var getZoomLevel = function() {
+      return zoom.level;
+    };
+
+    var roadsVisibility = true;
+
+    function toggleRoadVisibility() {
+      roadsVisibility = !roadsVisibility;
+    }
 
     function setSelectedTool(tool) {
       if (tool !== selectedTool) {
@@ -92,23 +108,23 @@
       }
     }
 
-    var getCurrentAction = function() {
+    var getCurrentAction = function () {
       return currentAction;
     };
 
-    var getUserGeoLocation = function() {
+    var getUserGeoLocation = function () {
       return {
         x: centerLonLat[0],
-        y:centerLonLat[1],
-        zoom:zoom.level
+        y: centerLonLat[1],
+        zoom: zoom.level
       };
     };
 
-    var setCurrentAction = function(action) {
+    var setCurrentAction = function (action) {
       currentAction = action;
     };
 
-    var resetCurrentAction = function(){
+    var resetCurrentAction = function () {
       currentAction = null;
     };
 
@@ -116,12 +132,13 @@
       jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
     };
 
-    var removeSpinner = function(){
+    var removeSpinner = function () {
       jQuery('.spinner-overlay').remove();
     };
 
     eventbus.on("userData:fetched", function (userData) {
-      sessionUser = userData.userName;
+      sessionUsername = userData.userName;
+      sessionUserRoles = userData.roles;
     });
 
     return {
@@ -130,33 +147,57 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      moveMap: function(zoom, bbox, center) {
+      refreshMap: function (zoom, bbox, center) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
         centerLonLat = center;
-        eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
+        eventbus.trigger('map:refresh', {
+          selectedLayer: selectedLayer,
+          zoom: getZoomLevel(),
+          bbox: bbox,
+          center: center,
+          hasZoomLevelChanged: hasZoomLevelChanged
+        });
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
-      getSelectedTool: function() {
+      getSelectedTool: function () {
         return selectedTool;
       },
       zoom: zoom,
       setZoomLevel: setZoomLevel,
-      setMinDirtyZoomLevel: function(level) {
+      getRoadVisibility: function () {
+        return roadsVisibility;
+      },
+      toggleRoadVisibility: toggleRoadVisibility,
+      setMinDirtyZoomLevel: function (level) {
         minDirtyZoomLevel = level;
       },
-      selectLayer: function(layer, toggleStart, noSave) {
+      selectLayer: function (layer, toggleStart, noSave) {
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
-        } else if(layer === 'linkProperty' && toggleStart) {
+        } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         }
+        var suravageVisibleCheckbox = $('#suravageVisibleCheckbox')[0];
+        if (layer === 'roadAddressProject') {
+          if (suravageVisibleCheckbox) {
+            $('#suravageVisibleCheckbox')[0].checked = false;
+            $('#suravageVisibleCheckbox')[0].disabled = true;
+          }
+          eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
+        } else {
+          if (suravageVisibleCheckbox) {
+            $('#suravageVisibleCheckbox')[0].checked = true;
+            $('#suravageVisibleCheckbox')[0].disabled = false;
+          }
+          eventbus.trigger('suravageProjectRoads:toggleVisibility', true);
+        }
       },
-      getSelectedLayer: function() {
+      getSelectedLayer: function () {
         return selectedLayer;
       },
       setReadOnly: setReadOnly,
@@ -165,57 +206,56 @@
       setProjectFeature: setProjectFeature,
       setContinueButton: setContinueButton,
       getContinueButtons: getContinueButtons,
-      setOpenProject : setOpenProject,
-      getProjectFeature: function() {
+      setOpenProject: setOpenProject,
+      getProjectFeature: function () {
         return projectFeature;
       },
       addSpinner: addSpinner,
       removeSpinner: removeSpinner,
-      isReadOnly: function() {
+      isReadOnly: function () {
         return readOnly;
       },
-      isActiveButtons: function() {
+      isActiveButtons: function () {
         return activeButtons;
       },
-      isProjectButton: function() {
+      isProjectButton: function () {
         return projectButton;
       },
-      isContinueButton: function() {
+      isContinueButton: function () {
         return continueButton;
       },
-      isProjectOpen: function() {
+      isProjectOpen: function () {
         return openProject;
       },
-      isDirty: function() {
+      isDirty: function () {
         return isDirty();
       },
-      canZoomOut: function() {
+      canZoomOut: function () {
         return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
       },
       canZoomOutEditMode: function () {
-        return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
+        return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) || (!readOnly && !activeButtons) || (readOnly);
       },
       assetDragDelay: 100,
-      assetGroupingDistance: 36,
-      setRoadTypeShown: function(bool) {
+      setRoadTypeShown: function (bool) {
         if (roadTypeShown !== bool) {
           roadTypeShown = bool;
           eventbus.trigger('road-type:selected', roadTypeShown);
         }
       },
-      isRoadTypeShown: function() {
-        return selectedLayer === 'massTransitStop' && roadTypeShown;
-      },
-      getCurrentLocation: function() {
+      getCurrentLocation: function () {
         return centerLonLat;
       },
+      setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,
-      toggleSelectionTypeAll: toggleSelectionTypeAll,
-      toggleSelectionTypeFloating: toggleSelectionTypeFloating,
-      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown,
-      getSessionUser: function () {
-        return sessionUser;
-      }
+      selectionTypeIs: selectionTypeIs,
+      getSessionUsername: function () {
+        return sessionUsername;
+      },
+      getSessionUserRoles: function () {
+        return sessionUserRoles;
+      },
+      specialSelectionTypes: specialSelectionTypes
     };
   };
 })(this);
