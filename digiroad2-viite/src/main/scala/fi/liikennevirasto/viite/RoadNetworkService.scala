@@ -117,10 +117,12 @@ class RoadNetworkService {
             logger.info(s" start checking of linear locations")
             val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
             val combinedErrors = checkCombinedLinearLocations(mappedCombined)
-            val linearLocationErrors = twoTrackErrors ++ combinedErrors
-            logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+            val groupedLinearLocationErrors = (twoTrackErrors ++ combinedErrors).groupBy(g => (g.roadwayId, g.linearLocationId, g.error, g.network_version))
+            val ukLinearErrors = groupedLinearLocationErrors.values.map(_.head)
 
-            val roadErrors = roadwaysErrors ++ linearLocationErrors
+            logger.info(s" Found ${ukLinearErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+
+            val roadErrors = roadwaysErrors ++ ukLinearErrors
 
             if(roadErrors.isEmpty){
               roadNetworkDAO.expireRoadNetwork
