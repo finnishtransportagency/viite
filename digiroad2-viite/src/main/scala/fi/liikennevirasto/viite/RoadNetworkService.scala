@@ -120,9 +120,16 @@ class RoadNetworkService {
             val linearLocationErrors = twoTrackErrors ++ combinedErrors
             logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
 
-            (roadwaysErrors ++ linearLocationErrors).foreach { e =>
-              logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
-              roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
+            val roadErrors = roadwaysErrors ++ linearLocationErrors
+
+            if(roadErrors.isEmpty){
+              roadNetworkDAO.expireRoadNetwork
+              roadNetworkDAO.createPublishedRoadNetwork
+            } else {
+              roadErrors.foreach{ e =>
+                logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
+                roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
+              }
             }
           }
         } catch {
