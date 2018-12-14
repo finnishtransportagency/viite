@@ -840,7 +840,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val user = Some("user")
 
-      val roadAddressProject = RoadAddressProject(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      val roadAddressProject = Project(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
@@ -858,7 +858,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val user = Some("user")
 
-      val roadAddressProject = RoadAddressProject(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      val roadAddressProject = Project(0L, Sent2TR, "split", user.get, DateTime.now(), user.get,
         DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
