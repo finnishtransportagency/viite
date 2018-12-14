@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadNetworkDAO, RoadwayDAO}
@@ -71,10 +72,12 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
       } else {
         val roadNumbers = roadwayDAO.getValidRoadNumbers
         val chunks = generateChunks(roadNumbers, 500)
+        val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
+        val nextNetworkVersion = Sequences.nextRoadNetworkError
         chunks.foreach {
           case (min, max) =>
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
-            roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads))
+            roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads, currNetworkVersion, nextNetworkVersion))
         }
       }
     }
