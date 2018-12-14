@@ -502,7 +502,7 @@ class ProjectLinkDAO {
     }
   }
 
-  def fetchProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Seq[Long], projectId: Long): Seq[ProjectLink] = {
+  def fetchProjectLinksByProjectAndLinkId(projectLinkIds: Set[Long], linkIds: Set[Long], projectId: Long): Seq[ProjectLink] = {
     if (projectLinkIds.isEmpty && linkIds.isEmpty) {
       List()
     } else {
