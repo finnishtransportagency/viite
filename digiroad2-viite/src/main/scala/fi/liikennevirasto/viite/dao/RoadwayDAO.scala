@@ -551,7 +551,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadNumbers(roadNumbers: Seq[Long])(query: String): String = {
-    s"""$query where a.valid_to is null AND a.end_date is null AND a.road_number in (${roadNumbers.mkString(",")})"""
+    s"""$query where a.valid_to is null AND a.end_date is null AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
   }
 
   private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
@@ -750,7 +750,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL AND end_date is NULL AND road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}
+              where valid_to IS NULL AND end_date is NULL AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2} AND road_number = 46930
       """.as[Long].list
   }
 
