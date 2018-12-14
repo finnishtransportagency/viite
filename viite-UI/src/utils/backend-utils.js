@@ -88,11 +88,11 @@
         });
     }, 1000);
 
-    this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
+      this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
+          return $.getJSON('api/viite/roadlinks/project/prefillfromvvh?linkId=' + linkId +'&currentProjectId=' + currentProjectId, function (data) {
+              return _.isFunction(callback) && callback(data);
+          });
+      }, 1000);
 
     this.getRoadLinkByMmlId = _.throttle(function (mmlId, callback) {
       return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {

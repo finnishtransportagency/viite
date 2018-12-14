@@ -1,6 +1,7 @@
 (function (root) {
   root.FormCommon = function(prefix) {
     var Track = LinkValues.Track;
+    var RoadNameSource = LinkValues.RoadNameSource;
 
       var title = function (titleName) {
           if (!titleName)
@@ -53,24 +54,24 @@
         '</div>';
     };
 
-    var replaceAddressInfo = function(backend, selectedProjectLink) {
-        var roadNameField = $('#roadName');
-        if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
-        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
-          if (response.success) {
-            $('#tie').val(response.roadNumber);
-            $('#osa').val(response.roadPartNumber);
-            if(response.roadName !== ''){
-                roadNameField.val(response.roadName);
-                roadNameField.prop('disabled', true);
-                $('.project-form button.update').prop("disabled", false);
-            }
-            if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
-              $('#trackCodeDropdown').val("0");
+      var replaceAddressInfo = function(backend, selectedProjectLink, currentProjectId) {
+          var roadNameField = $('#roadName');
+          if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
+              backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
+                  if (response.success) {
+                      $('#tie').val(response.roadNumber);
+                      $('#osa').val(response.roadPartNumber);
+                      if(response.roadName !== ''){
+                          roadNameField.val(response.roadName);
+                          roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
+                          $('.project-form button.update').prop("disabled", false);
+                      }
+                      if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
+                          $('#trackCodeDropdown').val("0");
+                  }
+              });
           }
-        });
-      }
-    };
+      };
 
     var roadTypeDropdown = function() {
       return '<select class="'+prefix+'form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
