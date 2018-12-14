@@ -130,6 +130,12 @@
         SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
     };
 
+    root.RoadNameSource = {
+        UnknownSource:              {value: 99, description: "Unknown Source"},
+        ProjectLinkSource:          {value: 0, description: "Project Link Source"},
+        RoadAddressSource:          {value: 1, description: "Road Name Source"}
+    };
+
     /*
     The meta key codes are browser dependant, in proper:
         Firefox: 224

@@ -222,7 +222,7 @@
         var currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
-        formCommon.replaceAddressInfo(backend, selectedProjectLink);
+        formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
