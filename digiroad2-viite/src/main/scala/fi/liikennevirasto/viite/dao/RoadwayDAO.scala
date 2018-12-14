@@ -734,7 +734,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL AND end_date is NULL order by road_number
+              where valid_to IS NULL AND end_date is NULL AND terminated = 0 AND road_number = 46930 order by road_number
       """.as[Long].list
   }
 
@@ -750,7 +750,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL AND end_date is NULL AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2} AND road_number = 46930
+              where valid_to IS NULL AND end_date is NULL AND terminated = 0 AND road_number = 46930 AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2}
       """.as[Long].list
   }
 
