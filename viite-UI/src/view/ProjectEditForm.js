@@ -280,6 +280,7 @@
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLinkProperty.setCurrent([]);
+        selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
