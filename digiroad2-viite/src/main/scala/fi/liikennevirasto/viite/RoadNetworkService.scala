@@ -64,13 +64,22 @@ class RoadNetworkService {
 
     def checkCombinedLinearLocations(mapped: Map[Long, Option[Seq[LinearLocation]]]): Seq[RoadNetworkError] = {
       val allLocations = mapped.values.flatten.flatten.toSeq
-        if(allLocations.isEmpty)
-          Seq.empty[RoadNetworkError]
-        else {
+      val errors:Seq[RoadNetworkError] = if (allLocations.isEmpty) {
+        Seq.empty[RoadNetworkError]
+      } else if (allLocations.size == 1){
+        mapped.flatMap { case (roadwayId, locations) =>
+          val locationsError: Seq[LinearLocation] = locations.get.filter(loc =>
+            allLocations.head.calibrationPoints._1.isEmpty || allLocations.head.calibrationPoints._2.isEmpty
+          )
+          locationsError.map { loc =>
+            RoadNetworkError(options.nextNetworkVersion, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+          }
+        }.toSeq
+      } else {
           val sortedLocations = allLocations.sortBy(_.orderNumber)
           val (first, last) = (sortedLocations.head, sortedLocations.last)
 
-          val errors: Seq[RoadNetworkError] = mapped.flatMap { case (roadwayId, locations) =>
+          mapped.flatMap { case (roadwayId, locations) =>
             val locationsError: Seq[LinearLocation] = locations.get.filter(loc =>
               !allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._1) && l.id != loc.id && l.id != last.id)
             )
@@ -78,8 +87,9 @@ class RoadNetworkService {
               RoadNetworkError(options.nextNetworkVersion, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
             }
           }.toSeq
-          errors
         }
+      errors
+
     }
 
     def checkAddressMValues(rw1: Roadway, rw2: Roadway, errors: Seq[RoadNetworkError]): Seq[RoadNetworkError] = {
