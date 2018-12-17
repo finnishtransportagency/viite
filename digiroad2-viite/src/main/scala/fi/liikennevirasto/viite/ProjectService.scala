@@ -1862,9 +1862,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  private def getProjectsWaitingForTR: Seq[Long]
-
-  = {
+  private def getProjectsWaitingForTR: Seq[Long] = {
     withDynSession {
       projectDAO.fetchProjectIdsWithSendingToTRStatus
     }
