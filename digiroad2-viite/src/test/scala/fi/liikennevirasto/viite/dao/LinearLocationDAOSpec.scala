@@ -426,7 +426,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated3.linkId should be(linkId3)
       updated3.endMValue should be(endM3)
       updated3.geometry.head.x should be(0.0)
-      updated3.geometry.head.y should be(0.1)
+      updated3.geometry.head.y should be(0.0)
       updated3.geometry.last.x should be(0.0)
       updated3.geometry.last.y should be(9999.9)
 
