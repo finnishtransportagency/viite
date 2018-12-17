@@ -92,7 +92,7 @@ class RoadNetworkService {
     }
 
     try {
-      val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
+      val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers.toSet)
       val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
       val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
         roadways.par.foreach { group =>
