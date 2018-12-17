@@ -218,12 +218,12 @@ class LinearLocationDAO {
           location.roadwayNumber
         }
 
-        val steppedGeom = if (GeometryUtils.geometryLength(location.geometry) > GeometryUtils.DefaultStepLength) {
-          GeometryUtils.createStepGeometry(location.geometry, Seq.empty[Point], location.startMValue, location.endMValue)
+        val reducedGeom = if (GeometryUtils.geometryLength(location.geometry) > GeometryUtils.DefaultStepLength) {
+          GeometryUtils.geometryReduction(location.geometry)
         } else {
           location.geometry
         }
-        val stepJGeom = OracleDatabase.createRoadsJGeometry(steppedGeom, dynamicSession.conn, location.endMValue)
+        val reducedJGeom = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, location.endMValue)
 
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
@@ -243,7 +243,7 @@ class LinearLocationDAO {
         ps.setInt(10, location.linkGeomSource.value)
         ps.setLong(11, location.adjustedTimestamp)
         ps.setInt(12, location.floating.value)
-        ps.setObject(13, stepJGeom)
+        ps.setObject(13, reducedJGeom)
         ps.setString(14, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }

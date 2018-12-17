@@ -79,8 +79,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def insertLinearLocation(linearLocationStatement: PreparedStatement, linearLocation: IncomingLinearLocation): Unit = {
-    val steppedGeom = GeometryUtils.createStepGeometry(linearLocation.geometry, Seq.empty[Point], linearLocation.startMeasure, linearLocation.endMeasure)
-    val stepJGeom = OracleDatabase.createRoadsJGeometry(steppedGeom, dynamicSession.conn, linearLocation.endMeasure)
+    val reducedGeom = GeometryUtils.geometryReduction(linearLocation.geometry)
+    val reducedJGeom = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, linearLocation.endMeasure)
     linearLocationStatement.setLong(1, linearLocation.roadwayNumber)
     linearLocationStatement.setLong(2, linearLocation.orderNumber)
     linearLocationStatement.setLong(3, linearLocation.linkId)
@@ -98,7 +98,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setLong(9, linearLocation.linkGeomSource.value)
     linearLocationStatement.setString(10, linearLocation.createdBy)
     linearLocationStatement.setLong(11, linearLocation.floating.value)
-    linearLocationStatement.setObject(12, stepJGeom)
+    linearLocationStatement.setObject(12, reducedJGeom)
     linearLocationStatement.setString(13, datePrinter(linearLocation.validFrom))
     linearLocationStatement.setString(14, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
