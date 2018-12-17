@@ -718,14 +718,24 @@ class LinearLocationDAO {
   }
 
   def fetchByRoadways(roadwayNumbers: Set[Long]): Seq[LinearLocation] = {
-    if (roadwayNumbers.isEmpty) {
+    if(roadwayNumbers.isEmpty){
       Seq()
     } else {
-      val query =
+      val query = if (roadwayNumbers.size > 1000) {
+        MassQuery.withIds(roadwayNumbers) {
+          idTableName =>
+            s"""
+              $selectFromLinearLocation
+              join $idTableName i on i.id = a.ROADWAY_NUMBER
+              where valid_to is null and t.id < t2.id
+            """.stripMargin
+        }
+      } else {
         s"""
-          $selectFromLinearLocation
-          where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
-        """
+            $selectFromLinearLocation
+            where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
+          """
+      }
       queryList(query)
     }
   }

@@ -407,7 +407,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadNumbers(roadNumbers: Seq[Long]): Seq[Roadway] = {
+  def fetchAllByRoadNumbers(roadNumbers: Set[Long]): Seq[Roadway] = {
     time(logger, "Fetch road ways by road number") {
       fetch(withRoadNumbers(roadNumbers))
     }
@@ -550,8 +550,19 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and end_date is null and road_number = $roadNumber"""
   }
 
-  private def withRoadNumbers(roadNumbers: Seq[Long])(query: String): String = {
-    s"""$query where a.valid_to is null AND a.end_date is null AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
+  private def withRoadNumbers(roadNumbers: Set[Long])(query: String): String = {
+    if (roadNumbers.size > 1000) {
+      MassQuery.withIds(roadNumbers) {
+        idTableName =>
+          s"""
+            $query
+            join $idTableName i on i.id = a.ROAD_NUMBER
+            where a.valid_to is null AND a.end_date is null AND a.terminated = 0
+          """.stripMargin
+      }
+    } else {
+      s"""$query where a.valid_to is null AND a.end_date is null AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
+    }
   }
 
   private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
