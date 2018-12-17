@@ -125,7 +125,7 @@ class RoadNetworkService {
 
           val roadErrors = roadwaysErrors ++ linearLocationErrors
 
-            if(roadErrors.isEmpty){
+            if(roadErrors.nonEmpty){
               val existingErrors = roadNetworkDAO.getRoadNetworkErrors(AddressError.InconsistentTopology)
               val newErrors = roadErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
               newErrors.foreach{ e =>
