@@ -1607,8 +1607,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val roadNumbers = projectLinkDAO.fetchRoadNumbersByProjectIdHistory(projectID)
           val roadNetworkService = new RoadNetworkService
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-          val nextNetworkVersion = Sequences.nextRoadNetworkError
-          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers, currNetworkVersion, nextNetworkVersion))
+          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers, currNetworkVersion, currNetworkVersion.getOrElse(0L)+1L))
         }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")

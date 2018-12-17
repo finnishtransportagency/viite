@@ -73,11 +73,10 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
         val roadNumbers = roadwayDAO.getValidRoadNumbers
         val chunks = generateChunks(roadNumbers, 500)
         val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-        val nextNetworkVersion = Sequences.nextRoadNetworkError
         chunks.foreach {
           case (min, max) =>
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
-            roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads, currNetworkVersion, nextNetworkVersion))
+            roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads, currNetworkVersion, currNetworkVersion.getOrElse(0L)+1L))
         }
       }
     }
