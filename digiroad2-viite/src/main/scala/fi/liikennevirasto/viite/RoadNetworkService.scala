@@ -125,18 +125,15 @@ class RoadNetworkService {
 
           val roadErrors = roadwaysErrors ++ linearLocationErrors
 
-          if(roadErrors.isEmpty){
-            roadNetworkDAO.expireRoadNetwork
-            roadNetworkDAO.createPublishedRoadNetwork
-          } else {
-            val existingErrors = roadNetworkDAO.getRoadNetworkErrors(AddressError.InconsistentTopology)
-            val newErrors = roadErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
-            newErrors.foreach{ e =>
-              logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
-              roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
+            if(roadErrors.isEmpty){
+              val existingErrors = roadNetworkDAO.getRoadNetworkErrors(AddressError.InconsistentTopology)
+              val newErrors = roadErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
+              newErrors.foreach{ e =>
+                logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
+                roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
+              }
             }
           }
-        }
       } catch {
         case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
         case e: SQLException => {
