@@ -350,4 +350,19 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     stepGeom.length should be(3)
   }
 
+  test("Test geometryUtils.geometryReduction() When using a very large geometry Then return a smaller geometry") {
+
+    val largeGeom = (0 to 10000 by 10).sliding(2).map(t => {
+      Point(t.head, t.last, 0.0)
+    }).toSeq
+    largeGeom.head should be(Point(0.0, 10.0, 0.0))
+    largeGeom.last should be(Point(9990.0, 10000.0, 0.0))
+    val begin = System.currentTimeMillis()
+    val reducedGeom = geometryReduction(largeGeom)
+    val duration = System.currentTimeMillis() - begin
+    println(s"GeometryReduction done in $duration ms")
+    println(reducedGeom)
+  }
+
+
 }

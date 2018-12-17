@@ -519,4 +519,103 @@ object GeometryUtils {
         Seq(p.x, p.y)).map(toBD).mkString("[", ",", "]")).mkString(",")
   }
 
+  /**
+    * O(n) method to reduce geometry
+    * @param geometry
+    * @return
+    */
+  def geometryReduction(geometry: Seq[Point] = Seq.empty[Point]): Set[Point] = {
+
+    var vStart = geometry.head
+    var reducedGeom = Set(vStart)
+
+    geometry.tail.foreach(p => {
+      val distance = p.distance3DTo(vStart)
+      if (distance > DefaultStepLength) {
+        reducedGeom+= p
+        vStart = p
+      }
+    })
+
+    reducedGeom
+  }
+
+
+//
+//
+//
+//Input:  tol = the approximation tolerance
+//          L = {V0,V1,...,Vn-1}  is any n vertex polyline
+//
+//// Mark vertexes that will be in the reduced polyline
+//Initially Mark V0 and Vn
+//
+//// Recursively decimate by selecting vertex furthest away
+//decimate(tol, L,  0, n);
+//
+//// Copy Marked vertexes to the reduced polyline
+//for (i=m=0; i<=n; i++) {
+//    if (Vi is marked) { add it to the output polyline W
+//        Wm = Vi;
+//        m++;
+//    }
+//}
+//
+//Output: W = {W0,W1,...,Wm-1} = the reduced m-vertex polyline
+//
+////-------------------------------------------------------------
+//// This is the recursive decimation routine
+//decimate(tol, L,  j, k)
+//{
+//    if (k £ j+1) there is nothing to decimate
+//        return immediately
+//    otherwise
+//    test distance of intermediate vertexes from segment Vj to Vk
+//
+//    Put Sjk  = the segment from Vj to  Vk
+//    Put maxd = 0 is the distance of farthest vertex from Sjk
+//    Put maxi = j is the index of the vertex farthest from Sjk
+//
+//    for each intermediate vertex Vi (i=j+1,k-1)
+//    {
+//        Put dv = distance from Vi to segment Sjk
+//        if (dv <= maxd) then Vi is  not farther away, so
+//            continue to  the next vertex
+//        otherwise Vi is a new max  vertex
+//        Put maxd = d and maxi = i to remember the farthest vertex
+//    }
+//    if (maxd > tol) a vertex is further than tol from Sjk
+//    {
+//        // split the polyline at the farthest  vertex
+//        Mark Vmaxi as part of the reduced polyline
+//        and recursively decimate the two  subpolylines
+//        decimate(tol, L, j, maxi);
+//        decimate(tol, L, maxi, k);
+//    }
+//}
+//
+//  def geometryReductionDP(geometry: Seq[Point] = Seq.empty[Point]): Seq[Point] = {
+//
+//    def decimate(geom :Seq[Point], j: Long, k:Long, reducedGeom: Seq[Point]): Seq[Point] = {
+//      if(k >= j+1) return reducedGeom
+//      val distanceFromItoJ = geom(j).distance3DTo(geom(k))
+//      val segment = (geom(j), geom(k))
+//      var maxD = 0.0
+//      var maxI = j
+//
+//      for (i <- j+1 to k-1) {
+//        val dv = minimumDistance(geom(i), segment)
+//        if (dv > maxD) {
+//          maxD = dv
+//          maxI = i
+//        }
+//      }
+//      if(maxD <= DefaultStepLength) {
+//        decimate(geom, j, maxI, reducedGeom ++ Seq(geom(maxI))) ++
+//          decimate(geom, maxI, k, reducedGeom ++ Seq(geom(maxI)))
+//      }
+//    }
+//
+//  }
+
 }
