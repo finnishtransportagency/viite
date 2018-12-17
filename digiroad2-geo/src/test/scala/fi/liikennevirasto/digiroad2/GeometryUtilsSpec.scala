@@ -281,7 +281,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     stepGeom.length == geometry.length should be(true)
   }
 
-  test("Test createStepGeometry When using a geometry with points having longer gaps than the given step Then return unchanged geometry.") {
+  test("Test createStepGeometry When using a geometry with points having longer gaps than the given step Then return a stepped geometry.") {
     val geometry = Seq(
       Point(0.0, 0.0, 0.0),
       Point(200.0, 200.0, 0.0),
@@ -292,10 +292,10 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     )
     val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
     GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
-    stepGeom.length == geometry.length should be(true)
+    stepGeom.length == geometry.length should be(false)
   }
 
-  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length shorter than the step Then return decimated geometry.") {
+  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length shorter than the step but with length inside the limit Then return the original geometry.") {
     val geometry = Seq(
       Point(0.0, 0.0, 0.0),
       Point(20.0, 20.0, 0.0),
@@ -305,10 +305,10 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     )
     val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
     GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
-    stepGeom.length should be(2)
+    stepGeom.length should be(geometry.length)
   }
 
-  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length equals to step Then return decimated geometry.") {
+  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length equals to step but with length inside the limit Then return original geometry.") {
     val geometry = Seq(
       Point(0.0, 0.0, 0.0),
       Point(20.0, 20.0, 0.0),
@@ -318,10 +318,10 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     )
     val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
     GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
-    stepGeom.length should be(2)
+    stepGeom.length should be(geometry.length)
   }
 
-  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length slightly longer than the step Then return decimated geometry.") {
+  test("Test createStepGeometry When using a geometry with points having shorter gaps than the given step and length slightly longer than the step but with length inside the limit Then return the original geometry.") {
     val geometry = Seq(
       Point(0.0, 0.0, 0.0),
       Point(20.0, 20.0, 0.0),
@@ -331,11 +331,11 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     )
     val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
     GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
-    stepGeom.length should be(2)
+    stepGeom.length should be(geometry.length)
   }
 
   // TODO This test might need some changes, since the middle point doesn't have to be exactly (50.0, 50.0)
-  test("Test createStepGeometry When using a geometry with points distributed unequally and the length longer than the step Then return decimated geometry.") {
+  test("Test createStepGeometry When using a geometry with points distributed unequally and the length longer than the step but with length inside the limit Then return the original geometry.") {
     val geometry = Seq(
       Point(0.0, 0.0, 0.0),
       Point(20.0, 20.0, 0.0),
@@ -345,9 +345,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     )
     val stepGeom = GeometryUtils.createStepGeometry(geometry, Seq.empty[Point], 0.0, GeometryUtils.geometryLength(geometry), 100)
     GeometryUtils.geometryEndpoints(stepGeom) should be(GeometryUtils.geometryEndpoints(geometry))
-    stepGeom(1).x should be (50.0)
-    stepGeom(1).y should be (50.0)
-    stepGeom.length should be(3)
+    stepGeom == geometry should be (true)
   }
 
   test("Test geometryUtils.geometryReduction() When using a very large geometry Then return a smaller geometry") {
