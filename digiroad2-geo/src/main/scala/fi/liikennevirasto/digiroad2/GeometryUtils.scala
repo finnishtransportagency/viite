@@ -530,24 +530,30 @@ object GeometryUtils {
     * @return
     */
   def geometryReduction(geometry: Seq[Point] = Seq.empty[Point]): Seq[Point] = {
-    /*
-    So far this serves our purpose but if we need to come up with a probably faster alternative for huge geometries there is a O(log n) version called the Douglas-Peucker algorithm or the Convex Hull Speed-Up
-    variation to the same.
-     For more information: http://geomalgorithms.com/a16-_decimate-1.html
-    */
 
-    var vStart = geometry.head
-    var reducedGeom = Seq(vStart)
+   def reduce(geom: Seq[Point]) = {
+     /*
+   So far this serves our purpose but if we need to come up with a probably faster alternative for huge geometries there is a O(log n) version called the Douglas-Peucker algorithm or the Convex Hull Speed-Up
+   variation to the same.
+    For more information: http://geomalgorithms.com/a16-_decimate-1.html
+   */
 
-    geometry.tail.foreach(p => {
-      val distance = p.distance3DTo(vStart)
-      if (distance > DefaultStepLength) {
-        reducedGeom = reducedGeom ++  Seq(p)
-        vStart = p
-      }
-    })
+     var vStart = geom.head
+     var reducedGeom = Seq(vStart)
 
-    reducedGeom
+     geom.tail.foreach(p => {
+       val distance = p.distance3DTo(vStart)
+       if (distance > DefaultStepLength) {
+         reducedGeom = reducedGeom ++  Seq(p)
+         vStart = p
+       }
+     })
+     reducedGeom
+   }
+
+    if(geometryLength(geometry) >= DefaultStepLength) {
+      reduce(geometry)
+    } else geometry
   }
 
 }
