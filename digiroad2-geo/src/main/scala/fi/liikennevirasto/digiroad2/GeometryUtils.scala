@@ -524,15 +524,15 @@ object GeometryUtils {
     * @param geometry
     * @return
     */
-  def geometryReduction(geometry: Seq[Point] = Seq.empty[Point]): Set[Point] = {
+  def geometryReduction(geometry: Seq[Point] = Seq.empty[Point]): Seq[Point] = {
 
     var vStart = geometry.head
-    var reducedGeom = Set(vStart)
+    var reducedGeom = Seq(vStart)
 
     geometry.tail.foreach(p => {
       val distance = p.distance3DTo(vStart)
       if (distance > DefaultStepLength) {
-        reducedGeom+= p
+        reducedGeom = reducedGeom ++  Seq(p)
         vStart = p
       }
     })
