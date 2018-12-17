@@ -1600,12 +1600,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
           }
         }
-        val roadNumbers = projectLinkDAO.fetchRoadNumbersByProjectIdHistory(projectID)
-        val roadNetworkService = new RoadNetworkService
         val roadNetworkDAO = new RoadNetworkDAO
-        val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-        val nextNetworkVersion = Sequences.nextRoadNetworkError
-        roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers, currNetworkVersion, nextNetworkVersion))
+        if(roadNetworkDAO.hasCurrentNetworkErrors){
+          logger.error(s"Current network have errors")
+        } else {
+          val roadNumbers = projectLinkDAO.fetchRoadNumbersByProjectIdHistory(projectID)
+          val roadNetworkService = new RoadNetworkService
+          val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
+          val nextNetworkVersion = Sequences.nextRoadNetworkError
+          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers, currNetworkVersion, nextNetworkVersion))
+        }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(projectDAO.fetchById(projectID).head, " Failed to find TR-ID ")
