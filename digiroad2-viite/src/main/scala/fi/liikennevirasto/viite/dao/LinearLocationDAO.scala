@@ -726,7 +726,7 @@ class LinearLocationDAO {
           idTableName =>
             s"""
               $selectFromLinearLocation
-              join $idTableName i on i.id = a.ROADWAY_NUMBER
+              join $idTableName i on i.id = loc.ROADWAY_NUMBER
               where valid_to is null and t.id < t2.id
             """.stripMargin
         }
