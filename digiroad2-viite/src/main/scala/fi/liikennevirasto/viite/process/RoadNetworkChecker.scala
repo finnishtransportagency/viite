@@ -79,7 +79,11 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
             roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads, currNetworkVersion, nextNetworkVersion))
         }
-      }
+          if(!roadNetworkDAO.hasCurrentNetworkErrors){
+            roadNetworkDAO.expireRoadNetwork
+            roadNetworkDAO.createPublishedRoadNetwork
+          }
+        }
     }
   }
 
