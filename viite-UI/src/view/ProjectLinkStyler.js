@@ -36,6 +36,7 @@
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.WinterRoadsClass.value).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.PathsClass.value).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(11).use({stroke: {color: '#444444', lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.PrivateRoadClass.value).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(97).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
       new StyleRule().where('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#ff9900', lineCap: 'round'}}),
