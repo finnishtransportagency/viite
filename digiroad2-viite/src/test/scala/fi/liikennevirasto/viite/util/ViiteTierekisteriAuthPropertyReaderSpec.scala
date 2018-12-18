@@ -8,7 +8,7 @@ package fi.liikennevirasto.viite.util
   class ViiteTierekisteriAuthPropertyReaderSpec extends FunSuite with Matchers {
     val reader = new ViiteTierekisteriAuthPropertyReader
 
-    test("Basic64 authentication for TR client") {
+    test("Test reader.getAuthInBase64 When asking for the Basic64 authentication string for the TR client Then return said string.") {
       val authenticate = reader.getAuthInBase64
       authenticate should be ("aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk")
     }
