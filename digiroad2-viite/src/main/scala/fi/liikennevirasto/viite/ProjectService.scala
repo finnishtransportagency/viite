@@ -1803,8 +1803,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val roadNumberOptional = rwc.changeInfo.target.roadNumber
         if (roadNumberOptional.isDefined) {
           val roadNumber = roadNumberOptional.get
-          val existingRoadways = roadwayDAO.fetchAllByRoad(roadNumber)
-          if (existingRoadways.isEmpty) {
+          val existingRoadnames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
+          if (existingRoadnames.isEmpty) {
             val projectLinkNames = ProjectLinkNameDAO.get(Set(roadNumber), rwc.projectId)
             if (projectLinkNames.nonEmpty) {
               roadNames = roadNames :+ RoadName(NewRoadNameId, roadNumber, projectLinkNames.head.roadName, startDate = Some(rwc.projectStartDate), validFrom = Some(DateTime.now()), createdBy = rwc.user)
