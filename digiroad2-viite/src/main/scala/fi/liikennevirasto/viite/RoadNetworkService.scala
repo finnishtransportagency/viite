@@ -76,14 +76,19 @@ class RoadNetworkService {
           }
         }.toSeq
       } else {
-          val sortedLocations = allLocations.sortBy(_.orderNumber)
-          val (first, last) = (sortedLocations.head, sortedLocations.last)
 
           mapped.flatMap { case (roadwayId, locations) =>
-            val locationsError: Seq[LinearLocation] = locations.get.filter(loc =>
-              !allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._1) && l.id != loc.id && l.id != last.id)
+            val sortedLocations = locations.get.sortBy(_.orderNumber)
+            val (first, last) = (sortedLocations.head, sortedLocations.last)
+
+            val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
+              edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
             )
-            locationsError.map { loc =>
+            val middleCalibrationPointsError: Seq[LinearLocation] = sortedLocations.filter(loc =>
+              !sortedLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.id != loc.id) && loc.id != last.id
+            )
+
+            (middleCalibrationPointsError++edgeCalibrationPointsError).map { loc =>
               RoadNetworkError(options.nextNetworkVersion, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
             }
           }.toSeq
