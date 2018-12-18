@@ -211,7 +211,7 @@
         roadNumber: roadNumber,
         startPart: startPart,
         endPart: endPart,
-        projDate: convertDateToIso(projDate)
+        projDate: convertDatetoSimpleDate(projDate)
       })
         .then(function (x) {
           eventbus.trigger('roadPartsValidation:checkRoadParts', x);
@@ -404,8 +404,8 @@
       };
     }
 
-    function convertDateToIso(date) {
-      return moment(date, 'DD.MM.YYYY').toISOString();
+    function convertDatetoSimpleDate(date) {
+      return moment(date, 'DD.MM.YYYY').format("YYYY-MM-DD");
     }
 
     //Methods for the UI Integrated Tests
