@@ -88,11 +88,11 @@
         });
     }, 1000);
 
-    this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
+      this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
+          return $.getJSON('api/viite/roadlinks/project/prefillfromvvh?linkId=' + linkId +'&currentProjectId=' + currentProjectId, function (data) {
+              return _.isFunction(callback) && callback(data);
+          });
+      }, 1000);
 
     this.getRoadLinkByMmlId = _.throttle(function (mmlId, callback) {
       return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {
@@ -211,7 +211,7 @@
         roadNumber: roadNumber,
         startPart: startPart,
         endPart: endPart,
-        projDate: convertDateToIso(projDate)
+        projDate: convertDatetoSimpleDate(projDate)
       })
         .then(function (x) {
           eventbus.trigger('roadPartsValidation:checkRoadParts', x);
@@ -404,8 +404,8 @@
       };
     }
 
-    function convertDateToIso(date) {
-      return moment(date, 'DD.MM.YYYY').toISOString();
+    function convertDatetoSimpleDate(date) {
+      return moment(date, 'DD.MM.YYYY').format("YYYY-MM-DD");
     }
 
     //Methods for the UI Integrated Tests

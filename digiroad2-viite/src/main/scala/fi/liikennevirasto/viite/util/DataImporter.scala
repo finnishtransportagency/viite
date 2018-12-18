@@ -24,8 +24,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
-// TODO This could be renamed to something else than asset...
-object AssetDataImporter {
+object DataImporter {
   sealed trait ImportDataSet {
     def database(): DatabaseDef
   }
@@ -55,7 +54,7 @@ object AssetDataImporter {
   }
 }
 
-class AssetDataImporter {
+class DataImporter {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val ds: DataSource = initDataSource
 
@@ -63,6 +62,10 @@ class AssetDataImporter {
 
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
+    val chunks = withDynSession{ fetchChunkLinkIds()}
+    chunks.par.foreach { p => f(p._1, p._2) }
+  }
 
   implicit object SetStruct extends SetParameter[STRUCT] {
     def apply(v: STRUCT, pp: PositionedParameters) {
@@ -117,7 +120,7 @@ class AssetDataImporter {
                             importOptions: ImportOptions): Unit = {
 
     withDynTransaction {
-      sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
+      disableRoadwayTriggers
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
@@ -150,12 +153,20 @@ class AssetDataImporter {
             	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
             	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
             	AND ROADWAY.TRACK = rw.TRACK
-            	AND ROADWAY.ENd_date = rw.start_date
+            	AND ROADWAY.END_DATE = rw.start_date
             	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
 
-      sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
+      enableRoadwayTriggers
       roadwayResetter()
     }
+  }
+
+  def enableRoadwayTriggers = {
+    sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
+  }
+
+  def disableRoadwayTriggers = {
+    sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
   }
 
   def roadwayResetter(): Unit = {
@@ -171,6 +182,7 @@ class AssetDataImporter {
     new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
 
+  // TODO This is not used and should probably be removed.
   def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
@@ -193,6 +205,7 @@ class AssetDataImporter {
     Seq(roadAddressA, roadAddressB)
   }
 
+  // TODO This is not used and probably should be removed.
   def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
     println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
     sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
@@ -202,12 +215,14 @@ class AssetDataImporter {
     val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val roadAddressDAO = new RoadwayDAO
+    val roadwayDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-    val service = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
-    RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
-    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
+    val projectLinkDAO = new ProjectLinkDAO
+    val service = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus)
+    val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
+    roadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
+    roadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     val municipalities = OracleDatabase.withDynTransaction {
       sqlu"""DELETE FROM UNADDRESSED_ROAD_LINK""".execute
       println("Old address data cleared")
@@ -245,44 +260,44 @@ class AssetDataImporter {
       generateChunks(linkIds, 25000l)
     }
 
-  def updateRoadAddressesGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
+
+  def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     var changed = 0
-      val chunks = withDynSession{fetchChunkLinkIds()}
-      chunks.par.foreach {
-          case (min, max) =>
-            withDynTransaction {
-            val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
-            val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-            val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
-            val topologyLocation = unGroupedTopology.groupBy(_.linkId)
-            roadLinksFromVVH.foreach(roadLink => {
-              val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
-              segmentsOnViiteDatabase.foreach(segment => {
-                val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
-                if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
-                  val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
-                  val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
-                  val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
-                  val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
-                  if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
-                    (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
-                    ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
-                      (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
-                    updateGeometry(segment.id, newGeom)
-                    println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
-                    changed += 1
-                  } else {
-                    println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
-                  }
-                }
-              })
-            })
-        }
+    withLinkIdChunks {
+      case (min, max) =>
+        withDynTransaction {
+        val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
+        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
+        val topologyLocation = unGroupedTopology.groupBy(_.linkId)
+        roadLinksFromVVH.foreach(roadLink => {
+          val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
+          segmentsOnViiteDatabase.foreach(segment => {
+            val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+            if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
+              val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
+              val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
+              val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
+              val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
+              if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
+                (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
+                ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
+                  (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
+                updateGeometry(segment.id, newGeom)
+                println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
+                changed += 1
+              } else {
+                println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+              }
+            }
+          })
+        })
       }
-      println(s"Geometries changed count: $changed")
+    }
+    println(s"Geometries changed count: $changed")
   }
 
   def updateGeometry(linearLocationId: Long, geometry: Seq[Point]): Unit = {

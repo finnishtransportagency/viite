@@ -64,7 +64,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  test("roadwayNumbers: Unchanged addresses with new Road Type in the middle") {
+  test("Test RoadwayFiller.fillRoadways() When dealing with unchanged addresses with a new Road Type in the middle of them Then check correctly assigned roadway id's."){
     withDynTransaction {
       val roadways = Map(
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None))
@@ -110,8 +110,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("roadwayNumbers: New addresses with new Road Type between") {
-    withDynTransaction {
+  test("Test RoadwayFiller.fillRoadways() When dealing with newly created addresses with a new Road Type between them Then check correctly assigned roadway id's.") {
+    withDynTransaction{
       val changeInfos = Seq(
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
@@ -150,7 +150,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("roadwayNumbers: Unchanged at start and Terminated at end") {
+  test("Test RoadwayFiller.fillRoadways() When dealing with unchanged at roads at the start and terminated at the end Then check correctly assigned roadway id's.") {
     withDynTransaction {
       val roadways = Map(
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
@@ -188,7 +188,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("roadwayNumbers: Terminating the first link and transferring the others") {
+  test("Test RoadwayFiller.fillRoadways() When dealing with the termination of the first link and the transferring the remainder Then check correctly assigned roadway id's.") {
     withDynTransaction {
       val roadways = Map(
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
@@ -226,7 +226,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("roadwayNumbers: Termination in the Middle of the Roadway") {
+  test("Test RoadwayFiller.fillRoadways() When dealing with a termination in the Middle of the Roadway Then check correctly assigned roadway id's.") {
     withDynTransaction {
       val roadways = Map(
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 300L, DateTime.now(), None))
@@ -287,7 +287,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("roadwayNumbers: Numbering operation") {
+  test("Test RoadwayFiller.fillRoadways() When dealing with the numbering operation Then check correctly assigned roadway id's.") {
     withDynTransaction {
       val roadways = Map(
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.now(), None))
@@ -318,7 +318,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("roadwayNumbers: Terminating a roadway with history") {
+  test("Test RoadwayFiller.fillRoadways() When dealing with a termination of a roadway with history Then check correctly assigned roadway id's.") {
     withDynTransaction {
       val roadways = Map(
         (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 200L, DateTime.parse("1950-01-01"), None))

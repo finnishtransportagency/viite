@@ -7,6 +7,8 @@ import slick.jdbc.{StaticQuery => Q}
 
 object Queries {
 
+  def nextViiteProjectId = sql"select viite_project_seq.nextval from dual"
+
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
   def nextRoadwayId = sql"select ROADWAY_SEQ.nextval from dual"
