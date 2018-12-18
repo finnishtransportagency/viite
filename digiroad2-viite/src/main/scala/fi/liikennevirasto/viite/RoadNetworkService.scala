@@ -130,8 +130,9 @@ class RoadNetworkService {
         val roadErrors = roadwaysErrors ++ linearLocationErrors
 
         if (roadErrors.nonEmpty) {
+          val uniqueErrors = roadErrors.groupBy(g => (g.roadwayId, g.linearLocationId, g.error, g.network_version)).map(_._2.head)
           val existingErrors = roadNetworkDAO.getRoadNetworkErrors(AddressError.InconsistentTopology)
-          val newErrors = roadErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
+          val newErrors = uniqueErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
           newErrors.foreach { e =>
             logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
             roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
