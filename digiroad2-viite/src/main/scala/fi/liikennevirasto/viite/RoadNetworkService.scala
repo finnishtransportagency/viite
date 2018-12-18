@@ -106,7 +106,7 @@ class RoadNetworkService {
     }
 
     try {
-      val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers.toSet)
+      val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
       val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
       val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
       roadways.par.foreach { group =>
@@ -160,4 +160,4 @@ class RoadNetworkService {
   }
 }
 
-case class RoadCheckOptions(roadways: Seq[Long], roadNumbers: Seq[Long], currNetworkVersion: Option[Long], nextNetworkVersion: Long)
+case class RoadCheckOptions(roadways: Seq[Long], roadNumbers: Set[Long], currNetworkVersion: Option[Long], nextNetworkVersion: Long)

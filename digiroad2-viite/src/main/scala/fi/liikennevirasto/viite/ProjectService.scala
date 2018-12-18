@@ -1587,7 +1587,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
-        projectDAO.fetchProjectStatus(projectID).map { currentState =>
+        val roadNumbers:Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
           logger.info(s"Retrieved TR status: ${trProjectState.getOrElse(None)}")
@@ -1598,16 +1598,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           if (updatedStatus == Saved2TR) {
             logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
-          }
+          } else Set()
         }
         val roadNetworkDAO = new RoadNetworkDAO
         if(roadNetworkDAO.hasCurrentNetworkErrors){
           logger.error(s"Current network have errors")
+        } else if(roadNumbers.isEmpty){
+          logger.error(s"No roadNumbers available in project $projectID")
         } else {
-          val roadNumbers = projectLinkDAO.fetchRoadNumbersByProjectIdHistory(projectID)
           val roadNetworkService = new RoadNetworkService
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers, currNetworkVersion, currNetworkVersion.getOrElse(0L)+1L))
+          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.getOrElse(0L)+1L))
         }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
@@ -1693,7 +1694,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadwayDAO.expireHistory(Set(roadwayId), projectDate, roadway.terminated)
   }
 
-  def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
+  def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Set[Long] = {
         if (newState != Saved2TR) {
           logger.error(s" Project state not at Saved2TR")
           throw new RuntimeException(s"Project state not at Saved2TR: $newState")
@@ -1725,14 +1726,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"Creating history rows based on operation")
           linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
           (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1, roadway._2, project.startDate))
-          roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate, roadway.endDate,
+          val newRoadways = generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway)
+          roadwayDAO.create(newRoadways.groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate, roadway.endDate,
                                                                     roadway.validFrom, roadway.validTo, roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
           linearLocationDAO.create(generatedRoadways.flatMap(_._2))
-          Some(s"road addresses created")
+          newRoadways.map(_.roadNumber).toSet
         } catch {
           case e: ProjectValidationException =>
             logger.error("Failed to validate project message:" + e.getMessage)
-            Some(e.getMessage)
+            Set.empty[Long]
         }
   }
 
