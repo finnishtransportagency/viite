@@ -40,26 +40,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result
   }
 
-  test("Test getRoadLinksFromVVH() When no overridden data on road links exists Then return last edited date from VVH on road link modification date") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-      val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
-
-      val lastEditedDate = DateTime.now()
-      val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TrafficDirection.TowardsDigitizing, AllOthers, Some(lastEditedDate)))
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(roadLinks).future)
-      when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
-
-      val service = new TestService(mockVVHClient)
-      val results = service.getRoadLinksFromVVH(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
-      results.head.modifiedAt should be(Some(DateTimePropertyFormat.print(lastEditedDate)))
-      dynamicSession.rollback()
-    }
-  }
-
   test("Test getRoadLinksFromVVHByMunicipality() When supplying a specific municipality Id Then return the correct return of a ViiteRoadLink of that Municipality") {
     val municipalityId = 235
     val linkId = 2l

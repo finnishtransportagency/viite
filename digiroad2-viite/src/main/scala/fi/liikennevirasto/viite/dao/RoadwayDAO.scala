@@ -558,19 +558,19 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadNumber(road: Long, roadPart: Option[Long], track: Option[Track], mValue: Option[Long])(query: String): String = {
     val roadPartFilter = roadPart match {
-      case Some(p) => s" AND ra.road_part_number = $p"
+      case Some(p) => s" AND a.road_part_number = $p"
       case None => ""
     }
     val trackFilter = track match {
-      case Some(t) => s"  AND ra.TRACK = $t"
+      case Some(t) => s"  AND a.TRACK = $t"
       case None => ""
     }
     val mValueFilter = mValue match {
-      case Some(v) => s" AND ra.start_addr_M <= $v AND ra.end_addr_M > $v"
+      case Some(v) => s" AND a.start_addr_M <= $v AND ra.end_addr_M > $v"
       case None => ""
     }
 
-    query + s" WHERE ra.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter "
+    query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter "
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
