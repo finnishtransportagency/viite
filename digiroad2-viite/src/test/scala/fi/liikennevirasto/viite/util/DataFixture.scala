@@ -50,7 +50,7 @@ object DataFixture {
 
   //private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
-//  private lazy val numberThreads: Int = 2
+  //  private lazy val numberThreads: Int = 2
   private lazy val numberThreads: Int = 6
 
   private def toIntNumber(value: Any): Int = {
@@ -105,24 +105,24 @@ object DataFixture {
     println()
   }
 
-//  def findFloatingRoadAddresses(): Unit = {
-//    println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
-//    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-//    val username = properties.getProperty("bonecp.username")
-//    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-//    val roadAddressDAO = new RoadwayDAO
-//    val linearLocationDAO = new LinearLocationDAO
-//    val roadNetworkDAO = new RoadNetworkDAO
-//    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-//    OracleDatabase.withDynTransaction {
-//      val checker = new RoadNetworkChecker(roadLinkService)
-//      val roads = checker.checkRoadNetwork(username)
-//      println(s"${roads.size} segment(s) found")
-//      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, float = true)
-//    }
-//    println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
-//    println()
-//  }
+  //  def findFloatingRoadAddresses(): Unit = {
+  //    println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
+  //    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+  //    val username = properties.getProperty("bonecp.username")
+  //    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+  //    val roadAddressDAO = new RoadwayDAO
+  //    val linearLocationDAO = new LinearLocationDAO
+  //    val roadNetworkDAO = new RoadNetworkDAO
+  //    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
+  //    OracleDatabase.withDynTransaction {
+  //      val checker = new RoadNetworkChecker(roadLinkService)
+  //      val roads = checker.checkRoadNetwork(username)
+  //      println(s"${roads.size} segment(s) found")
+  //      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, float = true)
+  //    }
+  //    println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
+  //    println()
+  //  }
 
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
@@ -185,40 +185,40 @@ object DataFixture {
 
     //get All municipalities and group them for ely
     OracleDatabase.withDynTransaction {
-                MunicipalityDAO.getMunicipalityMapping
-    }.groupBy(_._2).foreach{
+      MunicipalityDAO.getMunicipalityMapping
+    }.groupBy(_._2).foreach {
       case (ely, municipalityEly) =>
 
         //Get All Municipalities
         val municipalities: ParSet[Long] = municipalityEly.keySet.par
-        println ("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
+        println("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
 
-      //For each municipality get all VVH Roadlinks
-      municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
-      municipalities.foreach { municipality =>
-        println("Start processing municipality %d".format(municipality))
+        //For each municipality get all VVH Roadlinks
+        municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
+        municipalities.foreach { municipality =>
+          println("Start processing municipality %d".format(municipality))
 
-        //Obtain all RoadLink by municipality and change info from VVH
-        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
-        val allRoadLinks = roadLinks
+          //Obtain all RoadLink by municipality and change info from VVH
+          val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+          val allRoadLinks = roadLinks
 
-        println ("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
-        println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
-        if (roadLinks.nonEmpty) {
-          try {
+          println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
+          println("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
+          if (roadLinks.nonEmpty) {
+            try {
 
-            val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
-            roadAddressService.updateChangeSet(roadsChanges._2)
-            println(s"AppliedChanges for municipality $municipality")
-            println(s"${roadsChanges._2.droppedSegmentIds.size} dropped roads")
-            println(s"${roadsChanges._2.adjustedMValues.size} adjusted m values")
-            println(s"${roadsChanges._2.newLinearLocations.size} new linear locations")
-          } catch {
-            case e: Exception => println("ERR! -> " + e.getMessage)
+              val roadsChanges = ApplyChangeInfoProcess.applyChanges(linearLocations, allRoadLinks, changedRoadLinks)
+              roadAddressService.updateChangeSet(roadsChanges._2)
+              println(s"AppliedChanges for municipality $municipality")
+              println(s"${roadsChanges._2.droppedSegmentIds.size} dropped roads")
+              println(s"${roadsChanges._2.adjustedMValues.size} adjusted m values")
+              println(s"${roadsChanges._2.newLinearLocations.size} new linear locations")
+            } catch {
+              case e: Exception => println("ERR! -> " + e.getMessage)
+            }
           }
+          println("End processing municipality %d".format(municipality))
         }
-        println("End processing municipality %d".format(municipality))
-      }
     }
   }
 
@@ -226,35 +226,35 @@ object DataFixture {
     throw new NotImplementedError("Will be implemented at VIITE-1554")
 
     //    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-//
-//    //Get All Roads
-//    val roads: Seq[Long] =
-//      OracleDatabase.withDynTransaction {
-//        RoadAddressDAO.getAllValidRoadNumbers()
-//      }
-//
-//    //For each municipality get all VVH Roadlinks
-//    roads.par.foreach { road =>
-//      println("%d: Fetch road addresses for road #%d".format(road, road))
-//      OracleDatabase.withDynTransaction {
-//        val roadAddressSeq = RoadAddressDAO.fetchByRoad(road)
-//        // Floating addresses are ignored
-//        val linkIds = roadAddressSeq.map(_.linkId).toSet
-//        println("%d: %d address rows fetched on %d links".format(road, roadAddressSeq.size, linkIds.size))
-//        val cacLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIds)
-//          .map(rl => rl.linkId -> rl.linkSource).toMap
-//        // If not present in current and complementary, check the historic links, too
-//        val vvhHistoryLinks = roadLinkService.getRoadLinksHistoryFromVVH(linkIds -- cacLinks.keySet)
-//          .map(rl => rl.linkId -> LinkGeomSource.HistoryLinkInterface).toMap
-//        val vvhLinks = cacLinks ++ vvhHistoryLinks
-//        val updated = roadAddressSeq
-//          .filterNot(ra => vvhLinks.getOrElse(ra.linkId, ra.linkGeomSource) == ra.linkGeomSource)
-//          .count(ra =>
-//            RoadAddressDAO.updateLinkSource(ra.id, vvhLinks(ra.linkId))
-//          )
-//        println("%d: %d addresses updated".format(road, updated))
-//      }
-//    }
+    //
+    //    //Get All Roads
+    //    val roads: Seq[Long] =
+    //      OracleDatabase.withDynTransaction {
+    //        RoadAddressDAO.getAllValidRoadNumbers()
+    //      }
+    //
+    //    //For each municipality get all VVH Roadlinks
+    //    roads.par.foreach { road =>
+    //      println("%d: Fetch road addresses for road #%d".format(road, road))
+    //      OracleDatabase.withDynTransaction {
+    //        val roadAddressSeq = RoadAddressDAO.fetchByRoad(road)
+    //        // Floating addresses are ignored
+    //        val linkIds = roadAddressSeq.map(_.linkId).toSet
+    //        println("%d: %d address rows fetched on %d links".format(road, roadAddressSeq.size, linkIds.size))
+    //        val cacLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIds)
+    //          .map(rl => rl.linkId -> rl.linkSource).toMap
+    //        // If not present in current and complementary, check the historic links, too
+    //        val vvhHistoryLinks = roadLinkService.getRoadLinksHistoryFromVVH(linkIds -- cacLinks.keySet)
+    //          .map(rl => rl.linkId -> LinkGeomSource.HistoryLinkInterface).toMap
+    //        val vvhLinks = cacLinks ++ vvhHistoryLinks
+    //        val updated = roadAddressSeq
+    //          .filterNot(ra => vvhLinks.getOrElse(ra.linkId, ra.linkGeomSource) == ra.linkGeomSource)
+    //          .count(ra =>
+    //            RoadAddressDAO.updateLinkSource(ra.id, vvhLinks(ra.linkId))
+    //          )
+    //        println("%d: %d addresses updated".format(road, updated))
+    //      }
+    //    }
 
   }
 
@@ -321,8 +321,8 @@ object DataFixture {
     args.headOption match {
       /*case Some("find_floating_road_addresses") if geometryFrozen =>
         showFreezeInfo()*/
-//      case Some("find_floating_road_addresses") =>
-//        findFloatingRoadAddresses()
+      //      case Some("find_floating_road_addresses") =>
+      //        findFloatingRoadAddresses()
       case Some("check_road_network") =>
         checkRoadNetwork()
       case Some("import_road_addresses") =>
@@ -364,4 +364,5 @@ object DataFixture {
   }
 
   case class TimeLine(addressLength: Long, addresses: Seq[RoadAddress])
+
 }
