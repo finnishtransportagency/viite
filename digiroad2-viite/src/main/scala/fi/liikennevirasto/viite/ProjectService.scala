@@ -1745,8 +1745,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val targetRoadNumber = targetRoadNumberOptional.get
           val srcRoadNumber = srcRoadNumberOptional.get
 
-          val targetExistingRoadways = roadwayDAO.fetchAllByRoadNumberAndValue(targetRoadNumber)
-          val srcExistingRoadways = roadwayDAO.fetchAllByRoadNumberAndValue(srcRoadNumber)
+          val targetExistingRoadways = roadwayDAO.fetchAllByRoad(targetRoadNumber)
+          val srcExistingRoadways = roadwayDAO.fetchAllByRoad(srcRoadNumber)
 
           if (targetExistingRoadways.isEmpty) {
             // TRANSFERING OR NUMBERING TO A NEW ROADWAY
@@ -1784,8 +1784,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val roadNumberOptional = rwc.changeInfo.source.roadNumber
         if (roadNumberOptional.isDefined) {
           val roadNumber = roadNumberOptional.get
-          val roadNumberSet = Set(roadNumber)
-          val roadways = roadwayDAO.fetchAllByRoadwayNumbers(roadNumberSet)
+          val roadways = roadwayDAO.fetchAllByRoad(roadNumber)
           if (roadways.isEmpty) {
             val roadNameOpt = RoadNameDAO.getLatestRoadName(roadNumber)
             if (roadNameOpt.isDefined) {
@@ -1804,7 +1803,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val roadNumberOptional = rwc.changeInfo.target.roadNumber
         if (roadNumberOptional.isDefined) {
           val roadNumber = roadNumberOptional.get
-          val existingRoadways = roadwayDAO.fetchAllByRoadwayNumbers(Set(roadNumber))
+          val existingRoadways = roadwayDAO.fetchAllByRoad(roadNumber)
           if (existingRoadways.isEmpty) {
             val projectLinkNames = ProjectLinkNameDAO.get(Set(roadNumber), rwc.projectId)
             if (projectLinkNames.nonEmpty) {
