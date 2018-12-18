@@ -1598,7 +1598,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           if (updatedStatus == Saved2TR) {
             logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
-          } else Set()
+          } else Set.empty[Long]
         }
         val roadNetworkDAO = new RoadNetworkDAO
         if(roadNetworkDAO.hasCurrentNetworkErrors){
