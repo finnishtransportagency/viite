@@ -863,7 +863,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getChangeProjectInTX(projectId: Long): Option[ChangeProject] = {
     try {
       if (recalculateChangeTable(projectId)) {
-        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
         Some(ViiteTierekisteriClient.convertToChangeProject(roadwayChanges))
       } else {
         None
