@@ -222,42 +222,6 @@ object DataFixture {
     }
   }
 
-  private def updateRoadAddressGeometrySource(): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1554")
-
-    //    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    //
-    //    //Get All Roads
-    //    val roads: Seq[Long] =
-    //      OracleDatabase.withDynTransaction {
-    //        RoadAddressDAO.getAllValidRoadNumbers()
-    //      }
-    //
-    //    //For each municipality get all VVH Roadlinks
-    //    roads.par.foreach { road =>
-    //      println("%d: Fetch road addresses for road #%d".format(road, road))
-    //      OracleDatabase.withDynTransaction {
-    //        val roadAddressSeq = RoadAddressDAO.fetchByRoad(road)
-    //        // Floating addresses are ignored
-    //        val linkIds = roadAddressSeq.map(_.linkId).toSet
-    //        println("%d: %d address rows fetched on %d links".format(road, roadAddressSeq.size, linkIds.size))
-    //        val cacLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIds)
-    //          .map(rl => rl.linkId -> rl.linkSource).toMap
-    //        // If not present in current and complementary, check the historic links, too
-    //        val vvhHistoryLinks = roadLinkService.getRoadLinksHistoryFromVVH(linkIds -- cacLinks.keySet)
-    //          .map(rl => rl.linkId -> LinkGeomSource.HistoryLinkInterface).toMap
-    //        val vvhLinks = cacLinks ++ vvhHistoryLinks
-    //        val updated = roadAddressSeq
-    //          .filterNot(ra => vvhLinks.getOrElse(ra.linkId, ra.linkGeomSource) == ra.linkGeomSource)
-    //          .count(ra =>
-    //            RoadAddressDAO.updateLinkSource(ra.id, vvhLinks(ra.linkId))
-    //          )
-    //        println("%d: %d addresses updated".format(road, updated))
-    //      }
-    //    }
-
-  }
-
   /*private def showFreezeInfo(): Unit = {
     println("Road link geometry freeze is active; exiting without changes")
   }*/
@@ -345,10 +309,6 @@ object DataFixture {
       case Some("apply_change_information_to_road_address_links") =>
         val numThreads = if (args.length > 1) toIntNumber(args(1)) else numberThreads
         applyChangeInformationToRoadAddressLinks(numThreads)
-      /*case Some("update_road_address_link_source") if geometryFrozen =>
-        showFreezeInfo()*/
-      case Some("update_road_address_link_source") =>
-        updateRoadAddressGeometrySource()
       case Some("import_road_names") =>
         importRoadNames()
       case Some("test") =>
@@ -359,7 +319,7 @@ object DataFixture {
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
-        "| apply_change_information_to_road_address_links | update_road_address_link_source | import_road_names | check_road_network")
+        "| apply_change_information_to_road_address_links | import_road_names | check_road_network")
     }
   }
 

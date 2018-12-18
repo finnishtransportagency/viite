@@ -18,50 +18,6 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
       s"($startM - $endM, ${ra.sideCode})"
   }
 
-  def checkRoadPart(roadNumber: Long)(roadPartNumber: Long): List[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1538")
-    //    def outsideOfGeometry(ra: RoadAddress, roadLinks: Seq[RoadLinkLike]): Boolean = {
-    //      !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
-    //        !roadLinks.exists(rl => GeometryUtils.areAdjacent(
-    //          GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
-    //          ra.geometry.map(_.copy(z = 0.0)), MaxMoveDistanceBeforeFloating))
-    //    }
-    //    println(s"Checking road $roadNumber part $roadPartNumber")
-    //    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true, includeSuravage = false)
-    //    assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
-    //    val roadLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(roadAddressList.map(_.linkId).toSet).groupBy(_.linkId)
-    //    val floatingSegments = roadAddressList.filter(ra => roadLinks.get(ra.linkId).isEmpty || outsideOfGeometry(ra, roadLinks.getOrElse(ra.linkId, Seq())))
-    //    floatingSegments.foreach(ra =>
-    //      if (roadLinks.get(ra.linkId).isEmpty) {
-    //        println(s"${pretty(ra)} moved to floating, road link no longer exists")
-    //      } else {
-    //        val rl = roadLinks(ra.linkId).head
-    //        val len = GeometryUtils.geometryLength(rl.geometry)
-    //        println(s"${pretty(ra)} moved to floating, outside of road link geometry (link is $len m)")
-    //        println(s"-------- RoadLink Geometry --------")
-    //        println(s"${rl.geometry.mkString(", ")}")
-    //        println(s"-------- Road Address Geometry --------")
-    //        println(s"${ra.geometry.mkString(", ")}")
-    //        println(s"----------------")
-    //      }
-    //    )
-    //    val floatings = checkGeometryChangeOfSegments(roadAddressList, roadLinks)
-    //    (floatingSegments ++ floatings).distinct
-  }
-
-  def checkRoad(roadNumber: Long): List[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1538")
-    //    try {
-    //      val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
-    //      println(s"Got ${roadPartNumbers.size} part(s) for road $roadNumber")
-    //      roadPartNumbers.flatMap(checkRoadPart(roadNumber))
-    //    } catch {
-    //      case ex: AssertionError =>
-    //        println(s"Assert failed: ${ex.getMessage} on road $roadNumber on Floating Check")
-    //        List()
-    //    }
-  }
-
   def checkRoadNetwork(username: String = "") = {
     time(logger, "Validation of road network") {
       val roadNetworkService = new RoadNetworkService
