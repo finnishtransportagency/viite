@@ -289,7 +289,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                          discontinuity: Discontinuity, roadType: RoadType, roadLinkSource: LinkGeomSource,
-                         roadEly: Long, user: String, roadName: String): Map[String, Any] = {
+                         roadEly: Long, user: String, roadName: String, coordinates: ProjectCoordinates): Map[String, Any] = {
     withDynSession {
       writableWithValidTrack(projectId, track.value) match {
         case None =>
@@ -309,7 +309,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
             newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, discontinuity, roadType, roadEly, roadName, reversed)
           }.toSeq
-          saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
+          saveProjectCoordinates(project.id, coordinates)
           setProjectEly(projectId, roadEly) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
@@ -1172,7 +1172,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                          newRoadNumber: Long, newRoadPartNumber: Long, newTrackCode: Int,
                          userDefinedEndAddressM: Option[Int], roadType: Long = RoadType.PublicRoad.value,
                          discontinuity: Int = Discontinuity.Continuous.value, ely: Option[Long] = None,
-                         reversed: Boolean = false, roadName: Option[String] = None): Option[String] = {
+                         reversed: Boolean = false, roadName: Option[String] = None, coordinates: ProjectCoordinates): Option[String] = {
     def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, Long, Long) = {
       val reservedPart = projectReservedPartDAO.fetchReservedRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber).get
       val newSavedLinks = projectLinkDAO.fetchByProjectRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber, projectId)
@@ -1312,6 +1312,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         recalculateProjectLinks(projectId, userName, Set((newRoadNumber, newRoadPartNumber)) ++
           toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).toSet)
+        saveProjectCoordinates(projectId, coordinates)
         None
       }
     } catch {
