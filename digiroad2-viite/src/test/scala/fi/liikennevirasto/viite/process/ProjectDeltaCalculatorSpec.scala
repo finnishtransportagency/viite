@@ -140,8 +140,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectDeltaCalculator.partition When executing a unchanged operation and terminating 2 different tracks, the links have different roadwayNumbers Then returns the correct From RoadSection -> To RoadSection mapping, roadways are not considered.") {
-    val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide))
-    val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
+    val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L, i)).map(_.copy(track = Track.RightSide, roadwayNumber = 1))
+    val addresses2 = (0 to 11).map(i => createRoadAddress(i * 10, 10L, i)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1, roadwayNumber = 2))
     val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
     val unchanged = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
@@ -442,19 +442,19 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     val addresses = (0 to 9).map(i => {
       createRoadAddress(i * 2, 2L)
     })
-    val projectLinksWithCp = addresses.map(a => {
+    val projectLinksWithCp = addresses.sortBy(_.startAddrMValue).map(a => {
       val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
       if (a.id == 10L)
-        (a, projectLink.copy(calibrationPoints = createCalibrationPoints(a)))
+        (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPoints = createCalibrationPoints(a), roadwayNumber = 1))
       else if(a.id > 10L)
-        (a, projectLink.copy(roadPartNumber = projectLink.roadPartNumber + 1))
+        (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2))
       else
-        (a, projectLink)
+        (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
     })
     val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp)
     partitionCp.size should be(2)
-    val firstSection = partitionCp.head
-    val secondSection = partitionCp.last
+    val firstSection = partitionCp.last
+    val secondSection = partitionCp.head
     val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
     firstSection._1.startMAddr should be(projectLinksWithCp.head._2.startAddrMValue)
     firstSection._1.endMAddr should be(cutPoint.endAddrMValue)
