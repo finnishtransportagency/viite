@@ -782,7 +782,7 @@ class RoadwayDAO extends BaseDAO {
     val createRoadways = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
-    createRoadways.foreach { case (address) =>
+    createRoadways.foreach { case address =>
       val roadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
         Sequences.nextRoadwayNumber
       } else {
