@@ -901,13 +901,13 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
 
       val info = dao.getRoadPartInfo(roadNumber1, roadPartNumber1).getOrElse(fail)
-      info._1 should be(roadwayId)
-      info._2 should be(testLinearLocation1.linkId)
-      info._3 should be(testRoadway1.endAddrMValue)
-      info._4 should be(testRoadway1.discontinuity.value)
-      info._5 should be(testRoadway1.ely)
-      info._6.getOrElse(fail) should be(testRoadway1.startDate)
-      info._7 should be(None)
+      info.id should be(roadwayId)
+      info.linkId should be(testLinearLocation1.linkId)
+      info.endAddrMValue should be(testRoadway1.endAddrMValue)
+      info.discontinuity should be(testRoadway1.discontinuity.value)
+      info.elyCode should be(testRoadway1.ely)
+      info.maxStartDate.getOrElse(fail) should be(testRoadway1.startDate)
+      info.maxEndDate should be(None)
     }
   }
 
