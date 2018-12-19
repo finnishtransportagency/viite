@@ -446,6 +446,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Main method of reversing the direction of a already created project link.
+    * 1st check if the project is writable in the current session, if it is then we check if there still are project links that are unchanged of unhandled, if there are none then the process continues by getting all the discontinuities of all project links.
+    * After that we run the query to reverse the directions, after it's execution we re-fetch the project links (minus the terminated ones) and the original information of the roads.
+    * Using said information we run an all project links of that project to update the "reversed" tag when relative to the side codes of the original roadways.
+    * To finalize we remove all the calibration points, we run the recalculate (which will regenerate calibration points when needed) and update the project coordinates for the UI to jump to when opened.
+    * @param projectId: Long - project id
+    * @param roadNumber: Long - roadway number
+    * @param roadPartNumber: Long - roadway part number
+    * @param links: Sequence of project links - Project links targeted to reverse
+    * @param coordinates: ProjectCoordinates - Coordinates for the project to jump to.
+    * @param username: Sting - User
+    * @return
+    */
   def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Seq[LinkToRevert], coordinates: ProjectCoordinates, username: String): Option[String] = {
     roadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
@@ -609,7 +623,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLink.copy(roadName = Option(projectLinkName))
   }
 
+  /**
+    * Preform the operations necessary to the preparation of the Suravage split.
+    * This includes checking if the links in the context of this project are writable and fetching all previous split information and updating it to the current information.
+    * After this, it will trigger the split without saving, and return the result to the UI, to give the user a chance to view the result and save it, if he desires.
+    * @param linkId
+    * @param userName
+    * @param splitOptions
+    * @return
+    */
   def preSplitSuravageLink(linkId: Long, userName: String, splitOptions: SplitOptions): (Option[Seq[ProjectLink]], Seq[ProjectLink], Option[String], Option[(Point, Vector3d)]) = {
+
     def previousSplitToSplitOptions(plSeq: Seq[ProjectLink], splitOptions: SplitOptions): SplitOptions = {
       val splitsAB = plSeq.filter(_.linkId == linkId)
       val (template, splitA, splitB) = (plSeq.find(_.status == LinkStatus.Terminated),
@@ -644,6 +668,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Preform the operations necessary to the split of the Suravage Link.
+    * This starts by checking if the links in the context of this project are writable and checking that the tracks are valid.
+    * After this, it will execute the split saving and save it.
+    * @param track: Int - Track code
+    * @param projectId: Long - ProjectId
+    * @param coordinates: ProjectCoordinates - Coordinates of the center of the work area
+    * @param linkId: Long - link id
+    * @param username: String - user name
+    * @param splitOptions: SplitOptions - Necessary support information to the split
+    * @return
+    */
   def splitSuravageLink(track: Int, projectId: Long, coordinates: ProjectCoordinates, linkId: Long, username: String,
                         splitOptions: SplitOptions): Option[String] = {
     withDynTransaction {
