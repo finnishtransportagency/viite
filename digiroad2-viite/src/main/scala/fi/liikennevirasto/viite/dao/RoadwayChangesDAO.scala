@@ -179,6 +179,16 @@ class RoadwayChangesDAO {
       else
         Seq(previousRow, nextRow)
     }
+
+    def combineReversed(previousRow: ChangeRow, nextRow: ChangeRow): Seq[ChangeRow] = {
+      if (nextRow.sourceEndAddressM == previousRow.sourceStartAddressM && nextRow.targetStartAddressM == previousRow.targetEndAddressM &&
+        (nextRow.targetDiscontinuity == previousRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty || previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)) &&
+        (nextRow.sourceDiscontinuity == previousRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty || previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)))
+        Seq(previousRow.copy(sourceStartAddressM = nextRow.sourceStartAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
+      else
+        Seq(previousRow, nextRow)
+    }
+
     resultList.groupBy(r =>
       (
         r.changeType, r.reversed,
@@ -187,7 +197,10 @@ class RoadwayChangesDAO {
       )
     ).flatMap { case (_, changeRows) =>
       changeRows.sortBy(_.targetStartAddressM).foldLeft(Seq[ChangeRow]()) {
-        case (result, nextChangeRow) => if (result.isEmpty) Seq(nextChangeRow) else combine(result.last, nextChangeRow)
+        case (result, nextChangeRow) =>
+          if (result.isEmpty) Seq(nextChangeRow)
+          else if(nextChangeRow.reversed) combineReversed(result.last, nextChangeRow)
+          else combine(result.last, nextChangeRow)
       }
     }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode))
   }
