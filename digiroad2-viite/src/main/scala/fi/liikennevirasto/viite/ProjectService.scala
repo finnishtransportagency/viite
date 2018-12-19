@@ -186,6 +186,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       )
   }
 
+  /**
+    * Validator method, this is in charge of evaluating if a combination of road number and road part number already exists in our roadway records.
+    * If it does not then we check if this project is able to reserve the combination.
+    * If the combination is already reserved in this project we simply return their parts, if not we validate the project date with the dates of the road parts.
+    * If the validation of the date passes then we return these road parts.
+    * IN ANY OTHER INSTANCE we return a error message detailing what the problem was
+    * @param roadNumber: Long
+    * @param startPart: Long - road part number of the start of the reservation
+    * @param endPart: Long - road part number that ends the reservation
+    * @param projectDate: DateTime
+    * @return Either the error message or the reserved road parts.
+    */
   def checkRoadPartExistsAndReservable(roadNumber: Long, startPart: Long, endPart: Long, projectDate: DateTime): Either[String, Seq[ProjectReservedPart]] = {
     withDynTransaction {
       checkRoadPartsExist(roadNumber, startPart, endPart) match {
@@ -235,12 +247,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Validation of the start and end dates of the project when compared with those in the roads.
+    * The start date of the roadways need to exist and be before the project date, same as the end date.
+    * @param reservedParts -Sequence of ProjectReservedParts
+    * @param date: DateTime -  Project Date
+    * @return Either an error message or nothing
+    */
   def validateProjectDate(reservedParts: Seq[ProjectReservedPart], date: DateTime): Option[String] = {
     // TODO If RoadwayDAO.getRoadPartInfo would return Option[RoadPartInfo], we could use the named attributes instead of these numbers
     reservedParts.map(rp => (rp.roadNumber, rp.roadPartNumber) -> roadwayDAO.getRoadPartInfo(rp.roadNumber, rp.roadPartNumber)).toMap.
       filterNot(_._2.isEmpty).foreach {
       case ((roadNumber, roadPartNumber), value) =>
-        val (startDate, endDate) = value.map(v => (v._6, v._7)).get
+        val (startDate, endDate) = value.map(v => (v.maxEndDate, v.maxEndDate)).get
         if (startDate.nonEmpty && startDate.get.isAfter(date))
           return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
             s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
@@ -259,9 +278,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def generateAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
     roadwayDAO.getRoadPartInfo(roadNumber, roadPart).map {
-      case (_, linkId, addrLength, discontinuity, ely, _, _) =>
-        ProjectReservedPart(0L, roadNumber, roadPart, Some(addrLength), Some(Discontinuity.apply(discontinuity.toInt)), Some(ely),
-          newLength = Some(addrLength), newDiscontinuity = Some(Discontinuity.apply(discontinuity.toInt)), newEly = Some(ely), Some(linkId))
+      case (roadPartInfo) =>
+        ProjectReservedPart(0L, roadNumber, roadPart, Some(roadPartInfo.endAddrMValue), Some(roadPartInfo.discontinuity), Some(roadPartInfo.elyCode),
+          newLength = Some(roadPartInfo.endAddrMValue), newDiscontinuity = Some(roadPartInfo.discontinuity), newEly = Some(roadPartInfo.elyCode), Some(roadPartInfo.linkId))
     }
   }
 
