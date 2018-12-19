@@ -171,22 +171,24 @@ class RoadwayChangesDAO {
     * @return
     */
   private def mergeChangeRows(resultList: List[ChangeRow]): List[ChangeRow] = {
-    def combine(previousRow: ChangeRow, nextRow: ChangeRow): Seq[ChangeRow] = {
+    def combine(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
+      val previousRow = resultList.last
       if (previousRow.sourceEndAddressM == nextRow.sourceStartAddressM && previousRow.targetEndAddressM == nextRow.targetStartAddressM &&
         (previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty || previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)) &&
         (previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty || previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)))
         Seq(previousRow.copy(sourceEndAddressM = nextRow.sourceEndAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
       else
-        Seq(previousRow, nextRow)
+        resultList ++ Seq(nextRow)
     }
 
-    def combineReversed(previousRow: ChangeRow, nextRow: ChangeRow): Seq[ChangeRow] = {
+    def combineReversed(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
+      val previousRow = resultList.last
       if (nextRow.sourceEndAddressM == previousRow.sourceStartAddressM && nextRow.targetStartAddressM == previousRow.targetEndAddressM &&
         (nextRow.targetDiscontinuity == previousRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty || previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)) &&
         (nextRow.sourceDiscontinuity == previousRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty || previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)))
         Seq(previousRow.copy(sourceStartAddressM = nextRow.sourceStartAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
       else
-        Seq(previousRow, nextRow)
+        resultList ++ Seq(nextRow)
     }
 
     resultList.groupBy(r =>
@@ -199,8 +201,8 @@ class RoadwayChangesDAO {
       changeRows.sortBy(_.targetStartAddressM).foldLeft(Seq[ChangeRow]()) {
         case (result, nextChangeRow) =>
           if (result.isEmpty) Seq(nextChangeRow)
-          else if(nextChangeRow.reversed) combineReversed(result.last, nextChangeRow)
-          else combine(result.last, nextChangeRow)
+          else if(nextChangeRow.reversed) combineReversed(result, nextChangeRow)
+          else combine(result, nextChangeRow)
       }
     }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode))
   }
