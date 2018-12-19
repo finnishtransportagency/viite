@@ -600,19 +600,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //    }
   }
 
-//  private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
+  private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
 //    throw new NotImplementedError("Will be implemented at VIITE-1540")
-////    withDynSession {
-////      Await.result(boundingBoxResult.suravageF, Duration.Inf).map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-////    }
-//  }
+    withDynSession {
+      Await.result(boundingBoxResult.suravageF, Duration.Inf).map(x => (x, None)).map(roadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
+  }
 
   def getSuravageRoadLinkAddressesByLinkIds(linkIdsToGet: Set[Long]): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    val suravageLinks = roadLinkService.getSuravageRoadLinksFromVVH(linkIdsToGet)
-//    withDynSession {
-//      suravageLinks.map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-//    }
+//    throw new NotImplementedError("Will be implemented at VIITE-1540")
+    Seq()
+    val suravageLinks = roadLinkService.getSuravageVVHRoadLinksByLinkIdsFromVVH(linkIdsToGet)
+    withDynSession {
+      suravageLinks.map(x => (x, None)).map(roadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
   }
 
   def getRoadAddressLinksWithSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
@@ -624,12 +625,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
       Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads, frozenTimeVVHAPIServiceEnabled)),
       Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set())),
-      Future(roadLinkService.getSuravageLinksFromVVH(boundingRectangle, Set()))
+      Future(roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, Set()))
     )
 
-    getRoadAddressLinks(boundingBoxResult)
-//    val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, combinedFuture)
-//    suravageAddresses ++ roadAddressLinks
+    val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, boundingBoxResult)
+    suravageAddresses ++ getRoadAddressLinks(boundingBoxResult)
+
   }
 
   // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
@@ -1099,7 +1100,7 @@ case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 case class LinearLocationResult(current: Seq[LinearLocation], floating: Seq[LinearLocation])
 
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
-                             roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[RoadLink]])
+                             roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[VVHRoadlink]])
 
 case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val currentSegments: Seq[RoadAddress] = v._1

@@ -666,7 +666,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
-        val splitResult = ProjectLinkSplitter.split(roadLink.get, newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinks, splitOptions)
+        val splitResult = try {
+          ProjectLinkSplitter.split(roadLink.get, newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinks, splitOptions)
+        } catch {
+          case e: Exception => {
+            logger.error(e.getMessage)
+            throw e
+          }
+        }
         (Some(splitResult), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
@@ -1030,7 +1037,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Future(
         if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
         else Seq()),
-      roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, municipalities)
+      Future(roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, municipalities))
     )
   }
 
