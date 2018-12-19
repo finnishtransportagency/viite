@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, _}
-import fi.liikennevirasto.viite.Dummies.{dummyLinearLocation, dummyProjectLink, dummyRoadLink, dummyRoadway, dummyVvhHistoryRoadLink}
+import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
@@ -2207,6 +2207,35 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
      linksAfterRevert.map(_.geometry).contains(geomAfterRevert) should be(true)
    }
  }
+
+  test("Test changeDirection() When projectLinks are reversed the track codes must switch and start_addr_m and end_addr_m should be the same for the first and last links") {
+    runWithRollback {
+
+      val roadNumber = 9999L
+      val roadPartNumber = 1L
+
+      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0, 100, 150, 300), true, roadNumber, roadPartNumber)
+
+      val projectLinksBefore = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+
+      val linksToRevert = projectLinksBefore.map( pl => LinkToRevert(pl.id, pl.id, LinkStatus.Transfer.value, pl.geometry))
+      projectService.changeDirection(project.id, roadNumber, roadPartNumber, linksToRevert, ProjectCoordinates(0,0, 5), "testUser")
+
+      val projectLinksAfter = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+      projectLinksAfter.size should be(projectLinksBefore.size)
+      projectLinksAfter.head.startAddrMValue should be(projectLinksBefore.head.startAddrMValue)
+      projectLinksAfter.last.endAddrMValue should be(projectLinksBefore.last.endAddrMValue)
+      var i = 0;
+      projectLinksAfter.foreach(pl => {
+        pl.track match {
+          case Track.RightSide => projectLinksBefore(i).track should be(Track.LeftSide)
+          case Track.LeftSide => projectLinksBefore(i).track should be(Track.RightSide)
+          case _ => "ignore"
+        }
+        i += 1
+      })
+    }
+  }
 
   //TODO remove after cleaning all floating code
   /*test("If the suplied, old, road address has a valid_to < sysdate then the outputted, new, road addresses are floating") {
