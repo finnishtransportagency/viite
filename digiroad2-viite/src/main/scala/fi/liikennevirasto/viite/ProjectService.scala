@@ -1570,7 +1570,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           checkAndUpdateProjectStatus(project)
         }
       } catch {
-        case t: SQLException => logger.error(s"SQL error while importing project: $project! Check if any roads have multiple valid names with out end dates ", t.getStackTrace)
+        case t: SQLException => logger.error(s"SQL error while importing project: $project! ${t.getMessage}", t)
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
       }
     }

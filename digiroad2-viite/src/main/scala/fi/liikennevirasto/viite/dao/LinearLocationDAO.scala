@@ -211,7 +211,7 @@ class LinearLocationDAO {
     )
 
     createLinearLocations.foreach {
-      case (location) =>
+      case location =>
         val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
           Sequences.nextRoadwayNumber
         } else {
