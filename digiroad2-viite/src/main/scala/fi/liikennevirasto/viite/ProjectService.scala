@@ -687,6 +687,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Main workhorse of the pre-split. This works by fetching the project and suravage links, with the suravage links we create a bounding box.
+    * Using said bounding box we search for all project links that are inside of it, after we get the project links we get the vvh roadlinks related to them.
+    * Afterwards we filter the project links, the filtering criteria is that they must be adjacent to the suravage links then we rank template links near suravage link by how much they overlap with suravage geometry.
+    * With the ranking in place we chose the best fit and using that we have our split but we do not save it in the DB.
+    * @param linkId: Long - linkId
+    * @param username: String - User name
+    * @param splitOptions
+    * @return
+    */
   def preSplitSuravageLinkInTX(linkId: Long, username: String,
                                splitOptions: SplitOptions): (Option[SplitResult], Option[String], Option[(Point, Vector3d)]) = {
     val projectId = splitOptions.projectId
@@ -734,6 +744,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+
+  /**
+    * Main workhorse of the actual split. This works by evoking the preSplitSuravageLinkInTX since it's the one that does most of the work.
+    * After the evocation we just remove all the project links sharing a link id with those in the result, create the ones in the result, update the project coordinates and then call the recalculation.
+    * @param linkId: Long - linkId
+    * @param username: String - User name
+    * @param splitOptions
+    * @return
+    */
   def splitSuravageLinkInTX(linkId: Long, username: String, splitOptions: SplitOptions): Option[String] = {
     val (splitResultOption, errorMessage, _) = preSplitSuravageLinkInTX(linkId, username, splitOptions)
     if (errorMessage.nonEmpty) {
@@ -891,7 +910,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  //This method will not be used now because we don't want to show suravage in project mode. It will be used in future
+  /**
+    * This method will not be used now because we don't want to show suravage in project mode. It will be used in future.
+    * It will execute a search by bounding box to find both the suravage links and project links contained in them, following that it will filter out all suravages that do not have a match with the project links.
+    * With the previous results we just run them through the builder and output the result.
+    * @param roadAddressService: RoadAddressService - The road address service
+    * @param projectId: Long - The active project id
+    * @param boundingRectangle: BoundingRectangle - Search rectangle defined by 2 point.
+    * @param roadNumberLimits: Seq(Int, Int) - Defines the upper and lower limits of the road number that can be retrived.
+    * @param municipalities: Seq(Int) - Defines from what municipalities we fetch infomration.
+    * @param everything: Boolean - Used in the filter
+    * @param publicRoads: Boolean - Used in the filter
+    * @return
+    */
   def getProjectLinksWithSuravage(roadAddressService: RoadAddressService, projectId: Long, boundingRectangle: BoundingRectangle,
                                   roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false,
                                   publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
@@ -982,8 +1013,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Main function responsible for fetching and building Project Road Links.
+    * First we fetch all kinds of road addresses, project links and vvh road links inside a bounding box.
+    * After that we fetch the unaddressed links via bounding box as well.
+    * With all the information we have now we start to call the various builders to get the information from multiple sources combined.
+    * Once our road information is combined we pass it to the fillTopology in order for it to do some adjustments when needed and to finalize it we filter via the complementaryLinkFilter and evoke the final builder to get the result we need.
+    *
+    * @param projectId: Long - Project id
+    * @param boundingRectangle: BoundingRectangle - designates where we search
+    * @param roadNumberLimits: Seq[(Int, Int)] - used in the filtering of results
+    * @param municipalities: Set[Int] - used to limit the results to these municipalities
+    * @param everything: Boolean - used in the filtering of results
+    * @param publicRoads: Boolean - used in the filtering of results
+    * @param fetch: ProjectBoundingBoxResult - collection of all our combined fetches from different sources
+    * @return
+    */
   def fetchProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                             everything: Boolean = false, publicRoads: Boolean = false, fetch: ProjectBoundingBoxResult): Seq[ProjectAddressLink] = {
+
     def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                 everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
       everything || publicRoads || roadNumberLimits.exists {
