@@ -59,6 +59,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
   val properties: Properties = {
     val props = new Properties()
@@ -1807,8 +1808,19 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'ROAD TEST')""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
-      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectId)
+      val changeInfos = List(
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1)
+      )
 
+      val changes = List(
+        ProjectRoadwayChange(projectId, Some("test project"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0))
+      )
+
+      val projectBefore = projectService.getSingleProjectById(projectId)
+      projectService.handleNewRoadNames(changes, projectBefore.get)
       val project = projectService.getSingleProjectById(projectId)
       val validNamesAfterUpdate = RoadNameDAO.getCurrentRoadNamesByRoadNumber(66666)
       validNamesAfterUpdate.size should be(1)
@@ -1932,11 +1944,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
         sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86)""".execute
         sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'another road name test')""".execute
-        val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
-        projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectId)
 
-        val project = projectService.getSingleProjectById(projectId)
+        val changeInfos = List(
+          RoadwayChangeInfo(AddressChangeType.New,
+            source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            Continuous, RoadType.apply(1), reversed = false, 1)
+        )
+
+        val changes = List(
+          ProjectRoadwayChange(projectId, Some("test project"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0))
+        )
+
+        val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
+        val projectBefore = projectService.getSingleProjectById(projectId)
+        projectService.handleNewRoadNames(changes, projectBefore.get)
         val namesAfterUpdate = RoadNameDAO.getLatestRoadName(66666)
+        val project = projectService.getSingleProjectById(projectId)
         project.get.statusInfo.getOrElse("") should be(roadNameWasNotSavedInProject + s"${66666}")
         namesAfterUpdate.get.roadName should be(namesBeforeUpdate.get.roadName)
       }
@@ -1949,10 +1973,22 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
         sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86)""".execute
         sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
-        projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectId)
+        val changeInfos = List(
+          RoadwayChangeInfo(AddressChangeType.New,
+            source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            Continuous, RoadType.apply(1), reversed = false, 1)
+        )
 
-        val project = projectService.getSingleProjectById(projectId)
+        val changes = List(
+          ProjectRoadwayChange(projectId, Some("test project"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0))
+        )
+
+        val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
+        val projectBefore = projectService.getSingleProjectById(projectId)
+        projectService.handleNewRoadNames(changes, projectBefore.get)
         val namesAfterUpdate = RoadNameDAO.getLatestRoadName(66666)
+        val project = projectService.getSingleProjectById(projectId)
         project.get.statusInfo should be(None)
         namesAfterUpdate.get.roadName should be("road name test")
       }
@@ -1970,8 +2006,24 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 55555, 'road name test2')""".execute
         RoadNameDAO.getLatestRoadName(55555).isEmpty should be (true)
         RoadNameDAO.getLatestRoadName(66666).isEmpty should be (true)
-        projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, projectId)
+        val changeInfos = List(
+          RoadwayChangeInfo(AddressChangeType.New,
+            source = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            target = dummyRoadwayChangeSection(Some(66666L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            Continuous, RoadType.apply(1), reversed = false, 1),
+          RoadwayChangeInfo(AddressChangeType.New,
+            source = dummyRoadwayChangeSection(Some(55555L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            target = dummyRoadwayChangeSection(Some(55555L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+            Continuous, RoadType.apply(1), reversed = false, 1)
+        )
 
+        val changes = List(
+          ProjectRoadwayChange(projectId, Some("test project"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0)),
+          ProjectRoadwayChange(projectId, Some("test project"), 8, "Test", DateTime.now(), changeInfos(1), DateTime.now(), Some(0))
+        )
+
+        val projectBefore = projectService.getSingleProjectById(projectId)
+        projectService.handleNewRoadNames(changes, projectBefore.get)
         val project = projectService.getSingleProjectById(projectId)
         val namesAfterUpdate55555 = RoadNameDAO.getLatestRoadName(55555)
         val namesAfterUpdate66666 = RoadNameDAO.getLatestRoadName(66666)
@@ -2246,7 +2298,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectLinkNameDAO.create(project.id, testRoadNumber, testName)
 
       // Method to be tested
-      projectService.handleNewRoadNames(changes)
+      projectService.handleNewRoadNames(changes, project)
 
       // Test if project link is removed from DB
       ProjectLinkNameDAO.get(project.id, testRoadNumber) should be (None)
@@ -2311,12 +2363,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test handleTransferAndRenumeration: Transfer to new roadway - If source roadway exists expire its road name and create new road name for targer road number") {
     runWithRollback {
 
-      val srcRoadNumber = 9998
-      val targetRoadNumber = 9999
+      val srcRoadNumber = 99998
+      val targetRoadNumber = 99999
       val testName = "TEST ROAD NAME"
 
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
         Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
@@ -2341,8 +2393,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
-        rn.endDate.isDefined should be(true)
-        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        if(rn.endDate.isDefined) {
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        }
       })
       val targetRoadNames = RoadNameDAO.getAllByRoadNumber(targetRoadNumber)
       targetRoadNames.foreach(rn => {
@@ -2355,12 +2408,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test handleTransferAndRenumeration: Transfer to existing roadway - If source roadway exists expire its roadname") {
     runWithRollback {
 
-      val srcRoadNumber = 9998
-      val targetRoadNumber = 9999
+      val srcRoadNumber = 99998
+      val targetRoadNumber = 99999
       val testName = "TEST ROAD NAME"
 
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
         Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
@@ -2388,8 +2441,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
-        rn.endDate.isDefined should be(true)
-        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        if(rn.endDate.isDefined) {
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        }
       })
     }
   }
@@ -2397,12 +2451,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test handleTransferAndRenumeration: Renumeration to new roadway - If source roadway exists expire its road name and create new road name for targer road number") {
     runWithRollback {
 
-      val srcRoadNumber = 9998
-      val targetRoadNumber = 9999
+      val srcRoadNumber = 99998
+      val targetRoadNumber = 99999
       val testName = "TEST ROAD NAME"
 
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
         Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
@@ -2427,8 +2481,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
-        rn.endDate.isDefined should be(true)
-        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        if(rn.endDate.isDefined) {
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        }
       })
       val targetRoadNames = RoadNameDAO.getAllByRoadNumber(targetRoadNumber)
       targetRoadNames.foreach(rn => {
@@ -2441,12 +2496,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test handleTransferAndRenumeration: Renumeration to existing roadway - If source roadway exists expire its roadname") {
     runWithRollback {
 
-      val srcRoadNumber = 9998
-      val targetRoadNumber = 9999
+      val srcRoadNumber = 99998
+      val targetRoadNumber = 99999
       val testName = "TEST ROAD NAME"
 
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
         Seq(), None)
       val project = projectService.createRoadLinkProject(rap)
       ProjectLinkNameDAO.create(project.id, targetRoadNumber, testName)
@@ -2474,8 +2529,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
-        rn.endDate.isDefined should be(true)
-        rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        if(rn.endDate.isDefined) {
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+        }
       })
     }
   }
