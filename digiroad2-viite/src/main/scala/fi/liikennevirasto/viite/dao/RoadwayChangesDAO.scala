@@ -156,7 +156,58 @@ class RoadwayChangesDAO {
   }
 
   private def queryList(query: String) = {
-    val resultList = Q.queryNA[ChangeRow](query).list
+    mapper(Q.queryNA[ChangeRow](query).list)
+  }
+
+  private def queryResumeList(query: String) = {
+    mapper(mergeChangeRows(Q.queryNA[ChangeRow](query).list))
+  }
+
+  /**
+    * Merge all the change rows by source and target road number, road part number, road type, ely, change type and reversed.
+    * Then if the end address of the previous row is equal to the start of the next one and the dicontinuity is equal the merge is performed.
+    *
+    * @param resultList
+    * @return
+    */
+  private def mergeChangeRows(resultList: List[ChangeRow]): List[ChangeRow] = {
+    def combine(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
+      val previousRow = resultList.last
+      if (previousRow.sourceEndAddressM == nextRow.sourceStartAddressM && previousRow.targetEndAddressM == nextRow.targetStartAddressM &&
+        (previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty || previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)) &&
+        (previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty || previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)))
+        Seq(previousRow.copy(sourceEndAddressM = nextRow.sourceEndAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
+      else
+        resultList ++ Seq(nextRow)
+    }
+
+    def combineReversed(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
+      val previousRow = resultList.last
+      if (nextRow.sourceEndAddressM == previousRow.sourceStartAddressM && nextRow.targetStartAddressM == previousRow.targetEndAddressM &&
+        (nextRow.targetDiscontinuity == previousRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty || previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)) &&
+        (nextRow.sourceDiscontinuity == previousRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty || previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)))
+        Seq(previousRow.copy(sourceStartAddressM = nextRow.sourceStartAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
+      else
+        resultList ++ Seq(nextRow)
+    }
+
+    resultList.groupBy(r =>
+      (
+        r.changeType, r.reversed,
+        r.sourceRoadNumber, r.sourceTrackCode, r.sourceStartRoadPartNumber, r.sourceEndRoadPartNumber, r.sourceRoadType, r.sourceEly,
+        r.targetRoadNumber, r.targetTrackCode, r.targetStartRoadPartNumber, r.targetEndRoadPartNumber, r.targetRoadType, r.targetEly
+      )
+    ).flatMap { case (_, changeRows) =>
+      changeRows.sortBy(_.targetStartAddressM).foldLeft(Seq[ChangeRow]()) {
+        case (result, nextChangeRow) =>
+          if (result.isEmpty) Seq(nextChangeRow)
+          else if(nextChangeRow.reversed) combineReversed(result, nextChangeRow)
+          else combine(result, nextChangeRow)
+      }
+    }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode))
+  }
+
+  private def mapper(resultList: List[ChangeRow]): List[ProjectRoadwayChange] = {
     resultList.map { row => {
       val changeInfo = toRoadwayChangeInfo(row)
       val (user, date) = getUserAndModDate(row)
@@ -166,7 +217,7 @@ class RoadwayChangesDAO {
     }
   }
 
-  def fetchRoadwayChanges(projectIds: Set[Long]): List[ProjectRoadwayChange] = {
+  private def fetchRoadwayChanges(projectIds: Set[Long], queryList: String => List[ProjectRoadwayChange]): List[ProjectRoadwayChange] = {
     if (projectIds.isEmpty)
       return List()
     val projectIdsString = projectIds.mkString(",")
@@ -282,11 +333,12 @@ class RoadwayChangesDAO {
       roadwayChangePS.setLong(20, nextChangeOrderLink)
       roadwayChangePS.addBatch()
 
-      newRoadwaySection.projectLinks.foreach {
-        pl =>
+      val projectLinkIdsToAdd = (oldRoadwaySection.projectLinks ++ newRoadwaySection.projectLinks).map(_.id).toSet
+      projectLinkIdsToAdd.foreach {
+        projectLinkId =>
           roadWayChangesLinkPS.setLong(1, nextChangeOrderLink)
           roadWayChangesLinkPS.setLong(2, projectId)
-          roadWayChangesLinkPS.setLong(3, pl.id)
+          roadWayChangesLinkPS.setLong(3, projectLinkId)
           roadWayChangesLinkPS.addBatch()
       }
     }
@@ -336,5 +388,13 @@ class RoadwayChangesDAO {
         }
       case _ => false
     }
+  }
+
+  def fetchRoadwayChanges(projectIds: Set[Long]): List[ProjectRoadwayChange] = {
+    fetchRoadwayChanges(projectIds, queryList)
+  }
+
+  def fetchRoadwayChangesResume(projectIds: Set[Long]): List[ProjectRoadwayChange] = {
+    fetchRoadwayChanges(projectIds, queryResumeList)
   }
 }
