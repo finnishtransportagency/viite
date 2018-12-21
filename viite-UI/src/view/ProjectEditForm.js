@@ -178,7 +178,7 @@
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
-      $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
+      $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
     var fillDistanceValues = function (selectedLinks) {
@@ -391,7 +391,7 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
-      rootElement.on('change', '#roadTypeDropDown', function(){
+      rootElement.on('change', '#roadTypeDropdown', function(){
         setFormDirty();
       });
 
@@ -409,7 +409,7 @@
         $('#osa').prop('disabled',false);
         $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
-        $('#roadTypeDropDown').prop('disabled',false);
+        $('#roadTypeDropdown').prop('disabled',false);
         if(this.value == LinkStatus.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
@@ -444,7 +444,7 @@
           $('#osa').prop('disabled',true);
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
-          $('#roadTypeDropDown').prop('disabled',false);
+          $('#roadTypeDropdown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -478,7 +478,7 @@
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
-          $('#roadTypeDropDown').prop('disabled',true);
+          $('#roadTypeDropdown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
