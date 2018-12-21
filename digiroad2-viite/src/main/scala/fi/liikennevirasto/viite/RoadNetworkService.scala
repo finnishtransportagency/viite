@@ -2,10 +2,7 @@ package fi.liikennevirasto.viite
 
 import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 
-import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError.{InconsistentTopology, OverlappingRoadAddresses}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
@@ -14,7 +11,6 @@ import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-
 
 class RoadNetworkService {
 
@@ -54,7 +50,7 @@ class RoadNetworkService {
               || !allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._2) && l.id != loc.id))
           )
           locationsError.map { loc =>
-            RoadNetworkError(options.nextNetworkVersion, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
           }
         }.toSeq
         errors
@@ -71,7 +67,7 @@ class RoadNetworkService {
             allLocations.head.calibrationPoints._1.isEmpty || allLocations.head.calibrationPoints._2.isEmpty
           )
           locationsError.map { loc =>
-            RoadNetworkError(options.nextNetworkVersion, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
           }
         }.toSeq
       } else {
@@ -88,7 +84,7 @@ class RoadNetworkService {
           )
 
           (middleCalibrationPointsError ++ edgeCalibrationPointsError).map { loc =>
-            RoadNetworkError(options.nextNetworkVersion, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
           }
         }.toSeq
       }
@@ -99,58 +95,120 @@ class RoadNetworkService {
     def checkAddressMValues(rw1: Roadway, rw2: Roadway, errors: Seq[RoadNetworkError]): Seq[RoadNetworkError] = {
       rw1.endAddrMValue != rw2.startAddrMValue match {
         case true => {
-          errors :+ RoadNetworkError(options.nextNetworkVersion, rw1.id, 0L, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+          errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
         }
         case _ => Seq()
       }
     }
 
-    try {
-      val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
-      val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
-      val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
-      roadways.par.foreach { group =>
-        val (section, roadway) = group
+    def runActor = {
 
-        val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
-        val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
-        logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
+      withDynTransaction{
+        try {
+          val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
+          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
+          val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
 
-        val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
+          val errors = roadways.flatMap { group =>
+            val (section, roadway) = group
 
-        val mappedCombined = combinedRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
-        val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
+            val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
+            val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
+            logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
 
-        val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
-        val combinedErrors = checkCombinedLinearLocations(mappedCombined)
-        val linearLocationErrors = twoTrackErrors ++ combinedErrors
+            val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
 
-        logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+            val mappedCombined = combinedRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
+            val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
 
-        val roadErrors = roadwaysErrors ++ linearLocationErrors
+            val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
+            val combinedErrors = checkCombinedLinearLocations(mappedCombined)
+            val linearLocationErrors = twoTrackErrors ++ combinedErrors
 
-        if (roadErrors.nonEmpty) {
-          val uniqueErrors = roadErrors.groupBy(g => (g.roadwayId, g.linearLocationId, g.error, g.network_version)).map(_._2.head)
-          val existingErrors = roadNetworkDAO.getRoadNetworkErrors(AddressError.InconsistentTopology)
-          val newErrors = uniqueErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
-          newErrors.foreach { e =>
-            logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
-            roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, InconsistentTopology)
+            logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+
+            roadwaysErrors ++ linearLocationErrors
+          }
+          if (errors.nonEmpty) {
+            val uniqueErrors = errors.groupBy(g => (g.roadwayId, g.linearLocationId, g.error, g.network_version)).map(_._2.head).toSeq
+            val existingErrors = roadNetworkDAO.getRoadNetworkErrors(AddressError.InconsistentTopology)
+            val newErrors = uniqueErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
+            newErrors.sortBy(_.roadwayId).foreach { e =>
+              logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
+              roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, e.error, e.network_version)
+            }
+          }
+        } catch {
+          case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
+          case e: SQLException => {
+            logger.info("SQL Exception")
+            logger.error(e.getMessage)
+            dynamicSession.rollback()
+          }
+          case e: Exception => {
+            logger.error(e.getMessage)
+            dynamicSession.rollback()
           }
         }
       }
-    } catch {
-      case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
-      case e: SQLException => {
-        logger.info("SQL Exception")
-        logger.error(e.getMessage)
-        dynamicSession.rollback()
-      }
-      case e: Exception => {
-        logger.error(e.getMessage)
-        dynamicSession.rollback()
+    }
+
+    def runBatch = {
+
+      withDynTransaction{
+        try {
+          val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
+          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
+          val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
+
+          val errors = roadways.flatMap { group =>
+            val (section, roadway) = group
+
+            val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
+            val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
+            logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
+
+            val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
+
+            val mappedCombined = combinedRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
+            val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
+
+            val twoTrackErrors = checkTwoTrackLinearLocations(mappedTwoTrack)
+            val combinedErrors = checkCombinedLinearLocations(mappedCombined)
+            val linearLocationErrors = twoTrackErrors ++ combinedErrors
+
+            logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+
+            roadwaysErrors ++ linearLocationErrors
+          }
+          if (errors.nonEmpty) {
+            val uniqueErrors = errors.groupBy(g => (g.roadwayId, g.linearLocationId, g.error, g.network_version)).map(_._2.head).toSeq
+            val existingErrors = roadNetworkDAO.getRoadNetworkErrors(AddressError.InconsistentTopology)
+            val newErrors = uniqueErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
+            newErrors.sortBy(_.roadwayId).foreach { e =>
+              logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
+              roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, e.error, e.network_version)
+            }
+          }
+        } catch {
+          case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
+          case e: SQLException => {
+            logger.info("SQL Exception")
+            logger.error(e.getMessage)
+            dynamicSession.rollback()
+          }
+          case e: Exception => {
+            logger.error(e.getMessage)
+            dynamicSession.rollback()
+          }
+        }
       }
     }
+
+    if(options.throughActor)
+      runActor
+    else runBatch
+
   }
 
   def getLatestPublishedNetworkDate: Option[DateTime] = {
@@ -160,4 +218,4 @@ class RoadNetworkService {
   }
 }
 
-case class RoadCheckOptions(roadways: Seq[Long], roadNumbers: Set[Long], currNetworkVersion: Option[Long], nextNetworkVersion: Long)
+case class RoadCheckOptions(roadways: Seq[Long], roadNumbers: Set[Long], currNetworkVersion: Option[Long], nextNetworkVersion: Long, throughActor: Boolean)

@@ -28,9 +28,8 @@ class RoadNetworkDAO {
     sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
 
-  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, addressError: AddressError): Unit = {
+  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, addressError: AddressError, networkVersion: Option[Long]): Unit = {
     val timestamp = System.currentTimeMillis()
-    val lastVersion = getLatestRoadNetworkVersionId
     val networkErrorPS = dynamicSession.prepareStatement(
       """INSERT INTO road_network_error (id, ROADWAY_ID, linear_location_id, error_code, error_timestamp, road_network_version)
       values (?, ?, ?, ?, ?, ?)""")
@@ -40,7 +39,7 @@ class RoadNetworkDAO {
     networkErrorPS.setLong(3, linearLocationId)
     networkErrorPS.setLong(4, addressError.value)
     networkErrorPS.setDouble(5, timestamp)
-    lastVersion match {
+    networkVersion match {
       case Some(v) => networkErrorPS.setLong(6, v)
       case _ => networkErrorPS.setString(6, null)
     }

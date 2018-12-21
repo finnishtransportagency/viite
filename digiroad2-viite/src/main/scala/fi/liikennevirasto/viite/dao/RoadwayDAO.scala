@@ -711,7 +711,7 @@ class RoadwayDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  def expireHistory(ids: Set[Long], endDate: DateTime, terminated: TerminationCode = TerminationCode.NoTermination): Int = {
+  def expireHistory(ids: Set[Long]): Int = {
     if (ids.isEmpty) {
       0
     } else {
