@@ -186,7 +186,7 @@
       if (!_.isUndefined(link.discontinuity) && link.discontinuity !== 5 && (link.marker == 'A' || link.marker == 'B'))
         $('#discontinuityDropdown').val(link.discontinuity);
       if (!_.isUndefined(link.marker) && (link.marker == 'A' || link.marker == 'B'))
-        $('#roadTypeDropDown').val(link.roadTypeId);
+        $('#roadTypeDropdown').val(link.roadTypeId);
     };
 
     var disableFormInputs = function () {
@@ -353,7 +353,7 @@
         $('#osa').prop('disabled', disabled);
         $('#trackCodeDropdown').prop('disabled', disabled);
         $('#discontinuityDropdown').prop('disabled', false);
-        $('#roadTypeDropDown').prop('disabled', false);
+        $('#roadTypeDropdown').prop('disabled', false);
       });
 
       rootElement.on('change', '.split-form-group', function () {

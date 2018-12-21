@@ -253,6 +253,11 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       return layer.getSource().getFeatures();
     };
 
+  var getLayer = function(map, layerName){
+      var layer = getLayerByName(map, layerName);
+      return layer;
+  };
+
       var getFeaturesLinkData = function (map, layerName) {
       var features =  getFeatures(map, layerName);
       return _.chain(features).map(function(feature){
@@ -337,9 +342,10 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       getLayerByName: getLayerByName,
       selectTestData: selectTestData,
       getFeatures: getFeatures,
-        getFeaturesLinkData: getFeaturesLinkData,
+      getLayer: getLayer,
+      getFeaturesLinkData: getFeaturesLinkData,
       getFeatureByLinkId: getFeatureByLinkId,
-        getLinkDataByLinkId: getLinkDataByLinkId,
+      getLinkDataByLinkId: getLinkDataByLinkId,
       selectSingleFeatureByInteraction: selectSingleFeatureByInteraction,
       selectTool: selectTool,
       clickCancelButton: clickCancelButton
