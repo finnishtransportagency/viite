@@ -89,6 +89,12 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry))
   }
 
+  /**
+    * This will return a RoadAddressLink based on the information of suravage links we fetch from VVH.
+    * It is possible that we already have road addresses or project links formed using those suravage links if so we include that information on the final RoadAddressLink.
+    * @param roadLinkProjectIdTuple: (VVHRoadlink, Option[Long]) - The suravage link and a possible project id
+    * @return
+    */
   def buildSuravageRoadAddressLink(roadLinkProjectIdTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
     val roadLink = roadLinkProjectIdTuple._1
     val roadAddresses = roadLinkProjectIdTuple._2 match { //Check if project attribute has been initialized
