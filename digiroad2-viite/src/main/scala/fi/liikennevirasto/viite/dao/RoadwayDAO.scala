@@ -768,25 +768,8 @@ class RoadwayDAO extends BaseDAO {
     createRoadways.map(_.id).toSeq
   }
 
-  case class RoadPartInfo(id: Long, linkId: Long, endAddrMValue: Long, discontinuity: Discontinuity, elyCode: Long, maxStartDate: Option[DateTime], maxEndDate: Option[DateTime])
-
-  private implicit val getRoadPartInfo: GetResult[RoadPartInfo] = new GetResult[RoadPartInfo] {
-    def apply(r: PositionedResult) = {
-
-      val id = r.nextLong()
-      val linkId = r.nextLong()
-      val endAddrMValue = r.nextLong()
-      val discontinuity = Discontinuity.apply(r.nextLong())
-      val elyCode = r.nextInt()
-      val maxStartDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val maxEndDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-
-      RoadPartInfo(id, linkId, endAddrMValue, discontinuity, elyCode, maxStartDate, maxEndDate)
-    }
-  }
-
   // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
-  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[RoadPartInfo] =
+  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
   {
     val query =
       s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
@@ -799,7 +782,6 @@ class RoadwayDAO extends BaseDAO {
               on r.START_ADDR_M=ra.maxstartaddrm
           WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
             r.valid_to is null AND r.end_date is null AND r.TRACK in (0,1)"""
-//    Q.queryNA[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
-    Q.queryNA[RoadPartInfo](query).firstOption
+    Q.queryNA[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 }
