@@ -1649,12 +1649,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val roadNetworkDAO = new RoadNetworkDAO
         if(roadNetworkDAO.hasCurrentNetworkErrors){
           logger.error(s"Current network have errors")
-        } else if(roadNumbers.isEmpty){
+        } else if(roadNumbers.isEmpty || roadNumbers.get.isEmpty){
           logger.error(s"No roadNumbers available in project $projectID")
         } else {
-          val roadNetworkService = new RoadNetworkService
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-          roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.getOrElse(0L)+1L))
+          eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.getOrElse(0L)+1L, throughActor = true))
         }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
@@ -1736,8 +1735,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
-  def expireHistoryRows(roadwayId: Long, roadway : Roadway, projectDate: DateTime): Int = {
-    roadwayDAO.expireHistory(Set(roadwayId), projectDate, roadway.terminated)
+  def expireHistoryRows(roadwayId: Long): Int = {
+    roadwayDAO.expireHistory(Set(roadwayId))
   }
 
   def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Set[Long] = {
@@ -1763,20 +1762,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw new InvalidAddressDataException(s"There are no addresses to update , rollbacking update ${project.id}")
         }
 
-        projectLinkDAO.moveProjectLinksToHistory(projectID)
+//        projectLinkDAO.moveProjectLinksToHistory(projectID)
         logger.info(s"Moving project links to project link history.")
-        handleNewRoadNames(projectLinks, project)
+//        handleNewRoadNames(projectLinks, project)
         try {
           val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedRoadwaysWithLinks)
           val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewRoadway).map(_.id)
           logger.info(s"Creating history rows based on operation")
-          linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
-          (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1, roadway._2, project.startDate))
-          val newRoadways = generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway)
-          roadwayDAO.create(newRoadways.groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate, roadway.endDate,
-                                                                    roadway.validFrom, roadway.validTo, roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
-          linearLocationDAO.create(generatedRoadways.flatMap(_._2), createdBy = project.createdBy)
-          newRoadways.map(_.roadNumber).toSet
+//          linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
+//          (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
+//          roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate.toYearMonthDay, roadway.endDate.map(_.toYearMonthDay),
+//          roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
+//          linearLocationDAO.create(generatedRoadways.flatMap(_._2).groupBy( l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.floating, l.sideCode, l.linkGeomSource)).map(_._2.head), createdBy = project.createdBy)
+          projectLinks.map(_.roadNumber).toSet
         } catch {
           case e: ProjectValidationException =>
             logger.error("Failed to validate project message:" + e.getMessage)
