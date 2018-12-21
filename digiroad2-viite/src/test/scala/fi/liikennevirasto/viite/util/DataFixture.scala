@@ -50,7 +50,6 @@ object DataFixture {
 
   //private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
-  //  private lazy val numberThreads: Int = 2
   private lazy val numberThreads: Int = 6
 
   private def toIntNumber(value: Any): Int = {
