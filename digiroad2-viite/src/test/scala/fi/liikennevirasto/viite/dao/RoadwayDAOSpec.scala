@@ -607,7 +607,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
       linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory, roadNetworkDAO.getLatestRoadNetworkVersionId)
       val errors = dao.fetchAllRoadAddressErrors()
       errors.size should be > 0
     }
@@ -620,7 +620,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
       linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory, roadNetworkDAO.getLatestRoadNetworkVersionId)
       val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
       errors.size should be > 0
     }

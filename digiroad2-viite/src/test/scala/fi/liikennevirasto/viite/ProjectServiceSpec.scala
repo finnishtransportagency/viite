@@ -1757,7 +1757,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).head.validTo should be(None)
 
       // Call the method to be tested
-      projectService.expireHistoryRows(roadway.id, roadway, projectLink.startDate.get)
+      projectService.expireHistoryRows(roadway.id)
 
       // Check results
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).isEmpty should be(true)
@@ -1791,7 +1791,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
         toMockAnswer(Seq(projectLink), roadLink)
       )
-      val historicRoadId = projectService.expireHistoryRows(roadwayId, roadway, roadAddressProject.createdDate)
+      val historicRoadId = projectService.expireHistoryRows(roadwayId)
       historicRoadId should be (1)
     }
   }
