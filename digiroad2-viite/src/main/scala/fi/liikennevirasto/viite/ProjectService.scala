@@ -259,7 +259,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     reservedParts.map(rp => (rp.roadNumber, rp.roadPartNumber) -> roadwayDAO.getRoadPartInfo(rp.roadNumber, rp.roadPartNumber)).toMap.
       filterNot(_._2.isEmpty).foreach {
       case ((roadNumber, roadPartNumber), value) =>
-        val (startDate, endDate) = value.map(v => (v.maxEndDate, v.maxEndDate)).get
+        val (startDate, endDate) = value.map(v => (v._6, v._7)).get
         if (startDate.nonEmpty && startDate.get.isAfter(date))
           return Option(s"Tieosalla TIE $roadNumber OSA $roadPartNumber alkupäivämäärä " +
             s"${startDate.get.toString("dd.MM.yyyy")} on myöhempi kuin tieosoiteprojektin alkupäivämäärä " +
@@ -278,9 +278,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def generateAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
     roadwayDAO.getRoadPartInfo(roadNumber, roadPart).map {
-      case (roadPartInfo) =>
-        ProjectReservedPart(0L, roadNumber, roadPart, Some(roadPartInfo.endAddrMValue), Some(roadPartInfo.discontinuity), Some(roadPartInfo.elyCode),
-          newLength = Some(roadPartInfo.endAddrMValue), newDiscontinuity = Some(roadPartInfo.discontinuity), newEly = Some(roadPartInfo.elyCode), Some(roadPartInfo.linkId))
+      case (_, linkId, addrLength, discontinuity, ely, _, _) =>
+        ProjectReservedPart(0L, roadNumber, roadPart, Some(addrLength), Some(Discontinuity.apply(discontinuity.toInt)), Some(ely),
+          newLength = Some(addrLength), newDiscontinuity = Some(Discontinuity.apply(discontinuity.toInt)), newEly = Some(ely), Some(linkId))
     }
   }
 
@@ -1093,6 +1093,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Main function responsible for fetching and building ProjectAddressLink.
+    * First we fetch all kinds of road addresses inside a bounding box, afterwards we fetch all of the project links for a specific project
+    * With all the information we have now we start to call the builders to mix road address and project link information, the road addresses that have no match to project links w
+    * Once our road information is built and evoke the final builder to get the result we need.
+    *
+    * @param projectId: Long - Project id
+    * @param boundingRectangle: BoundingRectangle - designates where we search
+    * @param roadNumberLimits: Seq[(Int, Int)] - used in the filtering of results
+    * @param municipalities: Set[Int] - used to limit the results to these municipalities
+    * @param everything: Boolean - used in the filtering of results
+    * @param publicRoads: Boolean - used in the filtering of results
+    * @return
+    */
   def fetchProjectRoadLinksLinearGeometry(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                           everything: Boolean = false, publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
     val fetchRoadAddressesByBoundingBoxF = Future(withDynTransaction {
@@ -1150,6 +1164,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads, fetch)
   }
 
+  /**
+    * This will fetch the project while testing for the following:
+    * Project existence
+    * Road Number and Road Part Number combination is reserved by the project
+    * If the road part combination is available for use in this project date
+    * If the road part combination is not reserved by another project.
+    *
+    * @param projectId: Long - Project Id
+    * @param newRoadNumber: Long - Road number
+    * @param newRoadPart: Long - Road part number
+    * @param linkStatus: LinkStatus - What kind of operation is subjected
+    * @param projectLinks: Seq[ProjectLink] - Project links
+    * @return
+    */
   private def getProjectWithReservationChecks(projectId: Long, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Project = {
     projectValidator.checkProjectExists(projectId)
     val project = projectDAO.fetchById(projectId).get
@@ -1159,6 +1187,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     project
   }
 
+  /**
+    * This will revert project links to their previous state, if used on new links it will delete them, if used on the rest they will become unhandled.
+    * This will also reset any values to their starting values.
+    * @param links
+    * @param userName
+    * @return
+    */
   def revertLinks(links: Iterable[ProjectLink], userName: String): Option[String] = {
     if (links.groupBy(l => (l.projectId, l.roadNumber, l.roadPartNumber)).keySet.size != 1)
       throw new IllegalArgumentException("Reverting links from multiple road parts at once is not allowed")
@@ -1229,6 +1264,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
 
+  /**
+    * This will split the links to revert in 2 separate types, the modified (ones that came from road addresses) and the added (ones that were created in this project).
+    *
+    * @param projectId
+    * @param roadNumber
+    * @param roadPartNumber
+    * @param links
+    * @param userName
+    * @return
+    */
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], userName: String): Option[String] = {
         val (added, modified) = links.partition(_.status == LinkStatus.New.value)
         if (modified.exists(_.status == LinkStatus.Numbering.value)) {
@@ -1244,6 +1289,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         None
   }
 
+  /**
+    * Continuation of the revert, this will set up the database transaction to save the modifications done to the links to revert.
+    * After the modifications are saved this will save the new project coordinates.
+    * Otherwise this will issue a error messages.
+    * @param projectId: Long - The id of the project
+    * @param roadNumber: Long - roadway road number
+    * @param roadPartNumber: Long - roadway road part number
+    * @param links: Iterable[LinkToRevert] - The links to return to the original values and state
+    * @param coordinates: ProjectCoordinates - New coordinates on where to move the map on project open
+    * @param userName: String - The name of the user
+    * @return
+    */
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], coordinates: ProjectCoordinates, userName: String): Option[String] = {
     try {
       withDynTransaction {
