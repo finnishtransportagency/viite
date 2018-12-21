@@ -40,6 +40,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
         }
         if (!roadNetworkDAO.hasCurrentNetworkErrors) {
           roadNetworkDAO.expireRoadNetwork
+          logger.error(s"creating published road network")
           roadNetworkDAO.createPublishedRoadNetwork
         }
       }
