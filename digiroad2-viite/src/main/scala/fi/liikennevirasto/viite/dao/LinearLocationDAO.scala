@@ -758,6 +758,13 @@ class LinearLocationDAO {
     queryList(query)
   }
 
+  /**
+    * Sets up the query filters of road numbers
+    * @param roadNumbers: Seq[(Int, Int) - list of lowest and highest road numbers
+    * @param alias: String - The alias of the roadway table on the query
+    * @param filter: String - already existing filters
+    * @return
+    */
   def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s"""($filter)"""
@@ -770,6 +777,11 @@ class LinearLocationDAO {
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
 
+  /**
+    * This returns the calibration code of a linear location found by it's id.
+    * @param linearLocationId: Long - The linear location id.
+    * @return
+    */
   def getLinearLocationCalibrationCode(linearLocationId: Long): CalibrationCode = {
     val query =
       s"""SELECT (CASE
