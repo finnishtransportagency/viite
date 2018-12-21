@@ -1190,8 +1190,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * This will revert project links to their previous state, if used on new links it will delete them, if used on the rest they will become unhandled.
     * This will also reset any values to their starting values.
-    * @param links
-    * @param userName
+    * @param links: Iterable[ProjectLink] - Links to revert
+    * @param userName: String - User name
     * @return
     */
   def revertLinks(links: Iterable[ProjectLink], userName: String): Option[String] = {
@@ -1216,6 +1216,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * Last function on the chain, this is the one that will do all the work.
+    * Firstly we isolate the unique link id's that were modified and we remove all the project links that have them them from the project.
+    * We use the same link ids we found and fetch the road addresses by combining VVH roadlink information and our roadway+linear location information on the builder.
+    * With the road address information we now check that a reservation is possible and reserve them in the project.
+    * Afterwards we update the newly reserved project links with the original geometry we obtained previously
+    * If we do still have road address information that do not match the original modified links then we check that a reservation is possible and reserve them in the project and we update those reserved links with the information on the road address.
+    * With that done we revert any changes on the road names, when applicable.
+    * If it is mandated we run the recalculateProjectLinks on this project.
+    * After all this we come to the conclusion that we have no more road number and road parts for this project then we go ahead and release them.
+    *
+    * @param projectId: Long - Project ID
+    * @param roadNumber: Long - Roadway Road Number
+    * @param roadPartNumber: Long - Roadway Road Part Number
+    * @param toRemove: Iterable[LinksToRemove] - Project links that were created in this project
+    * @param modified: Iterable[LinksToRemove] - Project links that existed as road addresses
+    * @param userName: String - User name
+    * @param recalculate: Boolean - Will tell if we recalculate the whole project links or not
+    */
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     val modifiedLinkIds = modified.map(_.linkId).toSet
@@ -1266,12 +1285,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   /**
     * This will split the links to revert in 2 separate types, the modified (ones that came from road addresses) and the added (ones that were created in this project).
-    *
-    * @param projectId
-    * @param roadNumber
-    * @param roadPartNumber
-    * @param links
-    * @param userName
+    * Also it will fetch the project links by road number, road part number and project id and supply them to the next step.
+    * @param projectId: Long - Project Id
+    * @param roadNumber: Long - Roadway Road Number
+    * @param roadPartNumber: Long - Roadway Road Part Number
+    * @param links: Iterable[ProjectLink] - Links to revert
+    * @param userName: String - User name
     * @return
     */
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], userName: String): Option[String] = {
@@ -1684,6 +1703,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     pl.map(l => ProjectAddressLinkBuilder.build(l))
   }
 
+
+  /**
+    * This will combine multiple project links in one only if it is possible
+    * @param links: Seq[ProjectLink] - Project links to combine.
+    * @return
+    */
   private def fuseProjectLinks(links: Seq[ProjectLink]): Seq[ProjectLink] = {
     val linkIds = links.map(_.linkId).distinct
     val existingRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
@@ -1801,6 +1826,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /**
+    * This will check project information from TR. If TR reply is such then we convert all the project links into regular road addresses and save them on the linear location and roadway tables.
+    * @param projectID: Long - The project Id
+    * @return
+    */
   private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
     projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
@@ -1837,6 +1867,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  //TODO: Currently only used on the Project Service Spec, can it be removed?
   def createSplitRoadAddress(roadAddress: RoadAddress, split: Seq[ProjectLink], project: Project): Seq[RoadAddress] = {
     def transferValues(terminated: Option[ProjectLink]): (Long, Long, Double, Double) = {
       terminated.map(termLink =>
@@ -1980,6 +2011,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectDAO.fetchProjectElyById(projectId)
   }
 
+  /**
+    * Main validator method.
+    * Will call and execute all the validations we have for a project.
+    * @param projectId: Long - Project ID
+    * @param newSession: Boolean - Will determine if we open a new database sesssion
+    * @return A sequence of validation errors, can be empty.
+    */
   def validateProjectById(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
     if(newSession) {
       withDynSession {
