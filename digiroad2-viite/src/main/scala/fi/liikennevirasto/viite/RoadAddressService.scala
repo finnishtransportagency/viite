@@ -64,6 +64,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    LinearLocationResult(nonFloatingAddresses, floatingAddresses)
   }
 
+  /**
+    * This will fetch linear locations based ou a bounding box and, if defined, within the road number limits suplied.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
@@ -72,6 +78,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  /**
+    * This will return the roadways that match the supplied linear locations.
+    * @param linearLocations: Seq[LinearLocation] - The linear locations to search
+    * @return
+    */
   def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]) = {
     roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
@@ -118,6 +129,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  /**
+    * Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
@@ -142,6 +159,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     getRoadAddressLinks(boundingBoxResult)
   }
 
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
     val linearLocations =
       time(logger, "Fetch floating and non-floating linear locations by bounding box") {
@@ -167,6 +190,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     nonFloatingRoadAddresses.map(roadAddressLinkBuilder.build)
   }
 
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) that share the same linkIds as those supplied.
+    * @param linkIds: Seq[Long] - The linkId's to fetch information
+    * @return
+    */
   def getRoadAddressesByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
     val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
     roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
@@ -410,6 +438,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
+    * @param roadwayIds: Seq[Long] - The roadway Id's to fetch
+    * @param includeFloating: Boolean - Signals if we fetch the floatings or not
+    * @return
+    */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
       val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -554,6 +588,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   // TODO
+  /**
+    * This will get the Unaddressed roads that match the link ids from the list supplied.
+    * @param linkIds: Set[Long] - The link ids to fetch
+    * @return
+    */
   def fetchUnaddressedRoadLinksByLinkIds(linkIds: Set[Long]): Seq[UnaddressedRoadLink] = {
     time(logger, "RoadAddressDAO.getUnaddressedRoadLinks by linkIds") {
       unaddressedRoadLinkDAO.getUnaddressedRoadLinks(linkIds)
