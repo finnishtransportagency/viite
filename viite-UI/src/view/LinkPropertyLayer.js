@@ -190,6 +190,7 @@
      * This interaction is restricted to a double click.
      * @type {ol.interaction.Select}
      *
+     * 
      */
     var selectDoubleClick = new ol.interaction.Select({
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
@@ -200,7 +201,8 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+          return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+            roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
               roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
       }
     });
@@ -278,7 +280,8 @@
       },
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature) {
-          return [roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+          return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+            roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
               roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
       }
     });
