@@ -1630,7 +1630,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
       }
     }
-
   }
 
   def getProjectState(projectId: Long): Option[ProjectState] = {

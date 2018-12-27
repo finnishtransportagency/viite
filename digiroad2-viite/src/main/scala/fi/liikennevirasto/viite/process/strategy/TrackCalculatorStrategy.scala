@@ -6,6 +6,7 @@ import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -182,22 +183,26 @@ trait TrackCalculatorStrategy {
   }
 
 
-  protected def setOnSideCalibrationPoints(projectlinks: Seq[ProjectLink], raCalibrationPoints: Map[Long, CalibrationCode], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    projectlinks.size match {
-      case 1 =>
-        projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true, ProjectLinkSource))
-      case _ =>
-        val pls = projectlinks.map {
-          pl =>
-            val raCalibrationCode = raCalibrationPoints.getOrElse(pl.linearLocationId, CalibrationCode.No)
-            val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
-            val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
-            setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
-        }
+  protected def setOnSideCalibrationPoints(projectLinks: Seq[ProjectLink], raCalibrationPoints: Map[Long, CalibrationCode], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+    if(projectLinks.head.status == NotHandled)
+      projectLinks
+    else
+      projectLinks.size match {
+        case 0 => projectLinks
+        case 1 =>
+          projectLinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true, ProjectLinkSource))
+        case _ =>
+          val pls = projectLinks.map {
+            pl =>
+              val raCalibrationCode = raCalibrationPoints.getOrElse(pl.linearLocationId, CalibrationCode.No)
+              val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
+              val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
+              setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
+          }
 
-        Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false, ProjectLinkSource)) ++ pls.init.tail ++
-          Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true, ProjectLinkSource))
-    }
+          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false, ProjectLinkSource)) ++ pls.init.tail ++
+            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true, ProjectLinkSource))
+      }
   }
 
   protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource) = {
@@ -206,16 +211,22 @@ trait TrackCalculatorStrategy {
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
-  protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < address)
+  protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    if(endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous){
+      val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
 
-    if (continuousProjectLinks.isEmpty)
-      throw new RoadAddressException("Could not find any nearest road address")
+      if (continuousProjectLinks.isEmpty)
+        throw new RoadAddressException("Could not find any nearest road address")
 
-    val lastProjectLink = continuousProjectLinks.last
-    if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(address - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(address - lastProjectLink.endAddrMValue))) {
-      (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
-    } else {
+      val lastProjectLink = continuousProjectLinks.last
+      if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.endAddrMValue))) {
+        (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
+      } else {
+        (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+      }
+    }
+    else{
+      val continuousProjectLinks = seq.takeWhile(pl => pl.status == endProjectLink.status)
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
   }
