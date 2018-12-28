@@ -1142,14 +1142,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], coordinates: ProjectCoordinates, userName: String): Option[String] = {
     try {
       withDynTransaction {
+        val (added, modified) = links.partition(_.status == LinkStatus.New.value)
         projectWritableCheckInSession(projectId) match {
           case None =>
-            revertLinks(projectId, roadNumber, roadPartNumber, links, userName) match {
-              case None =>
-                saveProjectCoordinates(projectId, coordinates)
-                None
-              case Some(error) => Some(error)
-            }
+            revertLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
+            saveProjectCoordinates(projectId, coordinates)
+            None
           case Some(error) => Some(error)
         }
       }
