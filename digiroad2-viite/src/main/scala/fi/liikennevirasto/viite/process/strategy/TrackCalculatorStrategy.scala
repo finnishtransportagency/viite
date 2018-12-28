@@ -220,6 +220,13 @@ trait TrackCalculatorStrategy {
     }
   }
 
+  /**
+    * This will re-add calibration points to the project links after the calculation, the calibration points are gotten via the information on our current linear locations
+    * .
+    * @param calculatorResult: TrackCalculatorResult - the result of the calculation
+    * @param userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint] - Map of linear location id -> UserDefinedCalibrationPoint
+    * @return
+    */
   def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
 
