@@ -24,7 +24,7 @@
     </ows:ServiceIdentification>
     <ows:ServiceProvider>
         <ows:ProviderName>Liikennevirasto</ows:ProviderName>
-        <ows:ProviderSite xlink:href="http://www.liikennevirasto.fi/"/>
+        <ows:ProviderSite xlink:href="http://www.vayla.fi/"/>
         <ows:ServiceContact>
             <ows:ContactInfo>
                 <ows:Address>
