@@ -586,7 +586,7 @@ class RoadwayDAO extends BaseDAO {
       case None => ""
     }
     val mValueFilter = mValue match {
-      case Some(v) => s" AND a.start_addr_M <= $v AND ra.end_addr_M > $v"
+      case Some(v) => s" AND ra.start_addr_M <= $v AND ra.end_addr_M > $v"
       case None => ""
     }
 
