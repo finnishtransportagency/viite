@@ -6,9 +6,9 @@
 
   var name = function() {
     var environmentName = {
-      'extranet.liikennevirasto.fi': 'production', // PROD
-      'testiextranet.liikennevirasto.fi': 'integration', // QA
-      'devtest.liikennevirasto.fi': 'staging' // IT
+      'extranet.vayla.fi': 'production', // PROD
+      'testiextranet.vayla.fi': 'integration', // QA
+      'devtest.vayla.fi': 'staging' // IT
     };
 
     return environmentName[urlParts()[1]] || 'unknown';
