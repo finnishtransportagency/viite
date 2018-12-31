@@ -1776,8 +1776,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
       linearLocationDAO.create(generatedRoadways.flatMap(_._2).groupBy( l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.floating, l.sideCode, l.linkGeomSource)).map(_._2.head), createdBy = project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
-      handleTransferAndRenumeration(roadwayChanges)
+      handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
+      ProjectLinkNameDAO.removeByProject(projectID)
       Some(s"road addresses created")
     } catch {
       case e: ProjectValidationException =>
@@ -1786,88 +1787,66 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def handleTransferAndRenumeration(roadwayChanges: Seq[ProjectRoadwayChange]): Unit = {
-    var roadNames: Seq[RoadName] = Seq()
+  def handleTransferAndNumbering(roadwayChanges: Seq[ProjectRoadwayChange]): Unit = {
     roadwayChanges.foreach(rwc => {
-      if (rwc.changeInfo.changeType.equals(AddressChangeType.ReNumeration) || rwc.changeInfo.changeType.equals(AddressChangeType.Transfer)) {
-        val targetRoadNumberOptional = rwc.changeInfo.target.roadNumber
-        val srcRoadNumberOptional = rwc.changeInfo.source.roadNumber
+      val srcRoadNumberOptional = rwc.changeInfo.source.roadNumber
+      val targetRoadNumberOptional = rwc.changeInfo.target.roadNumber
+      if ((rwc.changeInfo.changeType.equals(AddressChangeType.ReNumeration) || rwc.changeInfo.changeType.equals(AddressChangeType.Transfer)
+          && targetRoadNumberOptional.isDefined && srcRoadNumberOptional.isDefined)) {
 
-        if (targetRoadNumberOptional.isDefined && srcRoadNumberOptional.isDefined) {
-          val targetRoadNumber = targetRoadNumberOptional.get
-          val srcRoadNumber = srcRoadNumberOptional.get
+        val srcRoadNumber = srcRoadNumberOptional.get
+        val targetRoadNumber = targetRoadNumberOptional.get
+        if(srcRoadNumber != targetRoadNumber){
+          val srcExistingRoadName = RoadNameDAO.getLatestRoadName(srcRoadNumber)
+          val targetExistingRoadName =RoadNameDAO.getLatestRoadName(targetRoadNumber)
 
-          val targetExistingRoadways = roadwayDAO.fetchAllByRoad(targetRoadNumber)
           val srcExistingRoadways = roadwayDAO.fetchAllByRoad(srcRoadNumber)
+          val targetExistingRoadways = roadwayDAO.fetchAllByRoad(targetRoadNumber)
 
-          if (targetExistingRoadways.isEmpty) {
-            // TRANSFERING OR NUMBERING TO A NEW ROADWAY
-            if (srcExistingRoadways.nonEmpty) {
-              // IF EXISTS SOURCE ROADWAY AND ROADNAME EXPIRE IT
-              val srcRoadName = RoadNameDAO.getLatestRoadName(srcRoadNumber)
-              if (srcRoadName.isDefined) {
-                RoadNameDAO.update(srcRoadName.get.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
-              }
-            }
-            // CREATE NEW ROADNAME FOR TARGET ROADNUMBER
-            val projectLinkNames = ProjectLinkNameDAO.get(Set(targetRoadNumber), rwc.projectId)
-            if (projectLinkNames.nonEmpty) {
-              roadNames = roadNames :+ RoadName(NewRoadNameId, targetRoadNumber, projectLinkNames.head.roadName, startDate = Some(rwc.projectStartDate), validFrom = Some(DateTime.now()), createdBy = rwc.user)
-              ProjectLinkNameDAO.removeProjectLinkName(targetRoadNumber, rwc.projectId)
-            }
-          } else {
-            // TRANSFERING OR NUMBERING TO AN EXISTING ROADWAY
-            // IF EXISTS SOURCE ROADWAY AND ROADNAME EXPIRE IT
-            val srcRoadName = RoadNameDAO.getLatestRoadName(srcRoadNumber)
-            if (srcRoadName.isDefined) {
-              RoadNameDAO.update(srcRoadName.get.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
-            }
+          if (srcExistingRoadways.isEmpty && srcExistingRoadName.isDefined) {
+            RoadNameDAO.expireAndCreateHistory(srcExistingRoadName.get.id, rwc.user, historyRoadName = srcExistingRoadName.get.copy(endDate = Some(rwc.changeDate)))
+          }
+
+          // CREATE NEW ROADNAME FOR TARGET ROADNUMBER
+          val projectLinkNames = ProjectLinkNameDAO.get(Set(targetRoadNumber), rwc.projectId)
+          if (projectLinkNames.nonEmpty && targetExistingRoadways.nonEmpty && targetExistingRoadName.isEmpty) {
+            RoadNameDAO.create(Seq(RoadName(NewRoadNameId, targetRoadNumber, projectLinkNames.head.roadName, startDate = Some(rwc.projectStartDate), validFrom = Some(DateTime.now()), createdBy = rwc.user)))
           }
         }
       }
     })
-
-    RoadNameDAO.create(roadNames)
   }
 
-  def handleTerminatedRoadwayChanges(roadwayChanges: Seq[ProjectRoadwayChange]) = {
+  def handleTerminatedRoadwayChanges(roadwayChanges: Seq[ProjectRoadwayChange]): Unit = {
     roadwayChanges.foreach(rwc => {
-      if (rwc.changeInfo.changeType.equals(AddressChangeType.Termination)) {
-        val roadNumberOptional = rwc.changeInfo.source.roadNumber
-        if (roadNumberOptional.isDefined) {
-          val roadNumber = roadNumberOptional.get
-          val roadways = roadwayDAO.fetchAllByRoad(roadNumber)
-          if (roadways.isEmpty) {
-            val roadNameOpt = RoadNameDAO.getLatestRoadName(roadNumber)
-            if (roadNameOpt.isDefined) {
-              RoadNameDAO.update(roadNameOpt.get.id, Map("endDate" -> rwc.projectStartDate.toLocalDate.toString("dd-MM-yyyy")))
-            }
-          }
+      val roadNumberOptional = rwc.changeInfo.source.roadNumber
+      if (rwc.changeInfo.changeType.equals(AddressChangeType.Termination) && roadNumberOptional.isDefined) {
+        val roadNumber = roadNumberOptional.get
+        val roadways = roadwayDAO.fetchAllByRoad(roadNumber)
+        val roadNameOpt = RoadNameDAO.getLatestRoadName(roadNumber)
+        if (roadways.isEmpty && roadNameOpt.isDefined) {
+          RoadNameDAO.expireAndCreateHistory(roadNameOpt.get.id, rwc.user, historyRoadName = roadNameOpt.get.copy(endDate = Some(rwc.changeDate)))
         }
       }
     })
   }
 
   def handleNewRoadNames(roadwayChanges: Seq[ProjectRoadwayChange], project: Project): Unit = {
-    var roadNames: Seq[RoadName] = Seq()
-    roadwayChanges.foreach(rwc => {
-      if (rwc.changeInfo.changeType.equals(AddressChangeType.New)) {
-        val roadNumberOptional = rwc.changeInfo.target.roadNumber
-        if (roadNumberOptional.isDefined) {
+    val roadNames = roadwayChanges.flatMap(rwc => {
+      val roadNumberOptional = rwc.changeInfo.target.roadNumber
+      if (rwc.changeInfo.changeType.equals(AddressChangeType.New) && roadNumberOptional.isDefined) {
           val roadNumber = roadNumberOptional.get
-          val existingRoadnames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
-          if (existingRoadnames.isEmpty) {
-            val projectLinkNames = ProjectLinkNameDAO.get(Set(roadNumber), rwc.projectId)
-            if (projectLinkNames.nonEmpty) {
-              roadNames = roadNames :+ RoadName(NewRoadNameId, roadNumber, projectLinkNames.head.roadName, startDate = Some(rwc.projectStartDate), validFrom = Some(DateTime.now()), createdBy = rwc.user)
-              ProjectLinkNameDAO.removeProjectLinkName(roadNumberOptional.get, rwc.projectId)
-            }
+          val existingRoadNames = RoadNameDAO.getCurrentRoadNamesByRoadNumber(roadNumber)
+          val projectLinkNames = ProjectLinkNameDAO.get(Set(roadNumber), rwc.projectId)
+          if (existingRoadNames.isEmpty && projectLinkNames.nonEmpty) {
+            Some(RoadName(NewRoadNameId, roadNumber, projectLinkNames.head.roadName, startDate = Some(rwc.projectStartDate), validFrom = Some(DateTime.now()), createdBy = rwc.user))
           } else {
-            val nameString = s"${existingRoadnames.map(_.roadNumber).mkString(",")}"
+            val nameString = s"${existingRoadNames.map(_.roadNumber).mkString(",")}"
             appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
+            None
           }
         }
-      }
+      else None
     })
 
     RoadNameDAO.create(roadNames)
