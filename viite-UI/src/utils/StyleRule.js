@@ -212,6 +212,9 @@
                 factory: function(settings){
                     if(settings.color)
                         settings.color = mergeColorOpacity(settings.color, settings.opacity);
+                    if(!settings.lineCap){
+                        settings.lineCap = 'butt';
+                    }
 
                     return {
                         stroke: new ol.style.Stroke(settings)
