@@ -671,7 +671,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (None, Some(ErrorNoMatchingProjectLinkForSplit), None)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
-        val splitResult = ProjectLinkSplitter.split(roadLink.get, newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinks, splitOptions)
+        val splitResult = try {
+          ProjectLinkSplitter.split(roadLink.get, newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinks, splitOptions)
+        } catch {
+          case e: Exception => {
+            logger.error(e.getMessage)
+            throw e
+          }
+        }
         (Some(splitResult), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }
     }
@@ -1035,7 +1042,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Future(
         if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
         else Seq()),
-      roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, municipalities)
+      Future(roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, municipalities))
     )
   }
 
@@ -1752,7 +1759,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val project = projectDAO.fetchById(projectID).get
     val projectLinks = projectLinkDAO.fetchProjectLinks(projectID)
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
-    val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).map(roadway => (roadway.id, roadway)).toMap
+    val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
     val roadwayProjectLinkIds = roadwayChangesDAO.fetchRoadwayChangesLinks(projectID)
     val mappedRoadwaysWithLinks = roadwayChanges.map {
@@ -1777,7 +1784,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate.toYearMonthDay, roadway.endDate.map(_.toYearMonthDay),
         roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
-      linearLocationDAO.create(generatedRoadways.flatMap(_._2).groupBy(l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.floating, l.sideCode, l.linkGeomSource)).map(_._2.head), createdBy = project.createdBy)
+      linearLocationDAO.create(generatedRoadways.flatMap(_._2).groupBy( l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.floating, l.sideCode, l.linkGeomSource)).map(_._2.head), createdBy = project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndRenumeration(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
