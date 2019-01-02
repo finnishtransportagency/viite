@@ -407,6 +407,7 @@
       rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
         $('#tie').prop('disabled',false);
         $('#osa').prop('disabled',false);
+        $('#ely').prop('disabled',false);
         $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropDown').prop('disabled',false);
@@ -442,6 +443,7 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled',true);
           $('#osa').prop('disabled',true);
+          $('#ely').prop('disabled',true);
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropDown').prop('disabled',false);
