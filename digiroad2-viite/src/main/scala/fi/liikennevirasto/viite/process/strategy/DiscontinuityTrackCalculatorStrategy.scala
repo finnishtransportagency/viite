@@ -26,10 +26,17 @@ class DiscontinuityTrackCalculatorStrategy(discontinuity: Discontinuity) extends
 
     (left.last.discontinuity, right.last.discontinuity) match {
       case (MinorDiscontinuity, MinorDiscontinuity) => //If both sides have a minor discontinuity
-        //If in the future we have minor discontinuities that can not be related with each other,
-        //we should get a way to find the minor discontinuity depending on the road address instead
-        //of getting the next first one, from the opposite side
-        adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
+        if(Math.abs(left.last.endAddrMValue - right.last.endAddrMValue) < 10 ){
+          adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
+        }
+        else if(left.last.endAddrMValue < right.last.endAddrMValue){ //If left side have a minor discontinuity
+          val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last)
+          adjustTwoTracks(startAddress, left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
+        }
+        else{ //If right side have a minor discontinuity
+          val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last)
+          adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newLeftRest, restRight)
+        }
       case (MinorDiscontinuity, _) => //If left side have a minor discontinuity
         val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last)
         adjustTwoTracks(startAddress, left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
