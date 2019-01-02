@@ -33,7 +33,7 @@ class RoadNetworkDAO {
     val networkErrorPS = dynamicSession.prepareStatement(
       """INSERT INTO road_network_error (id, ROADWAY_ID, linear_location_id, error_code, error_timestamp, road_network_version)
       values (?, ?, ?, ?, ?, ?)""")
-    val nextId = Sequences.nextRoadNetworkError
+    val nextId = Sequences.nextRoadNetworkErrorId
     networkErrorPS.setLong(1, nextId)
     networkErrorPS.setLong(2, roadwayId)
     networkErrorPS.setLong(3, linearLocationId)
