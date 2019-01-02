@@ -1,60 +1,16 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.LinkStatus._
-import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLinkCalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink, ProjectLinkCalibrationPoint}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 
 object TrackSectionOrder {
-  private val RightVector = Vector3d(-1.0, 0.0, 0.0)
-  private val LeftVector = Vector3d(1.0, 0.0, -1.0)
-  private val ForwardVector = Vector3d(0.0, 1.0, 0.0)
-
-
-  def findChainEndpoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
-
-    case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
-
-    def recursiveFindNearest(projectLinkChain: ProjectLinkChain, others: Seq[ProjectLink]) : ProjectLinkChain = {
-      def mapDistances(p: Point)(pl: ProjectLink) = {
-        val (sP, eP) = GeometryUtils.geometryEndpoints(pl.geometry)
-        val (sD, eD) = (sP.distance2DTo(p), eP.distance2DTo(p))
-        (pl, sP, eP, sD, eD, Math.min(sD, eD))
-      }
-
-      val startPoinrMinDistance = others.map(mapDistances(projectLinkChain.startPoint)).minBy(_._6)
-      val endPointMinDistance = others.map(mapDistances(projectLinkChain.endPoint)).minBy(_._6)
-
-      //val(pl, sP, eP, sD, eD, minD) = Seq(startPoinrMinDistance, endPointMinDistance).minBy(pl => pl._6)
-
-      val (result, next) = if(startPoinrMinDistance._6 > endPointMinDistance._6){
-        val (pl, sP, eP, sD, eD, minD) = endPointMinDistance
-        (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ pl, endPoint = if(minD == sD) eP else sP), others.filterNot(pli => pli.id == pl.id))
-      } else {
-        val (pl, sP, eP, sD, eD, minD) = startPoinrMinDistance
-        (projectLinkChain.copy(sortedProjectLinks = pl +: projectLinkChain.sortedProjectLinks, startPoint = if(minD == sD) eP else sP), others.filterNot(pli => pli.id == pl.id))
-      }
-
-      if(next.isEmpty)
-        result
-      else
-        recursiveFindNearest(result, next)
-    }
-
-    if(projectLinks.size == 1){
-      val (p1, p2) = GeometryUtils.geometryEndpoints(projectLinks.head.geometry)
-      Map(p1 -> projectLinks.head, p2 -> projectLinks.head)
-    } else {
-      val projectLinkChain = recursiveFindNearest(ProjectLinkChain(Seq(projectLinks.head), projectLinks.head.geometry.head, projectLinks.head.geometry.last), projectLinks.tail)
-      Map(projectLinkChain.startPoint -> projectLinkChain.sortedProjectLinks.head, projectLinkChain.endPoint -> projectLinkChain.sortedProjectLinks.last)
-    }
-  }
 
   /**
     * Find the end points of a continuous or discontinuous project link chain.
@@ -250,10 +206,6 @@ object TrackSectionOrder {
 
   def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
 
-    def pickMostAligned(rotationMatrix: Matrix, vector: Vector3d, candidates: Seq[ProjectLink]): ProjectLink = {
-      candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
-    }
-
     def getConnectionPoint(lastLink: ProjectLink, projectLinks: Seq[ProjectLink]): Point =
       GeometryUtils.connectionPoint(projectLinks.map(_.geometry) :+ lastLink.geometry, MaxDistanceForConnectedLinks).getOrElse(throw new Exception("Candidates should have at least one connection point"))
 
@@ -265,9 +217,6 @@ object TrackSectionOrder {
 
     def getGeometryLastSegmentVector(connectionPoint: Point, projectLink: ProjectLink): (ProjectLink, Vector3d) =
       (projectLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(projectLink.geometry.last, connectionPoint)) projectLink.geometry else projectLink.geometry.reverse))
-
-    def getGeometryLastSegmentVectors(connectionPoint: Point, projectLinks: Seq[ProjectLink]): Seq[(ProjectLink, Vector3d)] =
-      projectLinks.map(pl => getGeometryLastSegmentVector(connectionPoint, pl))
 
     def pickRightMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
       val cPoint = GeometryUtils.connectionPoint(candidates.map(_.geometry) :+ lastLink.geometry, MaxDistanceForConnectedLinks).getOrElse(throw new Exception("Candidates should have at least one connection point"))
@@ -283,10 +232,6 @@ object TrackSectionOrder {
       val (_, lastLinkVector) = getGeometryLastSegmentVector(cPoint, lastLink)
       val (candidate, _) = candidateVectors.minBy { case (_, vector) => Math.abs(lastLinkVector.angleXYWithNegativeValues(vector)) }
       candidate
-    }
-
-    def pickForwardPointing(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
-      pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), ForwardVector, candidates)
     }
 
     def pickSameTrack(lastLinkOption: Option[ProjectLink], candidates: Seq[ProjectLink]): Option[ProjectLink] = {
@@ -305,38 +250,38 @@ object TrackSectionOrder {
         val connected = unprocessed.filter(pl => GeometryUtils.minimumDistance(currentPoint,
           GeometryUtils.geometryEndpoints(pl.geometry)) < MaxDistanceForConnectedLinks)
 
-        val (nextPoint, nextLink, nextSideCode): (Point, ProjectLink, Option[SideCode]) = connected.size match {
+        val (nextPoint, nextLink): (Point, ProjectLink) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
-            (getOppositeEnd(link.geometry, closestPoint), link, None)
+            (getOppositeEnd(link.geometry, closestPoint), link)
           case 1 =>
-            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head, None)
+            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head)
           case 2 =>
             val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
             if (nextLinkSameTrack.nonEmpty) {
-              (getOppositeEnd(nextLinkSameTrack.get.geometry, currentPoint), nextLinkSameTrack.get, None)
+              (getOppositeEnd(nextLinkSameTrack.get.geometry, currentPoint), nextLinkSameTrack.get)
             } else {
               if (findOnceConnectedLinks(unprocessed).exists(b =>
                 (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
                 val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
                   (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
                   .minBy(b => (currentPoint - b._1).length())
-                (getOppositeEnd(link.geometry, nPoint), link, None)
+                (getOppositeEnd(link.geometry, nPoint), link)
               } else {
                 val l = pickRightMost(ready.last, connected)
-                (getOppositeEnd(l.geometry, currentPoint), l, None)
+                (getOppositeEnd(l.geometry, currentPoint), l)
               }
             }
           case _ =>
             val l = pickForwardMost(ready.last, connected)
-            (getOppositeEnd(l.geometry, currentPoint), l, None)
+            (getOppositeEnd(l.geometry, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
         val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed) match {
-          case (false, false) | (true, true)=>
+          case (false, false) | (true, true) =>
             SideCode.AgainstDigitizing
-          case (false, true) |  (true, false) =>
+          case (false, true) | (true, false) =>
             SideCode.TowardsDigitizing
         }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
