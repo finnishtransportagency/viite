@@ -184,7 +184,7 @@ trait TrackCalculatorStrategy {
 
 
   protected def setOnSideCalibrationPoints(projectLinks: Seq[ProjectLink], raCalibrationPoints: Map[Long, CalibrationCode], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    if(projectLinks.head.status == NotHandled)
+    if (projectLinks.head.status == NotHandled)
       projectLinks
     else
       projectLinks.size match {
@@ -212,7 +212,7 @@ trait TrackCalculatorStrategy {
   }
 
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if(endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous){
+    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous) {
       val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
 
       if (continuousProjectLinks.isEmpty)
@@ -224,8 +224,7 @@ trait TrackCalculatorStrategy {
       } else {
         (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
       }
-    }
-    else{
+    } else {
       val continuousProjectLinks = seq.takeWhile(pl => pl.status == endProjectLink.status)
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
