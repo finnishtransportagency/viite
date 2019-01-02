@@ -221,8 +221,8 @@ trait TrackCalculatorStrategy {
   }
 
   /**
-    * This will re-add calibration points to the project links after the calculation, the calibration points are gotten via the information on our current linear locations
-    * .
+    * Re-adds the calibration points to the project links after the calculation. The calibration points are gotten via the information on our current linear locations.
+    * 
     * @param calculatorResult: TrackCalculatorResult - the result of the calculation
     * @param userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint] - Map of linear location id -> UserDefinedCalibrationPoint
     * @return

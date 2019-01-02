@@ -624,7 +624,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Preform the operations necessary to the preparation of the Suravage split.
+    * Performs the operations necessary to the preparation of the Suravage split.
     * This includes checking if the links in the context of this project are writable and fetching all previous split information and updating it to the current information.
     * After this, it will trigger the split without saving, and return the result to the UI, to give the user a chance to view the result and save it, if he desires.
     * @param linkId
@@ -669,7 +669,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Preform the operations necessary to the split of the Suravage Link.
+    * Performs the operations necessary to the split of the Suravage Link.
     * This starts by checking if the links in the context of this project are writable and checking that the tracks are valid.
     * After this, it will execute the split saving and save it.
     * @param track: Int - Track code
@@ -1163,7 +1163,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * This will fetch the project while testing for the following:
+    * Fetches the project while testing for the following:
     * Project existence
     * Road Number and Road Part Number combination is reserved by the project
     * If the road part combination is available for use in this project date
@@ -1186,8 +1186,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * This will revert project links to their previous state, if used on new links it will delete them, if used on the rest they will become unhandled.
-    * This will also reset any values to their starting values.
+    * Reverts project links to their previous state, if used on new links it will delete them, if used on the rest they will become unhandled.
+    * Also resets values to their starting values.
     * @param links: Iterable[ProjectLink] - Links to revert
     * @param userName: String - User name
     * @return
@@ -1282,8 +1282,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
 
   /**
-    * This will split the links to revert in 2 separate types, the modified (ones that came from road addresses) and the added (ones that were created in this project).
-    * Also it will fetch the project links by road number, road part number and project id and supply them to the next step.
+    * Splits the links to revert in two separate types, the modified (ones that came from road addresses) and the added (ones that were created in this project).
+    * Also fetches the project links by road number, road part number and project id and supply them to the next step.
     * @param projectId: Long - Project Id
     * @param roadNumber: Long - Roadway Road Number
     * @param roadPartNumber: Long - Roadway Road Part Number
@@ -1307,7 +1307,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Continuation of the revert, this will set up the database transaction to save the modifications done to the links to revert.
+    * Continuation of the revert. Sets up the database transaction to save the modifications done to the links to revert.
     * After the modifications are saved this will save the new project coordinates.
     * Otherwise this will issue a error messages.
     * @param projectId: Long - The id of the project
@@ -1349,7 +1349,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Update project links to given status and recalculate delta and change table
+    * Updates project links to given status and recalculates delta and change table.
     *
     * @param projectId  Project's id
     * @param linkIds    Set of link ids that are set to this status
@@ -1564,7 +1564,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * method to check if project is publishable. add filters for cases we do not want to prevent sending
+    * Checks if project is publishable. Add filters for cases we do not want to prevent sending.
     *
     * @param projectId project-id
     * @return if project contains any notifications preventing sending
@@ -1703,7 +1703,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
 
   /**
-    * This will combine multiple project links in one only if it is possible
+    * Combines multiple project links in one only if it is possible
     * @param links: Seq[ProjectLink] - Project links to combine.
     * @return
     */
@@ -1825,7 +1825,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * This will check project information from TR. If TR reply is such then we convert all the project links into regular road addresses and save them on the linear location and roadway tables.
+    * Checks the project information from TR. If TR reply is such then we convert all the project links into regular road addresses and save them on the linear location and roadway tables.
     * @param projectID: Long - The project Id
     * @return
     */
@@ -1923,7 +1923,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * This will expire roadways (valid_to = null and end_date = project_date)
+    * Expires roadways (valid_to = null and end_date = project_date)
     *
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
@@ -2083,7 +2083,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   /**
     * Main validator method.
-    * Will call and execute all the validations we have for a project.
+    * Calls and executes all the validations we have for a project.
     * @param projectId: Long - Project ID
     * @param newSession: Boolean - Will determine if we open a new database sesssion
     * @return A sequence of validation errors, can be empty.
