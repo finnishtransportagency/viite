@@ -152,7 +152,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
         RoadNameRow(search.get.id, "VICTORY RD.", "25.3.2018", Some("27.3.2018")),
         RoadNameRow(NewRoadNameId, "Victory Road", "27.3.2018", None)
       )
-      val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, User(1, "user", Configuration()))
+      val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, "user")
       afterInsert should be(None)
       val latestAfterInsert = RoadNameDAO.getLatestRoadName(roadNumber)
       latestAfterInsert.size should be(1)
@@ -169,7 +169,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
       val roadNames = Seq(
         RoadNameRow(search.get.id, "Victory Road", "27.3.2018", None)
       )
-      roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, User(1, "user", Configuration()))
+      roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, "user")
       val latestAfterInsert = RoadNameDAO.getLatestRoadName(roadNumber)
       latestAfterInsert.size should be(1)
       latestAfterInsert.get.roadName should be("Victory Road")
