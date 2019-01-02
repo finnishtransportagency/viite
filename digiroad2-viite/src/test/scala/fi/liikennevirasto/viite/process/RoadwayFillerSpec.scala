@@ -354,4 +354,55 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.head._1.last.terminated should be(Subsequent)
     }
   }
+
+  test("Test RoadwayFiller.fillRoadways() When dealing with transfered addresses check if the end_addr_m values are correct"){
+    runWithRollback {
+      val roadways = Map(
+        (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 9999L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)),
+        (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 9999L, roadPartNumber = 2L, startAddrM = 0L, endAddrM = 1000L, DateTime.now(), None))
+      )
+
+      val changeInfos = Seq(
+        RoadwayChangeInfo(AddressChangeType.Unchanged,
+          source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1),
+
+        RoadwayChangeInfo(AddressChangeType.Transfer,
+          source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(1L), Some(2L), Some(0L), Some(0L), Some(300L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 2),
+
+        RoadwayChangeInfo(AddressChangeType.Transfer,
+          source = dummyRoadwayChangeSection(Some(1L), Some(2L), Some(0L), Some(0L), Some(1000L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(1L), Some(2L), Some(0L), Some(300L), Some(1000L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3)
+      )
+
+      val projectLinks = Seq(
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = RoadType.apply(1)),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 300L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = RoadType.apply(1)),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 300L, 1000L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = RoadType.apply(1))
+      )
+
+      val changes = Seq(
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0)), Seq(projectLinks.head)),
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(1), DateTime.now(), Some(0)), Seq(projectLinks(1))),
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), DateTime.now(), Some(0)), Seq(projectLinks(2)))
+      )
+
+      val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
+      result.size should be(3)
+      result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
+      result.head._1.head.roadPartNumber should be (1)
+      result.head._1.head.endAddrMValue should be(100)
+      result(1)._1.size should be(2)
+      result(1)._1.last.startAddrMValue should be (0)
+      result(1)._1.last.endAddrMValue should be(300)
+      result(2)._1.size should be(2)
+      result(2)._1.last.startAddrMValue should be (300)
+      result(2)._1.last.endAddrMValue should be (1000)
+    }
+  }
+
 }
