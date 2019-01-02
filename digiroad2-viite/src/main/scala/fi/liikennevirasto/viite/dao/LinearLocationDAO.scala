@@ -718,7 +718,7 @@ class LinearLocationDAO {
   }
 
   def fetchByRoadways(roadwayNumbers: Set[Long]): Seq[LinearLocation] = {
-    if(roadwayNumbers.isEmpty){
+    if (roadwayNumbers.isEmpty) {
       Seq()
     } else {
       val query = if (roadwayNumbers.size > 1000) {

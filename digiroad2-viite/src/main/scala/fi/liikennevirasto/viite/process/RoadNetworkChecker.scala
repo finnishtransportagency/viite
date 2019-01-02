@@ -20,7 +20,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
 
   def checkRoadNetwork(username: String = "") = {
     time(logger, "Validation of road network") {
-      val roadNetworkService = new RoadNetworkService{
+      val roadNetworkService = new RoadNetworkService {
         override def withDynTransaction[T](f: => T): T = f
       }
       val roadNetworkDAO = new RoadNetworkDAO
