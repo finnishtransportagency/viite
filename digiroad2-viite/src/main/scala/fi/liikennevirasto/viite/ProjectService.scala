@@ -1665,7 +1665,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.error(s"No roadNumbers available in project $projectID")
         } else {
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-          eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.getOrElse(0L) + 1L, throughActor = true))
+          if(currNetworkVersion.isDefined)
+            eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
+          else logger.info(s"There is no published version for the network so far")
         }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
