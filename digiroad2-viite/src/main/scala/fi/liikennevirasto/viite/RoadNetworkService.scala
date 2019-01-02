@@ -138,6 +138,14 @@ class RoadNetworkService {
               roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, e.error, e.network_version)
             }
           }
+
+          //validate and create a new published version in case there are no errors now
+          if (!roadNetworkDAO.hasCurrentNetworkErrors) {
+            roadNetworkDAO.expireRoadNetwork
+            roadNetworkDAO.createPublishedRoadNetwork
+          }
+
+
         } catch {
           case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
           case e: SQLException => {
