@@ -103,7 +103,7 @@ class RoadNetworkService {
 
     def runActor = {
 
-      withDynTransaction{
+      withDynTransaction {
         try {
           val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
           val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
@@ -155,7 +155,7 @@ class RoadNetworkService {
 
     def runBatch = {
 
-      withDynTransaction{
+      withDynTransaction {
         try {
           val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
           val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet).groupBy(_.roadwayNumber)
@@ -205,7 +205,7 @@ class RoadNetworkService {
       }
     }
 
-    if(options.throughActor)
+    if (options.throughActor)
       runActor
     else runBatch
 
