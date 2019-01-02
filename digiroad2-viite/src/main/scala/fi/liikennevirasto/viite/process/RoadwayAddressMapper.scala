@@ -164,7 +164,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
   //TODO may be a good idea mode this method to road address service
   /**
-    * This will use the RoadwayDAO to get the roadway information that is connected to the entries of given linearLocations.
+    * Uses the RoadwayDAO to get the roadway information that is connected to the entries of given linearLocations.
     * Both information is then mixed and returned as fully fledged RoadAddress entries.
     *
     * @param linearLocations: Seq[LinearLocation] - The collection of Linear Locations entries
@@ -186,7 +186,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   }
 
   /**
-    * This will use the RoadwayDAO to get the current roadway information the is associated with a specific version of the road network, said roadway information is connected to the entries of given linearLocations.
+    * Uses the RoadwayDAO to get the current roadway information the is associated with a specific version of the road network, said roadway information is connected to the entries of given linearLocations.
     * Both information is then mixed and returned as fully fledged RoadAddress entries.
     *
     * @param linearLocations: Seq[LinearLocation] - The collection of Linear Locations entries
@@ -202,7 +202,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
   // TODO Might be a good idea to move this method to the RoadAddressService
   /**
-    * This will use the LinearLocationDAO to get the linear location information that is connected to the entries of given Roadway entries.
+    * Uses the LinearLocationDAO to get the linear location information that is connected to the entries of given Roadway entries.
     * Both information is then mixed and returned as fully fledged RoadAddress entries.
     *
     * @param roadwayAddresses: Seq[Roadway] - The collection of Roadway's entries

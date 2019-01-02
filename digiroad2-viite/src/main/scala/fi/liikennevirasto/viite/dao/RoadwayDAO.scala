@@ -664,7 +664,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   /**
-    * This composes the original SQL fetch query the the where clause filtering by roadwayId.
+    * Composes the original SQL fetch query the the where clause filtering by roadwayId.
     * @param roadwayIds: Seq[Long] - Collection of the roadway id's to return
     * @param query: String - The original SQL fetch query
     * @return
@@ -731,8 +731,8 @@ class RoadwayDAO extends BaseDAO {
   }
 
   /**
-    * This will expire roadways (set their valid to to the current system date) to all the roadways that have the supplied id's.
-    * @param ids: Seq[Long] - The id's of the roadways to expire.
+    * Expires roadways (set their valid to to the current system date) to all the roadways that have the supplied ids.
+    * @param ids: Seq[Long] - The ids of the roadways to expire.
     * @return
     */
   def expireById(ids: Set[Long]): Int = {

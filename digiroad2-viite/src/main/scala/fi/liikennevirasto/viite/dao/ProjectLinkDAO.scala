@@ -568,7 +568,7 @@ class ProjectLinkDAO {
   }
 
   /**
-    * This will update all the project links that share the same ids as supplied to the newRoadNumber and newRoadPart also it will put the last link of newRoadNumber and newRoadPart with the given discontinuity value.
+    * Updates all the project links that share the same ids as supplied to the newRoadNumber and newRoadPart also it will put the last link of newRoadNumber and newRoadPart with the given discontinuity value.
     * @param ids: Seq[Long] - ids of the project links
     * @param linkStatus: LinkStatus - The operation done on those project links
     * @param newRoadNumber: Long- the new road number to apply
@@ -619,7 +619,7 @@ class ProjectLinkDAO {
   }
 
   /**
-    * This will apply all the values of the road addresses to the project links sharing the project id and road address information.
+    * Applies all the values of the road addresses to the project links sharing the project id and road address information.
     * @param projectId: Long - The id of the project
     * @param roadAddress: RoadAddress - The road address information
     * @param updateGeom: Boolean - controls whether we update or not the geometry of the project links

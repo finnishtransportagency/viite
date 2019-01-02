@@ -778,7 +778,7 @@ class LinearLocationDAO {
   }
 
   /**
-    * This returns the calibration code of a linear location found by it's id.
+    * Returns the calibration code of a linear location found by it's id.
     * @param linearLocationId: Long - The linear location id.
     * @return
     */

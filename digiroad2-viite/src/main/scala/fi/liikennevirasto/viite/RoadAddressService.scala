@@ -65,7 +65,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * This will fetch linear locations based ou a bounding box and, if defined, within the road number limits suplied.
+    * Fetches linear locations based on a bounding box and, if defined, within the road number limits supplied.
     * @param boundingRectangle: BoundingRectangle - The search box
     * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
     * @return
@@ -79,7 +79,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * This will return the roadways that match the supplied linear locations.
+    * Returns the roadways that match the supplied linear locations.
     * @param linearLocations: Seq[LinearLocation] - The linear locations to search
     * @return
     */
@@ -589,7 +589,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   // TODO
   /**
-    * This will get the Unaddressed roads that match the link ids from the list supplied.
+    * Gets the Unaddressed roads that match the link ids from the list supplied.
     * @param linkIds: Set[Long] - The link ids to fetch
     * @return
     */
