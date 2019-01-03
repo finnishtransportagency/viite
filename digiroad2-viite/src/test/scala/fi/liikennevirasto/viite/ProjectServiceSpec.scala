@@ -411,48 +411,50 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val errorRoad = s"TIE $roadNumber OSA: $roadPartNumber"
       val reservedPart = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
       val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
-      projectService.validateReservations(reservedPart, Some(projectEly), Seq(), roadWays) should be(Some(s"$ErrorFollowingRoadPartsNotFoundInDB $errorRoad"))
+      projectService.validateReservations(reservedPart, Seq(), roadWays) should be(Some(s"$ErrorFollowingRoadPartsNotFoundInDB $errorRoad"))
     }
   }
 
   test("Test validateReservations When ely code is diferent Then return error") {
-    runWithRollback {
-      val roadNumber = 5
-      val roadPartNumber = 205
-      val projectEly = 8L
-      val newReserveEly = 1L
-      val errorRoad = s"TIE $roadNumber OSA: $roadPartNumber"
-      val reservedPart1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None)
-      val project = projectService.createRoadLinkProject(rap)
-      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
-      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-
-      val reservedPart2 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(newReserveEly))
-
-      projectService.validateReservations(reservedPart2, Some(projectEly), projectLinks, roadWays) should be(Some(s"$ErrorFollowingPartsHaveDifferingEly $errorRoad"))
-    }
+    // ELY CODE IS NO LONGER VALIDATED
+//    runWithRollback {
+//      val roadNumber = 5
+//      val roadPartNumber = 205
+//      val projectEly = 8L
+//      val newReserveEly = 1L
+//      val errorRoad = s"TIE $roadNumber OSA: $roadPartNumber"
+//      val reservedPart1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
+//      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+//        Seq(), None)
+//      val project = projectService.createRoadLinkProject(rap)
+//      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
+//      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+//
+//      val reservedPart2 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(newReserveEly))
+//
+//      projectService.validateReservations(reservedPart2, Some(projectEly), projectLinks, roadWays) should be(Some(s"$ErrorFollowingPartsHaveDifferingEly $errorRoad"))
+//    }
   }
 
   test("Test validateReservations When road parts exist and ely is the same Then return None") {
-    runWithRollback {
-      val roadNumber = 5
-      val roadPartNumber = 207
-      val projectEly = 8L
-      val reservedPart1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None)
-      val project = projectService.createRoadLinkProject(rap)
-      mockForProject(project.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project)))
-      projectService.saveProject(project.copy(reservedParts = Seq(reservedPart1)))
-      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
-      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-      val reservedPart2 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
-      projectService.validateReservations(reservedPart2, Some(projectEly), projectLinks, roadWays) should be(None)
-    }
+    // ELY CODE IS NO LONGER VALIDATED
+//    runWithRollback {
+//      val roadNumber = 5
+//      val roadPartNumber = 207
+//      val projectEly = 8L
+//      val reservedPart1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
+//      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+//        "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
+//        Seq(), None)
+//      val project = projectService.createRoadLinkProject(rap)
+//      mockForProject(project.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project)))
+//      projectService.saveProject(project.copy(reservedParts = Seq(reservedPart1)))
+//      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
+//      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+//      val reservedPart2 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
+//      projectService.validateReservations(reservedPart2, Some(projectEly), projectLinks, roadWays) should be(None)
+//    }
   }
 
   test("Test checkRoadPartsReservable When road does not exist Then return on right should be 0") {
@@ -878,7 +880,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     projectService.parsePreFillData(Seq(newRoadLink1)) should be(Left("Link does not contain valid prefill info"))
   }
 
-  test("Test setProjectEly When ely is changed Then project ely should change") {
+  test("Test setProjectEly When ely is changed Then project ely should change if it doesn't already have ely") {
     runWithRollback {
       val roadAddressProject = Project(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None, None)
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
@@ -889,7 +891,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val result2 = projectService.setProjectEly(project.id, 2)
       result2 should be(None)
       val result3 = projectService.setProjectEly(project.id, 3)
-      result3.isEmpty should be(false)
+      result3 should be(None)
+      projectService.getProjectEly(project.id).get should be(2)
     }
   }
 
@@ -2533,6 +2536,33 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
           rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
         }
       })
+    }
+  }
+
+  test("Test save project with reserved road parts having different ELY codes "){
+    runWithRollback {
+
+      val roadNumber = 2
+      val part1 = 19
+      val part2 = 20
+      val ely1 = Some(2L)
+      val ely2 = Some(1L)
+
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val reservations = List(
+        ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, roadNumber, part1, Some(0L), Some(Continuous), ely1, None, None, None, None, isDirty = true),
+        ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, roadNumber, part2, Some(0L), Some(Continuous), ely2, None, None, None, None, isDirty = true)
+      )
+      val project = projectService.createRoadLinkProject(rap)
+
+      val address1 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part1).map(_.roadwayNumber).toSet))
+      val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part2).map(_.roadwayNumber).toSet))
+      mockForProject(project.id, (address1 ++ address2).map(toProjectLink(rap)))
+      val savedProject = projectService.saveProject(project.copy(reservedParts = reservations))
+      savedProject.reservedParts.head.ely.get should be (ely1.get)
+      savedProject.reservedParts.last.ely.get should be (ely2.get)
     }
   }
 

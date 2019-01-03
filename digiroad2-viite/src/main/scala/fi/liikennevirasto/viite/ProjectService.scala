@@ -323,7 +323,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           setProjectEly(projectId, roadEly) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              addNewLinksToProject(sortRamps(projectLinks.toSeq, linkIds), projectId, user, linkId, newTransaction = false) match {
+              addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, newTransaction = false) match {
                 case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
                 case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
               }
@@ -477,27 +477,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   /**
     * Checks if the road part that user wants to reserve exists
-    * Checks if the road parts that user tries to reserve have different ely    *
     *
     * @param reservedRoadParts
-    * @param projectEly
     * @param projectLinks
     * @param roadways
     * @return None in case of success, error code in case of failed validation
     */
 
-  def validateReservations(reservedRoadParts: ProjectReservedPart, projectEly: Option[Long],
-                           projectLinks: Seq[ProjectLink], roadways: Seq[Roadway], allPartsToReserve: Seq[ProjectReservedPart] = Seq.empty[ProjectReservedPart]): Option[String] = {
-    val differingElyParts = allPartsToReserve.filter(pr => pr.ely != allPartsToReserve.head.ely)
-    if (differingElyParts.nonEmpty) {
-      val allDifferingElyParts = Seq(allPartsToReserve.head) ++ differingElyParts
-      Some(s"$ErrorFollowingPartsHaveDifferingEly " ++ allDifferingElyParts.map(op => {
-        s"TIE ${op.roadNumber} OSA: ${op.roadPartNumber} ELY: ${op.ely.getOrElse(-1)}"
-      }).mkString(" ja "))
-    } else if (roadways.isEmpty && !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
+  def validateReservations(reservedRoadParts: ProjectReservedPart, projectLinks: Seq[ProjectLink], roadways: Seq[Roadway]): Option[String] = {
+    if (roadways.isEmpty && !projectLinks.exists(pl => pl.roadNumber == reservedRoadParts.roadNumber && pl.roadPartNumber == reservedRoadParts.roadPartNumber))
       Some(s"$ErrorFollowingRoadPartsNotFoundInDB TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
-    else if ((projectLinks.exists(_.ely != reservedRoadParts.ely.get) || roadways.exists(_.ely != reservedRoadParts.ely.get)) && (projectEly.isEmpty || projectEly.get != defaultProjectEly))
-      Some(s"$ErrorFollowingPartsHaveDifferingEly TIE ${reservedRoadParts.roadNumber} OSA: ${reservedRoadParts.roadPartNumber}")
     else
       None
   }
@@ -523,7 +512,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
       reserved => {
         val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
-        validateReservations(reserved, project.ely, projectLinks, roadways, project.reservedParts) match {
+        validateReservations(reserved, projectLinks, roadways) match {
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
             val (suravageSource, regular) = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
@@ -1875,13 +1864,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def setProjectEly(currentProjectId: Long, newEly: Long): Option[String] = {
-    getProjectEly(currentProjectId).filterNot(_ == newEly).map { currentProjectEly =>
-      logger.info(s"The project can not handle multiple ELY areas (the project ELY range is $currentProjectEly). Recording was discarded.")
-      s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on $currentProjectEly). Tallennus hylättiin."
-    }.orElse {
+    if(getProjectEly(currentProjectId).isEmpty){
       projectDAO.updateProjectEly(currentProjectId, newEly)
-      None
     }
+    None
   }
 
   def getProjectEly(projectId: Long): Option[Long] = {
