@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.viite.MaxDistanceForSearchDiscontinuityOnOppositeTrack
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.MinorDiscontinuity
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
@@ -25,7 +26,7 @@ class DiscontinuityTrackCalculatorStrategy(discontinuity: Discontinuity) extends
 
     (left.last.discontinuity, right.last.discontinuity) match {
       case (MinorDiscontinuity, MinorDiscontinuity) => // If both sides have a minor discontinuity
-        if (Math.abs(left.last.endAddrMValue - right.last.endAddrMValue) < 10) {
+        if (Math.abs(left.last.endAddrMValue - right.last.endAddrMValue) < MaxDistanceForSearchDiscontinuityOnOppositeTrack) {
           adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
         } else if (left.last.endAddrMValue < right.last.endAddrMValue) { // If the left side has a minor discontinuity
           val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last)
