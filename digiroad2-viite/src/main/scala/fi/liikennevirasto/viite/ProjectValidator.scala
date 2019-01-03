@@ -681,8 +681,7 @@ class ProjectValidator {
             if (interval.size > 1) {
               interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
                 case Seq(curr, next) =>
-                  val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
-                  if ((checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) && (curr.discontinuity == MinorDiscontinuity || curr.discontinuity == Discontinuous))
+                  if (Track.isTrackContinuous(curr.track, next.track) && checkConnected(curr, Option(next)) && (curr.discontinuity == MinorDiscontinuity || curr.discontinuity == Discontinuous))
                     Some(curr)
                   else
                     None
@@ -730,11 +729,8 @@ class ProjectValidator {
                            Track 2  |
                          <----------|
                    */
-
-                  //optional opposite second track validation where the first node could be disconnected but connected to the next track joint
                   val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
-
-                  if ((checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity)
+                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity)
                     None
                   else
                     Some(curr)
