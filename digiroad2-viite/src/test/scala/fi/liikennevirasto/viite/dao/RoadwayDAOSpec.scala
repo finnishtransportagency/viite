@@ -976,19 +976,19 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchAllByRoadNumberAndValue() When filtering only by road number Then return the correct roadways withing the filter boundaries") {
+  test("Test () When filtering only by road number Then return the correct roadways withing the filter boundaries") {
     runWithRollback {
       val roadwayId1 = dao.getNextRoadwayId
       val roadwayId2 = dao.getNextRoadwayId
       val firstRoadway = testRoadway1.copy(id = roadwayId1)
       val secondRoadway = testRoadway1.copy(id = roadwayId2, roadPartNumber = testRoadway1.roadPartNumber + 1)
       dao.create(List(firstRoadway, secondRoadway))
-      val nonExistingRoadNumber = dao.fetchAllByRoadNumberAndValue(99999999L)
+      val nonExistingRoadNumber = dao.fetchAllByRoad(99999999L)
       nonExistingRoadNumber.size should be (0)
-      val recentlyCreatedRoadNumber = dao.fetchAllByRoadNumberAndValue(testRoadway1.roadNumber)
+      val recentlyCreatedRoadNumber = dao.fetchAllByRoad(testRoadway1.roadNumber)
       recentlyCreatedRoadNumber.size should be (2)
       Seq(roadwayId1, roadwayId2).sorted should be (recentlyCreatedRoadNumber.map(_.id).sorted)
-      val secondRoadPart = dao.fetchAllByRoadNumberAndValue(testRoadway1.roadNumber, Some(secondRoadway.roadPartNumber))
+      val secondRoadPart = dao.fetchAllByRoadAndPart(testRoadway1.roadNumber, Some(secondRoadway.roadPartNumber))
       secondRoadPart.size should be (1)
       secondRoadPart.head.id should be (roadwayId2)
     }
