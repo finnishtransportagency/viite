@@ -140,7 +140,8 @@ class RoadNetworkService {
           }
 
           //validate and create a new published version in case there are no errors now
-          if (!roadNetworkDAO.hasCurrentNetworkErrors) {
+          if (options.currNetworkVersion.nonEmpty && !roadNetworkDAO.hasCurrentNetworkErrors) {
+            logger.info(s"No errors found. Creating new publishable version for the road network ")
             roadNetworkDAO.expireRoadNetwork
             roadNetworkDAO.createPublishedRoadNetwork
           }

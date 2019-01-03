@@ -38,7 +38,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
             roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads.toSet, currNetworkVersion, nextNetworkVersion, throughActor = false))
         }
-        if (!roadNetworkDAO.hasCurrentNetworkErrors) {
+        if (currNetworkVersion.nonEmpty && !roadNetworkDAO.hasCurrentNetworkErrors) {
           logger.info(s"No errors found. Creating new publishable version for the road network ")
           roadNetworkDAO.expireRoadNetwork
           roadNetworkDAO.createPublishedRoadNetwork
