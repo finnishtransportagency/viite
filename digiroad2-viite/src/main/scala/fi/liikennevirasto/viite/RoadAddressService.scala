@@ -112,9 +112,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
-  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadNumberAddress(road: Long): Seq[RoadAddress] = {
     withDynSession {
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllByRoadNumberAndValue(road, addressMValue = addrMValue).map(_.roadwayNumber).toSet))
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoad(road))
     }
   }
 
