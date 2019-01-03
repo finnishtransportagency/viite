@@ -1654,7 +1654,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
           if (updatedStatus == Saved2TR) {
-            logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
+            logger.info(s"Starting project $projectID road addresses importing to road address table")
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
           } else Set.empty[Long]
         }
@@ -1662,7 +1662,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (roadNetworkDAO.hasCurrentNetworkErrors) {
           logger.error(s"Current network have errors")
         } else if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
-          logger.error(s"No roadNumbers available in project $projectID")
+          logger.error(s"No road numbers available in project $projectID")
         } else {
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
           if (currNetworkVersion.isDefined)
