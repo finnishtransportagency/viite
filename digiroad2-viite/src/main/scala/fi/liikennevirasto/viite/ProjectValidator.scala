@@ -729,8 +729,8 @@ class ProjectValidator {
                            Track 2  |
                          <----------|
                    */
-
-                  if (Track.isTrackContinuous(curr.track, next.track) && checkConnected(curr, Option(next)) || curr.discontinuity == MinorDiscontinuity)
+                  val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
+                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity)
                     None
                   else
                     Some(curr)
