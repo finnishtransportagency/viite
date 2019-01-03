@@ -968,8 +968,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val roadwayId2 = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
       val roadways = dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
       dao.expireById(Set(roadwayId1, roadwayId2)) should be(2)
       dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2)).size should be(0)
@@ -988,7 +988,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val recentlyCreatedRoadNumber = dao.fetchAllByRoad(testRoadway1.roadNumber)
       recentlyCreatedRoadNumber.size should be (2)
       Seq(roadwayId1, roadwayId2).sorted should be (recentlyCreatedRoadNumber.map(_.id).sorted)
-      val secondRoadPart = dao.fetchAllByRoadAndPart(testRoadway1.roadNumber, Some(secondRoadway.roadPartNumber))
+      val secondRoadPart = dao.fetchAllByRoadAndPart(testRoadway1.roadNumber, secondRoadway.roadPartNumber)
       secondRoadPart.size should be (1)
       secondRoadPart.head.id should be (roadwayId2)
     }
