@@ -1645,7 +1645,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
-        val roadNumbers:Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
+        val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
           logger.info(s"Retrieved TR status: ${trProjectState.getOrElse(None)}")
@@ -1665,7 +1665,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.error(s"No roadNumbers available in project $projectID")
         } else {
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-          if(currNetworkVersion.isDefined)
+          if (currNetworkVersion.isDefined)
             eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
           else logger.info(s"There is no published version for the network so far")
         }
@@ -1786,7 +1786,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate.toYearMonthDay, roadway.endDate.map(_.toYearMonthDay),
         roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
-      linearLocationDAO.create(generatedRoadways.flatMap(_._2).groupBy( l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.floating, l.sideCode, l.linkGeomSource)).map(_._2.head), createdBy = project.createdBy)
+      linearLocationDAO.create(generatedRoadways.flatMap(_._2).groupBy(l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.floating, l.sideCode, l.linkGeomSource)).map(_._2.head), createdBy = project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndRenumeration(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
