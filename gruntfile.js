@@ -111,7 +111,7 @@ module.exports = function(grunt) {
           },
           {
             context: '/rasteripalvelu',
-            host: 'oag.vayla.fi',
+            host: 'oag.liikennevirasto.fi',
             port: '80',
             https: false,
             changeOrigin: true,
@@ -119,7 +119,7 @@ module.exports = function(grunt) {
           },
           {
             context: '/wmts',
-            host: 'oag.vayla.fi',
+            host: 'oag.liikennevirasto.fi',
             port: '80',
             https: false,
             changeOrigin: true,
