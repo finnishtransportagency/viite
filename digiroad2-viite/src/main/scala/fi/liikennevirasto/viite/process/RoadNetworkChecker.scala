@@ -39,6 +39,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
             roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads.toSet, currNetworkVersion, nextNetworkVersion, throughActor = false))
         }
         if (!roadNetworkDAO.hasCurrentNetworkErrors) {
+          logger.info(s"No errors found. Creating new publishable version for the road network ")
           roadNetworkDAO.expireRoadNetwork
           roadNetworkDAO.createPublishedRoadNetwork
         }
