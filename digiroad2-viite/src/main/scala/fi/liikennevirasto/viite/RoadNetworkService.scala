@@ -144,6 +144,8 @@ class RoadNetworkService {
             logger.info(s"No errors found. Creating new publishable version for the road network ")
             roadNetworkDAO.expireRoadNetwork
             roadNetworkDAO.createPublishedRoadNetwork
+            val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
+            roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
           }
 
 
