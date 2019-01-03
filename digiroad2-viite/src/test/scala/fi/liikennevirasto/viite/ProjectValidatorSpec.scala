@@ -260,7 +260,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
              Track 0   |
                        |    Track 1
                        |-------------->
-                       ^
+                       |
                        |
                        |
                        |
@@ -289,7 +289,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          (None, Some(20l)), FloatingReason.NoFloating, Seq(Point(0.0, 5.0), Point(10.0, 5.0)), LinkGeomSource.ComplimentaryLinkInterface,
           roadwayNumber2, Some(startDate), None),
 
         LinearLocation(linearLocationId + 2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
