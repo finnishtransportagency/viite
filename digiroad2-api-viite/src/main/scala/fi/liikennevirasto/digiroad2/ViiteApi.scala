@@ -240,8 +240,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val roadNumber = params("roadNumber").toLong
     time(logger, s"PUT request for /roadnames/$roadNumber") {
       val roadNames = parsedBody.extract[Seq[RoadNameRow]]
-      val user = userProvider.getCurrentUser()
-      roadNameService.addOrUpdateRoadNames(roadNumber, roadNames, user) match {
+      val username = userProvider.getCurrentUser().username
+      roadNameService.addOrUpdateRoadNames(roadNumber, roadNames, username) match {
         case Some(err) => Map("success" -> false, "errorMessage" -> err)
         case None => Map("success" -> true)
       }
