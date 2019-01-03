@@ -496,6 +496,16 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllCurrentRoadwayIds: Set[Long] = {
+    time(logger, "Fetch all roadway ids") {
+      sql"""
+			select distinct (ra.id)
+      from ROADWAY ra
+      where ra.valid_to is null
+		  """.as[Long].list.toSet
+    }
+  }
+
   // TODO Can we really have errors in history? Do we need includesHistory -parameter?
   def fetchAllRoadAddressErrors(includesHistory: Boolean = false): List[AddressErrorDetails] = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
