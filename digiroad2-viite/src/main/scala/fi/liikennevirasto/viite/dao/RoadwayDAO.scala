@@ -413,12 +413,6 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadNumberAndValue(roadNumber: Long, roadPart: Option[Long] = None, track: Option[Track] = None, addressMValue: Option[Long] = None) : Seq[Roadway] = {
-    time(logger, "Fetch roadway by road number and part with mValue") {
-      fetch(withRoadNumber(roadNumber, roadPart, track, addressMValue))
-    }
-  }
-
   def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
@@ -570,7 +564,7 @@ class RoadwayDAO extends BaseDAO {
       case None => ""
     }
 
-    query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter "
+    query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter and a.end_date is null and a.valid_to is null "
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
