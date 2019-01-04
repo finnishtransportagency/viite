@@ -103,7 +103,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
     verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
-    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L), false)
 
     result.size should be (4)
   }
