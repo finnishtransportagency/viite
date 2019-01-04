@@ -1659,10 +1659,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           } else Set.empty[Long]
         }
         val roadNetworkDAO = new RoadNetworkDAO
-        if (roadNetworkDAO.hasCurrentNetworkErrors) {
-          logger.error(s"Current network have errors")
-        } else if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
+        if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
           logger.error(s"No road numbers available in project $projectID")
+        } else if (roadNetworkDAO.hasCurrentNetworkErrorsForOtherNumbers(roadNumbers.get)) {
+          logger.error(s"Current network have errors for another project roads, solve Them first.")
         } else {
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
           if (currNetworkVersion.isDefined)
