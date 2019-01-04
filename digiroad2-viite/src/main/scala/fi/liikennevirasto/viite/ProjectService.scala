@@ -288,7 +288,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def writableWithValidTrack(projectId: Long, track: Int): Option[String] = {
     if (!isWritableState(projectId)) Some(projectNotWritable)
-    else if (!validateLinkTrack(track)) Some("Invalid track code")
+    else if (!validateLinkTrack(track)) Some("Ajoratakoodi puuttuu")
     else None
   }
 

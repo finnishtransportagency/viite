@@ -574,7 +574,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                 "projectErrors" -> projectErrors)
           }
         } else {
-          Map("success" -> false, "errorMessage" -> "Invalid track code")
+          Map("success" -> false, "errorMessage" -> "Ajoratakoodi puuttuu")
         }
       } catch {
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
