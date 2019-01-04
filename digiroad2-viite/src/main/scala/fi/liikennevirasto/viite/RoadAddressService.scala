@@ -77,13 +77,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
-    //TODO check if this will continue to be needed or if it was something that
-//    def complementaryLinkFilter(roadAddressLink: RoadAddressLink) = {
-//      everything || publicRoads || roadNumberLimits.exists {
-//        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
-//      }
-//    }
-
     val boundingBoxResultF =
       for {
         changeInfoF <- boundingBoxResult.changeInfoF
@@ -134,7 +127,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(nonFloatingLinkIds),
       Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(floatingLinkIds))),
-      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds)),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds, frozenTimeVVHAPIServiceEnabled)),
       Future(Seq()),
       Future(Seq())
     )
@@ -182,7 +175,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val suravageRoadLinksF = Future(roadLinkService.getSuravageRoadLinks(municipality))
 
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality, frozenTimeVVHAPIServiceEnabled)
 
     val allRoadLinks = roadLinks ++ Await.result(suravageRoadLinksF, atMost = Duration.create(1, TimeUnit.HOURS))
 
