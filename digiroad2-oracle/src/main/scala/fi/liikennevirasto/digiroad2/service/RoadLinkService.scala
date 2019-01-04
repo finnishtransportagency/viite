@@ -143,7 +143,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val fut = for {
       f1Result <- vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities)
       f2Result <- vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
-      f3Result <- if(useFrozenVVHLinks)
+      f3Result <- if (useFrozenVVHLinks)
                   vvhClient.frozenTimeRoadLinkData.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
                 else
                   vvhClient.roadLinkData.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
@@ -156,7 +156,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val fut = for {
       f1Result <- vvhClient.complementaryData.fetchWalkwaysByMunicipalitiesF(municipalities)
       f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
-      f3Result <- if(useFrozenVVHLinks)
+      f3Result <- if (useFrozenVVHLinks)
                     vvhClient.frozenTimeRoadLinkData.fetchByMunicipalityF(municipalities)
                   else
                     vvhClient.roadLinkData.fetchByMunicipalityF(municipalities)
