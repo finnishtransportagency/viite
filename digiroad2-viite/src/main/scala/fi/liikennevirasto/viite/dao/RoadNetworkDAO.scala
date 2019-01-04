@@ -60,6 +60,10 @@ class RoadNetworkDAO {
     sql"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL) """.as[Long].first > 0
   }
 
+  def hasCurrentNetworkErrorsForOtherNumbers(roads: Set[Long]): Boolean = {
+    sql"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL) and roadway_id not in (select id from roadway where road_number in (${roads.mkString(",")})) """.as[Long].first > 0
+  }
+
   def getLatestRoadNetworkVersionId: Option[Long] = {
     sql"""SELECT MAX(id) FROM published_road_network WHERE valid_to is null""".as[Option[Long]].first
   }
