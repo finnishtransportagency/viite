@@ -28,19 +28,18 @@ class RoadNetworkDAO {
     sqlu"""INSERT INTO PUBLISHED_ROADWAY (network_id, ROADWAY_ID) VALUES ($networkVersion, $roadwayId)""".execute
   }
 
-  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, addressError: AddressError): Unit = {
+  def addRoadNetworkError(roadwayId: Long, linearLocationId: Long, addressError: AddressError, networkVersion: Option[Long]): Unit = {
     val timestamp = System.currentTimeMillis()
-    val lastVersion = getLatestRoadNetworkVersionId
     val networkErrorPS = dynamicSession.prepareStatement(
       """INSERT INTO road_network_error (id, ROADWAY_ID, linear_location_id, error_code, error_timestamp, road_network_version)
       values (?, ?, ?, ?, ?, ?)""")
-    val nextId = Sequences.nextRoadNetworkErrorSeqValue
+    val nextId = Sequences.nextRoadNetworkErrorId
     networkErrorPS.setLong(1, nextId)
     networkErrorPS.setLong(2, roadwayId)
     networkErrorPS.setLong(3, linearLocationId)
     networkErrorPS.setLong(4, addressError.value)
     networkErrorPS.setDouble(5, timestamp)
-    lastVersion match {
+    networkVersion match {
       case Some(v) => networkErrorPS.setLong(6, v)
       case _ => networkErrorPS.setString(6, null)
     }
@@ -55,6 +54,14 @@ class RoadNetworkDAO {
 
   def hasRoadNetworkErrors: Boolean = {
     sql"""SELECT COUNT(*) FROM road_network_error """.as[Long].first > 0
+  }
+
+  def hasCurrentNetworkErrors: Boolean = {
+    sql"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL) """.as[Long].first > 0
+  }
+
+  def hasCurrentNetworkErrorsForOtherNumbers(roads: Set[Long]): Boolean = {
+    sql"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL) and roadway_id not in (select id from roadway where road_number in (${roads.mkString(",")})) """.as[Long].first > 0
   }
 
   def getLatestRoadNetworkVersionId: Option[Long] = {

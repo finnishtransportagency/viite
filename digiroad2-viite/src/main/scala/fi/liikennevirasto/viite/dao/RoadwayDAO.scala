@@ -407,6 +407,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllByRoadNumbers(roadNumbers: Set[Long]): Seq[Roadway] = {
+    time(logger, "Fetch road ways by road number") {
+      fetch(withRoadNumbers(roadNumbers))
+    }
+  }
+
   def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
       fetch(withRoadAndPart(roadNumber, roadPart, withHistory, fetchOnlyEnd))
@@ -484,6 +490,16 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchAllCurrentRoadwayIds: Set[Long] = {
+    time(logger, "Fetch all roadway ids") {
+      sql"""
+			select distinct (ra.id)
+      from ROADWAY ra
+      where ra.valid_to is null
+		  """.as[Long].list.toSet
+    }
+  }
+
   // TODO Can we really have errors in history? Do we need includesHistory -parameter?
   def fetchAllRoadAddressErrors(includesHistory: Boolean = false): List[AddressErrorDetails] = {
     time(logger, s"Fetch all road address errors (includesHistory: $includesHistory)") {
@@ -536,6 +552,21 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoad(roadNumber: Long)(query: String): String = {
     s"""$query where valid_to is null and end_date is null and road_number = $roadNumber"""
+  }
+
+  private def withRoadNumbers(roadNumbers: Set[Long])(query: String): String = {
+    if (roadNumbers.size > 1000) {
+      MassQuery.withIds(roadNumbers) {
+        idTableName =>
+          s"""
+            $query
+            join $idTableName i on i.id = a.ROAD_NUMBER
+            where a.valid_to is null AND a.end_date is null AND a.terminated = 0
+          """.stripMargin
+      }
+    } else {
+      s"""$query where a.valid_to is null AND a.end_date is null AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
+    }
   }
 
   private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
@@ -684,7 +715,7 @@ class RoadwayDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  def expireHistory(ids: Set[Long], endDate: DateTime, terminated: TerminationCode = TerminationCode.NoTermination): Int = {
+  def expireHistory(ids: Set[Long]): Int = {
     if (ids.isEmpty) {
       0
     } else {
@@ -714,9 +745,33 @@ class RoadwayDAO extends BaseDAO {
       """.as[Long].list
   }
 
-    def getNextRoadwayId: Long = {
-      Queries.nextRoadwayId.as[Long].first
-    }
+  def getValidRoadNumbers: List[Long] = {
+    sql"""
+       select distinct road_number
+              from ROADWAY
+              where valid_to IS NULL AND end_date is NULL AND terminated = 0 order by road_number
+      """.as[Long].list
+  }
+
+  def getValidRoadNumbersByProject(projectId: Long): List[Long] = {
+    sql"""
+       select distinct road_number
+              from ROADWAY
+              where valid_to IS NULL AND project
+      """.as[Long].list
+  }
+
+  def getValidBetweenRoadNumbers(roadNumbers: (Long, Long)): List[Long] = {
+    sql"""
+       select distinct road_number
+              from ROADWAY
+              where valid_to IS NULL AND end_date is NULL AND terminated = 0 AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2}
+      """.as[Long].list
+  }
+
+  def getNextRoadwayId: Long = {
+    Queries.nextRoadwayId.as[Long].first
+  }
 
   def create(roadways: Iterable[Roadway]): Seq[Long] = {
     val roadwayPS = dynamicSession.prepareStatement(
@@ -731,7 +786,7 @@ class RoadwayDAO extends BaseDAO {
     val createRoadways = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
-    createRoadways.foreach { case (address) =>
+    createRoadways.foreach { case address =>
       val roadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
         Sequences.nextRoadwayNumber
       } else {

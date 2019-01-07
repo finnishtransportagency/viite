@@ -1624,16 +1624,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val listOfPendingProjects = getProjectsPendingInTR
     for (project <- listOfPendingProjects) {
       try {
-        if (withDynTransaction {
-          logger.info(s"Checking status for $project")
+        withDynTransaction {
           checkAndUpdateProjectStatus(project)
-        }) {
-          eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
-        } else {
-          logger.info(s"Not going to check road network (status != Saved2TR)")
         }
       } catch {
-        case t: SQLException => logger.error(s"SQL error while importing project: $project! Check if any roads have multiple valid names with out end dates ", t.getStackTrace)
+        case t: SQLException => logger.error(s"SQL error while importing project: $project! ${t.getMessage}", t)
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
       }
     }
@@ -1645,10 +1640,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def checkAndUpdateProjectStatus(projectID: Long): Boolean = {
+  private def checkAndUpdateProjectStatus(projectID: Long): Unit = {
+
     projectDAO.fetchTRIdByProjectId(projectID) match {
       case Some(trId) =>
-        projectDAO.fetchProjectStatus(projectID).map { currentState =>
+        val roadNumbers: Option[Set[Long]] = projectDAO.fetchProjectStatus(projectID).map { currentState =>
           logger.info(s"Current status is $currentState, fetching TR state")
           val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
           logger.info(s"Retrieved TR status: ${trProjectState.getOrElse(None)}")
@@ -1657,15 +1653,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
           val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
           if (updatedStatus == Saved2TR) {
-            logger.info(s"Starting project $projectID roadaddresses importing to roadaddresstable")
+            logger.info(s"Starting project $projectID road addresses importing to road address table")
             updateRoadwaysAndLinearLocationsWithProjectLinks(updatedStatus, projectID)
-          }
+          } else Set.empty[Long]
         }
-        false
+        val roadNetworkDAO = new RoadNetworkDAO
+        if (roadNumbers.isEmpty || roadNumbers.get.isEmpty) {
+          logger.error(s"No road numbers available in project $projectID")
+        } else if (roadNetworkDAO.hasCurrentNetworkErrorsForOtherNumbers(roadNumbers.get)) {
+          logger.error(s"Current network have errors for another project roads, solve Them first.")
+        } else {
+          val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
+          if (currNetworkVersion.isDefined)
+            eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
+          else logger.info(s"There is no published version for the network so far")
+        }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
         appendStatusInfo(projectDAO.fetchById(projectID).head, " Failed to find TR-ID ")
-        false
     }
   }
 
@@ -1743,11 +1748,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
     */
-  def expireHistoryRows(roadwayId: Long, roadway: Roadway, projectDate: DateTime): Int = {
-    roadwayDAO.expireHistory(Set(roadwayId), projectDate, roadway.terminated)
+  def expireHistoryRows(roadwayId: Long): Int = {
+    roadwayDAO.expireHistory(Set(roadwayId))
   }
 
-  def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Option[String] = {
+  def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Set[Long] = {
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
@@ -1777,7 +1782,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewRoadway).map(_.id)
       logger.info(s"Creating history rows based on operation")
       linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
-      (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1, roadway._2, project.startDate))
+      (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(generatedRoadways.flatMap(_._1).filter(_.id == NewRoadway).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate.toYearMonthDay, roadway.endDate.map(_.toYearMonthDay),
         roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head))
       linearLocationDAO.create(generatedRoadways.flatMap(_._2).groupBy(l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.floating, l.sideCode, l.linkGeomSource)).map(_._2.head), createdBy = project.createdBy)
@@ -1786,10 +1791,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       handleTerminatedRoadwayChanges(roadwayChanges)
       ProjectLinkNameDAO.removeByProject(projectID)
       Some(s"road addresses created")
+      projectLinks.map(_.roadNumber).toSet
     } catch {
       case e: ProjectValidationException =>
         logger.error("Failed to validate project message:" + e.getMessage)
-        Some(e.getMessage)
+        Set.empty[Long]
     }
   }
 
