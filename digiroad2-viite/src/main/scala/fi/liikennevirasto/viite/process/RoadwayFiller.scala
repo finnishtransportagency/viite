@@ -17,7 +17,7 @@ object RoadwayFiller {
     val roadwayNumber = if (newRoadwayNumber) Sequences.nextRoadwayNumber else currentRoadway.roadwayNumber
 
     val historyRoadway = Roadway(NewRoadway, roadwayNumber, changeSource.roadNumber.get, changeSource.startRoadPartNumber.get, changeSource.roadType.get, Track.apply(changeSource.trackCode.get.toInt), changeSource.discontinuity.get,
-      changeSource.startAddressM.get, changeSource.endAddressM.get, projectLinks.head.reversed, currentRoadway.startDate, Some(change.changeDate), createdBy = currentRoadway.createdBy, currentRoadway.roadName,
+      changeSource.startAddressM.get, changeSource.endAddressM.get, projectLinks.head.reversed, currentRoadway.startDate, Some(change.projectStartDate), createdBy = currentRoadway.createdBy, currentRoadway.roadName,
       currentRoadway.ely, NoTermination, currentRoadway.validFrom, currentRoadway.validTo)
 
     val newRoadway = Roadway(NewRoadway, roadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,

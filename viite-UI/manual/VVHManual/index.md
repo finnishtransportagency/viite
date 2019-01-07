@@ -102,7 +102,7 @@ DRID, LinkiD ja NodeID muodostetaan kun kohde luodaan ensimm&auml;ist&auml; kert
 1.3 Ty&ouml;skentelyn aloitus
 --------------------------
 
-V&auml;yl&auml;verkon hallinnan sovellukseen kirjaudutaan osoitteesta https://citrix.liikennevirasto.fi/. Valitaan Apps ->  ArcMap __Standard__.
+V&auml;yl&auml;verkon hallinnan sovellukseen kirjaudutaan osoitteesta https://citrix.vayla.fi/. Valitaan Apps ->  ArcMap __Standard__.
 
 ![ArcMap.](k1.png)
 
