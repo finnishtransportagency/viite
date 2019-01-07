@@ -4,8 +4,12 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
+import fi.liikennevirasto.viite.{ProjectService, RoadType}
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.{Delta, ReNumeration, Transferred, Unchanged}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -54,6 +58,22 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       addprojects()
       new RoadwayChangesDAO().insertDeltaToRoadChangeTable(delta, 1)
       sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.get should be(1)
+    }
+  }
+
+  test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted ely code should be the roadway ely instead of project ely") {
+    val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0,
+      SideCode.Unknown, (None, None), NoFloating, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false,
+      None, 748800L)
+    val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
+    runWithRollback {
+      addprojects()
+      val dao = new RoadwayChangesDAO()
+      dao.insertDeltaToRoadChangeTable(delta, 1)
+      val changes = dao.fetchRoadwayChanges(Set(1))
+      changes.foreach(c => {
+        c.changeInfo.target.ely.get should be(5)
+      })
     }
   }
 }

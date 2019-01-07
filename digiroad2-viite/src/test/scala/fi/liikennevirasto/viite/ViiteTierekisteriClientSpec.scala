@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.Properties
 
+import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
@@ -163,5 +164,44 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     val part3 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 3)
     part2.nonEmpty should be(true)
     part3.nonEmpty should be(true)
+  }
+
+  test("Test ViiteTierekisteriClient.convertToChangeProject() The change table ely codes should be the ones in the change infos") {
+    val projectId = 99999999999L
+    val roadNumber = 99999
+    val oldEly = 8L
+    val newEly = 9L
+
+    val changeInfos = List(
+      RoadwayChangeInfo(AddressChangeType.Unchanged,
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, RoadType.apply(1), reversed = false, 1),
+      RoadwayChangeInfo(AddressChangeType.ReNumeration,
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, RoadType.apply(1), reversed = false, 1),
+      RoadwayChangeInfo(AddressChangeType.Transfer,
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, RoadType.apply(1), reversed = false, 1),
+      RoadwayChangeInfo(AddressChangeType.New,
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, RoadType.apply(1), reversed = false, 1)
+    )
+
+    val changes = List(
+      ProjectRoadwayChange(projectId, Some("testproject"), 1, "user", DateTime.now(), changeInfos.head, DateTime.now(), Some(2)),
+      ProjectRoadwayChange(projectId, Some("testproject"), 1, "user", DateTime.now(), changeInfos(1), DateTime.now(), Some(2)),
+      ProjectRoadwayChange(projectId, Some("testproject"), 1, "user", DateTime.now(), changeInfos(2), DateTime.now(), Some(2)),
+      ProjectRoadwayChange(projectId, Some("testproject"), 1, "user", DateTime.now(), changeInfos.last, DateTime.now(), Some(2))
+    )
+
+    val changeProject = ViiteTierekisteriClient.convertToChangeProject(changes)
+    changeProject.changeInfoSeq.foreach(cis => {
+      cis.source.ely.get should be(oldEly)
+      cis.target.ely.get should be(newEly)
+    })
   }
 }
