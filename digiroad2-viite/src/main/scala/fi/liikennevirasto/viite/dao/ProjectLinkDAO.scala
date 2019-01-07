@@ -445,6 +445,15 @@ class ProjectLinkDAO {
     }
   }
 
+  def fetchRoadNumbersByProjectIdHistory(projectId: Long): Seq[Long] = {
+    time(logger, "Get road numbers history by project") {
+      val query =
+        s"""SELECT ROAD_NUMBER FROM PROJECT_LINK_HISTORY
+                where PROJECT_ID = $projectId order by ROAD_NUMBER """
+      Q.queryNA[Long](query).list
+    }
+  }
+
   def fetchProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"

@@ -14,9 +14,9 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 
-class FloatingCheckerSpec extends FunSuite with Matchers {
+class RoadNetworkCheckerSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val floatingChecker = new FloatingChecker(roadLinkService = mockRoadLinkService)
+  val floatingChecker = new RoadNetworkChecker(roadLinkService = mockRoadLinkService)
 
   test("Geometry subtracted by more than 1 meter should trigger floating check") {
     val geometry = Seq(Point(0.0, 0.0), Point(60.0, 0.0), Point(60.0, 9.844))
