@@ -288,7 +288,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def writableWithValidTrack(projectId: Long, track: Int): Option[String] = {
     if (!isWritableState(projectId)) Some(projectNotWritable)
-    else if (!validateLinkTrack(track)) Some("Invalid track code")
+    else if (!validateLinkTrack(track)) Some("Ajoratakoodi puuttuu")
     else None
   }
 
@@ -300,7 +300,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case None =>
           val linkId = linkIds.head
           val roadLinks = (if (roadLinkSource != LinkGeomSource.SuravageLinkInterface) {
-            roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
+            roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet, frozenTimeVVHAPIServiceEnabled)
           } else {
             roadLinkService.getSuravageRoadLinksFromVVH(linkIds.toSet)
           }).map(l => l.linkId -> l).toMap
@@ -528,7 +528,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             val (suravageSource, regular) = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
             val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
-            val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
+            val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
             val fullMapping = regularMapping ++ suravageMapping
             val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravageSource ++ regular).groupBy(_.roadwayNumber)(r.roadwayNumber)))
             checkAndReserve(project, reserved)
@@ -1632,7 +1632,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case t: Exception => logger.warn(s"Couldn't update project $project", t.getMessage)
       }
     }
-
   }
 
   def getProjectState(projectId: Long): Option[ProjectState] = {
@@ -1817,7 +1816,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val targetExistingRoadways = roadwayDAO.fetchAllByRoad(targetRoadNumber)
 
           if (srcExistingRoadways.isEmpty && srcExistingRoadName.isDefined) {
-            RoadNameDAO.expireAndCreateHistory(srcExistingRoadName.get.id, rwc.user, historyRoadName = srcExistingRoadName.get.copy(endDate = Some(rwc.changeDate)))
+            RoadNameDAO.expireAndCreateHistory(srcExistingRoadName.get.id, rwc.user, historyRoadName = srcExistingRoadName.get.copy(endDate = Some(rwc.projectStartDate)))
           }
 
           // CREATE NEW ROADNAME FOR TARGET ROADNUMBER
@@ -1838,7 +1837,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val roadways = roadwayDAO.fetchAllByRoad(roadNumber)
         val roadNameOpt = RoadNameDAO.getLatestRoadName(roadNumber)
         if (roadways.isEmpty && roadNameOpt.isDefined) {
-          RoadNameDAO.expireAndCreateHistory(roadNameOpt.get.id, rwc.user, historyRoadName = roadNameOpt.get.copy(endDate = Some(rwc.changeDate)))
+          RoadNameDAO.expireAndCreateHistory(roadNameOpt.get.id, rwc.user, historyRoadName = roadNameOpt.get.copy(endDate = Some(rwc.projectStartDate)))
         }
       }
     })

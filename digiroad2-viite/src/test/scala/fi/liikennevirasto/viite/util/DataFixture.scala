@@ -48,7 +48,7 @@ object DataFixture {
 
   private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits (2) printZeroAlways() appendHours() appendSeparator (":") appendMinutes() appendSuffix (":") appendSeconds() toFormatter
 
-  //private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
   private lazy val numberThreads: Int = 6
 
@@ -77,7 +77,7 @@ object DataFixture {
         case Some(tableName) =>
           val importOptions = ImportOptions(
             onlyComplementaryLinks = false,
-            useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
+            useFrozenLinkService = geometryFrozen,
             geometryAdjustedTimeStamp.toLong, tableName,
             onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
           dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
@@ -197,9 +197,9 @@ object DataFixture {
         municipalities.foreach { municipality =>
           println("Start processing municipality %d".format(municipality))
 
-          //Obtain all RoadLink by municipality and change info from VVH
-          val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
-          val allRoadLinks = roadLinks
+        //Obtain all RoadLink by municipality and change info from VVH
+        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt, geometryFrozen)
+        val allRoadLinks = roadLinks
 
           println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
           println("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
