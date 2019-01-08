@@ -200,8 +200,8 @@ trait TrackCalculatorStrategy {
               setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
           }
 
-          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false, ProjectLinkSource)) ++ pls.init.tail ++
-            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true, ProjectLinkSource))
+          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, ProjectLinkSource)) ++ pls.init.tail ++
+            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, ProjectLinkSource))
       }
   }
 
@@ -230,6 +230,13 @@ trait TrackCalculatorStrategy {
     }
   }
 
+  /**
+    * Re-adds the calibration points to the project links after the calculation. The calibration points are gotten via the information on our current linear locations.
+    * 
+    * @param calculatorResult: TrackCalculatorResult - the result of the calculation
+    * @param userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint] - Map of linear location id -> UserDefinedCalibrationPoint
+    * @return
+    */
   def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
 

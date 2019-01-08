@@ -462,11 +462,15 @@ class ProjectValidator {
     }).headOption.getOrElse(Seq())
   }
 
-  /*
-    Pick only parts that are terminated and had end of road given before
-    Find previous road part for all terminated road parts with end of road and link it to an error message
-    If previous road address is part of the project and not terminated, don't throw error
-  */
+  /**
+    * Pick only parts that are terminated and had end of road given before
+    * Find previous road part for all terminated road parts with end of road and link it to an error message
+    * If previous road address is part of the project and not terminated, don't throw error
+    *
+    * @param project
+    * @param projectLinks
+    * @return
+    */
   def checkRemovedEndOfRoadParts(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     projectLinks.filter(pl => pl.status == Terminated && pl.discontinuity == EndOfRoad).flatMap { rrp =>
       roadAddressService.getPreviousRoadAddressPart(rrp.roadNumber, rrp.roadPartNumber) match {
@@ -756,6 +760,10 @@ class ProjectValidator {
       discontinuousErrors.toSeq
     }
 
+    /**
+      * This will evaluate that the last link of the road part has EndOfRoad discontinuity value.
+      * @return
+      */
     def checkEndOfRoadOnLastPart: Seq[ValidationErrorDetails] = {
       val afterCheckErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toLong, project.startDate)
@@ -797,6 +805,10 @@ class ProjectValidator {
       groupedErrors
     }
 
+    /**
+      * This will evaluate that the last link of the road part has EndOfRoad, ChangingELYCode or Continuous discontinuity value as needed.
+      * @return
+      */
     def checkDiscontinuityOnLastPart: Seq[ValidationErrorDetails] = {
       val  discontinuityErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
@@ -853,6 +865,10 @@ class ProjectValidator {
       groupedDiscontinuity
     }
 
+    /**
+      * This will validate if the road number and road part number we have in the project has a end of road discontinuity in any road that lies outside of the project.
+      * @return
+      */
     def checkEndOfRoadOutsideOfProject: Seq[ValidationErrorDetails] = {
       val (road, part): (Long, Long) = (roadProjectLinks.head.roadNumber, roadProjectLinks.head.roadPartNumber)
       roadAddressService.getPreviousRoadAddressPart(road, part) match {
@@ -876,6 +892,14 @@ class ProjectValidator {
       endOfRoadErrors.distinct
     }
 
+    /**
+      * This will return the next link (being project link or road address) from a road number/road part number combo being them in this project or not
+      * @param allProjectLinks: Seq[ProjectLink] - Project Links
+      * @param road: Long - Road number
+      * @param nextProjectPart: Long - Road Part Number
+      * @param nextAddressPart: Long - Road Part Number
+      * @return
+      */
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]):Seq[BaseRoadAddress] = {
       if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
         projectLinkDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
