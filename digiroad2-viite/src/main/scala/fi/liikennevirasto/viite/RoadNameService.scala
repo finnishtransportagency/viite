@@ -26,13 +26,13 @@ class RoadNameService() {
     }
   }
 
-  def addOrUpdateRoadNames(roadNumber: Long, roadNameRows: Seq[RoadNameRow], user: User): Option[String] = {
+  def addOrUpdateRoadNames(roadNumber: Long, roadNameRows: Seq[RoadNameRow], username: String): Option[String] = {
     withDynTransaction {
-      addOrUpdateRoadNamesInTX(roadNumber, roadNameRows, user)
+      addOrUpdateRoadNamesInTX(roadNumber, roadNameRows, username)
     }
   }
 
-  def addOrUpdateRoadNamesInTX(roadNumber: Long, roadNameRows: Seq[RoadNameRow], user: User): Option[String] = {
+  def addOrUpdateRoadNamesInTX(roadNumber: Long, roadNameRows: Seq[RoadNameRow], username: String): Option[String] = {
     try {
       roadNameRows.map {
         roadNameRow =>
@@ -43,11 +43,11 @@ class RoadNameService() {
           }
           val newRoadName = roadNameOption match {
             case Some(roadName) =>
-              RoadNameDAO.expire(roadNameRow.id, user)
-              roadName.copy(createdBy = user.username, roadName = roadNameRow.name, endDate = endDate)
+              RoadNameDAO.expire(roadNameRow.id, username)
+              roadName.copy(createdBy = username, roadName = roadNameRow.name, endDate = endDate)
             case _ =>
               val startDate = new DateTime(formatter.parseDateTime(roadNameRow.startDate))
-              RoadName(NewRoadNameId, roadNumber, roadNameRow.name, Some(startDate), endDate, createdBy = user.username)
+              RoadName(NewRoadNameId, roadNumber, roadNameRow.name, Some(startDate), endDate, createdBy = username)
           }
 
           RoadNameDAO.create(Seq(newRoadName))

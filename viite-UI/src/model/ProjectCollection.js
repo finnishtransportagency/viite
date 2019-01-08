@@ -347,7 +347,7 @@
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
         roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number(roadAddressProjectForm.find('#roadTypeDropDown')[0].value),
+        roadType: Number(roadAddressProjectForm.find('#roadTypeDropdown')[0].value),
         userDefinedEndAddressM: endDistance !== undefined ? (!isNaN(Number(endDistance.value)) ? Number(endDistance.value) : null) : null,
         coordinates: coordinates,
         roadName: roadAddressProjectForm.find('#roadName')[0].value,
@@ -468,7 +468,7 @@
         discontinuity: Number(form.find('#discontinuityDropdown')[0].value),
         ely: Number(form.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number(form.find('#roadTypeDropDown')[0].value),
+        roadType: Number(form.find('#roadTypeDropdown')[0].value),
         projectId: projectId,
         coordinates: coordinates
       };
