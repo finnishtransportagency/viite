@@ -103,7 +103,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
     verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
-    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L), false)
 
     result.size should be (4)
   }
@@ -203,7 +203,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     //Road Link service mocks
     when(mockRoadLinkService.getSuravageRoadLinks(any[Int])).thenReturn(suravageRoadLinks)
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, Seq()))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int], any[Boolean])).thenReturn((roadLinks, Seq()))
 
     val (floating, nonFloating) = roadAddressService.getAllByMunicipality(municipality = 100).partition(_.floating)
 
@@ -241,7 +241,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     //Road Link service mocks
     when(mockRoadLinkService.getSuravageRoadLinks(any[Int])).thenReturn(suravageRoadLinks)
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, Seq()))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int], any[Boolean])).thenReturn((roadLinks, Seq()))
 
     val now = DateTime.now
     roadAddressService.getAllByMunicipality(municipality = 100).partition(_.floating)
@@ -516,7 +516,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
 
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn(roadLinks)
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999, false)).thenReturn(roadLinks)
     when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
     when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
     val roadAddresses = roadAddressService.getAllByMunicipality(99999)

@@ -146,7 +146,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
           (p - Point(0, 0)).scale(1.0 / points.size) + x
         }
-        TrackSectionOrder.findOnceConnectedLinks(remainLinks).minBy(p => direction.dot(p._1.toVector - midPoint))
+        TrackSectionOrder.findChainEndpoints(remainLinks).minBy(p => direction.dot(p._1.toVector - midPoint))
       }
 
     )

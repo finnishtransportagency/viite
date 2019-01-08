@@ -24,11 +24,11 @@
     </ows:ServiceIdentification>
     <ows:ServiceProvider>
         <ows:ProviderName>Liikennevirasto</ows:ProviderName>
-        <ows:ProviderSite xlink:href="http://www.liikennevirasto.fi/"/>
+        <ows:ProviderSite xlink:href="http://www.vayla.fi/"/>
         <ows:ServiceContact>
             <ows:ContactInfo>
                 <ows:Address>
-                    <ows:ElectronicMailAddress>paikkatieto@liikennevirasto.fi</ows:ElectronicMailAddress>
+                    <ows:ElectronicMailAddress>paikkatieto@vayla.fi</ows:ElectronicMailAddress>
                 </ows:Address>
             </ows:ContactInfo>
         </ows:ServiceContact>
@@ -37,7 +37,7 @@
         <ows:Operation name="GetCapabilities">
             <ows:DCP>
                 <ows:HTTP>
-                    <ows:Get xlink:href="http://oag.liikennevirasto.fi/rasteripalvelu/service/wmts?">
+                    <ows:Get xlink:href="http://oag.vayla.fi/rasteripalvelu/service/wmts?">
                         <ows:Constraint name="GetEncoding">
                             <ows:AllowedValues>
                                 <ows:Value>KVP</ows:Value>
@@ -50,7 +50,7 @@
         <ows:Operation name="GetTile">
             <ows:DCP>
                 <ows:HTTP>
-                    <ows:Get xlink:href="http://oag.liikennevirasto.fi/rasteripalvelu/service/wmts?">
+                    <ows:Get xlink:href="http://oag.vayla.fi/rasteripalvelu/service/wmts?">
                         <ows:Constraint name="GetEncoding">
                             <ows:AllowedValues>
                                 <ows:Value>KVP</ows:Value>
@@ -63,7 +63,7 @@
         <ows:Operation name="GetFeatureInfo">
             <ows:DCP>
                 <ows:HTTP>
-                    <ows:Get xlink:href="http://oag.liikennevirasto.fi/rasteripalvelu/service/wmts?">
+                    <ows:Get xlink:href="http://oag.vayla.fi/rasteripalvelu/service/wmts?">
                         <ows:Constraint name="GetEncoding">
                             <ows:AllowedValues>
                                 <ows:Value>KVP</ows:Value>
@@ -16920,5 +16920,5 @@
             </TileMatrix>
         </TileMatrixSet>
     </Contents>
-    <ServiceMetadataURL xlink:href="http://oag.liikennevirasto.fi/rasteripalvelu/service/wmts?REQUEST=getcapabilities&amp;VERSION=1.0.0"/>
+    <ServiceMetadataURL xlink:href="http://oag.vayla.fi/rasteripalvelu/service/wmts?REQUEST=getcapabilities&amp;VERSION=1.0.0"/>
 </Capabilities>

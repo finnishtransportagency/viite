@@ -89,11 +89,12 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   private def addLinearLocationAndRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
     val linearLocationDAO = new LinearLocationDAO
+    val roadnetworkDAO = new RoadNetworkDAO
     val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
       (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
       roadwayId)
     linearLocationDAO.create(List(linearLocation))
-    dao.addRoadNetworkError(roadwayId, linearLocationId, addressError)
+    dao.addRoadNetworkError(roadwayId, linearLocationId, addressError, roadnetworkDAO.getLatestRoadNetworkVersionId)
   }
 
   private def expireAndAddRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {

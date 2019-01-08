@@ -66,7 +66,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   def build(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
     roadLink match {
       case rl: RoadLink => buildRoadLink(rl, unaddressedRoadLink)
-      case rl: RoadLinkLike => throw new NotImplementedError(s"No support for building unaddressed road links on RoadLinkLike subclass ${rl.getClass}")
+      case rl: RoadLinkLike => buildRoadLinkLike(rl, unaddressedRoadLink)
     }
   }
 
@@ -87,6 +87,25 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber),
       unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry))
+  }
+
+  private def buildRoadLinkLike(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(roadLink.length))
+    val length = GeometryUtils.geometryLength(geom)
+    val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
+    val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
+    val VVHRoadName = getVVHRoadName(roadLink.attributes)
+    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[Number].intValue()
+    val roadType = unaddressedRoadLink.roadType match {
+      case RoadType.Unknown => getRoadType(roadLink.administrativeClass, UnknownLinkType)
+      case _ => unaddressedRoadLink.roadType
+    }
+    RoadAddressLink(0, 0, roadLink.linkId, geom,
+      length, roadLink.administrativeClass, UnknownLinkType, roadLink.constructionType, roadLink.linkSource, roadType,
+      VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber),
+      unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry), floating = false)
   }
 
   /**
