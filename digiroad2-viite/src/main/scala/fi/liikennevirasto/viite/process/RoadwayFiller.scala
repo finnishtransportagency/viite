@@ -55,7 +55,7 @@ object RoadwayFiller {
 
         (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.head, projectLinksInRoadway))
       } else {
-        (Seq(), Seq())
+        (Seq(currentRoadway), roadwayAddressMapper.mapLinearLocations(currentRoadway, projectLinksInRoadway))
       }
     }
   }
