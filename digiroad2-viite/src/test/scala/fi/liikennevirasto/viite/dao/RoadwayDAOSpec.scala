@@ -607,7 +607,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
       linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory, roadNetworkDAO.getLatestRoadNetworkVersionId)
       val errors = dao.fetchAllRoadAddressErrors()
       errors.size should be > 0
     }
@@ -620,7 +620,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
       linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO
-      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory)
+      roadNetworkDAO.addRoadNetworkError(roadwayId, linearLocationId1, AddressError.InconsistentLrmHistory, roadNetworkDAO.getLatestRoadNetworkVersionId)
       val errors = dao.fetchAllRoadAddressErrors(includesHistory = true)
       errors.size should be > 0
     }
@@ -968,27 +968,27 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val roadwayId2 = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
       val roadways = dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
       dao.expireById(Set(roadwayId1, roadwayId2)) should be(2)
       dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2)).size should be(0)
     }
   }
 
-  test("Test fetchAllByRoadNumberAndValue() When filtering only by road number Then return the correct roadways withing the filter boundaries") {
+  test("Test () When filtering only by road number Then return the correct roadways withing the filter boundaries") {
     runWithRollback {
       val roadwayId1 = dao.getNextRoadwayId
       val roadwayId2 = dao.getNextRoadwayId
       val firstRoadway = testRoadway1.copy(id = roadwayId1)
       val secondRoadway = testRoadway1.copy(id = roadwayId2, roadPartNumber = testRoadway1.roadPartNumber + 1)
       dao.create(List(firstRoadway, secondRoadway))
-      val nonExistingRoadNumber = dao.fetchAllByRoadNumberAndValue(99999999L)
+      val nonExistingRoadNumber = dao.fetchAllByRoad(99999999L)
       nonExistingRoadNumber.size should be (0)
-      val recentlyCreatedRoadNumber = dao.fetchAllByRoadNumberAndValue(testRoadway1.roadNumber)
+      val recentlyCreatedRoadNumber = dao.fetchAllByRoad(testRoadway1.roadNumber)
       recentlyCreatedRoadNumber.size should be (2)
       Seq(roadwayId1, roadwayId2).sorted should be (recentlyCreatedRoadNumber.map(_.id).sorted)
-      val secondRoadPart = dao.fetchAllByRoadNumberAndValue(testRoadway1.roadNumber, Some(secondRoadway.roadPartNumber))
+      val secondRoadPart = dao.fetchAllByRoadAndPart(testRoadway1.roadNumber, secondRoadway.roadPartNumber)
       secondRoadPart.size should be (1)
       secondRoadPart.head.id should be (roadwayId2)
     }

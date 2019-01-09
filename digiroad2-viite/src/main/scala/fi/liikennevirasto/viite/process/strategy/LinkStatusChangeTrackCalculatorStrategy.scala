@@ -28,7 +28,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
-        val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
+        val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight)
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
       }
     } else {
@@ -36,7 +36,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
-        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
+        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft)
         adjustTwoTracks(startAddress, left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
       }
     }
@@ -76,10 +76,10 @@ class TerminatedLinkStatusChangeStrategy extends  LinkStatusChangeTrackCalculato
 
     val (lastLeft, lastRight) = (left.last, right.last)
     if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
-      val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
+      val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight)
       adjustTwoTrackss(startAddress, Some(lastRight.endAddrMValue), newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
     } else {
-      val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
+      val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft)
       adjustTwoTrackss(startAddress, Some(lastLeft.endAddrMValue), left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
     }
   }

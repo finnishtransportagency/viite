@@ -101,11 +101,11 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
       result.size should be(3)
-      result.head._1.size should be(1)
+      result.head._1.size should be(2)
       result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
       result(1)._1.size should be(2)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
-      result(2)._1.size should be(1)
+      result(2)._1.size should be(2)
       result(2)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
     }
   }
@@ -180,7 +180,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
       result.size should be(2)
-      result.head._1.size should be(1)
+      result.head._1.size should be(2)
       result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
       result(1)._1.size should be(1)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
@@ -271,7 +271,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
       result.size should be(4)
       //Unchanged
-      result.head._1.size should be(1)
+      result.head._1.size should be(2)
       result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
       //Terminated
       result(1)._1.size should be(1)

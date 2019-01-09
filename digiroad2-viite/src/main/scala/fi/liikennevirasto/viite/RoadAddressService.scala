@@ -64,6 +64,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    LinearLocationResult(nonFloatingAddresses, floatingAddresses)
   }
 
+  /**
+    * Fetches linear locations based on a bounding box and, if defined, within the road number limits supplied.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
@@ -72,18 +78,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  /**
+    * Returns the roadways that match the supplied linear locations.
+    * @param linearLocations: Seq[LinearLocation] - The linear locations to search
+    * @return
+    */
   def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]) = {
     roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
 
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
-    //TODO check if this will continue to be needed or if it was something that
-//    def complementaryLinkFilter(roadAddressLink: RoadAddressLink) = {
-//      everything || publicRoads || roadNumberLimits.exists {
-//        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
-//      }
-//    }
-
     val boundingBoxResultF =
       for {
         changeInfoF <- boundingBoxResult.changeInfoF
@@ -112,12 +116,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
-  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadNumberAddress(road: Long): Seq[RoadAddress] = {
     withDynSession {
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllByRoadNumberAndValue(road, addressMValue = addrMValue).map(_.roadwayNumber).toSet))
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoad(road))
     }
   }
 
+  /**
+    * Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
@@ -134,7 +144,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(nonFloatingLinkIds),
       Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(floatingLinkIds))),
-      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds)),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds, frozenTimeVVHAPIServiceEnabled)),
       Future(Seq()),
       Future(Seq())
     )
@@ -142,6 +152,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     getRoadAddressLinks(boundingBoxResult)
   }
 
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
     val linearLocations =
       time(logger, "Fetch floating and non-floating linear locations by bounding box") {
@@ -167,6 +183,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     nonFloatingRoadAddresses.map(roadAddressLinkBuilder.build)
   }
 
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) that share the same linkIds as those supplied.
+    * @param linkIds: Seq[Long] - The linkId's to fetch information
+    * @return
+    */
   def getRoadAddressesByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
     val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
     roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
@@ -182,7 +203,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val suravageRoadLinksF = Future(roadLinkService.getSuravageRoadLinks(municipality))
 
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality, frozenTimeVVHAPIServiceEnabled)
 
     val allRoadLinks = roadLinks ++ Await.result(suravageRoadLinksF, atMost = Duration.create(1, TimeUnit.HOURS))
 
@@ -410,6 +431,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
+    * @param roadwayIds: Seq[Long] - The roadway Id's to fetch
+    * @param includeFloating: Boolean - Signals if we fetch the floatings or not
+    * @return
+    */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
       val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -554,6 +581,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   // TODO
+  /**
+    * Gets the Unaddressed roads that match the link ids from the list supplied.
+    * @param linkIds: Set[Long] - The link ids to fetch
+    * @return
+    */
   def fetchUnaddressedRoadLinksByLinkIds(linkIds: Set[Long]): Seq[UnaddressedRoadLink] = {
     time(logger, "RoadAddressDAO.getUnaddressedRoadLinks by linkIds") {
       unaddressedRoadLinkDAO.getUnaddressedRoadLinks(linkIds)
@@ -600,19 +632,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //    }
   }
 
-//  private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
+  private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
 //    throw new NotImplementedError("Will be implemented at VIITE-1540")
-////    withDynSession {
-////      Await.result(boundingBoxResult.suravageF, Duration.Inf).map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-////    }
-//  }
+    withDynSession {
+      Await.result(boundingBoxResult.suravageF, Duration.Inf).map(x => (x, None)).map(roadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
+  }
 
   def getSuravageRoadLinkAddressesByLinkIds(linkIdsToGet: Set[Long]): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    val suravageLinks = roadLinkService.getSuravageRoadLinksFromVVH(linkIdsToGet)
-//    withDynSession {
-//      suravageLinks.map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-//    }
+//    throw new NotImplementedError("Will be implemented at VIITE-1540")
+    Seq()
+    val suravageLinks = roadLinkService.getSuravageVVHRoadLinksByLinkIdsFromVVH(linkIdsToGet)
+    withDynSession {
+      suravageLinks.map(x => (x, None)).map(roadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
   }
 
   def getRoadAddressLinksWithSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
@@ -624,12 +657,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
       Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads, frozenTimeVVHAPIServiceEnabled)),
       Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set())),
-      Future(roadLinkService.getSuravageLinksFromVVH(boundingRectangle, Set()))
+      Future(roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, Set()))
     )
 
-    getRoadAddressLinks(boundingBoxResult)
-//    val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, combinedFuture)
-//    suravageAddresses ++ roadAddressLinks
+    val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, boundingBoxResult)
+    suravageAddresses ++ getRoadAddressLinks(boundingBoxResult)
+
   }
 
   // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
@@ -1099,7 +1132,7 @@ case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 case class LinearLocationResult(current: Seq[LinearLocation], floating: Seq[LinearLocation])
 
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
-                             roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[RoadLink]])
+                             roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[VVHRoadlink]])
 
 case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val currentSegments: Seq[RoadAddress] = v._1

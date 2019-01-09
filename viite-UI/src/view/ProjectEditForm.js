@@ -88,7 +88,7 @@
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
-        '<select class="action-select" id="dropdown_0" size="1">'+
+        '<select class="action-select" id="dropDown_0" size="1">'+
         '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
         '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
         '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
@@ -179,7 +179,7 @@
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
-      $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
+      $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
     var fillDistanceValues = function (selectedLinks) {
@@ -352,15 +352,15 @@
 
       var saveChanges = function(){
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        var isValidEly = _.find(ValidElys, function(ely){ 
+        var isValidEly = _.find(ValidElys, function(ely){
           return ely.value == $('#ely')[0].value;
         });
         if(!isValidEly){
           return new ModalConfirm("Tarkista antamasi ELY-koodi. Annettu arvo on virheellinen.");
         }
 
-        var statusDropdown_0 =$('#dropdown_0').val();
-        var statusDropdown_1 = $('#dropdown_1').val();
+        var statusDropdown_0 =$('#dropDown_0').val();
+        var statusDropdown_1 = $('#dropDown_1').val();
 
         var objectDropdown_0 = _.find(LinkStatus, function(obj){
           return obj.description === statusDropdown_0;
@@ -399,7 +399,7 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
-      rootElement.on('change', '#roadTypeDropDown', function(){
+      rootElement.on('change', '#roadTypeDropdown', function(){
         setFormDirty();
       });
 
@@ -412,12 +412,12 @@
         saveChanges();
       });
 
-      rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
+      rootElement.on('change', '#roadAddressProjectForm #dropDown_0', function() {
         $('#tie').prop('disabled',false);
         $('#osa').prop('disabled',false);
         $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
-        $('#roadTypeDropDown').prop('disabled',false);
+        $('#roadTypeDropdown').prop('disabled',false);
         if(this.value == LinkStatus.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
@@ -452,7 +452,7 @@
           $('#osa').prop('disabled',true);
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
-          $('#roadTypeDropDown').prop('disabled',false);
+          $('#roadTypeDropdown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -486,7 +486,7 @@
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
-          $('#roadTypeDropDown').prop('disabled',true);
+          $('#roadTypeDropdown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -562,7 +562,7 @@
       });
 
       rootElement.on('change input', '.form-control.small-input', function (event) {
-      var dropdown_0 = $('#dropdown_0');
+      var dropdown_0 = $('#dropDown_0');
       var roadNameField =$('#roadName');
       checkInputs('.project-');
       setFormDirty();

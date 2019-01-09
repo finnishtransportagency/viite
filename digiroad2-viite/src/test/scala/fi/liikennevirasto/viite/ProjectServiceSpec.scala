@@ -1760,7 +1760,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).head.validTo should be(None)
 
       // Call the method to be tested
-      projectService.expireHistoryRows(roadway.id, roadway, projectLink.startDate.get)
+      projectService.expireHistoryRows(roadway.id)
 
       // Check results
       roadwayDAO.fetchAllByRoadwayId(Seq(roadway.id)).isEmpty should be(true)
@@ -1794,7 +1794,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
         toMockAnswer(Seq(projectLink), roadLink)
       )
-      val historicRoadId = projectService.expireHistoryRows(roadwayId, roadway, roadAddressProject.createdDate)
+      val historicRoadId = projectService.expireHistoryRows(roadwayId)
       historicRoadId should be (1)
     }
   }
@@ -2262,6 +2262,35 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
    }
  }
 
+  test("Test changeDirection() When projectLinks are reversed the track codes must switch and start_addr_m and end_addr_m should be the same for the first and last links") {
+    runWithRollback {
+
+      val roadNumber = 9999L
+      val roadPartNumber = 1L
+
+      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0, 100, 150, 300), true, roadNumber, roadPartNumber)
+
+      val projectLinksBefore = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+
+      val linksToRevert = projectLinksBefore.map( pl => LinkToRevert(pl.id, pl.id, LinkStatus.Transfer.value, pl.geometry))
+      projectService.changeDirection(project.id, roadNumber, roadPartNumber, linksToRevert, ProjectCoordinates(0,0, 5), "testUser")
+
+      val projectLinksAfter = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+      projectLinksAfter.size should be(projectLinksBefore.size)
+      projectLinksAfter.head.startAddrMValue should be(projectLinksBefore.head.startAddrMValue)
+      projectLinksAfter.last.endAddrMValue should be(projectLinksBefore.last.endAddrMValue)
+      var i = 0;
+      projectLinksAfter.foreach(pl => {
+        pl.track match {
+          case Track.RightSide => projectLinksBefore(i).track should be(Track.LeftSide)
+          case Track.LeftSide => projectLinksBefore(i).track should be(Track.RightSide)
+          case _ => "ignore"
+        }
+        i += 1
+      })
+    }
+  }
+
   test("Test handleNewRoadNames - Test if a new RoadName is created from a project link") {
     runWithRollback {
 
@@ -2392,7 +2421,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndRenumeration(changes)
+      projectService.handleTransferAndNumbering(changes)
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2440,7 +2469,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndRenumeration(changes)
+      projectService.handleTransferAndNumbering(changes)
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2480,7 +2509,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndRenumeration(changes)
+      projectService.handleTransferAndNumbering(changes)
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2528,7 +2557,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndRenumeration(changes)
+      projectService.handleTransferAndNumbering(changes)
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {

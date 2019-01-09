@@ -74,7 +74,7 @@
       };
 
     var roadTypeDropdown = function() {
-      return '<select class="'+prefix+'form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
+      return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
         '<option value = "1">1 Maantie</option>'+
         '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
