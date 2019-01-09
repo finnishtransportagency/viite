@@ -131,7 +131,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
   private def addProjectLinksToProject(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
-                                       roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, lastLinkDiscontinuity: Discontinuity = Discontinuity.Continuous, project: Project, withRoadInfo: Boolean = false): Project = {
+                                       roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L,
+                                       lastLinkDiscontinuity: Discontinuity = Discontinuity.Continuous, project: Project, withRoadInfo: Boolean = false): Project = {
 
     def withTrack(t: Track): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map { case (st, en) =>
@@ -145,7 +146,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       } else {
         withTrack(Combined)
       }
-    projectReservedPartDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, "u")
+    if(projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).isEmpty)
+      projectReservedPartDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, "u")
     val newLinks = links.dropRight(1) ++ Seq(links.last.copy(discontinuity = lastLinkDiscontinuity))
     if(withRoadInfo){
       val (ll, rw) = newLinks.map(toRoadwayAndLinearLocation).unzip
@@ -2231,9 +2233,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and putting the correct link status but using many different elys in the change then validator should return an error") {
     runWithRollback {
-      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode, ely = 1L)
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode, ely = 10L)
       val originalProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-      addProjectLinksToProject(LinkStatus.UnChanged, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 1L)
+      addProjectLinksToProject(LinkStatus.UnChanged, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 10L)
       val additionalProjectLinks2 = projectLinkDAO.fetchProjectLinks(project.id)
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.startAddrMValue).startAddrMValue
@@ -2250,6 +2252,60 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       elyCodeCheck.size should be (1)
       elyCodeCheck.head.projectId should be (project.id)
       elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.MultipleElyInPart)
+    }
+  }
+
+  test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and putting the correct link status but not putting the correct discontinuity value in the change then validator should return an error") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.Continuous, ely = 1L)
+      val originalProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      addProjectLinksToProject(LinkStatus.Transfer, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 2L)
+      val additionalProjectLinks2 = projectLinkDAO.fetchProjectLinks(project.id)
+      val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
+      val min = newLinksOnly.minBy(_.startAddrMValue).startAddrMValue
+      newLinksOnly.foreach(p => {
+        projectLinkDAO.updateAddrMValues(p.copy(startAddrMValue = p.startAddrMValue-min, endAddrMValue = p.endAddrMValue-min,
+          originalStartAddrMValue = p.originalStartAddrMValue - min, originalEndAddrMValue = p.originalEndAddrMValue - min))
+      })
+      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      mockEmptyRoadAddressServiceCalls()
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2.map(p => p.copy(ely = 8))
+      roadwayDAO.create(rw)
+      val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
+      elyCodeCheck.size should be (1)
+      elyCodeCheck.head.projectId should be (project.id)
+      elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeChangeDetected)
+    }
+  }
+
+  test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and putting the correct link status and discontinuity value in the change but not changing the next road part then validator should return an error") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode, ely = 1L)
+      val originalProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      addProjectLinksToProject(LinkStatus.Transfer, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, ely = 1L)
+      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      mockEmptyRoadAddressServiceCalls()
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
+      roadwayDAO.create(rw)
+      val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
+      elyCodeCheck.size should be (1)
+      elyCodeCheck.head.projectId should be (project.id)
+      elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeChangeButNotOnEnd)
+    }
+  }
+
+  test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and putting the correct link status and discontinuity value in the change but not changing the Ely Code on the next road part then validator should return an error") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode, ely = 1L)
+      addProjectLinksToProject(LinkStatus.Transfer, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 1L)
+      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      mockEmptyRoadAddressServiceCalls()
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
+      roadwayDAO.create(rw)
+      val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
+      elyCodeCheck.size should be (1)
+      elyCodeCheck.head.projectId should be (project.id)
+      elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeChangeButNotOnEnd)
     }
   }
 }

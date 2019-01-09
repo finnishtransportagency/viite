@@ -13,6 +13,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
+import scala.collection.immutable.ListMap
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.format.DateTimeFormat
@@ -39,6 +40,7 @@ class ProjectValidator {
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val projectDAO = new ProjectDAO
+  val defaultZoomlevel = 12
 
  private def distanceToPoint = 10.0
 
@@ -99,7 +101,8 @@ class ProjectValidator {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp,
-      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly, MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange)
+      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly, MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
+      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -302,6 +305,30 @@ class ProjectValidator {
       def notification = true
     }
 
+    case object ElyCodeChangeButNoRoadPartChange extends ValidationError {
+      def value = 23
+
+      def message: String = ElyCodeChangeButNoRoadPartChangeMessage
+
+      def notification = true
+    }
+
+    case object ElyCodeChangeButNoElyChange extends ValidationError {
+      def value = 24
+
+      def message: String = ElyCodeChangeButNoElyChangeMessage
+
+      def notification = true
+    }
+
+    case object ElyCodeChangeButNotOnEnd extends ValidationError {
+      def value = 25
+
+      def message: String = ElyCodeChangeButNotOnEndMessage
+
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -334,11 +361,11 @@ class ProjectValidator {
   def projectLinksValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     val projectValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
+      checkProjectElyCodes,
       checkProjectContinuity,
       checkForNotHandledLinks,
       checkTrackCodePairing,
-      checkRemovedEndOfRoadParts,
-      checkProjectElyCodes
+      checkRemovedEndOfRoadParts
     )
 
     val errors: Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
@@ -354,7 +381,7 @@ class ProjectValidator {
     val (ids, points) = (nonSplitLinks ++ connectedSplitLinks).map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty) {
       Some(ValidationErrorDetails(id, validationError, ids,
-        points.map(p => ProjectCoordinates(p.x, p.y, 12)), Some(info)))
+        points.map(p => ProjectCoordinates(p.x, p.y, defaultZoomlevel)), Some(info)))
     } else {
       None
     }
@@ -364,7 +391,7 @@ class ProjectValidator {
     val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
     if (ids.nonEmpty)
       Some(ValidationErrorDetails(id, validationError, ids,
-        points.map(p => ProjectCoordinates(p.x, p.y, 12)), None))
+        points.map(p => ProjectCoordinates(p.x, p.y, defaultZoomlevel)), None))
     else
       None
   }
@@ -403,7 +430,7 @@ class ProjectValidator {
     invalidUnchangedLinks.map { projectLink =>
       val point = GeometryUtils.midPointGeometry(projectLink.geometry)
       ValidationErrorDetails(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks,
-        Seq(projectLink.id), Seq(ProjectCoordinates(point.x, point.y, 12)),
+        Seq(projectLink.id), Seq(ProjectCoordinates(point.x, point.y, defaultZoomlevel)),
         Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue)))
     }
   }
@@ -492,7 +519,7 @@ class ProjectValidator {
               case Some(actualProjectLinkForPreviousEnd) =>
                 return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
                   Seq(actualProjectLinkForPreviousEnd.id),
-                  Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, 12)), Some("")))
+                  Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, defaultZoomlevel)), Some("")))
               case None => Seq()
           }
         case None => Seq()
@@ -501,6 +528,56 @@ class ProjectValidator {
   }
 
   def checkProjectElyCodes(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+
+    def recProjectGroupsEly(unprocessed: Map[(Long, Long), Seq[ProjectLink]], processed: Map[(Long, Long), Seq[ProjectLink]], acumulatedErrors: Seq[ValidationErrorDetails] = Seq.empty[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
+
+      def prepareCoordinates(links: Seq[ProjectLink]): Seq[ProjectCoordinates] = {
+        unprocessed.head._2.map(p => {
+          val middlePoint = GeometryUtils.midPointGeometry(p.geometry)
+          ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)
+        })
+      }
+
+      if(processed.isEmpty && unprocessed.nonEmpty) {
+        recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head))
+      } else {
+        if(unprocessed.isEmpty){
+         return acumulatedErrors
+        } else {
+          val biggestPrevious = processed.head._2.maxBy(_.endAddrMValue)
+          val lowestCurrent = unprocessed.head._2.minBy(_.startAddrMValue)
+          val lastLinkHasChangeOfEly = biggestPrevious.discontinuity == Discontinuity.ChangingELYCode && biggestPrevious.ely != lowestCurrent.ely
+          val roadNumbersAreDifferent = lowestCurrent.roadPartNumber != biggestPrevious.roadPartNumber
+
+          val errors = (lastLinkHasChangeOfEly, roadNumbersAreDifferent ) match {
+
+            case (true, true) => {
+              Seq.empty
+            }
+            case (true, false) => {
+              val affectedProjectLinks = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
+              val coords = prepareCoordinates(affectedProjectLinks)
+              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, affectedProjectLinks.map(_.id), coords, Option("")))
+            }
+            case (false, true) => {
+              val affectedProjectLinks = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
+              val coords = prepareCoordinates(affectedProjectLinks)
+              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, affectedProjectLinks.map(_.id), coords, Option("")))
+            }
+            case (false, false) => {
+              val projectLinksSameEly = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
+              val projectLinksSameRoadPartNumber = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
+              val sameElyCoords = prepareCoordinates(projectLinksSameEly)
+              val sameRoadPartNumberCoords = prepareCoordinates(projectLinksSameRoadPartNumber)
+              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, unprocessed.head._2.map(_.id), sameElyCoords, Option("")),
+                ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, unprocessed.head._2.map(_.id), sameRoadPartNumberCoords, Option("")))
+            }
+          }
+          recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, errors++acumulatedErrors)
+
+        }
+      }
+    }
 
     /**
       * Check the project links edges for adjacent road addresses that must have a different ely than a adjacent one
@@ -521,7 +598,7 @@ class ProjectValidator {
         val (ids, points) = pl.map(pl => (pl.id, GeometryUtils.midPointGeometry(pl.geometry))).unzip
         if (ids.nonEmpty)
           Some(ValidationErrorDetails(project.id, validationError, ids.distinct,
-            points.map(p => ProjectCoordinates(p.x, p.y, 12)).distinct, None))
+            points.map(p => ProjectCoordinates(p.x, p.y, defaultZoomlevel)).distinct, None))
         else
           None
       }
@@ -566,9 +643,9 @@ class ProjectValidator {
         if (gLinkIds.nonEmpty) {
           if (gDiscontinuity.nonEmpty) {
             Some(ValidationErrorDetails(project.id, alterMessage(validationError, Option.empty, Option.empty, Option(gDiscontinuity.toSeq)), gLinkIds.toSeq.distinct,
-              gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
+              gPoints.map(p => ProjectCoordinates(p.x, p.y, defaultZoomlevel)).toSeq.distinct, Option.empty[String]))
           } else Some(ValidationErrorDetails(project.id, validationError, gLinkIds.toSeq.distinct,
-            gPoints.map(p => ProjectCoordinates(p.x, p.y, 12)).toSeq.distinct, Option.empty[String]))
+            gPoints.map(p => ProjectCoordinates(p.x, p.y, defaultZoomlevel)).toSeq.distinct, Option.empty[String]))
         }
         else
           Option.empty[ValidationErrorDetails]
@@ -602,14 +679,13 @@ class ProjectValidator {
       * @return an optional symbolizing a found invalid edgeRoad, or nothing.
       */
     def evaluateBorderCheck(startRoad: ProjectLink, endRoad: ProjectLink, secondCheck: Boolean): Option[Seq[ProjectLink]] = {
-//      throw new NotImplementedError("Will be implemented at VIITE-1540")
-//      /**
-//        * Helper method, will find ALL the road addresses in a bounding box whose center is the edge road
-//        *
-//        * @param headRoad A project link, at the start of it (lowest endAddressMValue)
-//        * @param tailRoad A project link, at the end of it(highest endAddressMValue)
-//        * @return Road addresses contained in a small bounding box
-//        */
+      /**
+        * Helper method, will find ALL the road addresses in a bounding box whose center is the edge road
+        *
+        * @param headRoad A project link, at the start of it (lowest endAddressMValue)
+        * @param tailRoad A project link, at the end of it(highest endAddressMValue)
+        * @return Road addresses contained in a small bounding box
+        */
       def findRoads(headRoad: ProjectLink, tailRoad: ProjectLink) = {
         val sp = startPoint(headRoad)
         val ep = endPoint(tailRoad)
@@ -642,55 +718,77 @@ class ProjectValidator {
     }
 
     /**
-      * This method will evaluate if there is a ELY change in the project links and if the operation supplied is one of the available for the change (transfer, numbering, unchanged e new)
-      */
-    /**
       * This will validate if a shift in ely code in all links of a certain part ocoured and happened correctly.
       * To be correct, the change needs to:
       * A. have all links transition to a new ELY
       * B. all links must have the UnChanged Link status
       * @param project: Project - the project to evaluate
-      * @param groupedProjectLinks: Map[(Long, Long), Seq[ProjectLink]] - the project links, grouped by road number and road part number
+      * @param groupedProjectLinks: Map[(Long, Long), Seq[ProjectLink]) - the project links, grouped by road number and road part number
       * @return
       */
-    def checkFullSwapOfEly(project: Project, groupedProjectLinks: Map[(Long, Long), Seq[ProjectLink]]) = {
+    def checkChangeOfEly(project: Project, groupedProjectLinks: Map[(Long, Long), Seq[ProjectLink]]) = {
 
-      def prepareValidationErrorDetails(condition: Either[Seq[Long],LinkStatus]) = {
+      def prepareValidationErrorDetails(condition: Either[Seq[Long],Seq[LinkStatus]]) = {
         val (wrongProjectLinks, validationError) = condition match {
           case Left (originalElys) => {
             (projectLinks.filterNot(_.ely == originalElys.head), ValidationErrorList.MultipleElyInPart)
           }
-          case Right(linkStatus) => {
-            (projectLinks.filterNot(_.ely == linkStatus), ValidationErrorList.IncorrectLinkStatusOnElyCodeChange)
+          case Right(linkStatusSeq) => {
+            (projectLinks.filterNot(pl => linkStatusSeq.contains(pl.status)), ValidationErrorList.IncorrectLinkStatusOnElyCodeChange)
           }
         }
 
         val projectCoords = wrongProjectLinks.map(p => {
           val middlePoint = GeometryUtils.middlePoint(Seq(p.geometry))
-          ProjectCoordinates(middlePoint.x, middlePoint.y)
+          ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)
         })
-        ValidationErrorDetails(project.id, validationError, wrongProjectLinks.map(_.projectId), projectCoords, Option.empty[String])
+        ValidationErrorDetails(project.id, validationError, wrongProjectLinks.map(_.id), projectCoords, Option.empty[String])
       }
 
-      val validationErrors = groupedProjectLinks.flatMap(g => {
+      val validationErrors = groupedProjectLinks.flatMap(group => {
         //Fetch original roadway data
-        val roadways = roadwayDAO.fetchAllByRoadAndPart(g._1._1, g._1._2)
+        val roadways = roadwayDAO.fetchAllByRoadwayNumbers(group._2.map(_.roadwayNumber).toSet)
+        val notLastLinkHasChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.id != group._2.maxBy(_.endAddrMValue).id)
+        val endLink = group._2.maxBy(_.endAddrMValue)
+        val closestProjectLinks = projectLinks.filterNot(p => (p.roadNumber, p.roadPartNumber) == group._1).filter(p => p.originalStartAddrMValue == endLink.originalEndAddrMValue)
         val originalElys = roadways.map(_.ely).distinct
-        val projectLinkElys = g._2.map(_.ely).distinct
-        val errors = if(originalElys != projectLinkElys ) {
-          val multi =if (projectLinkElys.size != 1) {
+        val projectLinkElys = group._2.map(_.ely).distinct
+
+        val errors = if(originalElys.nonEmpty) {
+
+          val multi =if (projectLinkElys.size > 1) {
             Seq(prepareValidationErrorDetails(Left(originalElys)))
           }
           else Seq.empty
-          val notUnchanged = if(!projectLinks.forall(_.status == LinkStatus.UnChanged)) {
-            Seq(prepareValidationErrorDetails(Right(LinkStatus.UnChanged)))
+
+          val wrongStatusCode = if(!projectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer  )) {
+            Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer))))
           }
           else Seq.empty
-          multi++notUnchanged
+
+          val changeElyCodeNotInFinish = if (notLastLinkHasChangeOfEly.nonEmpty) {
+            val coords = notLastLinkHasChangeOfEly.map(p => {
+              val middlePoint = GeometryUtils.midPointGeometry(p.geometry)
+              ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)
+            })
+            Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNotOnEnd, notLastLinkHasChangeOfEly.map(_.id), coords, Option.empty[String]))
+          } else Seq.empty
+
+          val intraProjectLinksDiscontinuityError = if(closestProjectLinks.nonEmpty) {
+            if(!closestProjectLinks.forall(p => p.ely == endLink.ely) && endLink.discontinuity != Discontinuity.ChangingELYCode) {
+              val middlePoint = GeometryUtils.middlePoint(Seq(endLink.geometry))
+              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeDetected, Seq(endLink.id), Seq(ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)), Option.empty))
+            } else {
+              Seq.empty
+            }
+          } else {
+            Seq.empty
+          }
+          multi++wrongStatusCode++intraProjectLinksDiscontinuityError++changeElyCodeNotInFinish
         } else Seq.empty
         errors
       })
-      validationErrors
+      validationErrors ++ recProjectGroupsEly(groupedProjectLinks, Map.empty)
 
     }
 
@@ -702,7 +800,8 @@ class ProjectValidator {
         checkFirstElyBorder(project, grouped)
       else
         checkSecondElyBorder(project, grouped)
-      errors ++ checkFullSwapOfEly(project, grouped)
+
+      errors ++ checkChangeOfEly(project, ListMap(grouped.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]])
     } else Seq.empty[ValidationErrorDetails]
   }
 
