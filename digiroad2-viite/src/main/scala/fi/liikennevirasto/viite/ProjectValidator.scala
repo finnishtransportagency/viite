@@ -765,7 +765,7 @@ class ProjectValidator {
           }
           else Seq.empty
 
-          val wrongStatusCode = if(!projectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer  )) {
+          val wrongStatusCode = if(!projectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer  ) && !originalElys.equals(projectLinkElys)) {
             Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer))))
           }
           else Seq.empty
