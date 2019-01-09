@@ -243,12 +243,33 @@ object TrackSectionOrder {
       val lastTrack = lastLinkOption.map(_.track)
       val connectedLinks = candidates.filter(link => lastTrack.contains(link.track))
       connectedLinks.size match {
+        case 0 => None
         case 1 => connectedLinks.headOption
-        case _ => None
+        case _ =>
+          connectedLinks.count(_.startAddrMValue == lastLinkOption.get.endAddrMValue) match {
+            case 1 => connectedLinks.find(_.startAddrMValue == lastLinkOption.get.endAddrMValue)
+            case _ => None
+          }
+
       }
     }
 
-    def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
+    def pickOppositeTrack(candidates: Map[Point, ProjectLink], oppositeTrackLinks : Seq[ProjectLink]): Map[Point, ProjectLink] = {
+      candidates.flatMap{
+        candidate =>
+          oppositeTrackLinks.flatMap{
+            oppositeLink =>
+              val connectedLink = GeometryUtils.areAdjacent(oppositeLink.geometry, candidate._1, MaxDistanceForConnectedLinks)
+              if (connectedLink) {
+                Some(candidate)
+              } else {
+                None
+              }
+          }
+      }
+    }
+
+    def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink], oppositeTrack: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
       else {
@@ -258,8 +279,15 @@ object TrackSectionOrder {
         val (nextPoint, nextLink): (Point, ProjectLink) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
-            val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
-            (getOppositeEnd(link.geometry, closestPoint), link)
+            val connectedToOtherTrack = pickOppositeTrack(subsetB, oppositeTrack)
+            if(connectedToOtherTrack.nonEmpty){
+              val (closestPoint, link) = connectedToOtherTrack.minBy(b => (currentPoint - b._1).length())
+              (getOppositeEnd(link.geometry, closestPoint), link)
+            }
+            else{
+              val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
+              (getOppositeEnd(link.geometry, closestPoint), link)
+            }
           case 1 =>
             (getOppositeEnd(connected.head.geometry, currentPoint), connected.head)
           case 2 =>
@@ -289,14 +317,14 @@ object TrackSectionOrder {
           case (false, true) | (true, false) =>
             SideCode.TowardsDigitizing
         }
-        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
+        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
       }
     }
 
     val track01 = list.filter(_.track != Track.LeftSide)
     val track02 = list.filter(_.track != Track.RightSide)
 
-    (recursiveFindAndExtend(startingPoints._1, Seq(), track01), recursiveFindAndExtend(startingPoints._2, Seq(), track02))
+    (recursiveFindAndExtend(startingPoints._1, Seq(), track01, track02), recursiveFindAndExtend(startingPoints._2, Seq(), track02, track01))
   }
 
   def createCombinedSections(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {

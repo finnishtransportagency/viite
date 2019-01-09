@@ -101,14 +101,18 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     else {
       // Get left track non-connected points and find the closest to right track starting point
       val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-      val leftPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
+      val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks)
 
       if (leftPoints.isEmpty)
         throw new InvalidAddressDataException("Missing left track starting points")
 
       val direction = rightStartPoint - pl.oppositeEndPoint(rightStartPoint)
 
-      (rightStartPoint, leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p =>  p._1.distance2DTo(rightStartPoint))._1)
+      (rightStartPoint,
+        if(leftPoints.count(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0) == 1)
+          leftPoints.find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0).get._1
+        else
+          leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p =>  p._1.distance2DTo(rightStartPoint))._1)
     }
   }
 
