@@ -111,6 +111,9 @@ package object viite {
   //TODO: ask for translations
   val MultipleElysInPartMessage = s"There are multiple elys in road part"
   val IncorrectLinkStatusOnElyCodeChangeMessage = s"Incorrect Link status for a ely code change operation"
+  val ElyCodeChangeButNoRoadPartChangeMessage = s"A Ely code change discontinuity was found but no road part change was found."
+  val ElyCodeChangeButNoElyChangeMessage = s"A Ely code change discontinuity was found but no Ely code change was found."
+  val ElyCodeChangeButNotOnEndMessage = s"A Ely code change discontinuity was found but no Ely code change was found."
 
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
