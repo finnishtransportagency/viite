@@ -550,35 +550,38 @@ class ProjectValidator {
         } else {
           val biggestPrevious = processed.head._2.maxBy(_.endAddrMValue)
           val lowestCurrent = unprocessed.head._2.minBy(_.startAddrMValue)
-          val lastLinkHasChangeOfEly = biggestPrevious.discontinuity == Discontinuity.ChangingELYCode && biggestPrevious.ely != lowestCurrent.ely
-          val roadNumbersAreDifferent = lowestCurrent.roadPartNumber != biggestPrevious.roadPartNumber
+          if(biggestPrevious.ely != lowestCurrent.ely) {
+            val lastLinkHasChangeOfEly = biggestPrevious.discontinuity == Discontinuity.ChangingELYCode
+            val roadNumbersAreDifferent = lowestCurrent.roadPartNumber != biggestPrevious.roadPartNumber
 
-          val errors = (lastLinkHasChangeOfEly, roadNumbersAreDifferent ) match {
+            val errors = (lastLinkHasChangeOfEly, roadNumbersAreDifferent ) match {
 
-            case (true, true) => {
-              Seq.empty
+              case (true, true) => {
+                Seq.empty
+              }
+              case (true, false) => {
+                val affectedProjectLinks = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
+                val coords = prepareCoordinates(affectedProjectLinks)
+                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option("")))
+              }
+              case (false, true) => {
+                val affectedProjectLinks = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
+                val coords = prepareCoordinates(affectedProjectLinks)
+                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, affectedProjectLinks.map(_.id), coords, Option("")))
+              }
+              case (false, false) => {
+                val projectLinksSameEly = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
+                val projectLinksSameRoadPartNumber = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
+                val sameElyCoords = prepareCoordinates(projectLinksSameEly)
+                val sameRoadPartNumberCoords = prepareCoordinates(projectLinksSameRoadPartNumber)
+                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, unprocessed.head._2.map(_.id), sameElyCoords, Option("")),
+                  ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, unprocessed.head._2.map(_.id), sameRoadPartNumberCoords, Option("")))
+              }
             }
-            case (true, false) => {
-              val affectedProjectLinks = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
-              val coords = prepareCoordinates(affectedProjectLinks)
-              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, affectedProjectLinks.map(_.id), coords, Option("")))
-            }
-            case (false, true) => {
-              val affectedProjectLinks = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
-              val coords = prepareCoordinates(affectedProjectLinks)
-              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, affectedProjectLinks.map(_.id), coords, Option("")))
-            }
-            case (false, false) => {
-              val projectLinksSameEly = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
-              val projectLinksSameRoadPartNumber = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
-              val sameElyCoords = prepareCoordinates(projectLinksSameEly)
-              val sameRoadPartNumberCoords = prepareCoordinates(projectLinksSameRoadPartNumber)
-              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, unprocessed.head._2.map(_.id), sameElyCoords, Option("")),
-                ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, unprocessed.head._2.map(_.id), sameRoadPartNumberCoords, Option("")))
-            }
+            recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, errors++acumulatedErrors)
+          } else {
+            recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, acumulatedErrors)
           }
-          recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, errors++acumulatedErrors)
-
         }
       }
     }
