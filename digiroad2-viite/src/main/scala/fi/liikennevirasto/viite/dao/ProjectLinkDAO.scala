@@ -445,6 +445,15 @@ class ProjectLinkDAO {
     }
   }
 
+  def fetchRoadNumbersByProjectIdHistory(projectId: Long): Seq[Long] = {
+    time(logger, "Get road numbers history by project") {
+      val query =
+        s"""SELECT ROAD_NUMBER FROM PROJECT_LINK_HISTORY
+                where PROJECT_ID = $projectId order by ROAD_NUMBER """
+      Q.queryNA[Long](query).list
+    }
+  }
+
   def fetchProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     time(logger, "Get project links") {
       val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
@@ -567,11 +576,22 @@ class ProjectLinkDAO {
           """.execute
   }
 
-  def updateProjectLinkNumbering(ids: Seq[Long], linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
+  /**
+    * Updates all the project links that share the same ids as supplied to the newRoadNumber and newRoadPart also it will put the last link of newRoadNumber and newRoadPart with the given discontinuity value.
+    * @param projectId: Long - projectId of the links to update
+    * @param roadNumber: Long - the existing road number
+    * @param roadPart: Long - the existing road part
+    * @param linkStatus: LinkStatus - The operation done on those project links
+    * @param newRoadNumber: Long - the new road number to apply
+    * @param newRoadPart: Long the new road part number to apply
+    * @param userName: String - user name
+    * @param discontinuity: Long - the discontinuity value to apply
+    */
+  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart" +
-        s"WHERE ID IN ${ids.mkString("(", ",", ")")} AND STATUS != ${LinkStatus.Terminated.value}"
+        s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
 
       val updateLastLinkWithDiscontinuity =
@@ -609,6 +629,12 @@ class ProjectLinkDAO {
     }
   }
 
+  /**
+    * Applies all the values of the road addresses to the project links sharing the project id and road address information.
+    * @param projectId: Long - The id of the project
+    * @param roadAddress: RoadAddress - The road address information
+    * @param updateGeom: Boolean - controls whether we update or not the geometry of the project links
+    */
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true): Unit = {
 
     time(logger, "Update project link values") {
@@ -646,6 +672,7 @@ class ProjectLinkDAO {
          """.as[Long].firstOption.getOrElse(0L)
       val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
+        s"TRACK = (CASE TRACK WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
         s"reversed = (CASE reversed WHEN 0 THEN 1 WHEN 1 THEN 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
@@ -667,6 +694,14 @@ class ProjectLinkDAO {
     Q.queryNA[Long](query).list
   }
 
+  /**
+    * Returns a counting of the project links by all the link status we supplied them limited by the project id, road number and road part number
+    * @param projectId: Long - The id of the project
+    * @param roadNumber: Long - project link road number
+    * @param roadPartNumber: Long - project link road part number
+    * @param linkStatus: Set[Long] - the collection of operations done to the project links
+    * @return
+    */
   def countLinksByStatus(projectId: Long, roadNumber: Long, roadPartNumber: Long, linkStatus: Set[Long]): Long = {
     val filterByStatus = if(linkStatus.nonEmpty) s" AND Status IN (${linkStatus.mkString(",")})" else ""
     val query =

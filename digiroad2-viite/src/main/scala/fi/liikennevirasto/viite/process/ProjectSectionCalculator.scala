@@ -36,7 +36,7 @@ object ProjectSectionCalculator {
     //Should we have rightSide tracks only or leftSideTracks only then RESET the sideCodes of the "new"
     val processedNewLinks = if (rightSide.nonEmpty && leftSide.isEmpty || rightSide.isEmpty && leftSide.nonEmpty) {
       logger.info(s"Only one track code detected, resetting side codes.")
-      newLinks.map(p => p.copy(sideCode = SideCode.Unknown))
+      (rightSide ++ leftSide).map(p => p.copy(sideCode = SideCode.Unknown)) ++ combinedAndUnknown
     } else {
       logger.info(s"Found both tracks, continuing.")
       newLinks

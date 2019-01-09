@@ -211,7 +211,7 @@ class LinearLocationDAO {
     )
 
     createLinearLocations.foreach {
-      case (location) =>
+      case location =>
         val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
           Sequences.nextRoadwayNumber
         } else {
@@ -721,11 +721,21 @@ class LinearLocationDAO {
     if (roadwayNumbers.isEmpty) {
       Seq()
     } else {
-      val query =
+      val query = if (roadwayNumbers.size > 1000) {
+        MassQuery.withIds(roadwayNumbers) {
+          idTableName =>
+            s"""
+              $selectFromLinearLocation
+              join $idTableName i on i.id = loc.ROADWAY_NUMBER
+              where valid_to is null and t.id < t2.id
+            """.stripMargin
+        }
+      } else {
         s"""
-          $selectFromLinearLocation
-          where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
-        """
+            $selectFromLinearLocation
+            where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
+          """
+      }
       queryList(query)
     }
   }
@@ -758,6 +768,13 @@ class LinearLocationDAO {
     queryList(query)
   }
 
+  /**
+    * Sets up the query filters of road numbers
+    * @param roadNumbers: Seq[(Int, Int) - list of lowest and highest road numbers
+    * @param alias: String - The alias of the roadway table on the query
+    * @param filter: String - already existing filters
+    * @return
+    */
   def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s"""($filter)"""
@@ -770,6 +787,11 @@ class LinearLocationDAO {
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
 
+  /**
+    * Returns the calibration code of a linear location found by it's id.
+    * @param linearLocationId: Long - The linear location id.
+    * @return
+    */
   def getLinearLocationCalibrationCode(linearLocationId: Long): CalibrationCode = {
     val query =
       s"""SELECT (CASE

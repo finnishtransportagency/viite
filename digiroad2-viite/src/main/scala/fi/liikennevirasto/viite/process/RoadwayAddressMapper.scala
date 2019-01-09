@@ -163,6 +163,13 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   }
 
   //TODO may be a good idea mode this method to road address service
+  /**
+    * Uses the RoadwayDAO to get the roadway information that is connected to the entries of given linearLocations.
+    * Both information is then mixed and returned as fully fledged RoadAddress entries.
+    *
+    * @param linearLocations: Seq[LinearLocation] - The collection of Linear Locations entries
+    * @return
+    */
   def getRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
 
@@ -178,6 +185,14 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 
+  /**
+    * Uses the RoadwayDAO to get the current roadway information the is associated with a specific version of the road network, said roadway information is connected to the entries of given linearLocations.
+    * Both information is then mixed and returned as fully fledged RoadAddress entries.
+    *
+    * @param linearLocations: Seq[LinearLocation] - The collection of Linear Locations entries
+    * @param roadNetworkId: Long - the id of the road network version
+    * @return
+    */
   def getNetworkVersionRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation], roadNetworkId: Long): Seq[RoadAddress] = {
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
     val roadwayAddresses = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, roadNetworkId)
@@ -186,6 +201,13 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   }
 
   // TODO Might be a good idea to move this method to the RoadAddressService
+  /**
+    * Uses the LinearLocationDAO to get the linear location information that is connected to the entries of given Roadway entries.
+    * Both information is then mixed and returned as fully fledged RoadAddress entries.
+    *
+    * @param roadwayAddresses: Seq[Roadway] - The collection of Roadway's entries
+    * @return
+    */
   def getRoadAddressesByRoadway(roadwayAddresses: Seq[Roadway]): Seq[RoadAddress] = {
 
     val linearLocations = linearLocationDAO.fetchByRoadways(roadwayAddresses.map(_.roadwayNumber).toSet)
