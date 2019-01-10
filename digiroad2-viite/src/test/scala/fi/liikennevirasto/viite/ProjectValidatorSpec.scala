@@ -149,12 +149,23 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     if(projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).isEmpty)
       projectReservedPartDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, "u")
     val newLinks = links.dropRight(1) ++ Seq(links.last.copy(discontinuity = lastLinkDiscontinuity))
-    if(withRoadInfo){
+    val newLinksWithRoadwayInfo = if(withRoadInfo){
       val (ll, rw) = newLinks.map(toRoadwayAndLinearLocation).unzip
       linearLocationDAO.create(ll)
       roadwayDAO.create(rw)
+      val roadways = newLinks.map(p => (p.roadNumber, p.roadPartNumber)).distinct.flatMap(p => roadwayDAO.fetchAllByRoadAndPart(p._1, p._2))
+      println(roadways)
+      newLinks.map(nl => {
+        val roadway = roadways.find(r => r.roadNumber == nl.roadNumber && r.roadPartNumber == nl.roadPartNumber && r.startAddrMValue == nl.startAddrMValue && r.endAddrMValue == nl.endAddrMValue)
+        if (roadway.nonEmpty) {
+          nl.copy(roadwayId = roadway.get.id, roadwayNumber = roadway.get.roadwayNumber)
+        }
+        else nl
+      })
+    } else {
+      newLinks
     }
-    projectLinkDAO.create(newLinks)
+    projectLinkDAO.create(newLinksWithRoadwayInfo)
     project
   }
 
@@ -1725,8 +1736,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
       val validationErrors = projectValidator.checkProjectElyCodes(project, projectLinks).distinct
-      validationErrors.size should be(1)
-      validationErrors.head.validationError.value should be(projectValidator.ValidationErrorList.RoadNotEndingInElyBorder.value)
+      validationErrors.size should be(2)
+      validationErrors.map(_.validationError).contains(projectValidator.ValidationErrorList.RoadNotEndingInElyBorder)
+      validationErrors.map(_.validationError).contains(projectValidator.ValidationErrorList.ElyCodeChangeButNotOnEnd)
     }
   }
 
@@ -2233,9 +2245,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and putting the correct link status but using many different elys in the change then validator should return an error") {
     runWithRollback {
-      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode, ely = 10L)
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode, ely = 10, withRoadInfo = true)
       val originalProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-      addProjectLinksToProject(LinkStatus.UnChanged, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 10L)
+      addProjectLinksToProject(LinkStatus.UnChanged, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, ely = 10L, withRoadInfo = true)
       val additionalProjectLinks2 = projectLinkDAO.fetchProjectLinks(project.id)
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.startAddrMValue).startAddrMValue
@@ -2245,11 +2257,14 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         sqlu"""UPDATE project_link SET ely = ${scala.util.Random.nextInt(5)} WHERE id = ${p.id}""".execute
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      updatedProjectLinks.map(_.roadwayId)
       mockEmptyRoadAddressServiceCalls()
-      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2.map(p => p.copy(ely = 8))
-      roadwayDAO.create(rw)
+      updatedProjectLinks.map(p =>
+        sqlu"""UPDATE roadway Set ely = 8 Where road_number = ${p.roadNumber} and road_part_number = ${p.roadPartNumber} """.execute
+      )
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be (1)
+
       elyCodeCheck.head.projectId should be (project.id)
       elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.MultipleElyInPart)
     }
@@ -2305,7 +2320,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be (1)
       elyCodeCheck.head.projectId should be (project.id)
-      elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeChangeButNotOnEnd)
+      elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange)
     }
   }
 }
