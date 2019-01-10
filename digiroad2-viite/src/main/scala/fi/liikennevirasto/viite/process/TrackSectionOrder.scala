@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
@@ -257,7 +258,7 @@ object TrackSectionOrder {
     def pickOppositeTrack(candidates: Map[Point, ProjectLink], oppositeTrackLinks : Seq[ProjectLink]): Map[Point, ProjectLink] = {
       candidates.flatMap{
         candidate =>
-          oppositeTrackLinks.flatMap{
+          oppositeTrackLinks.filterNot(_.track == Combined).flatMap{
             oppositeLink =>
               val connectedLink = GeometryUtils.areAdjacent(oppositeLink.geometry, candidate._1, MaxDistanceForConnectedLinks)
               if (connectedLink) {
@@ -280,8 +281,12 @@ object TrackSectionOrder {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val connectedToOtherTrack = pickOppositeTrack(subsetB, oppositeTrack)
-            if(connectedToOtherTrack.nonEmpty){
-              val (closestPoint, link) = connectedToOtherTrack.minBy(b => (currentPoint - b._1).length())
+            if(connectedToOtherTrack.nonEmpty && connectedToOtherTrack.forall(_._2.track != Combined)){
+              val (closestPoint, link) =
+                if(connectedToOtherTrack.count(link => link._2.endAddrMValue != 0 && ready.lastOption.get.endAddrMValue == link._2.startAddrMValue) == 1)
+                  connectedToOtherTrack.find(link => link._2.endAddrMValue != 0 && ready.lastOption.get.endAddrMValue == link._2.startAddrMValue).get
+                else
+                  connectedToOtherTrack.minBy(b => (currentPoint - b._1).length())
               (getOppositeEnd(link.geometry, closestPoint), link)
             }
             else{
