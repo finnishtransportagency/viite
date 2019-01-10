@@ -110,13 +110,13 @@ package object viite {
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
-  //TODO: ask for translations
-  val MultipleElysInPartMessage = s"There are multiple ely codes in road part"
-  val IncorrectLinkStatusOnElyCodeChangeMessage = s"Incorrect Link status for a ely code change operation, allowed link status are ${LinkStatus.UnChanged.description}(${LinkStatus.UnChanged.value}), ${LinkStatus.Transfer.description}(${LinkStatus.Transfer.value}) or ${LinkStatus.New.description}(${LinkStatus.New.value})"
-  val ElyCodeChangeButNoRoadPartChangeMessage = s"A Ely code change was found but no Road Part change was found."
-  val ElyCodeChangeButNoElyChangeMessage = s"A Ely code change was found but no ${ChangingELYCode.description}(${ChangingELYCode.value}) discontinuity was present."
-  val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"${ChangingELYCode.description}(${ChangingELYCode.value}) was issued to a project link but no Ely code change was found."
-  val ElyCodeChangeButNotOnEndMessage = s"A Ely code change discontinuity ${ChangingELYCode.description}(${ChangingELYCode.value}), was found but it was not on the final project link of the part."
+
+  val MultipleElysInPartMessage = s"Useampi ELY-koodi tieosassa"
+  val IncorrectLinkStatusOnElyCodeChangeMessage =  s"Linkin tila ei salli ELY-koodin muutosta. Sallitut tilat ovat ${LinkStatus.UnChanged.description}(${LinkStatus.UnChanged.value}), ${LinkStatus.Transfer.description}(${LinkStatus.Transfer.value}) or ${LinkStatus.New.description}(${LinkStatus.New.value})"
+  val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-koodi muutos havaittu mutta tieosamuutosta ei löydy"
+  val ElyCodeChangeButNoElyChangeMessage = s"ELY-koodimuutos havaittu mutta ${ChangingELYCode.description}(${ChangingELYCode.value}) epäjatkuvuutta ei havaittu."
+  val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"${ChangingELYCode.description}(${ChangingELYCode.value}) määritelty projektilinkille mutta ELY-koodimuutosta ei havaittu."
+  val ElyCodeChangeButNotOnEndMessage = s"Epäjatkuvuutta havaittu ${ChangingELYCode.description}(${ChangingELYCode.value}) havaittu, mutta puuttuu tieosan lopulliselta projektilinkiltä"
 
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
