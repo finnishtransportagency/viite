@@ -1468,7 +1468,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
               }
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
-              projectLinkDAO.updateProjectLinkNumbering(toUpdateLinks.map(_.id), linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity)
+              projectLinkDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity)
               roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
@@ -2049,10 +2049,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
       }
       else None
-    })
+    }).groupBy(_.roadNumber)
 
-    RoadNameDAO.create(roadNames)
-    if (roadNames.nonEmpty) {
+    if (roadNames.nonEmpty && roadNames.values.nonEmpty) {
+      roadNames.values.foreach(rn => {
+        RoadNameDAO.create(Seq(rn.head))
+      })
       logger.info(s"Found ${roadNames.size} names in project that differ from road address name")
     }
   }
