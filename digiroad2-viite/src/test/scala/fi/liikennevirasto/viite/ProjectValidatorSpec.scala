@@ -2220,9 +2220,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
   test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and not putting the correct link status then validator should return an error") {
     runWithRollback {
-      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode)
+      val project = setUpProjectWithLinks(LinkStatus.Numbering, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode)
       val originalProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-      addProjectLinksToProject(LinkStatus.New, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 50L)
+      addProjectLinksToProject(LinkStatus.Numbering, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 50L)
       val additionalProjectLinks2 = projectLinkDAO.fetchProjectLinks(project.id)
       val newLinksOnly = additionalProjectLinks2.diff(originalProjectLinks)
       val min = newLinksOnly.minBy(_.startAddrMValue).startAddrMValue
