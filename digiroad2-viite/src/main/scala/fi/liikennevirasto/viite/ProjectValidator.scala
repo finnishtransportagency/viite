@@ -772,7 +772,6 @@ class ProjectValidator {
         val roadways = roadwayDAO.fetchAllByRoadwayNumbers(group._2.map(_.roadwayNumber).toSet)
         val notLastLinkHasChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.id != group._2.maxBy(_.endAddrMValue).id)
         val endLink = group._2.maxBy(_.endAddrMValue)
-        val closestProjectLinks = projectLinks.filterNot(p => (p.roadNumber, p.roadPartNumber) == group._1).filter(p => p.originalStartAddrMValue == endLink.originalEndAddrMValue)
         val originalElys = roadways.map(_.ely).distinct
         val projectLinkElys = group._2.map(_.ely).distinct
 
@@ -783,7 +782,7 @@ class ProjectValidator {
           }
           else Seq.empty
 
-          val wrongStatusCode = if(!projectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer  ) && !originalElys.equals(projectLinkElys)) {
+          val wrongStatusCode = if(!projectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer || pl.status == LinkStatus.New) && !originalElys.equals(projectLinkElys)) {
             Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer))))
           }
           else Seq.empty
