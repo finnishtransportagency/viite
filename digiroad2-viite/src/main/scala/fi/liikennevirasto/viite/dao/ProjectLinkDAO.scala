@@ -578,18 +578,20 @@ class ProjectLinkDAO {
 
   /**
     * Updates all the project links that share the same ids as supplied to the newRoadNumber and newRoadPart also it will put the last link of newRoadNumber and newRoadPart with the given discontinuity value.
-    * @param ids: Seq[Long] - ids of the project links
+    * @param projectId: Long - projectId of the links to update
+    * @param roadNumber: Long - the existing road number
+    * @param roadPart: Long - the existing road part
     * @param linkStatus: LinkStatus - The operation done on those project links
-    * @param newRoadNumber: Long- the new road number to apply
+    * @param newRoadNumber: Long - the new road number to apply
     * @param newRoadPart: Long the new road part number to apply
     * @param userName: String - user name
     * @param discontinuity: Long - the discontinuity value to apply
     */
-  def updateProjectLinkNumbering(ids: Seq[Long], linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
+  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart" +
-        s"WHERE ID IN ${ids.mkString("(", ",", ")")} AND STATUS != ${LinkStatus.Terminated.value}"
+        s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
 
       val updateLastLinkWithDiscontinuity =
