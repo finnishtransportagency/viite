@@ -281,7 +281,7 @@ object TrackSectionOrder {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val connectedToOtherTrack = pickOppositeTrack(subsetB, oppositeTrack)
-            if(connectedToOtherTrack.nonEmpty && connectedToOtherTrack.forall(_._2.track != Combined)){
+            if(connectedToOtherTrack.nonEmpty && connectedToOtherTrack.forall(_._2.track != Combined) && (ready++ unprocessed).forall(_.status == New)){
               val (closestPoint, link) =
                 if(connectedToOtherTrack.count(link => link._2.endAddrMValue != 0 && ready.lastOption.get.endAddrMValue == link._2.startAddrMValue) == 1)
                   connectedToOtherTrack.find(link => link._2.endAddrMValue != 0 && ready.lastOption.get.endAddrMValue == link._2.startAddrMValue).get
