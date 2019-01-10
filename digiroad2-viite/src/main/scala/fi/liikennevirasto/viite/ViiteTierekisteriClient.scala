@@ -26,7 +26,7 @@ case class TRStatusResponse(id_tr_projekti:Option[Long], projekti:Option[Long], 
                             job_number:Option[Long], error_message:Option[String], start_time:Option[String],
                             end_time:Option[String], error_code:Option[Int])
 
-case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadwayChangeInfo])
+case class ChangeProject(id:Long, name:String, user:String, changeDate:String, changeInfoSeq:Seq[RoadwayChangeInfo])
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
 case class TRErrorResponse(error_message:String)
 
@@ -35,7 +35,7 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoItemSerializer
     ChangeProject(o.values("id").asInstanceOf[BigInt].longValue(), o.values("name").asInstanceOf[String],
-      o.values("user").asInstanceOf[String], o.values("ely").asInstanceOf[BigInt].intValue(),
+      o.values("user").asInstanceOf[String],
       o.values("change_date").asInstanceOf[String],
       (o \\ "change_info").extract[Seq[RoadwayChangeInfo]])
 }, {
@@ -45,7 +45,6 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
       JField("id", JInt(BigInt.apply(o.id))),
       JField("name", JString(o.name)),
       JField("user", JString(o.user)),
-      JField("ely", JInt(BigInt.apply(o.ely))),
       JField("change_date", JString(o.changeDate)),
       JField("change_info", Extraction.decompose(o.changeInfoSeq))
     )
@@ -57,7 +56,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
     RoadwayChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
       (o \\ "source").extract[RoadwayChangeSection], (o \\ "target").extract[RoadwayChangeSection],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
-      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), reversed = false, 0)
+      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), reversed = false, 0, o.values("ely").asInstanceOf[BigInt].intValue())
 }, {
   case o: RoadwayChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
@@ -68,6 +67,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(emptySection)),
           JField("target", Extraction.decompose(o.target))
         )
@@ -76,6 +76,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(o.source)),
           JField("target", Extraction.decompose(emptySection))
         )
@@ -85,6 +86,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
           JField("reversed", JInt(BigInt.apply(if (o.reversed) 1 else 0))),
+          JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(o.source)),
           JField("target", Extraction.decompose(o.target))
         )
@@ -190,7 +192,7 @@ object ViiteTierekisteriClient {
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
