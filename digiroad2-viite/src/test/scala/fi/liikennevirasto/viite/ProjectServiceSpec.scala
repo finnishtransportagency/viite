@@ -2590,8 +2590,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part2).map(_.roadwayNumber).toSet))
       mockForProject(project.id, (address1 ++ address2).map(toProjectLink(rap)))
       val savedProject = projectService.saveProject(project.copy(reservedParts = reservations))
-      savedProject.reservedParts.head.ely.get should be (ely1.get)
-      savedProject.reservedParts.last.ely.get should be (ely2.get)
+      savedProject.reservedParts.head.ely.get should be (ely2.get)
+      savedProject.reservedParts.last.ely.get should be (ely1.get)
     }
   }
 

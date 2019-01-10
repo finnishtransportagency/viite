@@ -54,7 +54,7 @@ case class RoadwayChangeSectionTR(roadNumber: Option[Long], trackCode: Option[Lo
                                   endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long])
 
 case class RoadwayChangeInfo(changeType: AddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
-                             discontinuity: Discontinuity, roadType: RoadType, reversed: Boolean, orderInChangeTable: Long)
+                             discontinuity: Discontinuity, roadType: RoadType, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L)
 
 case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime,
                                 changeInfo: RoadwayChangeInfo, projectStartDate: DateTime, rotatingTRId: Option[Long])
@@ -133,7 +133,12 @@ class RoadwayChangesDAO {
   private def toRoadwayChangeInfo(row: ChangeRow) = {
     val source = toRoadwayChangeSource(row)
     val target = toRoadwayChangeRecipient(row)
-    RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)), RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)), row.reversed, row.orderInTable)
+    RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target,
+      Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)),
+      RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)),
+      row.reversed,
+      row.orderInTable,
+      target.ely.getOrElse(source.ely.get))
   }
 
   // TODO: cleanup after modification dates and modified by are populated correctly
