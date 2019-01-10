@@ -2049,10 +2049,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
       }
       else None
-    })
+    }).groupBy(_.roadNumber)
 
-    RoadNameDAO.create(roadNames)
-    if (roadNames.nonEmpty) {
+    if (roadNames.nonEmpty && roadNames.values.nonEmpty) {
+      roadNames.values.foreach(rn => {
+        RoadNameDAO.create(Seq(rn.head))
+      })
       logger.info(s"Found ${roadNames.size} names in project that differ from road address name")
     }
   }
