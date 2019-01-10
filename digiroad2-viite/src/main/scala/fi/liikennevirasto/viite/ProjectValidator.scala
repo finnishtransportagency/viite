@@ -329,6 +329,14 @@ class ProjectValidator {
       def notification = true
     }
 
+    case object ElyCodeDiscontinuityChangeButNoElyChange extends ValidationError {
+      def value = 26
+
+      def message: String = ElyCodeDiscontinuityChangeButNoElyChangeMessage
+
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -565,9 +573,9 @@ class ProjectValidator {
                 Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option("")))
               }
               case (false, true) => {
-                val affectedProjectLinks = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
+                val affectedProjectLinks = Seq(biggestPrevious)
                 val coords = prepareCoordinates(affectedProjectLinks)
-                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, affectedProjectLinks.map(_.id), coords, Option("")))
+                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeDetected, affectedProjectLinks.map(_.id), coords, Option("")))
               }
               case (false, false) => {
                 val projectLinksSameEly = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
@@ -580,7 +588,14 @@ class ProjectValidator {
             }
             recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, errors++acumulatedErrors)
           } else {
-            recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, acumulatedErrors)
+            if(biggestPrevious.discontinuity == Discontinuity.ChangingELYCode) {
+              val affectedProjectLinks = Seq(biggestPrevious, lowestCurrent)
+              val coords = prepareCoordinates(affectedProjectLinks)
+              recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, acumulatedErrors++Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option(""))))
+            } else {
+              recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head)++processed, acumulatedErrors)
+            }
+
           }
         }
       }
@@ -781,21 +796,12 @@ class ProjectValidator {
             Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNotOnEnd, notLastLinkHasChangeOfEly.map(_.id), coords, Option.empty[String]))
           } else Seq.empty
 
-          val intraProjectLinksDiscontinuityError = if(closestProjectLinks.nonEmpty) {
-            if(!closestProjectLinks.forall(p => p.ely == endLink.ely) && endLink.discontinuity != Discontinuity.ChangingELYCode) {
-              val middlePoint = GeometryUtils.middlePoint(Seq(endLink.geometry))
-              Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeDetected, Seq(endLink.id), Seq(ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)), Option.empty))
-            } else {
-              Seq.empty
-            }
-          } else {
-            Seq.empty
-          }
-          multi++wrongStatusCode++intraProjectLinksDiscontinuityError++changeElyCodeNotInFinish
+          multi++wrongStatusCode++changeElyCodeNotInFinish
         } else Seq.empty
         errors
       })
-      validationErrors ++ recProjectGroupsEly(groupedProjectLinks, Map.empty)
+      val recErrors = recProjectGroupsEly(groupedProjectLinks, Map.empty)
+      validationErrors ++ recErrors
 
     }
 
@@ -807,8 +813,8 @@ class ProjectValidator {
         checkFirstElyBorder(project, grouped)
       else
         checkSecondElyBorder(project, grouped)
-
-      errors ++ checkChangeOfEly(project, ListMap(grouped.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]])
+      val projectLinkElyChangeErrors = checkChangeOfEly(project, ListMap(grouped.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]])
+      errors ++ projectLinkElyChangeErrors
     } else Seq.empty[ValidationErrorDetails]
   }
 
