@@ -2571,9 +2571,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test save project with reserved road parts having different ELY codes "){
     runWithRollback {
 
-      val roadNumber = 2
-      val part1 = 19
-      val part2 = 20
+      val roadNumber = 75
+      val part1 = 1
+      val part2 = 2
       val ely1 = Some(2L)
       val ely2 = Some(1L)
 
@@ -2590,8 +2590,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part2).map(_.roadwayNumber).toSet))
       mockForProject(project.id, (address1 ++ address2).map(toProjectLink(rap)))
       val savedProject = projectService.saveProject(project.copy(reservedParts = reservations))
-      savedProject.reservedParts.head.ely.get should be (ely2.get)
-      savedProject.reservedParts.last.ely.get should be (ely1.get)
+      val originalElyPart1 = roadwayDAO.fetchAllByRoadAndPart(roadNumber, part1).map(_.ely).toSet
+      val originalElyPart2 = roadwayDAO.fetchAllByRoadAndPart(roadNumber, part2).map(_.ely).toSet
+      val reservedPart1 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part1)
+      val reservedPart2 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part2)
+      reservedPart1.nonEmpty should be (true)
+      reservedPart1.get.ely.get should be (originalElyPart1.head)
+      reservedPart1.get.newEly should be (ely1)
+      reservedPart2.nonEmpty should be (true)
+      reservedPart2.get.ely.get should be (originalElyPart2.head)
+      reservedPart2.get.newEly should be (ely2)
+
     }
   }
 
