@@ -643,7 +643,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val changeTableData = projectService.getChangeProject(projectId).map(project =>
         Map(
           "id" -> project.id,
-          "ely" -> project.ely,
           "user" -> project.user,
           "name" -> project.name,
           "changeDate" -> project.changeDate,
