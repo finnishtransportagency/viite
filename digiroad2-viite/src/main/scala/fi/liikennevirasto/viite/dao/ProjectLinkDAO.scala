@@ -382,7 +382,7 @@ class ProjectLinkDAO {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
         "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
         "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
+        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ? WHERE id = ?")
 
       for (projectLink <- links) {
         projectLinkPS.setLong(1, projectLink.roadNumber)
@@ -405,7 +405,8 @@ class ProjectLinkDAO {
         projectLinkPS.setDouble(18, projectLink.startMValue)
         projectLinkPS.setDouble(19, projectLink.endMValue)
         projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB().value)
-        projectLinkPS.setLong(21, projectLink.id)
+        projectLinkPS.setLong(21, projectLink.ely)
+        projectLinkPS.setLong(22, projectLink.id)
         projectLinkPS.addBatch()
       }
       projectLinkPS.executeBatch()
