@@ -544,7 +544,7 @@ class ProjectValidator {
     def recProjectGroupsEly(unprocessed: Map[(Long, Long), Seq[ProjectLink]], processed: Map[(Long, Long), Seq[ProjectLink]], acumulatedErrors: Seq[ValidationErrorDetails] = Seq.empty[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
 
       def prepareCoordinates(links: Seq[ProjectLink]): Seq[ProjectCoordinates] = {
-        unprocessed.head._2.map(p => {
+        links.map(p => {
           val middlePoint = GeometryUtils.midPointGeometry(p.geometry)
           ProjectCoordinates(middlePoint.x, middlePoint.y, defaultZoomlevel)
         })
@@ -769,6 +769,7 @@ class ProjectValidator {
 
       val validationErrors = groupedProjectLinks.flatMap(group => {
         //Fetch original roadway data
+        val workableProjectLinks = projectLinks.filterNot(pl => pl.status == LinkStatus.NotHandled || pl.status == LinkStatus.Terminated)
         val roadways = roadwayDAO.fetchAllByRoadwayNumbers(group._2.map(_.roadwayNumber).toSet)
         val notLastLinkHasChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.id != group._2.maxBy(_.endAddrMValue).id)
         val endLink = group._2.maxBy(_.endAddrMValue)
@@ -782,7 +783,7 @@ class ProjectValidator {
           }
           else Seq.empty
 
-          val wrongStatusCode = if(!projectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer || pl.status == LinkStatus.New) && !originalElys.equals(projectLinkElys)) {
+          val wrongStatusCode = if(!workableProjectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer || pl.status == LinkStatus.New) && !originalElys.equals(projectLinkElys)) {
             Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer))))
           }
           else Seq.empty
