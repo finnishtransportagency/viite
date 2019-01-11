@@ -1411,7 +1411,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def resetLinkValues(toReset: Seq[ProjectLink]): Unit = {
       val addressesForRoadway = roadAddressService.getRoadAddressesByRoadwayIds(toReset.map(_.roadwayId))
       val filteredAddresses = addressesForRoadway.filter(link => toReset.map(_.linkId).contains(link.linkId))
-      filteredAddresses.foreach(ra => projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false))
+      filteredAddresses.foreach(ra => projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(ely = toReset.find(pl => pl.roadwayNumber == ra.roadwayNumber).get.ely), updateGeom = false))
     }
 
     try {
@@ -1478,8 +1478,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
             // Reset back to original values
-            resetLinkValues(toUpdateLinks)
-            updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
+            val updated = toUpdateLinks.map(l => {
+              l.copy(ely = ely.getOrElse(l.ely))
+            })
+            resetLinkValues(updated)
+            updateRoadTypeDiscontinuity(updated.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
 
           case LinkStatus.New =>
             // Current logic allows only re adding new road addresses whithin same road/part group
