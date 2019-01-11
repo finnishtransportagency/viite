@@ -813,7 +813,10 @@ class ProjectValidator {
         checkFirstElyBorder(project, grouped)
       else
         checkSecondElyBorder(project, grouped)
-      val projectLinkElyChangeErrors = checkChangeOfEly(project, ListMap(grouped.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]])
+      val groupedMinusTerminated = grouped.map(g => {
+        g._1 -> g._2.filterNot(_.status == Terminated)
+      })
+      val projectLinkElyChangeErrors = checkChangeOfEly(project, ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]])
       errors ++ projectLinkElyChangeErrors
     } else Seq.empty[ValidationErrorDetails]
   }
