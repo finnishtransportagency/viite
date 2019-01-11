@@ -777,4 +777,76 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       projectLinks.filter(_.track == Track.LeftSide).head.endAddrMValue should be ((projectLink2.endAddrMValue+projectLink3.endAddrMValue)/2)
     }
   }
+
+  test("Test assignMValues When adding New sections Then Direction for those should always be the same as the existing section (that are for e.g. Transfer, Unchanged, Numbering)") {
+    runWithRollback{
+                              //(x,y)   -> (x,y)
+      val idRoad0 = 0L //   N>  C(0, 90)   ->  (10, 100)
+      val idRoad1 = 1L //   N>  C(10, 100) ->  (20, 80)
+
+      val idRoad2 = 2L //   T>  C(20, 80)  ->  (30, 90)
+      val idRoad3 = 3L //   T>  L(30, 90)  ->  (50, 20)
+      val idRoad4 = 4L //   T>  R(30, 90)  ->  (40, 10)
+      val idRoad5 = 5L //   T>  L(50, 20)  ->  (60, 30)
+      val idRoad6 = 6L //   T>  R(40, 10)  ->  (60, 20)
+
+      val idRoad7 = 7L //   N>  L(60, 30)  ->  (70, 40)
+      val idRoad8 = 8L //   N>  R(60, 20)  ->  (70, 30)
+      val idRoad9 = 9L //   N>  L(70, 40)  ->  (80, 50)
+      val idRoad10 = 10L // N>  R(70, 30)  ->  (80, 50)
+      val idRoad11 = 11L // N>  C(80, 50)  ->  (90, 60)
+
+
+      //NEW
+      val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0, 0.0, 14.1, SideCode.Unknown, 0, (None, None), floating = NoFloating,
+        Seq(Point(0.0, 90.0), Point(10.0, 100.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.Unknown, Track.Combined, MinorDiscontinuity,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1, 0.0, 22.3, SideCode.Unknown, 0, (None, None), floating = NoFloating,
+        Seq(Point(10.0, 100.0), Point(18.0, 78.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      //TRANSFER
+      val projectLink2 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad2, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 14L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2, 0.0, 14.1, SideCode.TowardsDigitizing, 0, (None, None), floating = NoFloating,
+        Seq(Point(20.0, 80.0), Point(30.0, 90.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad3, 0, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
+        14L, 87L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 72.8, SideCode.TowardsDigitizing, 0, (None, None), floating = NoFloating,
+        Seq(Point(30.0, 90.0),Point(50.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink4 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad4, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
+        14L, 95L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad4, 0.0, 80.6, SideCode.TowardsDigitizing, 0, (None, None), floating = NoFloating,
+        Seq(Point(30.0, 90.0), Point(40.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink5 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad5, 0, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
+        87L, 101L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad5, 0.0, 14.1, SideCode.TowardsDigitizing, 0, (None, None), floating = NoFloating,
+        Seq(Point(50.0, 20.0), Point(60.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink6 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad6, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
+        95L, 118L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad6, 0.0, 22.3, SideCode.TowardsDigitizing, 0, (None, None), floating = NoFloating,
+        Seq(Point(40.0, 10.0), Point(60.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      //NEW
+      val projectLink7 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad7, 0, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad7, 0.0, 0.0, SideCode.Unknown, 0, (None, None), floating = NoFloating,
+        Seq(Point(60.0, 30.0), Point(70.0, 40.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink8 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad8, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad8, 0.0, 0.0, SideCode.Unknown, 0, (None, None), floating = NoFloating,
+        Seq(Point(60.0, 20.0),Point(70.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink9 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad9, 0, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad9, 0.0, 0.0, SideCode.Unknown, 0, (None, None), floating = NoFloating,
+        Seq(Point(70.0, 40.0), Point(80.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink10 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad10, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad10, 0.0, 0.0, SideCode.Unknown, 0, (None, None), floating = NoFloating,
+        Seq(Point(70.0, 30.0), Point(80.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink11 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad11, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad11, 0.0, 0.0, SideCode.Unknown, 0, (None, None), floating = NoFloating,
+        Seq(Point(80.0, 50.0), Point(90.0, 60.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      val list1 = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6)
+      val ordered = ProjectSectionCalculator.assignMValues(list1)
+      ordered.minBy(_.startAddrMValue).id should be (idRoad0)
+
+      val list2 = ordered.toList ::: List(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)
+      val ordered2 = ProjectSectionCalculator.assignMValues(list2)
+      ordered2.maxBy(_.endAddrMValue).id should be (idRoad11)
+    }
+  }
+
 }
