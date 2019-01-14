@@ -13,9 +13,11 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, _}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
+
 import scala.collection.immutable.ListMap
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.format.DateTimeFormat
 
 class ProjectValidator {
@@ -40,6 +42,7 @@ class ProjectValidator {
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val projectDAO = new ProjectDAO
+  val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
   val defaultZoomlevel = 12
 
  private def distanceToPoint = 10.0
@@ -816,7 +819,23 @@ class ProjectValidator {
       val groupedMinusTerminated = grouped.map(g => {
         g._1 -> g._2.filterNot(_.status == Terminated)
       })
-      val projectLinkElyChangeErrors = checkChangeOfEly(project, ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]])
+
+      val nonTerminated = workedProjectLinks.filterNot(_.status == LinkStatus.Terminated)
+      val (newLinks, otherLinks) = nonTerminated.partition(l => l.status == LinkStatus.New)
+      val currStartPoints = defaultSectionCalculatorStrategy.findStartingPoints(newLinks, otherLinks, Seq.empty)
+      val startingProjectLinks = projectLinks.filter(pl => GeometryUtils.areAdjacent(pl.geometry, currStartPoints._1) || GeometryUtils.areAdjacent(pl.geometry, currStartPoints._2))
+
+      val orderedProjectLinks = if(startingProjectLinks.head.roadPartNumber == projectLinks.maxBy(_.roadPartNumber).roadPartNumber ) {
+        if(startingProjectLinks.head.reversed)
+          ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
+        else ListMap(groupedMinusTerminated.toSeq.sortBy(_._1).reverse:_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
+      }
+      else{
+        if(startingProjectLinks.head.reversed)
+          ListMap(groupedMinusTerminated.toSeq.sortBy(_._1).reverse:_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
+        else ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
+      }
+      val projectLinkElyChangeErrors = checkChangeOfEly(project, orderedProjectLinks)
       errors ++ projectLinkElyChangeErrors
     } else Seq.empty[ValidationErrorDetails]
   }
