@@ -109,10 +109,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val direction = rightStartPoint - pl.oppositeEndPoint(rightStartPoint)
 
       (rightStartPoint,
-        if(leftPoints.count(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0) == 1)
+        if (leftPoints.count(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0) == 1)
           leftPoints.find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0).get._1
         else
-          leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p =>  p._1.distance2DTo(rightStartPoint))._1)
+          leftPoints.filter(p => direction.dot(p._1 - p._2.oppositeEndPoint(p._1)) >= 0).minBy(p => p._1.distance2DTo(rightStartPoint))._1)
     }
   }
 
@@ -135,7 +135,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
-      oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl =>(pl.startingPoint, pl)).getOrElse {
+      oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
         val remainLinks = oldLinks ++ newLinks
         if (remainLinks.isEmpty)
           throw new InvalidAddressDataException("Missing right track starting project links")
@@ -151,7 +151,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           (p - Point(0, 0)).scale(1.0 / points.size) + x
         }
         val chainEndPoints = TrackSectionOrder.findChainEndpoints(remainLinks)
-        if(chainEndPoints.count(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0) == 1)
+        if (chainEndPoints.count(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0) == 1)
           chainEndPoints.find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0).get
         else
           chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
