@@ -756,7 +756,11 @@ class ProjectValidator {
       def prepareValidationErrorDetails(condition: Either[Seq[Long],Seq[LinkStatus]]) = {
         val (wrongProjectLinks, validationError) = condition match {
           case Left (originalElys) => {
-            (projectLinks.filterNot(_.ely == originalElys.head), ValidationErrorList.MultipleElyInPart)
+            if(originalElys.nonEmpty)
+              (projectLinks.filterNot(_.ely == originalElys.head), ValidationErrorList.MultipleElyInPart)
+            else {
+              (projectLinks.groupBy(_.ely).map(_._2.maxBy(_.endAddrMValue)).toSeq, ValidationErrorList.MultipleElyInPart)
+            }
           }
           case Right(linkStatusSeq) => {
             (projectLinks.filterNot(pl => linkStatusSeq.contains(pl.status)), ValidationErrorList.IncorrectLinkStatusOnElyCodeChange)
@@ -775,11 +779,10 @@ class ProjectValidator {
         val workableProjectLinks = projectLinks.filterNot(pl => pl.status == LinkStatus.NotHandled || pl.status == LinkStatus.Terminated)
         val roadways = roadwayDAO.fetchAllByRoadwayNumbers(group._2.map(_.roadwayNumber).toSet)
         val notLastLinkHasChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.id != group._2.maxBy(_.endAddrMValue).id)
-        val endLink = group._2.maxBy(_.endAddrMValue)
         val originalElys = roadways.map(_.ely).distinct
         val projectLinkElys = group._2.map(_.ely).distinct
 
-        val errors = if(originalElys.nonEmpty) {
+        val errors = if(originalElys.nonEmpty || (originalElys.isEmpty && projectLinkElys.size > 1)) {
 
           val multi =if (projectLinkElys.size > 1) {
             Seq(prepareValidationErrorDetails(Left(originalElys)))
@@ -787,7 +790,7 @@ class ProjectValidator {
           else Seq.empty
 
           val wrongStatusCode = if(!workableProjectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer || pl.status == LinkStatus.New) && !originalElys.equals(projectLinkElys)) {
-            Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer))))
+            Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer, LinkStatus.New))))
           }
           else Seq.empty
 
