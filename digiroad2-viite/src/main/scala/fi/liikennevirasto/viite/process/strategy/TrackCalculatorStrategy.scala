@@ -206,22 +206,16 @@ trait TrackCalculatorStrategy {
       }
   }
 
-  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource) = {
+  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
+                                    startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource): ProjectLink = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
-  private def endPointOfProjectLink(pl: ProjectLink): Point = {
-    if (pl.sideCode == SideCode.TowardsDigitizing) {
-      pl.geometry.last
-    } else {
-      pl.geometry.head
-    }
-  }
-
   private def lastSegmentDirection(pl: ProjectLink): Vector3d = {
-    if (pl.sideCode == SideCode.TowardsDigitizing) {
+    if ((pl.sideCode == SideCode.TowardsDigitizing && pl.reversed == false) ||
+      (pl.sideCode == SideCode.AgainstDigitizing && pl.reversed == true)) {
       GeometryUtils.lastSegmentDirection(pl.geometry)
     } else {
       GeometryUtils.firstSegmentDirection(pl.geometry)
@@ -239,9 +233,9 @@ trait TrackCalculatorStrategy {
     if (linkOnTrackB.discontinuity == MinorDiscontinuity || linkOnTrackB.discontinuity == Discontinuous) {
 
       // Sort links in order by the distance from the end of the link on track b.
-      val linkOnTrackBEndPoint = endPointOfProjectLink(linkOnTrackB)
+      val linkOnTrackBEndPoint = linkOnTrackB.getEndPoints()._2
       val nearestLinks: Seq[(ProjectLink, Double)] = trackA.map(pl => (pl,
-        endPointOfProjectLink(pl).distance2DTo(linkOnTrackBEndPoint)
+        pl.getEndPoints()._2.distance2DTo(linkOnTrackBEndPoint)
       )).sortWith(_._2 < _._2) // Links with nearest end points first
 
       // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as lastLink
