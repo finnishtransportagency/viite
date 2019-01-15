@@ -6,6 +6,7 @@
     var selectedProjectLink = false;
     var editedNameByUser = false;
     var LinkSources = LinkValues.LinkGeomSource;
+    var ProjectStatus = LinkValues.ProjectStatus;
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
@@ -205,6 +206,10 @@
         $('#roadAddressProjectFormCut select').prop('disabled',true);
         $('.update').prop('disabled', true);
         $('.btn-edit-project').prop('disabled', true);
+          if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
+              $(":input").prop('disabled',true);
+              $(".project-form button.cancelLink").prop('disabled',false);
+          }
       }
     };
 
