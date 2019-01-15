@@ -629,10 +629,14 @@ class ProjectValidator {
       }
 
       groupedProjectLinks.flatMap(group => {
-        val projectLinks = group._2.filter(_.discontinuity == Discontinuity.ChangingELYCode)
-        val problemRoads = if (projectLinks.nonEmpty) {
-          val roadsValidation = evaluateBorderCheck(projectLinks.head, projectLinks.last, secondCheck = false)
-          roadsValidation.filterNot(_.isEmpty).getOrElse(Seq())
+        val projectLinksToEvaluate = group._2.filter(_.discontinuity == Discontinuity.ChangingELYCode)
+        val problemRoads = if (projectLinksToEvaluate.nonEmpty) {
+          val roadsValidation = evaluateBorderCheck(projectLinksToEvaluate.head, projectLinksToEvaluate.last, secondCheck = false)
+          val possibleErrorRoads = roadsValidation.filterNot(_.isEmpty).getOrElse(Seq()).filterNot(er => {
+            val found = projectLinks.filter(pl => pl.roadNumber == er.roadNumber && pl.roadPartNumber > er.roadPartNumber)
+            found.nonEmpty && found.head.ely != er.ely
+          })
+          possibleErrorRoads
         } else {
           Seq.empty[BaseRoadAddress]
         }
