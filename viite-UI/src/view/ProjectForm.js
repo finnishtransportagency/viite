@@ -332,11 +332,9 @@
 
       var disableFormInputs = function () {
         if (!isProjectEditable()) {
-          $('#roadAddressProject input').prop('disabled', true);
+          $('#roadAddressProject :input').prop('disabled', true);
           $('.btn-reserve').prop('disabled', true);
           $('.btn-delete').prop('hidden', true);
-          if(currentProject.statusCode == ProjectStatus.SendingToTR.value)
-            $('#roadAddressProject :input').prop('disabled', true);
         }
       };
 
