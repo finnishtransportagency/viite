@@ -786,7 +786,7 @@ class ProjectValidator {
         val originalElys = roadways.map(_.ely).distinct
         val projectLinkElys = group._2.map(_.ely).distinct
 
-        val errors = if((originalElys.nonEmpty && !originalElys.equals(projectLinkElys)) || (originalElys.isEmpty && projectLinkElys.size > 1)) {
+        val errors = if(originalElys.nonEmpty || (originalElys.isEmpty && projectLinkElys.size > 1)) {
 
           val multi =if (projectLinkElys.size > 1) {
             Seq(prepareValidationErrorDetails(Left(originalElys)))
