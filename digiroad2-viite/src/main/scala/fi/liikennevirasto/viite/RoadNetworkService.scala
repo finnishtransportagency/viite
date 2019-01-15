@@ -28,8 +28,8 @@ class RoadNetworkService {
 
     def checkRoadways(l: Seq[Roadway], r: Seq[Roadway]): Seq[RoadNetworkError] = {
 
-      val sectionLeft = l.zip(l.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
-        checkAddressMValues(rws._1, rws._2, errors)
+      val sectionLeft = l.zip(l.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, lws) =>
+        checkAddressMValues(lws._1, lws._2, errors)
       )
 
       val sectionRight = r.zip(r.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
@@ -50,7 +50,7 @@ class RoadNetworkService {
               || !allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._2) && l.id != loc.id))
           )
           locationsError.map { loc =>
-            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+            RoadNetworkError(0, roadwayId, loc.id, AddressError.Inconsistent2TrackCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
           }
         }.toSeq
         errors
@@ -67,7 +67,7 @@ class RoadNetworkService {
             allLocations.head.calibrationPoints._1.isEmpty || allLocations.head.calibrationPoints._2.isEmpty
           )
           locationsError.map { loc =>
-            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
           }
         }.toSeq
       } else {
@@ -95,7 +95,7 @@ class RoadNetworkService {
     def checkAddressMValues(rw1: Roadway, rw2: Roadway, errors: Seq[RoadNetworkError]): Seq[RoadNetworkError] = {
       rw1.endAddrMValue != rw2.startAddrMValue match {
         case true => {
-          errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+          errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentAddressValues, System.currentTimeMillis(), options.currNetworkVersion)
         }
         case _ => Seq()
       }

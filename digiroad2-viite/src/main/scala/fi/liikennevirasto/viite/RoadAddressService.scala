@@ -1107,7 +1107,6 @@ object AddressConsistencyValidator {
 
   sealed trait AddressError {
     def value: Int
-
     def message: String
   }
 
@@ -1116,19 +1115,31 @@ object AddressConsistencyValidator {
 
     case object OverlappingRoadAddresses extends AddressError {
       def value = 1
-
       def message: String = ErrorOverlappingRoadAddress
     }
 
     case object InconsistentTopology extends AddressError {
       def value = 2
-
       def message: String = ErrorInconsistentTopology
     }
 
     case object InconsistentLrmHistory extends AddressError {
       def value = 3
+      def message: String = ErrorInconsistentLrmHistory
+    }
 
+    case object Inconsistent2TrackCalibrationPoints extends AddressError {
+      def value = 4
+      def message: String = ErrorInconsistent2TrackCalibrationPoints
+    }
+
+    case object InconsistentContinuityCalibrationPoints extends AddressError {
+      def value = 5
+      def message: String = ErrorInconsistentLrmHistory
+    }
+
+    case object InconsistentAddressValues extends AddressError {
+      def value = 6
       def message: String = ErrorInconsistentLrmHistory
     }
 
