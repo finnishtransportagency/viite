@@ -786,7 +786,7 @@ class ProjectValidator {
         val originalElys = roadways.map(_.ely).distinct
         val projectLinkElys = group._2.map(_.ely).distinct
 
-        val errors = if(originalElys.nonEmpty || (originalElys.isEmpty && projectLinkElys.size > 1)) {
+        val errors = if((originalElys.nonEmpty && !originalElys.equals(projectLinkElys)) || (originalElys.isEmpty && projectLinkElys.size > 1)) {
 
           val multi =if (projectLinkElys.size > 1) {
             Seq(prepareValidationErrorDetails(Left(originalElys)))
@@ -825,7 +825,7 @@ class ProjectValidator {
         checkSecondElyBorder(project, grouped)
       val groupedMinusTerminated = grouped.map(g => {
         g._1 -> g._2.filterNot(_.status == Terminated)
-      })
+      }).filterNot(_._2.isEmpty)
       val orderedProjectLinks = ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
       val projectLinkElyChangeErrors = checkChangeOfEly(project, orderedProjectLinks)
       errors ++ projectLinkElyChangeErrors
