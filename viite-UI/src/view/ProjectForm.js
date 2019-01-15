@@ -335,6 +335,8 @@
           $('#roadAddressProject input').prop('disabled', true);
           $('.btn-reserve').prop('disabled', true);
           $('.btn-delete').prop('hidden', true);
+          if(currentProject.statusCode == ProjectStatus.SendingToTR.value)
+            $('#roadAddressProject :input').prop('disabled', true);
         }
       };
 
@@ -535,6 +537,8 @@
         if (!currentProject) {
           projectCollection.setReservedParts(projectCollection.deleteRoadPartFromList(projectCollection.getCurrentReservedParts(), roadNumber, roadPartNumber));
           $('#reservedRoads').html(writeHtmlList(projectCollection.getCurrentReservedParts()));
+        } else if (!_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.SendingToTR.value) {
+          //Do nothing
         } else if (projectCollection.getAllReservedParts()[id]) {
           new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
             successCallback: function () {
