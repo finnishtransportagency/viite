@@ -213,15 +213,6 @@ trait TrackCalculatorStrategy {
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
-  private def lastSegmentDirection(pl: ProjectLink): Vector3d = {
-    if ((pl.sideCode == SideCode.TowardsDigitizing && pl.reversed == false) ||
-      (pl.sideCode == SideCode.AgainstDigitizing && pl.reversed == true)) {
-      GeometryUtils.lastSegmentDirection(pl.geometry)
-    } else {
-      GeometryUtils.firstSegmentDirection(pl.geometry)
-    }
-  }
-
   /**
     * Returns project links for the other track before and after the point where there is discontinuity on the track.
     *
@@ -233,15 +224,15 @@ trait TrackCalculatorStrategy {
     if (linkOnTrackB.discontinuity == MinorDiscontinuity || linkOnTrackB.discontinuity == Discontinuous) {
 
       // Sort links in order by the distance from the end of the link on track b.
-      val linkOnTrackBEndPoint = linkOnTrackB.getEndPoints()._2
+      val linkOnTrackBEndPoint = linkOnTrackB.lastPoint
       val nearestLinks: Seq[(ProjectLink, Double)] = trackA.map(pl => (pl,
-        pl.getEndPoints()._2.distance2DTo(linkOnTrackBEndPoint)
+        pl.lastPoint.distance2DTo(linkOnTrackBEndPoint)
       )).sortWith(_._2 < _._2) // Links with nearest end points first
 
       // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as lastLink
-      val linkOnTrackBDirection = lastSegmentDirection(linkOnTrackB)
-      val maxAngleBetweenLinks = math.toRadians(45.0)
-      val lastLink: ProjectLink = nearestLinks.collectFirst { case l if lastSegmentDirection(l._1).angle(linkOnTrackBDirection) < maxAngleBetweenLinks => l._1 }
+      val linkOnTrackBDirection = linkOnTrackB.lastSegmentDirection
+      val maxAngleBetweenLinks = math.toRadians(67.5) // TODO
+      val lastLink: ProjectLink = nearestLinks.collectFirst { case l if l._1.lastSegmentDirection.angle(linkOnTrackBDirection) < maxAngleBetweenLinks => l._1 }
         .getOrElse(nearestLinks.headOption.getOrElse(throw new RoadAddressException("Could not find any nearest road address"))._1)
 
       // Return links before the discontinuity point and links after it
@@ -249,6 +240,7 @@ trait TrackCalculatorStrategy {
       if (continuousLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")
 
+      // TODO
       if (continuousLinks.size > 1 &&
         lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.startAddrMValue)) < lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.endAddrMValue))) {
         (continuousLinks.init, lastLink +: trackA.drop(continuousLinks.size))

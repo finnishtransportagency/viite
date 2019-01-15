@@ -143,6 +143,20 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     coefficient * address
   }
 
+  def lastSegmentDirection: Vector3d = {
+    sideCode match {
+      case SideCode.TowardsDigitizing => GeometryUtils.lastSegmentDirection(geometry)
+      case SideCode.AgainstDigitizing => GeometryUtils.firstSegmentDirection(geometry) scale -1
+    }
+  }
+
+  def lastPoint: Point = {
+    sideCode match {
+      case SideCode.TowardsDigitizing => geometry.last
+      case SideCode.AgainstDigitizing => geometry.head
+    }
+  }
+
   def toCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrationPoints match {
       case (None, None) => (Option.empty[CalibrationPoint], Option.empty[CalibrationPoint])
