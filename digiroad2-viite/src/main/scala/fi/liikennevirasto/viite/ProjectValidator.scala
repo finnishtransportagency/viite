@@ -826,22 +826,7 @@ class ProjectValidator {
       val groupedMinusTerminated = grouped.map(g => {
         g._1 -> g._2.filterNot(_.status == Terminated)
       })
-
-      val nonTerminated = workedProjectLinks.filterNot(_.status == LinkStatus.Terminated)
-      val (newLinks, otherLinks) = nonTerminated.partition(l => l.status == LinkStatus.New)
-      val currStartPoints = defaultSectionCalculatorStrategy.findStartingPoints(newLinks, otherLinks, Seq.empty)
-      val startingProjectLinks = projectLinks.filter(pl => GeometryUtils.areAdjacent(pl.geometry, currStartPoints._1) || GeometryUtils.areAdjacent(pl.geometry, currStartPoints._2))
-
-      val orderedProjectLinks = if(startingProjectLinks.head.roadPartNumber == projectLinks.maxBy(_.roadPartNumber).roadPartNumber ) {
-        if(startingProjectLinks.head.reversed)
-          ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
-        else ListMap(groupedMinusTerminated.toSeq.sortBy(_._1).reverse:_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
-      }
-      else{
-        if(startingProjectLinks.head.reversed)
-          ListMap(groupedMinusTerminated.toSeq.sortBy(_._1).reverse:_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
-        else ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
-      }
+      val orderedProjectLinks = ListMap(groupedMinusTerminated.toSeq.sortBy(_._1):_*).asInstanceOf[Map[(Long,Long), Seq[ProjectLink]]]
       val projectLinkElyChangeErrors = checkChangeOfEly(project, orderedProjectLinks)
       errors ++ projectLinkElyChangeErrors
     } else Seq.empty[ValidationErrorDetails]
