@@ -144,9 +144,11 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def lastSegmentDirection: Vector3d = {
-    sideCode match {
-      case SideCode.TowardsDigitizing => GeometryUtils.lastSegmentDirection(geometry)
-      case SideCode.AgainstDigitizing => GeometryUtils.firstSegmentDirection(geometry) scale -1
+    (sideCode, reversed) match {
+      case (SideCode.TowardsDigitizing, false) => GeometryUtils.lastSegmentDirection(geometry)
+      case (SideCode.AgainstDigitizing, false) => GeometryUtils.firstSegmentDirection(geometry) scale -1
+      case (SideCode.TowardsDigitizing, true) => GeometryUtils.firstSegmentDirection(geometry) scale -1
+      case (SideCode.AgainstDigitizing, true) => GeometryUtils.lastSegmentDirection(geometry)
     }
   }
 

@@ -727,4 +727,24 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     projectLink.lastSegmentDirection should be(Vector3d(100, -100, 0))
   }
 
+  test("Test ProjectLink.lastSegmentDirection When / towards digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)), reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(-100, -100, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When / against digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)), sideCode = AgainstDigitizing, reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(50, 50, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When \\ towards digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)), reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(100, -100, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When \\ against digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)), sideCode = AgainstDigitizing, reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(-50, 50, 0))
+  }
+
 }
