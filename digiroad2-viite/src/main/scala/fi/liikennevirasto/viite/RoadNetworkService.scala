@@ -67,7 +67,7 @@ class RoadNetworkService {
             allLocations.head.calibrationPoints._1.isEmpty || allLocations.head.calibrationPoints._2.isEmpty
           )
           locationsError.map { loc =>
-            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            RoadNetworkError(0, roadwayId, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
           }
         }.toSeq
       } else {
@@ -84,7 +84,7 @@ class RoadNetworkService {
           )
 
           (middleCalibrationPointsError ++ edgeCalibrationPointsError).map { loc =>
-            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentTopology, System.currentTimeMillis(), options.currNetworkVersion)
+            RoadNetworkError(0, roadwayId, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
           }
         }.toSeq
       }
