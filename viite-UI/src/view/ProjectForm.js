@@ -411,6 +411,7 @@
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
         applicationModel.setSelectedTool("Select");
         applicationModel.addSpinner();
+        eventbus.trigger('projectChangeTable:hide');
         projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {
           rootElement.empty();
           setTimeout(function () {
