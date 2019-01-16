@@ -24,8 +24,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-import scala.collection.JavaConversions.asJavaCollection
-
 //TODO naming SQL conventions
 
 sealed trait CalibrationPointSource {
@@ -598,7 +596,7 @@ class ProjectLinkDAO {
 
       val maxByTrack = fetchProjectLinks(projectId).filter(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart).groupBy(_.track).mapValues(p => p.maxBy(_.endAddrMValue))
       val updateTrack = maxByTrack.filterNot(t => t._2.endAddrMValue == maxByTrack.minBy(_._2.endAddrMValue)._2.endAddrMValue && maxByTrack.minBy(_._2.endAddrMValue)._2.endAddrMValue != maxByTrack.maxBy(_._2.endAddrMValue)._2.endAddrMValue)
-      val updateLastLinkWithDiscontinuityString =  if(updateTrack.keys.contains(track)) {
+      val updateLastLinkWithDiscontinuityString =  if(updateTrack.keys.toList.contains(track)) {
         s"""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = $discontinuity WHERE ID IN (
          SELECT ID FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value} AND TRACK IN (${track}) AND END_ADDR_M = (SELECT MAX(END_ADDR_M) FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value} AND TRACK IN (${track.value})))"""
       } else {
