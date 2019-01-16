@@ -1112,9 +1112,17 @@ class ProjectValidator {
     )
 
     val continuityErrors: Seq[ValidationErrorDetails] = continuityValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
-      validation ++ errors
+      (validation ++ errors).distinct
     }
-    continuityErrors.distinct
+    val continuityErrorsMinusElyChange = continuityErrors.distinct.filterNot(ce => {
+      val affectedProjectLinks = allProjectLinks.filter(pl => ce.affectedIds.contains(pl.id))
+      val filtered = affectedProjectLinks.filter(apl => {
+        val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber > apl.roadNumber || (pl.roadNumber == apl.roadNumber && pl.roadPartNumber > apl.roadPartNumber))
+        nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)).ely == apl.ely
+      })
+      filtered.isEmpty
+    })
+    continuityErrorsMinusElyChange
   }
 
 
