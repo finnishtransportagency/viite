@@ -201,8 +201,10 @@ trait TrackCalculatorStrategy {
               setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
           }
 
-          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, ProjectLinkSource)) ++ pls.init.tail ++
-            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, ProjectLinkSource))
+          val calPointSource1 = if(pls.tail.head.calibrationPoints._1.isDefined) pls.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
+          val calPointSource2 = if(pls.init.last.calibrationPoints._2.isDefined) pls.init.last.calibrationPoints._2.get.source else ProjectLinkSource
+          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
+            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, calPointSource2))
       }
   }
 
