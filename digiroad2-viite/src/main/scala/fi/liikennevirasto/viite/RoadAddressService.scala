@@ -1135,12 +1135,17 @@ object AddressConsistencyValidator {
 
     case object InconsistentContinuityCalibrationPoints extends AddressError {
       def value = 5
-      def message: String = ErrorInconsistentLrmHistory
+      def message: String = ErrorInconsistentContinuityCalibrationPoints
+    }
+
+    case object MissingEdgeCalibrationPoints extends AddressError {
+      def value = 6
+      def message: String = ErrorMissingEdgeCalibrationPoints
     }
 
     case object InconsistentAddressValues extends AddressError {
-      def value = 6
-      def message: String = ErrorInconsistentLrmHistory
+      def value = 7
+      def message: String = ErrorInconsistentAddressValues
     }
 
     def apply(intValue: Int): AddressError = {

@@ -91,6 +91,8 @@ package object viite {
   val ErrorInconsistentLrmHistory = "Lrm with inconsistent history."
   val ErrorInconsistent2TrackCalibrationPoints = "Missing relative calibration point in opposite track."
   val ErrorInconsistentContinuityCalibrationPoints = "Missing relative connecting starting point."
+  val ErrorMissingEdgeCalibrationPoints = "Missing edge calibration points."
+  val ErrorInconsistentAddressValues = "Error in continuity by address m values between connected links."
   val InconsistentAddressValues = "Wrong address values between links."
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
