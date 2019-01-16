@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
@@ -205,28 +206,49 @@ trait TrackCalculatorStrategy {
       }
   }
 
-  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource) = {
+  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
+                                    startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource): ProjectLink = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
-  protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous) {
-      val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
+  /**
+    * Returns project links for the other track before and after the point where there is discontinuity on the track.
+    *
+    * @param trackA
+    * @param linkOnTrackB
+    * @return (Project links before the discontinuity point, project links after the discontinuity point)
+    */
+  protected def getUntilNearestAddress(trackA: Seq[ProjectLink], linkOnTrackB: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    if (linkOnTrackB.discontinuity == MinorDiscontinuity || linkOnTrackB.discontinuity == Discontinuous) {
 
-      if (continuousProjectLinks.isEmpty)
+      // Sort links in order by the distance from the end of the link on track b.
+      val linkOnTrackBEndPoint = linkOnTrackB.lastPoint
+      val nearestLinks: Seq[(ProjectLink, Double)] = trackA.map(pl => (pl,
+        pl.lastPoint.distance2DTo(linkOnTrackBEndPoint)
+      )).sortWith(_._2 < _._2) // Links with nearest end points first
+
+      // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as lastLink
+      val linkOnTrackBDirection = linkOnTrackB.lastSegmentDirection
+      val maxAngleBetweenLinks = math.toRadians(75) // Tolerance for "triangle" cases is 15 degrees and for "rectangle" cases 25 degrees.
+      val lastLink: ProjectLink = nearestLinks.collectFirst { case l if l._1.lastSegmentDirection.angle(linkOnTrackBDirection) < maxAngleBetweenLinks => l._1 }
+        .getOrElse(nearestLinks.headOption.getOrElse(throw new RoadAddressException("Could not find any nearest road address"))._1)
+
+      // Return links before the discontinuity point and links after it
+      val continuousLinks = trackA.takeWhile(pl => pl.endAddrMValue <= lastLink.endAddrMValue)
+      if (continuousLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")
 
-      val lastProjectLink = continuousProjectLinks.last
-      if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.endAddrMValue))) {
-        (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
+      if (continuousLinks.size > 1 &&
+        lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.startAddrMValue)) < lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.endAddrMValue))) {
+        (continuousLinks.init, lastLink +: trackA.drop(continuousLinks.size))
       } else {
-        (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+        (continuousLinks, trackA.drop(continuousLinks.size))
       }
     } else {
-      val continuousProjectLinks = seq.takeWhile(pl => pl.status == endProjectLink.status)
-      (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+      val continuousProjectLinks = trackA.takeWhile(pl => pl.status == linkOnTrackB.status)
+      (continuousProjectLinks, trackA.drop(continuousProjectLinks.size))
     }
   }
 
