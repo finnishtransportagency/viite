@@ -143,6 +143,28 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     coefficient * address
   }
 
+  def lastSegmentDirection: Vector3d = {
+    (sideCode, reversed) match {
+      case (SideCode.TowardsDigitizing, false) => GeometryUtils.lastSegmentDirection(geometry)
+      case (SideCode.AgainstDigitizing, false) => GeometryUtils.firstSegmentDirection(geometry) scale -1
+      case (SideCode.TowardsDigitizing, true) => GeometryUtils.firstSegmentDirection(geometry) scale -1
+      case (SideCode.AgainstDigitizing, true) => GeometryUtils.lastSegmentDirection(geometry)
+      case (SideCode.BothDirections, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
+      case (SideCode.Unknown, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
+    }
+  }
+
+  def lastPoint: Point = {
+    (sideCode, reversed) match {
+      case (SideCode.TowardsDigitizing, false) => geometry.last
+      case (SideCode.AgainstDigitizing, false) => geometry.head
+      case (SideCode.TowardsDigitizing, true) => geometry.head
+      case (SideCode.AgainstDigitizing, true) => geometry.last
+      case (SideCode.BothDirections, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
+      case (SideCode.Unknown, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
+    }
+  }
+
   def toCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrationPoints match {
       case (None, None) => (Option.empty[CalibrationPoint], Option.empty[CalibrationPoint])

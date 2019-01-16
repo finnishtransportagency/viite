@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -729,6 +729,48 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       result.size should be (1)
       result.head.linkId should be (linkId2)
     }
+  }
+
+  val dummyProjectLink2 = dummyProjectLink(0, 0, 0, 0, 0, 0, 0, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+
+  test("Test ProjectLink.lastSegmentDirection When / towards digitizing and not reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)))
+    projectLink.lastSegmentDirection should be(Vector3d(50, 50, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When / against digitizing and not reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)), sideCode = AgainstDigitizing)
+    projectLink.lastSegmentDirection should be(Vector3d(-100, -100, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When \\ towards digitizing and not reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)))
+    projectLink.lastSegmentDirection should be(Vector3d(-50, 50, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When \\ against digitizing and not reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)), sideCode = AgainstDigitizing)
+    projectLink.lastSegmentDirection should be(Vector3d(100, -100, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When / towards digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)), reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(-100, -100, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When / against digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)), sideCode = AgainstDigitizing, reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(50, 50, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When \\ towards digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)), reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(100, -100, 0))
+  }
+
+  test("Test ProjectLink.lastSegmentDirection When \\ against digitizing and reversed Then correct vector") {
+    val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(-50, 50), Point(-150, 150), Point(-200, 200)), sideCode = AgainstDigitizing, reversed = true)
+    projectLink.lastSegmentDirection should be(Vector3d(-50, 50, 0))
   }
 
 }
