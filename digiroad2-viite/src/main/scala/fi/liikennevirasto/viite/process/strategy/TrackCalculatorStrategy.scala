@@ -231,7 +231,7 @@ trait TrackCalculatorStrategy {
 
       // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as lastLink
       val linkOnTrackBDirection = linkOnTrackB.lastSegmentDirection
-      val maxAngleBetweenLinks = math.toRadians(67.5) // TODO
+      val maxAngleBetweenLinks = math.toRadians(75) // Tolerance for "triangle" cases is 15 degrees and for "rectangle" cases 25 degrees.
       val lastLink: ProjectLink = nearestLinks.collectFirst { case l if l._1.lastSegmentDirection.angle(linkOnTrackBDirection) < maxAngleBetweenLinks => l._1 }
         .getOrElse(nearestLinks.headOption.getOrElse(throw new RoadAddressException("Could not find any nearest road address"))._1)
 
@@ -240,7 +240,6 @@ trait TrackCalculatorStrategy {
       if (continuousLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")
 
-      // TODO
       if (continuousLinks.size > 1 &&
         lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.startAddrMValue)) < lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.endAddrMValue))) {
         (continuousLinks.init, lastLink +: trackA.drop(continuousLinks.size))
