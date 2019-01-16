@@ -153,9 +153,11 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def lastPoint: Point = {
-    sideCode match {
-      case SideCode.TowardsDigitizing => geometry.last
-      case SideCode.AgainstDigitizing => geometry.head
+    (sideCode, reversed) match {
+      case (SideCode.TowardsDigitizing, false) => geometry.last
+      case (SideCode.AgainstDigitizing, false) => geometry.head
+      case (SideCode.TowardsDigitizing, true) => geometry.head
+      case (SideCode.AgainstDigitizing, true) => geometry.last
     }
   }
 
