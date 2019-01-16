@@ -149,6 +149,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case (SideCode.AgainstDigitizing, false) => GeometryUtils.firstSegmentDirection(geometry) scale -1
       case (SideCode.TowardsDigitizing, true) => GeometryUtils.firstSegmentDirection(geometry) scale -1
       case (SideCode.AgainstDigitizing, true) => GeometryUtils.lastSegmentDirection(geometry)
+      case (SideCode.BothDirections, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
+      case (SideCode.Unknown, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
   }
 
@@ -158,6 +160,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case (SideCode.AgainstDigitizing, false) => geometry.head
       case (SideCode.TowardsDigitizing, true) => geometry.head
       case (SideCode.AgainstDigitizing, true) => geometry.last
+      case (SideCode.BothDirections, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
+      case (SideCode.Unknown, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
   }
 
