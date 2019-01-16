@@ -1488,7 +1488,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             // Current logic allows only re adding new road addresses whithin same road/part group
             if (toUpdateLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).size <= 1) {
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.New, toUpdateLinks)
-              updateRoadTypeDiscontinuity(toUpdateLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode))))
+              updateRoadTypeDiscontinuity(toUpdateLinks.map(l => l.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), ely = ely.getOrElse(l.ely))))
               roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
             } else {
               throw new RoadAddressException(s"Useamman kuin yhden tien/tieosan tallennus kerralla ei ole tuettu.")
