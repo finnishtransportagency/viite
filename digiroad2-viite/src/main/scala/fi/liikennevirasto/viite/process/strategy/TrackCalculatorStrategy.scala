@@ -240,12 +240,7 @@ trait TrackCalculatorStrategy {
       if (continuousLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")
 
-      if (continuousLinks.size > 1 &&
-        lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.startAddrMValue)) < lastLink.toMeters(Math.abs(linkOnTrackB.endAddrMValue - lastLink.endAddrMValue))) {
-        (continuousLinks.init, lastLink +: trackA.drop(continuousLinks.size))
-      } else {
-        (continuousLinks, trackA.drop(continuousLinks.size))
-      }
+      (continuousLinks, trackA.drop(continuousLinks.size))
     } else {
       val continuousProjectLinks = trackA.takeWhile(pl => pl.status == linkOnTrackB.status)
       (continuousProjectLinks, trackA.drop(continuousProjectLinks.size))
