@@ -791,12 +791,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               removed.foreach(p => projectReservedPartDAO.removeReservedRoadPartAndChanges(roadAddressProject.id, p.roadNumber, p.roadPartNumber))
               removed.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
               addLinksToProject(roadAddressProject)
-              val updatedProject = projectDAO.fetchById(roadAddressProject.id).get
-              if (updatedProject.reservedParts.nonEmpty) {
-                projectDAO.update(roadAddressProject.copy(ely = projectLinkDAO.fetchElyFromProjectLinks(roadAddressProject.id)))
-              } else { //in empty case we release ely
-                projectDAO.update(roadAddressProject.copy(ely = None))
-              }
               val savedProject = projectDAO.fetchById(roadAddressProject.id).get
               saveProjectCoordinates(savedProject.id, calculateProjectCoordinates(savedProject.id))
               savedProject
