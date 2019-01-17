@@ -59,8 +59,8 @@ class ProjectDAO {
 
   def create(project: Project): Unit = {
     sqlu"""
-         insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
-         values (${project.id}, ${project.status.value}, ${project.name}, null, ${project.createdBy}, sysdate, ${project.startDate}, '-' , sysdate, ${project.additionalInfo}, ${project.statusInfo})
+         insert into project (id, state, name, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
+         values (${project.id}, ${project.status.value}, ${project.name}, ${project.createdBy}, sysdate, ${project.startDate}, '-' , sysdate, ${project.additionalInfo}, ${project.statusInfo})
          """.execute
   }
 
