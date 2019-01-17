@@ -16,12 +16,12 @@ import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProjectId:Option[Long], trTrackingCode:Option[Long],
-                           status:Option[String], name:Option[String], changeDate:Option[String], ely:Option[Int],
+                           status:Option[String], name:Option[String], changeDate:Option[String],
                            trModifiedDate:Option[String], user:Option[String], trPublishedDate:Option[String],
                            trJobNumber:Option[Long], errorMessage:Option[String], trProcessingStarted:Option[String],
                            trProcessingEnded:Option[String], errorCode:Option[Int])
 case class TRStatusResponse(id_tr_projekti:Option[Long], projekti:Option[Long], id:Option[Long], tunnus:Option[Long],
-                            status:Option[String], name:Option[String], change_date:Option[String], ely:Option[Int],
+                            status:Option[String], name:Option[String], change_date:Option[String],
                             muutospvm:Option[String], user:Option[String], published_date:Option[String],
                             job_number:Option[Long], error_message:Option[String], start_time:Option[String],
                             end_time:Option[String], error_code:Option[Int])
@@ -106,15 +106,15 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
     }
     val map = o.values
     val (id, id_tr_projekti, projekti, tunnus,
-    status, name, change_date, ely,
+    status, name, change_date,
     muutospvm, user, published_date,
     job_number, error_message, start_time,
     end_time, error_code) =
       (map.get("id"), map.get("id_tr_projekti"), map.get("projekti"), map.get("tunnus"), map.get("status"), map.get("name"),
-        map.get("change_date"), map.get("ely"), map.get("muutospvm"), map.get("user"), map.get("published_date"), map.get("job_number"),
+        map.get("change_date"), map.get("muutospvm"), map.get("user"), map.get("published_date"), map.get("job_number"),
         map.get("error_message"), map.get("start_time"), map.get("end_time"), map.get("error_code"))
     TRProjectStatus(id.map(jIntToLong), id_tr_projekti.map(jIntToLong), projekti.map(jIntToLong), tunnus.map(jIntToLong),
-      status.map(jStringToString), name.map(jStringToString),change_date.map(jStringToString), ely.map(jIntToInt),
+      status.map(jStringToString), name.map(jStringToString),change_date.map(jStringToString),
       muutospvm.map(jStringToString), user.map(jStringToString),published_date.map(jStringToString), job_number.map(jIntToLong),
       error_message.map(jStringToString), start_time.map(jStringToString),end_time.map(jStringToString), error_code.map(jIntToInt))
 }, {
@@ -127,7 +127,6 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
       JField("status", s.status.map(l => JString(l)).orNull),
       JField("name", s.name.map(l => JString(l)).orNull),
       JField("change_date", s.changeDate.map(l => JString(l)).orNull),
-      JField("ely", s.ely.map(l => JInt(BigInt.apply(l))).orNull),
       JField("muutospvm", s.trModifiedDate.map(l => JString(l)).orNull),
       JField("user", s.user.map(l => JString(l)).orNull),
       JField("published_date", s.trPublishedDate.map(l => JString(l)).orNull),
@@ -249,7 +248,6 @@ object ViiteTierekisteriClient {
           "status" -> receivedData.status.getOrElse("null"),
           "name" -> receivedData.name.getOrElse("null"),
           "change_date" -> receivedData.changeDate.getOrElse("null"),
-          "ely" -> receivedData.ely.getOrElse("null"),
           "muutospvm" -> receivedData.trModifiedDate.getOrElse("null"),
           "user" -> receivedData.user.getOrElse("null"),
           "published_date" -> receivedData.trPublishedDate.getOrElse("null"),
@@ -289,7 +287,7 @@ object ViiteTierekisteriClient {
 
   def responseMapper (response:TRStatusResponse): TRProjectStatus = {
     TRProjectStatus(response.id, response.id_tr_projekti, response.tunnus, response.job_number, response.status,
-      response.name, response.change_date, response.ely, response.muutospvm, response.user, response.published_date,
+      response.name, response.change_date, response.muutospvm, response.user, response.published_date,
       response.job_number, response.error_message, response.start_time, response.end_time, response.error_code)
   }
 

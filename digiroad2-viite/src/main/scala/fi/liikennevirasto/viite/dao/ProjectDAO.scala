@@ -45,7 +45,7 @@ object ProjectState {
 
 case class Project(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                    modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                   reservedParts: Seq[ProjectReservedPart], statusInfo: Option[String], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
+                   reservedParts: Seq[ProjectReservedPart], statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
   }
@@ -76,7 +76,7 @@ class ProjectDAO {
 
   def update(roadAddressProject: Project): Unit = {
     sqlu"""
-         update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate}, ely = ${roadAddressProject.ely} where id = ${roadAddressProject.id}
+         update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate} where id = ${roadAddressProject.id}
          """.execute
   }
 
@@ -197,7 +197,7 @@ class ProjectDAO {
           projectReservedPartDAO.fetchReservedRoadParts(id).distinct
 
         Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-          addInfo, reservedRoadParts, statusInfo, if (ely.contains(-1L)) None else ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          addInfo, reservedRoadParts, statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
     }
   }
 }

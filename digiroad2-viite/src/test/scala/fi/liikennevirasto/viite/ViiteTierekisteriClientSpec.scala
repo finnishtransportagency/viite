@@ -105,7 +105,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   test("Test extract[TRProjectStatus] When using a serialized TRProjectStatus object to JSON Then return the correctly encoded and decoded TRProjectStatus object.") {
     implicit val formats = DefaultFormats + TRProjectStatusSerializer
     val trps = TRProjectStatus(Some(1), Some(2), Some(3), Some(4), Some("status"), Some("name"), Some("change_date"),
-      Some(5), Some("muutospvm"), Some("user"), Some("published_date"), Some(6), Some("error_message"), Some("start_time"),
+      Some("muutospvm"), Some("user"), Some("published_date"), Some(6), Some("error_message"), Some("start_time"),
       Some("end_time"), Some(7))
     val string = Serialization.write(trps).toString
     val trps2 = parse(StringInput(string)).extract[TRProjectStatus]
