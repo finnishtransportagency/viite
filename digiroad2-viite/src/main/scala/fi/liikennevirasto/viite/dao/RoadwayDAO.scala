@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
@@ -237,6 +237,32 @@ trait BaseRoadAddress {
     }
 
     GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+  }
+
+  lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.head
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.last
+  }
+  lazy val endPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.last
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.head
+  }
+
+  def getEndPoints: (Point, Point) = {
+    if (sideCode == SideCode.Unknown) {
+      val direction = if(geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
+      Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
+    } else {
+      (startingPoint, endPoint)
+    }
   }
 }
 
