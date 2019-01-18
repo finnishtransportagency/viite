@@ -677,7 +677,7 @@ class ProjectLinkDAO {
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
         s"TRACK = (CASE TRACK WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
         s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
-        s"reversed = (CASE WHEN reversed = 0 AND status != 2 THEN 1 WHEN reversed = 1 AND status != 2 THEN 0 ELSE 0 END)" +
+        s"reversed = (CASE WHEN reversed = 0 AND status != ${LinkStatus.New.value} THEN 1 WHEN reversed = 1 AND status != 2 THEN 0 ELSE 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
       Q.updateNA(updateProjectLink).execute
