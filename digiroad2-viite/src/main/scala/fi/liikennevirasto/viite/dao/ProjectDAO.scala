@@ -80,20 +80,14 @@ class ProjectDAO {
          """.execute
   }
 
-  def fetchProjectElyById(projectId: Long): Option[Long] = {
+  def fetchProjectElyById(projectId: Long): Seq[Long] = {
     val query =
       s"""
-         SELECT ELY
-         FROM project
-         WHERE id=$projectId
+         SELECT DISTINCT ELY
+         FROM project_link
+         WHERE project_id=$projectId
        """
-    Q.queryNA[Option[Long]](query).firstOption.flatten
-  }
-
-  def updateProjectEly(projectId: Long, ely: Long): Unit = {
-    sqlu"""
-       update project set ely = $ely, modified_date = sysdate where id =  ${projectId}
-      """.execute
+    Q.queryNA[Long](query).list
   }
 
   def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
@@ -105,12 +99,9 @@ class ProjectDAO {
     }
   }
 
-  def fetchAll(withNullElyFilter: Boolean = false): Seq[Project] = {
-    time(logger, s"Fetch all projects with null ely filter setted to $withNullElyFilter") {
-      if(withNullElyFilter)
-        fetch(query => s"""$query where where ely is null order by ely nulls first, name, id""")
-      else
-        fetch(query => s"""$query order by ely nulls first, name, id""")
+  def fetchAll(): Seq[Project] = {
+    time(logger, s"Fetch all projects ") {
+        fetch(query => s"""$query order by name, id""")
     }
   }
 
