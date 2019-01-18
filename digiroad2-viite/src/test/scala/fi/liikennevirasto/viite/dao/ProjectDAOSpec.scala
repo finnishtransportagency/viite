@@ -269,8 +269,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val rap = dummyProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None)
       projectDAO.create(rap)
       projectDAO.fetchById(id).nonEmpty should be(true)
-      projectDAO.updateProjectEly(id, 99)
-      projectDAO.fetchProjectElyById(id).get should be(99)
+      projectDAO.fetchProjectElyById(id).head should be(99)
     }
   }
 

@@ -339,13 +339,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           else {
             saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
           }
-          setProjectEly(projectId, roadEly) match {
+          addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, newTransaction = false) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-            case None =>
-              addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, newTransaction = false) match {
-                case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-                case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
-              }
+            case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
           }
         case Some(error) => Map("success" -> false, "errorMessage" -> error)
       }
@@ -887,7 +883,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (projectReservedPartDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), None)
       case _ =>
         projectReservedPartDAO.reserveRoadPart(project.id, reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber, project.modifiedBy)
-        setProjectEly(project.id, reservedRoadPart.ely.getOrElse(-1))
         (projectReservedPartDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), None)
     }
   }
@@ -2046,14 +2041,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def setProjectEly(currentProjectId: Long, newEly: Long): Option[String] = {
-    if(getProjectEly(currentProjectId).isEmpty){
-      projectDAO.updateProjectEly(currentProjectId, newEly)
-    }
-    None
-  }
-
-  def getProjectEly(projectId: Long): Option[Long] = {
+  def getProjectEly(projectId: Long): Seq[Long] = {
     projectDAO.fetchProjectElyById(projectId)
   }
 
