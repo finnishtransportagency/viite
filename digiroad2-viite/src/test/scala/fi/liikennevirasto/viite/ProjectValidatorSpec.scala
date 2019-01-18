@@ -2220,7 +2220,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   //    }
   //  }
 
-  test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and not putting the correct link status then validator should return an error") {
+  test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and putting the correct link status then validator should not return an error") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.Numbering, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode)
       val originalProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
@@ -2238,9 +2238,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2.map(p => p.copy(ely = 8L))
       roadwayDAO.create(rw)
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
-      elyCodeCheck.size should be (1)
-      elyCodeCheck.head.projectId should be (project.id)
-      elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.IncorrectLinkStatusOnElyCodeChange)
+      elyCodeCheck.size should be (0)
     }
   }
 
