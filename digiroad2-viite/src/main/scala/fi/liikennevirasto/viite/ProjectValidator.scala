@@ -1101,6 +1101,7 @@ class ProjectValidator {
             val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x+5, y= points._2.y+5), points._2.copy(x = points._2.x-5, y= points._2.y-5)), Seq.empty)
             val nextElyCodes = roadAddresses.filterNot(ra => allProjectLinks.exists(_.roadwayNumber == ra.roadwayNumber)).map(_.elyCode).toSet
             val sameProjectLinksDiffEly = nextProjectLinks.nonEmpty && nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)).ely == apl.ely
+            //TODO: AM NOT FINDING WAY OF COMBINING BOTH FILTERS (ELY CHANGE BETWEEN ROADS OUTSIDE OF PROJECTS AND PROJECT LINKS)
             (nextElyCodes.isEmpty && !nextElyCodes.contains(apl.ely)) || sameProjectLinksDiffEly
           })
           filtered.isEmpty && affectedProjectLinks.nonEmpty
