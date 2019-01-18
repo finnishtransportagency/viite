@@ -2336,4 +2336,24 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test projectValidator.checkRoadContinuityCodes When using a EndOfRoad code in last past in a lower roadNumber with different ELy code from the next one with bigger roadNumber Then the should have one error saying that the continuity coe should be ELY change") {
+    /*
+    This gives error because next part or number have different ELY -> Ely change code != EndOfRoad
+    |<------------------------------------------------|<------------------------------------------------|
+      ContinuityCode:EndOfRoad Ely:1 roadnumber:19998   ContinuityCode:EndOfRoad Ely:5 roadnumber:19999:
+     */
+
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, ely = 1L)
+      addProjectLinksToProject(LinkStatus.Transfer, Seq(0L, 10L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadNumber = 19998, ely = 2L)
+      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      mockEmptyRoadAddressServiceCalls()
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
+      roadwayDAO.create(rw)
+      val checkRoadContinuityChecks = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
+      checkRoadContinuityChecks.size should be (1)
+      checkRoadContinuityChecks.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeChangeDetected)
+    }
+  }
+
 }
