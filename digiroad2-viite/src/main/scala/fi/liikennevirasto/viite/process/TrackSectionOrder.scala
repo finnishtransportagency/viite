@@ -52,8 +52,7 @@ object TrackSectionOrder {
           if (projectLinksWithValues.nonEmpty) {
             val (startPoint, endPoint) = projectLinksWithValues.head.getEndPoints
             recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(projectLinksWithValues.head), startPoint, endPoint), projectLinksWithValues.tail ++ newLinks)
-          }
-          else{
+          } else {
             val (startPoint, endPoint) = newLinks.head.getEndPoints
             recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(newLinks.head), startPoint, endPoint), newLinks.tail)
           }
