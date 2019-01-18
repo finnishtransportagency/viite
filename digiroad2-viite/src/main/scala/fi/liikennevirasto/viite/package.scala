@@ -112,7 +112,7 @@ package object viite {
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
 
   val MultipleElysInPartMessage = s"Useampi ELY-koodi tieosassa"
-  val IncorrectLinkStatusOnElyCodeChangeMessage =  s"Linkin tila ei salli ELY-koodin muutosta. Sallitut tilat ovat ${LinkStatus.UnChanged.description}(${LinkStatus.UnChanged.value}), ${LinkStatus.Transfer.description}(${LinkStatus.Transfer.value}) or ${LinkStatus.New.description}(${LinkStatus.New.value})"
+  val IncorrectLinkStatusOnElyCodeChangeMessage =  s"Linkin tila ei salli ELY-koodin muutosta. Sallitut tilat ovat ${LinkStatus.UnChanged.description}(${LinkStatus.UnChanged.value}), ${LinkStatus.Transfer.description}(${LinkStatus.Transfer.value}), ${LinkStatus.New.description}(${LinkStatus.New.value} or ${LinkStatus.Numbering.description}(${LinkStatus.Numbering.value})"
   val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-koodi muutos havaittu mutta tieosamuutosta ei löydy"
   val ElyCodeChangeButNoElyChangeMessage = s"ELY-koodimuutos havaittu mutta ${ChangingELYCode.description}(${ChangingELYCode.value}) epäjatkuvuutta ei havaittu."
   val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"${ChangingELYCode.description}(${ChangingELYCode.value}) määritelty projektilinkille mutta ELY-koodimuutosta ei havaittu."
