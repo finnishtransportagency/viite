@@ -184,11 +184,11 @@ class ProjectDAO {
   private def fetch(queryFilter: String => String): Seq[Project] = {
     val query =
       s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
-           add_info, ely, status_info, coord_x, coord_y, zoom
+           add_info, status_info, coord_x, coord_y, zoom
            FROM project"""
 
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String], Double, Double, Int)](queryFilter(query)).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo, coordX, coordY, zoom) =>
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Double, Double, Int)](queryFilter(query)).list.map {
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, coordX, coordY, zoom) =>
 
         val projectState = ProjectState.apply(state)
         val reservedRoadParts = if (projectState == Saved2TR)
