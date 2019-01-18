@@ -1123,7 +1123,7 @@ class ProjectValidator {
           val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x+5, y= points._2.y+5), points._2.copy(x = points._2.x-5, y= points._2.y-5)), Seq.empty)
           val nextElyCodes = roadAddresses.filterNot(ra => allProjectLinks.exists(_.roadwayNumber == ra.roadwayNumber)).map(_.elyCode).toSet
           val sameProjectLinksDiffEly = nextProjectLinks.nonEmpty && nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)).ely == apl.ely
-          nextElyCodes.contains(apl.ely) || sameProjectLinksDiffEly
+          (nextElyCodes.isEmpty && !nextElyCodes.contains(apl.ely)) || sameProjectLinksDiffEly
         })
         filtered.isEmpty
       })
