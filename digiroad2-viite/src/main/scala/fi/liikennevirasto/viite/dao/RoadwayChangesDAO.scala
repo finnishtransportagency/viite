@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import java.sql.PreparedStatement
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.{RoadType, dao}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Discontinuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadwaySection}
 import org.joda.time.DateTime
@@ -68,6 +68,8 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      targetStartAddressM: Option[Long], targetEndAddressM: Option[Long], targetDiscontinuity: Option[Int], targetRoadType: Option[Int],
                      sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
                      rotatingTRId: Option[Long], reversed: Boolean, orderInTable: Long)
+
+case class ChangeTableRows(addressChangeType: AddressChangeType, source: RoadwaySection, target: RoadwaySection)
 
 class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -374,17 +376,27 @@ class RoadwayChangesDAO {
             val news = ProjectDeltaCalculator.partition(delta.newRoads)
             news.foreach(roadwaySection => addToBatch(roadwaySection, ely, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-            ProjectDeltaCalculator.partition(delta.unChanged.mapping).foreach { case (roadwaySection1, roadwaySection2) =>
-              addToBatchWithOldValues(roadwaySection1, roadwaySection2, ely, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
-            }
+//            ProjectDeltaCalculator.partition(delta.unChanged.mapping).foreach { case (roadwaySection1, roadwaySection2) =>
+//              addToBatchWithOldValues(roadwaySection1, roadwaySection2, ely, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
+//            }
+//
+//            ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated ++ news).foreach { case (roadwaySection1, roadwaySection2) =>
+//              addToBatchWithOldValues(roadwaySection1, roadwaySection2, ely, AddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
+//            }
+//
+//            ProjectDeltaCalculator.partition(delta.numbering.mapping).foreach { case (roadwaySection1, roadwaySection2) =>
+//              addToBatchWithOldValues(roadwaySection1, roadwaySection2, ely, AddressChangeType.ReNumeration, roadwayChangePS, roadWayChangesLinkPS)
+//            }
 
-            ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated ++ news).foreach { case (roadwaySection1, roadwaySection2) =>
-              addToBatchWithOldValues(roadwaySection1, roadwaySection2, ely, AddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
-            }
+            val unchangedRows = flattenOperationTableRows(AddressChangeType.Unchanged, ProjectDeltaCalculator.partition(delta.unChanged.mapping))
+            val transferRows = flattenOperationTableRows(AddressChangeType.Transfer, ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated ++ news))
+            val renumeration = flattenOperationTableRows(AddressChangeType.ReNumeration, ProjectDeltaCalculator.partition(delta.numbering.mapping))
 
-            ProjectDeltaCalculator.partition(delta.numbering.mapping).foreach { case (roadwaySection1, roadwaySection2) =>
-              addToBatchWithOldValues(roadwaySection1, roadwaySection2, ely, AddressChangeType.ReNumeration, roadwayChangePS, roadWayChangesLinkPS)
-            }
+            val adjustedOperations = adjustAverageBetweenOperations(unchangedRows ++ transferRows ++ renumeration)
+
+//            adjustedOperations.foreach { case (roadwaySection1, roadwaySection2) =>
+//              addToBatchWithOldValues(roadwaySection1, roadwaySection2, ely, AddressChangeType.ReNumeration, roadwayChangePS, roadWayChangesLinkPS)
+//            }
 
             roadwayChangePS.executeBatch()
             roadwayChangePS.close()
@@ -397,6 +409,35 @@ class RoadwayChangesDAO {
         }
       case _ => false
     }
+  }
+
+  def flattenOperationTableRows(cType: AddressChangeType, map: Map[RoadwaySection,RoadwaySection]): Seq[ChangeTableRows] = {
+    val srcs = map.keys.toSeq
+    val trgs = map.values.toSeq
+
+    if(srcs.size != trgs.size){
+      //Unchanged, Transfer and Renumeration should have same sources and targets size
+      Seq()
+    } else {
+      srcs.zip(trgs).map { case (s, t) =>
+        ChangeTableRows(cType, s, t)
+      }
+    }
+  }
+
+  def adjustAverageBetweenOperations(rows: Seq[ChangeTableRows]): Map[RoadwaySection, RoadwaySection] ={
+    //for e.g Left track can be Unchanged while Right track is Transfer
+//    val allSections = maps
+//
+//
+    Map()
+  }
+
+  def adjustOperations(maps: Seq[ChangeTableRows]): Map[RoadwaySection, RoadwaySection] ={
+    val allSections = maps
+
+
+    Map.empty[RoadwaySection, RoadwaySection]
   }
 
   def fetchRoadwayChanges(projectIds: Set[Long]): List[ProjectRoadwayChange] = {
