@@ -161,7 +161,7 @@ object TrackSectionOrder {
       else {
         val hit = unprocessed.find(pl => GeometryUtils.areAdjacent(pl.geometry, currentPoint, MaxDistanceForConnectedLinks))
           .getOrElse(throw new InvalidGeometryException("Roundabout was not connected"))
-        val nextPoint = getOppositeEnd(hit.geometry, currentPoint)
+        val nextPoint = getOppositeEnd(hit, currentPoint)
         val sideCode = if (hit.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         val prevAddrM = ready.last.endAddrMValue
         val endAddrM = hit.status match {
@@ -209,8 +209,8 @@ object TrackSectionOrder {
     }
   }
 
-  private def getOppositeEnd(geometry: Seq[Point], point: Point): Point = {
-    val (st, en) = GeometryUtils.geometryEndpoints(geometry)
+  private def getOppositeEnd(link: BaseRoadAddress, point: Point): Point = {
+    val (st, en) = link.getEndPoints
     if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
   }
 
@@ -264,28 +264,28 @@ object TrackSectionOrder {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
-            (getOppositeEnd(link.geometry, closestPoint), link)
+            (getOppositeEnd(link, closestPoint), link)
           case 1 =>
-            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head)
+            (getOppositeEnd(connected.head, currentPoint), connected.head)
           case 2 =>
             val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
             if (nextLinkSameTrack.nonEmpty) {
-              (getOppositeEnd(nextLinkSameTrack.get.geometry, currentPoint), nextLinkSameTrack.get)
+              (getOppositeEnd(nextLinkSameTrack.get, currentPoint), nextLinkSameTrack.get)
             } else {
               if (findOnceConnectedLinks(unprocessed).exists(b =>
                 (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
                 val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
                   (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
                   .minBy(b => (currentPoint - b._1).length())
-                (getOppositeEnd(link.geometry, nPoint), link)
+                (getOppositeEnd(link, nPoint), link)
               } else {
-                val l = pickRightMost(ready.last, connected)
-                (getOppositeEnd(l.geometry, currentPoint), l)
+                val l = if(ready.isEmpty) connected.head else pickRightMost(ready.last, connected)
+                (getOppositeEnd(l, currentPoint), l)
               }
             }
           case _ =>
             val l = pickForwardMost(ready.last, connected)
-            (getOppositeEnd(l.geometry, currentPoint), l)
+            (getOppositeEnd(l, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
         val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && (unprocessed ++ ready).size == 1) match {
