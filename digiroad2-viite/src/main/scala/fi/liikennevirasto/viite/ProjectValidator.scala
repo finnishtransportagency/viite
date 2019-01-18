@@ -793,8 +793,8 @@ class ProjectValidator {
           }
           else Seq.empty
 
-          val wrongStatusCode = if(!workableProjectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer || pl.status == LinkStatus.New) && !originalElys.equals(projectLinkElys)) {
-            Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer, LinkStatus.New))))
+          val wrongStatusCode = if(!workableProjectLinks.forall(pl => pl.status == LinkStatus.UnChanged || pl.status == LinkStatus.Transfer || pl.status == LinkStatus.New || pl.status == LinkStatus.Numbering) && !originalElys.equals(projectLinkElys)) {
+            Seq(prepareValidationErrorDetails(Right(Seq(LinkStatus.UnChanged, LinkStatus.Transfer, LinkStatus.New, LinkStatus.Numbering))))
           }
           else Seq.empty
 
@@ -1119,7 +1119,11 @@ class ProjectValidator {
         val affectedProjectLinks = allProjectLinks.filter(pl => ce.affectedIds.contains(pl.id))
         val filtered = affectedProjectLinks.filter(apl => {
           val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber > apl.roadNumber || (pl.roadNumber == apl.roadNumber && pl.roadPartNumber > apl.roadPartNumber))
-          nextProjectLinks.isEmpty || nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)).ely == apl.ely
+          val points = GeometryUtils.geometryEndpoints(apl.geometry)
+          val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x+5, y= points._2.y+5), points._2.copy(x = points._2.x-5, y= points._2.y-5)), Seq.empty)
+          val nextElyCodes = roadAddresses.filterNot(ra => allProjectLinks.exists(_.roadwayNumber == ra.roadwayNumber)).map(_.elyCode).toSet
+          val sameProjectLinksDiffEly = nextProjectLinks.nonEmpty && nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)).ely == apl.ely
+          nextElyCodes.contains(apl.ely) || sameProjectLinksDiffEly
         })
         filtered.isEmpty
       })
