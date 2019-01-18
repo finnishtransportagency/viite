@@ -26,8 +26,8 @@ V&auml;yl&auml;verkon hallinta -sovellus on toteutettu Esri ArcGIS-teknologian p
 VVH-sovelluksen k&auml;ytt&ouml;&auml; varten tulee olla p&auml;&auml;sy Liikenneviraston Citrix-palveluun, jonka lis&auml;ksi annetaan erikseen oikeudet VVH-sovellukseen.
 
 __K&auml;ytt&auml;j&auml;tunnukset Citrix-palveluun:__ Liikennevirastosta oman yhteyshenkil&ouml;n kautta
-__K&auml;ytt&auml;j&auml;tunnukset VVH-sovellukseen:__ Toistaiseksi Emmi Sallinen, emmi.sallinen@karttakeskus.fi
-__Sovellustuki:__ Toistaiseksi Emmi Sallinen, emmi.sallinen@karttakeskus.fi
+__K&auml;ytt&auml;j&auml;tunnukset VVH-sovellukseen:__ Toistaiseksi Emmi Sallinen, emmi.sallinen@cgi.com
+__Sovellustuki:__ Toistaiseksi Emmi Sallinen, emmi.sallinen@cgi.com
 
 1.2 Termit ja lyhenteet
 --------------------------
