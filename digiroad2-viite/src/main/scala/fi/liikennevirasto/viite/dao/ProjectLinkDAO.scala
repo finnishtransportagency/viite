@@ -673,11 +673,11 @@ class ProjectLinkDAO {
          where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
          and project_link.status != ${LinkStatus.Terminated.value}
          """.as[Long].firstOption.getOrElse(0L)
-      val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
+      val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN ${CalibrationCode.No.value} THEN ${CalibrationCode.No.value} WHEN ${CalibrationCode.AtEnd.value} THEN ${CalibrationCode.AtBeginning.value} WHEN ${CalibrationCode.AtBeginning.value} THEN ${CalibrationCode.AtEnd.value} ELSE ${CalibrationCode.AtBoth.value} END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-        s"TRACK = (CASE TRACK WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
-        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
-        s"reversed = (CASE WHEN reversed = 0 AND status != ${LinkStatus.New.value} THEN 1 WHEN reversed = 1 AND status != 2 THEN 0 ELSE 0 END)" +
+        s"TRACK = (CASE TRACK WHEN ${Track.Combined.value} THEN ${Track.Combined.value} WHEN ${Track.RightSide.value} THEN ${Track.LeftSide.value} WHEN ${Track.LeftSide.value} THEN ${Track.RightSide.value} ELSE ${Track.Unknown.value} END), " +
+        s"SIDE = (CASE SIDE WHEN ${SideCode.TowardsDigitizing.value} THEN ${SideCode.AgainstDigitizing.value} ELSE ${SideCode.TowardsDigitizing.value} END), " +
+        s"reversed = (CASE WHEN reversed = 0 AND status != ${LinkStatus.New.value} THEN 1 WHEN reversed = 1 AND status != ${LinkStatus.New.value} THEN 0 ELSE 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
       Q.updateNA(updateProjectLink).execute
