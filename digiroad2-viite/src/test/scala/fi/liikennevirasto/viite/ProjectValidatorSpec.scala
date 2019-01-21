@@ -2325,8 +2325,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
   test("Test projectValidator.checkRoadContinuityCodes When using a Ely change Then the discontinuity codes validations would be suppressed.") {
     runWithRollback {
-      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.MinorDiscontinuity, lastLinkDiscontinuity = Discontinuity.ChangingELYCode, ely = 1L)
-      addProjectLinksToProject(LinkStatus.Transfer, Seq(60L, 70L, 80L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 2L)
+      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.Continuous, ely = 1L)
+      addProjectLinksToProject(LinkStatus.Transfer, Seq(60L, 70L, 80L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadNumber = 20000L,roadPartNumber = 1L, ely = 2L)
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()
       val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
