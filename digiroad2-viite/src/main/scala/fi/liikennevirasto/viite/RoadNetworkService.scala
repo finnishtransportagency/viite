@@ -45,11 +45,11 @@ class RoadNetworkService {
         Seq.empty[RoadNetworkError]
       else {
         val sortedLocations = allLocations.sortBy(s => (s.roadwayNumber, s.orderNumber))
-        val locationsError: Seq[LinearLocation] = sortedLocations.filter(loc =>
-          (!allLocations.exists(l => (l.calibrationPoints._1 == loc.calibrationPoints._1) && l.id != loc.id)
-            || !allLocations.exists(l => (l.calibrationPoints._2 == loc.calibrationPoints._2) && l.id != loc.id))
+        val (first, last) = (sortedLocations.head, sortedLocations.last)
+        val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
+          edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
         )
-        locationsError.map { loc =>
+        edgeCalibrationPointsError.map { loc =>
           RoadNetworkError(0, loc.roadwayNumber, loc.id, AddressError.Inconsistent2TrackCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
         }
       }
