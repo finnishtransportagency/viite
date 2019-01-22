@@ -1566,8 +1566,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case ProjectState.Saved2TR => true
       case _ =>
         val delta = ProjectDeltaCalculator.delta(project)
-        setProjectDeltaToDB(delta, projectId)
-
+        val (calculated, errorM) = setProjectDeltaToDB(delta, projectId)
+        calculated
     }
   }
 
@@ -1671,7 +1671,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def setProjectDeltaToDB(projectDelta: Delta, projectId: Long): Boolean = {
+  private def setProjectDeltaToDB(projectDelta: Delta, projectId: Long): (Boolean, Option[String]) = {
     roadwayChangesDAO.clearRoadChangeTable(projectId)
     roadwayChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
   }
