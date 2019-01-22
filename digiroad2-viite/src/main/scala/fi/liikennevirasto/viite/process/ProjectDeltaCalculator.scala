@@ -296,11 +296,11 @@ object ProjectDeltaCalculator {
       val possibleExistingSameEndAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._2.endMAddr == target.endMAddr
       && s._1.track != src.track)
       if(possibleExistingSameEndAddrMValue.nonEmpty){
-        val errorMessage = if(Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > 50)
+        val warningMessage = if(Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > 50)
           Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
         else
         None
-      ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), errorMessage)
+      ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), warningMessage)
       } else {
         ((src, target), None)
       }
@@ -313,11 +313,11 @@ object ProjectDeltaCalculator {
         val oppositePairingTrack = sections.find(s => s._1.roadNumber == possibleExistingSameStartAddrMValue.get._1.roadNumber && s._1.roadPartNumberStart == possibleExistingSameStartAddrMValue.get._1.roadPartNumberStart && s._2.endMAddr == possibleExistingSameStartAddrMValue.get._2.endMAddr
          && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
         if(oppositePairingTrack.nonEmpty) {
-          val errorMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > 50)
+          val warningMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > 50)
             Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
           else
             None
-          ((src.copy(startMAddr = adjustAddressValues(possibleExistingSameStartAddrMValue.head._1.endMAddr + oppositePairingTrack.head._1.endMAddr, possibleExistingSameStartAddrMValue.head._1.endMAddr, src.track)), target), errorMessage)
+          ((src.copy(startMAddr = adjustAddressValues(possibleExistingSameStartAddrMValue.head._1.endMAddr + oppositePairingTrack.head._1.endMAddr, possibleExistingSameStartAddrMValue.head._1.endMAddr, src.track)), target), warningMessage)
         } else {
           ((src, target), None)
         }
@@ -325,8 +325,8 @@ object ProjectDeltaCalculator {
         ((src, target), None)
       }
     }
-    val error = adjustedEndSourceSections.values.flatten.toSeq ++ adjustedStartSourceSections.values.flatten.toSeq
-    (adjustedStartSourceSections.keys.toMap, if (error.nonEmpty) Option(error.head) else None)
+    val warning = adjustedEndSourceSections.values.flatten.toSeq ++ adjustedStartSourceSections.values.flatten.toSeq
+    (adjustedStartSourceSections.keys.toMap, if (warning.nonEmpty) Option(warning.head) else None)
   }
 }
 

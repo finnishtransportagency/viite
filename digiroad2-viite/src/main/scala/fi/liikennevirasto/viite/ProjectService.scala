@@ -957,24 +957,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinks
   }
 
-  def getChangeProject(projectId: Long): Option[ChangeProject] = {
+  def getChangeProject(projectId: Long): (Option[ChangeProject], Option[String]) = {
     withDynTransaction {
       getChangeProjectInTX(projectId)
     }
   }
 
-  def getChangeProjectInTX(projectId: Long): Option[ChangeProject] = {
+  def getChangeProjectInTX(projectId: Long): (Option[ChangeProject], Option[String]) = {
     try {
-      if (recalculateChangeTable(projectId)) {
+      val (recalculate, warningMessage) = recalculateChangeTable(projectId)
+      if (recalculate) {
         val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
-        Some(ViiteTierekisteriClient.convertToChangeProject(roadwayChanges))
+        (Some(ViiteTierekisteriClient.convertToChangeProject(roadwayChanges)), warningMessage)
       } else {
-        None
+        (None, None)
       }
     } catch {
       case NonFatal(e) =>
         logger.info(s"Change info not available for project $projectId: " + e.getMessage)
-        None
+        (None, None)
     }
   }
 
@@ -1557,17 +1558,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def recalculateChangeTable(projectId: Long): Boolean = {
+  private def recalculateChangeTable(projectId: Long): (Boolean, Option[String]) = {
     val projectOpt = projectDAO.fetchById(projectId)
     if (projectOpt.isEmpty)
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     project.status match {
-      case ProjectState.Saved2TR => true
+      case ProjectState.Saved2TR => (true, None)
       case _ =>
         val delta = ProjectDeltaCalculator.delta(project)
-        val (calculated, errorM) = setProjectDeltaToDB(delta, projectId)
-        calculated
+        setProjectDeltaToDB(delta, projectId)
     }
   }
 
@@ -1639,7 +1639,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     logger.info(s"Preparing to send Project ID: $projectId to TR")
     withDynTransaction {
       try {
-        if (!recalculateChangeTable(projectId)) {
+        if (!recalculateChangeTable(projectId)._1) {
           return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
         }
         projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID
