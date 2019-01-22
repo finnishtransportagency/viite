@@ -350,6 +350,41 @@ class ProjectValidator {
                                     affectedIds: Seq[Long], coordinates: Seq[ProjectCoordinates],
                                     optionalInformation: Option[String])
 
+  def findElyChangesOnAdjacentRoads(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
+    val dim = 2
+    val points = GeometryUtils.geometryEndpoints(projectLink.geometry)
+    val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x+dim, y= points._2.y+dim), points._2.copy(x = points._2.x-dim, y= points._2.y-dim)), Seq.empty)
+    val nextElyCodes = roadAddresses.filterNot(ra => allProjectLinks.exists(_.roadwayNumber == ra.roadwayNumber)).map(_.elyCode).toSet
+    println(s"findElyChangesOnAdjacentRoads || nextElyCodes.isEmpty ${nextElyCodes.isEmpty} || nextElyCodes.contains(projectLink.ely) ${nextElyCodes.contains(projectLink.ely)}")
+    //ELY pode estar contido e mesmo assim haver alteração ely
+    nextElyCodes.isEmpty || nextElyCodes.contains(projectLink.ely)
+  }
+
+  def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
+    val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber > projectLink.roadNumber || (pl.roadNumber == projectLink.roadNumber && pl.roadPartNumber > projectLink.roadPartNumber))
+    val nextPartStart =
+      if(nextProjectLinks.nonEmpty)
+        Some(nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)))
+      else Option.empty
+    println(s"findElyChangesOnNextProjectLinks || nextProjectLinks.isEmpty ${nextProjectLinks.isEmpty} || nextPartStart.isDefined ${nextPartStart.isDefined} ||")
+    nextProjectLinks.isEmpty || (nextPartStart.isDefined && nextPartStart.get.ely == projectLink.ely)
+  }
+
+  def filterErrorsWithElyChange(continuityErrors: Seq[ValidationErrorDetails], allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    if(allProjectLinks.size > 1) {
+      continuityErrors.distinct.filterNot(ce => {
+        val affectedProjectLinks = allProjectLinks.filter(pl => ce.affectedIds.contains(pl.id))
+        val filtered = affectedProjectLinks.filter(apl => {
+          val elyOnAdjacent = findElyChangesOnAdjacentRoads(apl, allProjectLinks)
+          val elyOnNext = findElyChangesOnNextProjectLinks(apl, allProjectLinks)
+          elyOnAdjacent && elyOnNext
+        })
+        filtered.isEmpty && affectedProjectLinks.nonEmpty
+      })
+    } else continuityErrors
+
+  }
+
   def validateProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     time(logger, "Validating project") {
       actionsOrderingValidation(project, projectLinks) match {
@@ -543,7 +578,7 @@ class ProjectValidator {
     }
   }
 
-  def checkProjectElyCodes(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+  def checkProjectElyCodes(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     def recProjectGroupsEly(unprocessed: Map[(Long, Long), Seq[ProjectLink]], processed: Map[(Long, Long), Seq[ProjectLink]], acumulatedErrors: Seq[ValidationErrorDetails] = Seq.empty[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
 
@@ -634,7 +669,7 @@ class ProjectValidator {
         val problemRoads = if (projectLinksToEvaluate.nonEmpty) {
           val roadsValidation = evaluateBorderCheck(projectLinksToEvaluate.head, projectLinksToEvaluate.last, secondCheck = false)
           val possibleErrorRoads = roadsValidation.filterNot(_.isEmpty).getOrElse(Seq()).filterNot(er => {
-            val found = projectLinks.filter(pl => pl.roadNumber == er.roadNumber && pl.roadPartNumber > er.roadPartNumber)
+            val found = allProjectLinks.filter(pl => pl.roadNumber == er.roadNumber && pl.roadPartNumber > er.roadPartNumber)
             found.nonEmpty && found.head.ely != er.ely
           })
           possibleErrorRoads
@@ -642,7 +677,9 @@ class ProjectValidator {
           Seq.empty[BaseRoadAddress]
         }
         val uniqueProblemRoads = problemRoads.groupBy(_.id).map(_._2.head).toSeq
-        error(ValidationErrorList.RoadNotEndingInElyBorder)(uniqueProblemRoads)
+        val currError = error(ValidationErrorList.RoadNotEndingInElyBorder)(uniqueProblemRoads)
+        val seqErrors = if(currError.isDefined) Seq(currError.get) else Seq.empty[ValidationErrorDetails]
+        filterErrorsWithElyChange(seqErrors, allProjectLinks)
       }).toSeq
     }
 
@@ -763,13 +800,13 @@ class ProjectValidator {
         val (wrongProjectLinks, validationError) = condition match {
           case Left(originalElys) => {
             if (originalElys.nonEmpty)
-              (projectLinks.filterNot(_.ely == originalElys.head), ValidationErrorList.MultipleElyInPart)
+              (allProjectLinks.filterNot(_.ely == originalElys.head), ValidationErrorList.MultipleElyInPart)
             else {
-              (projectLinks.groupBy(_.ely).map(_._2.maxBy(_.endAddrMValue)).toSeq, ValidationErrorList.MultipleElyInPart)
+              (allProjectLinks.groupBy(_.ely).map(_._2.maxBy(_.endAddrMValue)).toSeq, ValidationErrorList.MultipleElyInPart)
             }
           }
           case Right(linkStatusSeq) => {
-            (projectLinks.filterNot(pl => linkStatusSeq.contains(pl.status)), ValidationErrorList.IncorrectLinkStatusOnElyCodeChange)
+            (allProjectLinks.filterNot(pl => linkStatusSeq.contains(pl.status)), ValidationErrorList.IncorrectLinkStatusOnElyCodeChange)
           }
         }
 
@@ -782,7 +819,7 @@ class ProjectValidator {
 
       val validationErrors = groupedProjectLinks.flatMap(group => {
         //Fetch original roadway data
-        val workableProjectLinks = projectLinks.filterNot(pl => pl.status == LinkStatus.NotHandled || pl.status == LinkStatus.Terminated)
+        val workableProjectLinks = allProjectLinks.filterNot(pl => pl.status == LinkStatus.NotHandled || pl.status == LinkStatus.Terminated)
         val roadways = roadwayDAO.fetchAllByRoadwayNumbers(group._2.map(_.roadwayNumber).toSet)
         val notLastLinkHasChangeOfEly = group._2.filter(p => p.discontinuity == Discontinuity.ChangingELYCode && p.id != group._2.maxBy(_.endAddrMValue).id)
         val originalElys = roadways.map(_.ely).distinct
@@ -817,7 +854,7 @@ class ProjectValidator {
 
     }
 
-    val workedProjectLinks = projectLinks.filterNot(_.status == LinkStatus.NotHandled)
+    val workedProjectLinks = allProjectLinks.filterNot(_.status == LinkStatus.NotHandled)
     if (workedProjectLinks.nonEmpty) {
       val grouped = workedProjectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).map(group => group._1 -> group._2.sortBy(_.endAddrMValue))
       val projectLinksDiscontinuity = workedProjectLinks.map(_.discontinuity.value).distinct.toList
@@ -851,41 +888,6 @@ class ProjectValidator {
   def checkRoadContinuityCodes(project: Project, roadProjectLinks: Seq[ProjectLink], isRampValidation: Boolean = false): Seq[ValidationErrorDetails] = {
 
     val allProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-
-    def findElyChangesOnAdjacentRoads(projectLink: ProjectLink) = {
-      val dim = 2
-      val points = GeometryUtils.geometryEndpoints(projectLink.geometry)
-      val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x+dim, y= points._2.y+dim), points._2.copy(x = points._2.x-dim, y= points._2.y-dim)), Seq.empty)
-      val nextElyCodes = roadAddresses.filterNot(ra => allProjectLinks.exists(_.roadwayNumber == ra.roadwayNumber)).map(_.elyCode).toSet
-      println(s"findElyChangesOnAdjacentRoads || nextElyCodes.isEmpty ${nextElyCodes.isEmpty} || nextElyCodes.contains(projectLink.ely) ${nextElyCodes.contains(projectLink.ely)}")
-      //ELY pode estar contido e mesmo assim haver alteração ely
-      nextElyCodes.isEmpty || nextElyCodes.contains(projectLink.ely)
-    }
-
-    def findElyChangesOnNextProjectLinks(projectLink: ProjectLink) = {
-      val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber > projectLink.roadNumber || (pl.roadNumber == projectLink.roadNumber && pl.roadPartNumber > projectLink.roadPartNumber))
-      val nextPartStart =
-        if(nextProjectLinks.nonEmpty)
-          Some(nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)))
-        else Option.empty
-      println(s"findElyChangesOnNextProjectLinks || nextProjectLinks.isEmpty ${nextProjectLinks.isEmpty} || nextPartStart.isDefined ${nextPartStart.isDefined} ||")
-      nextProjectLinks.isEmpty || (nextPartStart.isDefined && nextPartStart.get.ely == projectLink.ely)
-    }
-
-    def filterContinuityErrors(continuityErrors: Seq[ValidationErrorDetails]): Seq[ValidationErrorDetails] = {
-      if(allProjectLinks.size > 1) {
-        continuityErrors.distinct.filterNot(ce => {
-          val affectedProjectLinks = allProjectLinks.filter(pl => ce.affectedIds.contains(pl.id))
-          val filtered = affectedProjectLinks.filter(apl => {
-            val elyOnAdjacent = findElyChangesOnAdjacentRoads(apl)
-            val elyOnNext = findElyChangesOnNextProjectLinks(apl)
-            elyOnAdjacent && elyOnNext
-          })
-          filtered.isEmpty && affectedProjectLinks.nonEmpty
-        })
-      } else continuityErrors
-
-    }
 
     def isConnectingRoundabout(pls: Seq[ProjectLink]): Boolean = {
       // This code means that this road part (of a ramp) should be connected to a roundabout
@@ -1034,7 +1036,7 @@ class ProjectValidator {
           val coords: Seq[ProjectCoordinates] = g._2.flatMap(_.coordinates)
           ValidationErrorDetails(g._2.head.projectId, g._1, ids, coords, None)
       }.toSeq
-      val filteredErrors = filterContinuityErrors(groupedErrors)
+      val filteredErrors = filterErrorsWithElyChange(groupedErrors, allProjectLinks)
       filteredErrors
     }
 
@@ -1096,7 +1098,7 @@ class ProjectValidator {
           val coords: Seq[ProjectCoordinates] = g._2.flatMap(_.coordinates)
           ValidationErrorDetails(g._2.head.projectId, g._1, ids, coords, None)
       }.toSeq
-      filterContinuityErrors(groupedDiscontinuity)
+      filterErrorsWithElyChange(groupedDiscontinuity, allProjectLinks)
     }
 
     /**
@@ -1157,7 +1159,7 @@ class ProjectValidator {
     val continuityErrors: Seq[ValidationErrorDetails] = continuityValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
       (validation ++ errors).distinct
     }
-    val continuityErrorsMinusElyChange =  filterContinuityErrors(continuityErrors.distinct)
+    val continuityErrorsMinusElyChange =  filterErrorsWithElyChange(continuityErrors.distinct, allProjectLinks)
     continuityErrorsMinusElyChange
   }
 
