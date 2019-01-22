@@ -142,9 +142,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         // Grab all the endpoints of the links
         val directionLinks = if (remainLinks.exists(_.sideCode != SideCode.Unknown)) remainLinks.filter(_.sideCode != SideCode.Unknown) else remainLinks
 
-        val direction = directionLinks.map(p => p.getEndPoints()._2 - p.getEndPoints()._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+        val direction = directionLinks.map(p => p.getEndPoints._2 - p.getEndPoints._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
 
-        val points = remainLinks.map(pl => pl.getEndPoints())
+        val points = remainLinks.map(pl => pl.getEndPoints)
 
         // Approximate estimate of the mid point: averaged over count, not link length
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
