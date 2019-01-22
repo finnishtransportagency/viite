@@ -273,7 +273,7 @@ object ProjectDeltaCalculator {
         transfers.map(_._2).filter(pl => pl.roadwayNumber == ra.roadwayNumber && pl.roadType == ra.roadType && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
   }
 
-  def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): Map[RoadwaySection, RoadwaySection] = {
+  def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): (Map[RoadwaySection, RoadwaySection], Option[String]) = {
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._1.roadwayNumber, x._2.roadNumber, x._2.roadPartNumber, x._2.track, x._2.roadwayNumber))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue), oppositeSections))
       .mapValues(v => {
@@ -283,7 +283,6 @@ object ProjectDeltaCalculator {
 
     //adjusted the end of sources
     val sections = sectioned.flatMap { case (key, (src, target)) =>
-//      val matches = matchingTracks2(sectioned, key, src, target, transfers, oppositeSections)
       val matches = matchingTracks(sectioned, key, oppositeSections)
       //exclusive 'or' operation, so we don't want to find a matching track when we want to reduce 2 tracks to track 0
       if (matches.nonEmpty && !(key._3 == Track.Combined ^ key._7 == Track.Combined))
@@ -296,27 +295,38 @@ object ProjectDeltaCalculator {
     val adjustedEndSourceSections = sections.map { case (src, target) =>
       val possibleExistingSameEndAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._2.endMAddr == target.endMAddr
       && s._1.track != src.track)
-      if(possibleExistingSameEndAddrMValue.nonEmpty)
-        (src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target)
-      else
-        (src, target)
+      if(possibleExistingSameEndAddrMValue.nonEmpty){
+        val errorMessage = if(Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > 50)
+          Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
+        else
+        None
+      ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), errorMessage)
+      } else {
+        ((src, target), None)
+      }
     }
 
     //adjusted the start of sources
-    val adjustedStartSourceSections = adjustedEndSourceSections.map { case (src, target) =>
+    val adjustedStartSourceSections = adjustedEndSourceSections.map { case ((src, target), errorM) =>
     val possibleExistingSameStartAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._1.roadwayNumber == src.roadwayNumber && s._2.roadwayNumber == target.roadwayNumber && s._1.endMAddr == src.startMAddr)
       if(possibleExistingSameStartAddrMValue.nonEmpty){
         val oppositePairingTrack = sections.find(s => s._1.roadNumber == possibleExistingSameStartAddrMValue.get._1.roadNumber && s._1.roadPartNumberStart == possibleExistingSameStartAddrMValue.get._1.roadPartNumberStart && s._2.endMAddr == possibleExistingSameStartAddrMValue.get._2.endMAddr
          && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
-        if(oppositePairingTrack.nonEmpty)
-          (src.copy(startMAddr = adjustAddressValues(possibleExistingSameStartAddrMValue.head._1.endMAddr + oppositePairingTrack.head._1.endMAddr, possibleExistingSameStartAddrMValue.head._1.endMAddr, src.track)), target)
-        else
-          (src, target)
+        if(oppositePairingTrack.nonEmpty) {
+          val errorMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > 50)
+            Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
+          else
+            None
+          ((src.copy(startMAddr = adjustAddressValues(possibleExistingSameStartAddrMValue.head._1.endMAddr + oppositePairingTrack.head._1.endMAddr, possibleExistingSameStartAddrMValue.head._1.endMAddr, src.track)), target), errorMessage)
+        } else {
+          ((src, target), None)
+        }
       } else {
-        (src, target)
+        ((src, target), None)
       }
     }
-    adjustedStartSourceSections
+    val error = adjustedEndSourceSections.values.flatten.toSeq ++ adjustedStartSourceSections.values.flatten.toSeq
+    (adjustedStartSourceSections.keys.toMap, if (error.nonEmpty) Option(error.head) else None)
   }
 }
 
