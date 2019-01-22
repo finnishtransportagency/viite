@@ -248,24 +248,8 @@ object ProjectDeltaCalculator {
     result
   }
 
-  def pair(roadAddress: Seq[RoadAddress], projectLink: Map[Long, Seq[ProjectLink]]): Seq[(RoadAddress, ProjectLink)] = {
-    roadAddress.foldLeft(List.empty[(RoadAddress, ProjectLink)]) { case (p, a) =>
-      val options = projectLink.getOrElse(a.id, Seq())
-      options.size match {
-        case 1 =>
-          p :+ (a, options.head)
-        case 0 =>
-          logger.error(s"Unmatched road address ${a.id}: ${a.roadNumber}/${a.roadPartNumber}/${a.track.value}/${a.startAddrMValue}-${a.endAddrMValue}")
-          p
-        case _ =>
-          logger.info(s"${options.size} matches for road address ${a.id}: ${a.roadNumber}/${a.roadPartNumber}/${a.track.value}/${a.startAddrMValue}-${a.endAddrMValue}")
-          p
-      }
-    }
-  }
-
   private def matchingTracks(map: Map[(Long, Long, Track, Long, Long, Long, Track, Long), (Seq[RoadwaySection], Seq[RoadwaySection])],
-                             key: (Long, Long, Track, Long, Long, Long, Track, Long)): Option[(Seq[RoadwaySection], Seq[RoadwaySection])] = {
+                             key: (Long, Long, Track, Long, Long, Long, Track, Long), oppositeSections: Seq[RoadwaySection] = Seq()): Option[(Seq[RoadwaySection], Seq[RoadwaySection])] = {
     map.get((key._1, key._2, Track.switch(key._3), key._4, key._5, key._6, Track.switch(key._7), key._8))
   }
 
@@ -282,28 +266,57 @@ object ProjectDeltaCalculator {
     }
   }
 
-  def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): Map[RoadwaySection, RoadwaySection] = {
-    def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadwaySection] = {
-      o.map(ra =>
-        RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber,
-          transfers.map(_._2).filter(pl => pl.roadwayNumber == ra.roadwayNumber && pl.roadType == ra.roadType && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
-    }
+  def toRoadAddressSection(transfers: Seq[(RoadAddress, ProjectLink)], o: Seq[BaseRoadAddress]): Seq[RoadwaySection] = {
+    o.map(ra =>
+      RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber,
+        transfers.map(_._2).filter(pl => pl.roadwayNumber == ra.roadwayNumber && pl.roadType == ra.roadType && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
+  }
 
+  def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): Map[RoadwaySection, RoadwaySection] = {
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._1.roadwayNumber, x._2.roadNumber, x._2.roadPartNumber, x._2.track, x._2.roadwayNumber))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue), oppositeSections))
       .mapValues(v => {
         val (from, to) = v.unzip
-        toRoadAddressSection(from) -> toRoadAddressSection(to)
+        toRoadAddressSection(transfers, from) -> toRoadAddressSection(transfers, to)
       })
-    sectioned.flatMap { case (key, (src, target)) =>
-      val matches = matchingTracks(sectioned, key)
+
+    //adjusted the end of sources
+    val sections = sectioned.flatMap { case (key, (src, target)) =>
+//      val matches = matchingTracks2(sectioned, key, src, target, transfers, oppositeSections)
+      val matches = matchingTracks(sectioned, key, oppositeSections)
       //exclusive 'or' operation, so we don't want to find a matching track when we want to reduce 2 tracks to track 0
       if (matches.nonEmpty && !(key._3 == Track.Combined ^ key._7 == Track.Combined))
         adjustTrack((src, matches.get._1)).zip(adjustTrack((target, matches.get._2)))
       else
         src.zip(target)
     }
+
+    //adjusted the end of sources
+    val adjustedEndSourceSections = sections.map { case (src, target) =>
+      val possibleExistingSameEndAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._2.endMAddr == target.endMAddr
+      && s._1.track != src.track)
+      if(possibleExistingSameEndAddrMValue.nonEmpty)
+        (src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target)
+      else
+        (src, target)
+    }
+
+    //adjusted the start of sources
+    val adjustedStartSourceSections = adjustedEndSourceSections.map { case (src, target) =>
+    val possibleExistingSameStartAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._1.roadwayNumber == src.roadwayNumber && s._2.roadwayNumber == target.roadwayNumber && s._1.endMAddr == src.startMAddr)
+      if(possibleExistingSameStartAddrMValue.nonEmpty){
+        val oppositePairingTrack = sections.find(s => s._1.roadNumber == possibleExistingSameStartAddrMValue.get._1.roadNumber && s._1.roadPartNumberStart == possibleExistingSameStartAddrMValue.get._1.roadPartNumberStart && s._2.endMAddr == possibleExistingSameStartAddrMValue.get._2.endMAddr
+         && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
+        if(oppositePairingTrack.nonEmpty)
+          (src.copy(startMAddr = adjustAddressValues(possibleExistingSameStartAddrMValue.head._1.endMAddr + oppositePairingTrack.head._1.endMAddr, possibleExistingSameStartAddrMValue.head._1.endMAddr, src.track)), target)
+        else
+          (src, target)
+      } else {
+        (src, target)
+      }
+    }
+    adjustedStartSourceSections
   }
 }
 
