@@ -397,8 +397,8 @@ class RoadwayChangesDAO {
             roadWayChangesLinkPS.close()
             val endTime = System.currentTimeMillis()
             logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
-            val error = (unchanged._2 ++ transferred._2 ++ numbering._2).toSeq
-            (true, if (error.nonEmpty) Option(error.head) else None)
+            val warning = (unchanged._2 ++ transferred._2 ++ numbering._2).toSeq
+            (true, if (warning.nonEmpty) Option(warning.head) else None)
           case _ => (false, None)
         }
       case _ => (false, None)
