@@ -77,10 +77,24 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     time(logger, "GET request for /road_address") {
       contentType = formats("json")
       params.get("municipality").map { municipality =>
-        val municipalityCode = municipality.toInt
-        val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode)
-          .filter(ral => ral.roadNumber > 0)
-        roadAddressLinksToApi(knownAddressLinks)
+        try {
+          val municipalityCode = municipality.toInt
+          try {
+            val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode)
+              .filter(ral => ral.roadNumber > 0)
+            roadAddressLinksToApi(knownAddressLinks)
+          } catch {
+            case e: Exception =>
+              val message = s"Failed to get road addresses for municipality $municipalityCode"
+              logger.error(message, e)
+              BadRequest(message)
+          }
+        } catch {
+          case _: Exception =>
+            val message = s"Invalid municipality code: $municipality"
+            logger.error(message)
+            BadRequest(message)
+        }
       } getOrElse {
         BadRequest("Missing mandatory 'municipality' parameter")
       }

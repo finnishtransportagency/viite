@@ -1444,7 +1444,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
               }
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
-              projectLinkDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity, ely = ely.getOrElse(toUpdateLinks.head.ely))
+              projectLinkDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity, toUpdateLinks.head.track, ely = ely.getOrElse(toUpdateLinks.head.ely))
               roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
@@ -1634,14 +1634,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             //rollback
             logger.info(s"Sending to TR failed: ${trProjectStateMessage.reason}")
-            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else trMessageRefusal
+            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else trConnectionError
             PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
         }
       } catch {
         //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
         case ioe@(_: IOException | _: ClientProtocolException) =>
           projectDAO.updateProjectStatus(projectId, SendingToTR)
-          PublishResult(validationSuccess = false, sendSuccess = false, Some(trUnreachableMessage))
+          PublishResult(validationSuccess = false, sendSuccess = false, Some(trConnectionError))
         case NonFatal(_) =>
           projectDAO.updateProjectStatus(projectId, ErrorInViite)
           PublishResult(validationSuccess = false, sendSuccess = false, Some(genericViiteErrorMessage))
@@ -2033,10 +2033,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
       }
       else None
-    })
+    }).groupBy(_.roadNumber)
 
-    RoadNameDAO.create(roadNames)
-    if (roadNames.nonEmpty) {
+    if (roadNames.nonEmpty && roadNames.values.nonEmpty) {
+      roadNames.values.foreach(rn => {
+        RoadNameDAO.create(Seq(rn.head))
+      })
       logger.info(s"Found ${roadNames.size} names in project that differ from road address name")
     }
   }

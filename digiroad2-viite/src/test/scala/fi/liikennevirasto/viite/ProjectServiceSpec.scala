@@ -2192,10 +2192,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test handleNewRoadNames - Test if a new RoadName is created from a project link") {
+  test("Test handleNewRoadNames - Test if a new RoadName is created from a project link and without duplicates") {
     runWithRollback {
 
-      val testRoadNumber = 9999
+      val testRoadNumber1 = 9999
+      val testRoadNumber2 = 9998
       val testName = "TEST ROAD NAME"
 
       val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -2205,18 +2206,30 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.New,
-          source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 1),
 
-        RoadwayChangeInfo(AddressChangeType.Unchanged,
-          source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(5), reversed = false, 2),
 
-        RoadwayChangeInfo(AddressChangeType.Unchanged,
-          source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(5), reversed = false, 3)
       )
 
@@ -2225,22 +2238,32 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, projectStartTime, Some(0)),
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(1), projectStartTime, Some(0)),
-        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), projectStartTime, Some(0))
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), projectStartTime, Some(0)),
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(3), projectStartTime, Some(0)),
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(4), projectStartTime, Some(0)),
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(5), projectStartTime, Some(0))
       )
 
-      ProjectLinkNameDAO.create(project.id, testRoadNumber, testName)
+      ProjectLinkNameDAO.create(project.id, testRoadNumber1, testName)
+      ProjectLinkNameDAO.create(project.id, testRoadNumber2, testName)
 
       // Method to be tested
       projectService.handleNewRoadNames(changes, project)
 
       // Test if project link is removed from DB
-      ProjectLinkNameDAO.get(project.id, testRoadNumber) should be (None)
+      ProjectLinkNameDAO.get(project.id, testRoadNumber1) should be (None)
 
       // Test if the new roadnames have the test road name & number
-      val roadnames = RoadNameDAO.getAllByRoadNumber(testRoadNumber)
-      roadnames.foreach(rn => {
+      val roadnames1 = RoadNameDAO.getAllByRoadNumber(testRoadNumber1)
+      roadnames1.foreach(rn => {
         rn.roadName should be (testName)
-        rn.roadNumber should be (testRoadNumber)
+        rn.roadNumber should be (testRoadNumber1)
+      })
+
+      val roadnames2 = RoadNameDAO.getAllByRoadNumber(testRoadNumber2)
+      roadnames2.foreach(rn => {
+        rn.roadName should be (testName)
+        rn.roadNumber should be (testRoadNumber2)
       })
     }
   }
