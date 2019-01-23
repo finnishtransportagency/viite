@@ -295,11 +295,11 @@ object ProjectDeltaCalculator {
     val adjustedEndSourceSections = sections.map { case (src, target) =>
       val possibleExistingSameEndAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._2.endMAddr == target.endMAddr
       && s._1.track != src.track)
-      if(possibleExistingSameEndAddrMValue.nonEmpty){
-        val warningMessage = if(Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > 50)
+      if (possibleExistingSameEndAddrMValue.nonEmpty) {
+        val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > 50)
           Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
         else
-        None
+          None
       ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), warningMessage)
       } else {
         ((src, target), None)
@@ -309,10 +309,10 @@ object ProjectDeltaCalculator {
     //adjusted the start of sources
     val adjustedStartSourceSections = adjustedEndSourceSections.map { case ((src, target), errorM) =>
     val possibleExistingSameStartAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._1.roadwayNumber == src.roadwayNumber && s._2.roadwayNumber == target.roadwayNumber && s._1.endMAddr == src.startMAddr)
-      if(possibleExistingSameStartAddrMValue.nonEmpty){
+      if (possibleExistingSameStartAddrMValue.nonEmpty) {
         val oppositePairingTrack = sections.find(s => s._1.roadNumber == possibleExistingSameStartAddrMValue.get._1.roadNumber && s._1.roadPartNumberStart == possibleExistingSameStartAddrMValue.get._1.roadPartNumberStart && s._2.endMAddr == possibleExistingSameStartAddrMValue.get._2.endMAddr
          && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
-        if(oppositePairingTrack.nonEmpty) {
+        if (oppositePairingTrack.nonEmpty) {
           val warningMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > 50)
             Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
           else
