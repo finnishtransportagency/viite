@@ -261,7 +261,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val projectLinkId2 = projectId + 2
       val newRoadNumber = 99999L
       val newPartNumber = 1L
-      val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None, None)
+      val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinkRightSide = dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0, track = Track.RightSide)
@@ -270,7 +270,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val links = projectLinkDAO.fetchProjectLinks(projectId)
       links.size should be (2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newPartNumber, "test")
-      projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", Discontinuity.MinorDiscontinuity.value, Track.LeftSide)
+      projectLinkDAO.updateProjectLinkNumbering(projectId, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", Discontinuity.MinorDiscontinuity.value, Track.LeftSide, 0)
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be (2)
       linksAfterUpdate.groupBy(p => (p.roadNumber, p.roadPartNumber)).keys.head should be ((newRoadNumber, newPartNumber))
@@ -283,8 +283,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
-      val newRoadNumber = 1
-      val newRoadPartNumber = 5
       projectLinkDAO.updateProjectLinksStatus(Set(header.id), LinkStatus.Terminated, "test")
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
