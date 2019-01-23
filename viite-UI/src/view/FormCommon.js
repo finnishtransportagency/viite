@@ -149,6 +149,7 @@
     };
 
     var directionChangedInfo = function (selected, isPartialReversed) {
+      if (selected[0].status === LinkValues.LinkStatus.New.value) return '';
       if (isPartialReversed) {
         return '<label class="split-form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {

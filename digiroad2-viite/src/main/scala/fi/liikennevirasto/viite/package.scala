@@ -121,9 +121,7 @@ package object viite {
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
   val failedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui"
-  val trMessageRefusal = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
-    s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon. "
-  val trUnreachableMessage = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
+  val trConnectionError = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
     s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon. "
   val genericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
   val projectNotWritable = s"Projekti ei ole enää muokattavissa"

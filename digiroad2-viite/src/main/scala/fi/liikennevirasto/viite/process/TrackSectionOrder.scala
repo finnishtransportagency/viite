@@ -19,18 +19,19 @@ object TrackSectionOrder {
     * @param projectLinks The project link sequence
     * @return Return a map with end point and the related project link
     */
-  def findChainEndpoints(projectLinks: Seq[ProjectLink]) : Map[Point, ProjectLink] = {
+  def findChainEndpoints(projectLinks: Seq[ProjectLink]): Map[Point, ProjectLink] = {
     case class ProjectLinkNonConnectedDistance(projectLink: ProjectLink, point: Point, distance: Double)
     case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
-    def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]) : ProjectLinkChain = {
-      def mapDistances(p: Point)(pl: ProjectLink) : ProjectLinkNonConnectedDistance = {
-        val (sP, eP) = GeometryUtils.geometryEndpoints(pl.geometry)
+    def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]): ProjectLinkChain = {
+      def mapDistances(p: Point)(pl: ProjectLink): ProjectLinkNonConnectedDistance = {
+        val (sP, eP) = pl.getEndPoints
         val (sD, eD) = (sP.distance2DTo(p), eP.distance2DTo(p))
-        if(sD < eD) ProjectLinkNonConnectedDistance(pl, eP, sD) else ProjectLinkNonConnectedDistance(pl, sP, eD)
+        if (sD < eD) ProjectLinkNonConnectedDistance(pl, eP, sD) else ProjectLinkNonConnectedDistance(pl, sP, eD)
       }
+
       val startPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.startPoint)).minBy(_.distance)
       val endPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.endPoint)).minBy(_.distance)
-      val (resultProjectLinkChain, newUnprocessed) = if(startPointMinDistance.distance > endPointMinDistance.distance)
+      val (resultProjectLinkChain, newUnprocessed) = if (startPointMinDistance.distance > endPointMinDistance.distance || endPointMinDistance.projectLink.startAddrMValue == projectLinkChain.sortedProjectLinks.last.endAddrMValue)
         (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = endPointMinDistance.point), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
       else
         (projectLinkChain.copy(sortedProjectLinks = startPointMinDistance.projectLink +: projectLinkChain.sortedProjectLinks, startPoint = startPointMinDistance.point), unprocessed.filterNot(pl => pl.id == startPointMinDistance.projectLink.id))
@@ -39,13 +40,22 @@ object TrackSectionOrder {
         case _ => recursiveFindNearestProjectLinks(resultProjectLinkChain, newUnprocessed)
       }
     }
+
     projectLinks.size match {
       case 0 => Map()
       case 1 =>
-        val (startPoint, endPoint) = GeometryUtils.geometryEndpoints(projectLinks.head.geometry)
+        val (startPoint, endPoint) = projectLinks.head.getEndPoints
         Map(startPoint -> projectLinks.head, endPoint -> projectLinks.head)
       case _ =>
-        val projectLinkChain = recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(projectLinks.head), projectLinks.head.geometry.head, projectLinks.head.geometry.last), projectLinks.tail)
+        val (projectLinksWithValues, newLinks) = projectLinks.partition(_.endAddrMValue != 0)
+        val projectLinkChain =
+          if (projectLinksWithValues.nonEmpty) {
+            val (startPoint, endPoint) = projectLinksWithValues.head.getEndPoints
+            recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(projectLinksWithValues.head), startPoint, endPoint), projectLinksWithValues.tail ++ newLinks)
+          } else {
+            val (startPoint, endPoint) = newLinks.head.getEndPoints
+            recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(newLinks.head), startPoint, endPoint), newLinks.tail)
+          }
         Map(projectLinkChain.startPoint -> projectLinkChain.sortedProjectLinks.head, projectLinkChain.endPoint -> projectLinkChain.sortedProjectLinks.last)
     }
   }
@@ -71,7 +81,7 @@ object TrackSectionOrder {
     //Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
     //Then groups it by points and reduces the mapped values to the distinct BaseRoadAddresses
     val pointMap = seq.flatMap(l => {
-      val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
+      val (p1, p2) = l.getEndPoints
       Seq(p1 -> l, p2 -> l)
     }).groupBy(_._1).mapValues(_.map(_._2).toSeq.distinct)
     pointMap.keys.map { p =>
@@ -151,7 +161,7 @@ object TrackSectionOrder {
       else {
         val hit = unprocessed.find(pl => GeometryUtils.areAdjacent(pl.geometry, currentPoint, MaxDistanceForConnectedLinks))
           .getOrElse(throw new InvalidGeometryException("Roundabout was not connected"))
-        val nextPoint = getOppositeEnd(hit.geometry, currentPoint)
+        val nextPoint = getOppositeEnd(hit, currentPoint)
         val sideCode = if (hit.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         val prevAddrM = ready.last.endAddrMValue
         val endAddrM = hit.status match {
@@ -199,8 +209,8 @@ object TrackSectionOrder {
     }
   }
 
-  private def getOppositeEnd(geometry: Seq[Point], point: Point): Point = {
-    val (st, en) = GeometryUtils.geometryEndpoints(geometry)
+  private def getOppositeEnd(link: BaseRoadAddress, point: Point): Point = {
+    val (st, en) = link.getEndPoints
     if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
   }
 
@@ -243,55 +253,55 @@ object TrackSectionOrder {
       }
     }
 
-    def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
+    def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink], oppositeTrack: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty)
         ready
       else {
         val connected = unprocessed.filter(pl => GeometryUtils.minimumDistance(currentPoint,
-          GeometryUtils.geometryEndpoints(pl.geometry)) < MaxDistanceForConnectedLinks)
+          pl.getEndPoints) < MaxDistanceForConnectedLinks)
 
         val (nextPoint, nextLink): (Point, ProjectLink) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
             val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
-            (getOppositeEnd(link.geometry, closestPoint), link)
+            (getOppositeEnd(link, closestPoint), link)
           case 1 =>
-            (getOppositeEnd(connected.head.geometry, currentPoint), connected.head)
+            (getOppositeEnd(connected.head, currentPoint), connected.head)
           case 2 =>
             val nextLinkSameTrack = pickSameTrack(ready.lastOption, connected)
             if (nextLinkSameTrack.nonEmpty) {
-              (getOppositeEnd(nextLinkSameTrack.get.geometry, currentPoint), nextLinkSameTrack.get)
+              (getOppositeEnd(nextLinkSameTrack.get, currentPoint), nextLinkSameTrack.get)
             } else {
               if (findOnceConnectedLinks(unprocessed).exists(b =>
                 (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)) {
                 val (nPoint, link) = findOnceConnectedLinks(unprocessed).filter(b =>
                   (currentPoint - b._1).length() <= fi.liikennevirasto.viite.MaxJumpForSection)
                   .minBy(b => (currentPoint - b._1).length())
-                (getOppositeEnd(link.geometry, nPoint), link)
+                (getOppositeEnd(link, nPoint), link)
               } else {
-                val l = pickRightMost(ready.last, connected)
-                (getOppositeEnd(l.geometry, currentPoint), l)
+                val l = if(ready.isEmpty) connected.head else pickRightMost(ready.last, connected)
+                (getOppositeEnd(l, currentPoint), l)
               }
             }
           case _ =>
             val l = pickForwardMost(ready.last, connected)
-            (getOppositeEnd(l.geometry, currentPoint), l)
+            (getOppositeEnd(l, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed) match {
+        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && (unprocessed ++ ready).size == 1) match {
           case (false, false) | (true, true) =>
             SideCode.AgainstDigitizing
           case (false, true) | (true, false) =>
             SideCode.TowardsDigitizing
         }
-        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
+        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
       }
     }
 
     val track01 = list.filter(_.track != Track.LeftSide)
     val track02 = list.filter(_.track != Track.RightSide)
 
-    (recursiveFindAndExtend(startingPoints._1, Seq(), track01), recursiveFindAndExtend(startingPoints._2, Seq(), track02))
+    (recursiveFindAndExtend(startingPoints._1, Seq(), track01, track02), recursiveFindAndExtend(startingPoints._2, Seq(), track02, track01))
   }
 
   def createCombinedSections(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {
