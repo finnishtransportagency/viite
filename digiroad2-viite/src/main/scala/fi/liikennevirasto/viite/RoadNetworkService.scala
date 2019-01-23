@@ -5,7 +5,7 @@ import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.Combined
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
@@ -39,46 +39,80 @@ class RoadNetworkService {
       sectionLeft ++ sectionRight
     }
 
-    def checkTwoTrackLinearLocations(allLocations: Seq[LinearLocation]): Seq[RoadNetworkError] = {
+    def checkTwoTrackLinearLocations(allLocations: Seq[LinearLocation], roadways: Seq[Roadway]): Seq[RoadNetworkError] = {
       val errors: Seq[RoadNetworkError] =
-      if (allLocations.isEmpty)
-        Seq.empty[RoadNetworkError]
-      else {
-        val sortedLocations = allLocations.sortBy(s => (s.roadwayNumber, s.orderNumber))
-        val (first, last) = (sortedLocations.head, sortedLocations.last)
-        val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
-          edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
-        )
-        edgeCalibrationPointsError.map { loc =>
-          RoadNetworkError(0, loc.roadwayNumber, loc.id, AddressError.Inconsistent2TrackCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+        if (allLocations.isEmpty)
+          Seq.empty[RoadNetworkError]
+        else {
+          val firstOpt = Some(allLocations.filter(loc => loc.orderNumber == 1 && loc.calibrationPoints._1.nonEmpty).minBy(_.calibrationPoints._1))
+          val lastOpt = Some(allLocations.maxBy(_.calibrationPoints._2))
+
+          if(firstOpt.isEmpty && lastOpt.isEmpty) {
+            allLocations.map( loc =>
+              RoadNetworkError(0, loc.roadwayNumber, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            )
+          }else{
+            val first = firstOpt.get
+            val last = lastOpt.get
+            val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
+              edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
+            )
+
+            edgeCalibrationPointsError.map { loc =>
+              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.Inconsistent2TrackCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            }
+          }
+
         }
-      }
       errors
     }
 
-    def checkCombinedLinearLocations(allLocations: Seq[LinearLocation]): Seq[RoadNetworkError] = {
+    def checkCombinedLinearLocations(combinedLocations: Seq[LinearLocation], combinedRoadways: Seq[Roadway], twoTrackLinearLocations: Seq[LinearLocation]): Seq[RoadNetworkError] = {
       val errors: Seq[RoadNetworkError] =
-        if (allLocations.isEmpty) {
+        if (combinedLocations.isEmpty) {
           Seq.empty[RoadNetworkError]
-        } else if (allLocations.size == 1) {
-          val locationsError: Seq[LinearLocation] = allLocations.filter(loc =>
-            allLocations.head.calibrationPoints._1.isEmpty || allLocations.head.calibrationPoints._2.isEmpty
+        } else if (combinedLocations.size == 1) {
+          val locationsError: Seq[LinearLocation] = combinedLocations.filter(loc =>
+            combinedLocations.head.calibrationPoints._1.isEmpty || combinedLocations.head.calibrationPoints._2.isEmpty
           )
           locationsError.map { loc =>
             RoadNetworkError(0, loc.roadwayNumber, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
           }
         } else {
-          val sortedLocations = allLocations.sortBy(s => (s.roadwayNumber, s.orderNumber))
-          val (first, last) = (sortedLocations.head, sortedLocations.last)
-          val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
-            edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
-          )
-          val middleCalibrationPointsError: Seq[LinearLocation] = sortedLocations.filter(loc =>
-            !sortedLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.id != loc.id) && loc.id != last.id
-          )
+          val sortedLocations = combinedLocations.sortBy(s => (s.roadwayNumber, s.orderNumber))
+          val firstOpt = Some(sortedLocations.filter(loc => loc.orderNumber == 1 && loc.calibrationPoints._1.nonEmpty).minBy(_.calibrationPoints._1))
+          val lastOpt = Some(sortedLocations.maxBy(_.calibrationPoints._2))
 
-          (middleCalibrationPointsError ++ edgeCalibrationPointsError).map { loc =>
-            RoadNetworkError(0, loc.roadwayNumber, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+          if(firstOpt.isEmpty && lastOpt.isEmpty) {
+            sortedLocations.map( loc =>
+              RoadNetworkError(0, loc.roadwayNumber, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            )
+          }else {
+            val first = firstOpt.get
+            val last = lastOpt.get
+            val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
+              edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
+            )
+
+            val middleCalibrationPointsError: Seq[LinearLocation] = {
+              val middleCalPoints = sortedLocations.filter(loc =>
+                !sortedLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.id != loc.id) && loc.id != last.id
+              )
+
+              if (middleCalPoints.nonEmpty) {
+                if(twoTrackLinearLocations.exists(ll => middleCalPoints.exists(a => a.calibrationPoints._1 == ll.calibrationPoints._2 || a.calibrationPoints._2 == ll.calibrationPoints._1))) {
+                  Seq()
+                }else {
+                  middleCalPoints
+                }
+              }else {
+                middleCalPoints
+              }
+            }
+
+            (middleCalibrationPointsError ++ edgeCalibrationPointsError).map { loc =>
+              RoadNetworkError(0, combinedRoadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            }
           }
         }
       errors
@@ -161,7 +195,7 @@ class RoadNetworkService {
       withDynTransaction {
         try {
           val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
-          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet)
+//          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet)
           val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
 
           val errors = roadways.flatMap { group =>
@@ -172,15 +206,19 @@ class RoadNetworkService {
             logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
 
             val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
+            val (leftRoadways, rightRoadways) = twoTrackRoadways.partition(_.track == LeftSide)
 
             //            val mappedCombined = combinedRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
             //            val mappedTwoTrack = twoTrackRoadways.map(r => r.id -> linearLocationsInChunk.get(r.roadwayNumber)).toMap
 
-            val twoTrackErrors = checkTwoTrackLinearLocations(linearLocationDAO.fetchByRoadways(twoTrackRoadways.map(_.roadwayNumber).toSet))
-            val combinedErrors = checkCombinedLinearLocations(linearLocationDAO.fetchByRoadways(combinedRoadways.map(_.roadwayNumber).toSet))
-            val linearLocationErrors = twoTrackErrors ++ combinedErrors
+            val leftTrackLinearLocations = linearLocationDAO.fetchByRoadways(leftRoadways.map(_.roadwayNumber).toSet)
+            val rightTrackLinearLocations = linearLocationDAO.fetchByRoadways(rightRoadways.map(_.roadwayNumber).toSet)
+            val leftTrackErrors = checkTwoTrackLinearLocations(leftTrackLinearLocations, leftRoadways)
+            val rightTrackErrors = checkTwoTrackLinearLocations(rightTrackLinearLocations, rightRoadways)
+            val combinedErrors = checkCombinedLinearLocations(linearLocationDAO.fetchByRoadways(combinedRoadways.map(_.roadwayNumber).toSet), combinedRoadways, rightTrackLinearLocations ++ leftTrackLinearLocations)
+            val linearLocationErrors = leftTrackErrors ++ rightTrackErrors ++ combinedErrors
 
-            logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${twoTrackErrors.size}) , (combined: ${combinedErrors.size})")
+            logger.info(s" Found ${linearLocationErrors.size} linear locations errors for RoadNumber ${section._1} and Part ${section._2} (twoTrack: ${leftTrackErrors.size + rightTrackErrors.size}) , (combined: ${combinedErrors.size})")
 
             roadwaysErrors ++ linearLocationErrors
           }
