@@ -213,7 +213,8 @@ class RoadwayChangesDAO {
           else if(nextChangeRow.reversed) combineReversed(result, nextChangeRow)
           else combine(result, nextChangeRow)
       }
-    }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode))
+    }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode,
+      r.sourceRoadNumber, r.sourceStartRoadPartNumber, r.sourceStartAddressM, r.sourceTrackCode))
   }
 
   private def mapper(resultList: List[ChangeRow]): List[ProjectRoadwayChange] = {
