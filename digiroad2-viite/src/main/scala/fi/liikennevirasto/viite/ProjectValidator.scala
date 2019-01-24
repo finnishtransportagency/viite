@@ -380,8 +380,8 @@ class ProjectValidator {
   def checkForInvalidUnchangedLinks(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
       val (unchanged, others) = g._2.partition(_.status == UnChanged)
-      //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry to the UnChanged link starting point
-      unchanged.filter(u => others.exists(o => o.connected(u)))
+      //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
+      unchanged.filter(u => others.exists(o => o.connected(u) && u.startAddrMValue >= o.startAddrMValue))
     }.toSeq
 
     invalidUnchangedLinks.map { projectLink =>
