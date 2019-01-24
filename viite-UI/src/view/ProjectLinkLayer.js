@@ -296,7 +296,8 @@
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
         selectionData.trackCode === currentlySelectedSample.trackCode &&
-        selectionData.roadType === currentlySelectedSample.roadType;
+        selectionData.roadTypeId === currentlySelectedSample.roadTypeId &&
+        selectionData.elyCode === currentlySelectedSample.elyCode;
     };
 
     var highlightFeatures = function () {
