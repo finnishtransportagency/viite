@@ -113,23 +113,21 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val endPointsWithValues = leftPoints.filter(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
 
       (rightStartPoint,
-        if (endPointsWithValues.size == 1){
-          val (linksWithValues, linksWithoutValues)= leftLinks.partition(_.endAddrMValue != 0)
+        if (endPointsWithValues.size == 1) {
+          val (linksWithValues, linksWithoutValues) = leftLinks.partition(_.endAddrMValue != 0)
           val otherEndPoint = leftPoints.filterNot(_._2.id == endPointsWithValues.head._2.id)
           val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
-          if(endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.size == 1 &&
+          if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.size == 1 &&
             onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
               || GeometryUtils.areAdjacent(connected._2.getEndPoints._1, endPointsWithValues.head._2.getEndPoints._1)))
             otherEndPoint.head._1
           else
             endPointsWithValues.head._1
-        }
-        else{
-        if(leftLinks.forall(_.endAddrMValue == 0) && rightLinks.nonEmpty && rightLinks.exists(_.endAddrMValue != 0)){
-          val rightStartPoint = TrackSectionOrder.findChainEndpoints(rightLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0 )
-          leftPoints.minBy(p => p._2.geometry.head.distance2DTo(rightStartPoint.get._1))._1
-        }
-        else leftPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
+        } else {
+          if (leftLinks.forall(_.endAddrMValue == 0) && rightLinks.nonEmpty && rightLinks.exists(_.endAddrMValue != 0)) {
+            val rightStartPoint = TrackSectionOrder.findChainEndpoints(rightLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
+            leftPoints.minBy(p => p._2.geometry.head.distance2DTo(rightStartPoint.get._1))._1
+          } else leftPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
         }
       )
     }
