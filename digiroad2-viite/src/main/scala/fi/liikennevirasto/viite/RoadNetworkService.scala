@@ -189,7 +189,7 @@ class RoadNetworkService {
       withDynTransaction {
         try {
           val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
-          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).toSet)
+          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).distinct.toSet, false).groupBy(_.roadwayNumber)
           val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
 
           val errors = roadways.flatMap { group =>
@@ -202,9 +202,9 @@ class RoadNetworkService {
             val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
             val (leftRoadways, rightRoadways) = twoTrackRoadways.partition(_.track == LeftSide)
 
-            val leftTrackLinearLocations = linearLocationsInChunk.filter(l => leftRoadways.exists(r => r.roadwayNumber == l.roadwayNumber))
-            val rightTrackLinearLocations = linearLocationsInChunk.filter(l => rightRoadways.exists(r => r.roadwayNumber == l.roadwayNumber))
-            val combinedLinearLocations = linearLocationsInChunk.filter(l => combinedRoadways.exists(r => r.roadwayNumber == l.roadwayNumber))
+            val leftTrackLinearLocations = leftRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
+            val rightTrackLinearLocations = rightRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
+            val combinedLinearLocations = combinedRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
 
             val leftTrackErrors = checkTwoTrackLinearLocations(leftTrackLinearLocations, leftRoadways)
             val rightTrackErrors = checkTwoTrackLinearLocations(rightTrackLinearLocations, rightRoadways)
