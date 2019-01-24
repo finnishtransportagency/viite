@@ -273,8 +273,15 @@ object ProjectDeltaCalculator {
         transfers.map(_._2).filter(pl => pl.roadwayNumber == ra.roadwayNumber && pl.roadType == ra.roadType && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
   }
 
-  def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): (Map[RoadwaySection, RoadwaySection], Option[String]) = {
-    val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._1.roadwayNumber, x._2.roadNumber, x._2.roadPartNumber, x._2.track, x._2.roadwayNumber))
+    def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): (Map[(RoadwaySection, RoadwaySection), Option[String]], Map[RoadwaySection, RoadwaySection]) = {
+      def toRoadAddressSection(transfers: Seq[(RoadAddress, ProjectLink)], o: Seq[BaseRoadAddress]): Seq[RoadwaySection] = {
+        o.map(ra =>
+          RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+            ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber,
+            transfers.map(_._2).filter(pl => pl.roadwayNumber == ra.roadwayNumber && pl.roadType == ra.roadType && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
+      }
+
+      val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._1.roadwayNumber, x._2.roadNumber, x._2.roadPartNumber, x._2.track, x._2.roadwayNumber))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue), oppositeSections))
       .mapValues(v => {
         val (from, to) = v.unzip
@@ -306,12 +313,17 @@ object ProjectDeltaCalculator {
       }
     }
 
+    (adjustedEndSourceSections, sections)
+
+  }
+
+  def adjustStartSourceAddressValues(sectionsAfterAdjust: Map[(RoadwaySection, RoadwaySection), Option[String]], sections: Map[RoadwaySection, RoadwaySection]): (Map[RoadwaySection, RoadwaySection], Option[String]) = {
     //adjusted the start of sources
-    val adjustedStartSourceSections = adjustedEndSourceSections.map { case ((src, target), errorM) =>
-    val possibleExistingSameStartAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._1.roadwayNumber == src.roadwayNumber && s._2.roadwayNumber == target.roadwayNumber && s._1.endMAddr == src.startMAddr)
+    val adjustedStartSourceSections = sectionsAfterAdjust.map { case ((src, target), warningM) =>
+      val possibleExistingSameStartAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._1.roadwayNumber == src.roadwayNumber && s._2.roadwayNumber == target.roadwayNumber && s._1.endMAddr == src.startMAddr)
       if (possibleExistingSameStartAddrMValue.nonEmpty) {
         val oppositePairingTrack = sections.find(s => s._1.roadNumber == possibleExistingSameStartAddrMValue.get._1.roadNumber && s._1.roadPartNumberStart == possibleExistingSameStartAddrMValue.get._1.roadPartNumberStart && s._2.endMAddr == possibleExistingSameStartAddrMValue.get._2.endMAddr
-         && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
+          && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
         if (oppositePairingTrack.nonEmpty) {
           val warningMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > 50)
             Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
@@ -325,7 +337,7 @@ object ProjectDeltaCalculator {
         ((src, target), None)
       }
     }
-    val warning = adjustedEndSourceSections.values.flatten.toSeq ++ adjustedStartSourceSections.values.flatten.toSeq
+    val warning = sectionsAfterAdjust.values.flatten.toSeq ++ adjustedStartSourceSections.values.flatten.toSeq
     (adjustedStartSourceSections.keys.toMap, if (warning.nonEmpty) Option(warning.head) else None)
   }
 }
