@@ -3,11 +3,9 @@
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
-    var ValidElys = [];
-    for(var i in LinkValues.ElyCodes){
-      var type = LinkValues.ElyCodes[i];
-      ValidElys.push(type);
-    }
+    var ValidElys = _.map(LinkValues.ElyCodes, function(ely){
+      return ely;
+    });
     var selectedProjectLink = false;
     var editedNameByUser = false;
     var LinkSources = LinkValues.LinkGeomSource;
