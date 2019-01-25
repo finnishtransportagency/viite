@@ -18,6 +18,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUti
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import org.geotools.graph.util.geom.GeometryUtil
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -282,11 +283,13 @@ class DataImporter {
               val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
               val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
               val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
+              val isReductionUpdate = GeometryUtils.geometryIsReducible(newGeom) || GeometryUtils.geometryIsReducible(roadLink.geometry)
               if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
                 (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
-                  (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
-                updateGeometry(segment.id, newGeom)
+                  (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
+                isReductionUpdate) {
+                updateGeometry(segment.id, newGeom, roadLink.geometry, isReductionUpdate)
                 println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
                 changed += 1
               } else {
@@ -300,23 +303,34 @@ class DataImporter {
     println(s"Geometries changed count: $changed")
   }
 
-  def updateGeometry(linearLocationId: Long, geometry: Seq[Point]): Unit = {
-    if (geometry.nonEmpty) {
-      val first = geometry.head
-      val last = geometry.last
-      val (x1, y1, z1, x2, y2, z2) = (
-        GeometryUtils.scaleToThreeDigits(first.x),
-        GeometryUtils.scaleToThreeDigits(first.y),
-        GeometryUtils.scaleToThreeDigits(first.z),
-        GeometryUtils.scaleToThreeDigits(last.x),
-        GeometryUtils.scaleToThreeDigits(last.y),
-        GeometryUtils.scaleToThreeDigits(last.z)
-      )
-      val length = GeometryUtils.geometryLength(geometry)
-      sqlu"""UPDATE LINEAR_LOCATION
+  def updateGeometry(linearLocationId: Long, truncatedGeometry: Seq[Point], roadLinkGeometry: Seq[Point], isReductionUpdate: Boolean): Unit = {
+    if (truncatedGeometry.nonEmpty) {
+      if(isReductionUpdate) {
+        println(s"Geometry is way to big, reducing linearLocationId: $linearLocationId to a few key points")
+        val reducedGeom = GeometryUtils.geometryReduction(roadLinkGeometry)
+        val reducedGeometryLength = GeometryUtils.geometryLength(reducedGeom)
+        val reducedGeomStruct = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, reducedGeometryLength)
+
+        sqlu"""UPDATE LINEAR_LOCATION
+          SET geometry = $reducedGeomStruct
+          WHERE id = ${linearLocationId}""".execute
+      } else {
+        val first = truncatedGeometry.head
+        val last = truncatedGeometry.last
+        val (x1, y1, z1, x2, y2, z2) = (
+          GeometryUtils.scaleToThreeDigits(first.x),
+          GeometryUtils.scaleToThreeDigits(first.y),
+          GeometryUtils.scaleToThreeDigits(first.z),
+          GeometryUtils.scaleToThreeDigits(last.x),
+          GeometryUtils.scaleToThreeDigits(last.y),
+          GeometryUtils.scaleToThreeDigits(last.z)
+        )
+        val length = GeometryUtils.geometryLength(truncatedGeometry)
+        sqlu"""UPDATE LINEAR_LOCATION
           SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
                MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
           WHERE id = ${linearLocationId}""".execute
+      }
     }
   }
 
