@@ -30,7 +30,7 @@
       var roadNumber = road.roadNumber;
       var part = road.roadPartNumber;
       var track = road.trackCode;
-        var roadName = selected[0].roadName;
+      var roadName = selected[0].roadName;
       var link = _.first(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
@@ -44,7 +44,7 @@
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
         addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
-        addSmallInputNumberDisabled('ely', link.elyCode) +
+        addSmallInputNumber('ely', link.elyCode) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
           roadTypeDropdown() + '<br>' +
