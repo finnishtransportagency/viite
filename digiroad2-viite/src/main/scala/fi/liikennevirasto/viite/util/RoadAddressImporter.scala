@@ -81,7 +81,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def insertLinearLocation(linearLocationStatement: PreparedStatement, linearLocation: IncomingLinearLocation): Unit = {
     val reducedGeom = if(GeometryUtils.geometryIsReducible(linearLocation.geometry)) {
       GeometryUtils.geometryReduction(linearLocation.geometry)
-    } else linearLocation.geometry
+    } else {
+      val (start,end) = GeometryUtils.geometryEndpoints(linearLocation.geometry)
+      Seq(start,end)
+    }
     val reducedJGeom = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, linearLocation.endMeasure)
     linearLocationStatement.setLong(1, linearLocation.roadwayNumber)
     linearLocationStatement.setLong(2, linearLocation.orderNumber)
@@ -232,7 +235,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             val roadLink = mappedRoadLinks.getOrElse(converted.linkId, mappedHistoryRoadLinks(converted.linkId))
             val newGeometry = if(GeometryUtils.geometryIsReducible(roadLink.geometry)) {
               GeometryUtils.geometryReduction(roadLink.geometry)
-            } else roadLink.geometry
+            } else {
+              val (start,end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+              Seq(start,end)
+            }
             val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, getStartCalibrationPointValue(converted), getEndCalibrationPointValue(converted),
               roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import", newGeometry, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
             if (add._1.directionFlag == 1) {
