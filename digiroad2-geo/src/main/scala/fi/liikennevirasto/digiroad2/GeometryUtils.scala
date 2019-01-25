@@ -6,6 +6,8 @@ object GeometryUtils {
 
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
+  final val DefaultStepLength = 1500.0
+
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
@@ -466,6 +468,69 @@ object GeometryUtils {
       true
     } else {
       false
+    }
+  }
+
+  /**
+    * Evaluates whether or not a given geometry is reducible by comparing it's length to the DefaultStepLength
+    * @param geom: Seq[Point] - The given geometry
+    * @return
+    */
+  def geometryIsReducible(geom: Seq[Point]): Boolean = {
+    geometryLength(geom) >= DefaultStepLength
+  }
+
+
+  def toGeomString(geometry: Seq[Point]): String = {
+    def toBD(d: Double): String = {
+      val zeroEndRegex = """(\.0+)$""".r
+      val lastZero = """(\.[0-9])0*$""".r
+      val bd = BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toString
+      lastZero.replaceAllIn(zeroEndRegex.replaceFirstIn(bd, ""), { m => m.group(0) })
+    }
+
+    geometry.map(p =>
+      (if (p.z != 0.0)
+        Seq(p.x, p.y, p.z)
+      else
+        Seq(p.x, p.y)).map(toBD).mkString("[", ",", "]")).mkString(",")
+  }
+
+  /**
+    * O(n) method to reduce geometry
+    * @param geometry
+    * @return
+    */
+  def geometryReduction(geometry: Seq[Point] = Seq.empty[Point]): Seq[Point] = {
+
+    def reduce(geom: Seq[Point]) = {
+      /*
+   So far this serves our purpose but if we need to come up with a probably faster alternative for huge geometries there is a O(log n) version called the Douglas-Peucker algorithm or the Convex Hull Speed-Up
+   variation to the same.
+    For more information: http://geomalgorithms.com/a16-_decimate-1.html
+   */
+
+      var vStart = geom.head
+      var reducedGeom = Seq(vStart)
+
+      geom.tail.foreach(p => {
+        val distance = p.distance3DTo(vStart)
+        if (distance > DefaultStepLength) {
+          reducedGeom = reducedGeom ++ Seq(p)
+          vStart = p
+        }
+      })
+      reducedGeom
+    }
+
+    val reducedGeom = if (geometryLength(geometry) >= DefaultStepLength) {
+      reduce(geometry)
+    } else geometry
+
+    if (reducedGeom.contains(geometry.last)) {
+      reducedGeom
+    } else {
+      reducedGeom ++ Seq(geometry.last)
     }
   }
 
