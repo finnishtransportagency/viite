@@ -5,7 +5,7 @@ import java.sql.BatchUpdateException
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
@@ -18,8 +18,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val linearLocationDAO = new LinearLocationDAO
   val roadwayDAO = new RoadwayDAO
 
-  val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-    (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
+  val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 300.0, SideCode.TowardsDigitizing, 10000000000l,
+    (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0), Point(0.0, 200.0), Point(0.0, 300.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -208,9 +208,10 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
+      val endMValue = GeometryUtils.geometryLength(testLinearLocation.geometry)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, endMValue = endMValue)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2, endMValue = endMValue)))
 
       val locations = linearLocationDAO.fetchByLinkId(Set(linkId1))
       locations.size should be(2)
@@ -751,6 +752,23 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       locations.count(l => l.linkId == linkId1) should be(1)
       locations.count(l => l.linkId == linkId2) should be(1)
       locations.count(l => l.linkId == linkId3) should be(1)
+    }
+  }
+
+  test("Test linearLocationDAO.create() and linearLocationDAO.fetchByRoadways() When inserting a multi point geometry Then return said linear location with the multi point geometry.") {
+    runWithRollback {
+      val newGeom = Seq(
+        Point(0, 0, 0),
+        Point(5, 5, 0),
+        Point(10, 10, 0),
+        Point(15, 15, 0),
+        Point(20, 20, 0),
+        Point(25, 25, 0)
+      )
+      val linearLocationToInsert = testLinearLocation.copy(geometry = newGeom, endMValue = GeometryUtils.geometryLength(newGeom))
+      linearLocationDAO.create(Seq(linearLocationToInsert))
+      val fetchedLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
+      fetchedLinearLocation.head.geometry should be(linearLocationToInsert.geometry)
     }
   }
 

@@ -2166,7 +2166,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       //Should return MAJOR DISCONTINUITY to both Project Links, part number = 1
       val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
       val geometry = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
-      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z, 0.0))
       val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = #$geometryQuery Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
       val errorsAtEnd = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
