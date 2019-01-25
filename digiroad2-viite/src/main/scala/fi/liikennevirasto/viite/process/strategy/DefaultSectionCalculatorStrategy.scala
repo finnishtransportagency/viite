@@ -55,8 +55,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   private def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val continuousProjectLinks = seq.takeWhile(pl => pl.track == track)
+    val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(0)
+    val continuousProjectLinks = seq.takeWhile(pl => pl.roadwayNumber == roadwayNumber)
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
   }
 
@@ -67,6 +67,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
       } else {
+
         val (firstRight, restRight) = getContinuousTrack(rightLinks)
         val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
 
