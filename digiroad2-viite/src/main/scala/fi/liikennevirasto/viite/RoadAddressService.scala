@@ -1091,6 +1091,43 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    if (!hasFloatings)
 //      eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
   }
+
+  //The following are helper methods to be Mocked by the DataImporterSpec
+
+  /**
+    * Helper method, will fetch all LinkId's in a interval.
+    * Will start it's own session if needed.
+    * @param min
+    * @param max
+    * @param withSession
+    * @return
+    */
+  def getLinkIdsInChunkWithTX(min: Long, max: Long, withSession: Boolean = false): List[Long] = {
+    if(withSession) {
+      withDynSession {
+        linearLocationDAO.fetchLinkIdsInChunk(min, max)
+      }
+    } else linearLocationDAO.fetchLinkIdsInChunk(min, max)
+  }
+
+  /**
+    * Helper method, will fetch all linear locations by LinkId's, with or without floating and excluding certain Ids (if needed).
+    * Will start it's own session if needed.
+    * @param linkIds
+    * @param includeFloating
+    * @param filterIds
+    * @param withSession
+    * @return
+    */
+  def getLinearLocationsByLinkIdWithTX(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set(), withSession: Boolean = false): List[LinearLocation] = {
+    if (withSession) {
+      withDynSession {
+        linearLocationDAO.fetchByLinkId(linkIds, includeFloating, filterIds)
+      }
+    }
+    else linearLocationDAO.fetchByLinkId(linkIds, includeFloating, filterIds)
+  }
+
 }
 
 sealed trait RoadClass {
