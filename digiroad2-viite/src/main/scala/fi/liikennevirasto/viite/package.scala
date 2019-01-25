@@ -110,6 +110,14 @@ package object viite {
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
+
+  val MultipleElysInPartMessage = s"Useampi ELY-koodi tieosassa"
+  val IncorrectLinkStatusOnElyCodeChangeMessage =  s"Linkin tila ei salli ELY-koodin muutosta. Sallitut tilat ovat ${LinkStatus.UnChanged.description}(${LinkStatus.UnChanged.value}), ${LinkStatus.Transfer.description}(${LinkStatus.Transfer.value}), ${LinkStatus.New.description}(${LinkStatus.New.value} or ${LinkStatus.Numbering.description}(${LinkStatus.Numbering.value})"
+  val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-koodi muutos havaittu mutta tieosamuutosta ei löydy"
+  val ElyCodeChangeButNoElyChangeMessage = s"ELY-koodimuutos havaittu mutta ${ChangingELYCode.description}(${ChangingELYCode.value}) epäjatkuvuutta ei havaittu."
+  val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"${ChangingELYCode.description}(${ChangingELYCode.value}) määritelty projektilinkille mutta ELY-koodimuutosta ei havaittu."
+  val ElyCodeChangeButNotOnEndMessage = s"Epäjatkuvuutta havaittu ${ChangingELYCode.description}(${ChangingELYCode.value}) havaittu, mutta puuttuu tieosan lopulliselta projektilinkiltä"
+
   val roadNameWasNotSavedInProject = "Projektin tienimityksiä ei ole tallennettu, koska ne ovat jo olemassa. Tien numerot: "
   val RoadNotAvailableMessage = s"TIE %d OSA %d on jo olemassa projektin alkupäivänä %s, tarkista tiedot"
   val failedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui"

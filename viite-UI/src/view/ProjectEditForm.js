@@ -3,6 +3,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
+    var ValidElys = Object.values(LinkValues.ElyCodes);
     var selectedProjectLink = false;
     var editedNameByUser = false;
     var LinkSources = LinkValues.LinkGeomSource;
@@ -356,6 +357,13 @@
 
       var saveChanges = function(){
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
+        var isValidEly = _.find(ValidElys, function(ely){
+          return ely.value == $('#ely')[0].value;
+        });
+        if(!isValidEly){
+          return new ModalConfirm("Tarkista antamasi ELY-koodi. Annettu arvo on virheellinen.");
+        }
+
         var statusDropdown_0 =$('#dropDown_0').val();
         var statusDropdown_1 = $('#dropDown_1').val();
 
