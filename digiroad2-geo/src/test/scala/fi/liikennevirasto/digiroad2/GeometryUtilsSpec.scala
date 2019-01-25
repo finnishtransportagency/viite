@@ -249,4 +249,17 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val geometry2 = List(Point(1.0, 1.0), Point(1.0, 0.0), Point(0.0, 0.0))
     geometryMoved(1.0)(geometry1, geometry2) should be (true)
   }
+
+  test("Test geometryUtils.geometryReduction() When using a very large geometry Then return a smaller geometry") {
+    val largeGeom = (0 to 100000 by 10).sliding(2).map(t => {
+      Point(t.head, t.last, 0.0)
+    }).toSeq
+    largeGeom.head should be(Point(0.0, 10.0, 0.0))
+    largeGeom.last should be(Point(99990.0, 100000.0, 0.0))
+    val begin = System.currentTimeMillis()
+    val reducedGeom = geometryReduction(largeGeom)
+    val duration = System.currentTimeMillis() - begin
+    println(s"GeometryReduction from ${largeGeom.size} done in $duration ms to ${reducedGeom.size}")
+    reducedGeom.size < largeGeom.size should be (true)
+  }
 }
