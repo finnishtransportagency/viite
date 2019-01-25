@@ -264,7 +264,8 @@ class ProjectLinkDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextObjectOption()
+      val rawGeom = r.nextObjectOption()
+      val decodedGeom = OracleDatabase.loadJGeometryToGeometry(rawGeom)
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -291,7 +292,7 @@ class ProjectLinkDAO {
 
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate,
-        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, OracleDatabase.loadJGeometryToGeometry(geom), projectId,
+        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, decodedGeom, projectId,
         status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, roadwayNumber, Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack,
@@ -643,7 +644,7 @@ class ProjectLinkDAO {
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true): Unit = {
 
     time(logger, "Update project link values") {
-      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z))
+      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z, roadAddress.endMValue))
       val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
 

@@ -173,7 +173,7 @@ class LinearLocationDAO {
   val selectFromLinearLocation =
     """
     select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
+      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, loc.geometry,
       loc.valid_from, loc.valid_to
     from LINEAR_LOCATION loc cross join
       TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t cross join
@@ -201,7 +201,7 @@ class LinearLocationDAO {
       """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
         cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
+        ?, ?)""")
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
@@ -217,6 +217,13 @@ class LinearLocationDAO {
         } else {
           location.roadwayNumber
         }
+        val reducedGeom = if (GeometryUtils.geometryIsReducible(location.geometry)) {
+          GeometryUtils.geometryReduction(location.geometry)
+        } else {
+          location.geometry
+        }
+        val reducedJGeom = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, location.endMValue)
+
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber.toLong)
@@ -235,14 +242,8 @@ class LinearLocationDAO {
         ps.setInt(10, location.linkGeomSource.value)
         ps.setLong(11, location.adjustedTimestamp)
         ps.setInt(12, location.floating.value)
-        val (p1, p2) = (location.geometry.head, location.geometry.last)
-        ps.setDouble(13, p1.x)
-        ps.setDouble(14, p1.y)
-        ps.setDouble(15, location.startMValue)
-        ps.setDouble(16, p2.x)
-        ps.setDouble(17, p2.y)
-        ps.setDouble(18, location.endMValue)
-        ps.setString(19, if (createdBy == null) "-" else createdBy)
+        ps.setObject(13, reducedJGeom)
+        ps.setString(14, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
@@ -268,15 +269,13 @@ class LinearLocationDAO {
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
       val floating = r.nextInt()
-      val x1 = r.nextDouble()
-      val y1 = r.nextDouble()
-      val x2 = r.nextDouble()
-      val y2 = r.nextDouble()
+      val rawGeom = r.nextObjectOption()
+      val decodedGeom = OracleDatabase.loadJGeometryToGeometry2D(rawGeom)
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (calStartM, calEndM), FloatingReason.apply(floating), Seq(Point(x1, y1), Point(x2, y2)),
+        (calStartM, calEndM), FloatingReason.apply(floating), decodedGeom,
         LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
