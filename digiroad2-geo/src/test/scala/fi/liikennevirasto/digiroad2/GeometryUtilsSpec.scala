@@ -261,5 +261,9 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val duration = System.currentTimeMillis() - begin
     println(s"GeometryReduction from ${largeGeom.size} done in $duration ms to ${reducedGeom.size}")
     reducedGeom.size < largeGeom.size should be (true)
+    reducedGeom.forall(p => largeGeom.contains(p))
+    reducedGeom.head should be (largeGeom.head)
+    reducedGeom.last should be (largeGeom.last)
+
   }
 }
