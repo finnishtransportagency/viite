@@ -79,7 +79,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def insertLinearLocation(linearLocationStatement: PreparedStatement, linearLocation: IncomingLinearLocation): Unit = {
-    val reducedGeom = if(GeometryUtils.geometryIsReducible(linearLocation.geometry)) {
+    val reducedGeom = if (GeometryUtils.geometryIsReducible(linearLocation.geometry)) {
       GeometryUtils.geometryReduction(linearLocation.geometry)
     } else {
       val (start,end) = GeometryUtils.geometryEndpoints(linearLocation.geometry)
