@@ -361,17 +361,17 @@ class ProjectValidator {
   }
 
   def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
-    val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber > projectLink.roadNumber || (pl.roadNumber == projectLink.roadNumber && pl.roadPartNumber > projectLink.roadPartNumber))
+    val nextProjectLinks = allProjectLinks.filter(pl => pl.roadNumber == projectLink.roadNumber && pl.roadPartNumber > projectLink.roadPartNumber)
     val nextPartStart =
       if(nextProjectLinks.nonEmpty)
         Some(nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)))
       else Option.empty
-    nextProjectLinks.isEmpty || (nextPartStart.isDefined && nextPartStart.get.ely == projectLink.ely)
+    nextProjectLinks.nonEmpty || (nextPartStart.isDefined && nextPartStart.get.ely == projectLink.ely)
   }
 
   def filterErrorsWithElyChange(continuityErrors: Seq[ValidationErrorDetails], allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     if(allProjectLinks.size > 1) {
-      continuityErrors.distinct.filterNot(ce => {
+      continuityErrors.distinct.filter(ce => {
         val affectedProjectLinks = allProjectLinks.filter(pl => ce.affectedIds.contains(pl.id))
         val filtered = affectedProjectLinks.filter(apl => {
           val elyOnAdjacent = findElyChangesOnAdjacentRoads(apl, allProjectLinks)
