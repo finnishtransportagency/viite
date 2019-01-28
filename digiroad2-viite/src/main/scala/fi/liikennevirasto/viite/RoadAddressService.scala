@@ -1103,7 +1103,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return
     */
   def getLinkIdsInChunkWithTX(min: Long, max: Long, withSession: Boolean = false): List[Long] = {
-    if(withSession) {
+    if (withSession) {
       withDynSession {
         linearLocationDAO.fetchLinkIdsInChunk(min, max)
       }
