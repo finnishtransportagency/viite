@@ -772,4 +772,48 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
+
+  test("Test linearLocationDAO.simpleUpdateTwoPointGeometry() When supplying a new, different geometry to a already existing linear location Then existent linear location should have the updated geometry") {
+    runWithRollback {
+      val originalGeom = Seq(
+        Point(0, 0, 0),
+        Point(5, 5, 0),
+        Point(10, 10, 0),
+        Point(15, 15, 0),
+        Point(20, 20, 0),
+        Point(25, 25, 0)
+      )
+      val newGeom = Seq(Point(50,50,0), Point(75,75,0), Point(100,100,0))
+      val linearLocationToInsert = testLinearLocation.copy(geometry = originalGeom, endMValue = GeometryUtils.geometryLength(originalGeom))
+      linearLocationDAO.create(Seq(linearLocationToInsert))
+      val orignalLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
+      orignalLinearLocation.head.geometry should be(linearLocationToInsert.geometry)
+      linearLocationDAO.simpleUpdateTwoPointGeometry(newGeom, orignalLinearLocation.head.id)
+      val linearLocationAfterUpdate = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
+      linearLocationAfterUpdate.head.geometry should be (Seq(newGeom.head, newGeom.last))
+    }
+  }
+
+
+  test("Test linearLocationDAO.simpleUpdateMultiPointGeometry() When supplying a new, different geometry to a already existing linear location Then existent linear location should have the updated geometry") {
+    runWithRollback {
+      val originalGeom = Seq(
+        Point(0, 0, 0),
+        Point(5, 5, 0),
+        Point(10, 10, 0),
+        Point(15, 15, 0),
+        Point(20, 20, 0),
+        Point(25, 25, 0)
+      )
+      val newGeom = Seq(Point(50,50,0), Point(75,75,0), Point(100,100,0))
+      val linearLocationToInsert = testLinearLocation.copy(geometry = originalGeom, endMValue = GeometryUtils.geometryLength(originalGeom))
+      linearLocationDAO.create(Seq(linearLocationToInsert))
+      val orignalLinearLocation = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
+      orignalLinearLocation.head.geometry should be(linearLocationToInsert.geometry)
+      linearLocationDAO.simpleUpdateMultiPointGeometry(newGeom, orignalLinearLocation.head.id)
+      val linearLocationAfterUpdate = linearLocationDAO.fetchByRoadways(Set(linearLocationToInsert.roadwayNumber))
+      linearLocationAfterUpdate.head.geometry should be (newGeom)
+    }
+  }
+
 }

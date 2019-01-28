@@ -11,12 +11,13 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
+import oracle.sql.STRUCT
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
@@ -820,5 +821,44 @@ class LinearLocationDAO {
       }.toMap
     }
   }
+
+  implicit object SetStruct extends SetParameter[STRUCT] {
+    def apply(v: STRUCT, pp: PositionedParameters) {
+      pp.setObject(v, java.sql.Types.STRUCT)
+    }
+  }
+
+  def simpleUpdateTwoPointGeometry(truncatedGeometry: Seq[Point], linearLocationId: Long) = {
+    if (truncatedGeometry.nonEmpty) {
+      val first = truncatedGeometry.head
+      val last = truncatedGeometry.last
+      val (x1, y1, z1, x2, y2, z2) = (
+        GeometryUtils.scaleToThreeDigits(first.x),
+        GeometryUtils.scaleToThreeDigits(first.y),
+        GeometryUtils.scaleToThreeDigits(first.z),
+        GeometryUtils.scaleToThreeDigits(last.x),
+        GeometryUtils.scaleToThreeDigits(last.y),
+        GeometryUtils.scaleToThreeDigits(last.z)
+      )
+      val length = GeometryUtils.geometryLength(truncatedGeometry)
+      sqlu"""UPDATE LINEAR_LOCATION
+          SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
+               MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
+          WHERE id = ${linearLocationId}""".execute
+    }
+  }
+
+    def simpleUpdateMultiPointGeometry(roadLinkGeometry: Seq[Point], linearLocationId: Long) = {
+      if(roadLinkGeometry.nonEmpty) {
+        val reducedGeom = GeometryUtils.geometryReduction(roadLinkGeometry)
+        val reducedGeometryLength = GeometryUtils.geometryLength(reducedGeom)
+        val reducedGeomStruct = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, reducedGeometryLength)
+
+        sqlu"""UPDATE LINEAR_LOCATION
+          SET geometry = $reducedGeomStruct
+          WHERE id = ${linearLocationId}""".execute
+      }
+    }
+
 
 }

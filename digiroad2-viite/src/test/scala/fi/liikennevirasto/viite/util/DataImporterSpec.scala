@@ -197,46 +197,4 @@ class DataImporterSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO: Test currently on ignore due to the withDynamicSession error.
-  test("Test updateLinearLocationGeometry When trying to deal with a long geometry Then said geometry should be saved \"in steps \".") {
-    runWithRollback {
-      val roadwayNumber = 123
-      val linkId = 12345L
-      val testChunk = Some(Seq((linkId, linkId)))
-      val linearLocationId = sql"""Select LINEAR_LOCATION_SEQ.nextval FROM dual""".as[Long].firstOption.get
-      sqlu"""INSERT INTO LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,CAL_START_ADDR_M,CAL_END_ADDR_M,LINK_SOURCE,ADJUSTED_TIMESTAMP,FLOATING,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATE_TIME)
-            VALUES($linearLocationId, $roadwayNumber, 1, $linkId, 0, 9, 2, NULL, NULL, 1, 1510876800000, 0, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(5.0, 0.0, 0, 0, 5.0, 9.0, 0, 9)), TIMESTAMP '2015-12-30 00:00:00.000000', NULL, 'TR', TIMESTAMP '2015-12-30 00:00:00.000000')""".execute
-
-      val originalLinearLocations = linearLocationDAO.fetchById(linearLocationId).get
-      val hugeGeom = (0.0 to 2000.0 by 10.0).map(t => {
-        Point(t, t)
-      })
-      val reducedGeom = GeometryUtils.geometryReduction(hugeGeom)
-      val structGeom = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, GeometryUtils.geometryLength(reducedGeom))
-
-      val vvhTestRoadLink = Seq(
-        VVHRoadlink(linkId, 91, hugeGeom, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
-      )
-
-      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
-      when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
-      when(mockVVHClient.frozenTimeRoadLinkData)thenReturn(mockVVHFrozenTimeRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhTestRoadLink)
-      when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq.empty)
-      when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq.empty)
-
-      when(mockRoadAddressService.getLinkIdsInChunkWithTX(any[Long], any[Long], any[Boolean])).thenReturn(List(originalLinearLocations.linkId))
-      when(mockRoadAddressService.getLinearLocationsByLinkIdWithTX(any[Set[Long]], any[Boolean], any[Set[Long]], any[Boolean])).thenReturn(List(originalLinearLocations))
-      println(s" Sending testGeom ${structGeom}")
-      dataImporter.updateLinearLocationGeometry(mockVVHClient, "", Some(mockRoadAddressService), testGeom = Some(structGeom), testChunk)
-
-      val updatedLinearLocation = linearLocationDAO.fetchById(linearLocationId)
-      updatedLinearLocation.isDefined should be (true)
-      updatedLinearLocation.get.id should be (linearLocationId)
-      updatedLinearLocation.get.geometry should be (reducedGeom)
-    }
-  }
-
 }

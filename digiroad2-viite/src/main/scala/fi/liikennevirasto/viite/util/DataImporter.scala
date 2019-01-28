@@ -63,8 +63,9 @@ class DataImporter {
 
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  def withLinkIdChunks(testChunks: Option[Seq[(Long, Long)]] = Option.empty)(f: (Long, Long) => Unit): Unit = {
-    val chunks = if(testChunks.nonEmpty) testChunks.get else withDynSession{ fetchChunkLinkIds()}
+
+  def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
+    val chunks = withDynSession{ fetchChunkLinkIds()}
     chunks.par.foreach { p => f(p._1, p._2) }
   }
 
@@ -262,19 +263,17 @@ class DataImporter {
     }
 
 
-  def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = "", mockService: Option[RoadAddressService] = Option.empty, testGeom: Option[STRUCT] = Option.empty, testChunks: Option[Seq[(Long, Long)]] = Option.empty): Unit = {
+  def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
     val roadwayDAO = new RoadwayDAO
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+    val service = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus)
     var changed = 0
-    withLinkIdChunks(testChunks) {
+    withLinkIdChunks {
       case (min, max) =>
         withDynTransaction {
-          val service = if (mockService.nonEmpty) mockService.get else {
-            new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus)
-          }
         val linkIds = service.getLinkIdsInChunkWithTX(min, max).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
         val unGroupedTopology = service.getLinearLocationsByLinkIdWithTX(roadLinksFromVVH.map(_.linkId).toSet, false)
@@ -294,7 +293,7 @@ class DataImporter {
                 ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
                   (distanceFromLastToLast > MinDistanceForGeometryUpdate)) ||
                 isReductionUpdate) {
-                updateGeometry(segment.id, newGeom, roadLink.geometry, isReductionUpdate, testGeom)
+                updateGeometry(segment.id, newGeom, roadLink.geometry, isReductionUpdate, linearLocationDAO)
                 println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
                 changed += 1
               } else {
@@ -308,33 +307,13 @@ class DataImporter {
     println(s"Geometries changed count: $changed")
   }
 
-  def updateGeometry(linearLocationId: Long, truncatedGeometry: Seq[Point], roadLinkGeometry: Seq[Point], isReductionUpdate: Boolean, testGeom: Option[STRUCT] = Option.empty): Unit = {
+  def updateGeometry(linearLocationId: Long, truncatedGeometry: Seq[Point], roadLinkGeometry: Seq[Point], isReductionUpdate: Boolean, linearLocationDAO: LinearLocationDAO): Unit = {
     if (truncatedGeometry.nonEmpty) {
       if(isReductionUpdate) {
         println(s"Geometry is way to big, reducing linearLocationId: $linearLocationId to a few key points")
-        val reducedGeom = GeometryUtils.geometryReduction(roadLinkGeometry)
-        val reducedGeometryLength = GeometryUtils.geometryLength(reducedGeom)
-        val reducedGeomStruct = if(testGeom.nonEmpty) testGeom.get else OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, reducedGeometryLength)
-
-        sqlu"""UPDATE LINEAR_LOCATION
-          SET geometry = $reducedGeomStruct
-          WHERE id = ${linearLocationId}""".execute
+        linearLocationDAO.simpleUpdateMultiPointGeometry(roadLinkGeometry, linearLocationId)
       } else {
-        val first = truncatedGeometry.head
-        val last = truncatedGeometry.last
-        val (x1, y1, z1, x2, y2, z2) = (
-          GeometryUtils.scaleToThreeDigits(first.x),
-          GeometryUtils.scaleToThreeDigits(first.y),
-          GeometryUtils.scaleToThreeDigits(first.z),
-          GeometryUtils.scaleToThreeDigits(last.x),
-          GeometryUtils.scaleToThreeDigits(last.y),
-          GeometryUtils.scaleToThreeDigits(last.z)
-        )
-        val length = GeometryUtils.geometryLength(truncatedGeometry)
-        sqlu"""UPDATE LINEAR_LOCATION
-          SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-               MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
-          WHERE id = ${linearLocationId}""".execute
+        linearLocationDAO.simpleUpdateTwoPointGeometry(truncatedGeometry, linearLocationId)
       }
     }
   }

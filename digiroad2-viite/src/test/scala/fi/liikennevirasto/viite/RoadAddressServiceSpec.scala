@@ -523,6 +523,27 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     roadAddresses.size should be (3)
   }
 
+  test("Test roadAddressService.getLinkIdsInChunkWithTX() When asking for linkId's on the interval Then return the list of all linkId's on the interval from LinearLocation table.") {
+    runWithRollback{
+      val linearLocationsLinkIds = List( 123L, 124L, 125L, 126L, 127L)
+      when(mockLinearLocationDAO.fetchLinkIdsInChunk(any[Long], any[Long])).thenReturn(linearLocationsLinkIds)
+      roadAddressService.getLinkIdsInChunkWithTX(123L, 127L) should be (linearLocationsLinkIds)
+    }
+  }
+
+  test("Test roadAddressService.getLinearLocationsByLinkIdWithTX() When asking for the linearLocations that have the given linkId's Then return the list of the linear locations") {
+    runWithRollback{
+      val linearLocations = List(
+        dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
+        dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, FloatingReason.ManualFloating),
+        dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
+        dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, FloatingReason.ManualFloating)
+      )
+      when(mockLinearLocationDAO.fetchByLinkId(any[Set[Long]], any[Boolean], any[Set[Long]])).thenReturn(linearLocations)
+      roadAddressService.getLinearLocationsByLinkIdWithTX(linearLocations.map(_.linkId).toSet) should be (linearLocations)
+    }
+  }
+
   private def getSpecificUnaddressedRoadLinks(linkId :Long): List[(Long, Long, Long, Long, Long, Int)] = {
     sql"""
           select link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code
