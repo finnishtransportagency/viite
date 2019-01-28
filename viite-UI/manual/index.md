@@ -51,7 +51,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu 
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
 - Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; janne.grekula@karttakeskus.fi
+- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; janne.grekula@cgi.com.
 
 
 2. Perustietoja Viite-sovelluksesta

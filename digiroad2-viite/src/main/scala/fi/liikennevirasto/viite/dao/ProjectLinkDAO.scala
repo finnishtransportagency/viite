@@ -43,17 +43,18 @@ object CalibrationPointSource {
 
 sealed trait LinkStatus {
   def value: Int
+  def description: String
 }
 
 object LinkStatus {
   val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Numbering, Unknown)
-  case object NotHandled extends LinkStatus {def value = 0}
-  case object UnChanged  extends LinkStatus {def value = 1}
-  case object New extends LinkStatus {def value = 2}
-  case object Transfer extends LinkStatus {def value = 3}
-  case object Numbering extends LinkStatus {def value = 4}
-  case object Terminated extends LinkStatus {def value = 5}
-  case object Unknown extends LinkStatus {def value = 99}
+  case object NotHandled extends LinkStatus {def value = 0; def description = "Käsittelemättä"}
+  case object UnChanged  extends LinkStatus {def value = 1; def description = "Ennallaan"}
+  case object New extends LinkStatus {def value = 2; def description = "Uusi"}
+  case object Transfer extends LinkStatus {def value = 3; def description = "Siirto"}
+  case object Numbering extends LinkStatus {def value = 4; def description = "Numerointi"}
+  case object Terminated extends LinkStatus {def value = 5; def description = "Lakkautettu"}
+  case object Unknown extends LinkStatus {def value = 99; def description = "Tuntematon"}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
@@ -77,32 +78,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
 
-  lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
-    case (true, true) | (false, false) =>
-      //reversed for both SideCodes
-      geometry.head
-    case (true, false) | (false, true) =>
-      //NOT reversed for both SideCodes
-      geometry.last
-  }
-  lazy val endPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
-    case (true, true) | (false, false) =>
-      //reversed for both SideCodes
-      geometry.last
-    case (true, false) | (false, true) =>
-      //NOT reversed for both SideCodes
-      geometry.head
-  }
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
-
-  def getEndPoints() = {
-    if (sideCode == SideCode.Unknown) {
-      val direction = if(geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
-      Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
-    } else {
-      (startingPoint, endPoint)
-    }
-  }
 
   def oppositeEndPoint(point: Point) : Point = {
     if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
@@ -410,7 +386,7 @@ class ProjectLinkDAO {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
         "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
         "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=? WHERE id = ?")
+        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ? WHERE id = ?")
 
       for (projectLink <- links) {
         projectLinkPS.setLong(1, projectLink.roadNumber)
@@ -433,7 +409,8 @@ class ProjectLinkDAO {
         projectLinkPS.setDouble(18, projectLink.startMValue)
         projectLinkPS.setDouble(19, projectLink.endMValue)
         projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
-        projectLinkPS.setLong(21, projectLink.id)
+        projectLinkPS.setLong(21, projectLink.ely)
+        projectLinkPS.setLong(22, projectLink.id)
         projectLinkPS.addBatch()
       }
       projectLinkPS.executeBatch()
@@ -616,10 +593,10 @@ class ProjectLinkDAO {
     * @param userName: String - user name
     * @param discontinuity: Long - the discontinuity value to apply
     */
-  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long, track: Track): Unit = {
+  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long, track: Track, ely: Long ): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-      val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart" +
+      val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, ELY = $ely" +
         s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
 
@@ -683,7 +660,7 @@ class ProjectLinkDAO {
         s" STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue}, " +
         s" CALIBRATION_POINTS = ${CalibrationCode.getFromAddress(roadAddress).value}, CONNECTED_LINK_ID = null, REVERSED = 0, " +
         s" CALIBRATION_POINTS_SOURCE = ${CalibrationPointSource.RoadAddressSource.value}, " +
-        s" SIDE = ${roadAddress.sideCode.value}, " +
+        s" SIDE = ${roadAddress.sideCode.value}, ELY = ${roadAddress.ely}," +
         s" start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry" +
         s" WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId"
       Q.updateNA(updateProjectLink).execute
@@ -705,11 +682,11 @@ class ProjectLinkDAO {
          where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
          and project_link.status != ${LinkStatus.Terminated.value}
          """.as[Long].firstOption.getOrElse(0L)
-      val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
+      val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN ${CalibrationCode.No.value} THEN ${CalibrationCode.No.value} WHEN ${CalibrationCode.AtEnd.value} THEN ${CalibrationCode.AtBeginning.value} WHEN ${CalibrationCode.AtBeginning.value} THEN ${CalibrationCode.AtEnd.value} ELSE ${CalibrationCode.AtBoth.value} END), " +
         s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-        s"TRACK = (CASE TRACK WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
-        s"SIDE = (CASE SIDE WHEN 2 THEN 3 ELSE 2 END), " +
-        s"reversed = (CASE reversed WHEN 0 THEN 1 WHEN 1 THEN 0 END)" +
+        s"TRACK = (CASE TRACK WHEN ${Track.Combined.value} THEN ${Track.Combined.value} WHEN ${Track.RightSide.value} THEN ${Track.LeftSide.value} WHEN ${Track.LeftSide.value} THEN ${Track.RightSide.value} ELSE ${Track.Unknown.value} END), " +
+        s"SIDE = (CASE SIDE WHEN ${SideCode.TowardsDigitizing.value} THEN ${SideCode.AgainstDigitizing.value} ELSE ${SideCode.TowardsDigitizing.value} END), " +
+        s"reversed = (CASE WHEN reversed = 0 AND status != ${LinkStatus.New.value} THEN 1 WHEN reversed = 1 AND status != ${LinkStatus.New.value} THEN 0 ELSE 0 END)" +
         s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
         s"and project_link.status != ${LinkStatus.Terminated.value}"
       Q.updateNA(updateProjectLink).execute

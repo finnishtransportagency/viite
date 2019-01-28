@@ -14,7 +14,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
       if (sl.roadLinkSource == LinkGeomSource.NormalLinkInterface)
         sl.linkId else sl.connectedLinkId.get)
     val (outside, inProject) = links.partition(_.status == LinkStatus.Unknown)
-    val inProjectGroups = inProject.groupBy(l => (l.status, l.roadNumber, l.roadPartNumber, l.trackCode, l.roadType))
+    val inProjectGroups = inProject.groupBy(l => (l.status, l.roadNumber, l.roadPartNumber, l.trackCode, l.roadType, l.elyCode))
     val (outsideWithRoadName, outsideWithoutRoadName) = outside.partition(link => link.VVHRoadName.get != "none" && link.VVHRoadName.get != "" && link.VVHRoadName.get != " " || (link.roadNumber != 0 && link.roadPartNumber != 0))
     val groupedUnnamedRoads = groupRoadsWithoutName(Seq(), Seq(), outsideWithoutRoadName, outsideWithoutRoadName)
     val outsideGroup = outsideWithRoadName.groupBy(link => (link.roadLinkSource, link.partitioningName))
