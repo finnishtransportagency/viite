@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
@@ -201,8 +201,10 @@ trait TrackCalculatorStrategy {
               setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
           }
 
-          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, ProjectLinkSource)) ++ pls.init.tail ++
-            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, ProjectLinkSource))
+          val calPointSource1 = if (pls.tail.head.calibrationPoints._1.isDefined) pls.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
+          val calPointSource2 = if (pls.init.last.calibrationPoints._2.isDefined) pls.init.last.calibrationPoints._2.get.source else ProjectLinkSource
+          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
+            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, calPointSource2))
       }
   }
 
@@ -216,6 +218,11 @@ trait TrackCalculatorStrategy {
   /**
     * Returns project links for the other track before and after the point where there is discontinuity on the track.
     *
+    * Find the links from the track A whose end points are nearest to the discontinuity point on track B.
+    * Search the link from track A that is 75 degrees or less different from the link with the discontinuity point on track B
+    * and that has highest possible end address (not greater than the end address of the nearest link).
+    * If the discontinuity is on the left track, reject the nearest link.
+    *
     * @param trackA
     * @param linkOnTrackB
     * @return (Project links before the discontinuity point, project links after the discontinuity point)
@@ -224,16 +231,30 @@ trait TrackCalculatorStrategy {
     if (linkOnTrackB.discontinuity == MinorDiscontinuity || linkOnTrackB.discontinuity == Discontinuous) {
 
       // Sort links in order by the distance from the end of the link on track b.
+      // Include only the nearest candidates
+      val maxNumberOfCandidates = 10
       val linkOnTrackBEndPoint = linkOnTrackB.lastPoint
       val nearestLinks: Seq[(ProjectLink, Double)] = trackA.map(pl => (pl,
         pl.lastPoint.distance2DTo(linkOnTrackBEndPoint)
-      )).sortWith(_._2 < _._2) // Links with nearest end points first
+      )).sortWith(_._2 < _._2).take(maxNumberOfCandidates) // Links with nearest end points first
 
-      // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as lastLink
+      // Find the highest possible end address value. When the discontinuity is on the left side, ignore the nearest link.
+      val maxEndAddress: Long = (if (linkOnTrackB.track == Track.LeftSide && nearestLinks.size > 1) {
+        nearestLinks.lift(1)
+      } else {
+        nearestLinks.headOption
+      }).getOrElse(throw new RoadAddressException("Could not find any nearest road address"))._1.endAddrMValue
+      val nearestLinksSortedByAddressDesc = nearestLinks.sortWith(_._1.endAddrMValue > _._1.endAddrMValue)
+
+      // All links that are over 75 degrees angle compared to the one having the discontinuity will be ignored.
+      // Nearest links in triangles should be accepted, but in rectangles rejected.
+      val maxAngleBetweenLinks = math.toRadians(75)
       val linkOnTrackBDirection = linkOnTrackB.lastSegmentDirection
-      val maxAngleBetweenLinks = math.toRadians(75) // Tolerance for "triangle" cases is 15 degrees and for "rectangle" cases 25 degrees.
-      val lastLink: ProjectLink = nearestLinks.collectFirst { case l if l._1.lastSegmentDirection.angle(linkOnTrackBDirection) < maxAngleBetweenLinks => l._1 }
-        .getOrElse(nearestLinks.headOption.getOrElse(throw new RoadAddressException("Could not find any nearest road address"))._1)
+
+      // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as the lastLink
+      val lastLink: ProjectLink = nearestLinksSortedByAddressDesc.collectFirst {
+        case l if l._1.lastSegmentDirection.angle(linkOnTrackBDirection) < maxAngleBetweenLinks && l._1.endAddrMValue <= maxEndAddress => l._1 }
+        .getOrElse(nearestLinks.head._1)
 
       // Return links before the discontinuity point and links after it
       val continuousLinks = trackA.takeWhile(pl => pl.endAddrMValue <= lastLink.endAddrMValue)

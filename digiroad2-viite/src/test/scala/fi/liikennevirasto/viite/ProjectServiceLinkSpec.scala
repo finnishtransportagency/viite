@@ -107,7 +107,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
 
     val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-      "", Seq(), None, Some(8), None)
+      "", Seq(), None, None)
     projectDAO.create(project)
     val links =
       if (changeTrack) {
@@ -521,7 +521,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(project.id, Set(), transferLinks.map(_.linkId), LinkStatus.Transfer, "Test", 77, 35, 0, Option.empty[Int]) should be(None)
 
       val (resultNew, resultTransfer) = projectLinkDAO.fetchProjectLinks(project.id).partition(_.status == LinkStatus.New)
-      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5167598,0.0,0,ProjectLinkSource)))
+      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5167598, 296.597, 0, ProjectLinkSource)))
       resultTransfer.head.calibrationPoints._2 should be(None)
       allLinks.size should be(resultNew.size + resultTransfer.size)
     }
