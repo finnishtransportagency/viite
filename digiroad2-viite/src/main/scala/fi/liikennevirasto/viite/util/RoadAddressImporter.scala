@@ -233,7 +233,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
           add =>
             val converted = add._1
             val roadLink = mappedRoadLinks.getOrElse(converted.linkId, mappedHistoryRoadLinks(converted.linkId))
-            val newGeometry = if(GeometryUtils.geometryIsReducible(roadLink.geometry)) {
+            val newGeometry = if (GeometryUtils.geometryIsReducible(roadLink.geometry)) {
               GeometryUtils.geometryReduction(roadLink.geometry)
             } else {
               val (start,end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
