@@ -849,7 +849,7 @@ class LinearLocationDAO {
   }
 
     def simpleUpdateMultiPointGeometry(roadLinkGeometry: Seq[Point], linearLocationId: Long) = {
-      if(roadLinkGeometry.nonEmpty) {
+      if (roadLinkGeometry.nonEmpty) {
         val reducedGeom = GeometryUtils.geometryReduction(roadLinkGeometry)
         val reducedGeometryLength = GeometryUtils.geometryLength(reducedGeom)
         val reducedGeomStruct = OracleDatabase.createRoadsJGeometry(reducedGeom, dynamicSession.conn, reducedGeometryLength)
