@@ -2323,7 +2323,9 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange)
     }
   }
-  test("Test projectValidator.checkRoadContinuityCodes When using a Ely change Then the discontinuity codes validations would be suppressed.") {
+
+  //TODO - needs to be tested after VIITE-1788
+  ignore("Test projectValidator.checkRoadContinuityCodes When using a Ely change Then the discontinuity codes validations would be suppressed.") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.Continuous, ely = 1L)
       addProjectLinksToProject(LinkStatus.Transfer, Seq(60L, 70L, 80L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadNumber = 20000L,roadPartNumber = 1L, ely = 2L)

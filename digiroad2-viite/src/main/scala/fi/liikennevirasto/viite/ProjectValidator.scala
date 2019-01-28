@@ -357,7 +357,7 @@ class ProjectValidator {
     val points = GeometryUtils.geometryEndpoints(projectLink.geometry)
     val roadAddresses = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(points._2.copy(x = points._2.x+dim, y= points._2.y+dim), points._2.copy(x = points._2.x-dim, y= points._2.y-dim)), Seq.empty)
     val nextElyCodes = roadAddresses.filterNot(ra => allProjectLinks.exists(_.roadwayNumber == ra.roadwayNumber)).map(_.elyCode).toSet
-    nextElyCodes.isEmpty || nextElyCodes.filterNot(_ == projectLink.ely).contains(projectLink.ely)
+    nextElyCodes.nonEmpty && !nextElyCodes.forall(_ == projectLink.ely)
   }
 
   def findElyChangesOnNextProjectLinks(projectLink: ProjectLink, allProjectLinks: Seq[ProjectLink]) = {
@@ -366,7 +366,7 @@ class ProjectValidator {
       if(nextProjectLinks.nonEmpty)
         Some(nextProjectLinks.minBy(p => (p.roadNumber, p.roadPartNumber)))
       else Option.empty
-    nextProjectLinks.nonEmpty || (nextPartStart.isDefined && nextPartStart.get.ely == projectLink.ely)
+    nextProjectLinks.isEmpty && (nextPartStart.isDefined && nextPartStart.get.ely == projectLink.ely)
   }
 
   def filterErrorsWithElyChange(continuityErrors: Seq[ValidationErrorDetails], allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -376,9 +376,9 @@ class ProjectValidator {
         val filtered = affectedProjectLinks.filter(apl => {
           val elyOnAdjacent = findElyChangesOnAdjacentRoads(apl, allProjectLinks)
           val elyOnNext = findElyChangesOnNextProjectLinks(apl, allProjectLinks)
-          elyOnAdjacent && elyOnNext
+          elyOnAdjacent || elyOnNext
         })
-        filtered.isEmpty && affectedProjectLinks.nonEmpty
+        filtered.isEmpty || ce.validationError.value == MissingEndOfRoadMessage
       })
     } else continuityErrors
 
@@ -674,7 +674,9 @@ class ProjectValidator {
         val uniqueProblemRoads = problemRoads.groupBy(_.id).map(_._2.head).toSeq
         val currError = error(ValidationErrorList.RoadNotEndingInElyBorder)(uniqueProblemRoads)
         val seqErrors = if(currError.isDefined) Seq(currError.get) else Seq.empty[ValidationErrorDetails]
-        filterErrorsWithElyChange(seqErrors, allProjectLinks)
+        //TODO - filter errors on ELY change on VIITE-1788
+        //filterErrorsWithElyChange(seqErrors, allProjectLinks)
+        seqErrors
       }).toSeq
     }
 
@@ -1023,14 +1025,12 @@ class ProjectValidator {
 
         }
       }.toSeq
-      val groupedErrors: Seq[ValidationErrorDetails] = afterCheckErrors.groupBy(_.validationError).map {
+      afterCheckErrors.groupBy(_.validationError).map {
         g =>
           val ids: Seq[Long] = g._2.flatMap(_.affectedIds)
           val coords: Seq[ProjectCoordinates] = g._2.flatMap(_.coordinates)
           ValidationErrorDetails(g._2.head.projectId, g._1, ids, coords, None)
       }.toSeq
-      val filteredErrors = filterErrorsWithElyChange(groupedErrors, allProjectLinks)
-      filteredErrors
     }
 
     /**
@@ -1085,13 +1085,12 @@ class ProjectValidator {
             } else None
         }
       }.toSeq
-      val groupedDiscontinuity: Seq[ValidationErrorDetails] = discontinuityErrors.groupBy(_.validationError).map {
+      discontinuityErrors.groupBy(_.validationError).map {
         g =>
           val ids: Seq[Long] = g._2.flatMap(_.affectedIds)
           val coords: Seq[ProjectCoordinates] = g._2.flatMap(_.coordinates)
           ValidationErrorDetails(g._2.head.projectId, g._1, ids, coords, None)
       }.toSeq
-      filterErrorsWithElyChange(groupedDiscontinuity, allProjectLinks)
     }
 
     /**
@@ -1152,8 +1151,9 @@ class ProjectValidator {
     val continuityErrors: Seq[ValidationErrorDetails] = continuityValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
       (validation ++ errors).distinct
     }
-    val continuityErrorsMinusElyChange =  filterErrorsWithElyChange(continuityErrors.distinct, allProjectLinks)
-    continuityErrorsMinusElyChange
+    //TODO - filter errors with ELY change on VIITE-1788
+    //val continuityErrorsMinusElyChange =  filterErrorsWithElyChange(continuityErrors.distinct, allProjectLinks)
+    continuityErrors
   }
 
 
