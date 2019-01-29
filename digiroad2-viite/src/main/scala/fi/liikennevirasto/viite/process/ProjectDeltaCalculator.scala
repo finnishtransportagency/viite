@@ -7,6 +7,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, U
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.liikennevirasto.viite
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -325,7 +326,7 @@ object ProjectDeltaCalculator {
         val oppositePairingTrack = sections.find(s => s._1.roadNumber == possibleExistingSameStartAddrMValue.get._1.roadNumber && s._1.roadPartNumberStart == possibleExistingSameStartAddrMValue.get._1.roadPartNumberStart && s._2.endMAddr == possibleExistingSameStartAddrMValue.get._2.endMAddr
           && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
         if (oppositePairingTrack.nonEmpty) {
-          val warningMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > 50)
+          val warningMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
             Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
           else
             None
