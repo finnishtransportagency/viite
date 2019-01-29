@@ -65,7 +65,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     val transfer1 = (0 to 10).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
     val transfer2 = (12 to 15).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
     val mapping =
-      ProjectDeltaCalculator.partition(transfer1 ++ transfer2)._1.keys
+      ProjectDeltaCalculator.partition(transfer1 ++ transfer2).adjustedSections.keys
     mapping.foreach { elem =>
       elem._1.startMAddr should be(elem._2.startMAddr - project.id)
       elem._1.endMAddr should be(elem._2.endMAddr - project.id)
@@ -82,7 +82,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       transferLinks1.map(l => (l._1, l._2.copy(roadPartNumber = 205, startAddrMValue = 110L, endAddrMValue = 120L))) ++
       transferLinks2.map(l => (l._1, l._2.copy(startAddrMValue = l._2.startAddrMValue - 10L, endAddrMValue = l._2.endAddrMValue - 10L)))
 
-    val partitions = ProjectDeltaCalculator.partition(projectLinks, oppositeSections = Seq())._1.keys
+    val partitions = ProjectDeltaCalculator.partition(projectLinks, oppositeSections = Seq()).adjustedSections.keys
     partitions should have size 3
     val start205 = partitions.find(p => p._1.roadPartNumberStart == 205 && p._2.roadPartNumberStart == 205)
     val to205 = partitions.find(p => p._1.roadPartNumberStart == 206 && p._2.roadPartNumberStart == 205)
@@ -99,7 +99,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     val addresses = (0 to 10).map(i => createRoadAddress(i * 10, 10L))
     val numberingLinks = addresses.map(a => (a, a.copy(roadNumber = 12345, roadPartNumber = 1))).map(x => (x._1, toProjectLink(project, LinkStatus.Numbering)(x._2)))
 
-    val partitions = ProjectDeltaCalculator.partition(numberingLinks, oppositeSections = Seq())._1.keys
+    val partitions = ProjectDeltaCalculator.partition(numberingLinks, oppositeSections = Seq()).adjustedSections.keys
     partitions should have size 1
     val correctRoadNumber = partitions.find(p => p._1.roadNumber == 5 && p._2.roadNumber == 12345)
     val correctRoadPartNumber = partitions.find(p => p._1.roadPartNumberStart == 205 && p._1.roadPartNumberEnd == 205 && p._2.roadPartNumberStart == 1 && p._2.roadPartNumberEnd == 1)
@@ -128,7 +128,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       x.endMAddr should be(11L)
     })
 
-    val transferParts = ProjectDeltaCalculator.partition(transfers, oppositeSections = Seq())._1.keys
+    val transferParts = ProjectDeltaCalculator.partition(transfers, oppositeSections = Seq()).adjustedSections.keys
     transferParts should have size 2
     transferParts.foreach(x => {
       val (fr, to) = x
@@ -151,7 +151,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       x.endMAddr should be(120L)
     })
 
-    val unchangedParts = ProjectDeltaCalculator.partition(unchanged, oppositeSections = Seq())._1
+    val unchangedParts = ProjectDeltaCalculator.partition(unchanged, oppositeSections = Seq()).adjustedSections
     unchangedParts.keys should have size 2
     unchangedParts.keys.foreach(x => {
       val (fr, to) = x
@@ -202,7 +202,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     })
 
 
-    val uncParts = ProjectDeltaCalculator.partition(unchanged, oppositeSections = Seq())._1.keys
+    val uncParts = ProjectDeltaCalculator.partition(unchanged, oppositeSections = Seq()).adjustedSections.keys
     uncParts should have size 2
     uncParts.foreach(x => {
       val (fr, to) = x
@@ -210,7 +210,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       fr.endMAddr should be(38L)
     })
 
-    val transferParts = ProjectDeltaCalculator.partition(transfers, oppositeSections = Seq())._1.keys
+    val transferParts = ProjectDeltaCalculator.partition(transfers, oppositeSections = Seq()).adjustedSections.keys
     transferParts should have size 2
     transferParts.foreach(x => {
       val (fr, to) = x
@@ -243,7 +243,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       TowardsDigitizing, (None, None), floating = NoFloating, Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
       RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false,
       None, 748800L))
-    val uncParts = ProjectDeltaCalculator.partition(unchanged, Seq())._1.keys
+    val uncParts = ProjectDeltaCalculator.partition(unchanged, Seq()).adjustedSections.keys
     uncParts should have size 2
     uncParts.foreach(x => {
       val (fr, to) = x
@@ -269,7 +269,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   test("Test ProjectDeltaCalculator.partition When executing a Unchanged operation but changing it's ELY value Then returns the correct From RoadSection -> To RoadSection mapping, ensuring the new ELY is in effect.") {
     val addresses = (0 to 9).map(i => createRoadAddress(i * 12, 12L))
     val links = addresses.filter(_.endAddrMValue < 61).map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))))
-    val partitioned = ProjectDeltaCalculator.partition(links, Seq())._1.keys
+    val partitioned = ProjectDeltaCalculator.partition(links, Seq()).adjustedSections.keys
     partitioned.size should be(1)
     val (fr, to) = partitioned.head
     fr.startMAddr should be(to.startMAddr)
@@ -287,7 +287,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         toTransition(project, LinkStatus.UnChanged)(a)
       }
     })
-    val partitioned = ProjectDeltaCalculator.partition(links, oppositeSections = Seq())._1.keys
+    val partitioned = ProjectDeltaCalculator.partition(links, oppositeSections = Seq()).adjustedSections.keys
     partitioned.size should be(2)
     partitioned.foreach(x => {
       val (fr, to) = x
@@ -307,7 +307,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       (createRoadAddress(502, 1524),
         createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
     val mapping =
-      ProjectDeltaCalculator.partition(transfer)._1.keys
+      ProjectDeltaCalculator.partition(transfer).adjustedSections.keys
     mapping should have size 2
     mapping.foreach { case (from, to) =>
       from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
@@ -427,7 +427,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       (createRoadAddress(502, 1524),
         createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
     val mapping =
-      ProjectDeltaCalculator.partition(transfer)._1.keys
+      ProjectDeltaCalculator.partition(transfer).adjustedSections.keys
     mapping should have size (2)
     mapping.foreach { case (from, to) =>
       from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
@@ -451,7 +451,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       else
         (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
     })
-    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp, Seq())._1.keys
+    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp, Seq()).adjustedSections.keys
     partitionCp.size should be(2)
     val firstSection = partitionCp.last
     val secondSection = partitionCp.head

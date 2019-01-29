@@ -274,7 +274,6 @@ object ProjectDeltaCalculator {
         transfers.map(_._2).filter(pl => pl.roadwayNumber == ra.roadwayNumber && pl.roadType == ra.roadType && (pl.originalStartAddrMValue >= ra.startAddrMValue && pl.originalStartAddrMValue < ra.endAddrMValue) && (pl.originalEndAddrMValue <= ra.endAddrMValue && pl.originalEndAddrMValue > ra.startAddrMValue))))
   }
 
-//    def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): (Map[(RoadwaySection, RoadwaySection), Option[String]], Map[RoadwaySection, RoadwaySection]) = {
     def partition(transfers: Seq[(RoadAddress, ProjectLink)], oppositeSections: Seq[RoadwaySection] = Seq()): ChangeTableRows = {
       def toRoadAddressSection(transfers: Seq[(RoadAddress, ProjectLink)], o: Seq[BaseRoadAddress]): Seq[RoadwaySection] = {
         o.map(ra =>
