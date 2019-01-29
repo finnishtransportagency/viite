@@ -597,10 +597,10 @@ class ProjectValidator {
           val biggestPrevious = processed.head._2.maxBy(_.endAddrMValue)
           val lowestCurrent = unprocessed.head._2.minBy(_.startAddrMValue)
           if (biggestPrevious.ely != lowestCurrent.ely) {
-            val lastLinkHasChangeOfEly = biggestPrevious.discontinuity != Discontinuity.ChangingELYCode && biggestPrevious.roadNumber == lowestCurrent.roadNumber
-            val roadNumbersAreDifferent = lowestCurrent.roadNumber == biggestPrevious.roadNumber && lowestCurrent.roadPartNumber > biggestPrevious.roadPartNumber
+            val lastLinkDoesNotHaveChangeOfEly = biggestPrevious.discontinuity != Discontinuity.ChangingELYCode && biggestPrevious.roadNumber == lowestCurrent.roadNumber
+            val roadNumbersAreDifferent = !(lowestCurrent.roadNumber == biggestPrevious.roadNumber && lowestCurrent.roadPartNumber > biggestPrevious.roadPartNumber)
 
-            val errors = (lastLinkHasChangeOfEly, roadNumbersAreDifferent) match {
+            val errors = (lastLinkDoesNotHaveChangeOfEly, roadNumbersAreDifferent) match {
 
               case (true, true) =>
                 val projectLinksSameEly = Seq(biggestPrevious)
@@ -615,8 +615,10 @@ class ProjectValidator {
                 Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeDetected, affectedProjectLinks.map(_.id), coords, Option("")))
               case (false, true) =>
                 val affectedProjectLinks = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
-                val coords = prepareCoordinates(affectedProjectLinks)
-                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option("")))
+                if(affectedProjectLinks.nonEmpty){
+                  val coords = prepareCoordinates(affectedProjectLinks)
+                  Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option("")))
+                } else Seq.empty
               case (false, false) =>
                 Seq.empty
             }
@@ -1153,7 +1155,9 @@ class ProjectValidator {
     }
     //TODO - filter errors with ELY change on VIITE-1788
     //val continuityErrorsMinusElyChange =  filterErrorsWithElyChange(continuityErrors.distinct, allProjectLinks)
-    continuityErrors
+    continuityErrors.map(ce => {
+      ce.copy(affectedIds = ce.affectedIds.distinct, coordinates = ce.coordinates.distinct)
+    })
   }
 
 
