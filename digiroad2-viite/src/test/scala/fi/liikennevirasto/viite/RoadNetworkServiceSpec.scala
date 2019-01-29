@@ -24,13 +24,6 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("test" ) {
-    runWithRollback {
-      val options = RoadCheckOptions(Seq(), Set(9), Some(0), 1, false)
-      roadNetworkService.checkRoadAddressNetwork(options)
-    }
-  }
-
 //TODO Will be implemented once the new implementation for road network is done
 //  test("validate network with valid road"){
 //    runWithRollback {
