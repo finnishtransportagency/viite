@@ -586,23 +586,15 @@ class ProjectLinkDAO {
     * @param userName: String - user name
     * @param discontinuity: Long - the discontinuity value to apply
     */
-  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long, track: Track, ely: Long ): Unit = {
+  def updateProjectLinkNumbering(projectId: Long, ids: Set[Long], roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long, track: Track, ely: Long ): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, ELY = $ely" +
         s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
 
-      val maxByTrack = fetchProjectLinks(projectId).filter(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart).groupBy(_.track).mapValues(p => p.maxBy(_.endAddrMValue))
-      val updateTrack = maxByTrack.filterNot(t => t._2.endAddrMValue == maxByTrack.minBy(_._2.endAddrMValue)._2.endAddrMValue && maxByTrack.minBy(_._2.endAddrMValue)._2.endAddrMValue != maxByTrack.maxBy(_._2.endAddrMValue)._2.endAddrMValue)
-      val updateLastLinkWithDiscontinuityString =  if (updateTrack.keys.toList.contains(track)) {
-        s"""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = $discontinuity WHERE ID IN (
-         SELECT ID FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value} AND TRACK IN (${track}) AND END_ADDR_M = (SELECT MAX(END_ADDR_M) FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value} AND TRACK IN (${track.value})))"""
-      } else {
-        s"""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = $discontinuity WHERE ID IN (
-         SELECT ID FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value} AND TRACK IN (${updateTrack.keys.mkString(", ")}) AND END_ADDR_M = (SELECT MAX(END_ADDR_M) FROM PROJECT_LINK WHERE ROAD_NUMBER = $newRoadNumber AND ROAD_PART_NUMBER = $newRoadPart AND STATUS != ${LinkStatus.Terminated.value} AND TRACK IN (${updateTrack.keys.mkString(", ")})))"""
-      }
-      Q.updateNA(updateLastLinkWithDiscontinuityString).execute
+      val sqlDiscontinuity = s"UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = $discontinuity WHERE ID IN (${ids.mkString(", ")})"
+      Q.updateNA(sqlDiscontinuity).execute
     }
   }
 
