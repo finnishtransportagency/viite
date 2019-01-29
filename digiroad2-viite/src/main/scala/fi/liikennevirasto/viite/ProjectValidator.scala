@@ -597,28 +597,28 @@ class ProjectValidator {
           val biggestPrevious = processed.head._2.maxBy(_.endAddrMValue)
           val lowestCurrent = unprocessed.head._2.minBy(_.startAddrMValue)
           if (biggestPrevious.ely != lowestCurrent.ely) {
-            val lastLinkHasChangeOfEly = biggestPrevious.discontinuity == Discontinuity.ChangingELYCode
-            val roadNumbersAreDifferent = (lowestCurrent.roadNumber == biggestPrevious.roadNumber && lowestCurrent.roadPartNumber > biggestPrevious.roadPartNumber) || (lowestCurrent.roadNumber > biggestPrevious.roadNumber)
+            val lastLinkHasChangeOfEly = biggestPrevious.discontinuity != Discontinuity.ChangingELYCode && biggestPrevious.roadNumber == lowestCurrent.roadNumber
+            val roadNumbersAreDifferent = lowestCurrent.roadNumber == biggestPrevious.roadNumber && lowestCurrent.roadPartNumber > biggestPrevious.roadPartNumber
 
             val errors = (lastLinkHasChangeOfEly, roadNumbersAreDifferent) match {
 
               case (true, true) =>
-                Seq.empty
-              case (true, false) =>
-                val affectedProjectLinks = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
-                val coords = prepareCoordinates(affectedProjectLinks)
-                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option("")))
-              case (false, true) =>
-                val affectedProjectLinks = Seq(biggestPrevious)
-                val coords = prepareCoordinates(affectedProjectLinks)
-                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeDetected, affectedProjectLinks.map(_.id), coords, Option("")))
-              case (false, false) =>
                 val projectLinksSameEly = Seq(biggestPrevious)
                 val projectLinksSameRoadPartNumber = unprocessed.head._2.filter(p => p.roadPartNumber == biggestPrevious.roadPartNumber)
                 val sameElyCoords = prepareCoordinates(projectLinksSameEly)
                 val sameRoadPartNumberCoords = prepareCoordinates(projectLinksSameRoadPartNumber)
                 Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, projectLinksSameEly.map(_.id), sameElyCoords, Option("")),
                   ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoRoadPartChange, projectLinksSameRoadPartNumber.map(_.id), sameRoadPartNumberCoords, Option("")))
+              case (true, false) =>
+                val affectedProjectLinks = Seq(biggestPrevious)
+                val coords = prepareCoordinates(affectedProjectLinks)
+                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeDetected, affectedProjectLinks.map(_.id), coords, Option("")))
+              case (false, true) =>
+                val affectedProjectLinks = unprocessed.head._2.filter(p => p.ely == biggestPrevious.ely)
+                val coords = prepareCoordinates(affectedProjectLinks)
+                Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option("")))
+              case (false, false) =>
+                Seq.empty
             }
             recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head) ++ processed, errors ++ acumulatedErrors)
           } else {
