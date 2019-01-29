@@ -780,6 +780,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case Some(errMsg) => throw new IllegalStateException(errMsg)
           case None =>
             if (projectDAO.isUniqueName(roadAddressProject.id, roadAddressProject.name)) {
+              projectDAO.update(roadAddressProject)
               val storedProject = projectDAO.fetchById(roadAddressProject.id).get
               val removed = storedProject.reservedParts.filterNot(part =>
                 roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
