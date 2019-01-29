@@ -279,7 +279,7 @@ object TrackSectionOrder {
                   .minBy(b => (currentPoint - b._1).length())
                 (getOppositeEnd(link, nPoint), link)
               } else {
-                val l = if(ready.isEmpty) connected.head else pickRightMost(ready.last, connected)
+                val l = if (ready.isEmpty) connected.head else pickRightMost(ready.last, connected)
                 (getOppositeEnd(l, currentPoint), l)
               }
             }
@@ -288,10 +288,10 @@ object TrackSectionOrder {
             (getOppositeEnd(l, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && (unprocessed ++ ready).size == 1) match {
-          case (false, false) | (true, true) =>
+        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && ready.isEmpty) match {
+          case (false, _) | (true, true) =>
             SideCode.AgainstDigitizing
-          case (false, true) | (true, false) =>
+          case (true, false) =>
             SideCode.TowardsDigitizing
         }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
