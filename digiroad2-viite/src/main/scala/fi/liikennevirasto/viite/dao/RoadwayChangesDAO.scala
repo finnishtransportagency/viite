@@ -69,7 +69,7 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
                      rotatingTRId: Option[Long], reversed: Boolean, orderInTable: Long)
 
-case class ChangeTableRows(addressChangeType: AddressChangeType, source: RoadwaySection, target: RoadwaySection)
+case class ChangeTableRows(adjustedSections: Map[(RoadwaySection, RoadwaySection), Option[String]], originalSections: Map[RoadwaySection, RoadwaySection])
 
 class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -388,9 +388,9 @@ class RoadwayChangesDAO {
 
             val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
 
-            val adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged._1, unchanged._2++transferred._2++numbering._2)
-            val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred._1, unchanged._2++transferred._2++numbering._2)
-            val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering._1, unchanged._2++transferred._2++numbering._2)
+            val adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged.adjustedSections, unchanged.originalSections++transferred.originalSections++numbering.originalSections)
+            val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections++transferred.originalSections++numbering.originalSections)
+            val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections++transferred.originalSections++numbering.originalSections)
 
             adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
                             addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
