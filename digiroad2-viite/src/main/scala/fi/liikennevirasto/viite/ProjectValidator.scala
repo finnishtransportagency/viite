@@ -962,7 +962,7 @@ class ProjectValidator {
                          <----------|
                    */
                   val nextOppositeTrack = g._2.find(t => t.track != next.track && t.startAddrMValue == next.startAddrMValue)
-                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity)
+                  if (Track.isTrackContinuous(curr.track, next.track) && (checkConnected(curr, Option(next)) || checkConnected(curr, nextOppositeTrack)) || curr.discontinuity == MinorDiscontinuity || curr.discontinuity == Discontinuous)
                     None
                   else
                     Some(curr)
@@ -1016,13 +1016,14 @@ class ProjectValidator {
               if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
                 error(project.id, ValidationErrorList.MissingEndOfRoad)(Seq(last))
               } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
-                error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last))
+                val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
+                val isConnected = Seq(last).forall(lpl => nextLinks.exists(nl => Track.isTrackContinuous(nl.track, lpl.track) &&
+                  lpl.connected(nl)))
+                if(isConnected) error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last)) else None
               } else
                 None
-
             } else
               None
-
         }
       }.toSeq
       afterCheckErrors.groupBy(_.validationError).map {
@@ -1131,10 +1132,10 @@ class ProjectValidator {
       */
     def getNextLinksFromParts(allProjectLinks: Seq[ProjectLink], road: Long, nextProjectPart: Option[Long], nextAddressPart: Option[Long]):Seq[BaseRoadAddress] = {
       if (nextProjectPart.nonEmpty && (nextAddressPart.isEmpty || nextProjectPart.get <= nextAddressPart.get))
-        projectLinkDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(_.startAddrMValue == 0L)
+        projectLinkDAO.fetchByProjectRoadPart(road, nextProjectPart.get, project.id).filter(l => LinkStatus.Terminated.value != l.status.value && l.startAddrMValue == 0L)
       else {
         roadAddressService.getRoadAddressesFiltered(road, nextAddressPart.get)
-          .filterNot(rp => allProjectLinks.exists(link => rp.roadPartNumber != link.roadPartNumber && rp.linearLocationId == link.linearLocationId)).filter(_.startAddrMValue == 0L)
+          .filterNot(rp => allProjectLinks.exists(link => (rp.roadNumber != link.roadNumber || rp.roadPartNumber != link.roadPartNumber) && rp.linearLocationId == link.linearLocationId)).filter(_.startAddrMValue == 0L)
       }
     }
 
