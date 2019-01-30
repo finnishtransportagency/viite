@@ -1749,7 +1749,7 @@ Left|      |Right
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, Some(8), None)
+        "", Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
 
