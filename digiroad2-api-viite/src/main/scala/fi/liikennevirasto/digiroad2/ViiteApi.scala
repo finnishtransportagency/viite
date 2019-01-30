@@ -48,6 +48,8 @@ case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], 
                                             roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
                                             coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
+case class roadDataExtractor(chainLinkIds: Seq[Long] )
+
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
 case class CutLineExtractor(linkId: Long, splitedPoint: Point)
@@ -123,13 +125,32 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/user") {
+  val getUser =
+    (apiOperation[Map[String,Any]]("getUser")
+      tags "User interface"
+      summary "Shows the current user and it's roles."
+      notes "Appears at the start of the application. One can search it too"
+      )
+
+  get("/user", operation(getUser)) {
     time(logger, "GET request for /user") {
       Map("userName" -> userProvider.getCurrentUser().username, "roles" -> userProvider.getCurrentUser().configuration.roles)
     }
   }
 
-  get("/roadaddress") {
+  val getRoadAddress = (
+    apiOperation[Seq[Seq[Map[String, Any]]]]("getRoadAddress")
+      .parameters(
+        queryParam[Int]("zoom").description("Current zoom level of the map"),
+        queryParam[String]("bbox").description("String containing the 4 vertexes of a square, is akin to the viewport.").notes("Format: <Number>,<Number>,<Number>,<Number>")
+      )
+      tags "User interface"
+      summary "Returns all the road addresses that fit inside the viewport."
+      notes "Zoom level affects what kind of roads it will return: \r\n" +
+      "Zoom level from -10 to 3 ->\tDrawMainRoadPartsOnly\nZoom level from 4 to 5\t ->\tDrawRoadPartsOnly\nZoom level from 6 to 8\t ->\tDrawLinearPublicRoads\nZoom level from 9 to 10\t ->\tDrawPublicRoads\nZoom level from 11 to 16 ->\tDrawAllRoads"
+  )
+
+  get("/roadaddress", operation(getRoadAddress)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
     time(logger, s"GET request for /roadlinks (zoom: $zoom)") {
@@ -139,7 +160,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadaddress/floatings") {
+  val getFloatings = (
+    apiOperation[Map[Long, List[Map[String, Any]]]]("getFloatingRoadAddresses")
+      tags "User interface"
+      summary "Returns all the road addresses that are on the floating state."
+      notes "Ideally we should have none."
+  )
+
+  get("/roadaddress/floatings", operation(getFloatings)) {
     time(logger, "GET request for /roadAddress/floatings") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
@@ -148,7 +176,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadaddress/errors") {
+  val getRoadAddressErrors = (
+    apiOperation[Map[Long, List[Map[String, Long]]]]("getRoadAddressErrors")
+      tags "User interface - RoadAddresses"
+      summary "Returns all the road addresses that are in a error state."
+      notes "The error states are:" +
+      "OverlappingRoadAddresses\nInconsistentTopology\nInconsistentLrmHistory\nInconsistent2TrackCalibrationPoints\nInconsistentContinuityCalibrationPoints\nMissingEdgeCalibrationPoints\nInconsistentAddressValues"
+    )
+
+  get("/roadaddress/errors", operation(getRoadAddressErrors)) {
     time(logger, "GET request for /roadAddress/errors") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getRoadAddressErrors().groupBy(_.ely).map(
@@ -157,7 +193,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadaddress/linkid/:linkId") {
+  val getRoadAddressLinkByLinkId = (
+    apiOperation[Map[String, Any]]("getRoadAddressLinkByLinkId")
+        .parameters(
+          pathParam[Long]("linkId").description("LinkId of a road address")
+        )
+      tags "User interface"
+      summary "Returns the RoadAddressLink object of the given linkId"
+      notes ""
+    )
+
+
+  get("/roadaddress/linkid/:linkId", operation(getRoadAddressLinkByLinkId)) {
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadAddress/linkid/$linkId") {
       //TODO This process can be improved
@@ -167,7 +214,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadaddress/:id") {
+  val getRoadAddressLinkById = (
+    apiOperation[Map[String, Any]]("getRoadAddressLinkById")
+      .parameters(
+        pathParam[Long]("Id").description("Id of a road address")
+      )
+      tags "User interface - RoadAddresses"
+      summary "Returns the RoadAddressLink object of the given roadway Id"
+      notes "Currently unimplemented"
+    )
+
+  get("/roadaddress/:id", operation(getRoadAddressLinkById)) {
     val id = params("id").toLong
     time(logger, s"GET request for /roadAddress/$id") {
       //TODO BUG: suravage links should be included here
@@ -179,7 +236,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   }
 
-  get("/roadlinks/project/prefillfromvvh") {
+  val getPreFillFromVVH = (
+    apiOperation[Map[String, Any]]("getPreFillFromVVH")
+      .parameters(
+        queryParam[Long]("linkId").description("LinkId of a project link"),
+        queryParam[Long]("currentProjectId").description("Id of the Current Active Project")
+      )
+      tags "User interface - ProjectLinks"
+      summary "Returns a object with simple information about a selected project link"
+      notes "Said object contains the Road number, road part number, road name and the source."
+    )
+
+  get("/roadlinks/project/prefillfromvvh", operation(getPreFillFromVVH)) {
     val linkId = params("linkId").toLong
     val currentProjectId = params("currentProjectId").toLong
     time(logger, s"GET request for /roadlinks/project/prefillfromvvh (linkId: $linkId, projectId: $currentProjectId)") {
@@ -192,7 +260,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/adjacent") {
+  val getFloatingAdjacent = (
+    apiOperation[Seq[Map[String, Any]]]("getFloatingAdjacent")
+      .parameters(
+        queryParam[Long]("roadData").description("Road Data String").notes("RoadData: { " +
+          "selectedLinks: Seq[Long] \r\n" +
+          "selectedLinkIds: Seq[Long] \r\n" +
+          "linkId: Long \r\n" +
+          "id: Long \r\n" +
+          "roadPartNumber: Long \r\n" +
+          "trackCode: Long \r\n" +
+          "}")
+      )
+      tags "User interface - RoadAddresses"
+      summary "Returns a sequence of  RoadAddressLink object adjacent to the selectedLinks"
+      notes "Currently unimplemented"
+    )
+
+  get("/roadlinks/adjacent", operation(getFloatingAdjacent)) {
     val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String, Any]]
     val chainLinkIds = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
     val chainIds = data("selectedIds").asInstanceOf[Seq[Long]].toSet
@@ -207,7 +292,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/midpoint/:linkId") {
+  val getMidPointByLinkId = (
+    apiOperation[Map[String, Any]]("getMidPointByLinkId")
+      .parameters(
+        pathParam[Long]("linkId").description("LinkId of a road address")
+      )
+      tags "User interface"
+      summary "Returns an Point object of the given linkId, if possible"
+      notes ""
+    )
+
+  get("/roadlinks/midpoint/:linkId", operation(getMidPointByLinkId)) {
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
