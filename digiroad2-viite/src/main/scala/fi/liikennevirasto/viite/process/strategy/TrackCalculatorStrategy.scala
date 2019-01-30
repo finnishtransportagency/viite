@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
@@ -200,36 +201,80 @@ trait TrackCalculatorStrategy {
               setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
           }
 
-          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false, ProjectLinkSource)) ++ pls.init.tail ++
-            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true, ProjectLinkSource))
+          val calPointSource1 = if (pls.tail.head.calibrationPoints._1.isDefined) pls.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
+          val calPointSource2 = if (pls.init.last.calibrationPoints._2.isDefined) pls.init.last.calibrationPoints._2.get.source else ProjectLinkSource
+          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
+            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, calPointSource2))
       }
   }
 
-  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource) = {
+  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
+                                    startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource): ProjectLink = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
-  protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous) {
-      val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
+  /**
+    * Returns project links for the other track before and after the point where there is discontinuity on the track.
+    *
+    * Find the links from the track A whose end points are nearest to the discontinuity point on track B.
+    * Search the link from track A that is 75 degrees or less different from the link with the discontinuity point on track B
+    * and that has highest possible end address (not greater than the end address of the nearest link).
+    * If the discontinuity is on the left track, reject the nearest link.
+    *
+    * @param trackA
+    * @param linkOnTrackB
+    * @return (Project links before the discontinuity point, project links after the discontinuity point)
+    */
+  protected def getUntilNearestAddress(trackA: Seq[ProjectLink], linkOnTrackB: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    if (linkOnTrackB.discontinuity == MinorDiscontinuity || linkOnTrackB.discontinuity == Discontinuous) {
 
-      if (continuousProjectLinks.isEmpty)
+      // Sort links in order by the distance from the end of the link on track b.
+      // Include only the nearest candidates
+      val maxNumberOfCandidates = 10
+      val linkOnTrackBEndPoint = linkOnTrackB.lastPoint
+      val nearestLinks: Seq[(ProjectLink, Double)] = trackA.map(pl => (pl,
+        pl.lastPoint.distance2DTo(linkOnTrackBEndPoint)
+      )).sortWith(_._2 < _._2).take(maxNumberOfCandidates) // Links with nearest end points first
+
+      // Find the highest possible end address value. When the discontinuity is on the left side, ignore the nearest link.
+      val maxEndAddress: Long = (if (linkOnTrackB.track == Track.LeftSide && nearestLinks.size > 1) {
+        nearestLinks.lift(1)
+      } else {
+        nearestLinks.headOption
+      }).getOrElse(throw new RoadAddressException("Could not find any nearest road address"))._1.endAddrMValue
+      val nearestLinksSortedByAddressDesc = nearestLinks.sortWith(_._1.endAddrMValue > _._1.endAddrMValue)
+
+      // All links that are over 75 degrees angle compared to the one having the discontinuity will be ignored.
+      // Nearest links in triangles should be accepted, but in rectangles rejected.
+      val maxAngleBetweenLinks = math.toRadians(75)
+      val linkOnTrackBDirection = linkOnTrackB.lastSegmentDirection
+
+      // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as the lastLink
+      val lastLink: ProjectLink = nearestLinksSortedByAddressDesc.collectFirst {
+        case l if l._1.lastSegmentDirection.angle(linkOnTrackBDirection) < maxAngleBetweenLinks && l._1.endAddrMValue <= maxEndAddress => l._1 }
+        .getOrElse(nearestLinks.head._1)
+
+      // Return links before the discontinuity point and links after it
+      val continuousLinks = trackA.takeWhile(pl => pl.endAddrMValue <= lastLink.endAddrMValue)
+      if (continuousLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")
 
-      val lastProjectLink = continuousProjectLinks.last
-      if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.endAddrMValue))) {
-        (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
-      } else {
-        (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
-      }
+      (continuousLinks, trackA.drop(continuousLinks.size))
     } else {
-      val continuousProjectLinks = seq.takeWhile(pl => pl.status == endProjectLink.status)
-      (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+      val continuousProjectLinks = trackA.takeWhile(pl => pl.status == linkOnTrackB.status)
+      (continuousProjectLinks, trackA.drop(continuousProjectLinks.size))
     }
   }
 
+  /**
+    * Re-adds the calibration points to the project links after the calculation. The calibration points are gotten via the information on our current linear locations.
+    * 
+    * @param calculatorResult: TrackCalculatorResult - the result of the calculation
+    * @param userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint] - Map of linear location id -> UserDefinedCalibrationPoint
+    * @return
+    */
   def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
 
