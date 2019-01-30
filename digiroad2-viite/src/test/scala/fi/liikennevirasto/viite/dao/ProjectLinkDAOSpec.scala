@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.{NewRoadway, RoadType}
@@ -253,7 +254,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test updateProjectLinkNumbering When changing the discontinuity value of one track only Then the discontinuity value for that track should be updated the other should remain") {
+  test("Test updateProjectLinkNumbering When changing the discontinuity value of Left track specific id only Then the discontinuity value for that Left track ids should be updated the other should remain") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
       val projectId = Sequences.nextViitePrimaryKeySeqValue
@@ -270,7 +271,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val links = projectLinkDAO.fetchProjectLinks(projectId)
       links.size should be (2)
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newPartNumber, "test")
-      projectLinkDAO.updateProjectLinkNumbering(projectId, links.map(_.id).toSet, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", Discontinuity.MinorDiscontinuity.value, Track.LeftSide, 0)
+      projectLinkDAO.updateProjectLinkNumbering(projectId, links.filter(_.track == LeftSide).map(_.id).toSet, roadNumber1, roadPartNumber1, LinkStatus.Numbering, newRoadNumber, newPartNumber, "test", Discontinuity.MinorDiscontinuity.value, Track.LeftSide, 0)
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(projectId)
       linksAfterUpdate.size should be (2)
       linksAfterUpdate.groupBy(p => (p.roadNumber, p.roadPartNumber)).keys.head should be ((newRoadNumber, newPartNumber))
