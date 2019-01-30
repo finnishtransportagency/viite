@@ -780,6 +780,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case Some(errMsg) => throw new IllegalStateException(errMsg)
           case None =>
             if (projectDAO.isUniqueName(roadAddressProject.id, roadAddressProject.name)) {
+              projectDAO.update(roadAddressProject)
               val storedProject = projectDAO.fetchById(roadAddressProject.id).get
               val removed = storedProject.reservedParts.filterNot(part =>
                 roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
@@ -1445,7 +1446,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
               }
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
-              projectLinkDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity, toUpdateLinks.head.track, ely = ely.getOrElse(toUpdateLinks.head.ely))
+
+              projectLinkDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.map(_.id).toSet, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber,
+                linkStatus, newRoadNumber, newRoadPartNumber, userName, discontinuity, toUpdateLinks.head.track, ely = ely.getOrElse(toUpdateLinks.head.ely))
               roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
