@@ -475,7 +475,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter(pl => {
               pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
             })
-            val originalSideCodes = linearLocationDAO.fetchByRoadways(projectLinks.map(_.roadwayId).toSet)
+            val originalSideCodes = linearLocationDAO.fetchByRoadways(projectLinks.map(_.roadwayNumber).toSet)
               .map(l => l.id -> l.sideCode).toMap
 
             val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(projectLinks.map(_.roadwayId))
