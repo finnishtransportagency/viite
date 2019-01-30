@@ -41,21 +41,21 @@ package object viite {
 
   val MaxAdjustmentRange = 10L
 
-  val NewRoadway: Long = -1000L
-
-  val NewLinearLocation: Long = -1000L
-
   val noRoadwayId: Long = 0L
 
   val noReservedPartId: Long = 0L
 
-  val NewRoadwayNumber: Long = -1000L
+  val NewRoadway,
 
-  val newCalibrationPointId: Long = -1000L
+  NewLinearLocation,
 
-  val NewRoadNameId: Long = -1000L
+  NewRoadwayNumber,
 
-  val NewProjectLink: Long = -1000L
+  NewCalibrationPointId,
+
+  NewRoadNameId,
+
+  NewProjectLink: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
 
@@ -63,7 +63,7 @@ package object viite {
   val MaxJumpForSection = 50.0
 
   /* Maximum distance to consider the tracks to go side by side */
-  val MaxDistanceBetweenTracks = 50.0
+  val MaxDistanceBetweenTracks = 50
 
   /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
   val MaxSuravageToleranceToGeometry = 0.5
@@ -89,6 +89,11 @@ package object viite {
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
   val ErrorInconsistentTopology = "Topology have inconsistent data."
   val ErrorInconsistentLrmHistory = "Lrm with inconsistent history."
+  val ErrorInconsistent2TrackCalibrationPoints = "Missing relative calibration point in opposite track."
+  val ErrorInconsistentContinuityCalibrationPoints = "Missing relative connecting starting point."
+  val ErrorMissingEdgeCalibrationPoints = "Missing edge calibration points."
+  val ErrorInconsistentAddressValues = "Error in continuity by address m values between connected links."
+  val InconsistentAddressValues = "Wrong address values between links."
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."

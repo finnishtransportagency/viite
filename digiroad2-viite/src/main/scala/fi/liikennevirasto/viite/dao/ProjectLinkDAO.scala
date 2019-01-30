@@ -159,7 +159,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     }
   }
 
-  def calibrationPointsSourcesToDB(): CalibrationPointSource = {
+  def calibrationPointsSourcesToDB: CalibrationPointSource = {
     calibrationPoints match {
       case (None, None) => CalibrationPointSource.NoCalibrationPoint
       case (Some(cp1), None) => cp1.source
@@ -174,6 +174,13 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case (Some(cp1), None) => cp1.addressMValue == addressMValue
       case (None, Some(cp1)) => cp1.addressMValue == addressMValue
       case (Some(cp1), Some(cp2)) => cp1.addressMValue == addressMValue || cp2.addressMValue == addressMValue
+    }
+  }
+
+  def hasCalibrationPoints: Boolean = {
+    calibrationPoints match {
+      case (None, None) => false
+      case  _ => true
     }
   }
 }
@@ -352,7 +359,7 @@ class ProjectLinkDAO {
         addressPS.setDouble(24, pl.endMValue)
         addressPS.setDouble(25, pl.linkGeometryTimeStamp)
         addressPS.setInt(26, pl.linkGeomSource.value)
-        addressPS.setInt(27, pl.calibrationPointsSourcesToDB().value)
+        addressPS.setInt(27, pl.calibrationPointsSourcesToDB.value)
         addressPS.addBatch()
       }
       addressPS.executeBatch()
@@ -401,7 +408,7 @@ class ProjectLinkDAO {
         projectLinkPS.setInt(17, projectLink.sideCode.value)
         projectLinkPS.setDouble(18, projectLink.startMValue)
         projectLinkPS.setDouble(19, projectLink.endMValue)
-        projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB().value)
+        projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
         projectLinkPS.setLong(21, projectLink.ely)
         projectLinkPS.setLong(22, projectLink.id)
         projectLinkPS.addBatch()

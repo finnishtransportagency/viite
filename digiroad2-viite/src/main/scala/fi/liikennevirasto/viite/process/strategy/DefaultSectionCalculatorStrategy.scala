@@ -55,9 +55,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }.toSeq
   }
 
-  private def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def getContinuousSection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val continuousProjectLinks = seq.takeWhile(pl => pl.track == track)
+    val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(0)
+    val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadwayNumber == roadwayNumber))
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
   }
 
@@ -68,8 +69,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
       } else {
-        val (firstRight, restRight) = getContinuousTrack(rightLinks)
-        val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
+
+        val (firstRight, restRight) = getContinuousSection(rightLinks)
+        val (firstLeft, restLeft) = getContinuousSection(leftLinks)
 
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
