@@ -218,53 +218,25 @@ trait TrackCalculatorStrategy {
   /**
     * Returns project links for the other track before and after the point where there is discontinuity on the track.
     *
-    * Find the links from the track A whose end points are nearest to the discontinuity point on track B.
-    * Search the link from track A that is 75 degrees or less different from the link with the discontinuity point on track B
-    * and that has highest possible end address (not greater than the end address of the nearest link).
-    * If the discontinuity is on the left track, reject the nearest link.
-    *
     * @param trackA
     * @param linkOnTrackB
     * @return (Project links before the discontinuity point, project links after the discontinuity point)
     */
-  protected def getUntilNearestAddress(trackA: Seq[ProjectLink], linkOnTrackB: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (linkOnTrackB.discontinuity == MinorDiscontinuity || linkOnTrackB.discontinuity == Discontinuous) {
-
-      // Sort links in order by the distance from the end of the link on track b.
-      // Include only the nearest candidates
-      val maxNumberOfCandidates = 10
-      val linkOnTrackBEndPoint = linkOnTrackB.lastPoint
-      val nearestLinks: Seq[(ProjectLink, Double)] = trackA.map(pl => (pl,
-        pl.lastPoint.distance2DTo(linkOnTrackBEndPoint)
-      )).sortWith(_._2 < _._2).take(maxNumberOfCandidates) // Links with nearest end points first
-
-      // Find the highest possible end address value. When the discontinuity is on the left side, ignore the nearest link.
-      val maxEndAddress: Long = (if (linkOnTrackB.track == Track.LeftSide && nearestLinks.size > 1) {
-        nearestLinks.lift(1)
-      } else {
-        nearestLinks.headOption
-      }).getOrElse(throw new RoadAddressException("Could not find any nearest road address"))._1.endAddrMValue
-      val nearestLinksSortedByAddressDesc = nearestLinks.sortWith(_._1.endAddrMValue > _._1.endAddrMValue)
-
-      // All links that are over 75 degrees angle compared to the one having the discontinuity will be ignored.
-      // Nearest links in triangles should be accepted, but in rectangles rejected.
-      val maxAngleBetweenLinks = math.toRadians(75)
-      val linkOnTrackBDirection = linkOnTrackB.lastSegmentDirection
-
-      // Choose the nearest link that has similar enough angle to the linkOnTrackB and set it as the lastLink
-      val lastLink: ProjectLink = nearestLinksSortedByAddressDesc.collectFirst {
-        case l if l._1.lastSegmentDirection.angle(linkOnTrackBDirection) < maxAngleBetweenLinks && l._1.endAddrMValue <= maxEndAddress => l._1 }
-        .getOrElse(nearestLinks.head._1)
-
-      // Return links before the discontinuity point and links after it
-      val continuousLinks = trackA.takeWhile(pl => pl.endAddrMValue <= lastLink.endAddrMValue)
-      if (continuousLinks.isEmpty)
+  protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous) {
+      val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
+      if (continuousProjectLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")
 
-      (continuousLinks, trackA.drop(continuousLinks.size))
+      val lastProjectLink = continuousProjectLinks.last
+      if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.endAddrMValue))) {
+        (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
+      } else {
+        (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+      }
     } else {
-      val continuousProjectLinks = trackA.takeWhile(pl => pl.status == linkOnTrackB.status)
-      (continuousProjectLinks, trackA.drop(continuousProjectLinks.size))
+      val continuousProjectLinks = seq.takeWhile(pl => pl.status == endProjectLink.status)
+      (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
   }
 

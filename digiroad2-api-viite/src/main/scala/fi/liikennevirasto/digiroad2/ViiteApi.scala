@@ -641,7 +641,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, s"GET request for /project/getchangetable/$projectId") {
       val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
       //TODO change UI to not override project validator errors on change table call
-      val changeTableData = projectService.getChangeProject(projectId).map(project =>
+      val (changeProject, warningMessage) = projectService.getChangeProject(projectId)
+      val changeTableData = changeProject.map(project =>
         Map(
           "id" -> project.id,
           "user" -> project.user,
@@ -652,7 +653,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
               "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
-      Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors)
+      Map("changeTable" -> changeTableData, "validationErrors" -> validationErrors, "warningMessage" -> warningMessage)
     }
   }
 
