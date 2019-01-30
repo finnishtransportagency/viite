@@ -28,13 +28,21 @@ class RoadNetworkService {
 
     def checkRoadways(l: Seq[Roadway], r: Seq[Roadway]): Seq[RoadNetworkError] = {
 
-      val sectionLeft = l.zip(l.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, lws) =>
+      val sectionLeft = if(l.isEmpty || l.size == 1){
+        Seq.empty[RoadNetworkError]
+      } else {
+        l.zip(l.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, lws) =>
         checkAddressMValues(lws._1, lws._2, errors)
-      )
+        )
+      }
 
-      val sectionRight = r.zip(r.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
+      val sectionRight = if(r.isEmpty || r.size == 1) {
+        Seq.empty[RoadNetworkError]
+      } else {
+        r.zip(r.tail).foldLeft(Seq.empty[RoadNetworkError])((errors, rws) =>
         checkAddressMValues(rws._1, rws._2, errors)
-      )
+        )
+      }
 
       sectionLeft ++ sectionRight
     }
