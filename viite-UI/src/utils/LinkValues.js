@@ -154,5 +154,17 @@
 
     root.BlackUnderlineRoadTypes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
 
+    root.ElyCodes = {
+        ELY_U:      {value: 1},
+        ELY_T:      {value: 2},
+        ELY_KAS:    {value: 3},
+        ELY_H:      {value: 4},
+        ELY_SK:     {value: 8},
+        ELY_KES:    {value: 9},
+        ELY_V:      {value: 10},
+        ELY_O:      {value: 12},
+        ELY_L:      {value: 14}
+    };
+
 })(window.LinkValues = window.LinkValues || {});
 

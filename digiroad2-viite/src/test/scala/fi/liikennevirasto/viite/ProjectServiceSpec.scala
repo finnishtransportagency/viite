@@ -246,7 +246,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     val projectStartDate = if (startDate.isEmpty) DateTime.now() else startDate.get
     val project = Project(id, ProjectState.Incomplete, "f", "s", projectStartDate, "", projectStartDate, projectStartDate,
-      "", Seq(), None, Some(8), None)
+      "", Seq(), None, None)
     projectDAO.create(project)
     val links =
       if (changeTrack) {
@@ -411,47 +411,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val errorRoad = s"TIE $roadNumber OSA: $roadPartNumber"
       val reservedPart = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
       val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
-      projectService.validateReservations(reservedPart, Some(projectEly), Seq(), roadWays) should be(Some(s"$ErrorFollowingRoadPartsNotFoundInDB $errorRoad"))
-    }
-  }
-
-  test("Test validateReservations When ely code is diferent Then return error") {
-    runWithRollback {
-      val roadNumber = 5
-      val roadPartNumber = 205
-      val projectEly = 8L
-      val newReserveEly = 1L
-      val errorRoad = s"TIE $roadNumber OSA: $roadPartNumber"
-      val reservedPart1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None)
-      val project = projectService.createRoadLinkProject(rap)
-      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
-      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-
-      val reservedPart2 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(newReserveEly))
-
-      projectService.validateReservations(reservedPart2, Some(projectEly), projectLinks, roadWays) should be(Some(s"$ErrorFollowingPartsHaveDifferingEly $errorRoad"))
-    }
-  }
-
-  test("Test validateReservations When road parts exist and ely is the same Then return None") {
-    runWithRollback {
-      val roadNumber = 5
-      val roadPartNumber = 207
-      val projectEly = 8L
-      val reservedPart1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None)
-      val project = projectService.createRoadLinkProject(rap)
-      mockForProject(project.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project)))
-      projectService.saveProject(project.copy(reservedParts = Seq(reservedPart1)))
-      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber)
-      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-      val reservedPart2 = ProjectReservedPart(0L, roadNumber, roadPartNumber, Some(1000L), Some(Continuous), Some(projectEly))
-      projectService.validateReservations(reservedPart2, Some(projectEly), projectLinks, roadWays) should be(None)
+      projectService.validateReservations(reservedPart, Seq(), roadWays) should be(Some(s"$ErrorFollowingRoadPartsNotFoundInDB $errorRoad"))
     }
   }
 
@@ -692,47 +652,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test saveProject When all reserved parts are removed Then Project ELY should be -1 ") {
-    val projectIdNew = 0L
-    val roadNumber = 19438
-    val roadPartNumber = 1
-    val linkId = 12345L
-    val roadwayNumber = 8000L
-
-    runWithRollback {
-
-      //Creation of Test road
-      val id = Sequences.nextRoadwayId
-      val ra = Seq(Roadway(id, roadwayNumber, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 1000L,
-        reversed = false, DateTime.parse("1963-01-01"), None, "teste", Option("test name"), 8L, NoTermination))
-      val rl = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), 9.8, State, 1, TrafficDirection.BothDirections,
-        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
-      roadwayDAO.create(ra)
-      val addresses: List[ProjectReservedPart] = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-
-      //Creation of test project with test links
-      val project = Project(projectIdNew, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
-        DateTime.now(), DateTime.now(), "info",
-        List.empty, None)
-      val proj = projectService.createRoadLinkProject(project)
-      val returnedProject = projectService.getSingleProjectById(proj.id).get
-      returnedProject.name should be("testiprojekti")
-      returnedProject.ely.getOrElse(-1) should be(-1)
-      mockForProject(project.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(proj)))
-      projectService.saveProject(proj.copy(reservedParts = addresses))
-      val updatedReturnProject = projectService.getSingleProjectById(proj.id).head
-      updatedReturnProject.ely.getOrElse(-1) should be(8)
-      projectService.saveProject(proj.copy(ely = None)) //returns project to null
-      val updatedReturnProject2 = projectService.getSingleProjectById(proj.id).head
-      updatedReturnProject2.ely.getOrElse(-1) should be(-1)
-      projectService.saveProject(proj.copy(reservedParts = addresses))
-      val updatedReturnProject3 = projectService.getSingleProjectById(proj.id).head
-      updatedReturnProject3.ely.getOrElse(-1) should be(8)
-    }
-  }
-
   test("Test getRoadAddressSingleProject When project with reserved parts is created Then return the created project") {
     var projectId = 0L
     val roadNumber = 19438
@@ -876,21 +795,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val attributes1 = Map("ROADNUMBER" -> BigInt(2))
     val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
     projectService.parsePreFillData(Seq(newRoadLink1)) should be(Left("Link does not contain valid prefill info"))
-  }
-
-  test("Test setProjectEly When ely is changed Then project ely should change") {
-    runWithRollback {
-      val roadAddressProject = Project(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], None, None)
-      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      val project = projectService.createRoadLinkProject(roadAddressProject)
-      project.ely should be(None)
-      val result = projectService.setProjectEly(project.id, 2)
-      result should be(None)
-      val result2 = projectService.setProjectEly(project.id, 2)
-      result2 should be(None)
-      val result3 = projectService.setProjectEly(project.id, 3)
-      result3.isEmpty should be(false)
-    }
   }
 
   test("Test projectService.createSplitRoadAddress When dealing with a road addresses that were subjected to the transfer and the new operations " +
@@ -1497,7 +1401,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         */
       val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1995-01-01"), DateTime.now(), "Some additional info",
-        Seq(), None, ely = Some(8))
+        Seq(), None)
 
       // part1
       // track1
@@ -1801,7 +1705,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 66666, 'ROAD TEST', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
 
-      sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, NULL, NULL, 1, 533406.572, 6994060.048, 12)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, NULL, NULL, 1, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
 
       sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, NULL, NULL, NULL, NULL, 1543328166000, 1, 0, NULL, 0, 85.617)""".execute
@@ -1842,7 +1746,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val addresses = List(ProjectReservedPart(5: Long, roadNumber: Long, part: Long, Some(5L), Some(Discontinuity.apply("jatkuva")),
         Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val project = Project(id, ProjectState.Incomplete, "TestProject", "TestUser", DateTime.now(),
-        "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info", Seq(), None, ely = Some(8L))
+        "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info", Seq(), None)
       val savedProject = projectService.createRoadLinkProject(project)
 
 
@@ -1919,7 +1823,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getLatestRoadName When having no road name for given road number Then road name should not be saved on TR success response if road number > 70.000 (even though it has no name)") {
     runWithRollback {
       val projectId = Sequences.nextViitePrimaryKeySeqValue
-      sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
+      sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 70001, 1, $projectId, '-')""".execute
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
                 VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 70001, 1, 0, 86, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
@@ -1940,7 +1844,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         val projectId = Sequences.nextViitePrimaryKeySeqValue
         sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 66666, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
 
-        sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
+        sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
         sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86)""".execute
         sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'another road name test')""".execute
@@ -1969,7 +1873,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getLatestRoadName When existing TR success response Then the road name should be saved") {
       runWithRollback {
         val projectId = Sequences.nextViitePrimaryKeySeqValue
-        sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
+        sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
         sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86)""".execute
         sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
@@ -1997,7 +1901,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getLatestRoadName When existing TR success response Then multiple names should be saved") {
       runWithRollback {
         val projectId = Sequences.nextViitePrimaryKeySeqValue
-        sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 8, 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
+        sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 55555, 1, $projectId, '-')""".execute
         sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86)""".execute
@@ -2288,10 +2192,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test handleNewRoadNames - Test if a new RoadName is created from a project link") {
+  test("Test handleNewRoadNames - Test if a new RoadName is created from a project link and without duplicates") {
     runWithRollback {
 
-      val testRoadNumber = 9999
+      val testRoadNumber1 = 9999
+      val testRoadNumber2 = 9998
       val testName = "TEST ROAD NAME"
 
       val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -2301,18 +2206,30 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.New,
-          source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 1),
 
-        RoadwayChangeInfo(AddressChangeType.Unchanged,
-          source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(5), reversed = false, 2),
 
-        RoadwayChangeInfo(AddressChangeType.Unchanged,
-          source = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(5), reversed = false, 3),
+        RoadwayChangeInfo(AddressChangeType.New,
+          source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(5), reversed = false, 3)
       )
 
@@ -2321,22 +2238,32 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, projectStartTime, Some(0)),
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(1), projectStartTime, Some(0)),
-        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), projectStartTime, Some(0))
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(2), projectStartTime, Some(0)),
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(3), projectStartTime, Some(0)),
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(4), projectStartTime, Some(0)),
+        ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(5), projectStartTime, Some(0))
       )
 
-      ProjectLinkNameDAO.create(project.id, testRoadNumber, testName)
+      ProjectLinkNameDAO.create(project.id, testRoadNumber1, testName)
+      ProjectLinkNameDAO.create(project.id, testRoadNumber2, testName)
 
       // Method to be tested
       projectService.handleNewRoadNames(changes, project)
 
       // Test if project link is removed from DB
-      ProjectLinkNameDAO.get(project.id, testRoadNumber) should be (None)
+      ProjectLinkNameDAO.get(project.id, testRoadNumber1) should be (None)
 
       // Test if the new roadnames have the test road name & number
-      val roadnames = RoadNameDAO.getAllByRoadNumber(testRoadNumber)
-      roadnames.foreach(rn => {
+      val roadnames1 = RoadNameDAO.getAllByRoadNumber(testRoadNumber1)
+      roadnames1.foreach(rn => {
         rn.roadName should be (testName)
-        rn.roadNumber should be (testRoadNumber)
+        rn.roadNumber should be (testRoadNumber1)
+      })
+
+      val roadnames2 = RoadNameDAO.getAllByRoadNumber(testRoadNumber2)
+      roadnames2.foreach(rn => {
+        rn.roadName should be (testName)
+        rn.roadNumber should be (testRoadNumber2)
       })
     }
   }
@@ -2562,6 +2489,42 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
           rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
         }
       })
+    }
+  }
+
+  test("Test save project with reserved road parts having different ELY codes "){
+    runWithRollback {
+
+      val roadNumber = 75
+      val part1 = 1
+      val part2 = 2
+      val ely1 = Some(2L)
+      val ely2 = Some(1L)
+
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val reservations = List(
+        ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, roadNumber, part1, Some(0L), Some(Continuous), ely1, None, None, None, None, isDirty = true),
+        ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, roadNumber, part2, Some(0L), Some(Continuous), ely2, None, None, None, None, isDirty = true)
+      )
+      val project = projectService.createRoadLinkProject(rap)
+
+      val address1 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part1).map(_.roadwayNumber).toSet))
+      val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part2).map(_.roadwayNumber).toSet))
+      mockForProject(project.id, (address1 ++ address2).map(toProjectLink(rap)))
+      val savedProject = projectService.saveProject(project.copy(reservedParts = reservations))
+      val originalElyPart1 = roadwayDAO.fetchAllByRoadAndPart(roadNumber, part1).map(_.ely).toSet
+      val originalElyPart2 = roadwayDAO.fetchAllByRoadAndPart(roadNumber, part2).map(_.ely).toSet
+      val reservedPart1 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part1)
+      val reservedPart2 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part2)
+      reservedPart1.nonEmpty should be (true)
+      reservedPart1.get.ely.get should be (originalElyPart1.head)
+      reservedPart1.get.newEly should be (ely1)
+      reservedPart2.nonEmpty should be (true)
+      reservedPart2.get.ely.get should be (originalElyPart2.head)
+      reservedPart2.get.newEly should be (ely2)
+
     }
   }
 

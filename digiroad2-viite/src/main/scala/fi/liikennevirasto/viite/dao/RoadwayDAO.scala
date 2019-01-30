@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
@@ -238,6 +238,32 @@ trait BaseRoadAddress {
 
     GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
+
+  lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.head
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.last
+  }
+  lazy val endPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.last
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.head
+  }
+
+  def getEndPoints: (Point, Point) = {
+    if (sideCode == SideCode.Unknown) {
+      val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
+      Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
+    } else {
+      (startingPoint, endPoint)
+    }
+  }
 }
 
 //TODO the start date and the created by should not be optional on the road address case class
@@ -413,6 +439,15 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Will get a collection of Roadways from our database based on the road number, road part number given.
+    * Also has query modifiers that will inform if it should return history roadways (default value no) or if should get only the end parts (max end address m value, default value no).
+    * @param roadNumber: Long - Road Number
+    * @param roadPart: Long - Road Part Number
+    * @param withHistory: Boolean - Query modifier, indicates if should fetch history roadways or not
+    * @param fetchOnlyEnd: Boolean - Query modifier, indicates if should fetch only the end parts or not
+    * @return
+    */
   def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number and part") {
       fetch(withRoadAndPart(roadNumber, roadPart, withHistory, fetchOnlyEnd))
@@ -569,6 +604,17 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Defines the portion of the query that will filter the results based on the given road number, road part number and if it should include history roadways or fetch only their end parts.
+    * Will return the completed SQL query.
+    *
+    * @param roadNumber: Long - Road Number
+    * @param roadPart: Long - Road Part Number
+    * @param includeHistory: Boolean - Query modifier, indicates if should fetch history roadways or not
+    * @param fetchOnlyEnd: Boolean - Query modifier, indicates if should fetch only the end parts or not
+    * @param query: String - The actual SQL query string
+    * @return
+    */
   private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
     val historyFilter = if (!includeHistory)
       " AND end_date is null"
@@ -668,6 +714,12 @@ class RoadwayDAO extends BaseDAO {
           AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
   }
 
+  /**
+    * Composes the original SQL fetch query the the where clause filtering by roadwayId.
+    * @param roadwayIds: Seq[Long] - Collection of the roadway id's to return
+    * @param query: String - The original SQL fetch query
+    * @return
+    */
   private def withRoadWayIds(roadwayIds: Seq[Long])(query: String): String = {
     s"""$query where id in (${roadwayIds.mkString(",")}) and a.valid_to is null and a.end_date is null"""
   }
@@ -699,6 +751,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Full SQL query to return, if existing, a road part number that is < than the supplied current one.
+    * @param roadNumber: Long - Roadway Road Number
+    * @param current: Long - Roadway Road Part Number
+    * @return
+    */
     def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
       val query =
         s"""
@@ -723,6 +781,11 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Expires roadways (set their valid to to the current system date) to all the roadways that have the supplied ids.
+    * @param ids: Seq[Long] - The ids of the roadways to expire.
+    * @return
+    */
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""

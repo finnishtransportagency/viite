@@ -332,7 +332,7 @@
 
       var disableFormInputs = function () {
         if (!isProjectEditable()) {
-          $('#roadAddressProject input').prop('disabled', true);
+          $('#roadAddressProject :input').prop('disabled', true);
           $('.btn-reserve').prop('disabled', true);
           $('.btn-delete').prop('hidden', true);
         }
@@ -411,6 +411,7 @@
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
         applicationModel.setSelectedTool("Select");
         applicationModel.addSpinner();
+        eventbus.trigger('projectChangeTable:hide');
         projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {
           rootElement.empty();
           setTimeout(function () {
@@ -532,22 +533,26 @@
         var id = this.id;
         var roadNumber = this.attributes.roadNumber.value;
         var roadPartNumber = this.attributes.roadPartNumber.value;
-        if (!currentProject) {
-          projectCollection.setReservedParts(projectCollection.deleteRoadPartFromList(projectCollection.getCurrentReservedParts(), roadNumber, roadPartNumber));
-          $('#reservedRoads').html(writeHtmlList(projectCollection.getCurrentReservedParts()));
-        } else if (projectCollection.getAllReservedParts()[id]) {
-          new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
-            successCallback: function () {
-              removePart(roadNumber, roadPartNumber);
-              _.defer(function () {
-                textFieldChangeHandler({removedReserved: true});
+
+          if (!currentProject) {
+            projectCollection.setReservedParts(projectCollection.deleteRoadPartFromList(projectCollection.getCurrentReservedParts(), roadNumber, roadPartNumber));
+            $('#reservedRoads').html(writeHtmlList(projectCollection.getCurrentReservedParts()));
+          }
+          if (isProjectEditable()) {
+            if (currentProject && projectCollection.getAllReservedParts()[id]) {
+              new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
+                successCallback: function () {
+                  removePart(roadNumber, roadPartNumber);
+                  _.defer(function () {
+                    textFieldChangeHandler({removedReserved: true});
+                  });
+                }
               });
+            } else {
+              removePart(roadNumber, roadPartNumber);
             }
-          });
-        }
-        else {
-          removePart(roadNumber, roadPartNumber);
-        }
+          }
+
       });
 
       rootElement.on('change', '.form-group', function () {
