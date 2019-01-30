@@ -304,7 +304,7 @@ object ProjectDeltaCalculator {
       val possibleExistingSameEndAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._2.endMAddr == target.endMAddr
       && s._1.track != src.track)
       if (possibleExistingSameEndAddrMValue.nonEmpty) {
-        val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > 50)
+        val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
           Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
         else
           None

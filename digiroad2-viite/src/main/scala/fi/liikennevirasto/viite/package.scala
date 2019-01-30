@@ -60,9 +60,10 @@ package object viite {
   val MaxDistanceForConnectedLinks = 0.1
 
   /* Used for small jumps on discontinuity or self-crossing tracks */
-  val MaxJumpForSection,
+  val MaxJumpForSection = 50.0
+
   /* Maximum distance to consider the tracks to go side by side */
-  MaxDistanceBetweenTracks = 50.0
+  val MaxDistanceBetweenTracks = 50
 
   /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
   val MaxSuravageToleranceToGeometry = 0.5
