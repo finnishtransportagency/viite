@@ -2018,7 +2018,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int]) should be(None)
         projectService.allLinksHandled(savedProject.id) should be(true)
         val changeProjectOpt = projectService.getChangeProject(savedProject.id)
-        val change = changeProjectOpt.get
+        val change = changeProjectOpt._1.get
         val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
         updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
         updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
@@ -2079,7 +2079,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.filterNot(_ == 5168510L).toSeq, LinkStatus.Transfer, "-", 0, 0, 0, Option.empty[Int])
         projectService.allLinksHandled(savedProject.id) should be(true)
         val changeProjectOpt = projectService.getChangeProject(savedProject.id)
-        val change = changeProjectOpt.get
+        val change = changeProjectOpt._1.get
         val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
         updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
         updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)

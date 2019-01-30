@@ -41,21 +41,21 @@ package object viite {
 
   val MaxAdjustmentRange = 10L
 
-  val NewRoadway: Long = -1000L
-
-  val NewLinearLocation: Long = -1000L
-
   val noRoadwayId: Long = 0L
 
   val noReservedPartId: Long = 0L
 
-  val NewRoadwayNumber: Long = -1000L
+  val NewRoadway,
 
-  val newCalibrationPointId: Long = -1000L
+  NewLinearLocation,
 
-  val NewRoadNameId: Long = -1000L
+  NewRoadwayNumber,
 
-  val NewProjectLink: Long = -1000L
+  NewCalibrationPointId,
+
+  NewRoadNameId,
+
+  NewProjectLink: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
 
@@ -63,7 +63,7 @@ package object viite {
   val MaxJumpForSection = 50.0
 
   /* Maximum distance to consider the tracks to go side by side */
-  val MaxDistanceBetweenTracks = 50.0
+  val MaxDistanceBetweenTracks = 50
 
   /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
   val MaxSuravageToleranceToGeometry = 0.5
