@@ -22,8 +22,14 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @return The linear location with recalculated calibration points
     */
   private def recalculateHistoryCalibrationPoints(historyRoadwayAddress: Roadway, linearLocations: Seq[LinearLocation]): Seq[LinearLocation] = {
-    val currentRoadwayAddress = roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber).
-      getOrElse(throw new NoSuchElementException(s"Could not find any current road address for roadway ${historyRoadwayAddress.roadwayNumber}"))
+    val currentRoadwayAddress = (if (OracleDatabase.isWithinSession) {
+      roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber)
+    } else {
+      OracleDatabase.withDynSession {
+        roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber)
+      }
+    }).getOrElse(throw new NoSuchElementException(s"Could not find any current road address for roadway ${historyRoadwayAddress.roadwayNumber}"))
+
 
     //Fix calibration points in history road addresses
     val addressLength = historyRoadwayAddress.endAddrMValue - historyRoadwayAddress.startAddrMValue
