@@ -38,9 +38,9 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
             roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads.toSet, currNetworkVersion, nextNetworkVersion, throughActor = false))
         }
-        if (currNetworkVersion.nonEmpty && !roadNetworkDAO.hasCurrentNetworkErrors) {
+        if (!roadNetworkDAO.hasCurrentNetworkErrors) {
           logger.info(s"No errors found. Creating new publishable version for the road network ")
-          roadNetworkDAO.expireRoadNetwork
+          if(currNetworkVersion.nonEmpty) roadNetworkDAO.expireRoadNetwork
           roadNetworkDAO.createPublishedRoadNetwork
           val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
           roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
@@ -69,7 +69,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
     )
     val checkMaxMovedDistance = Math.abs(roadAddresses.maxBy(_.endMValue).endMValue - GeometryUtils.geometryLength(roadLink.geometry)) > MaxMoveDistanceBeforeFloating
     if (movedAddresses.nonEmpty) {
-      println(s"The following road addresses (${movedAddresses.map(_.id).mkString(", ")}) deviate by a factor of ${MaxMoveDistanceBeforeFloating} of the RoadLink: ${roadLink.linkId}")
+      println(s"The following road addresses (${movedAddresses.map(_.id).mkString(", ")}) deviate by a factor of $MaxMoveDistanceBeforeFloating of the RoadLink: ${roadLink.linkId}")
       println(s"Proceeding to check if the addresses are a result of automatic merging and if they overlap.")
 
       // If we get road addresses that were merged we check if they current road link is not overlapping, if it not, then there is a floating problem
