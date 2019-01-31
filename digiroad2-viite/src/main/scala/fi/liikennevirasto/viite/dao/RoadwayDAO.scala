@@ -656,7 +656,7 @@ class RoadwayDAO extends BaseDAO {
       val strDate = dateFormatter.print(searchDate)
       s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') < $table.end_date or $table.end_date is null))"
     }
-    if(roadwayNumbers.size > 1000){
+    if (roadwayNumbers.size > 1000) {
       MassQuery.withIds(roadwayNumbers) {
         idTableName =>
           s"""
