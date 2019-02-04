@@ -101,7 +101,17 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  get("/roadnames/changes") {
+  val getRoadNameChanges = (
+    apiOperation[Option[String]]("getRoadNameChanges").parameters(
+      queryParam[String]("since").description("Start date of the road addresses changes"),
+      queryParam[String]("until").description("End date of the road addresses changes")
+    )
+      tags "Integration (kalpa)"
+      summary "Shows all the road address non floating for a given municipalities."
+      parameter queryParam[Int]("municipality").description("The municipality identifier"))
+  )
+
+  get("/roadnames/changes", operation(getRoadNameChanges)) {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     val untilUnformatted = params.get("until")
