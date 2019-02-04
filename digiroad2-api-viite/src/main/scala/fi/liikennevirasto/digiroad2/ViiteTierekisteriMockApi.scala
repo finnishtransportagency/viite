@@ -31,7 +31,7 @@ class ViiteTierekisteriMockApi(implicit val swagger: Swagger) extends ScalatraSe
 
   val postAddresschange = (
     apiOperation[Map[String, Any]]("postAddresschange").parameters(
-      headerParam[Map[String, String]]("X-Authorization").description("This is the default authorization string."),
+      headerParam[String]("X-Authorization").description("This is the default authorization string."),
       bodyParam[Map[String, Any]]("mappedObject").description("This is the default authorization string.")
     )
     tags "ViiteTierekisteriMockApi"
@@ -178,7 +178,7 @@ class ViiteTierekisteriMockApi(implicit val swagger: Swagger) extends ScalatraSe
 
   val getAddressChangesByProjectId = (
     apiOperation[Map[String, Any]]("getAddressChangesByProjectId").parameters(
-      headerParam[Map[String, String]]("X-Authorization").description("This is the default authorization string."),
+      headerParam[String]("X-Authorization").description("This is the default authorization string."),
       pathParam[String]("projectId").description("This is the project Id")
     )
       tags "ViiteTierekisteriMockApi"
