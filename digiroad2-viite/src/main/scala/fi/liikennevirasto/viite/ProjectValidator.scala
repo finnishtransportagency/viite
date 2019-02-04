@@ -1019,7 +1019,7 @@ class ProjectValidator {
                 val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
                 val isConnected = Seq(last).forall(lpl => nextLinks.exists(nl => Track.isTrackContinuous(nl.track, lpl.track) &&
                   lpl.connected(nl)))
-                if(isConnected) error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last)) else None
+                if (isConnected) error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last)) else None
               } else
                 None
             } else
