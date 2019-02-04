@@ -108,7 +108,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     )
       tags "Integration (kalpa)"
       summary "Shows all the road address non floating for a given municipalities."
-      parameter queryParam[Int]("municipality").description("The municipality identifier"))
+      parameter queryParam[Int]("municipality").description("The municipality identifier")
   )
 
   get("/roadnames/changes", operation(getRoadNameChanges)) {
