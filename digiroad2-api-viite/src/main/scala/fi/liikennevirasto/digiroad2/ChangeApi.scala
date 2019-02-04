@@ -27,8 +27,8 @@ class ChangeApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
   val roadNumberToGeoJson = (
     apiOperation[Map[String, Any]]("roadNumberToGeoJson")
       .parameters(
-        queryParam[String]("since").description("Start date of the road addreses"),
-        queryParam[String]("until").description("Start date of the road addreses")
+        queryParam[String]("since").description("Start date of the road addresses changes"),
+        queryParam[String]("until").description("End date of the road addresses changes")
       )
       tags "ChangeAPI"
       summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
