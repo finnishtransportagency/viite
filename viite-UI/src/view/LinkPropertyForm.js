@@ -45,7 +45,9 @@
           {value: 2, description: "Epäjatkuva"},
           {value: 3, description: "ELY:n raja"},
           {value: 4, description: "Lievä epäjatkuvuus"},
-          {value: 5, description: "Jatkuva"}
+          {value: 5, description: "Jatkuva"},
+          //TODO - needs translation to Finnish
+          {value: 6, description: "Parallel Link"}
         ]
       }
     ];
