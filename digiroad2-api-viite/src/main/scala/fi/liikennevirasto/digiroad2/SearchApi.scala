@@ -10,15 +10,11 @@ import org.json4s.Formats
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.slf4j.LoggerFactory
-import org.scalatra.swagger._
 
 
-class SearchApi(roadAddressService: RoadAddressService, implicit val swagger: Swagger) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport with SwaggerSupport {
-
+class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
-
-  protected val applicationDescription = "The SearchAPI"
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
@@ -31,18 +27,7 @@ class SearchApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
     contentType = formats("json")
   }
 
-  val getRoadAddressesByLinkIdAndMeasures = (
-    apiOperation[Seq[RoadAddress]]("getRoadAddressesByLinkIdAndMeasures").parameters(
-      queryParam[String]("linkId").description("Link Id of a road address"),
-      queryParam[Seq[String]]("startMeasure").description("Start measure (MValue) of a road address"),
-      queryParam[Seq[String]]("endMeasure").description("End measure (MValue) of a road address")
-    )
-    tags "SearchAPI"
-    summary "^Returns a sequence of road addresses that are between the given Start and End Measures"
-    notes "If start and end measures are not defined then it will pick up ALL from the link id."
-  )
-
-  get("/road_address/?", operation(getRoadAddressesByLinkIdAndMeasures)) {
+  get("/road_address/?") {
     val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toLong
     val startMeasure = params.get("startMeasure").map(_.toDouble)
     val endMeasure = params.get("endMeasure").map(_.toDouble)
@@ -52,30 +37,13 @@ class SearchApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
     }
   }
 
-  val getAllRoadNumbers = (
-    apiOperation("getAllRoadNumbers")
-      tags "SearchAPI"
-      summary "Returns a sequence of all road numbers"
-      notes ""
-    )
-
-  get("/road_numbers?", operation(getAllRoadNumbers)) {
+  get("/road_numbers?") {
     time(logger, "GET request for /road_numbers?") {
       roadAddressService.getRoadNumbers
     }
   }
 
-  val getRoadAddressWithRoadNumber = (
-    apiOperation("getRoadAddressWithRoadNumber")
-        .parameters(
-          pathParam[String]("road").description("This is the road number of a set of road addresses.")
-        )
-      tags "SearchAPI"
-      summary "Returns a sequence of all road addresses that share the given road number."
-      notes ""
-  )
-
-  get("/road_address/:road/?", operation(getRoadAddressWithRoadNumber)) {
+  get("/road_address/:road/?") {
     val roadNumber = params("road").toLong
     time(logger, s"GET request for /road_address/$roadNumber/?") {
       val trackCodes = multiParams.getOrElse("tracks", Seq()).map(_.toInt)
@@ -83,17 +51,7 @@ class SearchApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
     }
   }
 
-  val getRoadAddressesByPartAndNumber = (
-    apiOperation("getRoadAddressesByPartAndNumber").parameters(
-      pathParam[String]("road").description("Road number of a sequence of road addresses."),
-      pathParam[String]("roadPart").description("Road part number of a sequence of road addresses.")
-    )
-      tags "SearchAPI"
-      summary "Returns a sequence of all road addresses that share the given road number and road part."
-      notes ""
-  )
-
-  get("/road_address/:road/:roadPart/?", operation(getRoadAddressesByPartAndNumber)) {
+  get("/road_address/:road/:roadPart/?") {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/?") {
@@ -101,18 +59,7 @@ class SearchApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
     }
   }
 
-  val getRoadAddressesByPartNumberAndAddressM = (
-    apiOperation("getRoadAddressesByPartNumberAndAddressM").parameters(
-      pathParam[String]("road").description("Road number of a sequence of road addresses."),
-      pathParam[String]("roadPart").description("Road part number of a sequence of road addresses."),
-      pathParam[String]("address").description("Address M Value of a sequence of road addresses.")
-    )
-      tags "SearchAPI"
-      summary "Returns a sequence of all road addresses that share the given road number, road part and addressMValue."
-      notes ""
-    )
-
-  get("/road_address/:road/:roadPart/:address/?", operation(getRoadAddressesByPartNumberAndAddressM)) {
+  get("/road_address/:road/:roadPart/:address/?") {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     val address = params("address").toLong
@@ -123,19 +70,7 @@ class SearchApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
     }
   }
 
-  val getRoadAddressesByPartNumberStartAddressMValueAndEndAddressMValue = (
-    apiOperation("getRoadAddressesByPartNumberStartAddressMValueAndEndAddressMValue").parameters(
-      pathParam[String]("road").description("Road number of a sequence of road addresses."),
-      pathParam[String]("roadPart").description("Road part number of a sequence of road addresses."),
-      pathParam[String]("startAddress").description("Start Address M Value of a sequence of road addresses."),
-      pathParam[String]("endAddress").description("End Address M Value of a sequence of road addresses.")
-    )
-      tags "SearchAPI"
-      summary "Returns a sequence of all road addresses that share the given road number, road part and are between the startAddress and endAddress."
-      notes ""
-    )
-
-  get("/road_address/:road/:roadPart/:startAddress/:endAddress/?", operation(getRoadAddressesByPartNumberStartAddressMValueAndEndAddressMValue)) {
+  get("/road_address/:road/:roadPart/:startAddress/:endAddress/?") {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     val startAddress = params("startAddress").toLong
@@ -146,35 +81,14 @@ class SearchApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
     }
   }
 
-  val postRequestGetRoadAddressByLinkIds = (
-    apiOperation[Map[String, Any]]("postRequestGetRoadAddressByLinkIds").parameters(
-      queryParam[Set[Long]]("linkIds").description("Set of unique linkId's to fetch")
-    )
-    tags "SearchAPI"
-    summary "Returns a sequence of road addresses that share the linkId's that were supplied"
-    notes ""
-  )
-
-  post("/road_address/?", operation(postRequestGetRoadAddressByLinkIds)) {
+  post("/road_address/?") {
     time(logger, s"POST request for /road_address/?") {
       val linkIds = (parsedBody).extract[Set[Long]]
       roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
   }
 
-  val postRequestGetRoadAddressByRoadNumberPartsAndTracks = (
-    apiOperation[Map[String, Any]]("postRequestGetRoadAddressByRoadNumber")
-      .parameters(
-        pathParam("road").description("Road Number of the road addresses"),
-        queryParam("roadParts").description("Road Number of the road addresses"),
-        queryParam("tracks").description("Road Number of the road addresses")
-      )
-      tags "SearchAPI"
-      summary "Returns a sequence of road addresses that share the road number, the part number adn the tracks that are supplied on the request."
-      notes ""
-  )
-
-  post("/road_address/:road/?", operation(postRequestGetRoadAddressByRoadNumberPartsAndTracks)) {
+  post("/road_address/:road/?") {
     time(logger, s"POST request for /road_address/:road/?"){
       val roadNumber = params("road").toLong
       val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
