@@ -291,7 +291,7 @@ object TrackSectionOrder {
         val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && ready.isEmpty) match {
           case (false, _) | (true, true) =>
             SideCode.AgainstDigitizing
-          case (true, false) =>
+          case _ =>
             SideCode.TowardsDigitizing
         }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
