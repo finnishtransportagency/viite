@@ -167,7 +167,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       notes "Ideally we should have none."
   )
 
-  get("/roadaddress/floatings", operation(getFloatings)) {
+  get("/roadaddress/floatings/", operation(getFloatings)) {
     time(logger, "GET request for /roadAddress/floatings") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getFloatingAdresses().groupBy(_.ely).map(
@@ -190,7 +190,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "InconsistentAddressValues"
     )
 
-  get("/roadaddress/errors", operation(getRoadAddressErrors)) {
+  get("/roadaddress/errors/", operation(getRoadAddressErrors)) {
     time(logger, "GET request for /roadAddress/errors") {
       response.setHeader("Access-Control-Allow-Headers", "*")
       roadAddressService.getRoadAddressErrors().groupBy(_.ely).map(
@@ -387,9 +387,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getMultiSourceFloatingAdjacent = (
     apiOperation[Map[String, Any]]("getMultiSourceFloatingAdjacent")
       .parameters(
-        queryParam[Long]("roadData").description("Road Number of a road address"),
-        bodyParam[Seq[RoadNameRow]]("roadData").description("Data of the road selection\r\n" +
-          "Structure of the data object: \r\n" + roadDataStringDescription)
+        pathParam[String]("roadData").description("Data of the road selection\r\n" +
+          "Structure of the data object: \r\n" + roadDataStringDescription + " \r\n Example String: \r\n" + exampleRoadDataString )
       )
       tags "ViiteAPI - Unimplemented"
       summary "Returns a sequence of  RoadAddressLink object adjacent to the selectedLinks of each instance of the roadDataObject"
@@ -611,7 +610,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val deleteProjectById = (
     apiOperation[Map[String, Any]]("deleteProjectById")
       .parameters(
-        queryParam[Long]("projectId").description("The id of the project to delete.")
+        bodyParam[Long]("projectId").description("The id of the project to delete.")
       )
     tags "ViiteAPI - Project"
     summary "This will delete a project and all dependant information, that shares the given Id."
@@ -638,10 +637,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val sendProjectToTRByProjectId = (
     apiOperation[Map[String, Any]]("sendProjectToTRByProjectId")
       .parameters(
-        queryParam[Long]("projectID").description("The id of the project to send to TR.")
+        bodyParam[Long]("projectID").description("The id of the project to send to TR.")
       )
       tags "ViiteAPI - Project"
-      summary "This will send a project and all dependant information, that shares the given ProjectId to TR for further analisis."
+      summary "This will send a project and all dependant information, that shares the given ProjectId to TR for further analysis."
       notes "We assume that the project has no validation issues."
 
   )
@@ -668,7 +667,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val changeDirection = (
     apiOperation[Map[String, Any]]("changeDirection")
       .parameters(
-        bodyParam[RevertRoadLinksExtractor]("RevertRoadLinks").description("Ob1ject that details what project links should be reversed \r\n" +
+        bodyParam[RevertRoadLinksExtractor]("RevertRoadLinks").description("Object that details what project links should be reversed \r\n" +
           "Object Stucture: \r\n" + revertRoadLinksExtractorStructure)
       )
     tags "ViiteAPI - Project"
@@ -861,7 +860,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     apiOperation[Map[String, Any]]("updateProjectLinks")
       .parameters(
         bodyParam[RoadAddressProjectLinksExtractor]("RoadAddressProjectLinks").description("Object representing the projectLinks to create \r\n" +
-          "Object structure:" + roadAddressProjectLinksExtractorStructure)
+          "Object structure: \r\n" + roadAddressProjectLinksExtractorStructure)
       )
       tags "ViiteAPI - Project"
       summary "This will receive all the project link data with changes to be commited on the system."
@@ -935,10 +934,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getProjectLinksByProjectId = (
     apiOperation[Map[String, Any]]("getProjectLinksByProjectId")
         .parameters(
-          queryParam[Long]("projectId").description("Id of a project")
+          pathParam[Long]("projectId").description("Id of a project")
         )
       tags "ViiteAPI - Project"
-      summary "Akin to the one used by the road addresses, this one will return all road addresses and project links that are within the viewport defined by the bounding box."
+      summary "Akin to the one used by the road addresses, this one will return all road addresses and project links of a specific project.."
       notes ""
   )
 
@@ -959,7 +958,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val removeRotatingTRIdByProjectId = (
     apiOperation[Map[String, Any]]("removeRotatingTRIdByProjectId")
       .parameters(
-        queryParam[Long]("projectId").description("Id of a project")
+        pathParam[Long]("projectId").description("Id of a project")
       )
       tags "ViiteAPI - Project"
       summary "This is a part of the re-opening of a project, this one will remove the TRId of a project that has the projectId supplied."
@@ -983,7 +982,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val validateProjectAndReturnChangeTableById =(
     apiOperation[Map[String, Any]]("validateProjectAndReturnChangeTableById")
       .parameters(
-        queryParam[Long]("projectId").description("Id of a project")
+        pathParam[Long]("projectId").description("Id of a project")
       )
       tags "ViiteAPI - Project"
       summary "Given a valid projectId, this will run the validations to the project in question and it will also fetch all the changes made on said project."
@@ -1077,7 +1076,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getSuravagePreSplitInfoByLinkId = (
     apiOperation[Map[String, Any]]("getSuravagePreSplitInfoByLinkId")
       .parameters(
-        queryParam[Long]("linkID").description("LinkId of a projectLink")
+        pathParam[Long]("linkID").description("LinkId of a projectLink")
       )
       tags "ViiteAPI - Project - SuravageSplit"
       summary "This should return all the information pertaining to a split of the suravage links, but, without saving any data."
@@ -1129,7 +1128,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val splitSuravageLinkByLinkId = (
     apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
       .parameters(
-        queryParam[Long]("linkID").description("LinkId of a projectLink")
+        pathParam[Long]("linkID").description("LinkId of a projectLink")
       )
       tags "ViiteAPI - Project - SuravageSplit"
       summary "This effectively perform the split and save the results on the database."
@@ -1191,7 +1190,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         queryParam[Long]("addrMValue").description("Address M Value of a road address")
       )
       tags "ViiteAPI - RoadAddresses"
-      summary "Returns all the road names that are related to a certain project (referenced by the projectID) and within a certain roadNumber."
+      summary "Returns all the road names that are identified by the road number, road part number and possibly addressM value."
       notes ""
   )
 
@@ -1219,7 +1218,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "Object structure: \r\n" + revertSplitExtractor)
         )
       tags "ViiteAPI - Project - SuravageSplit"
-      summary "This effectively perform the split and save the results on the database."
+      summary "This effectively reverts the split operation and save the results on the database."
       notes ""
   )
 
@@ -1246,8 +1245,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   val convertRoadAddressToFloatingByLinkId = (
     apiOperation[Map[String, Any]]("convertRoadAddressToFloatingByLinkId")
-        .parameters()
-      tags "ViiteAPI - RoadAddresses"
+        .parameters(
+          pathParam[Long]("linkId").description("Link Id of a road addresss")
+        )
+      tags "ViiteAPI - Unimplemented"
       summary "This will convert a standard road address to a floating road address by link id."
       notes ""
   )

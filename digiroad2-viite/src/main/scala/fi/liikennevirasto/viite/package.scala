@@ -179,14 +179,25 @@ package object viite {
     "|  startDate |     String     |        Start date of this modification, default format (dd.MM.yyyy).        |\n" +
     "|   endDate  | Option[String] | Optional value, end date of this modification, default format (dd.MM.yyyy). |"
 
-  val roadDataStringDescription = "roadData: { " +
-    "selectedLinks: Seq[Long] \r\n" +
-    "selectedLinkIds: Seq[Long] \r\n" +
-    "linkId: Long \r\n" +
-    "id: Long \r\n" +
-    "roadPartNumber: Long \r\n" +
-    "trackCode: Long \r\n" +
-    "}"
+  val roadDataStringDescription = "" +
+    "|    Field Name   | Field Type |          Description         |\n" +
+    "|:---------------:|:----------:|:----------------------------:|\n" +
+    "|  selectedLinks  |  Seq[Long] |           Suljettu           |\n" +
+    "| selectedLinkIds |  Seq[Long] |         Keskeneräinen        |\n" +
+    "|      linkId     |    Long    |   Lähetetty tierekisteriin   |\n" +
+    "|        id       |    Long    |     Virhe tierekisterissä    |\n" +
+    "|  roadPartNumber |    Long    | Tierekisterissä käsittelyssä |\n" +
+    "|    trackCode    |    Long    |     Viety tierekisteriin     |"
+
+  val exampleRoadDataString = "" +
+    "[\n" +
+    "  \t{\n" +
+    "    \t\t\"id\": 0,\n" +
+    "    \t\t\"name\": \"string\",\n" +
+    "    \t\t\"startDate\": \"string\",\n" +
+    "    \t\t\"endDate\": \"string\"\n" +
+    "  \t}\n" +
+    "]"
 
   val roadPartExtractorStructure = "" +
     "|   Field Name   | Field Type |\n" +
