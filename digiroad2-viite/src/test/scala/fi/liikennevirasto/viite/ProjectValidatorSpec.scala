@@ -2385,7 +2385,7 @@ Left|      |Right
   }
 
   //TODO - needs to be tested after VIITE-1788
-  ignore("Test projectValidator.checkRoadContinuityCodes When using a Ely change Then the discontinuity codes validations would be suppressed.") {
+  test("Test projectValidator.checkRoadContinuityCodes When issuing a Ely change and one of the roads becomes the end of it Then the discontinuity codes validations should return a MissingEndOfRoad error.") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.Continuous, ely = 1L)
       addProjectLinksToProject(LinkStatus.Transfer, Seq(60L, 70L, 80L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadNumber = 20000L,roadPartNumber = 1L, ely = 2L)
@@ -2394,27 +2394,10 @@ Left|      |Right
       val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
       roadwayDAO.create(rw)
       val checkRoadContinuityChecks = projectValidator.checkRoadContinuityCodes(project, updatedProjectLinks)
-      checkRoadContinuityChecks.size should be (0)
-    }
-  }
-
-  test("Test projectValidator.checkRoadContinuityCodes When using a EndOfRoad code in last past in a lower roadNumber with different ELy code from the next one with bigger roadNumber Then the should have one error saying that the continuity coe should be ELY change") {
-    /*
-    This gives error because next part or number have different ELY -> Ely change code != EndOfRoad
-    |<------------------------------------------------|<------------------------------------------------|
-      ContinuityCode:EndOfRoad Ely:1 roadnumber:19998   ContinuityCode:EndOfRoad Ely:5 roadnumber:19999:
-     */
-
-    runWithRollback {
-      val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, ely = 1L)
-      addProjectLinksToProject(LinkStatus.Transfer, Seq(0L, 10L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadNumber = 19998, ely = 2L)
-      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-      mockEmptyRoadAddressServiceCalls()
-      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
-      roadwayDAO.create(rw)
-      val checkRoadContinuityChecks = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       checkRoadContinuityChecks.size should be (1)
-      checkRoadContinuityChecks.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeChangeDetected)
+      checkRoadContinuityChecks.head.validationError should be (projectValidator.ValidationErrorList.MissingEndOfRoad)
+      checkRoadContinuityChecks.head.affectedIds.size should be (1)
+      checkRoadContinuityChecks.head.affectedIds.head should be (updatedProjectLinks.find(p => p.roadNumber != 20000L && p.endAddrMValue == updatedProjectLinks.filter(_.roadNumber != 20000L).maxBy(_.endAddrMValue).endAddrMValue).get.id)
     }
   }
 
