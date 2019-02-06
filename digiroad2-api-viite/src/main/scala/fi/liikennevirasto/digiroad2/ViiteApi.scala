@@ -167,18 +167,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadaddress/:id") {
-    val id = params("id").toLong
-    time(logger, s"GET request for /roadAddress/$id") {
-      //TODO BUG: suravage links should be included here
-      val roadLinks = roadAddressService.getRoadAddressLinkById(id)
-      foldSegments(roadLinks)
-        .map(midPoint)
-        .getOrElse(Map("success" -> false, "reason" -> ("ID:" + id + " not found")))
-    }
-
-  }
-
   get("/roadlinks/project/prefillfromvvh") {
     val linkId = params("linkId").toLong
     val currentProjectId = params("currentProjectId").toLong
@@ -192,35 +180,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/adjacent") {
-    val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String, Any]]
-    val chainLinkIds = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
-    val chainIds = data("selectedIds").asInstanceOf[Seq[Long]].toSet
-    val linkId = data("linkId").asInstanceOf[Long]
-    val id = data("id").asInstanceOf[Long]
-    val roadNumber = data("roadNumber").asInstanceOf[Long]
-    val roadPartNumber = data("roadPartNumber").asInstanceOf[Long]
-    val trackCode = data("trackCode").asInstanceOf[Long].toInt
-
-    time(logger, s"GET request for /roadlinks/adjacent (chainLinks: $chainLinkIds, linkId: $linkId, roadNumber: $roadNumber, roadPartNumber: $roadPartNumber, trackCode: $trackCode)") {
-      roadAddressService.getFloatingAdjacent(chainLinkIds, chainIds, linkId, id, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
-    }
-  }
-
   get("/roadlinks/midpoint/:linkId") {
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
-    }
-  }
-
-  get("/roadlinks/adjacent/target") {
-    val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String, Any]]
-    val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
-    val linkId = data("linkId").asInstanceOf[Long]
-
-    time(logger, s"GET request for /roadlinks/adjacent/target (chainLinks: $chainLinks, linkId: $linkId)") {
-      roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
     }
   }
 
@@ -249,62 +212,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/adjacent/multiSource") {
-    time(logger, "GET request for /roadlinks/adjacent/multiSource") {
-      val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String, Any]]]
-      if (roadData.isEmpty) {
-        Set.empty
-      } else {
-        val adjacents: Seq[RoadAddressLink] = {
-          roadData.flatMap(rd => {
-            val chainLinks = rd("selectedLinks").asInstanceOf[Seq[Long]].toSet
-            val chainIds = rd("selectedIds").asInstanceOf[Seq[Long]].toSet
-            val linkId = rd("linkId").asInstanceOf[Long]
-            val id = rd("id").asInstanceOf[Long]
-            val roadNumber = rd("roadNumber").asInstanceOf[Long]
-            val roadPartNumber = rd("roadPartNumber").asInstanceOf[Long]
-            val trackCode = rd("trackCode").asInstanceOf[Long].toInt
-            roadAddressService.getFloatingAdjacent(chainLinks, chainIds, linkId, id,
-              roadNumber, roadPartNumber, trackCode)
-          })
-        }
-        val linkIds: Seq[Long] = roadData.map(rd => rd("linkId").asInstanceOf[Long])
-        val ids: Seq[Long] = roadData.map(rd => rd("id").asInstanceOf[Long])
-        val result = adjacents.filter(adj => {
-          if (ids.nonEmpty) {
-            !ids.contains(adj.id)
-          } else {
-            !linkIds.contains(adj.linkId)
-          }
-        }).distinct
-        result.map(roadAddressLinkToApi)
-      }
-    }
-  }
-
   get("/roadlinks/checkproject/") {
     val projectId = params("projectId").toLong
     time(logger, s"GET request for /roadlinks/checkproject/ (projectId: $projectId)") {
       projectService.getProjectStatusFromTR(projectId)
-    }
-  }
-
-  get("/roadlinks/transferRoadLink") {
-    time(logger, "GET request for /roadlinks/transferRoadLink") {
-      val (sources, targets) = roadlinksData()
-      val user = userProvider.getCurrentUser()
-      try {
-        val result = roadAddressService.getRoadAddressLinksAfterCalculation(sources, targets, user)
-        result.map(roadAddressLinkToApi)
-      }
-      catch {
-        case e: IllegalArgumentException =>
-          logger.warn("Invalid transfer attempted: " + e.getMessage, e)
-          BadRequest("Invalid transfer attempted: " + e.getMessage)
-        case e: Exception =>
-          logger.warn(e.getMessage, e)
-          InternalServerError("An unexpected error occurred while processing this action.")
-      }
     }
   }
 
@@ -315,31 +226,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       foldSegments(projectLinks)
         .map(midPoint)
         .getOrElse(Map("success" -> false, "reason" -> ("Link " + linkId + " not found")))
-    }
-  }
-
-  put("/roadlinks/roadaddress") {
-    time(logger, "PUT request for /roadlinks/roadaddress") {
-      val data = parsedBody.extract[NewAddressDataExtracted]
-      val sourceIds = data.sourceIds
-      val targetIds = data.targetIds
-      val user = userProvider.getCurrentUser()
-
-      try {
-        val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
-        roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses, user.username)
-      }
-      catch {
-        case e: RoadAddressException =>
-          logger.warn(e.getMessage)
-          InternalServerError("An unexpected error occurred while processing this action.")
-        case e: MappingException =>
-          logger.warn("Exception treating road links", e)
-          BadRequest("Missing mandatory ProjectLink parameter")
-        case e: Exception =>
-          logger.warn("Exception", e)
-          BadRequest("An unexpected error occurred while processing this action.")
-      }
     }
   }
 
@@ -657,25 +543,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  post("/project/publish") {
-    //TODO VIITE-1551
-    /*try {
-      val projectId = params("projectId").toLong
-      time(logger, s"POST request for /project/publish (projectId: $projectId)") {
-        val writableProject = projectWritable(projectId)
-        val publishResult = writableProject.publishProject(projectId)
-        if (publishResult.sendSuccess && publishResult.validationSuccess)
-          Map("status" -> "ok")
-        PreconditionFailed(publishResult.errorMessage.getOrElse("Unknown error"))
-      }
-    } catch {
-      case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
-      case e: MappingException =>
-        logger.warn("Exception treating road links", e)
-        BadRequest("Missing mandatory ProjectLink parameter")
-    }*/
-  }
-
   post("/project/getCutLine") {
     time(logger, "POST request for /project/getCutLine") {
       try {
@@ -811,18 +678,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         }
       } catch {
         case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
-      }
-    }
-  }
-
-  put("/roadlinks/roadaddress/tofloating/:linkId") {
-    time(logger, "PUT request for /roadaddress/tofloating") {
-      val linkId = params("linkId").toLong
-      try {
-        roadAddressService.convertRoadAddressToFloating(linkId)
-      }
-      catch {
-        case _: Exception => BadRequest(s"an error occurred when trying to convert linkId $linkId to floating")
       }
     }
   }
