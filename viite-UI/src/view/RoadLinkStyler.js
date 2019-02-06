@@ -194,17 +194,20 @@
             new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 19 }})
         ];
 
-        var roadLinkStyle = new StyleRuleProvider({});
+        // Medium z-index for all roads
+        var roadLinkStyle = new StyleRuleProvider({zIndex: LinkValues.RoadZIndex.AnomalousMarkerLayer.value});
         roadLinkStyle.addRules(strokeRules);
         roadLinkStyle.addRules(strokeWidthRules);
         roadLinkStyle.addRules(strokeAdministrativeClassRules);
 
+        //Higher z-index for the fill colors and dashed roads
         var overlayStyle = new StyleRuleProvider({zIndex: LinkValues.RoadZIndex.CalibrationPointLayer.value});
         overlayStyle.addRules(fillRules);
         overlayStyle.addRules(fillWidthRules);
 
 
-        var borderStyle = new StyleRuleProvider({});
+        // Lower z-index to keep the black lines under the main ones
+        var borderStyle = new StyleRuleProvider({zIndex: LinkValues.RoadZIndex.VectorLayer.value});
         borderStyle.addRules(borderRules);
 
         var getRoadLinkStyle = function () {
