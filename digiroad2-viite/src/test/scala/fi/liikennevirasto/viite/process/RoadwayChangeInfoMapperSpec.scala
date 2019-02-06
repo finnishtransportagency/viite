@@ -113,55 +113,6 @@ class RoadwayChangeInfoMapperSpec extends FunSuite with Matchers {
 //    results.values.flatten.map(_.roadwayNumber).toSet.size should be (1)
 //    results.values.flatten.map(_.roadwayNumber).toSet.head should be (roadAddress1.roadwayNumber)
 //  }
-
-  //TODO will be implemented at VIITE-1537
-//  test("modify 1, transfer 2 To 1, transfer 3 to 1") {
-//    val roadLinkId1 = 123L
-//    val roadLinkId2 = 456L
-//    val roadLinkId3 = 789L
-//
-//    val changesVVHTimestamp = 96400L
-//
-//    val roadAddress1 = roadAddr.copy(id = 2, startAddrMValue = 400, endAddrMValue = 1400, linkId = roadLinkId1, endMValue = 1000.234, geometry = Seq(Point(0.0, 0.0), Point(1000.234, 0.0)))
-//    val roadAddress2 = roadAddr.copy(id = 1, startAddrMValue = 0, endAddrMValue = 400, linkId = roadLinkId2, endMValue = 399.648, geometry = Seq(Point(1000.234, 0.0), Point(1000.234, 399.648)))
-//    val roadAddress3 = roadAddr.copy(id = 367, startAddrMValue = 1400, endAddrMValue = 1465, createdBy = Some("tr"),
-//      linkId = roadLinkId3, endMValue = 65.259, sideCode = SideCode.TowardsDigitizing, geometry = List(Point(538889.668, 6999800.979, 0.0), Point(538912.266, 6999862.199, 0.0)))
-//
-//    val map = Seq(roadAddress1, roadAddress2, roadAddress3).groupBy(ad => (ad.linkId, ad.roadwayNumber)).mapValues(s => LinkRoadAddressHistory(s, Seq()))
-//    val changes = Seq(
-//      //Modifications
-//      ChangeInfo(Some(roadLinkId1), Some(roadLinkId1), 123L, 1, Some(0.0), Some(1000.234), Some(399.648), Some(1399.882), changesVVHTimestamp),
-//      //Transfers
-//      ChangeInfo(Some(roadLinkId2), Some(roadLinkId1), 123L, 2, Some(0.0), Some(399.648), Some(0.0), Some(399.648), changesVVHTimestamp),
-//      ChangeInfo(Some(roadLinkId3), Some(roadLinkId1), 123L, 2, Some(0.0), Some(65.259), Some(1465.0), Some(1399.882), changesVVHTimestamp)
-//    )
-//    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, changes).mapValues(_.allSegments.sortBy(_.startAddrMValue))
-//    results.get(roadLinkId1).isEmpty should be (false)
-//    results.get(roadLinkId2).isEmpty should be (true)
-//    results.get(roadLinkId3).isEmpty should be (true)
-//    results(roadLinkId1).size should be (3)
-//    results(roadLinkId1).forall(_.id == NewRoadway) should be (true)
-//    val addr1 = results(roadLinkId1).head
-//    addr1.startMValue should be (0)
-//    addr1.endMValue should be (399.648)
-//    addr1.startAddrMValue should be (0)
-//    addr1.endAddrMValue should be (400)
-//    addr1.adjustedTimestamp should be (changesVVHTimestamp)
-//    val addr2 = results(roadLinkId1)(1)
-//    addr2.startMValue should be (399.648)
-//    addr2.endMValue should be (1399.882)
-//    addr2.startAddrMValue should be (400)
-//    addr2.endAddrMValue should be (1400)
-//    addr2.adjustedTimestamp should be (changesVVHTimestamp)
-//    val addr3 = results(roadLinkId1)(2)
-//    addr3.startMValue should be (1399.882)
-//    addr3.endMValue should be (1465.0)
-//    addr3.startAddrMValue should be (1400)
-//    addr3.endAddrMValue should be (1465)
-//    addr3.adjustedTimestamp should be (changesVVHTimestamp)
-//    results.values.flatten.map(_.roadwayNumber).toSet.size should be (1)
-//    results.values.flatten.map(_.roadwayNumber).toSet.head should be (roadAddress1.roadwayNumber)
-//  }
 //
 //  test("split a road address link into three") {
 //    val roadLinkId1 = 123L

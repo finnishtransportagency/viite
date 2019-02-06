@@ -557,19 +557,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   }
 
-  /**
-    * Returns all floating road addresses that are represented on ROADWAY table and are valid (excluding history)
-    *
-    * @param includesHistory - default value = false to exclude history values
-    * @return Seq[RoadAddress]
-    */
-  def getFloatingAdresses(includesHistory: Boolean = false): List[RoadAddress] = {
-    throw new NotImplementedError("Will be implementd at VIITE-1537")
-    //    withDynSession {
-    //      RoadAddressDAO.fetchAllFloatingRoadAddresses(includesHistory)
-    //    }
-  }
-
   // TODO
   /**
     * Gets the Unaddressed roads that match the link ids from the list supplied.
@@ -581,47 +568,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     time(logger, "RoadAddressDAO.getUnaddressedRoadLinks by linkIds") {
       unaddressedRoadLinkDAO.getUnaddressedRoadLinks(linkIds)
     }
-  }
-
-  private def processRoadAddresses(addresses: Seq[RoadAddress], missedRL: Seq[UnaddressedRoadLink]): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implementd at VIITE-1537")
-    //    val linkIds = addresses.map(_.linkId).toSet
-    //    val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
-    //    val (roadLinks, vvhHistoryLinks) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(linkIds, frozenTimeVVHAPIServiceEnabled)
-    //    (anomaly, addresses.size, roadLinks.size, vvhHistoryLinks.size) match {
-    //      case (_, 0, 0, _) => List() // No road link currently exists and no addresses on this link id => ignore
-    //      case (Anomaly.GeometryChanged, _, _, 0) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-    //      case (Anomaly.GeometryChanged, _, _, _) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-    //      case (_, _, 0, _) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-    //      case (Anomaly.NoAddressGiven, 0, _, _) => missedRL.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-    //      case (_, _, _, _) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-    //    }
-  }
-
-  //  //Only used outside the class for test propose
-  //  def buildFloatingAddresses(allRoadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], floating: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-  //    //    val combinedRoadLinks = (allRoadLinks ++ suravageLinks).filter(crl => floating.map(_.linkId).contains(crl.linkId))
-  //    //    combinedRoadLinks.flatMap(fh => {
-  //    //      val actualFloatings = floating.filter(_.linkId == fh.linkId)
-  //    //      buildFloatingRoadAddressLink(toHistoryRoadLink(fh), actualFloatings)
-  //    //    })
-  //  }
-
-  //TODO: CASCADE DELETE
-  private def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    val fusedRoadAddresses = roadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
-    fusedRoadAddresses.map(ra => {
-      roadAddressLinkBuilder.build(rl, ra)
-    })
-  }
-
-  private def fetchUnaddressedRoadLinksByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
-    throw new NotImplementedError("Will be implemented at VIITE-1542")
-    //    withDynTransaction {
-    //      time(logger, "RoadAddressDAO.fetchUnaddressedRoadLinksByBoundingBox") {
-    //        RoadAddressDAO.fetchUnaddressedRoadLinksByBoundingBox(boundingRectangle).groupBy(_.linkId)
-    //      }
-    //    }
   }
 
   private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
@@ -782,34 +728,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //    }
   }
 
-  /**
-    * Returns unaddressed road links for links that did not already exist in database
-    *
-    * @param roadNumberLimits
-    * @param municipality
-    * @return
-    */
-  def getUnaddressedRoadLink(roadNumberLimits: Seq[(Int, Int)], municipality: Int): Seq[UnaddressedRoadLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1542")
-    //    val (addresses, missedRL, roadLinks) =
-    //      withDynTransaction {
-    //        val roadLinks = roadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumberLimits, frozenTimeVVHAPIServiceEnabled)
-    //        val linkIds = roadLinks.map(_.linkId).toSet
-    //        val addr = RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
-    //        val missingLinkIds = linkIds -- addr.keySet
-    //        (addr, RoadAddressDAO.getUnaddressedRoadLinks(missingLinkIds).groupBy(_.linkId), roadLinks)
-    //      }
-    //    val viiteRoadLinks = roadLinks.map { rl =>
-    //      val ra = addresses.getOrElse(rl.linkId, Seq())
-    //      val missed = missedRL.getOrElse(rl.linkId, Seq())
-    //      rl.linkId -> buildRoadAddressLink(rl, ra, missed)
-    //    }.toMap
-    //
-    //    val (_, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
-    //
-    //    changeSet.unaddressedRoadLinks
-  }
-
   //TODO this method is almost duplicated from buildRoadAddressLink if this method is needed in the future it should be refactored
   private def buildSuravageRoadAddressLink(rl: VVHRoadlink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     throw new NotImplementedError("Will be implemented at VIITE-1540")
@@ -831,17 +749,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     } else {
       roadAddressLinkBuilder.build(roadLinks.head, UnaddressedRoadLink(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven, Seq.empty[Point]))
     }
-  }
-
-  def createUnaddressedRoadLink(unaddressedRoadLink: Seq[UnaddressedRoadLink]): Unit = {
-    withDynTransaction {
-      unaddressedRoadLink.foreach(createSingleUnaddressedRoadLink)
-    }
-  }
-
-  private def createSingleUnaddressedRoadLink(unaddressedRoadLink: UnaddressedRoadLink): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1542 and VIITE-1538")
-    //    RoadAddressDAO.createUnaddressedRoadLink(unaddressedRoadLink)
   }
 
   def mergeRoadAddress(data: RoadAddressMerge): Unit = {

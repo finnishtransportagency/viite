@@ -211,32 +211,6 @@ class DataImporter {
     sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
   }
 
-  def updateUnaddressedRoadLinks(vvhClient: VVHClient) = {
-    val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
-    val eventBus = new DummyEventBus
-    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val roadwayDAO = new RoadwayDAO
-    val linearLocationDAO = new LinearLocationDAO
-    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-    val projectLinkDAO = new ProjectLinkDAO
-    val service = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus)
-    val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
-    roadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
-    roadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
-    val municipalities = OracleDatabase.withDynTransaction {
-      sqlu"""DELETE FROM UNADDRESSED_ROAD_LINK""".execute
-      println("Old address data cleared")
-      Queries.getMunicipalitiesWithoutAhvenanmaa
-    }
-      municipalities.foreach(municipality => {
-        println("Processing municipality %d at time: %s".format(municipality, DateTime.now()))
-        val unaddressed = service.getUnaddressedRoadLink(roadNumbersToFetch, municipality)
-        println("Got %d links".format(unaddressed.size))
-        service.createUnaddressedRoadLink(unaddressed)
-        println("Municipality %d: %d links added at time: %s".format(municipality, unaddressed.size, DateTime.now()))
-      })
-  }
-
   private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
     val (chunks, _) = linkIds.foldLeft((Seq[Long](0), 0)) {
       case ((fchunks, index), linkId) =>
