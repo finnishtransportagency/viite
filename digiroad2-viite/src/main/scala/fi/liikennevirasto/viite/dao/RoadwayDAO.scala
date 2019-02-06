@@ -656,8 +656,17 @@ class RoadwayDAO extends BaseDAO {
       val strDate = dateFormatter.print(searchDate)
       s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') < $table.end_date or $table.end_date is null))"
     }
-
-    s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+    if (roadwayNumbers.size > 1000) {
+      MassQuery.withIds(roadwayNumbers) {
+        idTableName =>
+          s"""
+            $query
+            join $idTableName i on i.id = a.ROADWAY_NUMBER
+            where a.valid_to is null and ${dateFilter(table = "a")}
+          """.stripMargin
+      }
+    }
+    else s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {

@@ -255,6 +255,10 @@ object DataFixture {
     ))
   }
 
+  def flywayInit() {
+    flyway.init()
+  }
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -314,11 +318,14 @@ object DataFixture {
         tearDown()
         setUpTest()
         importMunicipalityCodes()
+      case Some("flyway_init") =>
+        flywayInit()
 
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
-        "| apply_change_information_to_road_address_links | import_road_names | check_road_network")
+        "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
+        "| test | flyway_init")
     }
   }
 
