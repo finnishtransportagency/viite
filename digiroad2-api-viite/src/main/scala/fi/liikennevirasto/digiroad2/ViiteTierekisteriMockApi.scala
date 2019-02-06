@@ -5,12 +5,8 @@ import org.json4s.JsonAST.{JInt, JObject, JString}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra._
-import org.scalatra.swagger._
 
-
-class ViiteTierekisteriMockApi(implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
-
-  protected val applicationDescription = "The ViiteTierekisteriMockApi"
+class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
 
   var projectsReceived: Map[Long, Map[String, Any]] = Map()
   val SourceXIsNullMessage = "Source %s is null"
@@ -29,17 +25,7 @@ class ViiteTierekisteriMockApi(implicit val swagger: Swagger) extends ScalatraSe
     contentType = formats("json")
   }
 
-  val postAddresschange = (
-    apiOperation[Map[String, Any]]("postAddresschange").parameters(
-      headerParam[String]("X-Authorization").description("This is the default authorization string."),
-      bodyParam[Map[String, Any]]("mappedObject").description("This is the default authorization string.")
-    )
-    tags "ViiteTierekisteriMockApi"
-    summary "This should validate a full project as akin to the validation from Tierekisteri."
-    notes ""
-  )
-
-  post("/addresschange/", operation(postAddresschange)){
+  post("/addresschange/"){
     logger.info("POST /addresschange/")
     if (!request.headers.exists(_==("X-Authorization" -> "Basic aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk"))){
       logger.warn("POST not authorized")
@@ -176,17 +162,7 @@ class ViiteTierekisteriMockApi(implicit val swagger: Swagger) extends ScalatraSe
     }
   }
 
-  val getAddressChangesByProjectId = (
-    apiOperation[Map[String, Any]]("getAddressChangesByProjectId").parameters(
-      headerParam[String]("X-Authorization").description("This is the default authorization string."),
-      pathParam[String]("projectId").description("This is the project Id")
-    )
-      tags "ViiteTierekisteriMockApi"
-      summary "This should return the project data that were previously submited to be validated if it exist."
-      notes ""
-  )
-
-  get("/addresschange/:projectId", operation(getAddressChangesByProjectId)){
+  get("/addresschange/:projectId"){
     logger.info(s"GET /addresschange/${params("projectId")}")
     if (!request.headers.exists(_==("X-Authorization" -> "Basic aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk"))){
       logger.warn("GET not authorized")
