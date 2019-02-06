@@ -223,7 +223,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getRoadAddressLinkById = (
     apiOperation[Map[String, Any]]("getRoadAddressLinkById")
       .parameters(
-        pathParam[Long]("Id").description("Id of a road address")
+        pathParam[String]("id").description("Id of a road address")
       )
       tags "ViiteAPI - Unimplemented"
       summary "Returns the RoadAddressLink object of the given roadway Id"
@@ -269,7 +269,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getFloatingAdjacent = (
     apiOperation[Seq[Map[String, Any]]]("getFloatingAdjacent")
       .parameters(
-        queryParam[Long]("roadData").description("Road Data String \r\n" + roadDataStringDescription)
+        queryParam[String]("roadData").description("Road Data Object \r\n" + roadDataStringDescription + "\r\n" +
+          "Example String: \r\n" + exampleAdjacentRoadDataString)
       )
       tags "ViiteAPI - Unimplemented"
       summary "Returns a sequence of  RoadAddressLink object adjacent to the selectedLinks"
@@ -448,11 +449,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getRoadAddressLinksAfterCalculation = (
     apiOperation[Seq[Map[String, Any]]]("getRoadAddressLinksAfterCalculation")
         .parameters(
-          queryParam[Long]("data").description("Road Data String \r\n" +
+          queryParam[String]("data").description("Road Data String \r\n" +
             "data: { " +
             "sourceLinkIds: Seq[String] \r\n" +
             "targetLinkIds: Seq[String] \r\n" +
-            "}")
+            "}\r\n" +
+            "Example string: " + transferRoadLinksExampleString)
         )
       tags "ViiteAPI - Unimplemented"
       summary "Supposedly returned all the road addresses after performing a road address transfer (on the context of the defloating)."
@@ -1021,6 +1023,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   )
 
   post("/project/publish", operation(publishProjectByProjectId)) {
+    throw new NotImplementedError("Will be implemented at VIITE-1551")
     //TODO VIITE-1551
     /*try {
       val projectId = params("projectId").toLong
@@ -1158,10 +1161,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getRoadNamesByRoadNumberAndProjectId = (
     apiOperation[Map[String, Any]]("getRoadNamesByRoadNumberAndProjectId")
       .parameters(
-        queryParam[Long]("roadNumber").description("Road Number of a project link"),
-        queryParam[Long]("projectID").description("Id of a project")
+        pathParam[Long]("roadNumber").description("Road Number of a project link"),
+        pathParam[Long]("projectID").description("Id of a project")
       )
-      tags "ViiteAPI - RoadName"
+      tags "ViiteAPI - RoadNames"
       summary "Returns all the road names that are related to a certain project (referenced by the projectID) and within a certain roadNumber."
       notes ""
   )

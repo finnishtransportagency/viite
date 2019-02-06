@@ -182,12 +182,15 @@ package object viite {
   val roadDataStringDescription = "" +
     "|    Field Name   | Field Type |          Description         |\n" +
     "|:---------------:|:----------:|:----------------------------:|\n" +
-    "|  selectedLinks  |  Seq[Long] |           Suljettu           |\n" +
-    "| selectedLinkIds |  Seq[Long] |         Keskeneräinen        |\n" +
-    "|      linkId     |    Long    |   Lähetetty tierekisteriin   |\n" +
-    "|        id       |    Long    |     Virhe tierekisterissä    |\n" +
-    "|  roadPartNumber |    Long    | Tierekisterissä käsittelyssä |\n" +
-    "|    trackCode    |    Long    |     Viety tierekisteriin     |"
+    "|  selectedLinks  |  Seq[Long] |                              |\n" +
+    "|   selectedIds   |  Seq[Long] |                              |\n" +
+    "|      linkId     |    Long    |                              |\n" +
+    "|        id       |    Long    |                              |\n" +
+    "|  roadPartNumber |    Long    |                              |\n" +
+    "|    trackCode    |    Long    |                              |"
+
+  val exampleAdjacentRoadDataString = "" +
+    "{ \"id\": 0, \"linkId\": 0, \"selectedLinks\": [0], \"selectedIds\": [0], \"roadPartNumber\" : 0, \"trackCode\": 0 }"
 
   val exampleRoadDataString = "" +
     "[\n" +
@@ -198,6 +201,8 @@ package object viite {
     "    \t\t\"endDate\": \"string\"\n" +
     "  \t}\n" +
     "]"
+
+  val transferRoadLinksExampleString = "{ \"sourceLinkIds\": [\"AA\"], \"targetLinkIds\": [\"AA\"] }"
 
   val roadPartExtractorStructure = "" +
     "|   Field Name   | Field Type |\n" +
