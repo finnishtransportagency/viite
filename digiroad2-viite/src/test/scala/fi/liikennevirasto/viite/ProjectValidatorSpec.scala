@@ -2035,9 +2035,14 @@ Left|      |Right
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project, g._2).distinct)
+
       linksAfterTransfer.head.connected(linksAfterTransfer.last) should be(true)
-      errorsAfterTransfer.size should be(1)
-      errorsAfterTransfer.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
+      if (!linksAfterTransfer.last.connected(ra.last)) {
+        errorsAfterTransfer.size should be(0)
+      } else {
+        errorsAfterTransfer.size should be(1)
+        errorsAfterTransfer.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
+      }
     }
   }
 
