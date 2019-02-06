@@ -312,18 +312,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getAdjacent = (
     apiOperation[Seq[Map[String, Any]]]("getAdjacent")
       .parameters(
-        queryParam[Long]("roadData").description("Road Data String\r\n" +
+        queryParam[String]("roadData").description("Road Data String\r\n" +
           "roadData: { " +
           "selectedLinks: Seq[Long] \r\n" +
           "linkId: Long \r\n" +
-          "}")
+          "}\r\n" +
+          "Example String: {\"selectedLings\" : [0], \"linkId\": 0}")
       )
       tags "ViiteAPI - Unimplemented"
       summary "Returns a sequence of  RoadAddressLink object adjacent to the selectedLinks"
       notes "Currently unimplemented"
     )
 
-  get("/roadlinks/adjacent/target") {
+  get("/roadlinks/adjacent/target", operation(getAdjacent)) {
     val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String, Any]]
     val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
     val linkId = data("linkId").asInstanceOf[Long]
