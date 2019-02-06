@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import org.scalatra.{ActionResult, InternalServerError, Ok, ScalatraServlet}
+import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import org.slf4j.LoggerFactory
 import org.scalatra.swagger._
 
@@ -11,13 +11,13 @@ class PingApi(implicit val swagger: Swagger) extends ScalatraServlet with Swagge
   protected val applicationDescription = "The PingAPI"
 
   val ping = (
-    apiOperation[ActionResult]("ping")
+    apiOperation[Unit]("ping")
     tags "PingAPI"
     summary "This allows viite to respond to a simple, empty get request in order to receive a confirmation of Viite being active or not."
     notes ""
   )
 
-  get("/") {
+  get("/", operation(ping)) {
     try {
       Digiroad2Context.userProvider.getUser("")
       Ok("OK")
