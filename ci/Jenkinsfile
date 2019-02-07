@@ -78,6 +78,8 @@ pipeline {
                         "--batch-mode"
                     ].join(" ")
 
+                    STAGE_DEPLOY_CMD =
+                        "bundle exec cap staging deploy"
                 }
             }
         }
@@ -112,6 +114,10 @@ pipeline {
                         "viite-maven-publish",
                         "${build_args} -f ci/Dockerfile.maven ci"
                     )
+                    docker.build(
+                        "viite-capistrano"
+                        "${build_args} -f ci/Dockerfile.ruby ci"
+                     )
                 }
             }
             //post {
@@ -205,7 +211,13 @@ pipeline {
             //}
         }
        stage("Deploy") {
-            agent any
+            agent {
+                docker {
+                    image "viite-capistrano"
+                    reuseNode true
+                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
             when {
                 beforeAgent true
                 expression {
@@ -213,7 +225,7 @@ pipeline {
                 }
             }
             steps {
-				//sh STAGE_DEPLOY_CMD
+				sh STAGE_DEPLOY_CMD
 				echo "Running deploy... (skipped for now)"
             }
             //post {

@@ -8,11 +8,11 @@
 case "$1" in
   start)
     runuser web -lc $"
-      cd /home/web/viite/current
+      cd /home/web/ci-test/current
             ./start.sh &"
         ;;
   stop)
-    cd /home/web/viite/current
+    cd /home/web/ci-test/current
     ./stop.sh || true
         ;;
   *)

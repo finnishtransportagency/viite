@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pkill -f 'java.*viite'
+pkill -f 'java.*ci-test'
