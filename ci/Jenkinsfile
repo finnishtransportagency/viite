@@ -115,7 +115,7 @@ pipeline {
                         "${build_args} -f ci/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "viite-capistrano"
+                        "viite-capistrano",
                         "${build_args} -f ci/Dockerfile.ruby ci"
                      )
                 }
