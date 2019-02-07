@@ -221,12 +221,12 @@ pipeline {
             when {
                 beforeAgent true
                 expression {
-                    get_environment().equals("Staging")
+                    get_environment()?.trim()
                 }
             }
             steps {
 				sh STAGE_DEPLOY_CMD
-				echo "Running deploy... (skipped for now)"
+				//echo "Running deploy... (skipped for now)"
             }
             //post {
             //    failure {
