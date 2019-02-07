@@ -78,8 +78,10 @@ pipeline {
                         "--batch-mode"
                     ].join(" ")
 
-                    STAGE_DEPLOY_CMD =
+                    STAGE_DEPLOY_CMD = [
+                        "cd /home/jenkins/",
                         "bundle exec cap staging deploy"
+                    ].join(" && ")
                 }
             }
         }
