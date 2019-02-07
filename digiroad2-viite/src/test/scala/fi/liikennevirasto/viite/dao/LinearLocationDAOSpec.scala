@@ -19,7 +19,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val roadwayDAO = new RoadwayDAO
 
   val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-    (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
+    (Some(0l), None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -63,7 +63,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val linkSource = LinkGeomSource.NormalLinkInterface
       val roadwayNumber = 200l
       val linearLocation = LinearLocation(id, orderNumber, linkId, startMValue, endMValue, sideCode, adjustedTimestamp,
-        calibrationPoints, floating, geometry, linkSource, roadwayNumber)
+        calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
       val loc = linearLocationDAO.fetchById(id).getOrElse(fail())
 
@@ -76,7 +76,6 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       loc.sideCode should be(sideCode)
       loc.adjustedTimestamp should be(adjustedTimestamp)
       loc.calibrationPoints should be(calibrationPoints)
-      loc.floating should be(floating)
       loc.geometry.head.x should be(geometry.head.x +- 0.001)
       loc.geometry.head.y should be(geometry.head.y +- 0.001)
       loc.geometry.head.z should be(geometry.head.z +- 0.001)
@@ -229,7 +228,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, floating = FloatingReason.ManualFloating)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2)))
 
@@ -293,7 +292,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val (id1, id2, id3, id4) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2) = (111111111l, 222222222l)
       val roadwayNumber = 111111l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = linkId1, floating = FloatingReason.ManualFloating)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = linkId1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber, linkId = linkId2)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2)))
@@ -324,8 +323,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = 1l)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 2l, floating = FloatingReason.ManualFloating)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 3l, floating = FloatingReason.NewAddressGiven)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 2l)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 3l)))
 
       val locations = linearLocationDAO.fetchAllFloatingLinearLocations
       locations.count(l => l.id == id1) should be(0)
@@ -343,18 +342,15 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
 
       val locationsBefore = linearLocationDAO.fetchByLinkId(Set(linkId1))
-      locationsBefore.head.floating should be(FloatingReason.NoFloating)
 
       // Without geometry
       val floating1 = FloatingReason.ManualFloating
       linearLocationDAO.updateToFloating(id = id1, geometry = None, floatingReason = floating1, createdBy = "test")
       val expired1 = linearLocationDAO.fetchById(id1).getOrElse(fail())
       expired1.validTo.nonEmpty should be(true)
-      expired1.floating should be(FloatingReason.NoFloating)
       val linearLocations1 = linearLocationDAO.fetchByLinkId(Set(linkId1), includeFloating = true)
       linearLocations1.size should be(1)
       val floatingLocation1 = linearLocations1.head
-      floatingLocation1.floating should be(floating1)
 
       // With geometry
       val floating2 = FloatingReason.GeometryChanged
@@ -362,11 +358,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.updateToFloating(id = id2, geometry = Some(newGeometry), floatingReason = floating2)
       val expired2 = linearLocationDAO.fetchById(id2).getOrElse(fail())
       expired2.validTo.nonEmpty should be(true)
-      expired2.floating should be(FloatingReason.NoFloating)
       val linearLocations2 = linearLocationDAO.fetchByLinkId(Set(linkId2), includeFloating = true)
       linearLocations2.size should be(1)
       val floatingLocation2 = linearLocations2.head
-      floatingLocation2.floating should be(floating2)
       floatingLocation2.geometry.head.x should be(newGeometry.head.x)
       floatingLocation2.geometry.head.y should be(newGeometry.head.y)
       floatingLocation2.geometry.last.x should be(newGeometry.last.x)
@@ -578,7 +572,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test queryFloatingByLinkId When querying floating with empty Then should return none") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation.copy(floating = FloatingReason.ManualFloating)))
+      linearLocationDAO.create(Seq(testLinearLocation))
       val noLocations = linearLocationDAO.queryFloatingByLinkId(Set())
       noLocations.size should be(0)
     }
@@ -589,8 +583,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (linkId1, linkId2, linkId3) = (111111111l, 222222222l, 3333333333l)
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, floating = FloatingReason.ManualFloating)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, floating = FloatingReason.NewAddressGiven)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3)))
 
       val locations = linearLocationDAO.queryFloatingByLinkId(Set(linkId1, linkId2, linkId3))
       locations.count(l => l.id == id1) should be(0)

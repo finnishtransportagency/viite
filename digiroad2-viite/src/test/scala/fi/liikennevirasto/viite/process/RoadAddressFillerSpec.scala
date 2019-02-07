@@ -29,13 +29,10 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double]): LinearLocation =
-    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, yCoordinates, NoFloating, LinkGeomSource.NormalLinkInterface)
+    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, yCoordinates, LinkGeomSource.NormalLinkInterface)
 
-  private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double], floatingReason: FloatingReason): LinearLocation =
-    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, yCoordinates, floatingReason, LinkGeomSource.NormalLinkInterface)
-
-  private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double], floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): LinearLocation ={
-    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None), floatingReason,
+  private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): LinearLocation ={
+    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None),
       yCoordinates.map(y => Point(0.0, y)), linkGeomSource, roadwayNumber)
   }
 
@@ -46,9 +43,9 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test adjustToTopology When there is any exists a linear location to be adjusted Then should not have any change set"){
     val linearLocations = Seq(
       dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0), FloatingReason.ManualFloating),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
       dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, Seq(20.0, 30.0)),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, Seq(30.0, 40.0), FloatingReason.ManualFloating)
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, Seq(30.0, 40.0))
     )
 
     val roadLinks = Seq(
@@ -165,7 +162,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test adjustToTopology When exists a linear location with adjustments and one linear location floating in same road link Then any adjustment should be applied"){
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0), ManualFloating),
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
       dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 21.0, Seq(10.0, 21.0)),
       dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, Seq(20.0, 30.0)),
       dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, Seq(30.0, 40.0))

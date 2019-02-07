@@ -159,7 +159,7 @@ object RoadAddressFiller {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
           val roadLinkOption = topologyMap.getOrElse(linkId, Seq()).headOption
           //If there is on segment floating any adjustment should be done for the road link
-          if(roadLinkOption.isEmpty || roadLinkSegments.exists(_.isFloating)){
+          if(roadLinkOption.isEmpty){
             (existingSegments ++ roadLinkSegments, changeSet)
           } else {
             val (ajustedSegments, adjustments) = adjustOperations.foldLeft(roadLinkSegments, changeSet) {
@@ -199,16 +199,6 @@ object RoadAddressFiller {
 
   private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
     roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
-  }
-
-  def fillTopologyWithFloating(topology: Seq[RoadLinkLike], historyTopology: Seq[VVHHistoryRoadLink], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    val (floatingRoadAddresses, nonFloatingRoadAddresses) = roadAddresses.partition(_.isFloating)
-
-    val floatingRoadAddressLinks = floatingRoadAddresses.flatMap{ra =>
-      historyTopology.find(rl => rl.linkId == ra.linkId).map(rl => roadAddressLinkBuilder.build(rl, ra))
-    }
-
-    floatingRoadAddressLinks ++ fillTopology(topology, nonFloatingRoadAddresses)
   }
 
   def fillTopology(topology: Seq[RoadLinkLike], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {

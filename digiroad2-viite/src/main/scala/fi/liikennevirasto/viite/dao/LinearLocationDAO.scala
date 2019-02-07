@@ -86,8 +86,6 @@ trait BaseLinearLocation {
 
   def calibrationPoints: (Option[Long], Option[Long])
 
-  def floating: FloatingReason
-
   def geometry: Seq[Point]
 
   def linkGeomSource: LinkGeomSource
@@ -97,8 +95,6 @@ trait BaseLinearLocation {
   def validFrom: Option[DateTime]
 
   def validTo: Option[DateTime]
-
-  def isFloating: Boolean = floating.isFloating
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseLinearLocation
 
@@ -139,7 +135,7 @@ trait BaseLinearLocation {
 //  - Order number is a Double in LinearLocation case class and Long on the database because when there is for example divided change type we need to add more linear locations
 case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                           adjustedTimestamp: Long, calibrationPoints: (Option[Long], Option[Long]) = (None, None),
-                          floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource,
+                          geometry: Seq[Point], linkGeomSource: LinkGeomSource,
                           roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
 
   val startCalibrationPoint: Option[Long] = calibrationPoints._1
@@ -199,8 +195,8 @@ class LinearLocationDAO {
   def create(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Seq[Long] = {
     val ps = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
-        cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, geometry, created_by)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
 
     // Set ids for the linear locations without one
@@ -234,15 +230,14 @@ class LinearLocationDAO {
         }
         ps.setInt(10, location.linkGeomSource.value)
         ps.setLong(11, location.adjustedTimestamp)
-        ps.setInt(12, location.floating.value)
         val (p1, p2) = (location.geometry.head, location.geometry.last)
-        ps.setDouble(13, p1.x)
-        ps.setDouble(14, p1.y)
-        ps.setDouble(15, location.startMValue)
-        ps.setDouble(16, p2.x)
-        ps.setDouble(17, p2.y)
-        ps.setDouble(18, location.endMValue)
-        ps.setString(19, if (createdBy == null) "-" else createdBy)
+        ps.setDouble(12, p1.x)
+        ps.setDouble(13, p1.y)
+        ps.setDouble(14, location.startMValue)
+        ps.setDouble(15, p2.x)
+        ps.setDouble(16, p2.y)
+        ps.setDouble(17, location.endMValue)
+        ps.setString(18, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
@@ -267,7 +262,6 @@ class LinearLocationDAO {
       val calEndM = r.nextLongOption()
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
-      val floating = r.nextInt()
       val x1 = r.nextDouble()
       val y1 = r.nextDouble()
       val x2 = r.nextDouble()
@@ -276,7 +270,7 @@ class LinearLocationDAO {
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (calStartM, calEndM), FloatingReason.apply(floating), Seq(Point(x1, y1), Point(x2, y2)),
+        (calStartM, calEndM), Seq(Point(x1, y1), Point(x2, y2)),
         LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
@@ -558,9 +552,9 @@ class LinearLocationDAO {
 
     // Create new row
     create(Seq(if (geometry.nonEmpty) {
-      expired.copy(id = NewLinearLocation, geometry = geometry.get, floating = floatingReason)
+      expired.copy(id = NewLinearLocation, geometry = geometry.get)
     } else {
-      expired.copy(id = NewLinearLocation, floating = floatingReason)
+      expired.copy(id = NewLinearLocation)
     }), createdBy)
 
   }

@@ -25,9 +25,9 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
 
     val roadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, false, startDate, None, "test_user", None, 0, NoTermination, startDate)
     val linearLocations = Seq(
-      LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (None, Some(250)), NoFloating, Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0, (Some(250), Some(300)), NoFloating, Seq(Point(154.0,0.0), Point(205.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
+      LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
+      LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (None, Some(250)), Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
+      LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0, (Some(250), Some(300)), Seq(Point(154.0,0.0), Point(205.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
     )
 
     val roadAddresses = roadwayAddressMapper.mapRoadAddresses(roadwayAddress, linearLocations)
@@ -63,9 +63,9 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val currentRoadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, false, currentStartDate, None, "test_user", None, 0, NoTermination, currentStartDate)
     val historyRoadwayAddress = Roadway(3L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 240, 400, false, historyStartDate, Some(historyEndDate), "test_user", None, 0, NoTermination, historyStartDate)
     val linearLocations = Seq(
-      LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating, Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (None, Some(250)), NoFloating, Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0, (Some(250), Some(300)), NoFloating, Seq(Point(154.0,0.0), Point(205.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
+      LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
+      LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (None, Some(250)), Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
+      LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0, (Some(250), Some(300)), Seq(Point(154.0,0.0), Point(205.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
     )
 
     when(mockRoadwayDAO.fetchByRoadwayNumber(roadwayNumber)).thenReturn(Some(currentRoadwayAddress))

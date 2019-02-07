@@ -817,21 +817,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
-  def floatingRoadAddressToApi(roadAddress: RoadAddress): Map[String, Any] = {
-    Map(
-      "id" -> roadAddress.id,
-      "linkId" -> roadAddress.linkId,
-      "roadNumber" -> roadAddress.roadNumber,
-      "roadPartNumber" -> roadAddress.roadPartNumber,
-      "trackCode" -> roadAddress.track.value,
-      "startAddressM" -> roadAddress.startAddrMValue,
-      "endAddressM" -> roadAddress.endAddrMValue,
-      "startMValue" -> roadAddress.startMValue,
-      "endMValue" -> roadAddress.endMValue,
-      "ely" -> roadAddress.ely
-    )
-  }
-
   def roadAddressErrorsToApi(addressError: AddressErrorDetails): Map[String, Long] = {
     Map(
       "id" -> addressError.linearLocationId,
@@ -849,8 +834,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "startDate" -> roadAddressLink.startDate,
         "endDate" -> roadAddressLink.endDate,
         "newGeometry" -> roadAddressLink.newGeometry,
-        "linearLocationId" -> roadAddressLink.linearLocationId, //TODO This needs to be made inside the roadAddressLinkLikeToApi once the project links have the new structure
-        "floating" -> roadAddressLink.floatingAsInt
+        "linearLocationId" -> roadAddressLink.linearLocationId //TODO This needs to be made inside the roadAddressLinkLikeToApi once the project links have the new structure
       )
   }
 
@@ -895,8 +879,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadTypeId" -> projectLink.roadType.value,
       "discontinuity" -> projectLink.discontinuity.value,
       "elyCode" -> projectLink.ely,
-      "roadName" -> projectLink.roadName,
-      "floating" -> projectLink.floating)
+      "roadName" -> projectLink.roadName)
   }
 
   def roadAddressProjectToApi(roadAddressProject: Project, projectLinks: Seq[ProjectLink]): Map[String, Any] = {
