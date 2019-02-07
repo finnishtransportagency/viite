@@ -49,4 +49,8 @@ object Sequences {
   def nextRoadwayChangeLink: Long = {
     Queries.nextRoadwayChangeLink.as[Long].first
   }
+
+  def nextPublishedRoadNetwork: Long = {
+    Queries.nextPublishedRoadNetwork.as[Long].first
+  }
 }
