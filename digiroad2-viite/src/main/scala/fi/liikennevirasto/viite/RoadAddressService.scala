@@ -50,18 +50,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val historyRoadLinks = roadLinkService.getRoadLinksHistoryFromVVH(linearLocations.filter(_.isFloating).map(_.linkId).toSet)
 
     (linearLocations, historyRoadLinks)
-    //TODO will be implemented at VIITE-1538
-    //    val floatingHistoryRoadLinks = withDynTransaction {
-    //      time(logger, "Fetch floating history links") {
-    //        roadLinkService.getRoadLinksHistoryFromVVH(floatingAddresses.map(_.linkId).toSet)
-    //      }
-    //    }
-    //    val historyLinkAddresses = time(logger, "Build history link addresses") {
-    //      floatingHistoryRoadLinks.flatMap(fh => {
-    //        buildFloatingRoadAddressLink(fh, floatingAddresses.filter(_.linkId == fh.linkId))
-    //      })
-    //    }
-    //    LinearLocationResult(nonFloatingAddresses, floatingAddresses)
   }
 
   /**
@@ -807,52 +795,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def expireRoadAddresses(expiredIds: Set[Long]): Int = {
     throw new NotImplementedError("This method probably will not be needed anymore, and if it's needed can be done a batch execution")
     //expiredIds.grouped(500).map(group => RoadAddressDAO.expireById(group)).sum
-  }
-
-  //TODO check if this is needed in VIITE-1538
-  //  /**
-  //    * Checks that if the geometry is found and updates the geometry to match or sets it floating if not found
-  //    *
-  //    * @param ids
-  //    */
-  //  def checkRoadAddressFloating(ids: Set[Long]): Unit = {
-  //    withDynTransaction {
-  //      checkRoadAddressFloatingWithoutTX(ids)
-  //    }
-  //  }
-
-  /**
-    * For easier unit testing and use
-    *
-    * @param ids
-    */
-  def checkRoadAddressFloatingWithoutTX(ids: Set[Long], float: Boolean = false): Unit = {
-    throw new NotImplementedError("Will be implemented at VIITE-1538")
-    //    def hasTargetRoadLink(roadLinkOpt: Option[RoadLinkLike], geometryOpt: Option[Seq[Point]]) = {
-    //      !(roadLinkOpt.isEmpty || geometryOpt.isEmpty || GeometryUtils.geometryLength(geometryOpt.get) == 0.0)
-    //    }
-    //
-    //    val addresses = RoadAddressDAO.queryById(ids)
-    //    val linkIdMap = addresses.groupBy(_.linkId).mapValues(_.map(_.id))
-    //    val roadLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIdMap.keySet, frozenTimeVVHAPIServiceEnabled)
-    //    addresses.foreach { address =>
-    //      val roadLink = roadLinks.find(_.linkId == address.linkId)
-    //      val addressGeometry = roadLink.map(rl =>
-    //        GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
-    //      if (float && hasTargetRoadLink(roadLink, addressGeometry)) {
-    //        logger.info(s"Floating and update geometry id ${address.id} (link id ${address.linkId})")
-    //        RoadAddressDAO.changeRoadAddressFloatingWithHistory(address.id, addressGeometry, FloatingReason.GeometryChanged)
-    //        val missing = UnaddressedRoadLink(address.linkId, Some(address.startAddrMValue), Some(address.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None, None, Some(address.startMValue), Some(address.endMValue), Anomaly.GeometryChanged, Seq.empty[Point])
-    //        RoadAddressDAO.createUnaddressedRoadLink(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
-    //      } else if (!hasTargetRoadLink(roadLink, addressGeometry)) {
-    //        logger.info(s"Floating id ${address.id}")
-    //        RoadAddressDAO.changeRoadAddressFloatingWithHistory(address.id, None, FloatingReason.NewAddressGiven)
-    //      } else {
-    //        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geometry)) {
-    //          logger.info(s"Updating geometry for id ${address.id} (link id ${address.linkId})")
-    //          RoadAddressDAO.changeRoadAddressFloatingWithHistory(address.id, addressGeometry, FloatingReason.GapInGeometry)}
-    //      }
-    //    }
   }
 
   def saveAdjustments(addresses: Seq[LinearLocationAdjustment]): Unit = {
