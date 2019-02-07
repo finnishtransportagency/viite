@@ -14,7 +14,6 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}

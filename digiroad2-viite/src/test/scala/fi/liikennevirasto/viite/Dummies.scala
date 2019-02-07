@@ -33,9 +33,6 @@ object Dummies {
   def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
     dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface)
 
-  def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason): LinearLocation =
-    dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface)
-
   def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource): LinearLocation = {
     dummyLinearLocation(roadwayNumber + Math.round(orderNumber), roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, vvhTimestamp = 0L)
   }

@@ -4,7 +4,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime

@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar

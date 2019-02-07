@@ -13,10 +13,6 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     Set(LengthenedCommonPart.value, LengthenedNewPart.value, ShortenedCommonPart.value, ShortenedRemovedPart.value).contains(ci.changeType.value)
   }
 
-  private def isFloatingChange(ci: ChangeInfo) = {
-    Set(Removed.value, ReplacedCommonPart.value, ReplacedNewPart.value, ReplacedRemovedPart.value).contains(ci.changeType.value)
-  }
-
   private def max(doubles: Double*) = {
     doubles.max
   }

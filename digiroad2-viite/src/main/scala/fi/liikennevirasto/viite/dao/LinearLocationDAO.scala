@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -17,57 +16,6 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
-sealed trait FloatingReason {
-  def value: Int
-
-  def isFloating: Boolean = value != 0
-}
-
-object FloatingReason {
-  val values = Set(NoFloating, ApplyChanges, GeometryChanged, NewAddressGiven, GapInGeometry, ManualFloating)
-
-  def apply(intValue: Long): FloatingReason = {
-    values.find(_.value == intValue).getOrElse(NoFloating)
-  }
-
-  case object NoFloating extends FloatingReason {
-    def value = 0
-  }
-
-  case object ApplyChanges extends FloatingReason {
-    def value = 1
-  }
-
-  case object GeometryChanged extends FloatingReason {
-    def value = 2
-  }
-
-  case object NewAddressGiven extends FloatingReason {
-    def value = 3
-  }
-
-  case object GapInGeometry extends FloatingReason {
-    def value = 4
-  }
-
-  case object ManualFloating extends FloatingReason {
-    def value = 5
-  }
-
-  case object SplittingTool extends FloatingReason {
-    def value = 6
-  }
-
-  case object ProjectToRoadAddress extends FloatingReason {
-    def value = 7
-  }
-
-  case object ChangeTypeNotSupported extends FloatingReason {
-    def value = 8
-  }
-
-}
 
 trait BaseLinearLocation {
   def id: Long
@@ -169,7 +117,7 @@ class LinearLocationDAO {
   val selectFromLinearLocation =
     """
     select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
+      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, t.X, t.Y, t2.X, t2.Y,
       loc.valid_from, loc.valid_to
     from LINEAR_LOCATION loc cross join
       TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t cross join
@@ -325,15 +273,10 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchByIdMassQuery(ids: Set[Long], includeFloating: Boolean = false, rejectInvalids: Boolean = true): List[LinearLocation] = {
+  def fetchByIdMassQuery(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
     time(logger, "Fetch linear locations by id - mass query") {
       MassQuery.withIds(ids) {
         idTableName =>
-
-          val floating = if (!includeFloating)
-            "AND loc.floating = 0"
-          else
-            ""
 
           val validToFilter = if (rejectInvalids)
             " and loc.valid_to is null"
@@ -344,7 +287,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.id
-              where t.id < t2.id $floating $validToFilter
+              where t.id < t2.id  $validToFilter
             """
           queryList(query)
       }
@@ -352,22 +295,18 @@ class LinearLocationDAO {
   }
 
   def queryByIdMassQuery(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
-    fetchByIdMassQuery(ids, includeFloating = true, rejectInvalids)
+    fetchByIdMassQuery(ids, rejectInvalids)
   }
 
-  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, filterIds: Set[Long] = Set()): List[LinearLocation] = {
+  def fetchByLinkId(linkIds: Set[Long], filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id") {
       if (linkIds.isEmpty) {
         return List()
       }
       if (linkIds.size > 1000 || filterIds.size > 1000) {
-        return fetchByLinkIdMassQuery(linkIds, includeFloating).filterNot(ra => filterIds.contains(ra.id))
+        return fetchByLinkIdMassQuery(linkIds).filterNot(ra => filterIds.contains(ra.id))
       }
       val linkIdsString = linkIds.mkString(", ")
-      val floating = if (!includeFloating)
-        "AND loc.floating = 0"
-      else
-        ""
       val idFilter = if (filterIds.nonEmpty)
         s"AND loc.id not in ${filterIds.mkString("(", ", ", ")")}"
       else
@@ -375,25 +314,21 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where loc.link_id in ($linkIdsString) $floating $idFilter and t.id < t2.id and loc.valid_to is null
+          where loc.link_id in ($linkIdsString) $idFilter and t.id < t2.id and loc.valid_to is null
         """
       queryList(query)
     }
   }
 
-  def fetchByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false): List[LinearLocation] = {
+  def fetchByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id - mass query") {
       MassQuery.withIds(linkIds) {
         idTableName =>
-          val floating = if (!includeFloating)
-            "AND loc.floating = 0"
-          else
-            ""
           val query =
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.link_id
-              where t.id < t2.id $floating and loc.valid_to is null
+              where t.id < t2.id and loc.valid_to is null
             """
           queryList(query)
       }
@@ -439,52 +374,6 @@ class LinearLocationDAO {
             """
           queryList(query)
       }
-    }
-  }
-
-  def queryFloatingByLinkId(linkIds: Set[Long]): List[LinearLocation] = {
-    time(logger, "Fetch floating linear locations by link ids") {
-      if (linkIds.isEmpty) {
-        return List()
-      }
-      if (linkIds.size > 1000) {
-        return queryFloatingByLinkIdMassQuery(linkIds)
-      }
-      val linkIdString = linkIds.mkString(", ")
-      val where = s""" where loc.link_id in ($linkIdString)"""
-      val query =
-        s"""
-          $selectFromLinearLocation
-          $where AND loc.floating > 0 and t.id < t2.id and loc.valid_to is null
-        """
-      queryList(query)
-    }
-  }
-
-  def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[LinearLocation] = {
-    time(logger, "Fetch floating linear locations by link ids - mass query") {
-      MassQuery.withIds(linkIds) {
-        idTableName =>
-          val query =
-            s"""
-              $selectFromLinearLocation
-              join $idTableName i on i.id = loc.link_id
-              where loc.floating > 0 and t.id < t2.id and loc.valid_to is null
-            """
-          queryList(query)
-      }
-    }
-  }
-
-  def fetchAllFloatingLinearLocations: List[LinearLocation] = {
-    time(logger, "Fetch all floating linear locations") {
-      val query =
-        s"""
-          $selectFromLinearLocation
-          where t.id < t2.id and loc.floating > 0 and loc.valid_to is null
-          order by loc.ROADWAY_NUMBER, loc.order_number
-        """
-      queryList(query)
     }
   }
 
@@ -540,23 +429,6 @@ class LinearLocationDAO {
       0
     else
       Q.updateNA(query).first
-  }
-
-  def updateToFloating(id: Long, geometry: Option[Seq[Point]], floatingReason: FloatingReason,
-                       createdBy: String = "setLinearLocationFloatingReason"): Unit = {
-
-    // Expire old row
-    val expired: LinearLocation = fetchById(id).getOrElse(
-      throw new IllegalStateException(s"""Failed to set linear location $id floating reason. Linear location not found."""))
-    expireByIds(Set(id))
-
-    // Create new row
-    create(Seq(if (geometry.nonEmpty) {
-      expired.copy(id = NewLinearLocation, geometry = geometry.get)
-    } else {
-      expired.copy(id = NewLinearLocation)
-    }), createdBy)
-
   }
 
   def update(adjustment: LinearLocationAdjustment,
@@ -657,7 +529,7 @@ class LinearLocationDAO {
       case None => ""
     }
 
-    query + s" WHERE loc.link_id = $linkId $startFilter $endFilter AND floating = 0" + withValidityCheck
+    query + s" WHERE loc.link_id = $linkId $startFilter $endFilter" + withValidityCheck
   }
 
   def withRoadwayNumbers(fromRoadwayNumber: Long, toRoadwayNumber: Long)(query: String): String = {

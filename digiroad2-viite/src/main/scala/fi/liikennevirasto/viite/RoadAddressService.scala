@@ -162,12 +162,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
-    val nonFloatingRoadAddresses = withDynTransaction {
+    val roadAddresses = withDynTransaction {
       val linearLocations = linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
     }
 
-    nonFloatingRoadAddresses.map(roadAddressLinkBuilder.build)
+    roadAddresses.map(roadAddressLinkBuilder.build)
   }
 
   /**
@@ -305,12 +305,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @param road         The road number
     * @param part         The road part
     * @param withHistory  The optional parameter that allows the search to also look for historic links
-    * @param withFloating The optional parameter that allows the search to also look for floating links
     * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
     * @return Returns all the filtered road addresses
     */
   // TODO Implement fetching with floating
-  def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
+  def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
     withDynSession {
       val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -423,10 +422,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
     *
     * @param roadwayIds      : Seq[Long] - The roadway Id's to fetch
-    * @param includeFloating : Boolean - Signals if we fetch the floatings or not
     * @return
     */
-  def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
+  def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
     val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
     roadAddresses
@@ -604,30 +602,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   //      eventbus.publish("roadAddress:floatRoadAddress", changeSet.floatingLinearLocationIds)
   //    }
   //  }
-
-  private def createRoadAddressLinkMap(roadLinks: Seq[RoadLink], suravageLinks: Seq[VVHRoadlink], toFloating: Seq[RoadAddressLink],
-                                       addresses: Seq[RoadAddress],
-                                       missedRL: Map[Long, List[UnaddressedRoadLink]]): Map[Long, Seq[RoadAddressLink]] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1536")
-    //    time(logger, "Create road address link map") {
-    //      val (suravageRA, _) = addresses.partition(ad => ad.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-    //      logger.info(s"Creation of RoadAddressLinks started.")
-    //      val mappedRegular = roadLinks.map { rl =>
-    //        val floaters = toFloating.filter(_.linkId == rl.linkId)
-    //        val ra = addresses.filter(_.linkId == rl.linkId)
-    //        val missed = missedRL.getOrElse(rl.linkId, Seq())
-    //        rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
-    //      }.toMap
-    //      val filteredSuravage = suravageLinks.filter(sl => suravageRA.map(_.linkId).contains(sl.linkId))
-    //      val mappedSuravage = filteredSuravage.map(sur => {
-    //        val ra = suravageRA.filter(_.linkId == sur.linkId)
-    //        sur.linkId -> buildSuravageRoadAddressLink(sur, ra)
-    //      }).toMap
-    //      logger.info(s"Finished creation of roadAddressLinks, final result: ")
-    //      logger.info(s"Regular Roads: ${mappedRegular.size} || Suravage Roads: ${mappedSuravage.size}")
-    //      mappedRegular ++ mappedSuravage
-    //    }
-  }
 
   /**
     * Checks that  length is same after change  (used in type 1 and type 2)
@@ -862,7 +836,7 @@ class Contains(r: Range) {
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 
-case class LinearLocationResult(current: Seq[LinearLocation], floating: Seq[LinearLocation])
+case class LinearLocationResult(current: Seq[LinearLocation])
 
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
                              roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[VVHRoadlink]])

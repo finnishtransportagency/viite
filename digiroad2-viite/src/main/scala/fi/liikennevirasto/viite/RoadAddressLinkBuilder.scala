@@ -105,7 +105,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber),
       unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
-      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry), floating = false)
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry))
   }
 
   /**
@@ -170,7 +170,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       VVHRoadName, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadLinkRoadNumber, roadLinkRoadPartNumber, trackValue, elyCode, Discontinuity.Continuous.value,
-      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType, floating = false)
+      startAddrM, endAddrM, "", "", 0.0, length, sideCode, None, None, anomalyType)
   }
 
   private def getVVHRoadName(link: Map[String, Any]): Option[String] = {

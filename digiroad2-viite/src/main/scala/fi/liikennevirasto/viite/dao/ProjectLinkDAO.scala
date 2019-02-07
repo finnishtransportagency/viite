@@ -14,7 +14,6 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
