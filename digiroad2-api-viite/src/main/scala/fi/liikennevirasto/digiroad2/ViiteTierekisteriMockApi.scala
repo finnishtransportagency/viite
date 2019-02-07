@@ -214,7 +214,6 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
       }),
       "name" -> project("name").toString,
       "change_date" -> project("change_date").toString,
-      "ely" -> project("ely").toString,
       "muutospvm" -> project("change_date").toString,
       "user" -> project("user").toString,
       "published_date" -> project("change_date").toString,
