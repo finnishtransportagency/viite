@@ -63,7 +63,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadway = Dummies.dummyRoadway(1, 62555, 2, 0, 68, DateTime.parse("2018-04-23"), Some(DateTime.parse("2018-04-23")))
       val linearLocation = Dummies.dummyLinearLocationWithGeometry(id = 1, roadwayNumber = 1, orderNumber = 1, linkId = 7096025, startMValue = 0, endMValue = 67.768, geometry = Seq(Point(642581.506, 6947078.918), Point(642544.7200222166, 6947042.201990652)))
-      when(mockLinearLocationDAO.fetchByLinkId(any[Set[Long]], any[Boolean], any[Set[Long]])).thenReturn(List(linearLocation))
+      when(mockLinearLocationDAO.fetchByLinkId(any[Set[Long]], any[Set[Long]])).thenReturn(List(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
       when(mockRoadwayDAO.fetchByRoadwayNumber(any[Long], any[Boolean])).thenReturn(Some(roadway))
 
