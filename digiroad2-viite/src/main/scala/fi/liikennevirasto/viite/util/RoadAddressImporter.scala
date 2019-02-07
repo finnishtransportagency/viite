@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, FloatingReason, TerminationCode}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, TerminationCode}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -32,7 +32,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                              startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, roadType: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
   case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: SideCode,
-                                    calStartM: Option[Long], calEndM: Option[Long], linkGeomSource: LinkGeomSource, floating: FloatingReason, createdBy: String, x1: Option[Double], y1: Option[Double],
+                                    calStartM: Option[Long], calEndM: Option[Long], linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double],
                                     x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
 
   val dateFormatter = ISODateTimeFormat.basicDate()
@@ -48,8 +48,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def linearLocationStatement() =
     dynamicSession.prepareStatement("insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, cal_start_addr_m, cal_end_addr_m, link_source, " +
-      "created_by, floating, geometry, valid_from, valid_to) " +
-      "values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+      "created_by, geometry, valid_from, valid_to) " +
+      "values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
 
   def datePrinter(date: Option[DateTime]): String = {
     date match {
@@ -95,14 +95,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
     linearLocationStatement.setLong(9, linearLocation.linkGeomSource.value)
     linearLocationStatement.setString(10, linearLocation.createdBy)
-    linearLocationStatement.setLong(11, linearLocation.floating.value)
-    linearLocationStatement.setDouble(12, linearLocation.x1.get)
-    linearLocationStatement.setDouble(13, linearLocation.y1.get)
-    linearLocationStatement.setDouble(14, linearLocation.x2.get)
-    linearLocationStatement.setDouble(15, linearLocation.y2.get)
-    linearLocationStatement.setDouble(16, linearLocation.endMeasure)
-    linearLocationStatement.setString(17, datePrinter(linearLocation.validFrom))
-    linearLocationStatement.setString(18, datePrinter(linearLocation.validTo))
+    linearLocationStatement.setDouble(11, linearLocation.x1.get)
+    linearLocationStatement.setDouble(12, linearLocation.y1.get)
+    linearLocationStatement.setDouble(13, linearLocation.x2.get)
+    linearLocationStatement.setDouble(14, linearLocation.y2.get)
+    linearLocationStatement.setDouble(15, linearLocation.endMeasure)
+    linearLocationStatement.setString(16, datePrinter(linearLocation.validFrom))
+    linearLocationStatement.setString(17, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
 
   }
@@ -232,7 +231,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             val roadLink = mappedRoadLinks.getOrElse(converted.linkId, mappedHistoryRoadLinks(converted.linkId))
 
             val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, getStartCalibrationPointValue(converted), getEndCalibrationPointValue(converted),
-              roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
+              roadLink.linkSource, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
             if (add._1.directionFlag == 1) {
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)

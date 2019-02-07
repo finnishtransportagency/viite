@@ -8,7 +8,6 @@ import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
 import fi.liikennevirasto.viite.{ProjectService, RoadType}
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.{Delta, ReNumeration, Transferred, Unchanged}
 import org.joda.time.DateTime

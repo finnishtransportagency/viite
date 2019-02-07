@@ -7,9 +7,8 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, FloatingReason, RoadAddress}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}

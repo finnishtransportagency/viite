@@ -21,7 +21,6 @@ import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.MaxSuravageToleranceToGeometry
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime

@@ -10,7 +10,6 @@ import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util.toProjectLink
 
