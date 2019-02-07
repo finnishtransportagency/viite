@@ -171,7 +171,6 @@ class DataImporterSpec extends FunSuite with Matchers {
       linearLocations.foreach(l => l.linkId should be(1))
       linearLocations.foreach(l => l.sideCode should be(SideCode.Unknown))
       linearLocations.foreach(l => l.orderNumber should be(1.0 +- 0.00001))
-      linearLocations.foreach(l => l.floating should be(FloatingReason.NoFloating))
       linearLocations.foreach(l => l.linkGeomSource should be(LinkGeomSource.NormalLinkInterface))
       val linearLocation1 = linearLocations.filter(l => l.roadwayNumber == 1).head
       val linearLocation2 = linearLocations.filter(l => l.roadwayNumber == 2).head

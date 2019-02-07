@@ -18,7 +18,7 @@ class RoadwayChangeInfoMapperSpec extends FunSuite with Matchers {
 
   //TODO the road address now have the linear location id and has been set to 1L
   val roadAddr = RoadAddress(1, 1L, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
-    None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), NoFloating, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
+    None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
     LinkGeomSource.NormalLinkInterface, 8, NoTermination, 123456)
 
   //TODO will be implemented at VIITE-1536

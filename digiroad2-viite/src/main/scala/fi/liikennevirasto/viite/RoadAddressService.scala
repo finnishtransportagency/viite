@@ -47,7 +47,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     }
 
-    val historyRoadLinks = roadLinkService.getRoadLinksHistoryFromVVH(linearLocations.filter(_.isFloating).map(_.linkId).toSet)
+    val historyRoadLinks = roadLinkService.getRoadLinksHistoryFromVVH(linearLocations.map(_.linkId).toSet)
 
     (linearLocations, historyRoadLinks)
   }
@@ -102,8 +102,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val roadAddresses = withDynSession {
       roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
     }
-
-    RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
+    RoadAddressFiller.fillTopology(allRoadLinks, roadAddresses)
   }
 
   def getRoadAddressWithRoadNumberAddress(road: Long): Seq[RoadAddress] = {
@@ -126,16 +125,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
-
-    val (floating, nonFloating) = linearLocations.partition(_.isFloating)
-
-    val floatingLinkIds = floating.map(_.linkId).toSet
-    val nonFloatingLinkIds = nonFloating.map(_.linkId).toSet
+    val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
 
     val boundingBoxResult = BoundingBoxResult(
-      roadLinkService.getChangeInfoFromVVHF(nonFloatingLinkIds),
-      Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(floatingLinkIds))),
-      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds, frozenTimeVVHAPIServiceEnabled)),
+      roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
+      Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(linearLocationsLinkIds))),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds, frozenTimeVVHAPIServiceEnabled)),
       Future(Seq()),
       Future(Seq())
     )
@@ -169,7 +164,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
     val nonFloatingRoadAddresses = withDynTransaction {
       val linearLocations = linearLocationDAO.fetchRoadwayByBoundingBox(boundingRectangle, roadNumberLimits)
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
     }
 
     nonFloatingRoadAddresses.map(roadAddressLinkBuilder.build)
@@ -183,7 +178,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   def getRoadAddressesByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
     val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
-    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
+    roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
   }
 
   /**
@@ -420,7 +415,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     withDynSession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
-      roadAddresses.filter(ra => linkIds.contains(ra.linkId)).filterNot(_.isFloating)
+      roadAddresses.filter(ra => linkIds.contains(ra.linkId))
     }
   }
 
@@ -434,7 +429,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
     val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-    roadAddresses.filterNot(_.isFloating)
+    roadAddresses
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
