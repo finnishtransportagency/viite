@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 
 class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, unaddressedRoadLinkDAO: UnaddressedRoadLinkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
@@ -462,6 +463,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         )
       }
     }
+  }
+
+  def getUpdatedRoadAddresses(sinceDate: DateTime): Either[String, Seq[RoadAddress]] = {
+    withDynSession {
+      try {
+        val roadways = roadwayDAO.fetchUpdatedSince(sinceDate)
+        val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+        Right(roadAddresses.filterNot(_.isFloating))
+      } catch {
+        case e if NonFatal(e) =>
+          logger.error("Failed to fetch updated road addresses.", e)
+          Left(e.getMessage)
+      }
+    }
+
   }
 
   /**
