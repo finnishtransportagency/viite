@@ -564,6 +564,16 @@ class ProjectLinkDAO {
     }
   }
 
+  def fetchByProjectRoad(roadNumber: Long, projectId: Long): Seq[ProjectLink] = {
+    time(logger, "Fetch project links by project road part") {
+      val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND"
+      val query =
+        s"""$projectLinkQueryBase
+                where $filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
   def fetchByProjectRoadParts(roadParts: Set[(Long, Long)], projectId: Long): Seq[ProjectLink] = {
     time(logger, "Fetch project links by project road parts") {
       if (roadParts.isEmpty)
