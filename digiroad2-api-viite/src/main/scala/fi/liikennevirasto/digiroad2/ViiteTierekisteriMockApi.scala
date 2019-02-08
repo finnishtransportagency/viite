@@ -25,13 +25,19 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     contentType = formats("json")
   }
 
-  post("/addresschange/"){
+  post("/addresschange/") {
     logger.info("POST /addresschange/")
-    if (!request.headers.exists(_==("X-Authorization" -> "Basic aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk"))){
+    if (!request.headers.exists(_ == ("X-Authorization" -> "Basic aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk"))) {
       logger.warn("POST not authorized")
-      halt(Unauthorized("401 Unauthorized"))
+      halt(Unauthorized(Map(
+        "error" -> "401",
+        "errorcode" -> "401",
+        "message" -> "Ei sallittu",
+        "path" -> "/trrest",
+        "status" -> "401"
+      )))
     }
-    val mappedObject = parsedBody.mapField{
+    val mappedObject = parsedBody.mapField {
       case (key, JString(value)) => (key, JString(value))
       case (key, JInt(value)) => (key, JInt(value))
       case (key, JObject(value)) => (key, mapNestedObject(JObject(value)))
@@ -42,15 +48,15 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     logger.warn("Project validated")
     val id = extractedProject.get("id")
     if (id.isEmpty)
-      BadRequest(Map("error_message" -> "id not found"))
+      BadRequest(Map("error_message" -> "Id puuttuu."))
     else {
       projectsReceived = projectsReceived ++ Map(anythingToLong(id.get) -> extractedProject)
       Created(Map("message" -> "Project created"))
     }
   }
 
-  private def mapNestedObject(nestedJObject:JObject):JValue ={
-    val things = nestedJObject.mapField{
+  private def mapNestedObject(nestedJObject: JObject): JValue = {
+    val things = nestedJObject.mapField {
       case (key, JString(value)) => (key, JString(value))
       case (key, JInt(value)) => (key, JInt(value))
       case (key, JObject(value)) => (key, mapNestedObject(JObject(value)))
@@ -62,11 +68,13 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
   private def failValidation(errorMessage: String): ActionResult = {
     failValidation(Map("error_message" -> errorMessage))
   }
+
   private def failValidation(errorMessage: Map[String, String]): ActionResult = {
     logger.info(s"Validation failed: $errorMessage")
     BadRequest(errorMessage)
   }
-  private def validateProject(project: Map[String,Any]) ={
+
+  private def validateProject(project: Map[String, Any]) = {
     def testNonNull(map: Map[String, Any], keys: Seq[String], errorTemplate: Map[String, String]): Unit = {
       if (keys.nonEmpty) {
         val key = keys.head
@@ -79,7 +87,7 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     }
 
     def testIsNull(map: Map[String, Any], keys: Seq[String], errorTemplate: String): Unit = {
-      val nonNullValues=map.filterNot(x=>x._2==null)
+      val nonNullValues = map.filterNot(x => x._2 == null)
       if (nonNullValues.nonEmpty) {
         val errorMessage = errorTemplate.format(nonNullValues.head._1)
         halt(failValidation(errorMessage))
@@ -127,7 +135,7 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
         logger.info("Matched 1")
         testNonNull(source, changeInfoKeys, MandatoryFieldMissing)
         // TODO: turn on this check when viite-tr-client is updated
-//        testIsNull(target, changeInfoKeys, TargetXNotNullMessage)
+        //        testIsNull(target, changeInfoKeys, TargetXNotNullMessage)
         testValues(source, changeInfoKeys, IncorrectLengthOrValue)
       case 2 =>
         //Source - all null
@@ -162,22 +170,34 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     }
   }
 
-  get("/addresschange/:projectId"){
+  get("/addresschange/:projectId") {
     logger.info(s"GET /addresschange/${params("projectId")}")
-    if (!request.headers.exists(_==("X-Authorization" -> "Basic aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk"))){
+    if (!request.headers.exists(_ == ("X-Authorization" -> "Basic aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk"))) {
       logger.warn("GET not authorized")
-      halt(BadRequest("401 Unauthorized"))
+      halt(BadRequest(Map(
+        "error" -> "401",
+        "errorcode" -> "401",
+        "message" -> "Ei sallittu",
+        "path" -> "/trrest",
+        "status" -> "401"
+      )))
     } else {
       logger.info("Passed the authorization verification")
       logger.info("Trying to get the project Id")
       val projectId = anythingToLong(params("projectId"))
       logger.debug("If this is correct, project Id should be: " + projectId)
-      if (projectsReceived.contains(projectId)){
+      if (projectsReceived.contains(projectId)) {
         toProjectResponseObject(projectsReceived(projectId))
       }
       else {
         logger.info("404: projectId was: " + projectId)
-        halt(NotFound(s"project with id $projectId was not found"))
+        halt(NotFound(Map(
+          "error" -> "404",
+          "errorcode" -> "404",
+          "message" -> s"Projektia ${projectId} ei löydy.",
+          "path" -> "/trrest",
+          "status" -> "404"
+        )))
       }
     }
   }
@@ -203,7 +223,7 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
         (0, null)
     }
     logger.info(s"Project id $id with name ${project("name")} has error code $errorCode, $error")
-    Map (
+    Map(
       "id_tr_projekti" -> (1000 + id),
       "projekti" -> id,
       "id" -> id,
@@ -217,7 +237,7 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
       "muutospvm" -> project("change_date").toString,
       "user" -> project("user").toString,
       "published_date" -> project("change_date").toString,
-      "job_number" -> (20+id),
+      "job_number" -> (20 + id),
       "error_message" -> error,
       "start_time" -> project("change_date").toString,
       "end_time" -> project("change_date").toString,
