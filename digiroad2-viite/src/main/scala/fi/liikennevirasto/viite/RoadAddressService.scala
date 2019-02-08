@@ -465,15 +465,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  def getUpdatedRoadAddresses(sinceDate: DateTime): Either[String, Seq[RoadAddress]] = {
+  def getUpdatedRoadways(sinceDate: DateTime): Either[String, Seq[Roadway]] = {
     withDynSession {
       try {
         val roadways = roadwayDAO.fetchUpdatedSince(sinceDate)
-        val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-        Right(roadAddresses.filterNot(_.isFloating))
+        Right(roadways)
       } catch {
         case e if NonFatal(e) =>
-          logger.error("Failed to fetch updated road addresses.", e)
+          logger.error("Failed to fetch updated roadways.", e)
+          Left(e.getMessage)
+      }
+    }
+
+  }
+
+  def getUpdatedLinearLocations(sinceDate: DateTime): Either[String, Seq[LinearLocation]] = {
+    withDynSession {
+      try {
+        val linearLocations = linearLocationDAO.fetchUpdatedSince(sinceDate)
+        Right(linearLocations)
+      } catch {
+        case e if NonFatal(e) =>
+          logger.error("Failed to fetch updated linear locations.", e)
           Left(e.getMessage)
       }
     }
