@@ -41,7 +41,6 @@ object ProjectSectionCalculator {
     }
   }
 
-
   def assignTerminatedMValues(terminated: Seq[ProjectLink], nonTerminatedLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${terminated.size} links")
     try {
