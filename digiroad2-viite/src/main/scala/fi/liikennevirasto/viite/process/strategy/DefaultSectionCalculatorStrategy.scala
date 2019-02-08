@@ -27,7 +27,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       try {
         val newIds = newProjectLinks.map(_.id)
         val oldRoadLinks = projectLinkDAO.fetchByProjectRoad(part._1, projectLinks.head.projectId).filterNot(l=> newIds.contains(l.id)).partition(_.roadPartNumber == part._2)
-        val currStartPoints = findStartingPoints(projectLinks, oldRoadLinks, userCalibrationPoints)
+        val currStartPoints = findStartingPoints(projectLinks, oldLinks, oldRoadLinks, userCalibrationPoints)
         val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, projectLinks ++ oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
 
@@ -99,17 +99,17 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
-  def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: (Seq[ProjectLink], Seq[ProjectLink]),
+  def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: (Seq[ProjectLink], Seq[ProjectLink]),
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
-    val (oldPartLinks, otherPartsLinks) = oldLinks
-    val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldPartLinks.filter(_.track != Track.LeftSide), otherPartsLinks, calibrationPoints, (newLinks ++ oldPartLinks).filter(_.track == LeftSide))
+    val otherPartsLinks = otherRoadPartLinks._2
+    val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide), otherPartsLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == LeftSide))
 
-    if ((oldPartLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
+    if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
       (rightStartPoint, rightStartPoint)
     else {
       // Get left track non-connected points and find the closest to right track starting point
-      val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldPartLinks.filter(_.track != Track.RightSide)
-      val rightLinks = newLinks.filter(_.track == Track.RightSide) ++ oldPartLinks.filter(_.track == Track.RightSide)
+      val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
+      val rightLinks = newLinks.filter(_.track == Track.RightSide) ++ oldLinks.filter(_.track == Track.RightSide)
       val chainEndPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
       if (chainEndPoints.isEmpty)
