@@ -100,11 +100,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val result = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
-    verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L))
-    verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 125L))
-    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L), false)
+    verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L, 125L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 124L, 125L))
+    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L, 125L), false)
 
-    result.size should be (4)
+    result.size should be (3)
   }
 
   test("Test getRoadAddressLinksByLinkId When called by any bounding box and any road number limits Then should not filter out floatings") {
@@ -140,8 +140,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val roadAddressLinks = roadAddressService.getRoadAddressLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
-    roadAddressLinks.size should be (2)
-    roadAddressLinks.map(_.linkId) should contain allOf (123L,124L)
+    roadAddressLinks.size should be (3)
+    roadAddressLinks.map(_.linkId).distinct should contain allOf (123L,124L)
   }
 
   test("Test getRoadAddressesWithLinearGeometry When municipality has road addresses on top of suravage and complementary road links Then should not return floatings") {
@@ -162,8 +162,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val roadAddressesWithLinearGeometry = roadAddressService.getRoadAddressesWithLinearGeometry(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 20.0)), Seq())
 
-    roadAddressesWithLinearGeometry.size should be (2)
-    roadAddressesWithLinearGeometry.map(_.linkId) should contain allOf (123L,124L)
+    roadAddressesWithLinearGeometry.size should be (linearLocations.size)
+
+    roadAddressesWithLinearGeometry.map(_.linkId).distinct should be (linearLocations.map(_.linkId).distinct)
   }
 
   test("Test getAllByMunicipality When exists road network version Then returns road addresses of that version") {
@@ -198,6 +199,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     //Road Link service mocks
     when(mockRoadLinkService.getSuravageRoadLinks(any[Int])).thenReturn(suravageRoadLinks)
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int], any[Boolean])).thenReturn((roadLinks, Seq()))
+
+    val roads = roadAddressService.getAllByMunicipality(municipality = 100)
 
     verify(mockRoadwayDAO, times(1)).fetchAllByRoadwayNumbers(Set(1L), 1)
   }
@@ -406,10 +409,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val result = roadAddressService.getRoadAddressByLinkIds(Set(123L))
 
-    result.size should be (1)
-    result.head.linkId should be (123L)
+    result.size should be (2)
+    result.map(_.linkId).distinct.size should be (1)
+    result.map(_.linkId).distinct should be (List(123L))
     result.head.startMValue should be (0.0)
     result.head.endMValue should be (10.0)
+    result.last.startMValue should be (10.0)
+    result.last.endMValue should be (20.0)
   }
 
 
@@ -486,6 +492,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //  }
 
   test("Test roadAddressService.getAllByMunicipality() When asking for data for a specific municipality Then return all the Road addresses for that municipality."){
+    val newGeom0010 = Seq(Point(0.0, 0.0), Point(10.0, 10.0))
+    val newGeom1020 = Seq(Point(10.0, 10.0), Point(30.0, 30.0))
+    val newGeom3040 = Seq(Point(30.0, 30.0), Point(40.0, 40.0))
+    val newGeom4050 = Seq(Point(40.0, 40.0), Point(50.0, 50.0))
     val linearLocations = List(
       dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
       dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 0.0, endMValue = 20.0),
@@ -494,10 +504,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     val roadLinks = (Seq(
-      RoadLink(123L, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))),
-      RoadLink(123L, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))),
-      RoadLink(124L, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))),
-      RoadLink(125L, Seq(), 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312)))
+      RoadLink(123L, newGeom0010, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))),
+      RoadLink(123L, newGeom1020, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))),
+      RoadLink(124L, newGeom3040, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))),
+      RoadLink(125L, newGeom4050, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312)))
     ), Seq.empty[ChangeInfo])
 
     val roadways = Seq(
@@ -512,7 +522,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
     when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
     val roadAddresses = roadAddressService.getAllByMunicipality(99999)
-    roadAddresses.size should be (3)
+    roadAddresses.size should be (4)
   }
 
   private def getSpecificUnaddressedRoadLinks(linkId :Long): List[(Long, Long, Long, Long, Long, Int)] = {
