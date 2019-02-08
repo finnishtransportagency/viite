@@ -176,7 +176,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
 
     adjustedLinearLocations should have size 4
-    changeSet.adjustedMValues should have size 0
+    changeSet.adjustedMValues should have size 1
     changeSet.unaddressedRoadLink should have size 0
     changeSet.droppedSegmentIds should have size 0
   }
