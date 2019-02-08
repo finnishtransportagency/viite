@@ -110,22 +110,22 @@ package object viite {
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
-
+  val roadNameWasNotSavedInProject = "Datavirhe tien nimetyksessä, ota yhteys pääkäyttäjään."
+  val RoadNotAvailableMessage = s"Varattujen tieosien haku tietokannasta epäonnistui. Tie %d osa %d ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä %s tai se on varattu toiseen projektiin."
+  val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
+  val ProjectNotFoundMessage = "Projektia ei löytynyt, ota yhteys pääkäyttäjään."
+  val failedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui, ota yhteys pääkäyttäjään."
+  val trConnectionError = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
+    s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon."
+  val genericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
+  val projectNotWritable = s"Projekti ei ole enää muokattavissa."
+  //ELY-code error messages
   val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
   val IncorrectLinkStatusOnElyCodeChangeMessage =  s"ELY-koodin muutos ei onnistu, ota yhteyttä pääkäyttäjään."
   val ElyCodeChangeButNoRoadPartChangeMessage = s"ELY-numeromuutos havaittu mutta tieosoitemuutos puuttuu. Tieosanumeron tulee vaihtua ELY-rajalla."
   val ElyCodeChangeButNoElyChangeMessage = s" ELY-numeromuutos havaittu mutta  ${ChangingELYCode.description}(${ChangingELYCode.value}) jatkuvuuskoodi on väärä. Elyrajalla jatkuvuuskoodin tulee olla 3."
   val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"Tieosan [lisää tähän tieosa] lopussa jatkuu-koodiksi määritelty 3, tarkista tieosan [lisää tähän seuraava tieosa] elykoodi tai korjaa jatkuu-koodia."
   val ElyCodeChangeButNotOnEndMessage = s"Tieosan keskellä on jatkuu-koodiksi määritelty 3, korjaa jatkuu-koodi."
-
-  val roadNameWasNotSavedInProject = "Datavirhe tien nimetyksessä, ota yhteys pääkäyttäjään."
-  val RoadNotAvailableMessage = s"Varattujen tieosien haku tietokannasta epäonnistui. Tieosa ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä tai se on varattu toiseen projektiin."
-  val failedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui."
-  val trConnectionError = s"Muutosilmoitus ei tavoittanut Tierekisteriä. Muutosilmoitus lähetetään automaattisesti uudelleen aina 5 minuutin välein.\r\n" +
-    s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon."
-  val genericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
-  val projectNotWritable = s"Projekti ei ole enää muokattavissa."
-
   //RoadNetworkChecker error messages
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
   val ErrorInconsistentTopology = "Topology have inconsistent data."

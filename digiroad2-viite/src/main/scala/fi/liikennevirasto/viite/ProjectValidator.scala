@@ -69,13 +69,13 @@ class ProjectValidator {
   def checkNotReserved(number: Long, part: Long, currentProject: Project): Unit = {
     val project = projectReservedPartDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
     if (project.nonEmpty) {
-      throw new ProjectValidationException(s"TIE $number OSA $part on jo varattuna projektissa ${project.get}, tarkista tiedot")
+      throw new ProjectValidationException(RoadReservedOtherProjectMessage.format(number, part, currentProject.name))
     }
   }
 
   def checkProjectExists(id: Long): Unit = {
     if (projectDAO.fetchById(id).isEmpty)
-      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia")
+      throw new ProjectValidationException(ProjectNotFoundMessage)
   }
 
   // Utility method, will return correct GeometryEndpoint
@@ -107,7 +107,8 @@ class ProjectValidator {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp,
-      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly, MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
+      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
+      MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
       ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd)
 
     // Viite-942
