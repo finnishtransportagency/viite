@@ -5,7 +5,7 @@ import java.util.Locale
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinearLocation, RoadAddress, Roadway}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.DateTime
@@ -126,10 +126,10 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  get("/road_address/changes") {
+  get("/roadway/changes") {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
-    time(logger, s"GET request for /road_address  /changes (since: $sinceUnformatted)") {
+    time(logger, s"GET request for /roadway/changes (since: $sinceUnformatted)") {
       if (sinceUnformatted == "") {
         val message = "Since parameter is empty"
         logger.warn(message)
@@ -137,7 +137,32 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       } else {
         try {
           val since = DateTime.parse(sinceUnformatted)
-          fetchUpdatedRoadAddresses(since)
+          fetchUpdatedRoadways(since)
+        } catch {
+          case e: IllegalArgumentException =>
+            val message = "The since parameter of the service should be in the form ISO8601"
+            logger.warn(message)
+            BadRequest(message)
+          case e if NonFatal(e) =>
+            logger.warn(e.getMessage, e)
+            BadRequest(e.getMessage)
+        }
+      }
+    }
+  }
+
+  get("/linear_location/changes") {
+    contentType = formats("json")
+    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+    time(logger, s"GET request for /linear_location/changes (since: $sinceUnformatted)") {
+      if (sinceUnformatted == "") {
+        val message = "Since parameter is empty"
+        logger.warn(message)
+        BadRequest(message)
+      } else {
+        try {
+          val since = DateTime.parse(sinceUnformatted)
+          fetchUpdatedLinearLocations(since)
         } catch {
           case e: IllegalArgumentException =>
             val message = "The since parameter of the service should be in the form ISO8601"
@@ -239,14 +264,25 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  private def fetchUpdatedRoadAddresses(since: DateTime) = {
-    val result = roadAddressService.getUpdatedRoadAddresses(since)
+  private def fetchUpdatedRoadways(since: DateTime) = {
+    val result = roadAddressService.getUpdatedRoadways(since)
     if (result.isLeft) {
       BadRequest(result.left)
     } else if (result.isRight) {
       result.right.get
     } else {
-      Seq.empty[RoadAddress]
+      Seq.empty[Roadway]
+    }
+  }
+
+  private def fetchUpdatedLinearLocations(since: DateTime) = {
+    val result = roadAddressService.getUpdatedLinearLocations(since)
+    if (result.isLeft) {
+      BadRequest(result.left)
+    } else if (result.isRight) {
+      result.right.get
+    } else {
+      Seq.empty[LinearLocation]
     }
   }
 

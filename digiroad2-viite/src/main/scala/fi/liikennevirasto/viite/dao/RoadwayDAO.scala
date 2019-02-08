@@ -742,11 +742,9 @@ class RoadwayDAO extends BaseDAO {
 
   private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
     val sinceString = sinceDate.toString("yyyy-MM-dd")
-    // TODO Linear_location valid_from and valid_to
     s"""$query
-
         where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
-          OR (a.valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
   }
 
   /**
