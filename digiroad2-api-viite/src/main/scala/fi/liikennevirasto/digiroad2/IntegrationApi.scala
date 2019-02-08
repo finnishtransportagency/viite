@@ -5,17 +5,16 @@ import java.util.Locale
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
+import org.scalatra.{BadRequest, ScalatraBase}
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -127,6 +126,31 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
+  get("/road_address/changes") {
+    contentType = formats("json")
+    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+    time(logger, s"GET request for /road_address  /changes (since: $sinceUnformatted)") {
+      if (sinceUnformatted == "") {
+        val message = "Since parameter is empty"
+        logger.warn(message)
+        BadRequest(message)
+      } else {
+        try {
+          val since = DateTime.parse(sinceUnformatted)
+          fetchUpdatedRoadAddresses(since)
+        } catch {
+          case e: IllegalArgumentException =>
+            val message = "The since parameter of the service should be in the form ISO8601"
+            logger.warn(message)
+            BadRequest(message)
+          case e if NonFatal(e) =>
+            logger.warn(e.getMessage, e)
+            BadRequest(e.getMessage)
+        }
+      }
+    }
+  }
+
   def geometryWKT(geometry: Seq[Point], startAddr: Long, endAddr: Long): (String, String) = {
     if (geometry.nonEmpty) {
       val segments = geometry.zip(geometry.tail)
@@ -212,6 +236,17 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       )
     } else {
       Seq.empty[Any]
+    }
+  }
+
+  private def fetchUpdatedRoadAddresses(since: DateTime) = {
+    val result = roadAddressService.getUpdatedRoadAddresses(since)
+    if (result.isLeft) {
+      BadRequest(result.left)
+    } else if (result.isRight) {
+      result.right.get
+    } else {
+      Seq.empty[RoadAddress]
     }
   }
 
