@@ -32,10 +32,10 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
         val roadNumbers = roadwayDAO.getValidRoadNumbers
         val chunks = generateChunks(roadNumbers, 500)
         roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(
-          roadNetworkDAO.createPublishedRoadNetwork(Sequences.nextPublishedRoadNetwork)
+          roadNetworkDAO.createPublishedRoadNetwork(Sequences.nextPublishedRoadNetworkId)
         )
         val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-        val nextNetworkVersion = Sequences.nextPublishedRoadNetwork
+        val nextNetworkVersion = Sequences.nextPublishedRoadNetworkId
         chunks.foreach {
           case (min, max) =>
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))

@@ -50,7 +50,7 @@ object Sequences {
     Queries.nextRoadwayChangeLink.as[Long].first
   }
 
-  def nextPublishedRoadNetwork: Long = {
-    Queries.nextPublishedRoadNetwork.as[Long].first
+  def nextPublishedRoadNetworkId: Long = {
+    Queries.nextPublishedRoadNetworkId.as[Long].first
   }
 }
