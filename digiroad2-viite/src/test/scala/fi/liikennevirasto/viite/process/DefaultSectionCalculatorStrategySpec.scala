@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
@@ -9,9 +10,16 @@ import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.scalatest.{FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
-
+  def runWithRollback(f: => Unit): Unit = {
+   Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
+    }
+  }
   val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
 
   def setUpSideCodeDeterminationTestData(): Seq[ProjectLink] = {
@@ -149,13 +157,13 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     val beforeProjectLinks = leftSideBeforeProjectLinks ++ rightSideBeforeProjectLinks
 
     val projectLinksWithAssignedValuesBefore = defaultSectionCalculatorStrategy.assignMValues(projectLinksWithAssignedValues ++ beforeProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    val findStartingPointsBefore = defaultSectionCalculatorStrategy.findStartingPoints(projectLinksWithAssignedValuesBefore, Seq.empty[ProjectLink], Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
     projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be(true)
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
   }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() When supplying a variety of project links Then return said project links but EVERY SideCode should be TowardsDigitizing")
   {
+    runWithRollback {
     val projectLinks = setUpSideCodeDeterminationTestData()
     projectLinks.foreach(p => {
       val assigned = defaultSectionCalculatorStrategy.assignMValues(Seq(p), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
@@ -163,18 +171,21 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       assigned.head.geometry should be(p.geometry)
       assigned.head.sideCode should be(SideCode.TowardsDigitizing)
     })
+    }
   }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() When supplying a variety of project links Then return said project links but EVERY SideCode should be AgainstDigitizing")
   {
-    val projectLinks = setUpSideCodeDeterminationTestData()
-    projectLinks.foreach(p => {
-      val pl = p.copyWithGeometry(p.geometry.reverse)
-      val assigned = defaultSectionCalculatorStrategy.assignMValues(Seq(pl), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-      assigned.head.linkId should be(pl.linkId)
-      assigned.head.geometry should be(pl.geometry)
-      assigned.head.sideCode should be(SideCode.AgainstDigitizing)
-    })
+    runWithRollback {
+      val projectLinks = setUpSideCodeDeterminationTestData()
+      projectLinks.foreach(p => {
+        val pl = p.copyWithGeometry(p.geometry.reverse)
+        val assigned = defaultSectionCalculatorStrategy.assignMValues(Seq(pl), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+        assigned.head.linkId should be(pl.linkId)
+        assigned.head.geometry should be(pl.geometry)
+        assigned.head.sideCode should be(SideCode.AgainstDigitizing)
+      })
+    }
   }
 
 }
