@@ -192,11 +192,29 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
             val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
-          } else chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
+          } else if(remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.forall(_.endAddrMValue == 0)){
+            val candidateRightStartPoint = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
+            val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
+            val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
+            val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
+            val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
+            val angle = startingPointsVector.angleXYWithNegativeValues(direction)
+            if(angle > 0){
+              chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
+            }
+            else
+              candidateRightStartPoint
+          }
+          else chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
         }
 
       }
 
     )
+  }
+
+  private def getOppositeEnd(link: BaseRoadAddress, point: Point): Point = {
+    val (st, en) = link.getEndPoints
+    if (st.distance2DTo(point) < en.distance2DTo(point)) en else st
   }
 }
