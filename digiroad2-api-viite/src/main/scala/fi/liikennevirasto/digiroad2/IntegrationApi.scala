@@ -102,7 +102,14 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  get("/roadnames/changes") {
+  val getRoadNameChanges =
+    (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
+      tags "Integration (kalpa)"
+      summary "Returns all the changes to road names between given dates."
+      parameter queryParam[String]("since").description("Date in format ISO8601")
+      parameter queryParam[String]("until").description("Date in format ISO8601").optional)
+
+  get("/roadnames/changes", operation(getRoadNameChanges)) {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     val untilUnformatted = params.get("until")
@@ -128,7 +135,13 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  get("/roadway/changes") {
+  val getRoadwayChanges =
+    (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
+      tags "Integration (kalpa)"
+      summary "Returns all the changes to roadways after the given date (including the given date)."
+      parameter queryParam[String]("since").description("Date in format ISO8601"))
+
+  get("/roadway/changes", operation(getRoadwayChanges)) {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     time(logger, s"GET request for /roadway/changes (since: $sinceUnformatted)") {
@@ -173,7 +186,13 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  get("/linear_location/changes") {
+  val getLinearLocationChanges =
+    (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
+      tags "Integration (kalpa)"
+      summary "Returns all the changes to roadways after the given date (including the given date)."
+      parameter queryParam[String]("since").description("Date in format ISO8601"))
+
+  get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     time(logger, s"GET request for /linear_location/changes (since: $sinceUnformatted)") {
