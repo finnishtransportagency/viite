@@ -25,8 +25,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) =>
       try {
-        val newIds = newProjectLinks.map(_.id)
-        val oldRoadLinks = projectLinkDAO.fetchByProjectRoad(part._1, projectLinks.head.projectId).filterNot(l=> l.roadPartNumber == part._2)
+        val oldRoadLinks = if(projectLinks.nonEmpty){
+          projectLinkDAO.fetchByProjectRoad(part._1, projectLinks.head.projectId).filterNot(l=> l.roadPartNumber == part._2)
+        } else {
+          Seq.empty[ProjectLink]
+        }
         val currStartPoints = findStartingPoints(projectLinks, oldLinks, oldRoadLinks, userCalibrationPoints)
         val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(currStartPoints, projectLinks ++ oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
