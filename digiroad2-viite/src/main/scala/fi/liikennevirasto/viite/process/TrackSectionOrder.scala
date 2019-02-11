@@ -253,7 +253,7 @@ object TrackSectionOrder {
         case 1 => connectedLinks.headOption
         case _ =>
           val nextCandidates = connectedLinks.filter(connectedLink => lastLinkOption.get.endAddrMValue == connectedLink.startAddrMValue && lastLinkOption.get.discontinuity == Continuous)
-          if(nextCandidates.nonEmpty && nextCandidates.size == 1){
+          if (nextCandidates.nonEmpty && nextCandidates.size == 1) {
             nextCandidates.headOption
           }
           else

@@ -87,7 +87,7 @@ object Discontinuity {
   }
 
   def replaceParallelLink(currentDiscontinuity: Discontinuity) : Discontinuity = {
-    if(currentDiscontinuity == ParallelLink)
+    if (currentDiscontinuity == ParallelLink)
       Continuous
     else currentDiscontinuity
   }
