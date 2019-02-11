@@ -245,7 +245,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val newRoadNumber = 1
       val newRoadPartNumber = 5
       projectReservedPartDAO.reserveRoadPart(7081807, newRoadNumber, newRoadPartNumber, "test")
-      projectLinkDAO.updateProjectLinkNumbering(header.projectId, header.roadNumber, header.roadPartNumber, header.status, newRoadNumber, newRoadPartNumber, "test", header.ely+6)
+      projectLinkDAO.updateProjectLinkNumbering(header.projectId, header.roadNumber, header.roadPartNumber, header.status, newRoadNumber, newRoadPartNumber, "test", header.ely + 6)
 
       val updatedProjectLink = projectLinkDAO.fetchProjectLinks(7081807).filter(link => link.id == header.id).head
       updatedProjectLink.roadNumber should be(newRoadNumber)
