@@ -2495,9 +2495,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test save project with reserved road parts having different ELY codes "){
     runWithRollback {
 
-      val roadNumber = 75
-      val part1 = 1
-      val part2 = 2
+      val roadNumber = 26020
+      val part1 = 12
+      val part2 = 34
       val ely1 = Some(2L)
       val ely2 = Some(1L)
 
