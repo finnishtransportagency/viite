@@ -41,7 +41,7 @@ class RoadNetworkDAO {
     networkErrorPS.setDouble(5, timestamp)
     networkVersion match {
       case Some(v) => networkErrorPS.setLong(6, v)
-      case _ => networkErrorPS.setLong(6, Sequences.nextPublishedRoadNetwork)
+      case _ => networkErrorPS.setLong(6, Sequences.nextPublishedRoadNetworkId)
     }
     networkErrorPS.addBatch()
     networkErrorPS.executeBatch()
