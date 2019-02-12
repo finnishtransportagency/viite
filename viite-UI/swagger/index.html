@@ -41,6 +41,8 @@
       // Build a system
       const ui = SwaggerUIBundle({
         url: "/viite/api-docs/swagger.json",
+        // add the allowed operations here
+        supportedSubmitMethods: ["get"],
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
