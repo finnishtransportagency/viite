@@ -102,6 +102,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
+
   val getRoadNameChanges =
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
       tags "Integration (kalpa)"
