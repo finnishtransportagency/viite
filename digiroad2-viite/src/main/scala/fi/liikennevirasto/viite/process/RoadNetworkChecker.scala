@@ -31,19 +31,24 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
       } else {
         val roadNumbers = roadwayDAO.getValidRoadNumbers
         val chunks = generateChunks(roadNumbers, 500)
+        roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(
+          roadNetworkDAO.createPublishedRoadNetwork()
+        )
         val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-        val nextNetworkVersion = currNetworkVersion.getOrElse(0L) + 1
+        val nextNetworkVersion = Sequences.nextPublishedRoadNetworkId
         chunks.foreach {
           case (min, max) =>
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
             roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads.toSet, currNetworkVersion, nextNetworkVersion, throughActor = false))
         }
         if (!roadNetworkDAO.hasCurrentNetworkErrors) {
-          logger.info(s"No errors found. Creating new publishable version for the road network ")
-          if(currNetworkVersion.nonEmpty) roadNetworkDAO.expireRoadNetwork
-          roadNetworkDAO.createPublishedRoadNetwork
+          logger.info(s"No errors found. Creating new publishable version for the road network")
+          roadNetworkDAO.expireRoadNetwork
+          roadNetworkDAO.createPublishedRoadNetwork(nextNetworkVersion)
           val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
           roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
+        } else {
+          logger.info(s"Network errors found. Check road_network_error table")
         }
       }
     }
