@@ -132,7 +132,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           if (leftLinks.forall(_.endAddrMValue == 0) && rightLinks.nonEmpty && rightLinks.exists(_.endAddrMValue != 0)) {
             val rightStartPoint = TrackSectionOrder.findChainEndpoints(rightLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(rightStartPoint.get._1))._1
-          } else chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
+          } else{
+            val candidateEndPoint = chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
+            val rightSideEndPoint = Seq(pl.getEndPoints._1, pl.getEndPoints._2).filterNot(_ == rightStartPoint)
+            if(candidateEndPoint.distance2DTo(rightStartPoint) > candidateEndPoint.distance2DTo(rightSideEndPoint.head)){
+              chainEndPoints.filterNot(_._1 == candidateEndPoint).head._1
+            }
+            else
+              candidateEndPoint
+          }
         }
       )
     }
