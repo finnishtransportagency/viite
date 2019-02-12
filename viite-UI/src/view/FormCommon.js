@@ -26,7 +26,7 @@
       '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
-    var newRoadAddressInfo = function(selected, links, road){
+    var newRoadAddressInfo = function(project, selected, links, road) {
       var roadNumber = road.roadNumber;
       var part = road.roadPartNumber;
       var track = road.trackCode;
@@ -34,17 +34,18 @@
       var link = _.first(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
+      var projectIncomplete = project.statusCode === 1;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
-        addSmallInputNumber('osa',(part !== 0 ? part : '')) +
+        addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectIncomplete) +
+        addSmallInputNumber('osa', (part !== 0 ? part : ''), !projectIncomplete) +
         addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
-        addSmallInputNumber('ely', link.elyCode) +
+        addSmallInputNumber('ely', link.elyCode, !projectIncomplete) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
           roadTypeDropdown() + '<br>' +
@@ -102,15 +103,16 @@
       return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">'+label+'</label>';
     };
 
-    var addSmallInputNumber = function(id, value, isDisabled){
+    var addSmallInputNumber = function(id, value, isDisabled) {
       //Validate only number characters on "onkeypress" including TAB and backspace
-      var disabled = isDisabled ? ' disabled ': '';
-      return '<input '+ disabled+ ' type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="'+prefix+'form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+      var disabled = isDisabled ? ' readonly="readonly" ': '';
+      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
+        '" class="' + prefix + 'form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value)? '' : value ) + '" ' +
+        disabled + ' onclick=""/>';
     };
 
-    var addSmallInputNumberDisabled = function(id, value){
-      return '<input type="text" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" readonly="readonly"/>';
+    var addSmallInputNumberDisabled = function(id, value) {
+      return '<input type="text" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value)? '' : value ) + '" readonly="readonly"/>';
     };
 
     var addDiscontinuityDropdown = function(link){
@@ -159,7 +161,11 @@
       }
     };
 
-    var changeDirection = function (selected) {
+    var changeDirection = function (selected, project) {
+      var projectIncomplete = project.statusCode === 1;
+      if (!projectIncomplete) {
+        return ''; // Don't show the button if project status is not incomplete
+      }
       var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
       var isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
