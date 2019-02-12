@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink, ProjectLinkCalibrationPoint}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -248,8 +249,15 @@ object TrackSectionOrder {
       val lastTrack = lastLinkOption.map(_.track)
       val connectedLinks = candidates.filter(link => lastTrack.contains(link.track))
       connectedLinks.size match {
+        case 0 => None
         case 1 => connectedLinks.headOption
-        case _ => None
+        case _ =>
+          val nextCandidates = connectedLinks.filter(connectedLink => lastLinkOption.get.endAddrMValue == connectedLink.startAddrMValue && lastLinkOption.get.discontinuity == Continuous)
+          if (nextCandidates.nonEmpty && nextCandidates.size == 1) {
+            nextCandidates.headOption
+          }
+          else
+            None
       }
     }
 
@@ -279,7 +287,7 @@ object TrackSectionOrder {
                   .minBy(b => (currentPoint - b._1).length())
                 (getOppositeEnd(link, nPoint), link)
               } else {
-                val l = if(ready.isEmpty) connected.head else pickRightMost(ready.last, connected)
+                val l = if (ready.isEmpty) connected.head else pickRightMost(ready.last, connected)
                 (getOppositeEnd(l, currentPoint), l)
               }
             }
@@ -288,10 +296,10 @@ object TrackSectionOrder {
             (getOppositeEnd(l, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && (unprocessed ++ ready).size == 1) match {
-          case (false, false) | (true, true) =>
+        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && ready.isEmpty) match {
+          case (false, _) | (true, true) =>
             SideCode.AgainstDigitizing
-          case (false, true) | (true, false) =>
+          case _ =>
             SideCode.TowardsDigitizing
         }
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink), oppositeTrack)
