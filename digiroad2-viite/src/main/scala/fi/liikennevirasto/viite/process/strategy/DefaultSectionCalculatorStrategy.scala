@@ -142,7 +142,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val startPoint1 = chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
             val startPoint2 = chainEndPoints.maxBy(p => p._1.distance2DTo(rightStartPoint))._1
             val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2))
-            if(otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty)
+            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty)
               startPoint1
             else {
               chainEndPoints.maxBy(p => p._1.distance2DTo(rightStartPoint))._1
