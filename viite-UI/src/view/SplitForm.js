@@ -77,7 +77,7 @@
         formCommon.staticField('Geometrian Lähde', roadLinkSources)+
         '<div class="split-form-group editable form-editable-roadAddressProject"> ' +
         selectionFormCutted(selection, selected, currentSplitData) +
-        (isReSplitMode ? '' : formCommon.changeDirection(selected)) +
+        (isReSplitMode ? '' : formCommon.changeDirection(selected, project)) +
         formCommon.actionSelectedField() +
         (isReSplitMode ? revertSplitButton() : '') +
         '</div>' +
