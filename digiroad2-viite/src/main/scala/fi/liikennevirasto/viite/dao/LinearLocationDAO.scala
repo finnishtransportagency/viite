@@ -494,6 +494,14 @@ class LinearLocationDAO {
     }
   }
 
+  private def fetch(queryFilter: String => String): Seq[LinearLocation] = {
+    val query = s"""
+        $selectFromLinearLocation
+      """
+    val filteredQuery = queryFilter(query)
+    Q.queryNA[LinearLocation](filteredQuery).iterator.toSeq
+  }
+
   // TODO If not used, should be removed
   def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
     dateTime.map(dt => new Timestamp(dt.getMillis))
@@ -766,6 +774,19 @@ class LinearLocationDAO {
           (SELECT ELY_NRO FROM MUNICIPALITY WHERE ID = $municipality) AND VALID_TO IS NULL AND END_DATE IS NULL)
        """
     queryList(query)
+  }
+
+  def fetchUpdatedSince(sinceDate: DateTime): Seq[LinearLocation] = {
+    time(logger, "Fetch linear locations updated since date") {
+      fetch(withUpdatedSince(sinceDate))
+    }
+  }
+
+  private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
+    val sinceString = sinceDate.toString("yyyy-MM-dd")
+    s"""$query
+        where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
   }
 
   /**

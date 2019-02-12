@@ -517,6 +517,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchUpdatedSince(sinceDate: DateTime): Seq[Roadway] = {
+    time(logger, "Fetch roadways updated since date") {
+      fetch(withUpdatedSince(sinceDate))
+    }
+  }
+
   def fetchAllByRoadwayId(roadwayIds: Seq[Long]): Seq[Roadway] = {
     time(logger, "Fetch road ways by id") {
       if (roadwayIds.isEmpty) {
@@ -744,6 +750,13 @@ class RoadwayDAO extends BaseDAO {
   private def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     s"""$query where valid_to is null and start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
           AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
+  }
+
+  private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
+    val sinceString = sinceDate.toString("yyyy-MM-dd")
+    s"""$query
+        where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
   }
 
   /**
