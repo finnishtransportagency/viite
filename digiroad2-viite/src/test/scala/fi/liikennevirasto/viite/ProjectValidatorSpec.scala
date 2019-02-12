@@ -2385,7 +2385,7 @@ Left|      |Right
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be (1)
       elyCodeCheck.head.projectId should be (project.id)
-      elyCodeCheck.head.validationError should be (projectValidator.ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange)
+      elyCodeCheck.head.validationError.value should be (projectValidator.ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange.value)
     }
   }
 
