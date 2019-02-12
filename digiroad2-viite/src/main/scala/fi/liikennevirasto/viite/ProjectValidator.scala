@@ -378,7 +378,7 @@ class ProjectValidator {
           val elyOnNext = findElyChangesOnNextProjectLinks(apl, allProjectLinks)
           elyOnAdjacent || elyOnNext
         })
-        filtered.isEmpty || ce.validationError.value == MissingEndOfRoadMessage
+        filtered.isEmpty || (ce.validationError == ValidationErrorList.MissingEndOfRoad)
       })
     } else continuityErrors
 
@@ -847,6 +847,7 @@ class ProjectValidator {
     def checkEndOfRoadOnLastPart: Seq[ValidationErrorDetails] = {
       val afterCheckErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+        val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toLong, project.startDate)
         trackIntervals.flatMap {
           interval =>
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
@@ -859,14 +860,14 @@ class ProjectValidator {
 
               val nextProjectPart = projectNextRoadParts.filter(np => np.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == np.roadPartNumber))
                 .map(_.roadPartNumber).sorted.headOption
-              val nextAddressPart = projectNextRoadParts
-                .filter(p => p.roadPartNumber > part)
-                .find(p => roadAddressService.getRoadAddressesFiltered(road, p.roadPartNumber)
+              val nextAddressPart = validRoadParts
+                .filter(p => p > part).sorted
+                .find(p => roadAddressService.getRoadAddressesFiltered(road, p)
                   .forall(ra => !allProjectLinks.exists(al => al.linearLocationId == ra.linearLocationId && al.roadPartNumber != ra.roadPartNumber)))
               if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
                 error(project.id, ValidationErrorList.MissingEndOfRoad)(Seq(last))
               } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
-                val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, Some(nextAddressPart.head.roadPartNumber))
+                val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
                 val isConnected = Seq(last).forall(lpl => nextLinks.exists(nl => Track.isTrackContinuous(nl.track, lpl.track) &&
                   lpl.connected(nl)))
                 if (isConnected) error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last)) else None
