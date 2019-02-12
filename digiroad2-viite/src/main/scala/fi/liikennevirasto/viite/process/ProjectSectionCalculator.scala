@@ -79,13 +79,13 @@ object ProjectSectionCalculator {
 
     def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
       val pl = s.head
-      TrackSection(pl.roadNumber, pl.roadPartNumber, pl.roadAddressTrack.get, s.map(_.geometryLength).sum, s)
+      TrackSection(pl.roadNumber, pl.roadPartNumber, pl.roadAddressTrack.getOrElse(Track.Unknown), s.map(_.geometryLength).sum, s)
     }
 
     def groupIntoSections(seq: Seq[ProjectLink]): Seq[TrackSection] = {
       if (seq.isEmpty)
         throw new InvalidAddressDataException("Missing track")
-      val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.roadAddressTrack.get != pl2.roadAddressTrack.get}
+      val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.roadAddressTrack.getOrElse(Track.Unknown) != pl2.roadAddressTrack.getOrElse(Track.Unknown)}
       seq.foldLeft(Seq(Seq[ProjectLink]())) { case (tracks, pl) =>
         if (changePoints.exists(_._2 == pl)) {
           Seq(Seq(pl)) ++ tracks
@@ -96,8 +96,8 @@ object ProjectSectionCalculator {
     }
 
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      val track = seq.headOption.map(_.roadAddressTrack.get).getOrElse(Track.Unknown)
-      val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.get == track)
+      val track = seq.headOption.map(_.roadAddressTrack.getOrElse(Track.Unknown)).getOrElse(Track.Unknown)
+      val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track)
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
 
