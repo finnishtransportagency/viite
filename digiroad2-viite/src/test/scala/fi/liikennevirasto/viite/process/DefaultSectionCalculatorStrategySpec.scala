@@ -78,8 +78,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() and defaultSectionCalculatorStrategy.findStartingPoints() When using 4 geometries that end up in a point " +
-    "Then return the same project links, but now with correct MValues and directions")
-  {
+    "Then return the same project links, but now with correct MValues and directions") {
     val geomLeft1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
     val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
 
@@ -161,21 +160,19 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
   }
 
-  test("Test defaultSectionCalculatorStrategy.assignMValues() When supplying a variety of project links Then return said project links but EVERY SideCode should be TowardsDigitizing")
-  {
+  test("Test defaultSectionCalculatorStrategy.assignMValues() When supplying a variety of project links Then return said project links but EVERY SideCode should be TowardsDigitizing") {
     runWithRollback {
-    val projectLinks = setUpSideCodeDeterminationTestData()
-    projectLinks.foreach(p => {
-      val assigned = defaultSectionCalculatorStrategy.assignMValues(Seq(p), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-      assigned.head.linkId should be(p.linkId)
-      assigned.head.geometry should be(p.geometry)
-      assigned.head.sideCode should be(SideCode.TowardsDigitizing)
-    })
+      val projectLinks = setUpSideCodeDeterminationTestData()
+      projectLinks.foreach(p => {
+        val assigned = defaultSectionCalculatorStrategy.assignMValues(Seq(p), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+        assigned.head.linkId should be(p.linkId)
+        assigned.head.geometry should be(p.geometry)
+        assigned.head.sideCode should be(SideCode.TowardsDigitizing)
+      })
     }
   }
 
-  test("Test defaultSectionCalculatorStrategy.assignMValues() When supplying a variety of project links Then return said project links but EVERY SideCode should be AgainstDigitizing")
-  {
+  test("Test defaultSectionCalculatorStrategy.assignMValues() When supplying a variety of project links Then return said project links but EVERY SideCode should be AgainstDigitizing") {
     runWithRollback {
       val projectLinks = setUpSideCodeDeterminationTestData()
       projectLinks.foreach(p => {
