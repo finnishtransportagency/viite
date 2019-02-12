@@ -16,8 +16,8 @@ class RoadNetworkDAO {
 
   protected def logger = LoggerFactory.getLogger(getClass)
 
-  def createPublishedRoadNetwork (networkVersion: Long): Unit = {
-    sqlu"""INSERT INTO published_road_network (id, created) VALUES ($networkVersion, sysdate)""".execute
+  def createPublishedRoadNetwork (publishedRoadNetworkId: Long = Sequences.nextPublishedRoadNetworkId): Unit = {
+    sqlu"""INSERT INTO published_road_network (id, created) VALUES ($publishedRoadNetworkId, sysdate)""".execute
   }
 
   def expireRoadNetwork: Unit = {
