@@ -451,7 +451,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all") {
     time(logger, "GET request for /roadlinks/roadaddress/project/all") {
-      projectService.getAllProjects.map(p => roadAddressProjectToApi(p, projectService.getProjectLinks(p.id)))
+      projectService.getAllProjects.map(p => {
+        val projectLinks = if (p.status == ProjectState.Saved2TR) {
+          projectService.fetchProjectHistoryLinks(p.id)
+        } else projectService.getProjectLinks(p.id)
+        roadAddressProjectToApi(p, projectLinks)
+      })
     }
   }
 
