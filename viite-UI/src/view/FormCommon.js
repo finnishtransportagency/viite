@@ -126,6 +126,7 @@
           '<option value="3" >3 ELY:n raja</option>' +
           '<option value="4" >4 Lievä epäjatkuvuus</option>' +
           '<option value="5" >5 Jatkuva</option>' +
+          '<option value="6" >6 Rinnakkainen linkki</option>' +
           '</select>';
       }
     };

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
@@ -16,11 +16,11 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 object TrackCalculatorContext {
 
   private lazy val minorDiscontinuityStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(MinorDiscontinuity)
+    new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
   }
 
   private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(Discontinuous)
+    new DiscontinuityTrackCalculatorStrategy(Seq(Discontinuous, ParallelLink))
   }
 
   private lazy val linkStatusChangeTrackCalculatorStrategy: LinkStatusChangeTrackCalculatorStrategy = {
@@ -223,7 +223,7 @@ trait TrackCalculatorStrategy {
     * @return (Project links before the discontinuity point, project links after the discontinuity point)
     */
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous) {
+    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous || endProjectLink.discontinuity == ParallelLink) {
       val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
       if (continuousProjectLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")

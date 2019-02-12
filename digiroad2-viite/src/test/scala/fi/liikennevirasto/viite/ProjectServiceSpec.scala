@@ -2582,4 +2582,97 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result.filter(res => res.terminated == TerminationCode.NoTermination && res.roadwayNumber != -1000).forall(_.isFloating) should be(true)
     }
   }*/
+
+  test("Test changeDirection When after the creation of valid project links on a project Then the side code of road addresses should be reversed.") {
+    runWithRollback {
+
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+
+      val geom1 = Seq(Point(419.26, 5896.197), Point(420.115, 5911.262))
+      val geom2 = Seq(Point(420.115, 5911.262), Point(420.289, 5929.439))
+      val geom3 = Seq(Point(420.289, 5929.439), Point(420.80, 5951.574))
+      val geom4 = Seq(Point(420.802, 5951.574), Point(434.144, 5957.563))
+      val geom5 = Seq(Point(445.712, 5957.31), Point(434.144, 5957.563))
+      val geom6 = Seq(Point(445.712, 5957.31), Point(454.689, 5959.367))
+      val geom7 = Seq(Point(454.689, 5959.367), Point(554.849, 6005.186))
+      val geom8 = Seq(Point(430.743, 5896.673), Point(430.719, 5910.37))
+      val geom9 = Seq(Point(430.719, 5910.37), Point(433.033, 5945.855))
+      val geom10 = Seq(Point(433.033, 5945.855), Point(420.802, 5951.574))
+      val geom11 = Seq(Point(443.483, 5945.637), Point(433.033, 5945.855))
+      val geom12 = Seq(Point(443.483, 5945.637), Point(451.695, 5947.231))
+      val geom13 = Seq(Point(451.695, 5947.231), Point(580.822, 5990.441))
+
+      val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom4, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl5 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom5, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom5), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl6 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12350L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom6, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl7 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12351L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom7, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom7), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl8 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12352L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom8, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom8), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl9 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12353L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom9, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom9), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl10 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12354L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom10, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom10), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl11 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12355L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom11, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom11), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl12 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12356L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom12, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom12), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+      val pl13 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12357L, 0.0, 0.0, SideCode.Unknown, (None, None), NoFloating,
+        geom13, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom13), 0L, 0, 0, reversed = false,
+        None, NewRoadwayNumber)
+
+      val project = projectService.createRoadLinkProject(rap)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(pl1, pl2, pl3, pl4, pl5, pl6, pl7).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12345L, 12346L, 12347L, 12348L, 12349L, 12350L, 12351L), project.id, 9999, 1, Track.RightSide, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(12352L, 12353L, 12354L), false)).thenReturn(Seq(pl8, pl9, pl10).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12352L, 12353L, 12354L), project.id, 9999, 1, Track.LeftSide, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(12355L, 12356L, 12357L), false)).thenReturn(Seq(pl11, pl12, pl13).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12355L, 12356L, 12357L), project.id, 9999, 1, Track.LeftSide, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+
+      val linksBeforeChange = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+      projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
+      val linksAfterChange = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+
+      linksBeforeChange.forall{bc =>
+        val changedLink = linksAfterChange.find(_.linkId == bc.linkId)
+        SideCode.switch(changedLink.get.sideCode) == bc.sideCode
+      }
+    }
+  }
 }
