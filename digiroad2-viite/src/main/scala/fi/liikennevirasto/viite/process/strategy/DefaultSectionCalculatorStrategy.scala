@@ -25,7 +25,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) =>
       try {
-        val oldRoadLinks = if(projectLinks.nonEmpty){
+        val oldRoadLinks = if (projectLinks.nonEmpty) {
           projectLinkDAO.fetchByProjectRoad(part._1, projectLinks.head.projectId).filterNot(l=> l.roadPartNumber == part._2)
         } else {
           Seq.empty[ProjectLink]
