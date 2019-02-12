@@ -200,10 +200,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             otherEndPoint.head
           else
             endPointsWithValues.head
-        } else if(chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
+        } else if (chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
           (oldFirst.get.getEndPoints._1, oldFirst.get)
-        }
-        else{
+        } else {
           if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
             val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
@@ -211,7 +210,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
             val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
             val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
-            if(otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty){
+            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
               startPoint1
             } else {
               chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
