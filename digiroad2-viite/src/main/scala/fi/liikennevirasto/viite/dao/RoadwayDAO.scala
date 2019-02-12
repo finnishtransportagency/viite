@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
@@ -36,7 +36,7 @@ sealed trait Discontinuity {
 }
 
 object Discontinuity {
-  val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
+  val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous, ParallelLink)
 
   def apply(intValue: Int): Discontinuity = {
     values.find(_.value == intValue).getOrElse(Continuous)
@@ -78,6 +78,18 @@ object Discontinuity {
     def value = 5
 
     def description = "Jatkuva"
+  }
+
+  case object ParallelLink extends Discontinuity {
+    def value = 6
+
+    def description = "Parallel Link"
+  }
+
+  def replaceParallelLink(currentDiscontinuity: Discontinuity) : Discontinuity = {
+    if (currentDiscontinuity == ParallelLink)
+      Continuous
+    else currentDiscontinuity
   }
 
 }
@@ -237,6 +249,32 @@ trait BaseRoadAddress {
     }
 
     GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+  }
+
+  lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.head
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.last
+  }
+  lazy val endPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
+    case (true, true) | (false, false) =>
+      //reversed for both SideCodes
+      geometry.last
+    case (true, false) | (false, true) =>
+      //NOT reversed for both SideCodes
+      geometry.head
+  }
+
+  def getEndPoints: (Point, Point) = {
+    if (sideCode == SideCode.Unknown) {
+      val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
+      Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
+    } else {
+      (startingPoint, endPoint)
+    }
   }
 }
 
@@ -479,6 +517,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
+  def fetchUpdatedSince(sinceDate: DateTime): Seq[Roadway] = {
+    time(logger, "Fetch roadways updated since date") {
+      fetch(withUpdatedSince(sinceDate))
+    }
+  }
+
   def fetchAllByRoadwayId(roadwayIds: Seq[Long]): Seq[Roadway] = {
     time(logger, "Fetch road ways by id") {
       if (roadwayIds.isEmpty) {
@@ -620,9 +664,20 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
 
-    s"""$query
-       join published_roadway net on net.ROADWAY_ID = a.id
-       where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+    if (roadwayNumbers.size > 1000) {
+      MassQuery.withIds(roadwayNumbers){
+        idTableName =>
+          s"""
+          $query
+          join $idTableName i on i.id = a.ROADWAY_NUMBER
+          join published_roadway net on net.ROADWAY_ID = a.id
+          where net.network_id = $roadNetworkId and a.valid_to is null"""
+      }
+    }
+    else
+      s"""$query
+         join published_roadway net on net.ROADWAY_ID = a.id
+         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
@@ -630,8 +685,17 @@ class RoadwayDAO extends BaseDAO {
       val strDate = dateFormatter.print(searchDate)
       s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') < $table.end_date or $table.end_date is null))"
     }
-
-    s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+    if (roadwayNumbers.size > 1000) {
+      MassQuery.withIds(roadwayNumbers) {
+        idTableName =>
+          s"""
+            $query
+            join $idTableName i on i.id = a.ROADWAY_NUMBER
+            where a.valid_to is null and ${dateFilter(table = "a")}
+          """.stripMargin
+      }
+    }
+    else s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
@@ -686,6 +750,13 @@ class RoadwayDAO extends BaseDAO {
   private def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     s"""$query where valid_to is null and start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
           AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
+  }
+
+  private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
+    val sinceString = sinceDate.toString("yyyy-MM-dd")
+    s"""$query
+        where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
   }
 
   /**

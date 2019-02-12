@@ -372,11 +372,11 @@
     }, 1000);
 
     this.getFloatingRoadAddresses = function () {
-      return $.getJSON('api/viite/roadaddress/floatings');
+      return $.getJSON('api/viite/roadaddress/floatings/');
     };
 
     this.getRoadAddressErrors = function () {
-      return $.getJSON('api/viite/roadaddress/errors');
+      return $.getJSON('api/viite/roadaddress/errors/');
     };
 
     function createCallbackRequestor(getParameters) {

@@ -149,11 +149,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     val beforeProjectLinks = leftSideBeforeProjectLinks ++ rightSideBeforeProjectLinks
 
     val projectLinksWithAssignedValuesBefore = defaultSectionCalculatorStrategy.assignMValues(projectLinksWithAssignedValues ++ beforeProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    val findStartingPointsBefore = defaultSectionCalculatorStrategy.findStartingPoints(projectLinksWithAssignedValues ++ beforeProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be(true)
-    projectLinksWithAssignedValuesBefore.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(p => p.sideCode.value).sorted) should be(true)
+    val findStartingPointsBefore = defaultSectionCalculatorStrategy.findStartingPoints(projectLinksWithAssignedValuesBefore, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+    projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be(true)
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
-    findStartingPointsBefore should be((additionalGeomRightBefore.last, additionalGeomLeftBefore.last))
   }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() When supplying a variety of project links Then return said project links but EVERY SideCode should be TowardsDigitizing")

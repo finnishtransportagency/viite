@@ -296,7 +296,8 @@
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
         selectionData.trackCode === currentlySelectedSample.trackCode &&
-        selectionData.roadType === currentlySelectedSample.roadType;
+        selectionData.roadTypeId === currentlySelectedSample.roadTypeId &&
+        selectionData.elyCode === currentlySelectedSample.elyCode;
     };
 
     var highlightFeatures = function () {
@@ -732,7 +733,7 @@
         var addMarkersToLayer = function(links, layer) {
           var directionMarkers = _.filter(links, function (projectLink) {
               var acceptedLinks = projectLink.id !== 0 || (projectLink.id === 0 && (projectLink.anomaly === Anomaly.NoAddressGiven.value || projectLink.roadLinkType === RoadLinkType.FloatingRoadLinkType.value));
-              return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value;
+              return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.endAddressM !== 0;
           });
           _.each(directionMarkers, function (directionLink) {
             marker = cachedMarker.createProjectMarker(directionLink);

@@ -100,10 +100,13 @@
       $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
     }
 
-    function bindEvents(){
+    function bindEvents() {
       $('.row-changes').remove();
       eventbus.once('projectChanges:fetched', function(projectChangeData) {
         var htmlTable = "";
+        var warningM = projectChangeData.warningMessage;
+        if (!_.isUndefined(warningM))
+          new ModalConfirm(warningM);
         if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
           _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
             var rowColorClass = '';
