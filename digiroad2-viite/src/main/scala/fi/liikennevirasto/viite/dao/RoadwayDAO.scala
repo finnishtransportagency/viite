@@ -646,9 +646,20 @@ class RoadwayDAO extends BaseDAO {
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
 
-    s"""$query
-       join published_roadway net on net.ROADWAY_ID = a.id
-       where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+    if (roadwayNumbers.size > 1000) {
+      MassQuery.withIds(roadwayNumbers){
+        idTableName =>
+          s"""
+          $query
+          join $idTableName i on i.id = a.ROADWAY_NUMBER
+          join published_roadway net on net.ROADWAY_ID = a.id
+          where net.network_id = $roadNetworkId and a.valid_to is null"""
+      }
+    }
+    else
+      s"""$query
+         join published_roadway net on net.ROADWAY_ID = a.id
+         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
