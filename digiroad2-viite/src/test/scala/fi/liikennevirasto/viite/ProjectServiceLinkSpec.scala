@@ -107,7 +107,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
 
     val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-      "", Seq(), None, Some(8), None)
+      "", Seq(), None, None)
     projectDAO.create(project)
     val links =
       if (changeTrack) {
@@ -411,17 +411,17 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val maxBefore = if (beforeChange.nonEmpty) beforeChange.maxBy(_.endAddrMValue).endAddrMValue else 0
       val maxAfter = if (changedLinks.nonEmpty) changedLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
       maxBefore should be(maxAfter)
-      val combined = changedLinks.filter(_.track == Track.Combined)
-      val right = changedLinks.filter(_.track == Track.RightSide)
-      val left = changedLinks.filter(_.track == Track.LeftSide)
+      val combinedLeft = changedLinks.filter(_.track != Track.RightSide).sortBy(_.startAddrMValue)
+      val combinedRight = changedLinks.filter(_.track != Track.LeftSide).sortBy(_.startAddrMValue)
 
-      (combined ++ right).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]) { case (seq, plink) =>
+
+      combinedRight.foldLeft(Seq.empty[ProjectLink]) { case (seq, plink) =>
         if (seq.nonEmpty)
           seq.last.endAddrMValue should be(plink.startAddrMValue)
         seq ++ Seq(plink)
       }
 
-      (combined ++ left).sortBy(_.startAddrMValue).foldLeft(Seq.empty[ProjectLink]) { case (seq, plink) =>
+      combinedLeft.foldLeft(Seq.empty[ProjectLink]) { case (seq, plink) =>
         if (seq.nonEmpty)
           seq.last.endAddrMValue should be(plink.startAddrMValue)
         seq ++ Seq(plink)
@@ -521,8 +521,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(project.id, Set(), transferLinks.map(_.linkId), LinkStatus.Transfer, "Test", 77, 35, 0, Option.empty[Int]) should be(None)
 
       val (resultNew, resultTransfer) = projectLinkDAO.fetchProjectLinks(project.id).partition(_.status == LinkStatus.New)
-      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5171040,97.373,427,RoadAddressSource)))
-      resultTransfer.head.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(5171040,0.0,531,RoadAddressSource)))
+      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5167598, 296.597, 0, ProjectLinkSource)))
+      resultTransfer.head.calibrationPoints._2 should be(None)
       allLinks.size should be(resultNew.size + resultTransfer.size)
     }
   }

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 
 class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, unaddressedRoadLinkDAO: UnaddressedRoadLinkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
@@ -218,7 +219,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
     eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
-    val roadAddresses = withDynTransaction {
+    val roadAddresses = withDynSession {
       roadNetworkDAO.getLatestRoadNetworkVersionId match {
         case Some(roadNetworkId) => roadwayAddressMapper.getNetworkVersionRoadAddressesByLinearLocation(adjustedLinearLocations, roadNetworkId)
         case _ => roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations)
@@ -462,6 +463,34 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         )
       }
     }
+  }
+
+  def getUpdatedRoadways(sinceDate: DateTime): Either[String, Seq[Roadway]] = {
+    withDynSession {
+      try {
+        val roadways = roadwayDAO.fetchUpdatedSince(sinceDate)
+        Right(roadways)
+      } catch {
+        case e if NonFatal(e) =>
+          logger.error("Failed to fetch updated roadways.", e)
+          Left(e.getMessage)
+      }
+    }
+
+  }
+
+  def getUpdatedLinearLocations(sinceDate: DateTime): Either[String, Seq[LinearLocation]] = {
+    withDynSession {
+      try {
+        val linearLocations = linearLocationDAO.fetchUpdatedSince(sinceDate)
+        Right(linearLocations)
+      } catch {
+        case e if NonFatal(e) =>
+          logger.error("Failed to fetch updated linear locations.", e)
+          Left(e.getMessage)
+      }
+    }
+
   }
 
   /**
@@ -1146,7 +1175,6 @@ object AddressConsistencyValidator {
 
   sealed trait AddressError {
     def value: Int
-
     def message: String
   }
 
@@ -1155,20 +1183,37 @@ object AddressConsistencyValidator {
 
     case object OverlappingRoadAddresses extends AddressError {
       def value = 1
-
       def message: String = ErrorOverlappingRoadAddress
     }
 
     case object InconsistentTopology extends AddressError {
       def value = 2
-
       def message: String = ErrorInconsistentTopology
     }
 
     case object InconsistentLrmHistory extends AddressError {
       def value = 3
-
       def message: String = ErrorInconsistentLrmHistory
+    }
+
+    case object Inconsistent2TrackCalibrationPoints extends AddressError {
+      def value = 4
+      def message: String = ErrorInconsistent2TrackCalibrationPoints
+    }
+
+    case object InconsistentContinuityCalibrationPoints extends AddressError {
+      def value = 5
+      def message: String = ErrorInconsistentContinuityCalibrationPoints
+    }
+
+    case object MissingEdgeCalibrationPoints extends AddressError {
+      def value = 6
+      def message: String = ErrorMissingEdgeCalibrationPoints
+    }
+
+    case object InconsistentAddressValues extends AddressError {
+      def value = 7
+      def message: String = ErrorInconsistentAddressValues
     }
 
     def apply(intValue: Int): AddressError = {

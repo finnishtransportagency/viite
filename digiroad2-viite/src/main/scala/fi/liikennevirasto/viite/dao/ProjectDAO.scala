@@ -45,7 +45,7 @@ object ProjectState {
 
 case class Project(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                    modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                   reservedParts: Seq[ProjectReservedPart], statusInfo: Option[String], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
+                   reservedParts: Seq[ProjectReservedPart], statusInfo: Option[String], coordinates: Option[ProjectCoordinates] = Some(ProjectCoordinates())) {
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
   }
@@ -59,8 +59,8 @@ class ProjectDAO {
 
   def create(project: Project): Unit = {
     sqlu"""
-         insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
-         values (${project.id}, ${project.status.value}, ${project.name}, null, ${project.createdBy}, sysdate, ${project.startDate}, '-' , sysdate, ${project.additionalInfo}, ${project.statusInfo})
+         insert into project (id, state, name, created_by, created_date, start_date ,modified_by, modified_date, add_info, status_info)
+         values (${project.id}, ${project.status.value}, ${project.name}, ${project.createdBy}, sysdate, ${project.startDate}, '-' , sysdate, ${project.additionalInfo}, ${project.statusInfo})
          """.execute
   }
 
@@ -76,24 +76,18 @@ class ProjectDAO {
 
   def update(roadAddressProject: Project): Unit = {
     sqlu"""
-         update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate}, ely = ${roadAddressProject.ely} where id = ${roadAddressProject.id}
+         update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = ${roadAddressProject.modifiedBy} ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate} where id = ${roadAddressProject.id}
          """.execute
   }
 
-  def fetchProjectElyById(projectId: Long): Option[Long] = {
+  def fetchProjectElyById(projectId: Long): Seq[Long] = {
     val query =
       s"""
-         SELECT ELY
-         FROM project
-         WHERE id=$projectId
+         SELECT DISTINCT ELY
+         FROM project_link
+         WHERE project_id=$projectId
        """
-    Q.queryNA[Option[Long]](query).firstOption.flatten
-  }
-
-  def updateProjectEly(projectId: Long, ely: Long): Unit = {
-    sqlu"""
-       update project set ely = $ely, modified_date = sysdate where id =  ${projectId}
-      """.execute
+    Q.queryNA[Long](query).list
   }
 
   def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
@@ -105,12 +99,9 @@ class ProjectDAO {
     }
   }
 
-  def fetchAll(withNullElyFilter: Boolean = false): Seq[Project] = {
-    time(logger, s"Fetch all projects with null ely filter setted to $withNullElyFilter") {
-      if(withNullElyFilter)
-        fetch(query => s"""$query where where ely is null order by ely nulls first, name, id""")
-      else
-        fetch(query => s"""$query order by ely nulls first, name, id""")
+  def fetchAll(): Seq[Project] = {
+    time(logger, s"Fetch all projects ") {
+        fetch(query => s"""$query order by name, id""")
     }
   }
 
@@ -184,11 +175,11 @@ class ProjectDAO {
   private def fetch(queryFilter: String => String): Seq[Project] = {
     val query =
       s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
-           add_info, ely, status_info, coord_x, coord_y, zoom
+           add_info, status_info, coord_x, coord_y, zoom
            FROM project"""
 
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String], Double, Double, Int)](queryFilter(query)).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo, coordX, coordY, zoom) =>
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Double, Double, Int)](queryFilter(query)).list.map {
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, coordX, coordY, zoom) =>
 
         val projectState = ProjectState.apply(state)
         val reservedRoadParts = if (projectState == Saved2TR)
@@ -197,7 +188,7 @@ class ProjectDAO {
           projectReservedPartDAO.fetchReservedRoadParts(id).distinct
 
         Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-          addInfo, reservedRoadParts, statusInfo, if (ely.contains(-1L)) None else ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          addInfo, reservedRoadParts, statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
     }
   }
 }

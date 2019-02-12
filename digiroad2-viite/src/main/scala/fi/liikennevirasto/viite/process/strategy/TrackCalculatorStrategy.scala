@@ -1,11 +1,12 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
@@ -15,11 +16,11 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 object TrackCalculatorContext {
 
   private lazy val minorDiscontinuityStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(MinorDiscontinuity)
+    new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
   }
 
   private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(Discontinuous)
+    new DiscontinuityTrackCalculatorStrategy(Seq(Discontinuous, ParallelLink))
   }
 
   private lazy val linkStatusChangeTrackCalculatorStrategy: LinkStatusChangeTrackCalculatorStrategy = {
@@ -200,21 +201,30 @@ trait TrackCalculatorStrategy {
               setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
           }
 
-          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, ProjectLinkSource)) ++ pls.init.tail ++
-            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, ProjectLinkSource))
+          val calPointSource1 = if (pls.tail.head.calibrationPoints._1.isDefined) pls.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
+          val calPointSource2 = if (pls.init.last.calibrationPoints._2.isDefined) pls.init.last.calibrationPoints._2.get.source else ProjectLinkSource
+          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
+            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, calPointSource2))
       }
   }
 
-  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource) = {
+  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
+                                    startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource): ProjectLink = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
+  /**
+    * Returns project links for the other track before and after the point where there is discontinuity on the track.
+    *
+    * @param trackA
+    * @param linkOnTrackB
+    * @return (Project links before the discontinuity point, project links after the discontinuity point)
+    */
   protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous) {
+    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous || endProjectLink.discontinuity == ParallelLink) {
       val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
-
       if (continuousProjectLinks.isEmpty)
         throw new RoadAddressException("Could not find any nearest road address")
 
