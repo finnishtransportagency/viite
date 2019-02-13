@@ -69,13 +69,13 @@ class ProjectValidator {
   def checkNotReserved(number: Long, part: Long, currentProject: Project): Unit = {
     val project = projectReservedPartDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
     if (project.nonEmpty) {
-      throw new ProjectValidationException(s"TIE $number OSA $part on jo varattuna projektissa ${project.get}, tarkista tiedot")
+      throw new ProjectValidationException(RoadReservedOtherProjectMessage.format(number, part, currentProject.name))
     }
   }
 
   def checkProjectExists(id: Long): Unit = {
     if (projectDAO.fetchById(id).isEmpty)
-      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia")
+      throw new ProjectValidationException(ProjectNotFoundMessage)
   }
 
   // Utility method, will return correct GeometryEndpoint
@@ -107,7 +107,8 @@ class ProjectValidator {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp,
-      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly, MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
+      ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
+      MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
       ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd)
 
     // Viite-942
@@ -567,7 +568,7 @@ class ProjectValidator {
           roadAddressService.getRoadAddressWithRoadAndPart(rrp.roadNumber, previousRoadPartNumber).reverse
             .find(ra => !projectLinks.exists(link => link.linearLocationId == ra.linearLocationId || link.status != Terminated)) match {
             case Some(actualProjectLinkForPreviousEnd) =>
-              return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, roadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
+              return Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.TerminationContinuity, currentRoadAndPart = Some(Seq((actualProjectLinkForPreviousEnd.roadNumber, actualProjectLinkForPreviousEnd.roadPartNumber)))),
                 Seq(actualProjectLinkForPreviousEnd.id),
                 Seq(ProjectCoordinates(actualProjectLinkForPreviousEnd.geometry.head.x, actualProjectLinkForPreviousEnd.geometry.head.y, defaultZoomlevel)), Some("")))
             case None => Seq()
@@ -627,7 +628,7 @@ class ProjectValidator {
             if (biggestPrevious.discontinuity == Discontinuity.ChangingELYCode) {
               val affectedProjectLinks = Seq(biggestPrevious, lowestCurrent)
               val coords = prepareCoordinates(affectedProjectLinks)
-              recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head) ++ processed, acumulatedErrors ++ Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange, affectedProjectLinks.map(_.id), coords, Option(""))))
+              recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head) ++ processed, acumulatedErrors ++ Seq(ValidationErrorDetails(project.id, alterMessage(ValidationErrorList.ElyCodeDiscontinuityChangeButNoElyChange, currentRoadAndPart = Some(Seq((biggestPrevious.roadNumber, biggestPrevious.roadPartNumber))), nextRoadAndPart = Some(Seq((lowestCurrent.roadNumber, lowestCurrent.roadPartNumber)))), affectedProjectLinks.map(_.id), coords, Option(biggestPrevious.roadNumber.toString))))
             } else {
               recProjectGroupsEly(unprocessed.tail, Map(unprocessed.head) ++ processed, acumulatedErrors)
             }
@@ -637,7 +638,6 @@ class ProjectValidator {
       }
     }
 
-    /**
       * This will validate if a shift in ely code in all links of a certain part ocoured and happened correctly.
       * To be correct, the change needs to:
       * A. have all links transition to a new ELY
@@ -958,7 +958,7 @@ class ProjectValidator {
           if (actualProjectLinkForPreviousEnd.nonEmpty)
             return outsideOfProjectError(
               project.id,
-              alterMessage(ValidationErrorList.DoubleEndOfRoad, roadAndPart = Some(Seq((road, previousRoadPartNumber))))
+              alterMessage(ValidationErrorList.DoubleEndOfRoad, currentRoadAndPart = Some(Seq((road, previousRoadPartNumber))))
             )(actualProjectLinkForPreviousEnd).toSeq
         case None => Seq()
       }
@@ -1011,18 +1011,24 @@ class ProjectValidator {
 
 
   private def alterMessage(validationError: ValidationError, elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
-                           roadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
+                           currentRoadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
+                           nextRoadAndPart: Option[Seq[(Long, Long)]] = Option.empty[Seq[(Long, Long)]],
                            discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]], projectDate: Option[String] = Option.empty[String]) = {
     val formattedMessage =
-      if (projectDate.nonEmpty && roadAndPart.nonEmpty) {
-        val unzippedRoadAndPart = roadAndPart.get.unzip
+      if (projectDate.nonEmpty && currentRoadAndPart.nonEmpty) {
+        val unzippedRoadAndPart = currentRoadAndPart.get.unzip
         val changedMsg = validationError.message.format(unzippedRoadAndPart._1.head, unzippedRoadAndPart._2.head, projectDate.get)
+        changedMsg
+      } else if (currentRoadAndPart.nonEmpty && nextRoadAndPart.nonEmpty) {
+        val unzippedPreviousRoadAndPart = currentRoadAndPart.get.unzip
+        val unzippedNextRoadAndPart = nextRoadAndPart.get.unzip
+        val changedMsg = validationError.message.format(unzippedPreviousRoadAndPart._2.head, unzippedPreviousRoadAndPart._2.head, unzippedNextRoadAndPart._2.head)
         changedMsg
       } else {
         validationError.message.format(if (elyBorderData.nonEmpty) {
           elyBorderData.get.toSet.mkString(", ")
-        } else if (roadAndPart.nonEmpty) {
-          roadAndPart.get.toSet.mkString(", ")
+        } else if (currentRoadAndPart.nonEmpty) {
+          currentRoadAndPart.get.toSet.mkString(", ")
         } else if (discontinuity.nonEmpty) {
           discontinuity.get.groupBy(_.value).map(_._2.head.toString).mkString(", ")
         }
