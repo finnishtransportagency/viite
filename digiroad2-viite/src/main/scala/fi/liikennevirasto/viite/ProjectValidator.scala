@@ -637,7 +637,8 @@ class ProjectValidator {
         }
       }
     }
-
+    
+    /*
       * This will validate if a shift in ely code in all links of a certain part ocoured and happened correctly.
       * To be correct, the change needs to:
       * A. have all links transition to a new ELY
