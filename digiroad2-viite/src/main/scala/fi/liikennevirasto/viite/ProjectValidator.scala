@@ -867,10 +867,7 @@ class ProjectValidator {
               if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
                 error(project.id, ValidationErrorList.MissingEndOfRoad)(Seq(last))
               } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
-                val nextLinks = getNextLinksFromParts(allProjectLinks, road, nextProjectPart, nextAddressPart)
-                val isConnected = Seq(last).forall(lpl => nextLinks.exists(nl => Track.isTrackContinuous(nl.track, lpl.track) &&
-                  lpl.connected(nl)))
-                if (isConnected) error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last)) else None
+                error(project.id, ValidationErrorList.EndOfRoadNotOnLastPart)(Seq(last))
               } else
                 None
             } else
