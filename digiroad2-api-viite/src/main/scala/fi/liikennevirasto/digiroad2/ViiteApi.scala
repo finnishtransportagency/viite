@@ -417,9 +417,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val sendStatus = projectService.publishProject(projectID)
         if (sendStatus.validationSuccess && sendStatus.sendSuccess)
           Map("sendSuccess" -> true)
-        else if (sendStatus.errorMessage.getOrElse("").toLowerCase == failedToSendToTRMessage.toLowerCase) {
+        else if (sendStatus.errorMessage.getOrElse("").toLowerCase == FailedToSendToTRMessage.toLowerCase) {
           projectService.setProjectStatus(projectID, SendingToTR)
-          Map("sendSuccess" -> false, "errorMessage" -> trConnectionError)
+          Map("sendSuccess" -> false, "errorMessage" -> TrConnectionError)
         } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
       }
       else {

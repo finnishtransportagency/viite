@@ -231,7 +231,7 @@ object ViiteTierekisteriClient {
     } catch {
       case NonFatal(e) =>
         logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
-        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, failedToSendToTRMessage) // sending project to tierekisteri failed
+        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, FailedToSendToTRMessage) // sending project to tierekisteri failed
     } finally {
       response.close()
     }
