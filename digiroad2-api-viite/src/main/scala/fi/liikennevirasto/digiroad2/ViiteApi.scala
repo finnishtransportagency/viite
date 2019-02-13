@@ -455,7 +455,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val projectLinks = if (p.status == ProjectState.Saved2TR) {
           projectService.fetchProjectHistoryLinks(p.id)
         } else projectService.getProjectLinks(p.id)
-        roadAddressProjectToApi(p, projectLinks)
+          roadAddressProjectToApi(p, projectLinks)
       })
     }
   }
