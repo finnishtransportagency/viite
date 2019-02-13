@@ -577,6 +577,16 @@ class ProjectLinkDAO {
     }
   }
 
+  def fetchByProjectRoad(roadNumber: Long, projectId: Long): Seq[ProjectLink] = {
+    time(logger, "Fetch project links by project road part") {
+      val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND"
+      val query =
+        s"""$projectLinkQueryBase
+                where $filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
     sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
