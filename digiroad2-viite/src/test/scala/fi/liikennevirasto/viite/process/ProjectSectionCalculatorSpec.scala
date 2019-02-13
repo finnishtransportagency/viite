@@ -148,20 +148,20 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         pl.copy(endMValue = pl.geometryLength))
       val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.linkId)
       output.length should be(9)
-      output.foreach(pl => pl.sideCode == TowardsDigitizing should be(true))
+      output.foreach(pl => pl.sideCode == AgainstDigitizing should be(true))
       val start = output.find(_.id == idRoad0).get
       start.calibrationPoints._1.nonEmpty should be(true)
       start.calibrationPoints._2.nonEmpty should be(true)
-      start.startAddrMValue should be(0L)
+      start.startAddrMValue should be(139L)
 
       output.filter(pl => pl.id == idRoad1 || pl.id == idRoad2).foreach { pl =>
-        pl.calibrationPoints._1.nonEmpty should be(true)
-        pl.calibrationPoints._2.nonEmpty should be(false)
+        pl.calibrationPoints._1.nonEmpty should be(false)
+        pl.calibrationPoints._2.nonEmpty should be(true)
       }
 
       output.filter(pl => pl.id == idRoad3 || pl.id == idRoad4).foreach { pl =>
-        pl.calibrationPoints._1.nonEmpty should be(false)
-        pl.calibrationPoints._2.nonEmpty should be(true)
+        pl.calibrationPoints._1.nonEmpty should be(true)
+        pl.calibrationPoints._2.nonEmpty should be(false)
       }
 
       output.filter(pl => pl.id > idRoad4).foreach { pl =>
@@ -169,7 +169,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         pl.calibrationPoints._2.nonEmpty should be(true)
       }
 
-      output.find(_.id == idRoad8).get.endAddrMValue should be(149L)
+      output.find(_.id == idRoad0).get.endAddrMValue should be(149L)
     }
   }
 
@@ -217,20 +217,20 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       )
       val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.linkId)
       output.length should be(9)
-      output.foreach(pl => pl.sideCode == AgainstDigitizing should be(true))
+      output.foreach(pl => pl.sideCode == TowardsDigitizing should be(true))
       val start = output.find(_.id == idRoad0).get
       start.calibrationPoints._1.nonEmpty should be(true)
       start.calibrationPoints._2.nonEmpty should be(true)
-      start.endAddrMValue should be(149L)
+      start.endAddrMValue should be(10L)
 
       output.filter(pl => pl.id == idRoad1 || pl.id == idRoad2).foreach { pl =>
-        pl.calibrationPoints._1.nonEmpty should be(false)
-        pl.calibrationPoints._2.nonEmpty should be(true)
+        pl.calibrationPoints._1.nonEmpty should be(true)
+        pl.calibrationPoints._2.nonEmpty should be(false)
       }
 
       output.filter(pl => pl.id == idRoad3 || pl.id == idRoad4).foreach { pl =>
-        pl.calibrationPoints._1.nonEmpty should be(true)
-        pl.calibrationPoints._2.nonEmpty should be(false)
+        pl.calibrationPoints._1.nonEmpty should be(false)
+        pl.calibrationPoints._2.nonEmpty should be(true)
       }
 
       output.filter(pl => pl.id > idRoad4).foreach { pl =>
@@ -238,7 +238,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         pl.calibrationPoints._2.nonEmpty should be(true)
       }
 
-      output.find(_.id == idRoad8).get.startAddrMValue should be(0L)
+      output.find(_.id == idRoad0).get.startAddrMValue should be(0L)
     }
   }
 
