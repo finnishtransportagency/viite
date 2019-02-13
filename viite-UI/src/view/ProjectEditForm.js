@@ -76,8 +76,8 @@
         formCommon.staticField('Geometrian Lähde', roadLinkSources)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
-        selectionForm(selection, selected, road) +
-        formCommon.changeDirection(selected) +
+        selectionForm(project, selection, selected, road) +
+        formCommon.changeDirection(selected, project) +
         formCommon.actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -86,7 +86,7 @@
         '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
     };
 
-    var selectionForm = function(selection, selected, road){
+    var selectionForm = function(project, selection, selected, road) {
       var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
@@ -101,7 +101,7 @@
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink, road) +
+        formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road) +
         '</form>';
     };
 
