@@ -2,8 +2,9 @@
   root.FormCommon = function(prefix) {
     var Track = LinkValues.Track;
     var RoadNameSource = LinkValues.RoadNameSource;
+    var editableStatus = LinkValues.ProjectStatus.Incomplete.value;
 
-      var title = function (titleName) {
+    var title = function (titleName) {
           if (!titleName)
               titleName = "Uusi tieosoiteprojekti";
           return '<span class ="edit-mode-title">' + titleName + '</span>';
@@ -34,18 +35,18 @@
       var link = _.first(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
-      var projectIncomplete = project.statusCode === 1;
+      var projectEditable = project.statusCode === editableStatus;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectIncomplete) +
-        addSmallInputNumber('osa', (part !== 0 ? part : ''), !projectIncomplete) +
+        addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectEditable) +
+        addSmallInputNumber('osa', (part !== 0 ? part : ''), !projectEditable) +
         addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
-        addSmallInputNumber('ely', link.elyCode, !projectIncomplete) +
+        addSmallInputNumber('ely', link.elyCode, !projectEditable) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
           roadTypeDropdown() + '<br>' +
@@ -162,8 +163,8 @@
     };
 
     var changeDirection = function (selected, project) {
-      var projectIncomplete = project.statusCode === 1;
-      if (!projectIncomplete) {
+      var projectEditable = project.statusCode === editableStatus;
+      if (!projectEditable) {
         return ''; // Don't show the button if project status is not incomplete
       }
       var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
