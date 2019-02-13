@@ -719,7 +719,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
       val links = projectLinkDAO.fetchProjectLinks(id)
       links.size should be(0)
-      message1project1 should be("TIE 5 OSA 207 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
+      message1project1 should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 207 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 03.03.1972 tai se on varattu toiseen projektiin.") //check that it is reserved in roadaddress table
 
       val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
       val links2 = projectLinkDAO.fetchProjectLinks(id + 1)
@@ -729,7 +729,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId).getOrElse("")
       val links3 = projectLinkDAO.fetchProjectLinks(id)
       links3.size should be(0)
-      message2project1 should be("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
+      message2project1 should be("Tie 5 osa 999 on jo varattuna projektissa TestProject, tarkista tiedot.")
     }
   }
 
@@ -892,7 +892,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 206, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       response("success").asInstanceOf[Boolean] should be(false)
-      response("errorMessage").asInstanceOf[String] should be("TIE 5 OSA 206 on jo olemassa projektin alkupäivänä 01.01.1901, tarkista tiedot")
+      response("errorMessage").asInstanceOf[String] should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 206 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 01.01.1901 tai se on varattu toiseen projektiin.")
     }
   }
 
@@ -920,7 +920,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val response = projectService.updateProjectLinks(project1.id, Set(), projectLinkDAO.fetchProjectLinks(project1.id).map(_.linkId),
         LinkStatus.Numbering, "TestUser", 5, 206, 0, None,
         RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
-      response.get should be("TIE 5 OSA 206 on jo olemassa projektin alkupäivänä 01.01.1963, tarkista tiedot")
+      response.get should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 206 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 01.01.1963 tai se on varattu toiseen projektiin.")
     }
   }
 
@@ -935,7 +935,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       mockForProject(project1.id, roadAddressServiceRealRoadwayAddressMapper.getRoadAddressWithRoadAndPart(5, 207).map(toProjectLink(project1)))
       projectService.saveProject(project1.copy(reservedParts = addr1))
       val response = projectService.updateProjectLinks(project1.id, Set(), projectLinkDAO.fetchProjectLinks(project1.id).map(_.linkId), LinkStatus.Numbering, "TestUser", 5, 203, 0, None, RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
-      response.get should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 01.01.1963, tarkista tiedot")
+      response.get should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 203 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 01.01.1963 tai se on varattu toiseen projektiin.")
     }
   }
 
@@ -1730,7 +1730,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val validNamesAfterUpdate = RoadNameDAO.getCurrentRoadNamesByRoadNumber(66666)
       validNamesAfterUpdate.size should be(1)
       validNamesAfterUpdate.head.roadName should be(namesBeforeUpdate.get.roadName)
-      project.get.statusInfo.getOrElse("") should be(roadNameWasNotSavedInProject + s"${66666}")
+      project.get.statusInfo.getOrElse("") should be(RoadNameWasNotSavedInProject + s"${66666}")
     }
   }
 
@@ -1866,7 +1866,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectService.handleNewRoadNames(changes, projectBefore.get)
         val namesAfterUpdate = RoadNameDAO.getLatestRoadName(66666)
         val project = projectService.getSingleProjectById(projectId)
-        project.get.statusInfo.getOrElse("") should be(roadNameWasNotSavedInProject + s"${66666}")
+        project.get.statusInfo.getOrElse("") should be(RoadNameWasNotSavedInProject + s"${66666}")
         namesAfterUpdate.get.roadName should be(namesBeforeUpdate.get.roadName)
       }
     }

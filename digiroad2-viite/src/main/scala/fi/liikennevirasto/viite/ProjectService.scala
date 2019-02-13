@@ -306,7 +306,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def writableWithValidTrack(projectId: Long, track: Int): Option[String] = {
-    if (!isWritableState(projectId)) Some(projectNotWritable)
+    if (!isWritableState(projectId)) Some(ProjectNotWritable)
     else if (!validateLinkTrack(track)) Some("Ajoratakoodi puuttuu")
     else None
   }
@@ -796,7 +796,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
         }
       } else {
-        throw new IllegalStateException(projectNotWritable)
+        throw new IllegalStateException(ProjectNotWritable)
       }
     }
   }
@@ -1638,17 +1638,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             //rollback
             logger.info(s"Sending to TR failed: ${trProjectStateMessage.reason}")
-            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else trConnectionError
+            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
             PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
         }
       } catch {
         //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
         case ioe@(_: IOException | _: ClientProtocolException) =>
           projectDAO.updateProjectStatus(projectId, SendingToTR)
-          PublishResult(validationSuccess = false, sendSuccess = false, Some(trConnectionError))
+          PublishResult(validationSuccess = false, sendSuccess = false, Some(TrConnectionError))
         case NonFatal(_) =>
           projectDAO.updateProjectStatus(projectId, ErrorInViite)
-          PublishResult(validationSuccess = false, sendSuccess = false, Some(genericViiteErrorMessage))
+          PublishResult(validationSuccess = false, sendSuccess = false, Some(GenericViiteErrorMessage))
       }
     }
   }
@@ -2032,7 +2032,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           Some(RoadName(NewRoadNameId, roadNumber, projectLinkNames.head.roadName, startDate = Some(rwc.projectStartDate), validFrom = Some(DateTime.now()), createdBy = rwc.user))
         } else {
           val nameString = s"${existingRoadNames.map(_.roadNumber).mkString(",")}"
-          appendStatusInfo(project, roadNameWasNotSavedInProject + nameString)
+          appendStatusInfo(project, RoadNameWasNotSavedInProject + nameString)
           None
         }
       }

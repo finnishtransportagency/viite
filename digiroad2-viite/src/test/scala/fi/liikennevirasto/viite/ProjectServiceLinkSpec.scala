@@ -1154,7 +1154,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //      val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552, addProjectAddressLink584)
   //      mockForProject(id, addresses)
   //      val links = addresses.map(backToProjectLink(rap))
-  //      projectService.addNewLinksToProject(links, id, "U", links.minBy(_.endMValue).linkId) should be(Some("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä."))
+  //      projectService.addNewLinksToProject(links, id, "U", links.minBy(_.endMValue).linkId) should be(Some("Valittu tiegeometria sisältää haarautumia, jotka pitää käsitellä linkkikohtaisesti. Tallennusta ei voi tehdä."))
   //      val readLinks = ProjectDAO.getProjectLinks(id)
   //      readLinks.size should be(0)
   //    }
