@@ -5,17 +5,16 @@ import java.util.Locale
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinearLocation, Roadway}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
+import org.scalatra.{BadRequest, ScalatraBase}
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -24,6 +23,8 @@ trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
   self: ScalatraBase =>
 
   val realm = "Viite Integration API"
+
+  val dateFormat = "dd.MM.yyyy"
 
   protected def fromSession = {
     case id: String => BasicAuthUser(id)
@@ -101,7 +102,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  get("/roadnames/changes") {
+
+  val getRoadNameChanges =
+    (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
+      tags "Integration (kalpa)"
+      summary "Returns all the changes to road names between given dates."
+      parameter queryParam[String]("since").description("Date in format ISO8601")
+      parameter queryParam[String]("until").description("Date in format ISO8601").optional)
+
+  get("/roadnames/changes", operation(getRoadNameChanges)) {
     contentType = formats("json")
     val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
     val untilUnformatted = params.get("until")
@@ -117,6 +126,103 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         } catch {
           case e: IllegalArgumentException =>
             val message = "The since /until parameter of the service should be in the form ISO8601"
+            logger.warn(message)
+            BadRequest(message)
+          case e if NonFatal(e) =>
+            logger.warn(e.getMessage, e)
+            BadRequest(e.getMessage)
+        }
+      }
+    }
+  }
+
+  val getRoadwayChanges =
+    (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
+      tags "Integration (kalpa)"
+      summary "Returns all the changes to roadways after the given date (including the given date)."
+      parameter queryParam[String]("since").description("Date in format ISO8601"))
+
+  get("/roadway/changes", operation(getRoadwayChanges)) {
+    contentType = formats("json")
+    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+    time(logger, s"GET request for /roadway/changes (since: $sinceUnformatted)") {
+      if (sinceUnformatted == "") {
+        val message = "Since parameter is empty"
+        logger.warn(message)
+        BadRequest(message)
+      } else {
+        try {
+          val since = DateTime.parse(sinceUnformatted)
+          val roadways : Seq[Roadway] = fetchUpdatedRoadways(since)
+          roadways.map(r => Map(
+            "id" -> r.id,
+            "roadwayNumber" -> r.roadwayNumber,
+            "roadNumber" -> r.roadNumber,
+            "roadPartNumber" -> r.roadPartNumber,
+            "track" -> r.track.value,
+            "startAddrMValue" -> r.startAddrMValue,
+            "endAddrMValue" -> r.endAddrMValue,
+            "discontinuity" -> r.discontinuity.value,
+            "ely" -> r.ely,
+            "roadType" -> r.roadType.value,
+            "terminated" -> r.terminated.value,
+            "reversed" -> r.reversed,
+            "roadName" -> r.roadName,
+            "startDate" -> formatDate(r.startDate),
+            "endDate" -> formatDate(r.endDate),
+            "validFrom" -> formatDate(r.validFrom),
+            "validTo" -> formatDate(r.validTo),
+            "createdBy" -> r.createdBy
+          ))
+        } catch {
+          case e: IllegalArgumentException =>
+            val message = "The since parameter of the service should be in the form ISO8601"
+            logger.warn(message)
+            BadRequest(message)
+          case e if NonFatal(e) =>
+            logger.warn(e.getMessage, e)
+            BadRequest(e.getMessage)
+        }
+      }
+    }
+  }
+
+  val getLinearLocationChanges =
+    (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
+      tags "Integration (kalpa)"
+      summary "Returns all the changes to roadways after the given date (including the given date)."
+      parameter queryParam[String]("since").description("Date in format ISO8601"))
+
+  get("/linear_location/changes", operation(getLinearLocationChanges)) {
+    contentType = formats("json")
+    val sinceUnformatted = params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter")))
+    time(logger, s"GET request for /linear_location/changes (since: $sinceUnformatted)") {
+      if (sinceUnformatted == "") {
+        val message = "Since parameter is empty"
+        logger.warn(message)
+        BadRequest(message)
+      } else {
+        try {
+          val since = DateTime.parse(sinceUnformatted)
+          val linearLocations: Seq[LinearLocation] = fetchUpdatedLinearLocations(since)
+          linearLocations.map(l => Map(
+            "id" -> l.id,
+            "roadwayNumber" -> l.roadwayNumber,
+            "linkId" -> l.linkId,
+            "orderNumber" -> l.orderNumber,
+            "side" -> l.sideCode.value,
+            "linkGeomSource" -> l.linkGeomSource.value,
+            "startMValue" -> l.startMValue,
+            "endMValue" -> l.endMValue,
+            "startCalibrationPoint" -> l.startCalibrationPoint,
+            "endCalibrationPoint" -> l.endCalibrationPoint,
+            "validFrom" -> formatDate(l.validFrom),
+            "validTo" -> formatDate(l.validTo),
+            "adjustedTimestamp" -> l.adjustedTimestamp
+          ))
+        } catch {
+          case e: IllegalArgumentException =>
+            val message = "The since parameter of the service should be in the form ISO8601"
             logger.warn(message)
             BadRequest(message)
           case e if NonFatal(e) =>
@@ -212,6 +318,40 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       )
     } else {
       Seq.empty[Any]
+    }
+  }
+
+  private def fetchUpdatedRoadways(since: DateTime): Seq[Roadway] = {
+    val result = roadAddressService.getUpdatedRoadways(since)
+    if (result.isLeft) {
+      throw new ViiteException(result.left.getOrElse("Error fetching updated roadways."))
+    } else if (result.isRight) {
+      result.right.get
+    } else {
+      Seq.empty[Roadway]
+    }
+  }
+
+  private def fetchUpdatedLinearLocations(since: DateTime): Seq[LinearLocation] = {
+    val result = roadAddressService.getUpdatedLinearLocations(since)
+    if (result.isLeft) {
+      throw new ViiteException(result.left.getOrElse("Error fetching updated linear locations."))
+    } else if (result.isRight) {
+      result.right.get
+    } else {
+      Seq.empty[LinearLocation]
+    }
+  }
+
+  def formatDate(date: DateTime): String = {
+    date.toString(dateFormat)
+  }
+
+  def formatDate(date: Option[DateTime]): Option[String] = {
+    if (date.isDefined) {
+      Some(date.get.toString(dateFormat))
+    } else {
+      None
     }
   }
 

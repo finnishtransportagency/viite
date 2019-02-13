@@ -577,6 +577,16 @@ class ProjectLinkDAO {
     }
   }
 
+  def fetchByProjectRoad(roadNumber: Long, projectId: Long): Seq[ProjectLink] = {
+    time(logger, "Fetch project links by project road part") {
+      val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND"
+      val query =
+        s"""$projectLinkQueryBase
+                where $filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
     sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
@@ -591,17 +601,13 @@ class ProjectLinkDAO {
     * @param newRoadNumber: Long - the new road number to apply
     * @param newRoadPart: Long the new road part number to apply
     * @param userName: String - user name
-    * @param discontinuity: Long - the discontinuity value to apply
     */
-  def updateProjectLinkNumbering(projectId: Long, ids: Set[Long], roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, discontinuity: Long, track: Track, ely: Long ): Unit = {
+  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String, ely: Long ): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, ELY = $ely" +
         s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
       Q.updateNA(sql).execute
-
-      val sqlDiscontinuity = s"UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = $discontinuity WHERE ID IN (${ids.mkString(", ")})"
-      Q.updateNA(sqlDiscontinuity).execute
     }
   }
 
