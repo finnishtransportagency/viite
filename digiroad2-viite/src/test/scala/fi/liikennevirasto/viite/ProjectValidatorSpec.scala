@@ -238,9 +238,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getPreviousRoadAddressPart(19999l, 1l)).thenReturn(None)
 
       val errors = projectValidator.checkRoadContinuityCodes(project, links).distinct
-      errors should have size 2
+      errors should have size 1
       errors.head.validationError should be(projectValidator.ValidationErrorList.MajorDiscontinuityFound)
-      errors.last.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
 
       /*
       2nd case: |(x2)|---link A---|(x1)|  |(x2)|---link B---|(x3)|
@@ -262,8 +261,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getPreviousRoadAddressPart(19999l, 1l)).thenReturn(None)
       val errors2 = projectValidator.checkRoadContinuityCodes(project, linksLastLinkGeomReversed).distinct
-      errors2 should have size 1
-      errors2.head.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
+      errors2 should have size 0
 
       /*
       3rd case: |(x1)|---link A---|(x2)|  |(x2)|---link B---|(x3)|
@@ -278,8 +276,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         case l :+ last => l :+ last.copy(discontinuity = Discontinuity.Discontinuous)
       }
       val errors3 = projectValidator.checkRoadContinuityCodes(project, linksDiscontinuousLastLink).distinct
-      errors3 should have size 1
-      errors3.head.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
+      errors3 should have size 0
     }
   }
 
@@ -533,13 +530,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getPreviousRoadAddressPart(1999L, 2l)).thenReturn(None)
 
       val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks).distinct
-      errors should have size 1
-      errors.head.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
+      errors should have size 0
 
       val (starting, last) = projectLinks.splitAt(3)
       val errorsUpd = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = EndOfRoad))).distinct
-      errorsUpd should have size 0
+      errorsUpd should have size 1
+      errorsUpd.head.validationError should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart)
     }
   }
 
@@ -571,15 +568,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getPreviousRoadAddressPart(1999L, 1l)).thenReturn(None)
 
       val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks).distinct
-      errors should have size 2
+      errors should have size 1
       errors.head.validationError should be(projectValidator.ValidationErrorList.MajorDiscontinuityFound)
-      errors.last.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
 
       val (starting, last) = projectLinks.splitAt(3)
       val errorsUpd = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous))).distinct
-      errorsUpd should have size 1
-      errorsUpd.last.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
+      errorsUpd should have size 0
 
       //update geometry in order to make links be connected by geometry
       val ra2 = Seq(
@@ -596,9 +591,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val connectedError = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous))).distinct
-      connectedError should have size 2
+      connectedError should have size 1
       connectedError.head.validationError should be(projectValidator.ValidationErrorList.ConnectedDiscontinuousLink)
-      connectedError.last.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
     }
   }
 
@@ -809,7 +803,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
 
       val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
-      errors should have size 0
+      errors should have size 1
+      errors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
     }
   }
 
@@ -929,7 +924,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
 
       val error2 = projectValidator.validateProject(updProject, currentProjectLinks2).distinct
-      error2 should have size 0
+      error2 should have size 1
+      error2.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
 
       val updatedProjectLinks = Seq(currentProjectLinks2.filter(_.status == LinkStatus.UnChanged).head.copy(status = LinkStatus.Transfer, roadPartNumber = 2L, discontinuity = EndOfRoad))
       projectLinkDAO.updateProjectLinks(updatedProjectLinks, "U", roadAddresses)
@@ -1969,20 +1965,17 @@ Left|      |Right
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
       val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks).distinct
-      errors should have size 2
+      errors should have size 1
       errors.head.validationError should be(projectValidator.ValidationErrorList.MajorDiscontinuityFound)
-      errors.last.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
 
       val (starting, last) = projectLinks.splitAt(3)
       val errorsUpd = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous))).distinct
-      errorsUpd should have size 1
-      errorsUpd.last.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
+      errorsUpd should have size 0
 
       val errorsUpd2 = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))).distinct
-      errorsUpd2 should have size 1
-      errorsUpd2.last.validationError should be(projectValidator.ValidationErrorList.MissingEndOfRoad)
+      errorsUpd2 should have size 0
     }
   }
 
@@ -2028,8 +2021,7 @@ Left|      |Right
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
       val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project, g._2).distinct)
-      errors.size should be(1)
-      errors.head.validationError.value should be(projectValidator.ValidationErrorList.MissingEndOfRoad.value)
+      errors.size should be(0)
       sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
@@ -2044,12 +2036,8 @@ Left|      |Right
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project, g._2).distinct)
 
       linksAfterTransfer.head.connected(linksAfterTransfer.last) should be(true)
-      if (!linksAfterTransfer.last.connected(ra.last)) {
-        errorsAfterTransfer.size should be(0)
-      } else {
-        errorsAfterTransfer.size should be(1)
-        errorsAfterTransfer.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
-      }
+      errorsAfterTransfer.size should be(1)
+      errorsAfterTransfer.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
     }
   }
 
