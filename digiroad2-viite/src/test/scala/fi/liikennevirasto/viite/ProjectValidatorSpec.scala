@@ -2036,12 +2036,8 @@ Left|      |Right
       val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project, g._2).distinct)
 
       linksAfterTransfer.head.connected(linksAfterTransfer.last) should be(true)
-      if (!linksAfterTransfer.last.connected(ra.last)) {
-        errorsAfterTransfer.size should be(0)
-      } else {
-        errorsAfterTransfer.size should be(1)
-        errorsAfterTransfer.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
-      }
+      errorsAfterTransfer.size should be(1)
+      errorsAfterTransfer.head.validationError.value should be(projectValidator.ValidationErrorList.EndOfRoadNotOnLastPart.value)
     }
   }
 
