@@ -653,13 +653,15 @@ class RoadwayDAO extends BaseDAO {
           $query
           join $idTableName i on i.id = a.ROADWAY_NUMBER
           join published_roadway net on net.ROADWAY_ID = a.id
-          where net.network_id = $roadNetworkId and a.valid_to is null"""
+          where net.network_id = $roadNetworkId and a.valid_to is null
+            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
       }
     }
     else
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
-         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})
+            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
   }
 
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
