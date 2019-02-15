@@ -847,8 +847,9 @@ class ProjectValidator {
       */
     def checkEndOfRoadOnLastPart: Seq[ValidationErrorDetails] = {
       val afterCheckErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
+        val roadNumber = g._1
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
-        val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toLong, project.startDate)
+        val validRoadParts = roadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)
         trackIntervals.flatMap {
           interval =>
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
@@ -857,14 +858,15 @@ class ProjectValidator {
               val (road, part) = (last.roadNumber, last.roadPartNumber)
               val discontinuity = last.discontinuity
               val projectNextRoadParts = project.reservedParts.filter(rp =>
-                rp.roadNumber == road && rp.roadPartNumber > part)
+                rp.roadNumber == road && rp.roadPartNumber > part && rp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == rp.roadPartNumber))
 
-              val nextProjectPart = projectNextRoadParts.filter(np => np.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == np.roadPartNumber))
-                .map(_.roadPartNumber).sorted.headOption
+              val nextProjectPart = projectNextRoadParts.map(_.roadPartNumber).sorted.headOption
               val nextAddressPart = validRoadParts
                 .filter(p => p > part).sorted
-                .find(p => roadAddressService.getRoadAddressesFiltered(road, p)
-                  .forall(ra => !allProjectLinks.exists(al => al.linearLocationId == ra.linearLocationId && al.roadPartNumber != ra.roadPartNumber)))
+                .filterNot(
+                  rp => allProjectLinks.exists(l => l.roadAddressRoadNumber.getOrElse(0) == roadNumber && l.roadAddressRoadPart.getOrElse(0) == rp)
+                )
+
               if (nextProjectPart.isEmpty && nextAddressPart.isEmpty && discontinuity != EndOfRoad) {
                 error(project.id, ValidationErrorList.MissingEndOfRoad)(Seq(last))
               } else if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty) && discontinuity == EndOfRoad) {
