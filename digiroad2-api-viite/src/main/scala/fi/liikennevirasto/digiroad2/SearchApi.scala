@@ -83,7 +83,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
 
   post("/road_address/?") {
     time(logger, s"POST request for /road_address/?") {
-      val linkIds = (parsedBody).extract[Set[Long]]
+      val linkIds = parsedBody.extract[Set[Long]]
       roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
   }

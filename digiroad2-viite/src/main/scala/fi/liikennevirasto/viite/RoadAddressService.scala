@@ -424,7 +424,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns all filtered the road addresses
     */
   def getRoadAddressByLinkIds(linkIds: Set[Long]): Seq[RoadAddress] = {
-    withDynSession {
+    withDynTransaction {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filter(ra => linkIds.contains(ra.linkId)).filterNot(_.isFloating)

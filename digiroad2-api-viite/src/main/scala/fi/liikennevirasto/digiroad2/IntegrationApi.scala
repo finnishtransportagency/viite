@@ -131,8 +131,9 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     if (geometry.nonEmpty) {
       val segments = geometry.zip(geometry.tail)
       val factor = (endAddr - startAddr) / GeometryUtils.geometryLength(geometry)
-      val runningSum = segments.scanLeft(0.0 + startAddr)((current, points) => current + points._1.distance2DTo(points._2) * factor)
-      val mValuedGeometry = geometry.zip(runningSum.toList)
+      val runningSum: Seq[Double] = segments.scanLeft(0.0 + startAddr)((current, points) => current + points._1.distance2DTo(points._2) * factor)
+      val runningSumLastAdjusted = runningSum.init :+ endAddr.toDouble
+      val mValuedGeometry = geometry.zip(runningSumLastAdjusted.toList)
       val wktString = mValuedGeometry.map {
         case (p, newM) => "%.3f %.3f %.3f %.3f".formatLocal(Locale.US, p.x, p.y, p.z, newM)
       }.mkString(", ")
