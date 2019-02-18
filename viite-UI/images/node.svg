@@ -1,44 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   style="fill:none;stroke:none;stroke-linecap:square;stroke-miterlimit:10"
-   id="svg23"
-   stroke-miterlimit="10"
+   class="node"
    height="24"
    width="18"
-   viewBox="0 0 100 141.07506"
-   version="1.1">
-  <metadata
-     id="metadata29">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <defs
-     id="defs27" />
-  <clipPath
-     id="p.0">
-    <path
-       style="clip-rule:nonzero"
-       id="path2"
-       d="M 0,0 H 100 V 176.34383 H 0 Z" />
-  </clipPath>
+   viewBox="0 0 100 141.07506">
   <path
-     style="opacity:1;fill:#5a5a5a;fill-opacity:1;stroke:none;"
+     style="opacity:1;fill:#888;fill-opacity:1;stroke:none;"
      d="M 50,4.4085955 102.90315,70.537531 50,136.66646 -2.9031496,70.537531 Z"
-     id="stroke" />
+     class="stroke" />
   <path
-     id="fill"
+     class="fill"
      d="M 50,29.390638 82.917516,70.537531 50,111.68443 17.082484,70.537531 Z"
-     style="opacity:1;fill:#bebebe;fill-opacity:1;stroke:none;" />
+     style="opacity:1;fill:#bbb;fill-opacity:1;stroke:none;" />
 </svg>
