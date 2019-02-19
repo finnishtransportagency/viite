@@ -135,6 +135,14 @@ object CalibrationCode {
     def value = 3
   }
 
+  def switch(calibrationCode: CalibrationCode): CalibrationCode = {
+    calibrationCode match {
+      case AtBeginning => AtEnd
+      case AtEnd => AtBeginning
+      case _ => calibrationCode
+    }
+  }
+
 }
 
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
