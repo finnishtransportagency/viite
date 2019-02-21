@@ -2048,7 +2048,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getProjectEly(projectId: Long): Seq[Long] = {
-    projectDAO.fetchProjectElyById(projectId)
+    withDynSession{
+      projectDAO.fetchProjectElyById(projectId)
+    }
   }
 
   /**
