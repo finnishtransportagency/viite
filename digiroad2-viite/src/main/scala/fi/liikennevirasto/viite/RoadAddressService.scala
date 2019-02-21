@@ -106,7 +106,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageRoadLinks
 
     //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
-    val (adjustedLinearLocations, changeSet) = if(frozenTimeVVHAPIServiceEnabled) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
+    val (adjustedLinearLocations, changeSet) = if (frozenTimeVVHAPIServiceEnabled) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
     if (!frozenTimeVVHAPIServiceEnabled)
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
