@@ -1500,7 +1500,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadAddressProjectToApi(roadAddressProject: Project, elysList: Seq[Long]): Map[String, Any] = {
 
-    val elys = if(elysList.isEmpty) Seq(-1) else elysList
+    val elys = if (elysList.isEmpty) Seq(-1) else elysList
 
     Map(
       "id" -> roadAddressProject.id,
