@@ -35,7 +35,7 @@ package object viite {
   val MaxMoveDistanceBeforeFloating = 1.0
   /* Maximum amount a road start / end may move until it is turned into a floating road address */
 
-  val MaxDistanceForSearchDiscontinuityOnOppositeTrack = 10.0
+  val MaxDistanceForSearchDiscontinuityOnOppositeTrack = 20.0
 
   val MinDistanceForGeometryUpdate = 0.5
 
