@@ -83,7 +83,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         list
       } else {
         val location = remaining.head
-        val previewValue = if(reduce) {
+        val previewValue = if (reduce) {
           startAddr + Math.round((location.endMValue - location.startMValue) * coef) - 1
         } else {
           startAddr + Math.round((location.endMValue - location.startMValue) * coef)
@@ -91,12 +91,12 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
         val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
           list :+ previewValue.toLong
-        } else if (previewValue <= endAddress){
+        } else if (previewValue <= endAddress) {
           mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, reduce = true)
         } else {
-          mappedAddressValues(remaining:+processed.last, processed.init, list.init.last, endAddr, coef, list.init, reduce = true)
+          mappedAddressValues(remaining :+ processed.last, processed.init, list.init.last, endAddr, coef, list.init, reduce = true)
         }
-        mappedAddressValues(remaining.tail, processed:+remaining.head, previewValue, endAddr, coef, adjustedList, reduce = false)
+        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, reduce = false)
       }
 
     }
