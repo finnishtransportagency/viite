@@ -561,7 +561,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
         val firstAddress: Map[String, Any] =
           fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
-        Map("project" -> roadAddressProjectToApi(fetched, projectService.getProjectLinks(fetched.id)), "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
+        Map("project" -> roadAddressProjectToApi(fetched, projectService.getProjectEly(fetched.id)), "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
           "formInfo" ->
             fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
       } catch {
@@ -595,7 +595,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       try {
         val projectSaved = projectService.saveProject(roadAddressProject)
         val firstLink = projectService.getFirstProjectLink(projectSaved)
-        Map("project" -> roadAddressProjectToApi(projectSaved, projectService.getProjectLinks(projectSaved.id)), "projectAddresses" -> firstLink, "formInfo" ->
+        Map("project" -> roadAddressProjectToApi(projectSaved, projectService.getProjectEly(projectSaved.id)), "projectAddresses" -> firstLink, "formInfo" ->
           projectSaved.reservedParts.map(reservedRoadPartToApi),
           "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
       } catch {
@@ -709,10 +709,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/roadaddress/project/all", operation(getAllRoadAddressProjects)) {
     time(logger, "GET request for /roadlinks/roadaddress/project/all") {
       projectService.getAllProjects.map(p => {
-        val projectLinks = if (p.status == ProjectState.Saved2TR) {
-          projectService.fetchProjectHistoryLinks(p.id)
-        } else projectService.getProjectLinks(p.id)
-          roadAddressProjectToApi(p, projectLinks)
+        val projectLinksElys = projectService.getProjectEly(p.id)
+          roadAddressProjectToApi(p, projectLinksElys)
       })
     }
   }
@@ -733,7 +731,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       try {
         projectService.getSingleProjectById(projectId) match {
           case Some(project) =>
-            val projectMap = roadAddressProjectToApi(project, projectService.getProjectLinks(project.id))
+            val projectMap = roadAddressProjectToApi(project, projectService.getProjectEly(project.id))
             val parts = project.reservedParts.map(reservedRoadPartToApi)
             val errorParts = projectService.validateProjectById(project.id)
             val publishable = errorParts.isEmpty
@@ -1500,9 +1498,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "floating" -> projectLink.floating)
   }
 
-  def roadAddressProjectToApi(roadAddressProject: Project, projectLinks: Seq[ProjectLink]): Map[String, Any] = {
+  def roadAddressProjectToApi(roadAddressProject: Project, elysList: Seq[Long]): Map[String, Any] = {
 
-    val elys = Option(projectLinks.map( pl => pl.ely).distinct.sorted).filter(_.nonEmpty).getOrElse(Seq(-1))
+    val elys = if (elysList.isEmpty) Seq(-1) else elysList
 
     Map(
       "id" -> roadAddressProject.id,
