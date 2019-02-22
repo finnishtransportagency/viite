@@ -1730,7 +1730,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val validNamesAfterUpdate = RoadNameDAO.getCurrentRoadNamesByRoadNumber(66666)
       validNamesAfterUpdate.size should be(1)
       validNamesAfterUpdate.head.roadName should be(namesBeforeUpdate.get.roadName)
-      project.get.statusInfo.getOrElse("") should be(RoadNameWasNotSavedInProject + s"${66666}")
     }
   }
 
@@ -1866,7 +1865,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectService.handleNewRoadNames(changes, projectBefore.get)
         val namesAfterUpdate = RoadNameDAO.getLatestRoadName(66666)
         val project = projectService.getSingleProjectById(projectId)
-        project.get.statusInfo.getOrElse("") should be(RoadNameWasNotSavedInProject + s"${66666}")
         namesAfterUpdate.get.roadName should be(namesBeforeUpdate.get.roadName)
       }
     }
