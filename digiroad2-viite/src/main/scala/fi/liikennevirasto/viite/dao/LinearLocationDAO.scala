@@ -825,7 +825,7 @@ class LinearLocationDAO {
     CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
   }
 
-  def getLinearLocationCalibrationCode(linearLocationIds: Seq[Long]): Map[Long, CalibrationCode] = {
+  def getLinearLocationCalibrationCodeNSide(linearLocationIds: Seq[Long]): Map[Long, (CalibrationCode, SideCode)] = {
     if (linearLocationIds.isEmpty) {
       Map()
     } else {
@@ -835,10 +835,10 @@ class LinearLocationDAO {
                        WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
                        WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
                        ELSE 0
-                       END) AS calibrationCode
+                       END) AS calibrationCode, side
                        FROM LINEAR_LOCATION WHERE id in (${linearLocationIds.mkString(",")})"""
-      Q.queryNA[(Long, Int)](query).list.map {
-        case (id, code) => id -> CalibrationCode(code)
+      Q.queryNA[(Long, Int, Int)](query).list.map {
+        case (id, code, side) => id -> (CalibrationCode(code), SideCode.apply(side))
       }.toMap
     }
   }
