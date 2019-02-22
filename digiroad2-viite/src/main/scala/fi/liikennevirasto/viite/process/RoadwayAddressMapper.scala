@@ -78,14 +78,34 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     */
   private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long): Seq[RoadAddress] = {
 
+    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], reduce: Boolean): Seq[Long] = {
+      if (remaining.isEmpty) {
+        list
+      } else {
+        val location = remaining.head
+        val previewValue = if (reduce) {
+          startAddr + Math.round((location.endMValue - location.startMValue) * coef) - 1
+        } else {
+          startAddr + Math.round((location.endMValue - location.startMValue) * coef)
+        }
+
+        val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
+          list :+ previewValue.toLong
+        } else if (previewValue <= endAddress) {
+          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, reduce = true)
+        } else {
+          mappedAddressValues(remaining :+ processed.last, processed.init, list.init.last, endAddr, coef, list.init, reduce = true)
+        }
+        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, reduce = false)
+      }
+
+    }
+
     val coef = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
 
     val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
-    val addresses = sortedLinearLocations.init.scanLeft(startAddress) {
-      case (address, location) =>
-        address + Math.round((location.endMValue - location.startMValue) * coef)
-    } :+ endAddress
+    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coef, Seq(startAddress), reduce = false) :+ endAddress
 
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
