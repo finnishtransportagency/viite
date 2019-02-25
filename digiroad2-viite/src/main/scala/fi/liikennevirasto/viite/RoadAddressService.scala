@@ -200,7 +200,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @param municipality The municipality code
     * @return Returns all the filtered road addresses
     */
-  def getAllByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
+  def getAllByMunicipality(municipality: Int, testPurpose: Boolean = false): Seq[RoadAddressLink] = {
 
     val suravageRoadLinksF = Future(roadLinkService.getSuravageRoadLinks(municipality))
 
@@ -214,7 +214,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     }
     val (adjustedLinearLocations, changeSet) = if (frozenTimeVVHAPIServiceEnabled) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
-    if (!frozenTimeVVHAPIServiceEnabled) {
+    if (!frozenTimeVVHAPIServiceEnabled && !testPurpose) {
       //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
     }

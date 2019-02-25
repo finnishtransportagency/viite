@@ -172,22 +172,23 @@ object DataFixture {
 
   private def testIntegrationAPIWithAllMunicipalities(): Unit = {
     println(s"\nStarting fetch for integration API for all municipalities")
-    OracleDatabase.withDynTransaction {
-      val municipalities = Queries.getMunicipalities
-      municipalities.foreach(
-        municipalityCode =>
-          try {
-            val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode).count(ral => ral.roadNumber > 0)
-            println(s"\nMunicipality $municipalityCode returned $knownAddressLinksSize links with valid values")
-          }
-
-          catch {
-            case e: Exception =>
-              val message = s"Failed to get road addresses for municipality $municipalityCode"
-              println(s"\n" + message + s"\n"+ e.printStackTrace())
-          }
-      )
+    val municipalities = OracleDatabase.withDynTransaction {
+      Queries.getMunicipalities
     }
+    municipalities.foreach(
+      municipalityCode =>
+        try {
+          println(s"\nProcessing municipality $municipalityCode")
+          val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode, testPurpose = true).count(ral => ral.roadNumber > 0)
+          println(s"\nMunicipality $municipalityCode returned $knownAddressLinksSize links with valid values")
+        }
+        catch {
+          case e: Exception =>
+            val message = s"Failed to get road addresses for municipality $municipalityCode"
+            println(s"\n" + message + s"\n"+ e.printStackTrace())
+        }
+    )
+
   }
 
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
