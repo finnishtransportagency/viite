@@ -344,6 +344,14 @@ class ProjectValidator {
       def notification = true
     }
 
+    case object RoadNotReserved extends ValidationError {
+      def value = 27
+
+      def message: String = RoadNotReservedMessage
+
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -412,7 +420,8 @@ class ProjectValidator {
       checkProjectContinuity,
       checkForNotHandledLinks,
       checkTrackCodePairing,
-      checkRemovedEndOfRoadParts
+      checkRemovedEndOfRoadParts,
+      checkActionsInRoadsNotInProject
     )
 
     val errors: Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
@@ -576,6 +585,16 @@ class ProjectValidator {
         case None => Seq()
       }
     }
+  }
+
+  def checkActionsInRoadsNotInProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+    val linkStatus = List(LinkStatus.Transfer, LinkStatus.Numbering)
+    val operationsOutsideProject = projectLinks.filter(l => linkStatus.contains(l.status)).groupBy(p => (p.roadNumber, p.roadPartNumber)).flatMap(
+      pl => roadwayDAO.fetchAllByRoadAndPart(pl._1._1, pl._1._2)).filter{
+      l => !project.reservedParts.exists(r => r.roadNumber == l.roadNumber && r.roadPartNumber == l.roadwayNumber)
+    }
+    val erroredProjectLinks = projectLinks.filter(pl => operationsOutsideProject.exists(out => out.roadNumber == pl.roadNumber && out.roadPartNumber == pl.roadPartNumber))
+    error(project.id, ValidationErrorList.RoadNotReserved)(erroredProjectLinks).toSeq.distinct
   }
 
   def checkProjectElyCodes(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
@@ -990,7 +1009,7 @@ class ProjectValidator {
       }
     }
 
-    val continuityValidations: Seq[  Seq[ValidationErrorDetails]] = Seq(
+    val continuityValidations: Seq[Seq[ValidationErrorDetails]] = Seq(
       checkContinuityBetweenLinksOnParts,
       checkMinorDiscontinuityBetweenLinksOnPart,
       checkDiscontinuityBetweenLinksOnRamps,
