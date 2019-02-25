@@ -122,7 +122,7 @@ package object viite {
   val ElyCodeChangeButNoElyChangeMessage = s"ELY-numeromuutos havaittu mutta  ${ChangingELYCode.description}(${ChangingELYCode.value}) jatkuvuuskoodi on väärä. ELY:n rajalla jatkuvuuskoodin tulee olla 3."
   val ElyCodeDiscontinuityChangeButNoElyChangeMessage = s"Tieosan %d lopussa jatkuu-koodiksi määritelty ${ChangingELYCode.description} (${ChangingELYCode.value}), tarkista tieosien %d ja %s ELY-koodit tai korjaa jatkuu-koodia."
   val ElyCodeChangeButNotOnEndMessage = s"Tieosan keskellä on jatkuu-koodiksi määritelty ${ChangingELYCode.value}, korjaa jatkuu-koodi."
-
+  val RoadNotReservedMessage = s"Toimenpidettä ei saa tehdä tieosalle, jota ei ole varattu projektiin. Varaa tie %d osa %d."
   //RoadNetworkChecker error messages
   val ErrorOverlappingRoadAddress = "Road address overlaps another one."
   val ErrorInconsistentTopology = "Topology have inconsistent data."
