@@ -86,6 +86,10 @@ class ProjectDAO {
          SELECT DISTINCT ELY
          FROM project_link
          WHERE project_id=$projectId
+         union
+         SELECT DISTINCT ELY
+         FROM project_link_history
+         WHERE project_id=$projectId
        """
     Q.queryNA[Long](query).list
   }
@@ -101,7 +105,7 @@ class ProjectDAO {
 
   def fetchAll(): Seq[Project] = {
     time(logger, s"Fetch all projects ") {
-        fetch(query => s"""$query order by name, id""")
+      simpleFetch(query => s"""$query order by name, id""")
     }
   }
 
@@ -189,6 +193,22 @@ class ProjectDAO {
 
         Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
           addInfo, reservedRoadParts, statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
+    }
+  }
+
+  private def simpleFetch(queryFilter: String => String): Seq[Project] = {
+    val query =
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
+           add_info, status_info, coord_x, coord_y, zoom
+           FROM project"""
+
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Double, Double, Int)](queryFilter(query)).list.map {
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, coordX, coordY, zoom) =>
+
+        val projectState = ProjectState.apply(state)
+
+        Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
+          addInfo, Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
     }
   }
 }

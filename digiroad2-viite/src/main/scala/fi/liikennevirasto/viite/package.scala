@@ -106,7 +106,6 @@ package object viite {
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
-  val RoadNameWasNotSavedInProject = "Datavirhe tien nimetyksessä, ota yhteys pääkäyttäjään."
   val RoadNotAvailableMessage = s"Varattujen tieosien haku tietokannasta epäonnistui. Tie %d osa %d ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä %s tai se on varattu toiseen projektiin."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
   val ProjectNotFoundMessage = "Projektia ei löytynyt, ota yhteys pääkäyttäjään."
