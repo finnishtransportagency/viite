@@ -97,7 +97,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         } else if (previewValue <= endAddress) {
           mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, applyCoef = true)
         } else {
-          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, applyCoef = true)
+          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last - 1, endAddr, coef, list.init, applyCoef = true)
         }
         mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, applyCoef = false)
       }
