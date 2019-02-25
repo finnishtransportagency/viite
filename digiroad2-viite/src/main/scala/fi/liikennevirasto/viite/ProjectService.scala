@@ -2031,8 +2031,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (existingRoadNames.isEmpty && projectLinkNames.nonEmpty) {
           Some(RoadName(NewRoadNameId, roadNumber, projectLinkNames.head.roadName, startDate = Some(rwc.projectStartDate), validFrom = Some(DateTime.now()), createdBy = rwc.user))
         } else {
-          val nameString = s"${existingRoadNames.map(_.roadNumber).mkString(",")}"
-          appendStatusInfo(project, RoadNameWasNotSavedInProject + nameString)
           None
         }
       }
@@ -2048,7 +2046,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getProjectEly(projectId: Long): Seq[Long] = {
-    projectDAO.fetchProjectElyById(projectId)
+    withDynSession{
+      projectDAO.fetchProjectElyById(projectId)
+    }
   }
 
   /**

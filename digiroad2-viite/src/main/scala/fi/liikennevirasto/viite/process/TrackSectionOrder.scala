@@ -51,10 +51,10 @@ object TrackSectionOrder {
         val (projectLinksWithValues, newLinks) = projectLinks.partition(_.endAddrMValue != 0)
         val projectLinkChain =
           if (projectLinksWithValues.nonEmpty) {
-            val (startPoint, endPoint) = projectLinksWithValues.head.getEndPoints
+            val (startPoint, endPoint) = projectLinksWithValues.head.getEndPointsOnlyBySide
             recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(projectLinksWithValues.head), startPoint, endPoint), projectLinksWithValues.tail ++ newLinks)
           } else {
-            val (startPoint, endPoint) = newLinks.head.getEndPoints
+            val (startPoint, endPoint) = newLinks.head.getEndPointsOnlyBySide
             recursiveFindNearestProjectLinks(ProjectLinkChain(Seq(newLinks.head), startPoint, endPoint), newLinks.tail)
           }
         Map(projectLinkChain.startPoint -> projectLinkChain.sortedProjectLinks.head, projectLinkChain.endPoint -> projectLinkChain.sortedProjectLinks.last)
@@ -296,8 +296,8 @@ object TrackSectionOrder {
             (getOppositeEnd(l, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && ready.isEmpty) match {
-          case (false, _) | (true, true) =>
+        val sideCode = (nextLink.geometry.last == nextPoint, nextLink.reversed && (unprocessed ++ ready).size == 1) match {
+          case (false, false) | (true, true) =>
             SideCode.AgainstDigitizing
           case _ =>
             SideCode.TowardsDigitizing
