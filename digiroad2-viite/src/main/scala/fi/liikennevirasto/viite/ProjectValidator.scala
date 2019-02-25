@@ -593,13 +593,15 @@ class ProjectValidator {
       pl => roadwayDAO.fetchAllByRoadAndPart(pl._1._1, pl._1._2)).filter {
       l => !project.reservedParts.exists(r => r.roadNumber == l.roadNumber && r.roadPartNumber == l.roadwayNumber)
     }
-    val erroredProjectLinks = projectLinks.filter(pl => operationsOutsideProject.exists(out => out.roadNumber == pl.roadNumber && out.roadPartNumber == pl.roadPartNumber))
+    val erroredProjectLinks = projectLinks.filter(pl => operationsOutsideProject.exists(out => out.roadNumber == pl.roadNumber && out.roadPartNumber == pl.roadPartNumber)).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     if (erroredProjectLinks.nonEmpty) {
-      Seq(ValidationErrorDetails(project.id, alterShortMessage(ValidationErrorList.RoadNotReserved, currentRoadAndPart = Some(Seq((erroredProjectLinks.head.roadNumber, erroredProjectLinks.head.roadPartNumber))))
-        , Seq(erroredProjectLinks.size), erroredProjectLinks.map { l =>
-          val point = GeometryUtils.midPointGeometry(l.geometry)
-          ProjectCoordinates(point.x, point.y, 12)
-        }, None))
+      erroredProjectLinks.flatMap{ l =>
+        Seq(ValidationErrorDetails(project.id, alterShortMessage(ValidationErrorList.RoadNotReserved, currentRoadAndPart = Some(Seq((l._2.head.roadNumber, l._2.head.roadPartNumber))))
+          , Seq(l._2.size), l._2.map { pl =>
+            val point = GeometryUtils.midPointGeometry(pl.geometry)
+            ProjectCoordinates(point.x, point.y, 12)
+          }, None))
+      }.toSeq
     } else {
       Seq()
     }
