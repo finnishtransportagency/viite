@@ -4,11 +4,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.NewLinearLocation
 import fi.liikennevirasto.viite.dao._
-import org.joda.time.{DateTime, LocalDateTime}
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 
 class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) {
 
@@ -78,23 +75,30 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     */
   private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long): Seq[RoadAddress] = {
 
-    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], reduce: Boolean): Seq[Long] = {
+    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], reduce: Boolean, depth: Int = 1): Seq[Long] = {
       if (remaining.isEmpty) {
         list
       } else {
         val location = remaining.head
+        val addressesToAdd = Math.round((location.endMValue - location.startMValue) * coef)
         val previewValue = if (reduce) {
-          startAddr + Math.round((location.endMValue - location.startMValue) * coef) - 1
+          startAddr + addressesToAdd - 1
         } else {
-          startAddr + Math.round((location.endMValue - location.startMValue) * coef)
+          startAddr + addressesToAdd
+        }
+
+        if (depth > 100) {
+          val message = s"mappedAddressValues got in infinite recursion. Roadway number = ${roadway.roadwayNumber}, location.id = ${location.id}, startMValue = ${location.startMValue}, endMValue = ${location.endMValue}, addressesToAdd = ${addressesToAdd}, previewValue = ${previewValue}"
+          logger.error(message)
+          if (depth > 102) throw new RuntimeException(message)
         }
 
         val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
           list :+ previewValue.toLong
         } else if (previewValue <= endAddress) {
-          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, reduce = true)
+          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, reduce = true, depth + 1)
         } else {
-          mappedAddressValues(remaining :+ processed.last, processed.init, list.init.last, endAddr, coef, list.init, reduce = true)
+          mappedAddressValues(remaining :+ processed.last, processed.init, list.init.last, endAddr, coef, list.init, reduce = true, depth + 1)
         }
         mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, reduce = false)
       }
