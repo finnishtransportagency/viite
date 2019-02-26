@@ -1,4 +1,4 @@
-Viite-sovelluksen k&auml;ytt&ouml;ohje
+Viite-sovelluksen käyttöohje
 ======================================================
 VIITE
 -----------------------
