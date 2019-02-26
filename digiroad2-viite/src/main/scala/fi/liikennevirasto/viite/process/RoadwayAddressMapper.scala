@@ -78,25 +78,26 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     */
   private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long): Seq[RoadAddress] = {
 
-    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], reduce: Boolean): Seq[Long] = {
+    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], increment: Int): Seq[Long] = {
       if (remaining.isEmpty) {
         list
       } else {
         val location = remaining.head
-        val previewValue = if (reduce) {
-          startAddr + Math.round((location.endMValue - location.startMValue) * coef) - 1
-        } else {
-          startAddr + Math.round((location.endMValue - location.startMValue) * coef)
-        }
+        //increment can also be negative
+        val previewValue =
+            startAddr + Math.round((location.endMValue - location.startMValue) * coef) + increment
+
 
         val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
           list :+ previewValue.toLong
+        } else if (previewValue < startAddr) {
+          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, 1)
         } else if (previewValue <= endAddress) {
-          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, reduce = true)
+          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, -1)
         } else {
-          mappedAddressValues(remaining :+ processed.last, processed.init, list.init.last, endAddr, coef, list.init, reduce = true)
+          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last - 1, endAddr, coef, list.init, -1)
         }
-        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, reduce = false)
+        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, 0)
       }
 
     }
@@ -105,7 +106,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
-    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coef, Seq(startAddress), reduce = false) :+ endAddress
+    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coef, Seq(startAddress), 0) :+ endAddress
 
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
