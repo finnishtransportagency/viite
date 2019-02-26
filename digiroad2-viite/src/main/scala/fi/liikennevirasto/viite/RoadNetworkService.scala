@@ -89,7 +89,7 @@ class RoadNetworkService {
         } else {
           val firstOpt = allLocations.find(loc => loc.orderNumber == 1 && loc.calibrationPoints._1.nonEmpty && loc.calibrationPoints._1.get == 0)
           val lastOpt = Some(allLocations.maxBy(_.calibrationPoints._2))
-          if (firstOpt.isEmpty || lastOpt.get.endCalibrationPoint.isEmpty) {
+          if (firstOpt.isEmpty || lastOpt.get.endCalibrationPoint.isEmpty || !lastOpt.get.endCalibrationPoint.contains(Some(roadways.maxBy(_.endAddrMValue)).get.endAddrMValue)) {
             allLocations.map(loc =>
               RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
             )
