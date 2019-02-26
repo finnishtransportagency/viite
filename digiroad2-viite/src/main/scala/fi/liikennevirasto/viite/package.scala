@@ -128,7 +128,7 @@ package object viite {
   val ErrorInconsistentTopology = "Topology have inconsistent data."
   val ErrorInconsistentLrmHistory = "Lrm with inconsistent history."
   val ErrorInconsistent2TrackCalibrationPoints = "Missing relative calibration point in opposite track."
-  val ErrorInconsistentContinuityCalibrationPoints = "Missing relative connecting starting point."
+  val ErrorInconsistentContinuityCalibrationPoints = "Missing relative connecting starting/ending point."
   val ErrorMissingEdgeCalibrationPoints = "Missing edge calibration points."
   val ErrorInconsistentAddressValues = "Error in continuity by address m values between connected links."
   val InconsistentAddressValues = "Wrong address values between links."
