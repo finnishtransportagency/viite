@@ -168,14 +168,16 @@ class RoadNetworkService {
           * Used for actor cases only.
           * Batch should only deal with expiring and publishing of road network after run all chunks of the entire road network
           */
-          if (options.throughActor && options.currNetworkVersion.nonEmpty && !roadNetworkDAO.hasCurrentNetworkErrors) {
-            logger.info(s"No errors found. Creating new publishable version for the road network")
-            roadNetworkDAO.expireRoadNetwork
-            roadNetworkDAO.createPublishedRoadNetwork(options.nextNetworkVersion)
-            val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
-            roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
-          } else {
-            logger.info(s"Network errors found. Check road_network_error table")
+          if (options.throughActor) {
+            if (options.currNetworkVersion.nonEmpty && !roadNetworkDAO.hasCurrentNetworkErrors) {
+              logger.info(s"No errors found. Creating new publishable version for the road network")
+              roadNetworkDAO.expireRoadNetwork
+              roadNetworkDAO.createPublishedRoadNetwork(options.nextNetworkVersion)
+              val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
+              roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
+            } else {
+              logger.info(s"Network errors found or current network version not found. Check road_network_error and published_road_network tables")
+            }
           }
 
         } catch {
