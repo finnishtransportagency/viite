@@ -93,13 +93,13 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
           list :+ previewValue.toLong
         } else if (previewValue < startAddr) {
-          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, 1, depth + 1)
+          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
         } else if (previewValue <= endAddress) {
-          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, -1, depth + 1)
+          mappedAddressValues(remaining, processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
         } else {
-          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last - 1, endAddr, coef, list.init, -1, depth + 1)
+          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
         }
-        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, 0, depth + 1)
+        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, increment, depth + 1)
       }
 
     }
