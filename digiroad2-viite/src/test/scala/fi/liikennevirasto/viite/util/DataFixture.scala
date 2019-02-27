@@ -1,9 +1,11 @@
 package fi.liikennevirasto.viite.util
 
 import java.util.Properties
+
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -14,6 +16,8 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.DateTime
+import org.scalatra.BadRequest
+
 import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
@@ -166,6 +170,27 @@ object DataFixture {
     println()
   }
 
+  private def testIntegrationAPIWithAllMunicipalities(): Unit = {
+    println(s"\nStarting fetch for integration API for all municipalities")
+    val municipalities = OracleDatabase.withDynTransaction {
+      Queries.getMunicipalities
+    }
+    municipalities.foreach(
+      municipalityCode =>
+        try {
+          println(s"\nProcessing municipality $municipalityCode")
+          val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode).count(ral => ral.roadNumber > 0)
+          println(s"\nMunicipality $municipalityCode returned $knownAddressLinksSize links with valid values")
+        }
+        catch {
+          case e: Exception =>
+            val message = s"Failed to get road addresses for municipality $municipalityCode"
+            println(s"\n" + message + s"\n"+ e.printStackTrace())
+        }
+    )
+
+  }
+
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
 
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
@@ -314,6 +339,8 @@ object DataFixture {
         tearDown()
         setUpTest()
         importMunicipalityCodes()
+      case Some("test_integration_api_all_municipalities") =>
+        testIntegrationAPIWithAllMunicipalities()
 
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
