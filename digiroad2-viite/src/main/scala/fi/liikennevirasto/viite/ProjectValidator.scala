@@ -589,11 +589,12 @@ class ProjectValidator {
 
   def checkActionsInRoadsNotInProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     val linkStatus = List(LinkStatus.Transfer, LinkStatus.Numbering)
-    val operationsOutsideProject = projectLinks.filter(l => linkStatus.contains(l.status)).groupBy(p => (p.roadNumber, p.roadPartNumber)).flatMap(
-      pl => roadwayDAO.fetchAllByRoadAndPart(pl._1._1, pl._1._2)).filter {
-      l => !project.reservedParts.exists(r => r.roadNumber == l.roadNumber && r.roadPartNumber == l.roadwayNumber)
+    val operationsOutsideProject: Seq[Roadway] = project.reservedParts.flatMap{r =>
+      roadwayDAO.fetchAllByRoadAndPart(r.roadNumber, r.roadPartNumber)}
+    val cenas = operationsOutsideProject.filterNot{
+      l => projectLinks.exists(r => r.roadAddressRoadNumber.get == l.roadNumber && r.roadAddressRoadPart.get == l.roadPartNumber)
     }
-    val erroredProjectLinks = projectLinks.filter(pl => operationsOutsideProject.exists(out => out.roadNumber == pl.roadNumber && out.roadPartNumber == pl.roadPartNumber)).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
+    val erroredProjectLinks = projectLinks.filter(pl => linkStatus.contains(pl.status) && cenas.exists(out => out.roadNumber == pl.roadNumber && out.roadPartNumber == pl.roadPartNumber)).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     if (erroredProjectLinks.nonEmpty) {
       erroredProjectLinks.flatMap{ l =>
         Seq(ValidationErrorDetails(project.id, alterShortMessage(ValidationErrorList.RoadNotReserved, currentRoadAndPart = Some(Seq((l._2.head.roadNumber, l._2.head.roadPartNumber))))
@@ -606,7 +607,6 @@ class ProjectValidator {
       Seq()
     }
   }
-
 
   def checkProjectElyCodes(project: Project, allProjectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
