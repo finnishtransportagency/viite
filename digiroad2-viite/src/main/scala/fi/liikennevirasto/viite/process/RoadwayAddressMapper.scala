@@ -85,9 +85,9 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             startAddr + Math.round((location.endMValue - location.startMValue) * coef) + increment
 
         if (depth > 100) {
-          val message = s"mappedAddressValues got in infinite recursion. Roadway number = ${roadway.roadwayNumber}, location.id = ${location.id}, startMValue = ${location.startMValue}, endMValue = ${location.endMValue}, previewValue = ${previewValue}"
+          val message = s"mappedAddressValues got in infinite recursion. Roadway number = ${roadway.roadwayNumber}, location.id = ${location.id}, startMValue = ${location.startMValue}, endMValue = ${location.endMValue}, previewValue = ${previewValue}, remaining = ${remaining.length}"
           logger.error(message)
-          if (depth > 102) throw new RuntimeException(message)
+          if (depth > 105) throw new RuntimeException(message)
         }
 
         val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
@@ -99,7 +99,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         } else {
           mappedAddressValues(processed.last +: remaining, processed.init, list.init.last - 1, endAddr, coef, list.init, -1, depth + 1)
         }
-        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, 0)
+        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, 0, depth + 1)
       }
 
     }
