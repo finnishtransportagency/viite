@@ -3,9 +3,9 @@ Viite-sovelluksen käyttöohje
 VIITE
 -----------------------
 
-VIITE on Liikenneviraston tieosoitejärjestelmän ylläpito-sovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä Digiroadin (VVH:n) ajantasaisella linkkigeometrialla.
+VIITE on Liikenneviraston tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä Digiroadin (VVH:n) ajantasaisella linkkigeometrialla.
 
-Seuraavasta linkistä pääsee Liikenneviraston extranet VIITE-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
+Seuraavasta linkistä pääsee Liikenneviraston extranetin VIITE-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
 
 https://testiextranet.vayla.fi/extranet/web/fi/viite?kategoria=7457637 (testi) 
 
@@ -37,14 +37,14 @@ Oikeudet on rajattu maantieteellisesti sekä käyttäjän roolin mukaan.
 - Ilman erikseen annettuja oikeuksia Liikenneviraston tunnuksilla pääsee katselemaan kaikkia tieosoitteita
 - Sovelluksen käyttäjällä on oikeudet muokata hänelle määriteltyjen Elyjen maantieteellisten kuntarajojen sisäpuolella olevia tieosoitteita
 - Joillekin käyttäjille on voitu antaa oikeudet koko Suomen alueelle
-- Tieosoiteprojektit -painike ja Siirry muokkaustilaan -painike näkyvät vain käyttäjille, joilla on oikeudet muokata tieosoitteita
+- Tieosoiteprojektit-painike ja Siirry muokkaustilaan -painike näkyvät vain käyttäjille, joilla on oikeudet muokata tieosoitteita
 
 Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei kyseisellä tunnuksella ole pääsyä Liikenneviraston extranettiin. Tällöin tulee ottaa yhteyttä Liikennevirastossa tai Elyssä omaan yhteyshenkilöön.
 
 1.1 Mistä saada opastusta?
 --------------------------
 
-Viite-sovelluksen käytössä avustaa Janne Grekula janne.grekula@cgi.com.
+Viite-sovelluksen käytössä avustaa Janne Grekula, janne.grekula@cgi.com.
 ####Ongelmatilanteet####
 
 Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oikein) toimi seuraavasti:
@@ -62,7 +62,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 
 Viite-sovelluksessa tieosoiteverkko piirretään VVH:n tarjoaman Maanmittauslaitoksen keskilinja-aineiston päälle. Maanmittauslaitoksen keskilinja-aineisto muodostuu tielinkeistä. Tielinkki on tien, kadun, kevyen liikenteen väylän tai lauttayhteyden keskilinjageometrian pienin yksikkö. Tieosoiteverkko piirtyy geometrian päälle tieosoitesegmentteinä _lineaarisen referoinnin_ avulla. 
 
-Tielinkki on Viite-sovelluksen lineaarinen viitekehys, eli sen geometriaan sidotaan tieosoitesegmentit. Kukin tieosoitesegmentti tietää mille tielinkille se kuuluu (tielinkin ID) sekä kohdan, josta se alkaa ja loppuu kyseisellä tielinkillä. Tieosoitesegmentit ovat siten tielinkin mittaisia tai niitä lyhyempiä tieosoitteen osuuksia. Käyttöliittymässä kuitenkin pienin valittavissa oleva osuus on tielinkin mittainen (kts. luvut 4.1 ja 7.1).
+Tielinkki on Viite-sovelluksen lineaarinen viitekehys, jonka geometriaan sidotaan tieosoitesegmentit. Kukin tieosoitesegmentti tietää, mille tielinkille se kuuluu (tielinkin ID) sekä kohdan, josta se alkaa ja loppuu kyseisellä tielinkillä. Tieosoitesegmentit ovat siten tielinkin mittaisia tai niitä lyhyempiä tieosoitteen osuuksia. Käyttöliittymässä kuitenkin pienin valittavissa oleva osuus on tielinkin mittainen (kts. luvut 4.1 ja 7.1).
 
 Kullakin tieosoitesegmentillä on lisäksi tiettyjä sille annettuja ominaisuustietoja, kuten tienumero, tieosanumero ja ajoratakoodi. Tieosoitesegmenttien ominaisuustiedoista on kerrottu tarkemmin kohdassa "Tieosoitteen ominaisuustiedot".
 
@@ -72,7 +72,7 @@ _Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikunnassa._
 
 Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (kts. kohta 4. Tieosoiteverkon katselu). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut, ajotiet jne.
 
-Palautteet geometrian eli tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
+Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
 3. Karttanäkymän muokkaus
 --------------------------
