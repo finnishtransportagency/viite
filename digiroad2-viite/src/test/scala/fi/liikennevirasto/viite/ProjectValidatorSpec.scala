@@ -934,7 +934,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
 
       val errors3 = projectValidator.validateProject(updProject, afterProjectLinks).distinct
-      errors3 should have size 0
+      errors3 should have size 1
+      errors3.head.validationError.value should be(projectValidator.ValidationErrorList.RoadNotReserved.value)
     }
   }
 
