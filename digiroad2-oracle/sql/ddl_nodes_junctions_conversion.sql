@@ -1,3 +1,13 @@
+--------------------------------------------------------
+--  DDL for Tables AJORATA, AJORADAN_PISTE,
+--  SOLMU, SOLMUKOHTA, LIITTYMA, LIITTYMAKOHTA
+--  and View AJORADAN_PISTE_VIEW,
+--  used in CONVERSION Database for Initial Import
+--  of Nodes and Junctions from Road Register.
+--  Run the scripts to Conversion database,
+--  use Database Copy for data import.
+--------------------------------------------------------
+
   CREATE TABLE AJORATA
    (	ID NUMBER(*,0),
 	TILA VARCHAR2(1 BYTE) NOT NULL,
