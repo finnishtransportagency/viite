@@ -530,11 +530,10 @@ class ProjectValidator {
         checkMinMaxTrack(validTrackInterval) match {
           case Some(link) => Seq(link)
           case None => if (validTrackInterval.size > 1) {
-            validTrackInterval.sliding(2).map { case Seq(first, second) => {
+            validTrackInterval.sliding(2).map { case Seq(first, second) =>
               if (first.endAddrMValue != second.startAddrMValue && first.id != second.id) {
                 Some(first)
               } else None
-            }
             }.toSeq.flatten
           } else Seq.empty[ProjectLink]
         }
@@ -597,7 +596,7 @@ class ProjectValidator {
     if (erroredProjectLinks.nonEmpty) {
       erroredProjectLinks.flatMap{ l =>
         Seq(ValidationErrorDetails(project.id, alterShortMessage(ValidationErrorList.RoadNotReserved, currentRoadAndPart = Some(Seq((l._2.head.roadNumber, l._2.head.roadPartNumber))))
-          , Seq(l._2.size), l._2.map { pl =>
+          , Seq(l._2.map(_.id)).flatten, l._2.map { pl =>
             val point = GeometryUtils.midPointGeometry(pl.geometry)
             ProjectCoordinates(point.x, point.y, 12)
           }, None))
