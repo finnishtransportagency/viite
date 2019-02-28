@@ -173,9 +173,9 @@ object DataFixture {
 
   private def testIntegrationAPIWithAllMunicipalities(): Unit = {
     println(s"\nStarting fetch for integration API for all municipalities")
-    val municipalities = Seq(46, 736) /*OracleDatabase.withDynTransaction {
+    val municipalities = OracleDatabase.withDynTransaction {
       Queries.getMunicipalities
-    }*/
+    }
     val failedMunicipalities = municipalities.map(
       municipalityCode =>
         try {
