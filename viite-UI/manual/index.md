@@ -3,9 +3,9 @@ Viite-sovelluksen käyttöohje
 VIITE
 -----------------------
 
-VIITE on Liikenneviraston tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä Digiroadin (VVH:n) ajantasaisella linkkigeometrialla.
+VIITE on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä Digiroadin (VVH:n) ajantasaisella linkkigeometrialla.
 
-Seuraavasta linkistä pääsee Liikenneviraston extranetin VIITE-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
+Seuraavasta linkistä pääsee Väylän extranetin VIITE-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
 
 https://testiextranet.vayla.fi/extranet/web/fi/viite?kategoria=7457637 (testi) 
 
@@ -16,9 +16,9 @@ __Huom! Käyttöohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat pa
 1. Miten päästä alkuun?
 -----------------------
 
-Viite-sovelluksen käyttöä varten tarvitaan Liikenneviraston tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole tunnuksia, pyydä ne yhteyshenkilöltäsi Liikennevirastosta.
+Viite-sovelluksen käyttöä varten tarvitaan Väylän tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole tunnuksia, pyydä ne yhteyshenkilöltäsi Väylästä.
 
-Kaikilla Liikenneviraston tunnuksilla on pääsy Viite-sovellukseen.
+Kaikilla Väylän tunnuksilla on pääsy Viite-sovellukseen.
 
 Viite-sovellukseen kirjaudutaan osoitteessa: <a href="https://extranet.vayla.fi/viite/" target="_blank">https://extranet.vayla.fi/viite/</a>.
 
@@ -34,12 +34,12 @@ _Karttanäkymä kirjautumisen jälkeen._
 
 Oikeudet on rajattu maantieteellisesti sekä käyttäjän roolin mukaan.
 
-- Ilman erikseen annettuja oikeuksia Liikenneviraston tunnuksilla pääsee katselemaan kaikkia tieosoitteita
-- Sovelluksen käyttäjällä on oikeudet muokata hänelle määriteltyjen Elyjen maantieteellisten kuntarajojen sisäpuolella olevia tieosoitteita
+- Ilman erikseen annettuja oikeuksia Väylän tunnuksilla pääsee katselemaan kaikkia tieosoitteita
+- Sovelluksen käyttäjällä on oikeudet muokata hänelle määriteltyjen ELYjen maantieteellisten kuntarajojen sisäpuolella olevia tieosoitteita
 - Joillekin käyttäjille on voitu antaa oikeudet koko Suomen alueelle
-- Tieosoiteprojektit-painike ja Siirry muokkaustilaan -painike näkyvät vain käyttäjille, joilla on oikeudet muokata tieosoitteita
+- Tieosoiteprojektit, Tiennimen ylläpito ja Siirry muokkaustilaan -painikkeet näkyvät vain käyttäjille, joilla on oikeudet muokata tieosoitteita
 
-Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei kyseisellä tunnuksella ole pääsyä Liikenneviraston extranettiin. Tällöin tulee ottaa yhteyttä Liikennevirastossa tai Elyssä omaan yhteyshenkilöön.
+Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei kyseisellä tunnuksella ole pääsyä Väylän extranettiin. Tällöin tulee ottaa yhteyttä Väylässä tai ELYssä omaan yhteyshenkilöön.
 
 1.1 Mistä saada opastusta?
 --------------------------
@@ -72,7 +72,7 @@ _Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikunnassa._
 
 Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (kts. luku 4. Tieosoiteverkon katselu). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut, ajotiet jne.
 
-Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
+Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan laitetaan selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
 3. Karttanäkymän muokkaus
 --------------------------
@@ -87,7 +87,7 @@ Karttaa liikutetaan raahaamalla.
 
 ####Mittakaavataso####
 
-Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Ctrl+piirto (alue) tai mittakaavapainikkeista (1). Mittakaavapainikkeita käyttämällä kartan keskitys säilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  Käytössä oleva mittakaavataso näkyy kartan oikeassa alakulmassa (2).
+Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista (1). Mittakaavapainikkeita käyttämällä kartan keskitys säilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan. Käytössä oleva mittakaavataso näkyy kartan oikeassa alakulmassa (2).
 
 ####Kohdistin####
 
@@ -99,13 +99,13 @@ Merkitse-painike (6) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki po
 
 ####Taustakartat####
 
-Taustakartaksi voi valita vasemman alakulman painikkeista maastokartan, ortokuvat tai taustakarttasarjan. Käytössä on myös harmaasävykartta (tämän hetken versio ei kovin käyttökelpoinen).
+Taustakartaksi voi valita vasemman alakulman painikkeista maastokartan, ortokuvat, taustakarttasarjan tai harmaasävykartan. Käytössä oleva harmaasävykartta ei tällä hetkellä ole kovin käyttökelpoinen.
 
 ####Hakukenttä####
 
 Käyttöliittymässä on hakukenttä (8), jossa voi hakea koordinaateilla ja katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, jolloin kartta keskittyy siihen. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
 
-Tieosoitteella haku: Tieosoitteesta hakukenttään voi syöttää koko osoitteen tai osan siitä. Esim. 2 tai 2 1 150. (Varsinainen tieosoitehaku tieosoitteiden ylläpidon tarpeisiin toteutetaan myöhemmin)
+Tieosoitteella haku: Tieosoitteesta hakukenttään voi syöttää koko osoitteen tai osan siitä. Esim. 2 tai 2 1 150. (Varsinainen tieosoitehaku tieosoitteiden ylläpidon tarpeisiin toteutetaan myöhemmin.)
 
 Koordinaateilla haku: Koordinaatit syötetään muodossa "pohjoinen (7 merkkiä), itä (6 merkkiä)". Koordinaatit tulee olla ETRS89-TM35FIN -koordinaattijärjestelmässä. Esim. 6975061, 535628.
 
@@ -127,7 +127,7 @@ _Mittakaavajanassa 2 km._
 
 _Mittakaavajanassa 100 m._
 
-Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta väritys.
+Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta reunaviiva.
 
 ![Tieosoitteellinen katu](k16.JPG)
 
