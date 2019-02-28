@@ -18,6 +18,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.DateTime
 import org.scalatra.BadRequest
 
+import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
@@ -172,6 +173,7 @@ object DataFixture {
 
   private def testIntegrationAPIWithAllMunicipalities(): Unit = {
     println(s"\nStarting fetch for integration API for all municipalities")
+    var failedMunicipalities = ListBuffer[Int]()
     val municipalities = OracleDatabase.withDynTransaction {
       Queries.getMunicipalities
     }
@@ -184,15 +186,22 @@ object DataFixture {
             println(s"\nMunicipality $municipalityCode returned $knownAddressLinksSize links with valid values")
           } else {
             println(s"\n*** ERROR Municipality $municipalityCode returned zero links! ***")
+            failedMunicipalities += municipalityCode
           }
         }
         catch {
           case e: Exception =>
-            val message = s"*** ERROR Failed to get road addresses for municipality $municipalityCode! ***"
+            val message = s"\n*** ERROR Failed to get road addresses for municipality $municipalityCode! ***"
             println(s"\n" + message + s"\n"+ e.printStackTrace())
+            failedMunicipalities += municipalityCode
         }
     )
-
+    println(s"\n------------------------------------------------------------------------------")
+    if (failedMunicipalities.length > 0) {
+      throw new Exception(s"*** Test failed with ${failedMunicipalities.length} errors. Failed municipalities: ${failedMunicipalities.mkString(", ")} ***")
+    } else {
+      println(s"Test passed.")
+    }
   }
 
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
