@@ -188,7 +188,7 @@ object DataFixture {
         }
         catch {
           case e: Exception =>
-            val message = s"Failed to get road addresses for municipality $municipalityCode"
+            val message = s"*** ERROR Failed to get road addresses for municipality $municipalityCode! ***"
             println(s"\n" + message + s"\n"+ e.printStackTrace())
         }
     )
@@ -299,8 +299,9 @@ object DataFixture {
 
   def main(args: Array[String]): Unit = {
     import scala.util.control.Breaks._
+    val operation = args.headOption
     val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
+    if (!username.startsWith("dr2dev") && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")
@@ -314,7 +315,7 @@ object DataFixture {
       }
     }
 
-    args.headOption match {
+    operation match {
       /*case Some("find_floating_road_addresses") if geometryFrozen =>
         showFreezeInfo()*/
       //      case Some("find_floating_road_addresses") =>
