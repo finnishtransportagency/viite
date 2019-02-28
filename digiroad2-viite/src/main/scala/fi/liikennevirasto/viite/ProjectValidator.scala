@@ -591,7 +591,7 @@ class ProjectValidator {
     val linkStatus = List(LinkStatus.Transfer, LinkStatus.Numbering)
     val operationsOutsideProject: Seq[Roadway] = project.reservedParts.flatMap(r =>
       roadwayDAO.fetchAllByRoadAndPart(r.roadNumber, r.roadPartNumber)).filterNot(
-      l => projectLinks.exists(r => r.roadAddressRoadNumber.get == l.roadNumber && r.roadAddressRoadPart.get == l.roadPartNumber)
+      l => projectLinks.exists(r => r.roadAddressRoadNumber.nonEmpty && r.roadAddressRoadNumber.get == l.roadNumber && r.roadAddressRoadPart.nonEmpty && r.roadAddressRoadPart.get == l.roadPartNumber)
     )
     val erroredProjectLinks = projectLinks.filter(pl => linkStatus.contains(pl.status) && operationsOutsideProject.exists(out => out.roadNumber == pl.roadNumber && out.roadPartNumber == pl.roadPartNumber)).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     if (erroredProjectLinks.nonEmpty) {
