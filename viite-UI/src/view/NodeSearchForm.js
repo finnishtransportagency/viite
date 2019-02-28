@@ -1,6 +1,7 @@
 (function (root) {
   root.NodeSearchForm = function () {
-
+    var container = $('#legendDiv');
+    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var header = function() {
       return '<header>' +
         '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
@@ -52,6 +53,7 @@
 
         $('#close-node-search').click(function () {
           applicationModel.selectLayer('linkProperty', true);
+          eventbus.trigger('nodesAndJunctions:close');
           return false;
         });
 

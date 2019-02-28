@@ -66,6 +66,22 @@
       [1, 'Tuntematon, rakenteilla']
     ];
 
+    var nodeJunctions = [
+        [1, 'Normaali tasoliittymä'],
+        [3, 'Kiertoliittymä'],
+        [4, 'Y-liittymä'],
+        [5, 'Eirtasoliittymä'],
+        [7, 'Maantien/kadun raja'],
+        [8, 'ELY-raja'],
+        [10, 'Moniajoratainen liittymä'],
+        [11,'Pisaraliittymä'],
+        [12, 'Liityntätie'],
+        [13,'Tien loppu'],
+        [14,'Silta'],
+        [15,'Huoltoaukko'],
+        [16,'Yksityistie- tai katuliittymä']
+    ];
+
     var buildMultiColoredSegments = function () {
       var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1" />';
       for (var i = 1; i <= 6; i++) {
@@ -92,6 +108,13 @@
           defaultLegendEntry += buildMultiColoredSegments();
       return defaultLegendEntry + '</div>';
     }).join('');
+
+      var nodeJunctionsLegendEntries = _.map(nodeJunctions, function(nodeJunction) {
+          return '<div class="legend-entry">' +
+              '<img src="images/node-sprite.svg#' + nodeJunction[0]+ '"/>' +
+              '<div class="label">' + nodeJunction[0] + " " +nodeJunction[1] + '</div>' +
+              '</div>';
+      }).join('');
 
     var roadProjectOperations = function () {
       return '<div class="legend-entry">' +
@@ -190,7 +213,7 @@
       });
 
       hide();
-      
+
       return {
         element: element,
         reset: reset,
@@ -241,6 +264,21 @@
     });
 
     eventbus.on('layer:selected roadAddressProject', toggleProjectLegends);
+
+    eventbus.on('nodesAndJunctions:open', function () {
+        $('#legendDiv').empty();
+        roadClassLegend.append(nodeJunctionsLegendEntries);
+    });
+
+      eventbus.on('nodesAndJunctions:close', function () {
+        var container = $('#legendDiv');
+        $('.panel-actions').hide();
+        container.empty();
+        roadClassLegend.append(roadClassLegendEntries);
+        roadClassLegend.append(constructionTypeLegendEntries);
+        roadClassLegend.append(floatingLegend);
+        roadClassLegend.append(calibrationPointPicture);
+      });
 
     bindExternalEventHandlers();
 
