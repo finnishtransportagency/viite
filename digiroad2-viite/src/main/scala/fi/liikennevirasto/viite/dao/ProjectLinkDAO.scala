@@ -371,7 +371,7 @@ class ProjectLinkDAO {
 
   def updateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
     time(logger, "Update project links") {
-      val nonUpdatingStatus = Set[LinkStatus](NotHandled, UnChanged)
+      val nonUpdatingStatus = Set[LinkStatus](NotHandled)
       val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
       val links = projectLinks.map { pl =>
         if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
