@@ -650,7 +650,7 @@ class RoadwayDAO extends BaseDAO {
       val groupedRoadwayNumbers = groupsOf1000.map(group =>
       {
         s"""in (${group.mkString(",")})"""
-      }).mkString("", " or ", "")
+      }).mkString("", " or a.roadway_number ", "")
 
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
