@@ -145,7 +145,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val direction = Seq(pl).map(p => p.getEndPoints._2 - p.getEndPoints._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
             val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(leftLinks).minBy(_._1.distance2DTo(rightStartPoint))
             val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
-            val startingPointsVector = Vector3d(candidateLeftStartPoint._1.x - candidateLeftOppositeEnd.x, candidateLeftStartPoint._1.y - candidateLeftOppositeEnd.y, candidateLeftStartPoint._1.z - candidateLeftOppositeEnd.z)
+            val startingPointsVector = Vector3d(candidateLeftOppositeEnd.x - candidateLeftStartPoint._1.x ,  candidateLeftOppositeEnd.y - candidateLeftStartPoint._1.y,candidateLeftOppositeEnd.z-  candidateLeftStartPoint._1.z)
             val angle = startingPointsVector.angleXYWithNegativeValues(direction)
             if (candidateEndPoint.distance2DTo(rightStartPoint) > candidateEndPoint.distance2DTo(rightSideEndPoint.head) && angle > 0) {
               chainEndPoints.filterNot(_._1 == candidateEndPoint).head._1
