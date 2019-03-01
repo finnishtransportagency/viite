@@ -180,9 +180,9 @@ object DataFixture {
       municipalityCode =>
         try {
           println(s"\nProcessing municipality $municipalityCode")
-          val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode).count(ral => ral.roadNumber > 0)
-          if (knownAddressLinksSize > 0) {
-            println(s"\nMunicipality $municipalityCode returned $knownAddressLinksSize links with valid values")
+          val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode)
+          if (knownAddressLinksSize.nonEmpty) {
+            println(s"\nMunicipality $municipalityCode returned ${knownAddressLinksSize.size} links with valid values")
             None
           } else {
             println(s"\n*** WARNING Municipality $municipalityCode returned zero links! ***")
