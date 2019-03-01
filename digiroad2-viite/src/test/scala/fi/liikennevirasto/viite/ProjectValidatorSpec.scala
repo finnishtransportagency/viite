@@ -864,7 +864,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test validateProject When reservING part 2 (which has EndOfRoad) and Terminate it, Reserve and Transfer part 1 to part 2 (with and without EndOfRoad) Then different results should be returned") {
+  test("Test validateProject When reserving part 2 (which has EndOfRoad) and Terminate it, Reserve and Transfer part 1 to part 2 (with and without EndOfRoad) Then different results should be returned") {
     runWithRollback {
       val raId = Sequences.nextRoadwayId
       val startDate = DateTime.now()
@@ -934,8 +934,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
 
       val errors3 = projectValidator.validateProject(updProject, afterProjectLinks).distinct
-      errors3 should have size 1
-      errors3.head.validationError.value should be(projectValidator.ValidationErrorList.RoadNotReserved.value)
+      errors3 should have size 0
     }
   }
 
