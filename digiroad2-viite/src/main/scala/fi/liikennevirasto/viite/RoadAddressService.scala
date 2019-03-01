@@ -219,7 +219,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
 
-    val roadAddresses = withDynSession {
+    val roadAddresses = withDynTransaction {
       roadNetworkDAO.getLatestRoadNetworkVersionId match {
         case Some(roadNetworkId) => roadwayAddressMapper.getNetworkVersionRoadAddressesByLinearLocation(adjustedLinearLocations, roadNetworkId)
         case _ => roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations)

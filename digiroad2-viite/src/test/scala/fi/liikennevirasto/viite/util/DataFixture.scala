@@ -18,6 +18,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.DateTime
 import org.scalatra.BadRequest
 
+import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
@@ -175,20 +176,32 @@ object DataFixture {
     val municipalities = OracleDatabase.withDynTransaction {
       Queries.getMunicipalities
     }
-    municipalities.foreach(
+    val failedMunicipalities = municipalities.map(
       municipalityCode =>
         try {
           println(s"\nProcessing municipality $municipalityCode")
-          val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode).count(ral => ral.roadNumber > 0)
-          println(s"\nMunicipality $municipalityCode returned $knownAddressLinksSize links with valid values")
+          val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode)
+          if (knownAddressLinksSize.nonEmpty) {
+            println(s"\nMunicipality $municipalityCode returned ${knownAddressLinksSize.size} links with valid values")
+            None
+          } else {
+            println(s"\n*** WARNING Municipality $municipalityCode returned zero links! ***")
+            municipalityCode
+          }
         }
         catch {
           case e: Exception =>
-            val message = s"Failed to get road addresses for municipality $municipalityCode"
+            val message = s"\n*** ERROR Failed to get road addresses for municipality $municipalityCode! ***"
             println(s"\n" + message + s"\n"+ e.printStackTrace())
+            municipalityCode
         }
-    )
-
+    ).filterNot(_ == None)
+    println(s"\n------------------------------------------------------------------------------\n")
+    if (failedMunicipalities.nonEmpty) {
+      println(s"*** ${failedMunicipalities.size} municipalities returned 0 links. Those municipalities are: ${failedMunicipalities.mkString(", ")} ***")
+    } else {
+      println(s"Test passed.")
+    }
   }
 
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
@@ -291,8 +304,9 @@ object DataFixture {
 
   def main(args: Array[String]): Unit = {
     import scala.util.control.Breaks._
+    val operation = args.headOption
     val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
+    if (!username.startsWith("dr2dev") && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")
@@ -306,7 +320,7 @@ object DataFixture {
       }
     }
 
-    args.headOption match {
+    operation match {
       /*case Some("find_floating_road_addresses") if geometryFrozen =>
         showFreezeInfo()*/
       //      case Some("find_floating_road_addresses") =>

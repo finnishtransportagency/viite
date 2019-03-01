@@ -645,23 +645,24 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
-
     if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers){
-        idTableName =>
-          s"""
-          $query
-          join $idTableName i on i.id = a.ROADWAY_NUMBER
-          join published_roadway net on net.ROADWAY_ID = a.id
-          where net.network_id = $roadNetworkId and a.valid_to is null
+      val groupsOf1000 = roadwayNumbers.grouped(1000).toSeq
+      val groupedRoadwayNumbers = groupsOf1000.map(group =>
+      {
+        s"""in (${group.mkString(",")})"""
+      }).mkString("", " or ", "")
+
+      s"""$query
+         join published_roadway net on net.ROADWAY_ID = a.id
+         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number $groupedRoadwayNumbers
             and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
-      }
     }
     else
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})
             and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
+
   }
 
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
