@@ -227,7 +227,9 @@ pipeline {
                 }
             }
             steps {
-				sh STAGE_DEPLOY_CMD
+                withCredentials([sshUserPrivateKey(credentialsId: 'gateway', keyFileVariable: 'gateway', passphraseVariable: '', usernameVariable: '')]) {
+                    sh STAGE_DEPLOY_CMD
+                }
 				//echo "Running deploy... (skipped for now)"
             }
             //post {
