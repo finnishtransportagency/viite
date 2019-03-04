@@ -30,7 +30,7 @@ pipeline {
             }
             steps {
                 script {
-                Jenkins.instance.getItemByFullName("${JOB_NAME}").updateNextBuildNumber(1)
+                //Jenkins.instance.getItemByFullName("${JOB_NAME}").updateNextBuildNumber(1)
 
                     STAGE_FRONTEND_BUILD_CMD = [
                         "mkdir tmp",
