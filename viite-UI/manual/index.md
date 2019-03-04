@@ -89,7 +89,7 @@ Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+
 
 ####Kohdistin####
 
-Kohdistin (3) kertoo kartan keskipisteen. Kohdistimen koordinaatit näkyvät karttaikkunan oikeassa alakulmassa(4). Kun karttaa liikuttaa eli keskipiste muuttuu, päivittyvät koordinaatit. Oikean alakulman valinnan (5) avulla kohdistimen saa myös halutessaan piilotettua kartalta.
+Kohdistin (3) kertoo kartan keskipisteen. Kohdistimen koordinaatit näkyvät karttaikkunan oikeassa alakulmassa(4). Kun karttaa liikuttaa, keskipiste muuttuu ja koordinaatit päivittyvät. Oikean alakulman valinnan (5) avulla kohdistimen saa myös halutessaan piilotettua kartalta.
 
 ####Merkitse piste kartalla####
 
@@ -101,21 +101,21 @@ Taustakartaksi voi valita vasemman alakulman painikkeista maastokartan, ortokuva
 
 ####Hakukenttä####
 
-Käyttöliittymässä on hakukenttä (8), jossa voi hakea koordinaateilla ja katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, jolloin kartta keskittyy siihen. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
+Käyttöliittymässä on hakukenttä (8), jossa voi hakea koordinaateilla ja katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, johon kartta keskittyy. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
 
 Tieosoitteella haku: Tieosoitteesta hakukenttään voi syöttää koko osoitteen tai osan siitä. Esim. 2 tai 2 1 150. (Varsinainen tieosoitehaku tieosoitteiden ylläpidon tarpeisiin toteutetaan myöhemmin.)
 
-Koordinaateilla haku: Koordinaatit syötetään muodossa "pohjoinen (7 merkkiä), itä (6 merkkiä)". Koordinaatit tulee olla ETRS89-TM35FIN -koordinaattijärjestelmässä. Esim. 6975061, 535628.
+Koordinaateilla haku: Koordinaatit syötetään muodossa "pohjoinen (7 merkkiä), itä (6 merkkiä)". Koordinaatit tulee olla ETRS89-TM35FIN -koordinaattijärjestelmässä, esim. 6975061, 535628.
 
-Katuosoitteella haku: Katuosoitteesta hakukenttään voi syöttää koko ositteen tai sen osan. Esim. "Mannerheimintie" tai "Mannerheimintie 10, Helsinki".
+Katuosoitteella haku: Katuosoitteesta hakukenttään voi syöttää koko osoitteen tai sen osan, esim. "Mannerheimintie" tai "Mannerheimintie 10, Helsinki".
 
 
 4. Tieosoiteverkon katselu
 --------------------------
 
-Geometrialtaan yleistetty tieosoiteverkko tulee näkyviin kun zoomaa tasolle jossa mittakaavajanassa on lukema 5 km. Tästä tasosta ja sitä lähempää piirretään kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Yleistämätön tieverkko piirtyy mittakaavajanan lukemalla 2 km. 100 metriä (100 metrin mittakaavajanoja on kaksi kappaletta) suuremmilla mittakaavatasoilla tulevat näkyviin kaikki tieverkon kohteet.
+Geometrialtaan yleistetty tieosoiteverkko tulee näkyviin, kun zoomaa tasolle jossa mittakaavajanassa on lukema 5 km. Tästä tasosta ja sitä lähempää piirretään kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Yleistämätön tieverkko piirtyy mittakaavajanan lukemalla 2 km. 100 metriä (100 metrin mittakaavajanoja on kaksi kappaletta) suuremmilla mittakaavatasoilla tulevat näkyviin kaikki tieverkon kohteet.
 
-Tieosoiteverkko on värikoodattu tienumeroiden mukaan. Vasemman yläkulman selitteessä on kerrottu kunkin värikoodin tienumerot. Lisäksi kartalle piirtyvät etäisyyslukemasymbolit, eli ne kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta näkyy kartalla pisaran mallisena nuolena.
+Tieosoiteverkko on värikoodattu tienumeroiden mukaan. Vasemman yläkulman selitteessä on kerrottu kunkin värikoodin tienumerot. Lisäksi kartalle piirtyvät etäisyyslukemasymbolit, kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta näkyy kartalla pisaran mallisena nuolena.
 
 ![Mittakaavajanassa 2km](k4.JPG)
 
@@ -139,13 +139,13 @@ _Infolaatikko, kun hiiri on viety tieosoitesegmentin päälle._
 
 4.1 Kohteiden valinta
 --------------------------
-Kohteita voi valita klikkaamalla kartalta. Klikkaamalla kerran, sovellus valitsee kartalta ruudulla näkyvän osuuden kyseisestä tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikeaan laitaan ominaisuustietonäkymään (2).
+Kohteita voi valita kartalta klikkaamalla. Kertaklikkauksella sovellus valitsee kartalla näkyvästä tieosasta osuuden, jolla on sama tienumero, tieosanumero ja ajoratakoodi. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (2).
 
 ![Tieosan valinta](k6.JPG)
 
 _Tieosan valinta._
 
-Tuplaklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valittu osuus korostuu kartalla (3), ja sen tiedot tulevat näkyviin karttaikkunan oikeaan laitaan ominaisuustietonäkymään (4).
+Tuplaklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valittu osuus korostuu kartalla (3), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (4).
 
 ![Tieosoitesegmentin valinta](k7.JPG)
 
@@ -175,7 +175,7 @@ Tieosoitteilla on seuraavat ominaisuustiedot:
 
 __Tietyypin muodostaminen Viite-sovelluksessa__
 
-Järjestelmä muodostaa tietyyppi-tiedon automaattisesti Maanmittauslaitoksen aineiston pohjalta seuraavalla tavalla:
+Järjestelmä muodostaa Tietyyppi-tiedon automaattisesti Maanmittauslaitoksen aineiston pohjalta seuraavalla tavalla:
 
 |Tietyyppi|Muodostamistapa|
 |---------|---------------|
@@ -189,7 +189,7 @@ Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle
 
 ##Kohdistaminen tieosoitteeseen tielinkin ID:n avulla##
 
-Kun kohdetta klikkaa kartalla, tulee selaimen osoiteriville näkyviin valitun kohteen tielinkin ID. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi esimerkiksi lähettää toiselle henkilölle sähköpostilla, jolloin hän pääsee samaan paikkaan käyttöliittymässä helposti.
+Kun kohdetta klikkaa kartalla, tulee selaimen osoiteriville näkyviin valitun kohteen tielinkin ID. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi lähettää sähköpostilla toiselle henkilölle, jolloin tämä pääsee käyttöliittymässä samaan paikkaan.
 
 Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/799497 näkyy kuvassa osoiterivillä (5). 799497 on tielinkin ID.
 
@@ -217,7 +217,7 @@ Tätä varten järjestelmä tekee automaattista yhdistelyä:
 
 Viite-sovellus päivittää automaattisesti tieosoitesegmentit takaisin ajantasaiselle keskilinjalle, kun MML on tehnyt pieniä tarkennuksia keskilinjageometriaan. Tässä luvussa on kuvattu tapaukset, joissa Viite-sovellus osaa tehdä korjaukset automaattisesti. Ne tapaukset, joissa korjaus ei tapahdu automaattisesti, segmentit irtoavat geometriasta ja ne on korjattava manuaalisesti operaattorin toimesta.
 
-Automatiikka tekee korjaukset, kun...
+Automatiikka tekee korjaukset, kun
 
 1. __Tielinkki pitenee tai lyhenee alle metrin:__ Viite-sovellus lyhentää/pidentää tieosoitesegmenttiä automaattisesti muutoksen verran.
 1. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti Väyläverkon hallinnan (VVH) tarjoaman tielinkkien muutosrajapinnan avulla.
@@ -254,13 +254,13 @@ _Tieosan tiedot lomakkeella Lisää -painikkeen painamisen jälkeen._
 
 Tieosoiteprojekti tallentuu automaattisesti painikkeesta Jatka toimenpiteisiin, jolloin tiedot tallentuvat tietokantaan ja sovellus siirtyy toimenpidenäytölle. Varaamisen yhteydessä Viite zoomaa kartan varatun tieosan alkuun. Poistu-painikkeesta projekti suljetaan ja käyttäjältä varmistetaan, halutaanko tallentamattomat muutokset tallentaa. Projektiin pääsee palaamaan Tieosoiteprojektit -listan kautta. 
 
-Käyttäjä voi poistaa varattuja tieosia klikkaamalla ruksia tieosan oikealla puolella, Projektiin valitut tieosat-listalta. Mikäli tieosille ei ole tehty muutoksia eli ne on pelkastään varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite kysyy käyttäjältä varmistuksen poistosta. Tällöin kaikki muutokset menetetään.
+Käyttäjä voi poistaa varattuja tieosia klikkaamalla roskakorikuvaketta valitsemansa tieosan kohdalla Projektiin varatut tieosat -listalla. Mikäli tieosille ei ole tehty muutoksia, vaan ne on vain varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite pyytää käyttää vahvistamaan poiston. 
 
 
 
 ![Uusi tieosoiteprojekti](k20.JPG)
 
-_Kun tieosa on varattu projektiin Viite zoomaa kartan siten että tieosa näkyy kartalla kokonaisuudessaan._  
+_Kun tieosa on varattu projektiin, Viite zoomaa kartan siten että tieosa näkyy kartalla kokonaisuudessaan._  
 
 Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkistukset:
 
