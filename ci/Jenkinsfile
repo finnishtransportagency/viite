@@ -217,7 +217,7 @@ pipeline {
                 docker {
                     image "viite-capistrano"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package -p 22:22"
                 }
             }
             when {
