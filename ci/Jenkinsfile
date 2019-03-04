@@ -227,12 +227,12 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'gateway', keyFileVariable: 'gateway', passphraseVariable: '', usernameVariable: '')]) {
-                    sh '''
-                        ifconfig
-                    '''
-                    //sh STAGE_DEPLOY_CMD
-                }
+                //withCredentials([sshUserPrivateKey(credentialsId: 'gateway', keyFileVariable: 'gateway', passphraseVariable: '', usernameVariable: '')]) {
+                //    sh '''
+                //        ifconfig
+                //    '''
+                    sh STAGE_DEPLOY_CMD
+                //}
 				//echo "Running deploy... (skipped for now)"
             }
             //post {
