@@ -7,6 +7,7 @@ RUN adduser -D -S -u ${JENKINS_UID} jenkins
 RUN apk update && apk upgrade && \
     apk add ruby && \
     apk add ruby-rdoc && \
+    apk add openssh-client && \
     gem install bundler && \
     chown -R jenkins /home/jenkins
 
