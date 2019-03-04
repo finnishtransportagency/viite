@@ -29,7 +29,7 @@ pipeline {
                 }
             }
             steps {
-                Jenkins.instance.getItemByFullName("${JOB_NAME}").updateNextBuildNumber("1")
+                def job =  Jenkins.instance.getItemByFullName("${JOB_NAME}")
                 script {
 
                     STAGE_FRONTEND_BUILD_CMD = [
