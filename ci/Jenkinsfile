@@ -29,8 +29,8 @@ pipeline {
                 }
             }
             steps {
-                def job =  Jenkins.instance.getItemByFullName("${JOB_NAME}")
                 script {
+                def job =  Jenkins.instance.getItemByFullName("${JOB_NAME}")
 
                     STAGE_FRONTEND_BUILD_CMD = [
                         "mkdir tmp",
