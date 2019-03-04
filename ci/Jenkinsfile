@@ -213,13 +213,13 @@ pipeline {
             //}
         }
        stage("Deploy") {
-            agent {
-                docker {
-                    image "viite-capistrano"
-                    reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package -p 22:22"
-                }
-            }
+            //agent {
+            //    docker {
+            //        image "viite-capistrano"
+            //        reuseNode true
+            //        args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package -p 22:22"
+            //    }
+            //}
             when {
                 beforeAgent true
                 expression {
@@ -231,9 +231,10 @@ pipeline {
                 //    sh '''
                 //        ifconfig
                 //    '''
-                    sh STAGE_DEPLOY_CMD
+                //    sh STAGE_DEPLOY_CMD
                 //}
 				//echo "Running deploy... (skipped for now)"
+				sh "ssh 172.17.204.46"
             }
             //post {
             //    failure {
