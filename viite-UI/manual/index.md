@@ -16,9 +16,9 @@ __Huom! Käyttöohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat pa
 1. Miten päästä alkuun?
 -----------------------
 
-Viite-sovelluksen käyttöä varten tarvitaan Väylän tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole tunnuksia, pyydä ne yhteyshenkilöltäsi Väylästä.
+Viite-sovelluksen käyttöä varten tarvitaan Väylän tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole Väylän tunnuksia, pyydä ne yhteyshenkilöltäsi Väylästä.
 
-Kaikilla Väylän tunnuksilla on pääsy Viite-sovellukseen.
+Kaikilla Väylän tunnuksilla on pääsy Viite-sovellukseen katselukäyttäjänä.
 
 Viite-sovellukseen kirjaudutaan osoitteessa: <a href="https://extranet.vayla.fi/viite/" target="_blank">https://extranet.vayla.fi/viite/</a>.
 
@@ -32,12 +32,10 @@ Kirjautumisen jälkeen avautuu karttakäyttöliittymässä katselutila.
 
 _Karttanäkymä kirjautumisen jälkeen._
 
-Oikeudet on rajattu maantieteellisesti sekä käyttäjän roolin mukaan.
+Oikeudet on rajattu käyttäjän roolin mukaan.
 
 - Ilman erikseen annettuja oikeuksia Väylän tunnuksilla pääsee katselemaan kaikkia tieosoitteita
-- Sovelluksen käyttäjällä on oikeudet muokata hänelle määriteltyjen ELYjen maantieteellisten kuntarajojen sisäpuolella olevia tieosoitteita
-- Joillekin käyttäjille on voitu antaa oikeudet koko Suomen alueelle
-- Tieosoiteprojektit, Tiennimen ylläpito ja Siirry muokkaustilaan -painikkeet näkyvät vain käyttäjille, joilla on oikeudet muokata tieosoitteita
+- Tieosoiteprojektit, Tiennimen ylläpito sekä Solmut ja liittymät -painikkeet näkyvät vain käyttäjille, joilla on oikeudet muokata tieosoitteita
 
 Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei kyseisellä tunnuksella ole pääsyä Väylän extranettiin. Tällöin tulee ottaa yhteyttä Väylässä tai ELYssä omaan yhteyshenkilöön.
 
@@ -311,9 +309,9 @@ Projektin nimen vieressä on sininen kynäikoni (2), josta pääsee projektin pe
 
 _Projektissa muokattavissa olevat varatut tieosat näkyvät kartalla keltaisella värillä ja suuntanuolet ovat tien alkuperäisen värin mukaiset (siniset). Projektin nimi on "Esimerkki-projekti", joka näkyy oikeassa yläkulmassa._
 
-Projektin muutosilmoitukset tallentuvat projektin yhteenvetotauluun, jonka voi avata näkyviin toimenpidenäkymän alaoikeasta laidasta sinisestä painikkeesta (4). Yhteenvetotaulun toiminta on kuvattu tarkemmin kappaleessa 7.2. Lisäksi kaikkien projektien muutostiedot voidaan lähettää Tierekisteriin klikkaamalla vihreää Tee tieosoitemuutosilmoitus -painiketta (5) sivun alaoikealla. Muutosilmoituksen lähettäminen on kuvattu kappaleessa 7.3. 
+Projektin muutosilmoitukset tallentuvat projektin yhteenvetotauluun, jonka voi avata näkyviin toimenpidenäkymän alaoikeasta laidasta sinisestä painikkeesta (4). Yhteenvetotaulun toiminta on kuvattu tarkemmin kappaleessa 7.2. Lisäksi kaikkien projektien muutostiedot voidaan lähettää Tierekisteriin klikkaamalla vihreää Tee tieosoitemuutosilmoitus -painiketta (5) sivun alaoikealla. Muutosilmoituksen lähettäminen on kuvattu luvussa 7.3. 
 
-Kun keltaista, muokattavaa kohdetta kertaklikkaa kartalla, muuttuu valittu osuus vihreäksi ja oikeaan laitaan tulee alasvetovalikko, josta voi valita kohteelle tehtävän muutosilmoituksen (esim. lakkautus). Kerran klikkaamalla valitaan kartalta homogeeninen jakso (= sama tienumero, tieosanumero, ajoratakoodi, tietyyppi ja jatkuvuus). Tuplaklikkaus tai CTRL+klikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus). Kun halutaan valita vain osa tieosan linkeistä, tupla- tai CTRL+klikataan ensimmäistä linkkiä ja seuraavat linkit lisätään valintaan CTRL+klikkauksella samalta tieosalta. Samalla tavalla voi myös poistaa yksittäisiä linkkejä valinnasta. 
+Kun keltaista, muokattavaa kohdetta kertaklikkaa kartalla, muuttuu valittu osuus vihreäksi ja oikeaan laitaan tulee pudotusvalikko, josta voi valita kohteelle tehtävän muutosilmoituksen (esim. lakkautus). Kerran klikkaamalla valitaan kartalta homogeeninen jakso (= sama tienumero, tieosanumero, ajoratakoodi, tietyyppi ja jatkuvuus). Tuplaklikkaus tai CTRL+klikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus). Kun halutaan valita vain osa tieosan linkeistä, tupla- tai CTRL+klikataan ensimmäistä linkkiä ja seuraavat linkit lisätään valintaan CTRL+klikkauksella samalta tieosalta. Samalla tavalla voi myös poistaa yksittäisiä linkkejä valinnasta. 
 
 ![Valittu kohde](k37.JPG)
 
@@ -340,7 +338,7 @@ Tämän jälkeen klikataan Jatka toimenpiteisiin -painiketta, jolla siirrytään
 
 Toimenpiteellä määritetään uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia muun tieverkon linkkejä, jotka piirtyvät kartalle harmaina tai tuntemattomia mustia linkkejä, joissa on kysymysmerkkisymboli tai suravage-linkkejä, voi valita kerta- tai tuplaklikkauksella, kuten muitakin tielinkkejä. Tuplaklikkaus valitsee yhden tielinkin ja CTRL+klikkauksella voi lisätä tai poistaa valintaan linkkejä yksi kerrallaan. Kertaklikkaus valitsee homogeenisen jakson, jossa käytetään VVH:n tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
 
-Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toimenpiteet-alasvetovalikosta 'Uusi' (1) lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automattisesti.
+Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toimenpiteet-pudotusvalikosta 'Uusi' (1) lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automattisesti.
 
 ![Uusi tieosoite](k43.JPG)
 
@@ -383,7 +381,7 @@ Tieosoiteprojektissa Uusi-toimenpiteellä jo tieosoiteistetun kiertoliittymän a
 
 7.1.3 Ennallaan
 --------------------------
-Tieosan linkkien tieosoitteen voi säilyttää ennallaan esimerkiksi silloin, kun osalle tieosaa halutaan tehdä tieosoitemuutoksia ja osan säilyvän ennallaan. Tällöin tieosa käsitellään toimenpiteellä Ennallaan. Toimenpide tehdään varaamalla ensin projektitietojen formilla projektiin muokattava tieosa tai -osat. Seuraavaksi siirrytään toimenpidenäytölle Jatka toimenpiteisiin - painikkeella. Valittu tieosa tai sen tietyt linkit valitaan kartalta, jolloin ne muuttuvat vihreiksi, ja lomakkeelle ilmestyy alasvetovalikko. Valikosta valitaan toimenpide "Ennallaan" ja tallennetaan muutokset.   
+Tieosan linkkien tieosoitteen voi säilyttää ennallaan esimerkiksi silloin, kun osalle tieosaa halutaan tehdä tieosoitemuutoksia ja osan säilyvän ennallaan. Tällöin tieosa käsitellään toimenpiteellä Ennallaan. Toimenpide tehdään varaamalla ensin projektitietojen formilla projektiin muokattava tieosa tai -osat. Seuraavaksi siirrytään toimenpidenäytölle Jatka toimenpiteisiin - painikkeella. Valittu tieosa tai sen tietyt linkit valitaan kartalta, jolloin ne muuttuvat vihreiksi, ja lomakkeelle ilmestyy pudotusvalikko. Valikosta valitaan toimenpide "Ennallaan" ja tallennetaan muutokset.   
 
 7.1.4 Siirto
 --------------------------
@@ -442,7 +440,7 @@ Kun osioiden toimenpiteet on tallennettu, suunnitelmalinkin alla sijaitseva nyky
 
 7.1.10 ELY koodin, jatkuvuuden ja tietyypin muutos
 --------------------------
-Viitteessä voi muokata ~~ELY koodia~~ [ELYn muokkaamista ei ole vielä toteutettu], jatkuvuutta ja tietyyppiä. Näitä muutoksia voi tehdä esimerkiksi Ennallaan muutosilmoituksella, jolloin lomakkeelle tulee alasvetovalikot ELYlle, jatkuvuudelle ja tietyypille. Uudet arvot annetaan valitulle aihiolle ja tallennetaan. Jatkuvuus koodi näytetään valinnan viimeiseltä linkiltä ja muutokset kohdistuvat myös viimeiseen linkkiin. Tietyypin ja ja ELY koodin muutos kohdistuu kaikille valituille linkeille. Ennallaan toimenpiteen lisäksi näitä arvoja voi muokata aina, kun ne ovat eri muutosilmoituksen yhteydessä lomakkeella muokattavissa. 
+Viitteessä voi muokata ~~ELY koodia~~ [ELYn muokkaamista ei ole vielä toteutettu], jatkuvuutta ja tietyyppiä. Näitä muutoksia voi tehdä esimerkiksi Ennallaan muutosilmoituksella, jolloin lomakkeelle tulee pudotusvalikot ELYlle, jatkuvuudelle ja tietyypille. Uudet arvot annetaan valitulle aihiolle ja tallennetaan. Jatkuvuus koodi näytetään valinnan viimeiseltä linkiltä ja muutokset kohdistuvat myös viimeiseen linkkiin. Tietyypin ja ja ELY koodin muutos kohdistuu kaikille valituille linkeille. Ennallaan toimenpiteen lisäksi näitä arvoja voi muokata aina, kun ne ovat eri muutosilmoituksen yhteydessä lomakkeella muokattavissa. 
 
 
 7.2 Muutosilmoitusten tarkastelu taulukkonäkymässä
