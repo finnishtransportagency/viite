@@ -57,7 +57,8 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/dev/",
                             "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
                             "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
+                            "ls -l"
                         ].join(" && ")
 
                         STAGE_FIXTURE_RESET = [
