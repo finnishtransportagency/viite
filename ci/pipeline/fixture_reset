@@ -70,10 +70,11 @@ pipeline {
                         ].join(" && ")
 
                         STAGE_FIXTURE_RESET = [
-                            "./fixture-reset.sh",
-                            "test",
+                            "./sbt",
+                            "$java_opts",
                             "-Ddigiroad2.env=dev",
-                            "$java_opts"
+                            "project digiroad2-viite",
+                            "test:run-main fi.liikennevirasto.viite.util.DataFixture test"
                         ].join(" ")
                     }
                 }
