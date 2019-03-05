@@ -32,7 +32,8 @@ pipeline {
         stage("Setup") {
             when {
                 expression {
-                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    return true
                 }
             }
             steps {
@@ -70,7 +71,8 @@ pipeline {
         stage("Prepare") {
             when {
                 expression {
-                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    return true
                 }
             }
             steps {
@@ -105,7 +107,8 @@ pipeline {
         stage("Checkout Branch") {
             when {
                 expression {
-                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    return true
                 }
             }
             steps {
@@ -131,7 +134,8 @@ pipeline {
             when {
                 beforeAgent true
                 expression {
-                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
+                    return true
                 }
             }
             steps {
