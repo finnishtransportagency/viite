@@ -62,9 +62,9 @@ pipeline {
                         ].join(" && ")
 
                         STAGE_FIXTURE_RESET = [
-                            "./fixture_reset.sh",
+                            "./fixture-reset.sh",
                             "test",
-                            "''",
+                            "''''''",
                             "-Ddigiroad2.env=dev"
                         ].join(" ")
                     }
