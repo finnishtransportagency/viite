@@ -102,6 +102,25 @@ pipeline {
             //    }
             //}
         }
+        stage("Checkout Branch") {
+            when {
+                expression {
+                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                }
+            }
+            steps {
+                checkout(
+                    [$class: 'GitSCM',
+                     branches: [[name: '*/${BRANCH}']],
+                     doGenerateSubmoduleConfigurations: false,
+                     extensions: [[$class: 'LocalBranch', localBranch: '${BRANCH}']],
+                     submoduleCfg: [],
+                     userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/viite.git']]
+                    ]
+                )
+            }
+
+        }
         stage("Fixture Reset") {
             agent {
                 docker {
