@@ -109,12 +109,12 @@
       return defaultLegendEntry + '</div>';
     }).join('');
 
-      var nodeJunctionsLegendEntries = _.map(nodeJunctions, function(nodeJunction) {
-          return '<div class="legend-entry">' +
-              '<img src="images/node-sprite.svg#' + nodeJunction[0]+ '"/>' +
-              '<div class="label">' + nodeJunction[0] + " " +nodeJunction[1] + '</div>' +
-              '</div>';
-      }).join('');
+    var nodeJunctionsLegendEntries = _.map(nodeJunctions, function(nodeJunction) {
+      return '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
+        '<img src="images/node-sprite.svg#' + nodeJunction[0]+ '" style="margin-right: 5px"/>' +
+        '<div class="label">' + nodeJunction[0] + " " +nodeJunction[1] + '</div>' +
+        '</div>';
+    }).join('');
 
     var roadProjectOperations = function () {
       return '<div class="legend-entry">' +
