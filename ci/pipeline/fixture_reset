@@ -37,34 +37,37 @@ pipeline {
                 }
             }
             steps {
-                script {
+                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
 
-                    def ojdbc = 'ojdbc6'
-                    def ojdbc_version = '11.2.0.3.0'
-                    def version = '11.2.0'
-                    def sdoapl = 'sdoapl'
-                    def sdoutl = 'sdoutl'
+                    script {
 
-                    STAGE_SETUP_ORACLE = [
-                        "mkdir tmp",
-                        "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
-                        "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
-                        "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output tmp/${sdoutl}.jar",
-                        "cp -r tmp/ digiroad2-oracle/conf/lib/",
-                        "mkdir digiroad2-oracle/conf/dev/",
-                        "cd digiroad2-oracle/conf/dev/",
-                        "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > bonecp.properties",
-                        "echo 'bonecp.username='$DB > bonecp.properties",
-                        "echo 'bonecp.password='$DB > bonecp.properties",
-                        "cat bonecp.properties"
-                    ].join(" && ")
+                        def ojdbc = 'ojdbc6'
+                        def ojdbc_version = '11.2.0.3.0'
+                        def version = '11.2.0'
+                        def sdoapl = 'sdoapl'
+                        def sdoutl = 'sdoutl'
 
-                    STAGE_FIXTURE_RESET = [
-                        "./fixture_reset.sh",
-                        "test",
-                        "''",
-                        "-Ddigiroad2.env=dev"
-                    ].join(" ")
+                        STAGE_SETUP_ORACLE = [
+                            "mkdir tmp",
+                            "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output tmp/${sdoutl}.jar",
+                            "cp -r tmp/ digiroad2-oracle/conf/lib/",
+                            "mkdir digiroad2-oracle/conf/dev/",
+                            "cd digiroad2-oracle/conf/dev/",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > bonecp.properties",
+                            "echo 'bonecp.username='$DB > bonecp.properties",
+                            "echo 'bonecp.password='$DB > bonecp.properties",
+                            "cat bonecp.properties"
+                        ].join(" && ")
+
+                        STAGE_FIXTURE_RESET = [
+                            "./fixture_reset.sh",
+                            "test",
+                            "''",
+                            "-Ddigiroad2.env=dev"
+                        ].join(" ")
+                    }
                 }
             }
         }
