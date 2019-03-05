@@ -52,6 +52,7 @@ pipeline {
                             "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
                             "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
                             "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output tmp/${sdoutl}.jar",
+                            "mkdir digiroad2-oracle/conf/lib/",
                             "cp -r tmp/ digiroad2-oracle/conf/lib/",
                             "mkdir digiroad2-oracle/conf/dev/",
                             "cd digiroad2-oracle/conf/dev/",
