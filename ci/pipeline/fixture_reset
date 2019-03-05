@@ -38,7 +38,6 @@ pipeline {
             }
             steps {
                 withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
-
                     script {
 
                         def ojdbc = 'ojdbc6'
@@ -48,7 +47,6 @@ pipeline {
                         def sdoutl = 'sdoutl'
 
                         STAGE_SETUP_ORACLE = [
-                            "ls -l",
                             "mkdir tmp",
                             "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
                             "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
@@ -60,8 +58,7 @@ pipeline {
                             "cd digiroad2-oracle/conf/dev/",
                             "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > bonecp.properties",
                             "echo 'bonecp.username='$DB >> bonecp.properties",
-                            "echo 'bonecp.password='$DB >> bonecp.properties",
-                            "cat bonecp.properties"
+                            "echo 'bonecp.password='$DB >> bonecp.properties"
                         ].join(" && ")
 
                         STAGE_FIXTURE_RESET = [
@@ -146,6 +143,7 @@ pipeline {
             }
             steps {
                 sh STAGE_SETUP_ORACLE
+                sh STAGE_FIXTURE_RESET
             }
             //post {
             //    failure {
