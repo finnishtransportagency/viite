@@ -271,15 +271,16 @@
       roadClassLegend.append(nodeJunctionsLegendEntries);
     });
 
-      eventbus.on('nodesAndJunctions:close', function () {
-        var container = $('#legendDiv');
-        $('.panel-actions').hide();
-        container.empty();
-        roadClassLegend.append(roadClassLegendEntries);
-        roadClassLegend.append(constructionTypeLegendEntries);
-        roadClassLegend.append(floatingLegend);
-        roadClassLegend.append(calibrationPointPicture);
-      });
+    eventbus.on('nodesAndJunctions:close', function () {
+      eventbus.trigger('roadAddressProject:enableInteractions');
+      var container = $('#legendDiv');
+      $('.panel-actions').hide();
+      container.empty();
+      roadClassLegend.append(roadClassLegendEntries);
+      roadClassLegend.append(constructionTypeLegendEntries);
+      roadClassLegend.append(floatingLegend);
+      roadClassLegend.append(calibrationPointPicture);
+    });
 
     bindExternalEventHandlers();
 
