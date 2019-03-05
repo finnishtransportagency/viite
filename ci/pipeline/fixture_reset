@@ -59,8 +59,8 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/dev/",
                             "cd digiroad2-oracle/conf/dev/",
                             "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > bonecp.properties",
-                            "echo 'bonecp.username='$DB > bonecp.properties",
-                            "echo 'bonecp.password='$DB > bonecp.properties",
+                            "echo 'bonecp.username='$DB >> bonecp.properties",
+                            "echo 'bonecp.password='$DB >> bonecp.properties",
                             "cat bonecp.properties"
                         ].join(" && ")
 
