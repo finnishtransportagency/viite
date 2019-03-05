@@ -1,7 +1,6 @@
 import java.net.URI
 pipeline {
     agent any
-
     parameters {
         choice(name: 'DB', choices: ['-',
                                      'dr2dev1',
@@ -31,11 +30,6 @@ pipeline {
 
     stages {
         stage("Setup") {
-            when {
-                expression {
-                    return ${BRANCH} != '' && ${DB} != '-'
-                }
-            }
             steps {
                 withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
                     script {
@@ -80,11 +74,6 @@ pipeline {
             }
         }
         stage("Prepare") {
-            when {
-                expression {
-                    return ${BRANCH} != '' && ${DB} != '-'
-                }
-            }
             steps {
                 script {
 
@@ -107,11 +96,6 @@ pipeline {
             }
         }
         stage("Checkout Branch") {
-            when {
-                expression {
-                    return ${BRANCH} != '' && ${DB} != '-'
-                }
-            }
             steps {
                 checkout(
                     [$class: 'GitSCM',
@@ -130,13 +114,6 @@ pipeline {
                 docker {
                     image "viite-backend-sbt"
                     reuseNode true
-                }
-            }
-            when {
-                beforeAgent true
-                expression {
-                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
-                    return true
                 }
             }
             steps {
