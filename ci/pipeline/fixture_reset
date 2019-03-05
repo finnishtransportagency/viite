@@ -48,6 +48,7 @@ pipeline {
                         def sdoutl = 'sdoutl'
 
                         STAGE_SETUP_ORACLE = [
+                            "ls -l",
                             "mkdir tmp",
                             "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
                             "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
