@@ -654,7 +654,7 @@ class RoadwayDAO extends BaseDAO {
 
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
-         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number $groupedRoadwayNumbers
+         where net.network_id = $roadNetworkId and a.valid_to is null and (a.roadway_number $groupedRoadwayNumbers)
             and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
     }
     else
