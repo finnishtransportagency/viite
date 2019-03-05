@@ -266,8 +266,9 @@
     eventbus.on('layer:selected roadAddressProject', toggleProjectLegends);
 
     eventbus.on('nodesAndJunctions:open', function () {
-        $('#legendDiv').empty();
-        roadClassLegend.append(nodeJunctionsLegendEntries);
+      eventbus.trigger('roadAddressProject:deactivateAllSelections');
+      $('#legendDiv').empty();
+      roadClassLegend.append(nodeJunctionsLegendEntries);
     });
 
       eventbus.on('nodesAndJunctions:close', function () {
