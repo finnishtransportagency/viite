@@ -74,7 +74,7 @@ pipeline {
                             "$java_opts",
                             "-Ddigiroad2.env=dev",
                             "\'project digiroad2-viite\'",
-                            "test:run-main fi.liikennevirasto.viite.util.DataFixture test"
+                            "\'test:run-main fi.liikennevirasto.viite.util.DataFixture test\'"
                         ].join(" ")
                     }
                 }
