@@ -46,6 +46,13 @@ pipeline {
                         def sdoapl = 'sdoapl'
                         def sdoutl = 'sdoutl'
 
+                        def java_opts = [
+                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                            "-Dhttp.nonProxyHosts=*.vally.local",
+                            "-DproxySet=true"
+                        ].join(" ")
+
                         STAGE_SETUP_ORACLE = [
                             "mkdir tmp",
                             "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
@@ -57,15 +64,14 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/dev/",
                             "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
                             "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "ls -l"
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
                         ].join(" && ")
 
                         STAGE_FIXTURE_RESET = [
                             "./fixture-reset.sh",
                             "test",
-                            "''''''",
-                            "-Ddigiroad2.env=dev"
+                            "-Ddigiroad2.env=dev",
+                            "$java_opts"
                         ].join(" ")
                     }
                 }
