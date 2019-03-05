@@ -33,8 +33,7 @@ pipeline {
         stage("Setup") {
             when {
                 expression {
-                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
-                    return true
+                    return ${BRANCH} != '' && ${DB} != '-'
                 }
             }
             steps {
@@ -83,8 +82,7 @@ pipeline {
         stage("Prepare") {
             when {
                 expression {
-                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
-                    return true
+                    return ${BRANCH} != '' && ${DB} != '-'
                 }
             }
             steps {
@@ -107,20 +105,11 @@ pipeline {
                     )
                 }
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
         }
         stage("Checkout Branch") {
             when {
                 expression {
-                    //return ${params.BRANCH} != '' && ${params.DB} != '-'
-                    return true
+                    return ${BRANCH} != '' && ${DB} != '-'
                 }
             }
             steps {
@@ -154,22 +143,10 @@ pipeline {
                 sh STAGE_SETUP_ORACLE
                 sh STAGE_FIXTURE_RESET
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
         }
     }
     post {
         always {
-            //slackSend(
-            //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
-            //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
-            //)
             deleteDir()
         }
     }
