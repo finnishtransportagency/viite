@@ -1,3 +1,4 @@
+import java.net.URI
 pipeline {
     agent any
 
@@ -45,6 +46,7 @@ pipeline {
                         def version = '11.2.0'
                         def sdoapl = 'sdoapl'
                         def sdoutl = 'sdoutl'
+                        def sbt_proxy = new URI(http_proxy)
 
                         def java_opts = [
                             "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
