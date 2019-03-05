@@ -1,0 +1,140 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'DB', choices: ['-',
+                                     'dr2dev1',
+                                     'dr2dev2',
+                                     'dr2dev3',
+                                     'dr2dev4',
+                                     'dr2dev5',
+                                     'dr2dev7',
+                                     'dr2dev8',
+                                     'dr2dev9',
+                                     'dr2dev10',
+                                     'dr2dev11',
+                                     'dr2dev12',
+                                     'dr2dev13',
+                                     'dr2dev14',
+                                     'dr2dev15',
+                                     'dr2dev16',
+                                     'dr2dev17',
+                                     'dr2dev18'])
+        string(name: 'BRANCH', defaultValue: 'master')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Setup") {
+            when {
+                expression {
+                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                }
+            }
+            steps {
+                script {
+
+                    def ojdbc = 'ojdbc6'
+                    def ojdbc_version = '11.2.0.3.0'
+                    def version = '11.2.0'
+                    def sdoapl = 'sdoapl'
+                    def sdoutl = 'sdoutl'
+
+                    STAGE_SETUP_ORACLE = [
+                        "mkdir tmp",
+                        "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
+                        "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
+                        "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output tmp/${sdoutl}.jar",
+                        "cp -r tmp/ digiroad2-oracle/conf/lib/",
+                        "mkdir digiroad2-oracle/conf/dev/",
+                        "cd digiroad2-oracle/conf/dev/",
+                        "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > bonecp.properties",
+                        "echo 'bonecp.username='$DB > bonecp.properties",
+                        "echo 'bonecp.password='$DB > bonecp.properties",
+                        "cat bonecp.properties"
+                    ].join(" && ")
+
+                    STAGE_FIXTURE_RESET = [
+                        "./fixture_reset.sh",
+                        "test",
+                        "''",
+                        "-Ddigiroad2.env=dev"
+                    ].join(" ")
+                }
+            }
+        }
+        stage("Prepare") {
+            when {
+                expression {
+                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                }
+            }
+            steps {
+                script {
+
+                    echo "Running publish... (skipped for now) "
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+
+                    docker.build(
+                        "viite-backend-sbt",
+                        "${build_args} -f ci/Dockerfile.sbt ci"
+                    )
+                }
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+        stage("Fixture Reset") {
+            agent {
+                docker {
+                    image "viite-backend-sbt"
+                    reuseNode true
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    return ${params.BRANCH} != '' && ${params.DB} != '-'
+                }
+            }
+            steps {
+                sh STAGE_SETUP_ORACLE
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+    }
+    post {
+        always {
+            //slackSend(
+            //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
+            //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
+            //)
+            deleteDir()
+        }
+    }
+}
