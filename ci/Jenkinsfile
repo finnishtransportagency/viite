@@ -228,12 +228,12 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'gateway', keyFileVariable: 'gateway', passphraseVariable: '', usernameVariable: '')]) {
+                //withCredentials([sshUserPrivateKey(credentialsId: 'gateway', keyFileVariable: 'gateway', passphraseVariable: '', usernameVariable: '')]) {
                 //    sh '''
                 //        ifconfig
                 //    '''
                     sh STAGE_DEPLOY_CMD
-                }
+                //}
 				//echo "Running deploy... (skipped for now)"
 				//sh "ssh 172.17.204.46"
             }
