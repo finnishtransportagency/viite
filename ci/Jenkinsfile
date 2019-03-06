@@ -230,7 +230,7 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'), file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS')]) {
-                    mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/
+                   sh "mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/"
                 }
                 sh STAGE_DEPLOY_CMD
 				//echo "Running deploy... (skipped for now)"
