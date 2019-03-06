@@ -1439,6 +1439,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
           case LinkStatus.Numbering =>
             if (toUpdateLinks.nonEmpty) {
+              val currentAddresses = roadAddressService.getRoadAddressesFiltered(newRoadNumber, newRoadPartNumber)
+              if(currentAddresses.nonEmpty)
+                throw new ProjectValidationException(ErrorRenumberingValuesAlreadyInUse)
               val roadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(toUpdateLinks.map(_.roadwayId), includeFloating = true)
               if (roadAddresses.exists(x =>
                 x.roadNumber == newRoadNumber && x.roadPartNumber == newRoadPartNumber)) // check the original numbering wasn't exactly the same
