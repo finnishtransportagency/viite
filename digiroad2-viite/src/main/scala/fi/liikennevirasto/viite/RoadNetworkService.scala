@@ -174,7 +174,7 @@ class RoadNetworkService {
               roadNetworkDAO.expireRoadNetwork
               roadNetworkDAO.createPublishedRoadNetwork(options.nextNetworkVersion)
               val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
-              roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
+              roadwayDAO.fetchAllCurrentAndValidRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
             } else {
               logger.info(s"Network errors found or current network version not found. Check road_network_error and published_road_network tables")
             }
