@@ -220,7 +220,7 @@ pipeline {
             //}
         }
        stage("Deploy") {
-       withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'), file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS')]) {
+
             agent {
                 docker {
                     image "viite-capistrano"
@@ -235,12 +235,12 @@ pipeline {
                 }
             }
             steps {
-                //withCredentials([sshUserPrivateKey(credentialsId: 'gateway', keyFileVariable: 'gateway', passphraseVariable: '', usernameVariable: '')]) {
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'), file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS')]) {
                 //    sh '''
                 //        ifconfig
                 //    '''
                     sh STAGE_DEPLOY_CMD
-                //}
+                }
 				//echo "Running deploy... (skipped for now)"
 				//sh "ssh 172.17.204.46"
             }
@@ -252,7 +252,6 @@ pipeline {
                     //)
             //    }
             //}
-        }
         }
     }
     post {
