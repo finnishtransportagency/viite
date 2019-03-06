@@ -29,60 +29,64 @@ pipeline {
                 }
             }
             steps {
-                script {
-                //Jenkins.instance.getItemByFullName("${JOB_NAME}").updateNextBuildNumber(1)
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'), file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS')]) {
+                    script {
 
-                    STAGE_FRONTEND_BUILD_CMD = [
-                        "mkdir tmp",
-                        "npm install",
-                        "export TMPDIR=/home/jenkins/tmp",
-                        "yarn install",
-                        "grunt deploy --target=${get_environment()?.trim()}",
-                        "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/dist /home/jenkins/package/viite-UI/",
-                        "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/node_modules /home/jenkins/package/viite-UI/",
-                        "cd /home/jenkins/package/viite-UI"
-                    ].join(" && ")
+                        STAGE_FRONTEND_BUILD_CMD = [
+                            "mkdir tmp",
+                            "npm install",
+                            "export TMPDIR=/home/jenkins/tmp",
+                            "yarn install",
+                            "grunt deploy --target=${get_environment()?.trim()}",
+                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/dist /home/jenkins/package/viite-UI/",
+                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/node_modules /home/jenkins/package/viite-UI/",
+                            "cd /home/jenkins/package/viite-UI"
+                        ].join(" && ")
 
-                    STAGE_FRONTEND_TEST_CMD = [
-                        "grunt test"
-                    ].join(" && ")
-                    def sbt_proxy = new URI(http_proxy)
+                        STAGE_FRONTEND_TEST_CMD = [
+                            "grunt test"
+                        ].join(" && ")
+                        def sbt_proxy = new URI(http_proxy)
 
-                    def java_opts = [
-                    	"-Dhttp.proxyHost=${sbt_proxy.getHost()}",
-                    	"-Dhttp.proxyPort=${sbt_proxy.getPort()}",
-                    	"-Dhttp.nonProxyHosts=*.vally.local",
-                    	"-DproxySet=true"
-                    ].join(" ")
+                        def java_opts = [
+                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                            "-Dhttp.nonProxyHosts=*.vally.local",
+                            "-DproxySet=true"
+                        ].join(" ")
 
-                    STAGE_BACKEND_BUILD_CMD = [
-                        "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                        "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar /home/jenkins/package/"
-                    ].join(" && ")
+                        STAGE_BACKEND_BUILD_CMD = [
+                            "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
+                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar /home/jenkins/package/"
+                        ].join(" && ")
 
-                    STAGE_PACKAGE_CMD = [
-                        "cd /home/jenkins/package/",
-                        "jar -cvf viite-assembly-0.1.0.war *"
-                    ].join(" && ")
+                        STAGE_PACKAGE_CMD = [
+                            "cd /home/jenkins/package/",
+                            "jar -cvf viite-assembly-0.1.0.war *"
+                        ].join(" && ")
 
-                    STAGE_PUBLISH_CMD = [
-                        "mvn deploy:deploy-file",
-                        "-DgroupId=fi.liikennevirasto.viite",
-                        "-DartifactId=viite-staging",
-                        "-Dversion=1.0.0",
-                        "-DgeneratePom=true",
-                        "-Dpackaging=war",
-                        "-DrepositoryId=nexus3",
-                        "-Durl=http://livibuild04.vally.local/nexus/repository/viite/",
-                        "-Dfile=/home/jenkins/package/viite-assembly-0.1.0.war",
-                        "-q",
-                        "--batch-mode"
-                    ].join(" ")
+                        STAGE_PUBLISH_CMD = [
+                            "mvn deploy:deploy-file",
+                            "-DgroupId=fi.liikennevirasto.viite",
+                            "-DartifactId=viite-staging",
+                            "-Dversion=1.0.0",
+                            "-DgeneratePom=true",
+                            "-Dpackaging=war",
+                            "-DrepositoryId=nexus3",
+                            "-Durl=http://livibuild04.vally.local/nexus/repository/viite/",
+                            "-Dfile=/home/jenkins/package/viite-assembly-0.1.0.war",
+                            "-q",
+                            "--batch-mode"
+                        ].join(" ")
 
-                    STAGE_DEPLOY_CMD = [
-                        "cd /home/jenkins/",
-                        "bundle exec cap staging deploy"
-                    ].join(" && ")
+                        STAGE_DEPLOY_CMD = [
+                            "cd /home/jenkins/",
+                            "mkdir .ssh/",
+                            "cp ${SSH_CONFIG} /.ssh/",
+                            "cp ${KNOWN_HOSTS} /.ssh/",
+                            "bundle exec cap staging deploy"
+                        ].join(" && ")
+                    }
                 }
             }
         }
