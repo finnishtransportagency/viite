@@ -66,11 +66,11 @@
       [1, 'Tuntematon, rakenteilla']
     ];
 
-    var nodeJunctions = [
+    var nodes = [
         [1, 'Normaali tasoliittymä'],
         [3, 'Kiertoliittymä'],
         [4, 'Y-liittymä'],
-        [5, 'Eirtasoliittymä'],
+        [5, 'Eritasoliittymä'],
         [7, 'Maantien/kadun raja'],
         [8, 'ELY-raja'],
         [10, 'Moniajoratainen liittymä'],
@@ -109,10 +109,10 @@
       return defaultLegendEntry + '</div>';
     }).join('');
 
-    var nodeJunctionsLegendEntries = _.map(nodeJunctions, function(nodeJunction) {
+    var nodesLegendEntries = _.map(nodes, function(node) {
       return '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-        '<img src="images/node-sprite.svg#' + nodeJunction[0]+ '" style="margin-right: 5px"/>' +
-        '<div class="label">' + nodeJunction[0] + " " +nodeJunction[1] + '</div>' +
+        '<img src="images/node-sprite.svg#' + node[0] + '" style="margin-right: 5px"/>' +
+        '<div class="label">' + node[0] + " " + node[1] + '</div>' +
         '</div>';
     }).join('');
 
@@ -268,7 +268,7 @@
     eventbus.on('nodesAndJunctions:open', function () {
       eventbus.trigger('roadAddressProject:deactivateAllSelections');
       $('#legendDiv').empty();
-      roadClassLegend.append(nodeJunctionsLegendEntries);
+      roadClassLegend.append(nodesLegendEntries);
     });
 
     eventbus.on('nodesAndJunctions:close', function () {
