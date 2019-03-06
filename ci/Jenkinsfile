@@ -29,7 +29,6 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'), file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS')]) {
                     script {
 
                         STAGE_FRONTEND_BUILD_CMD = [
@@ -91,7 +90,6 @@ pipeline {
                             "bundle exec cap staging deploy"
                         ].join(" && ")
                     }
-                }
             }
         }
         stage("Prepare") {
@@ -222,6 +220,7 @@ pipeline {
             //}
         }
        stage("Deploy") {
+       withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'), file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS')]) {
             agent {
                 docker {
                     image "viite-capistrano"
@@ -253,6 +252,7 @@ pipeline {
                     //)
             //    }
             //}
+        }
         }
     }
     post {
