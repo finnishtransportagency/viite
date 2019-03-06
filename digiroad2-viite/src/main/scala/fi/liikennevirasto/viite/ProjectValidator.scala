@@ -483,7 +483,7 @@ class ProjectValidator {
       unchanged.filter(u => others.exists(o => u.startAddrMValue >= o.startAddrMValue))
     }.toSeq
 
-    if(invalidUnchangedLinks.nonEmpty){
+    if (invalidUnchangedLinks.nonEmpty) {
       Seq(error(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks)(invalidUnchangedLinks).get)
     } else {
       Seq()
