@@ -81,9 +81,9 @@ pipeline {
 
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
-                            "mkdir .ssh/",
-                            "cp ${SSH_CONFIG} /.ssh/",
-                            "cp ${KNOWN_HOSTS} /.ssh/",
+                            "mkdir /home/jenkins/.ssh/",
+                            "cp ${SSH_CONFIG} /home/jenkins/.ssh/",
+                            "cp ${KNOWN_HOSTS} /home/jenkins/.ssh/",
                             "bundle exec cap staging deploy"
                         ].join(" && ")
                     }
