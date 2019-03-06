@@ -80,9 +80,9 @@ pipeline {
                         ].join(" ")
 
                         STAGE_DEPLOY_CMD = [
-                            "cd /data1/jenkins/workspace/viite/Deploy-Staging/",
+                            "cd /data1/jenkins/workspace/viite/Deploy-Staging@tmp/",
                             "ls -l",
-                            "cd /data1/jenkins/workspace/viite/Deploy-Staging/secretFiles/",
+                            "cd /data1/jenkins/workspace/viite/Deploy-Staging@tmp/secretFiles/",
                             "ls -l",
                             "cd /home/jenkins/",
                             "mkdir /home/jenkins/.ssh/",
