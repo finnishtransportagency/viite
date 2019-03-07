@@ -483,11 +483,10 @@ class ProjectValidator {
       unchanged.filter(u => others.exists(o => u.startAddrMValue >= o.startAddrMValue))
     }.toSeq
 
-    invalidUnchangedLinks.map { projectLink =>
-      val point = GeometryUtils.midPointGeometry(projectLink.geometry)
-      ValidationErrorDetails(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks,
-        Seq(projectLink.id), Seq(ProjectCoordinates(point.x, point.y, defaultZoomlevel)),
-        Some("TIE : %d, OSA: %d, AET: %d".format(projectLink.roadNumber, projectLink.roadPartNumber, projectLink.startAddrMValue)))
+    if (invalidUnchangedLinks.nonEmpty) {
+      Seq(error(project.id, ValidationErrorList.ErrorInValidationOfUnchangedLinks)(invalidUnchangedLinks).get)
+    } else {
+      Seq()
     }
   }
 
