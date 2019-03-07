@@ -300,8 +300,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ProjectLinkNameDAO.get(roadNumber, projectId) match {
       case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
       case _ =>
-        val existingRoadName = RoadNameDAO.getLatestRoadName(roadNumber)
-        ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
+        if (roadName != null && roadName.trim.nonEmpty) {
+          val existingRoadName = RoadNameDAO.getLatestRoadName(roadNumber)
+          ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
+        }
     }
   }
 
