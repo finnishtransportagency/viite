@@ -36,12 +36,11 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
         )
         val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
         val nextNetworkVersion = Sequences.nextPublishedRoadNetworkId
-//        chunks.foreach {
-//          case (min, max) =>
-//            val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
-//            roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads.toSet, currNetworkVersion, nextNetworkVersion, throughActor = false))
-//        }
-        //TEST do not create any error to check if history roadways are saved in published_roadway
+        chunks.foreach {
+          case (min, max) =>
+            val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
+            roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads.toSet, currNetworkVersion, nextNetworkVersion, throughActor = false))
+        }
         if (!roadNetworkDAO.hasCurrentNetworkErrors) {
           logger.info(s"No errors found. Creating new publishable version for the road network")
           roadNetworkDAO.expireRoadNetwork
