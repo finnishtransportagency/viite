@@ -994,8 +994,11 @@ class ProjectValidator {
     }
 
     def checkEndOfRoadBetweenLinksOnPart: Seq[ValidationErrorDetails] = {
-      val endOfRoadErrors = roadProjectLinks.groupBy(_.track).flatMap { track =>
-        error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(track._2.sortBy(pl => (pl.roadPartNumber, pl.startAddrMValue)).init.filter(_.discontinuity == EndOfRoad))
+      val endOfRoadErrors = roadProjectLinks.groupBy(_.roadPartNumber).flatMap {
+        roadPart =>
+          val addresses = roadPart._2.sortBy(_.startAddrMValue)
+          val maxEndAddr = addresses.last.endAddrMValue
+          error(project.id, ValidationErrorList.EndOfRoadMiddleOfPart)(addresses.filterNot(_.endAddrMValue == maxEndAddr).filter(_.discontinuity == EndOfRoad))
       }.toSeq
       endOfRoadErrors.distinct
     }
