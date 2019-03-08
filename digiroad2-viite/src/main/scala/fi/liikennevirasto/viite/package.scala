@@ -114,7 +114,7 @@ package object viite {
     s"Virhetilanteen jatkuessa ota yhteytta ylläpitoon."
   val GenericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
   val ProjectNotWritable = s"Projekti ei ole enää muokattavissa."
-  val ErrorMaxRoadNumberDemandingRoadName = s"Tien nimi on pakollinen tieto lukuunottamatta kevyen liikenteen väyliä."
+  val ErrorMaxRoadNumberDemandingRoadNameMessage = s"Tien nimi on pakollinen tieto lukuunottamatta kevyen liikenteen väyliä."
 
   //ELY-code error messages
   val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
