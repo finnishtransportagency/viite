@@ -15,8 +15,6 @@ COPY config/Capfile /home/jenkins/Capfile
 COPY config/Gemfile /home/jenkins/Gemfile
 COPY config/deploy /home/jenkins/config/deploy
 COPY config/deploy.rb /home/jenkins/config/deploy.rb
-COPY ~/.ssh/id_rsa /home/jenkins/.ssh/id_rsa
-COPY ~/.ssh/id_rsa.pub /home/jenkins/.ssh/id_rsa.pub
 
 #USER jenkins
 RUN cd /home/jenkins && \
