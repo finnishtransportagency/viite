@@ -296,16 +296,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       seq
   }
 
-  private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String): Unit = {
-    ProjectLinkNameDAO.get(roadNumber, projectId) match {
-      case Some(projectLinkName) => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
-      case _ =>
-        if (roadName != null && roadName.trim.nonEmpty) {
-          val existingRoadName = RoadNameDAO.getLatestRoadName(roadNumber)
-          ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.map(_.roadName).getOrElse(roadName))
-        }
-    }
-  }
+  private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String): Option[String] = {
+
+    (ProjectLinkNameDAO.get(roadNumber, projectId),  RoadNameDAO.getLatestRoadName(roadNumber), roadName != null && roadName.trim.nonEmpty, roadNumber <= MaxRoadNumberDemandingRoadName) match {
+        case (Some(projectLinkName), _, true, _)  => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
+          None
+        case (_, Some(existingRoadName), _, _) => ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.roadName)
+          None
+        case (_, _, _, false) => ProjectLinkNameDAO.create(projectId, roadNumber, "")
+          None
+        case _ =>
+        Some(ErrorMaxRoadNumberDemandingRoadName)
+      }
+}
 
   def writableWithValidTrack(projectId: Long, track: Int): Option[String] = {
     if (!isWritableState(projectId)) Some(ProjectNotWritable)
@@ -397,10 +400,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           newLinks
       projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
       recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
-      newLinks.flatMap(_.roadName).headOption.foreach { roadName =>
-        setProjectRoadName(projectId, newRoadNumber, roadName)
-      }
-      None
+      newLinks.flatMap(_.roadName).headOption.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
     }
@@ -1452,7 +1452,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               projectLinkDAO.updateProjectLinkNumbering(projectId, toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber,
                 linkStatus, newRoadNumber, newRoadPartNumber, userName, ely.getOrElse(toUpdateLinks.head.ely))
               projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(toUpdateLinks.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
-              roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
+              val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
+              if(nameError.nonEmpty)
+                return nameError
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
             }
@@ -1470,7 +1472,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (replaceable) {
               projectReservedPartDAO.removeReservedRoadPart(projectId, road.get, part.get)
             }
-            roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
+            val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
+            if(nameError.nonEmpty)
+              return nameError
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
             // Reset back to original values
@@ -1481,11 +1485,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             updateRoadTypeDiscontinuity(updated.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
 
           case LinkStatus.New =>
-            // Current logic allows only re adding new road addresses whithin same road/part group
+            // Current logic allows only re adding new road addresses within same road/part group
             if (toUpdateLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).size <= 1) {
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.New, toUpdateLinks)
               updateRoadTypeDiscontinuity(toUpdateLinks.map(l => l.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), ely = ely.getOrElse(l.ely))))
-              roadName.foreach(setProjectRoadName(projectId, newRoadNumber, _))
+              val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
+              if(nameError.nonEmpty)
+                return nameError
             } else {
               throw new RoadAddressException(s"Useamman kuin yhden tien/tieosan tallennus kerralla ei ole tuettu.")
             }
