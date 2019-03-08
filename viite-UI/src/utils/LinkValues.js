@@ -136,6 +136,12 @@
         RoadAddressSource:          {value: 1, description: "Road Name Source"}
     };
 
+    root.ProjectError = {
+        TerminationContinuity:  {value: 18},
+        DoubleEndOfRoad:        {value: 19},
+        RoadNotReserved:        {value: 27}
+    };
+
     /*
     The meta key codes are browser dependant, in proper:
         Firefox: 224
