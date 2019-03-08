@@ -80,6 +80,8 @@ pipeline {
 
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
+                            "cat Gemfile",
+                            "cat Gemfile.lock",
                             "bundle exec cap staging deploy"
                         ].join(" && ")
                     }
