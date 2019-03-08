@@ -297,7 +297,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String): Option[String] = {
-
     (ProjectLinkNameDAO.get(roadNumber, projectId),  RoadNameDAO.getLatestRoadName(roadNumber), roadName != null && roadName.trim.nonEmpty, roadNumber <= MaxRoadNumberDemandingRoadName) match {
         case (Some(projectLinkName), _, true, _)  => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
           None
