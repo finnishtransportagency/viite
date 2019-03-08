@@ -82,6 +82,7 @@ pipeline {
                             "cd /home/jenkins/",
                             "cat Gemfile",
                             "cat Gemfile.lock",
+                            "bundle install",
                             "bundle exec cap staging deploy"
                         ].join(" && ")
                     }
