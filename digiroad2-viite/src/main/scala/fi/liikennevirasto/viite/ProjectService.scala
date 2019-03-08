@@ -306,7 +306,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case (_, _, _, false) => ProjectLinkNameDAO.create(projectId, roadNumber, "")
           None
         case _ =>
-        Some(ErrorMaxRoadNumberDemandingRoadName)
+        Some(ErrorMaxRoadNumberDemandingRoadNameMessage)
       }
 }
 
