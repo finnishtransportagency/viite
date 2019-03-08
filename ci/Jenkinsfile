@@ -96,7 +96,6 @@ pipeline {
             }
             steps {
                 sh "cp /data1/ci/maven/* ci/config/"
-                sh "cat ~/.ssh/id_rsa"
                 script {
 
                     echo "Running publish... (skipped for now) "
@@ -233,12 +232,13 @@ pipeline {
             }
             steps {
 
-                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
-                                file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
-                                string(credentialsId: 'ID_RSA_PUB', variable: '')]) {
+                   withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                    file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                    string(credentialsId: 'ID_RSA', variable: 'ID_RSA'),
+                                    string(credentialsId: 'ID_RSA_PUB', variable: 'ID_RSA_PUB')]) {
                    sh "mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/"
                    sh "touch /home/jenkins/.ssh/id_rsa.pub && cat ${ID_RSA_PUB} > /home/jenkins/.ssh/id_rsa.pub"
-                   //sh "touch /home/jenkins/.ssh/id_rsa && cat ${ID_RSA} > /home/jenkins/.ssh/id_rsa"
+                   sh "touch /home/jenkins/.ssh/id_rsa && cat ${ID_RSA} > /home/jenkins/.ssh/id_rsa"
                 }
                 sh STAGE_DEPLOY_CMD
 				//echo "Running deploy... (skipped for now)"
