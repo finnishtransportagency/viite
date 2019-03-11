@@ -8,7 +8,7 @@ RUN apk update && apk upgrade && \
     apk add ruby && \
     apk add ruby-rdoc && \
     apk add openssh-client && \
-    chown -R jenkins /home/jenkins/
+    chown -R jenkins /home/jenkins/ && \
     chown -R /usr/lib/ruby/
 
 COPY config/Capfile /home/jenkins/Capfile
