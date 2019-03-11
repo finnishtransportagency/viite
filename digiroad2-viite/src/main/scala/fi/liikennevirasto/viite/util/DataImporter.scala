@@ -219,7 +219,12 @@ class DataImporter {
     val linearLocationDAO = new LinearLocationDAO
     val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
     val projectLinkDAO = new ProjectLinkDAO
-    val service = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus)
+    lazy val properties: Properties = {
+      val props = new Properties()
+      props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+      props
+    }
+    val service = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
     val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
     roadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     roadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
@@ -304,18 +309,16 @@ class DataImporter {
     if (geometry.nonEmpty) {
       val first = geometry.head
       val last = geometry.last
-      val (x1, y1, z1, x2, y2, z2) = (
+      val (x1, y1, x2, y2) = (
         GeometryUtils.scaleToThreeDigits(first.x),
         GeometryUtils.scaleToThreeDigits(first.y),
-        GeometryUtils.scaleToThreeDigits(first.z),
         GeometryUtils.scaleToThreeDigits(last.x),
-        GeometryUtils.scaleToThreeDigits(last.y),
-        GeometryUtils.scaleToThreeDigits(last.z)
+        GeometryUtils.scaleToThreeDigits(last.y)
       )
       val length = GeometryUtils.geometryLength(geometry)
       sqlu"""UPDATE LINEAR_LOCATION
           SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-               MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, $z1, 0.0, $x2, $y2, $z2, $length))
+               MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, 0.0, 0.0, $x2, $y2, 0.0, $length))
           WHERE id = ${linearLocationId}""".execute
     }
   }

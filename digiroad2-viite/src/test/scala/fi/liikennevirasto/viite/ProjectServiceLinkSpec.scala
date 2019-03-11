@@ -521,8 +521,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(project.id, Set(), transferLinks.map(_.linkId), LinkStatus.Transfer, "Test", 77, 35, 0, Option.empty[Int]) should be(None)
 
       val (resultNew, resultTransfer) = projectLinkDAO.fetchProjectLinks(project.id).partition(_.status == LinkStatus.New)
-      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5167598, 296.597, 0, ProjectLinkSource)))
-      resultTransfer.head.calibrationPoints._2 should be(None)
+      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5167598, 296.597, 0, RoadAddressSource)))
+      resultNew.last.calibrationPoints._2 should not be None
       allLinks.size should be(resultNew.size + resultTransfer.size)
     }
   }
@@ -1154,7 +1154,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //      val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552, addProjectAddressLink584)
   //      mockForProject(id, addresses)
   //      val links = addresses.map(backToProjectLink(rap))
-  //      projectService.addNewLinksToProject(links, id, "U", links.minBy(_.endMValue).linkId) should be(Some("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä."))
+  //      projectService.addNewLinksToProject(links, id, "U", links.minBy(_.endMValue).linkId) should be(Some("Valittu tiegeometria sisältää haarautumia, jotka pitää käsitellä linkkikohtaisesti. Tallennusta ei voi tehdä."))
   //      val readLinks = ProjectDAO.getProjectLinks(id)
   //      readLinks.size should be(0)
   //    }

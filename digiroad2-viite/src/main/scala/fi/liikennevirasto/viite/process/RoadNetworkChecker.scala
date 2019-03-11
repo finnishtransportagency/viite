@@ -27,7 +27,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
       val roadwayDAO = new RoadwayDAO
 
       if (roadNetworkDAO.hasCurrentNetworkErrors) {
-        logger.error(s"current network have errors")
+        logger.error(s"current network has errors")
       } else {
         val roadNumbers = roadwayDAO.getValidRoadNumbers
         val chunks = generateChunks(roadNumbers, 500)
@@ -46,7 +46,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
           roadNetworkDAO.expireRoadNetwork
           roadNetworkDAO.createPublishedRoadNetwork(nextNetworkVersion)
           val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
-          roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
+          roadwayDAO.fetchAllCurrentAndValidRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
         } else {
           logger.info(s"Network errors found. Check road_network_error table")
         }

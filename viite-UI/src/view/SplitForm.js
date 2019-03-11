@@ -76,8 +76,8 @@
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
         formCommon.staticField('Geometrian Lähde', roadLinkSources)+
         '<div class="split-form-group editable form-editable-roadAddressProject"> ' +
-        selectionFormCutted(selection, selected, currentSplitData) +
-        (isReSplitMode ? '' : formCommon.changeDirection(selected)) +
+        selectionFormCutted(project, selection, selected, currentSplitData) +
+        (isReSplitMode ? '' : formCommon.changeDirection(selected, project)) +
         formCommon.actionSelectedField() +
         (isReSplitMode ? revertSplitButton() : '') +
         '</div>' +
@@ -94,7 +94,7 @@
         return _.last(link.points);
       }
     };
-    var selectionFormCutted = function (selection, selected, road) {
+    var selectionFormCutted = function (project, selection, selected, road) {
       var firstLink = _.first(_.sortBy(_.filter(selected, function (s) {
         return s.endMValue !== 0;
       }), 'startAddressM'));
@@ -104,7 +104,7 @@
         '<input type="hidden" id="splity" value="' + splitPoint.y + '"/>' +
         suravagePartForm(selection[0], selected, 0) +
         suravagePartForm(selection[1], selected, 1) +
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink, road) +
+        formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road) +
         terminatedPartForm(selection[2], selected[2]) +
         '</form>';
     };

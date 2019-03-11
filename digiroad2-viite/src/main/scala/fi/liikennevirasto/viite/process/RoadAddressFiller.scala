@@ -174,7 +174,7 @@ object RoadAddressFiller {
     (passThroughSegments, changeSet.copy(droppedSegmentIds = changeSet.droppedSegmentIds ++ droppedSegmentIds))
   }
 
-  //TODO can also be done here the fuse of linear locations when thr roadway id of the linear location is the same and no calirabtion points in the middle
+  //TODO can also be done here the fuse of linear locations when thr roadway id of the linear location is the same and no calibration points in the middle
   def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation], initialChangeSet: ChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)): (Seq[LinearLocation], ChangeSet) = {
     time(logger, "Adjust linear location to topology") {
       val adjustOperations: Seq[(RoadLinkLike, Seq[LinearLocation], ChangeSet) => (Seq[LinearLocation], ChangeSet)] = Seq(
