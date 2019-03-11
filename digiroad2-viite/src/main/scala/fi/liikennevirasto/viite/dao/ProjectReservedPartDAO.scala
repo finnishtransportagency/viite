@@ -124,6 +124,19 @@ class ProjectReservedPartDAO {
 
   def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
+      val project = roadPartReservedByProject(roadNumber, roadPartNumber)
+      val actualLength: Option[Long] = if (project.isEmpty) {
+        val pituus =
+          s"""
+          SELECT MAX(END_ADDR_M) pituus FROM ROADWAY
+            WHERE ROAD_NUMBER = $roadNumber
+            AND ROAD_PART_NUMBER = $roadPartNumber
+            AND VALID_TO IS NULL
+            AND END_DATE IS NULL
+            ORDER BY ROAD_PART_NUMBER, START_ADDR_M"""
+        Q.queryNA[Long](pituus).firstOption
+      } else None
+
       val sql =
         s"""
         SELECT id, road_number, road_part_number, length, length_new,
@@ -159,7 +172,7 @@ class ProjectReservedPartDAO {
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).firstOption.map {
         case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
+          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, actualLength.orElse(newLength),
             newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
       }
     }
