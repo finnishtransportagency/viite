@@ -16,6 +16,6 @@ COPY config/Gemfile /home/jenkins/Gemfile
 COPY config/deploy /home/jenkins/config/deploy
 COPY config/deploy.rb /home/jenkins/config/deploy.rb
 
-#USER jenkins
-RUN cd /home/jenkins && \
-    bundle install
+RUN chown -R jenkins /home/jenkins/
+USER jenkins
+RUN cd /home/jenkins/ && bundle install
