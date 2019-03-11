@@ -1,4 +1,4 @@
-lock '3.1.0'
+lock '3.4.0'
 set :application, 'ci-test'
 set :repo_url, 'https://github.com/finnishtransportagency/viite.git'
 set :branch, ENV['REVISION'] || ENV['BRANCH_NAME'] || 'VIITE-1701_New_CI_Server'
