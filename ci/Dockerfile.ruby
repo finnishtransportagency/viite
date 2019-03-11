@@ -20,4 +20,4 @@ RUN cd /home/jenkins/ && \
     gem install bundler && \
     gem install rake && \
     gem install concurrent-ruby && \
-    && bundle install
+    bundle install
