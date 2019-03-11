@@ -17,5 +17,6 @@ COPY config/Gemfile /home/jenkins/Gemfile
 COPY config/deploy /home/jenkins/config/deploy
 COPY config/deploy.rb /home/jenkins/config/deploy.rb
 
+RUN chmod 777 -R /home/jenkins/
 USER jenkins
 RUN cd /home/jenkins/ && bundle install
