@@ -79,7 +79,7 @@ pipeline {
                         ].join(" ")
 
                         STAGE_DEPLOY_CMD = [
-                            "cd /home/jenkins/",
+                            "cd /home/jenkins/ci/config/",
                             "cat Gemfile",
                             "cat Gemfile.lock",
                             "bundle install",
