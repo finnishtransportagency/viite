@@ -80,6 +80,7 @@ pipeline {
 
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
+                            "ls -l",
                             "cat Gemfile",
                             "cat Gemfile.lock",
                             "bundle install",
