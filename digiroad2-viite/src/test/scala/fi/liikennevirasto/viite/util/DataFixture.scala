@@ -1,9 +1,11 @@
 package fi.liikennevirasto.viite.util
 
 import java.util.Properties
+
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -14,6 +16,9 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.DateTime
+import org.scalatra.BadRequest
+
+import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
@@ -42,7 +47,7 @@ object DataFixture {
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
 
@@ -166,6 +171,39 @@ object DataFixture {
     println()
   }
 
+  private def testIntegrationAPIWithAllMunicipalities(): Unit = {
+    println(s"\nStarting fetch for integration API for all municipalities")
+    val municipalities = OracleDatabase.withDynTransaction {
+      Queries.getMunicipalities
+    }
+    val failedMunicipalities = municipalities.map(
+      municipalityCode =>
+        try {
+          println(s"\nProcessing municipality $municipalityCode")
+          val knownAddressLinksSize = roadAddressService.getAllByMunicipality(municipalityCode)
+          if (knownAddressLinksSize.nonEmpty) {
+            println(s"\nMunicipality $municipalityCode returned ${knownAddressLinksSize.size} links with valid values")
+            None
+          } else {
+            println(s"\n*** WARNING Municipality $municipalityCode returned zero links! ***")
+            municipalityCode
+          }
+        }
+        catch {
+          case e: Exception =>
+            val message = s"\n*** ERROR Failed to get road addresses for municipality $municipalityCode! ***"
+            println(s"\n" + message + s"\n"+ e.printStackTrace())
+            municipalityCode
+        }
+    ).filterNot(_ == None)
+    println(s"\n------------------------------------------------------------------------------\n")
+    if (failedMunicipalities.nonEmpty) {
+      println(s"*** ${failedMunicipalities.size} municipalities returned 0 links. Those municipalities are: ${failedMunicipalities.mkString(", ")} ***")
+    } else {
+      println(s"Test passed.")
+    }
+  }
+
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
 
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
@@ -270,8 +308,9 @@ object DataFixture {
 
   def main(args: Array[String]): Unit = {
     import scala.util.control.Breaks._
+    val operation = args.headOption
     val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
+    if (!username.startsWith("dr2dev") && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")
@@ -285,7 +324,7 @@ object DataFixture {
       }
     }
 
-    args.headOption match {
+    operation match {
       /*case Some("find_floating_road_addresses") if geometryFrozen =>
         showFreezeInfo()*/
       //      case Some("find_floating_road_addresses") =>
@@ -320,6 +359,8 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("flyway_init") =>
         flywayInit()
+      case Some("test_integration_api_all_municipalities") =>
+        testIntegrationAPIWithAllMunicipalities()
 
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +

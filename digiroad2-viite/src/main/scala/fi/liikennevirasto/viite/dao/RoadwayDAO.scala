@@ -135,6 +135,14 @@ object CalibrationCode {
     def value = 3
   }
 
+  def switch(calibrationCode: CalibrationCode): CalibrationCode = {
+    calibrationCode match {
+      case AtBeginning => AtEnd
+      case AtEnd => AtBeginning
+      case _ => calibrationCode
+    }
+  }
+
 }
 
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
@@ -273,6 +281,31 @@ trait BaseRoadAddress {
       val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
       Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
     } else {
+      (startingPoint, endPoint)
+    }
+  }
+
+  def getEndPointsOnlyBySide: (Point, Point) = {
+    if (sideCode == SideCode.Unknown) {
+      val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
+      Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
+    } else {
+      val startingPoint: Point = sideCode == SideCode.TowardsDigitizing match {
+        case true =>
+          //reversed for both SideCodes
+          geometry.head
+        case false =>
+          //NOT reversed for both SideCodes
+          geometry.last
+      }
+      val endPoint: Point = sideCode == SideCode.TowardsDigitizing match {
+        case true =>
+          //reversed for both SideCodes
+          geometry.last
+        case false =>
+          //NOT reversed for both SideCodes
+          geometry.head
+      }
       (startingPoint, endPoint)
     }
   }
@@ -447,7 +480,7 @@ class RoadwayDAO extends BaseDAO {
 
   def fetchAllByRoadNumbers(roadNumbers: Set[Long]): Seq[Roadway] = {
     time(logger, "Fetch road ways by road number") {
-      fetch(withRoadNumbers(roadNumbers))
+      fetch(withRoadNumbersInValidDate(roadNumbers))
     }
   }
 
@@ -543,12 +576,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllCurrentRoadwayIds: Set[Long] = {
+  def fetchAllCurrentAndValidRoadwayIds: Set[Long] = {
     time(logger, "Fetch all roadway ids") {
       sql"""
 			select distinct (ra.id)
       from ROADWAY ra
-      where ra.valid_to is null
+      where ra.valid_to is null and (ra.end_date is null or ra.end_date >= sysdate)
 		  """.as[Long].list.toSet
     }
   }
@@ -607,18 +640,18 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and end_date is null and road_number = $roadNumber"""
   }
 
-  private def withRoadNumbers(roadNumbers: Set[Long])(query: String): String = {
+  private def withRoadNumbersInValidDate(roadNumbers: Set[Long])(query: String): String = {
     if (roadNumbers.size > 1000) {
       MassQuery.withIds(roadNumbers) {
         idTableName =>
           s"""
             $query
             join $idTableName i on i.id = a.ROAD_NUMBER
-            where a.valid_to is null AND a.end_date is null AND a.terminated = 0
+            where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.terminated = 0
           """.stripMargin
       }
     } else {
-      s"""$query where a.valid_to is null AND a.end_date is null AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
+      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
     }
   }
 
@@ -663,21 +696,24 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
-
     if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers){
-        idTableName =>
-          s"""
-          $query
-          join $idTableName i on i.id = a.ROADWAY_NUMBER
-          join published_roadway net on net.ROADWAY_ID = a.id
-          where net.network_id = $roadNetworkId and a.valid_to is null"""
-      }
+      val groupsOf1000 = roadwayNumbers.grouped(1000).toSeq
+      val groupedRoadwayNumbers = groupsOf1000.map(group =>
+      {
+        s"""in (${group.mkString(",")})"""
+      }).mkString("", " or a.roadway_number ", "")
+
+      s"""$query
+         join published_roadway net on net.ROADWAY_ID = a.id
+         where net.network_id = $roadNetworkId and a.valid_to is null and (a.roadway_number $groupedRoadwayNumbers)
+            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
     }
     else
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
-         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+         where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})
+            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
+
   }
 
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {

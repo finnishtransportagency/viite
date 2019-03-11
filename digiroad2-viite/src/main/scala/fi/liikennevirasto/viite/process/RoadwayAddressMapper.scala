@@ -4,11 +4,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.NewLinearLocation
 import fi.liikennevirasto.viite.dao._
-import org.joda.time.{DateTime, LocalDateTime}
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 
 class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO) {
 
@@ -78,14 +75,40 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     */
   private def boundaryAddressMap(roadway: Roadway, linearLocations: Seq[LinearLocation], startAddress: Long, endAddress: Long): Seq[RoadAddress] = {
 
+    def mappedAddressValues(remaining: Seq[LinearLocation], processed: Seq[LinearLocation], startAddr: Double, endAddr: Double, coef: Double, list: Seq[Long], increment: Int, depth: Int = 1): Seq[Long] = {
+      if (remaining.isEmpty) {
+        list
+      } else {
+        val location = remaining.head
+        //increment can also be negative
+        val previewValue =
+            startAddr + Math.round((location.endMValue - location.startMValue) * coef) + increment
+
+        if (depth > 100) {
+          val message = s"mappedAddressValues got in infinite recursion. Roadway number = ${roadway.roadwayNumber}, location.id = ${location.id}, startMValue = ${location.startMValue}, endMValue = ${location.endMValue}, previewValue = ${previewValue}, remaining = ${remaining.length}"
+          logger.error(message)
+          if (depth > 105) throw new RuntimeException(message)
+        }
+
+        val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
+          list :+ previewValue.toLong
+        } else if (previewValue <= startAddr) {
+          mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
+        } else if (previewValue <= endAddress) {
+          mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
+        } else {
+          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
+        }
+        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, increment, depth + 1)
+      }
+
+    }
+
     val coef = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
 
     val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
-    val addresses = sortedLinearLocations.init.scanLeft(startAddress) {
-      case (address, location) =>
-        address + Math.round((location.endMValue - location.startMValue) * coef)
-    } :+ endAddress
+    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coef, Seq(startAddress), 0) :+ endAddress
 
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>

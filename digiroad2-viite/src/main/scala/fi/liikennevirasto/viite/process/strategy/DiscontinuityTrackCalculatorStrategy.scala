@@ -26,7 +26,7 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
 
     (left.last.discontinuity, right.last.discontinuity) match {
       case (MinorDiscontinuity | ParallelLink, MinorDiscontinuity | ParallelLink) => // If both sides have a minor discontinuity
-        if (Math.abs(left.last.endAddrMValue - right.last.endAddrMValue) < MaxDistanceForSearchDiscontinuityOnOppositeTrack || (left.last.discontinuity == ParallelLink || right.last.discontinuity == ParallelLink)) {
+        if (left.last.getEndPoints._2.distance2DTo(right.last.getEndPoints._2) < MaxDistanceForSearchDiscontinuityOnOppositeTrack || (left.last.discontinuity == ParallelLink || right.last.discontinuity == ParallelLink)) {
           adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
         } else if (left.last.endAddrMValue < right.last.endAddrMValue) { // If the left side has a minor discontinuity
           val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, left.last)
