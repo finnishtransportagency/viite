@@ -10,7 +10,7 @@ RUN apk update && apk upgrade && \
     apk add openssh-client && \
     gem install bundler && \
     gem install rake && \
-    gem install gem install concurrent-ruby && \
+    gem install concurrent-ruby && \
     chown -R jenkins /home/jenkins/
 
 COPY config/Capfile /home/jenkins/Capfile
