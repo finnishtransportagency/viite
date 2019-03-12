@@ -563,6 +563,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
     roadwayChangesDAO.clearRoadChangeTable(project.id)
     projectLinkDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
+    val road = newProjectLinks.headOption
+    if (road.nonEmpty)
+      recalculateProjectLinks(project.id, project.createdBy, Set((road.get.roadNumber, road.get.roadPartNumber)))
     None
   }
 
