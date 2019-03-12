@@ -5,9 +5,10 @@ RUN adduser -D -S -u ${JENKINS_UID} jenkins
 
 #Install capistrano
 RUN apk update && apk upgrade && \
-    apk add ruby && \
+    apk add ruby-dev && \
     apk add ruby-rdoc && \
-    apk add openssh-client && \
+    apk add g++ && \
+    apk add make && \
     chown -R jenkins /home/jenkins/ && \
     chown -R jenkins /usr/
 
@@ -19,6 +20,4 @@ COPY config/deploy.rb /home/jenkins/config/deploy.rb
 USER jenkins
 RUN cd /home/jenkins/ && \
     gem install bundler && \
-    gem install rake && \
-    gem install concurrent-ruby && \
     bundle install
