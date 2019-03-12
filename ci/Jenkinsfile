@@ -221,7 +221,6 @@ pipeline {
                 docker {
                     image "viite-capistrano_2"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
