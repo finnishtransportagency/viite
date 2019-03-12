@@ -46,7 +46,7 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
           roadNetworkDAO.expireRoadNetwork
           roadNetworkDAO.createPublishedRoadNetwork(nextNetworkVersion)
           val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
-          roadwayDAO.fetchAllCurrentRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
+          roadwayDAO.fetchAllCurrentAndValidRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
         } else {
           logger.info(s"Network errors found. Check road_network_error table")
         }
