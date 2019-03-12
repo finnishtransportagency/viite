@@ -80,7 +80,6 @@ pipeline {
 
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
-                            "ls -l",
                             "cat Gemfile",
                             "cat Gemfile.lock",
                             "bundle install",
@@ -121,7 +120,7 @@ pipeline {
                         "${build_args} -f ci/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "viite-capistrano",
+                        "viite-capistrano_2",
                         "${build_args} -f ci/Dockerfile.ruby ci"
                      )
                 }
@@ -220,7 +219,7 @@ pipeline {
 
             agent {
                 docker {
-                    image "viite-capistrano"
+                    image "viite-capistrano_2"
                     reuseNode true
                     args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
