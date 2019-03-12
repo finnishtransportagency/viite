@@ -124,55 +124,58 @@ class ProjectReservedPartDAO {
 
   def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
-      val project = roadPartReservedByProject(roadNumber, roadPartNumber)
-      val actualLength: Option[Long] = if (project.isEmpty) {
-        val pituus =
-          s"""
-          SELECT MAX(END_ADDR_M) pituus FROM ROADWAY
-            WHERE ROAD_NUMBER = $roadNumber
-            AND ROAD_PART_NUMBER = $roadPartNumber
-            AND VALID_TO IS NULL
-            AND END_DATE IS NULL
-            ORDER BY ROAD_PART_NUMBER, START_ADDR_M"""
-        Q.queryNA[Long](pituus).firstOption
-      } else None
-
       val sql =
         s"""
-        SELECT id, road_number, road_part_number, length, length_new,
-          ely, ely_new,
-          (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
-          ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-          AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
-          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
-          AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-          AND PL.STATUS != 5 AND PL.TRACK IN (0,1)
-          AND END_ADDR_M = gr.length_new and ROWNUM < 2) as discontinuity_new,
-          (SELECT LINK_ID FROM PROJECT_LINK pl
-            WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != 5 AND PL.TRACK IN (0,1) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
-          FROM (
-            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
-              MAX(ra.END_ADDR_M) as length,
-              MAX(pl.END_ADDR_M) as length_new,
-              MAX(ra.ely) as ELY,
-              MAX(pl.ely) as ELY_NEW
-              FROM PROJECT_RESERVED_ROAD_PART rp
-              LEFT JOIN PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND pl.road_part_number = rp.road_part_number)
-              LEFT JOIN ROADWAY ra ON ((ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number) OR ra.id = pl.ROADWAY_ID)
-              LEFT JOIN LINEAR_LOCATION lc ON (lc.Id = pl.Linear_Location_Id)
-              WHERE
-                rp.road_number = $roadNumber AND rp.road_part_number = $roadPartNumber AND
-                RA.END_DATE IS NULL AND RA.VALID_TO IS NULL AND
-                (PL.STATUS IS NULL OR (PL.STATUS != 5 AND PL.TRACK IN (0,1)))
-              GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-              ) gr"""
+        SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length, length_new, ely, ely_new,
+        (SELECT DISCONTINUITY FROM ROADWAY ra
+          WHERE ra.ROAD_NUMBER = gr.ROAD_NUMBER
+          AND ra.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
+          AND ra.END_DATE IS NULL
+          AND ra.VALID_TO IS NULL
+          AND END_ADDR_M = gr.LENGTH and ROWNUM < 2) as discontinuity,
+        (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl
+          WHERE pl.PROJECT_ID = gr.PROJECT_ID
+          AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
+          AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
+          AND pl.STATUS != 5
+          AND pl.TRACK IN (0,1)
+          AND END_ADDR_M = gr.LENGTH_NEW and ROWNUM < 2) as discontinuity_new,
+        (SELECT LINK_ID FROM PROJECT_LINK pl
+          WHERE pl.PROJECT_ID = gr.PROJECT_ID
+          AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
+          AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
+          AND pl.STATUS != 5
+          AND pl.TRACK IN (0,1)
+          AND pl.START_ADDR_M = 0
+          AND pl.END_ADDR_M > 0
+          AND ROWNUM < 2) as first_link FROM (
+            SELECT rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER,
+            MAX(ra.END_ADDR_M) as length,
+            CASE WHEN EXISTS(SELECT prj.NAME FROM PROJECT prj
+              WHERE prj.ID IN (SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
+                WHERE LINK_ID IN (SELECT link.LINK_ID FROM LINEAR_LOCATION link
+                  INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
+                  WHERE road.ROAD_NUMBER = $roadNumber
+                  AND road.ROAD_PART_NUMBER = $roadPartNumber)))
+            THEN MAX(pl.END_ADDR_M)
+            ELSE MAX(ra.END_ADDR_M)
+                END as length_new,
+                MAX(ra.ELY) as ely,
+                MAX(pl.ELY) as ely_new
+        FROM PROJECT_RESERVED_ROAD_PART rp
+          LEFT JOIN PROJECT_LINK pl ON (pl.PROJECT_ID = rp.PROJECT_ID AND pl.ROAD_NUMBER = rp.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER)
+          LEFT JOIN ROADWAY ra ON ((ra.ROAD_NUMBER = rp.ROAD_NUMBER AND ra.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER) OR ra.ID = pl.ROADWAY_ID)
+          LEFT JOIN LINEAR_LOCATION lc ON (lc.ID = pl.LINEAR_LOCATION_ID)
+          WHERE ra.ROAD_NUMBER = $roadNumber
+          AND ra.ROAD_PART_NUMBER = $roadPartNumber
+          AND ra.END_DATE IS NULL
+          AND ra.VALID_TO IS NULL
+          AND (pl.STATUS IS NULL OR (pl.STATUS != 5 AND pl.TRACK IN (0,1)))
+          GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).firstOption.map {
         case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, actualLength.orElse(newLength),
+          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
             newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
       }
     }
@@ -194,16 +197,16 @@ class ProjectReservedPartDAO {
     time(logger, "Road part reserved by project") {
       val filter = if (withProjectId && projectId != 0) s" AND link.PROJECT_ID != $projectId " else ""
       val query =
-        s"""SELECT prj.NAME
-              FROM PROJECT prj
-              WHERE prj.ID IN (
-                SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
-                  WHERE LINK_ID IN (
-                    SELECT link.LINK_ID FROM LINEAR_LOCATION link
-                      INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
-                      WHERE road.ROAD_NUMBER = $roadNumber
-                      AND road.ROAD_PART_NUMBER = $roadPart
-                      $filter))"""
+        s"""
+        SELECT prj.NAME FROM PROJECT prj
+          WHERE prj.ID IN (
+            SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
+              WHERE LINK_ID IN (
+                SELECT link.LINK_ID FROM LINEAR_LOCATION link
+                  INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
+                  WHERE road.ROAD_NUMBER = $roadNumber
+                  AND road.ROAD_PART_NUMBER = $roadPart
+                  $filter))"""
       Q.queryNA[String](query).firstOption
     }
   }
