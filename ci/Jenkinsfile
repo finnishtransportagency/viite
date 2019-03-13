@@ -231,7 +231,7 @@ pipeline {
             }
             steps {
 
-                sh "eval $(ssh-agent)"
+                sh "eval \$(ssh-agent)"
                 withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
                                  file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
                                  file(credentialsId: 'ID_RSA', variable: 'ID_RSA'),
