@@ -89,7 +89,7 @@ pipeline {
 
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
-                            "bundle install",
+                            //"bundle install",
                             "bundle exec cap staging deploy"
                         ].join(" && ")
                     }
@@ -246,13 +246,13 @@ pipeline {
                 //    sh "mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/"
                 //    sh "cp ${ID_RSA} /home/jenkins/.ssh/"
                 //}
-                 sshagent ( ['RSA_KEY']) {
-                    sh STAGE_DEPLOY_CMD
-                 }
+                // sshagent ( ['RSA_KEY']) {
+                //    sh STAGE_DEPLOY_CMD
+                // }
 
                 //sh "ls -l"
                 //sh "ssh-agent /bin/sh && ssh-add /home/jenkins/.ssh/id_rsa"
-                //sh STAGE_DEPLOY_CMD
+                sh STAGE_DEPLOY_CMD
             }
             //post {
             //    failure {

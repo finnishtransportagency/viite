@@ -19,6 +19,14 @@ COPY config/deploy /home/jenkins/config/deploy
 COPY config/deploy.rb /home/jenkins/config/deploy.rb
 
 USER jenkins
+
+#SSH start and config
+RUN mkdir /home/jenkins/.ssh && \
+    cp ~/.ssh./id_rsa /home/jenkins/.ssh/ && \
+    eval $(ssh-agent) && \
+    ssh-add /home/jenkins/.ssh/id_rsa
+
+
 RUN cd /home/jenkins/ && \
     gem install bundler && \
     bundle install
