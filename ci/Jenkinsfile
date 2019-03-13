@@ -80,7 +80,7 @@ pipeline {
 
                         START_SSH_AGENT = [
                             "touch start_agent.sh",
-                            "echo $(ssh-agent) > start_agent.sh",
+                            'echo "$(ssh-agent)" > start_agent.sh',
                             "chmod 711 start_agent.sh",
                             "source start_agent.sh"
                         ].join(" && ")
