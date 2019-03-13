@@ -78,6 +78,8 @@ pipeline {
                             "--batch-mode"
                         ].join(" ")
 
+                        EVAL_SHH_AGENT = ["eval $(ssh-agent)"]
+
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
                             "cat Gemfile",
@@ -231,7 +233,8 @@ pipeline {
             }
             steps {
 
-                sh "eval \$(ssh-agent)"
+                sh EVAL_SHH_AGENT
+
                 withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
                                  file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
                                  file(credentialsId: 'ID_RSA', variable: 'ID_RSA'),
