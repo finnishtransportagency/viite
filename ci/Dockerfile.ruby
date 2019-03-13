@@ -23,4 +23,4 @@ RUN cd /home/jenkins/ && \
     gem install bundler && \
     bundle install
 
-ENTRYPOINT eval $(ssh-agent)
+CMD eval $(ssh-agent)
