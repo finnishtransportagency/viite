@@ -238,12 +238,13 @@ pipeline {
             }
             steps {
 
-                sh START_SSH_AGENT
+                //sh START_SSH_AGENT
                 withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
                                  file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
                                  file(credentialsId: 'ID_RSA', variable: 'ID_RSA'),
                                  file(credentialsId: 'ID_RSA_PUB', variable: 'ID_RSA_PUB')]) {
                     sh "mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/"
+                    sh "ssh-agent /bin/sh"
                     sh "ssh-add ${ID_RSA}"
                 }
                 sh STAGE_DEPLOY_CMD
