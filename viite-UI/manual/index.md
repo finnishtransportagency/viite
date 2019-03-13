@@ -281,6 +281,8 @@ Viety tierekisteriin -tilaiset projektit näytetään listalla vuorokauden ajan 
 
 Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit-listalta painamalla Avaa-painiketta. Avaamisen yhteydessä sovellus zoomaa kartan paikkaan, jossa käyttäjä on viimeksi tallentanut toimenpiteen. Mikäli toimenpiteitä ei ole tehty, karttanäkymä rajautuu siten, että kaikki varatut aihiot näkyvät karttanäkymässä.
 
+Tieosoiteprojektit-lista suljetaan yläpalkin oikeassa kulmassa olevasta painikkeesta.
+
 ![Uusi tieosoiteprojekti](k26.JPG)
 
 _Tieosoiteprojektit -listaus._
