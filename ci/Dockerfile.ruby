@@ -5,6 +5,7 @@ RUN adduser -D -S -u ${JENKINS_UID} jenkins
 
 #Install capistrano
 RUN apk update && apk upgrade && \
+    apk add openssh-client && \
     apk add ruby-dev && \
     apk add ruby-rdoc && \
     apk add g++ && \
@@ -19,5 +20,6 @@ COPY config/deploy.rb /home/jenkins/config/deploy.rb
 
 USER jenkins
 RUN cd /home/jenkins/ && \
+    eval $(ssh-agent) && \
     gem install bundler && \
     bundle install
