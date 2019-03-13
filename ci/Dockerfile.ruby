@@ -20,6 +20,5 @@ COPY config/deploy.rb /home/jenkins/config/deploy.rb
 
 USER jenkins
 RUN cd /home/jenkins/ && \
-    eval $(ssh-agent) %% \
     gem install bundler && \
     bundle install
