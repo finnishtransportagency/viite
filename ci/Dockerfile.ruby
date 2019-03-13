@@ -22,5 +22,3 @@ USER jenkins
 RUN cd /home/jenkins/ && \
     gem install bundler && \
     bundle install
-
-CMD eval $(ssh-agent)
