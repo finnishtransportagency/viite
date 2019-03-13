@@ -244,9 +244,10 @@ pipeline {
                                  file(credentialsId: 'ID_RSA', variable: 'ID_RSA'),
                                  file(credentialsId: 'ID_RSA_PUB', variable: 'ID_RSA_PUB')]) {
                     sh "mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/"
-                    sh "ssh-agent /bin/sh"
-                    sh "ssh-add ${ID_RSA}"
+                    sh "cp ${ID_RSA} /home/jenkins/.ssh/"
                 }
+                sh "ls -l"
+                sh "ssh-agent /bin/sh && ssh-add /home/jenkins/.ssh/id_rsa"
                 sh STAGE_DEPLOY_CMD
             }
             //post {
