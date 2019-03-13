@@ -587,7 +587,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
                                   filter: Set[Long] => String): Seq[T] = {
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
-    idGroups.par.flatMap { ids =>
+//    idGroups.par.flatMap { ids =>
+    idGroups.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
 
