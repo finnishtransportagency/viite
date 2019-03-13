@@ -82,7 +82,7 @@ pipeline {
                             "touch start_agent.sh",
                             "echo \$(ssh-agent) > start_agent.sh",
                             "chmod 711 start_agent.sh",
-                            "./start_agent.sh"
+                            "source start_agent.sh"
                         ].join(" && ")
 
                         STAGE_DEPLOY_CMD = [
