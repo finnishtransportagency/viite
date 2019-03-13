@@ -275,9 +275,9 @@ Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käy
 
 Tieosoiteprojektit-listalla näkyvät kaikkien käyttäjien projektit. Projektit on järjestetty ELY-koodien mukaiseen järjestykseen pienimmästä suurimpaan ja niiden sisällä projektin nimen ja käyttäjätunnuksen mukaiseen järjestykseen. 
 
-Järjestystä voi muuttaa sarakkeiden nuolipainikkeilla. Käyttäjä-sarakkeen suodatinpainikkeella saa valittua listalle omat projektinsa tai kaikki projektit. 
+Järjestystä voi muuttaa sarakkeiden nuolipainikkeilla. Käyttäjä-sarakkeen suodatinpainikkeella saa valittua listalle omat projektinsa. Toisen käyttäjän projektit suodatetaan kirjoittamalla ko. käyttäjän tunnus avautuvaan syötekenttään.
 
-Viety tierekisteriin -tilaiset projektit näytetään listalla vuorokauden ajan niiden viennistä tierekisteriin. Kaikki tierekisteriin viedyt projektit saa näkyviin klikkaamalla listan alareunassa olevaa ruutua, ja vastaavasti ne saa pois näkyvistä poistamalla valinnan ruudusta.
+Viety tierekisteriin -tilaiset projektit näytetään listalla vuorokauden ajan niiden viennistä tierekisteriin. Kaikki tierekisteriin viedyt projektit saa näkyviin klikkaamalla listan alareunassa olevaa valintaruutua, ja vastaavasti ne saa pois näkyvistä poistamalla valinnan.
 
 Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit-listalta painamalla Avaa-painiketta. Avaamisen yhteydessä sovellus zoomaa kartan paikkaan, jossa käyttäjä on viimeksi tallentanut toimenpiteen. Mikäli toimenpiteitä ei ole tehty, karttanäkymä rajautuu siten, että kaikki varatut aihiot näkyvät karttanäkymässä.
 
@@ -451,7 +451,9 @@ Viitteessä voi muokata ~~ELY koodia~~ [ELYn muokkaamista ei ole vielä toteutet
 7.2 Muutosilmoitusten tarkastelu taulukkonäkymässä
 --------------------------
 
-Projektin muutosilmoitusten näkymässä on mahdollista tarkastella ilmoitusten yhteenvetotaulukkoa. Avaa projektin yhteenvetotaulukko -painiketta (1) klikkaamalla avautuu taulukkonäkymä, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen sekä tehdyn muutosilmoituksen. Taulukossa rivit on järjestetty suurimasta pienimpään tieosoitteen mukaan (tie, tieosa, alkuetäisyys, ajorata), jotta saman tien tieosuudet ovat taulukossa peräkkäin suurimmasta pienimpään. Yhteenvetotaulukon AET- ja LET-arvot päivittyvät oikein vasta, kun kaikki tieosan aihiot on käsitelty. Muutosilmoitusten tekojärjestyksellä ei ole vaikutusta lopulliseen yhteenvetotaulukkoon. 
+Projektin muutosilmoitusten näkymässä on mahdollista tarkastella ilmoitusten yhteenvetotaulukkoa. Avaa projektin yhteenvetotaulukko -painiketta (1) klikkaamalla avautuu taulukkonäkymä, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen sekä tehdyn muutosilmoituksen. Taulukossa rivit on järjestetty suurimasta pienimpään tieosoitteen mukaan (tie, tieosa, alkuetäisyys, ajorata), jotta saman tien tieosuudet ovat taulukossa peräkkäin suurimmasta pienimpään. Yhteenvetotaulukon AET- ja LET-arvot päivittyvät oikein vasta, kun kaikki tieosan aihiot on käsitelty. Muutosilmoitusten tekojärjestyksellä ei ole vaikutusta lopulliseen yhteenvetotaulukkoon.
+
+Taulukon rivien tietoja voi kopioida maalaamalla halutut tiedot hiirellä ja kopioimalla ne. 
 
 Taulukon saa suurennettua ja pienennettyä sekä suljettua taulukon oikeasta yläkulmasta (2). Taulukon voi pitää auki muokatessa ja muutokset päivittyvät taulukkoon tallennettaessa. Viite-sovelluksen voi esimerkisi venyttää kahdelle näytölle, joista toisella voi tarkastella muutostaulukkoa ja toisella käyttää karttanäkymää. Taulukkoa voi liikuttaa tarraamalla osoittimella yläpalkista. Yhteenvetotaulukko ei välttämättä näy oikeanlaisena, jos selaimen zoom-taso on liian suuri. Ongelma korjaantuu palauttamalla selaimen zoom-taso normaaliksi (Firefox/Chrome Ctrl+0).
 
