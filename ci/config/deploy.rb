@@ -8,8 +8,7 @@ set :log_level, :debug
 set :grunt_target, ENV['GRUNT_TARGET'] || ''
 set :ssh_options, {
   forward_agent: false,
-  auth_methods: ["publickey"],
-  keys: ["/home/jenkins/.ssh/"]
+  keys: ["/home/jenkins/.ssh/id_rsa"]
 }
 
 namespace :deploy do
