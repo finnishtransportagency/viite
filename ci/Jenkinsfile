@@ -30,6 +30,10 @@ pipeline {
             }
             steps {
                     script {
+                        sh "cat ~/.ssh/id_rsa"
+                        sh "cat ~/.ssh/id_rsa.pub"
+                        sh "cat ~/.ssh/known_hosts"
+                        sh "cat ~/.ssh/config"
 
                         STAGE_FRONTEND_BUILD_CMD = [
                             "mkdir tmp",
