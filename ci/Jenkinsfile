@@ -245,7 +245,7 @@ pipeline {
                                  file(credentialsId: 'ID_RSA_PUB', variable: 'ID_RSA_PUB')]) {
                     sh "mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/"
                     sh "cp ${ID_RSA} /home/jenkins/.ssh/"
-                //}
+                }
                 // sshagent ( ['RSA_KEY']) {
                 //    sh STAGE_DEPLOY_CMD
                 // }
