@@ -103,8 +103,6 @@ pipeline {
             }
             steps {
                 sh "cp /data1/ci/maven/* ci/config/"
-                sh "cat ~/.ssh/id_rsa.pub"
-                sh "ssh -o StrictHostKeyChecking=no web@172.17.204.46"
                 script {
 
                     echo "Running publish... (skipped for now) "
