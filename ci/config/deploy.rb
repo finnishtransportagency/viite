@@ -6,7 +6,7 @@ set :deploy_to, "/home/jenkins/ci-test"
 set :pty, true
 set :log_level, :debug
 set :grunt_target, ENV['GRUNT_TARGET'] || ''
-set :ssh_options, { forward_agent: true, keys: %w(~/.ssh/id_rsa) }
+set :ssh_options, { forward_agent: false, keys: %w(~/.ssh/id_rsa) }
 
 namespace :deploy do
   task :start do
