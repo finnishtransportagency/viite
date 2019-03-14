@@ -103,6 +103,7 @@ pipeline {
             }
             steps {
                 sh "cp /data1/ci/maven/* ci/config/"
+                sh "cat ~/.ssh/id_rsa.pub"
                 script {
 
                     echo "Running publish... (skipped for now) "
