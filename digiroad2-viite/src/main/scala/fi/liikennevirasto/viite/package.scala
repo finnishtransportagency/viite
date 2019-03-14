@@ -71,7 +71,7 @@ package object viite {
   val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt."
   val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt."
   val ErrorSplitSuravageNotUpdatable = "Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää."
-
+  val ErrorRenumberingValuesAlreadyInUse = "Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot."
   val ErrorFollowingRoadPartsNotFoundInDB = "Projektiin yritettiin varata tieosia joita ei ole olemassa, tarkista tieosoitteet:"
   val ErrorRoadLinkNotFoundInProject = "Tielinkkiä ei löytynyt projektista. Tekninen virhe, ota yhteys pääkäyttäjään."
   val ErrorRenumberingToOriginalNumber = "Numeroinnissa sekä tie- että  tieosanumero ei voi olla sama kuin alkuperäisellä tieosalla."
