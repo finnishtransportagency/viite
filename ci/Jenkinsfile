@@ -90,7 +90,7 @@ pipeline {
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
                             //"bundle install",
-                            "bundle exec cap staging ssh:doctor"
+                            "bundle exec cap staging deploy --trace"
                         ].join(" && ")
                     }
             }
