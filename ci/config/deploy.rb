@@ -2,11 +2,15 @@ lock '3.4.0'
 set :application, 'ci-test'
 set :repo_url, 'https://github.com/finnishtransportagency/viite.git'
 set :branch, ENV['REVISION'] || ENV['BRANCH_NAME'] || 'VIITE-1701_New_CI_Server'
-set :deploy_to, "/home/jenkins/ci-test"
+set :deploy_to, "/home/web/ci-test"
 set :pty, true
 set :log_level, :debug
 set :grunt_target, ENV['GRUNT_TARGET'] || ''
-set :ssh_options, { forward_agent: false, keys: ["/home/jenkins/.ssh/"] }
+set :ssh_options, {
+  forward_agent: false,
+  auth_methods: ["publickey"],
+  keys: ["/home/jenkins/.ssh/"]
+}
 
 namespace :deploy do
   task :start do
