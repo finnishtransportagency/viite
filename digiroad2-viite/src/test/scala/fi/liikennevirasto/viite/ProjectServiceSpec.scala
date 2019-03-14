@@ -920,7 +920,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val response = projectService.updateProjectLinks(project1.id, Set(), projectLinkDAO.fetchProjectLinks(project1.id).map(_.linkId),
         LinkStatus.Numbering, "TestUser", 5, 206, 0, None,
         RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
-      response.get should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 206 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 01.01.1963 tai se on varattu toiseen projektiin.")
+      response.get should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.")
     }
   }
 
@@ -935,7 +935,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       mockForProject(project1.id, roadAddressServiceRealRoadwayAddressMapper.getRoadAddressWithRoadAndPart(5, 207).map(toProjectLink(project1)))
       projectService.saveProject(project1.copy(reservedParts = addr1))
       val response = projectService.updateProjectLinks(project1.id, Set(), projectLinkDAO.fetchProjectLinks(project1.id).map(_.linkId), LinkStatus.Numbering, "TestUser", 5, 203, 0, None, RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
-      response.get should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 203 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 01.01.1963 tai se on varattu toiseen projektiin.")
+      response.get should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.")
     }
   }
 
