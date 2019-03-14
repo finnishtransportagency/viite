@@ -368,11 +368,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns road addresses filtered given section
     */
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long): Seq[RoadAddress] = {
-    if(OracleDatabase.isWithinSession){
+    if (OracleDatabase.isWithinSession) {
       val roadwayAddresses = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
-    }
-    else{
+    } else {
       withDynSession {
         val roadwayAddresses = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
         roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)

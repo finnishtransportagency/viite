@@ -66,6 +66,22 @@
       [1, 'Tuntematon, rakenteilla']
     ];
 
+    var nodes = [
+        [1, 'Normaali tasoliittymä'],
+        [3, 'Kiertoliittymä'],
+        [4, 'Y-liittymä'],
+        [5, 'Eritasoliittymä'],
+        [7, 'Maantien/kadun raja'],
+        [8, 'ELY-raja'],
+        [10, 'Moniajoratainen liittymä'],
+        [11,'Pisaraliittymä'],
+        [12, 'Liityntätie'],
+        [13,'Tien loppu'],
+        [14,'Silta'],
+        [15,'Huoltoaukko'],
+        [16,'Yksityistie- tai katuliittymä']
+    ];
+
     var buildMultiColoredSegments = function () {
       var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1" />';
       for (var i = 1; i <= 6; i++) {
@@ -91,6 +107,13 @@
         else
           defaultLegendEntry += buildMultiColoredSegments();
       return defaultLegendEntry + '</div>';
+    }).join('');
+
+    var nodesLegendEntries = _.map(nodes, function(node) {
+      return '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
+        '<img src="images/node-sprite.svg#' + node[0] + '" style="margin-right: 5px"/>' +
+        '<div class="label">' + node[0] + " " + node[1] + '</div>' +
+        '</div>';
     }).join('');
 
     var roadProjectOperations = function () {
@@ -190,7 +213,7 @@
       });
 
       hide();
-      
+
       return {
         element: element,
         reset: reset,
@@ -241,6 +264,23 @@
     });
 
     eventbus.on('layer:selected roadAddressProject', toggleProjectLegends);
+
+    eventbus.on('nodesAndJunctions:open', function () {
+      eventbus.trigger('roadAddressProject:deactivateAllSelections');
+      $('#legendDiv').empty();
+      roadClassLegend.append(nodesLegendEntries);
+    });
+
+    eventbus.on('nodesAndJunctions:close', function () {
+      eventbus.trigger('roadAddressProject:enableInteractions');
+      var container = $('#legendDiv');
+      $('.panel-actions').hide();
+      container.empty();
+      roadClassLegend.append(roadClassLegendEntries);
+      roadClassLegend.append(constructionTypeLegendEntries);
+      roadClassLegend.append(floatingLegend);
+      roadClassLegend.append(calibrationPointPicture);
+    });
 
     bindExternalEventHandlers();
 
