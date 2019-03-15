@@ -2,16 +2,9 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHHistoryRoadLink}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import org.slf4j.Logger
-
-import scala.util.matching.Regex.Match
 
 package object viite {
   /* Tolerance in which we can allow MValues to be equal */
@@ -55,7 +48,9 @@ package object viite {
 
   NewRoadNameId,
 
-  NewProjectLink: Long = -1000L
+  NewProjectLink,
+
+  NewRoadwayPointId: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
   /* Used for small jumps on discontinuity or self-crossing tracks */

@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
@@ -22,7 +22,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-class CalibrationPointDAOSpec extends FunSuite with Matchers {
+class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   def runWithRollback(f: => Unit): Unit = {
@@ -53,8 +53,8 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
-      CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      CalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(viite.NewCalibrationPointId, 2, 2, 1.1, 20))
+      ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
+      ProjectCalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(viite.NewCalibrationPointId, 2, 2, 1.1, 20))
       val calibrationPointsAmmount = sql""" Select count(*) from PROJECT_CALIBRATION_POINT""".as[Long].first
       calibrationPointsAmmount should be (2)
     }
@@ -64,19 +64,19 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
-      CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      CalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
-      val calibrationPoints = CalibrationPointDAO.findCalibrationPointByRemainingValues(1, 1, 0.05, 0.075)
+      ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
+      ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
+      val calibrationPoints = ProjectCalibrationPointDAO.findCalibrationPointByRemainingValues(1, 1, 0.05, 0.075)
       calibrationPoints.size should be (1)
       calibrationPoints.head.id != viite.NewCalibrationPointId should be (true)
       calibrationPoints.head.projectId should be (1)
-      val roadCalibrationPoints = CalibrationPointDAO.findCalibrationPointsOfRoad(1,1)
+      val roadCalibrationPoints = ProjectCalibrationPointDAO.findCalibrationPointsOfRoad(1,1)
       roadCalibrationPoints.size should be (2)
       roadCalibrationPoints.head.id should not be roadCalibrationPoints(1).id
       roadCalibrationPoints.head.segmentMValue should not be roadCalibrationPoints(1).segmentMValue
       roadCalibrationPoints.head.addressMValue should not be roadCalibrationPoints(1).addressMValue
-      val calibrationPointId = CalibrationPointDAO.createCalibrationPoint(2, 2, 1.1, 20)
-      val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointById(calibrationPointId)
+      val calibrationPointId = ProjectCalibrationPointDAO.createCalibrationPoint(2, 2, 1.1, 20)
+      val foundCalibrationPoint = ProjectCalibrationPointDAO.findCalibrationPointById(calibrationPointId)
       foundCalibrationPoint.isEmpty should be (false)
       foundCalibrationPoint.get.id should be (calibrationPointId)
       foundCalibrationPoint.get.projectId should be (2)
@@ -90,9 +90,9 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
-      val id = CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      CalibrationPointDAO.updateSpecificCalibrationPointMeasures(id, 1.1, 30)
-      val updatedCalibrationPoint = CalibrationPointDAO.findCalibrationPointById(id).get
+      val id = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
+      ProjectCalibrationPointDAO.updateSpecificCalibrationPointMeasures(id, 1.1, 30)
+      val updatedCalibrationPoint = ProjectCalibrationPointDAO.findCalibrationPointById(id).get
       updatedCalibrationPoint.id should be (id)
       updatedCalibrationPoint.segmentMValue should be (1.1)
       updatedCalibrationPoint.addressMValue should be (30)
@@ -103,9 +103,9 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       addTestProjects()
       addProjectRoads()
-      val id = CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      CalibrationPointDAO.removeSpecificCalibrationPoint(id)
-      val nonExistantCalibrationPoint = CalibrationPointDAO.findCalibrationPointById(id)
+      val id = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
+      ProjectCalibrationPointDAO.removeSpecificCalibrationPoint(id)
+      val nonExistantCalibrationPoint = ProjectCalibrationPointDAO.findCalibrationPointById(id)
       nonExistantCalibrationPoint.isEmpty should be (true)
     }
   }
@@ -115,19 +115,19 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       addTestProjects()
       addProjectRoads()
-      val id = CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      val id2 = CalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
-      CalibrationPointDAO.removeAllCalibrationPointsFromProject(1)
-      val deletedCalibrationPoint1 = CalibrationPointDAO.findCalibrationPointById(id)
-      val deletedCalibrationPoint2 = CalibrationPointDAO.findCalibrationPointById(id2)
+      val id = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
+      val id2 = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
+      ProjectCalibrationPointDAO.removeAllCalibrationPointsFromProject(1)
+      val deletedCalibrationPoint1 = ProjectCalibrationPointDAO.findCalibrationPointById(id)
+      val deletedCalibrationPoint2 = ProjectCalibrationPointDAO.findCalibrationPointById(id2)
       deletedCalibrationPoint1.isEmpty should be (true)
       deletedCalibrationPoint2.isEmpty should be (true)
 
-      val id3 = CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      val id4 = CalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
-      CalibrationPointDAO.removeAllCalibrationPointsFromRoad(1,1)
-      val deletedCalibrationPoint3 = CalibrationPointDAO.findCalibrationPointById(id)
-      val deletedCalibrationPoint4 = CalibrationPointDAO.findCalibrationPointById(id2)
+      val id3 = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
+      val id4 = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
+      ProjectCalibrationPointDAO.removeAllCalibrationPointsFromRoad(1,1)
+      val deletedCalibrationPoint3 = ProjectCalibrationPointDAO.findCalibrationPointById(id)
+      val deletedCalibrationPoint4 = ProjectCalibrationPointDAO.findCalibrationPointById(id2)
       deletedCalibrationPoint3.isEmpty should be (true)
       deletedCalibrationPoint4.isEmpty should be (true)
     }

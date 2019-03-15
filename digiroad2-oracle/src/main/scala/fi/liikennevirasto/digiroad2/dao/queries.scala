@@ -25,6 +25,8 @@ object Queries {
 
   def nextPublishedRoadNetworkId = sql"select PUBLISHED_ROAD_NETWORK_SEQ.nextval from dual"
 
+  def nextRoadwayPointId = sql"select ROADWAY_POINT_SEQ.nextval from dual"
+
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
   }
