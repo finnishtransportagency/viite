@@ -298,16 +298,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String): Option[String] = {
     (ProjectLinkNameDAO.get(roadNumber, projectId),  RoadNameDAO.getLatestRoadName(roadNumber), roadName != null && roadName.trim.nonEmpty, roadNumber <= MaxRoadNumberDemandingRoadName) match {
-        case (Some(projectLinkName), _, true, _)  => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
+        case (Some(projectLinkName), None, true, _)  => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
+          None
+        case (None, None, true, _) => ProjectLinkNameDAO.create(projectId, roadNumber, roadName)
           None
         case (_, Some(existingRoadName), _, _) => ProjectLinkNameDAO.create(projectId, roadNumber, existingRoadName.roadName)
           None
-        case (_, _, _, false) => ProjectLinkNameDAO.create(projectId, roadNumber, "")
+        case (_, _, false, true) =>
+          Some(ErrorMaxRoadNumberDemandingRoadNameMessage)
+        case (Some(_), None, false, false) => ProjectLinkNameDAO.revert(roadNumber, projectId)
           None
-        case _ =>
-        Some(ErrorMaxRoadNumberDemandingRoadNameMessage)
+        case _ => None
       }
-}
+  }
 
   def writableWithValidTrack(projectId: Long, track: Int): Option[String] = {
     if (!isWritableState(projectId)) Some(ProjectNotWritable)
