@@ -4,7 +4,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-object CalibrationPointDAO {
+object ProjectCalibrationPointDAO {
 
   trait CalibrationPointMValues {
     def segmentMValue: Double
