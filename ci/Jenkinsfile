@@ -37,8 +37,8 @@ pipeline {
                             "export TMPDIR=/home/jenkins/tmp",
                             "yarn install",
                             "grunt deploy --target=${get_environment()?.trim()}",
-                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/dist /home/jenkins/package/viite-UI/",
-                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/node_modules /home/jenkins/package/viite-UI/",
+                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging_test/dist /home/jenkins/package/UI/",
+                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging_test/node_modules /home/jenkins/package/UI/",
                             "cd /home/jenkins/package/viite-UI"
                         ].join(" && ")
 
@@ -56,7 +56,7 @@ pipeline {
 
                         STAGE_BACKEND_BUILD_CMD = [
                             "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar /home/jenkins/package/"
+                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging_test/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar /home/jenkins/package/"
                         ].join(" && ")
 
                         STAGE_PACKAGE_CMD = [
