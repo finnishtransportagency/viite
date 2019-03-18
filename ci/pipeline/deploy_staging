@@ -74,7 +74,7 @@ pipeline {
                             "-Dpackaging=war",
                             "-DrepositoryId=nexus3",
                             "-Durl=http://livibuild04.vally.local/nexus/repository/viite/",
-                            "-Dfile=~/package/viite-assembly-0.1.0.war",
+                            "-Dfile=/home/jenkins/package/viite-assembly-0.1.0.war",
                             "-q",
                             "--batch-mode"
                         ].join(" ")
@@ -111,7 +111,7 @@ pipeline {
                     )
                     docker.build(
                         "viite-backend-sbt",
-                        "${build_args} -f ci/docker/Dockerfile.backend ci"
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                     docker.build(
                         "viite-maven-publish",
