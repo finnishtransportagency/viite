@@ -90,7 +90,7 @@ pipeline {
                         STAGE_DEPLOY_CMD = [
                             "cd /home/jenkins/",
                             //"bundle install",
-                            "bundle exec cap staging deploy --trace"
+                            "bundle exec cap staging deploy"
                         ].join(" && ")
                     }
             }
@@ -120,14 +120,14 @@ pipeline {
                     )
                     docker.build(
                         "viite-backend-sbt",
-                        "${build_args} -f ci/Dockerfile.sbt ci"
+                        "${build_args} -f ci/Dockerfile.backend ci"
                     )
                     docker.build(
                         "viite-maven-publish",
                         "${build_args} -f ci/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "viite-capistrano_2",
+                        "viite-capistrano",
                         "${build_args} -f ci/Dockerfile.ruby ci"
                      )
                 }

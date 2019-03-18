@@ -9,7 +9,12 @@ RUN adduser -D -S -u ${JENKINS_UID} jenkins
 #Create scala sbt folders
 RUN mkdir /home/jenkins/.m2 && \
     mkdir /home/jenkins/.ivy && \
-    mkdir /home/jenkins/.sbt
+    mkdir /home/jenkins/.sbt  && \
+    mkdir /home/jenkins/package && \
+    mkdir /home/jenkins/package/UI
+
+#Sbt repositories config
+COPY config/repositories /home/jenkins/.sbt/repositories
 
 #Updates and bash
 RUN apk update && apk upgrade && \
