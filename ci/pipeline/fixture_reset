@@ -91,7 +91,7 @@ pipeline {
 
                     docker.build(
                         "viite-backend-sbt",
-                        "${build_args} -f ci/Dockerfile.sbt ci"
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                 }
             }

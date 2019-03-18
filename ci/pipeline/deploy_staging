@@ -1,6 +1,5 @@
 import java.net.URI
 def get_environment() {
-    //if (env.BRANCH_NAME.startsWith("master")) { return "Staging" }
     return "staging"
 }
 
@@ -31,28 +30,30 @@ pipeline {
             steps {
                     script {
 
+                        def sbt_proxy = new URI(http_proxy)
+
+                        def java_opts = [
+                                         "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                                         "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                                         "-Dhttp.nonProxyHosts=*.vally.local",
+                                         "-DproxySet=true"
+                        ].join(" ")
+
+
                         STAGE_FRONTEND_BUILD_CMD = [
                             "mkdir tmp",
                             "npm install",
-                            "export TMPDIR=/home/jenkins/tmp",
+                            "export TMPDIR=~/tmp",
                             "yarn install",
                             "grunt deploy --target=${get_environment()?.trim()}",
-                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging_test/dist /home/jenkins/package/UI/",
-                            "cp -r /data1/jenkins/workspace/viite/Deploy-Staging_test/node_modules /home/jenkins/package/UI/",
-                            "cd /home/jenkins/package/viite-UI"
+                            "cp -r ${WORKSPACE}/dist ~/package/UI/",
+                            "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
+                            "cd ~/package/UI"
                         ].join(" && ")
 
                         STAGE_FRONTEND_TEST_CMD = [
                             "grunt test"
                         ].join(" && ")
-                        def sbt_proxy = new URI(http_proxy)
-
-                        def java_opts = [
-                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
-                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
-                            "-Dhttp.nonProxyHosts=*.vally.local",
-                            "-DproxySet=true"
-                        ].join(" ")
 
                         STAGE_BACKEND_BUILD_CMD = [
                             "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
@@ -67,30 +68,20 @@ pipeline {
                         STAGE_PUBLISH_CMD = [
                             "mvn deploy:deploy-file",
                             "-DgroupId=fi.liikennevirasto.viite",
-                            "-DartifactId=viite-staging",
+                            "-DartifactId=viite-${get_environment()?.trim()}",
                             "-Dversion=1.0.0",
                             "-DgeneratePom=true",
                             "-Dpackaging=war",
                             "-DrepositoryId=nexus3",
                             "-Durl=http://livibuild04.vally.local/nexus/repository/viite/",
-                            "-Dfile=/home/jenkins/package/viite-assembly-0.1.0.war",
+                            "-Dfile=~/package/viite-assembly-0.1.0.war",
                             "-q",
                             "--batch-mode"
                         ].join(" ")
 
-                        START_SSH_AGENT = [
-                            "touch start_agent.sh",
-                            'echo "$(ssh-agent)" > start_agent.sh',
-                            "echo AQUI!",
-                            "cat start_agent.sh",
-                            "chmod 711 start_agent.sh",
-                            "source start_agent.sh"
-                        ].join(" && ")
-
                         STAGE_DEPLOY_CMD = [
-                            "cd /home/jenkins/",
-                            //"bundle install",
-                            "bundle exec cap staging deploy"
+                            "cd ~/",
+                            "bundle exec cap ${get_environment()?.trim()} deploy"
                         ].join(" && ")
                     }
             }
@@ -116,19 +107,19 @@ pipeline {
                     ].join(" ")
                     docker.build(
                         "viite-frontend-node",
-                        "${build_args} -f ci/Dockerfile.node ci"
+                        "${build_args} -f ci/docker/Dockerfile.node ci"
                     )
                     docker.build(
                         "viite-backend-sbt",
-                        "${build_args} -f ci/Dockerfile.backend ci"
+                        "${build_args} -f ci/docker/Dockerfile.backend ci"
                     )
                     docker.build(
                         "viite-maven-publish",
-                        "${build_args} -f ci/Dockerfile.maven ci"
+                        "${build_args} -f ci/docker/Dockerfile.maven ci"
                     )
                     docker.build(
                         "viite-capistrano",
-                        "${build_args} -f ci/Dockerfile.ruby ci"
+                        "${build_args} -f ci/docker/Dockerfile.ruby ci"
                      )
                 }
             }
@@ -146,7 +137,7 @@ pipeline {
                 docker {
                     image "viite-frontend-node"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v viite-package-${get_environment()?.trim()}:~/package"
                 }
             }
             when {
@@ -156,7 +147,7 @@ pipeline {
                 }
             }
             steps {
-                //sh STAGE_FRONTEND_BUILD_CMD
+                sh STAGE_FRONTEND_BUILD_CMD
                 echo "Running frontend build... (skipped for now)"
             }
             //post {
@@ -173,7 +164,7 @@ pipeline {
                 docker {
                     image "viite-backend-sbt"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v viite-package-${get_environment()?.trim()}:~/package"
                 }
             }
             when {
@@ -200,7 +191,7 @@ pipeline {
                 docker {
                     image "viite-maven-publish"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v viite-package-${get_environment()?.trim()}:~/package"
                 }
             }
             when {
@@ -239,21 +230,14 @@ pipeline {
             }
             steps {
 
-                //sh START_SSH_AGENT
                 withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
                                  file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
                                  file(credentialsId: 'ID_RSA', variable: 'ID_RSA'),
                                  file(credentialsId: 'ID_RSA_PUB', variable: 'ID_RSA_PUB')]) {
-                    sh "mkdir /home/jenkins/.ssh/ && cp ${SSH_CONFIG} /home/jenkins/.ssh/ && cp ${KNOWN_HOSTS} /home/jenkins/.ssh/"
-                    sh "cp ${ID_RSA_PUB} /home/jenkins/.ssh/"
-                    sh "cp ${ID_RSA} /home/jenkins/.ssh/"
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    //sh "cp ${ID_RSA_PUB} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
                 }
-                // sshagent ( ['RSA_KEY']) {
-                //    sh STAGE_DEPLOY_CMD
-                // }
-
-                //sh "ls -l"
-                //sh "ssh-agent /bin/sh && ssh-add /home/jenkins/.ssh/id_rsa"
                 sh STAGE_DEPLOY_CMD
             }
             //post {
