@@ -183,8 +183,8 @@ pipeline {
                 }
             }
             steps {
-                //sh STAGE_BACKEND_BUILD_CMD
-                echo "Skipped for now"
+                echo "Build and run backend tests"
+                sh STAGE_BACKEND_BUILD_CMD
             }
             //post {
             //    failure {
