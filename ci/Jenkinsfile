@@ -210,9 +210,9 @@ pipeline {
                 }
             }
             steps {
-                //sh STAGE_PACKAGE_CMD
-                //sh STAGE_PUBLISH_CMD
-				echo "Running publish... (skipped for now)"
+                echo "Packaging and publishing release to Nexus"
+                sh STAGE_PACKAGE_CMD
+                sh STAGE_PUBLISH_CMD
             }
             //post {
             //    failure {
