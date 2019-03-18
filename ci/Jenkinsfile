@@ -55,7 +55,7 @@ pipeline {
                         ].join(" ")
 
                         STAGE_BACKEND_BUILD_CMD = [
-                            "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
+                            "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
                             "cp -r /data1/jenkins/workspace/viite/Deploy-Staging/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar /home/jenkins/package/"
                         ].join(" && ")
 
