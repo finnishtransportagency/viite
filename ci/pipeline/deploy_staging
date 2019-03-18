@@ -137,7 +137,7 @@ pipeline {
                 docker {
                     image "viite-frontend-node"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:~/package"
+                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -164,7 +164,7 @@ pipeline {
                 docker {
                     image "viite-backend-sbt"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:~/package"
+                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -191,7 +191,7 @@ pipeline {
                 docker {
                     image "viite-maven-publish"
                     reuseNode true
-                    args "-v viite-package-${get_environment()?.trim()}:~/package"
+                    args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
