@@ -28,8 +28,14 @@ pipeline {
                 }
             }
             steps {
+                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
                     script {
 
+                        def ojdbc = 'ojdbc6'
+                        def ojdbc_version = '11.2.0.3.0'
+                        def version = '11.2.0'
+                        def sdoapl = 'sdoapl'
+                        def sdoutl = 'sdoutl'
                         def sbt_proxy = new URI(http_proxy)
 
                         def java_opts = [
@@ -39,24 +45,37 @@ pipeline {
                                          "-DproxySet=true"
                         ].join(" ")
 
+                        STAGE_SETUP_ORACLE = [
+                            "mkdir tmp",
+                            "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output tmp/${sdoutl}.jar",
+                            "mkdir digiroad2-oracle/conf/",
+                            "mkdir digiroad2-oracle/conf/lib/",
+                            "cp -r tmp/ digiroad2-oracle/conf/lib/",
+                            "mkdir digiroad2-oracle/conf/dev/",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
+                            "echo 'bonecp.username=dr2dev13' >> digiroad2-oracle/conf/dev/bonecp.properties",
+                            "echo 'bonecp.password=dr2dev13' >> digiroad2-oracle/conf/dev/bonecp.properties"
+                         ].join(" && ")
+
 
                         STAGE_FRONTEND_BUILD_CMD = [
                             "mkdir tmp",
                             "npm install",
                             "export TMPDIR=~/tmp",
                             "yarn install",
+                            "grunt test",
                             "grunt deploy --target=${get_environment()?.trim()}",
                             "cp -r ${WORKSPACE}/dist ~/package/UI/",
                             "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
                             "cd ~/package/UI"
                         ].join(" && ")
 
-                        STAGE_FRONTEND_TEST_CMD = [
-                            "grunt test"
-                        ].join(" && ")
-
                         STAGE_BACKEND_BUILD_CMD = [
                             "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
+                            "./sbt -Ddigiroad2.env=ci-vahti 'project digiroad2-viite' "test:run-main fi.liikennevirasto.viite.util.DataFixture test",
+                            "java -Ddigiroad2.env=ci-vahti -XX:MaxPermSize=512M -Dfile.encoding=UTF8 -jar ${WORKSPACE}/sbt-launch.jar test",
                             "cp -r ${WORKSPACE}/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar ~/package/"
                         ].join(" && ")
 
@@ -69,7 +88,7 @@ pipeline {
                             "mvn deploy:deploy-file",
                             "-DgroupId=fi.liikennevirasto.viite",
                             "-DartifactId=viite-${get_environment()?.trim()}",
-                            "-Dversion=1.0.0",
+                            "-Dversion=1.0.0-${BUILD_ID}",
                             "-DgeneratePom=true",
                             "-Dpackaging=war",
                             "-DrepositoryId=nexus3",
@@ -84,6 +103,7 @@ pipeline {
                             "bundle exec cap ${get_environment()?.trim()} deploy"
                         ].join(" && ")
                     }
+                }
             }
         }
         stage("Prepare") {
@@ -175,6 +195,7 @@ pipeline {
             }
             steps {
                 echo "Build and run backend tests"
+                sh STAGE_SETUP_ORACLE
                 sh STAGE_BACKEND_BUILD_CMD
             }
             //post {
