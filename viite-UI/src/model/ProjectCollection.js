@@ -254,7 +254,8 @@
     };
 
     var createOrUpdate = function (dataJson) {
-      if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
+      if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0 &&
+          dataJson.roadNumber !==0 && dataJson.roadPartNumber !==0) {
         resetEditedDistance();
         var ids = dataJson.ids;
         if (dataJson.linkStatus === LinkStatus.New.value && ids.length === 0) {
