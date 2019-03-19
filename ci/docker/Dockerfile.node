@@ -5,6 +5,7 @@ RUN adduser -D -S -u $JENKINS_UID jenkins
 RUN mkdir /home/jenkins/package && \
     mkdir /home/jenkins/package/viite-UI && \
     mkdir /home/jenkins/package/viite-backend
-RUN npm install grunt -g
+RUN npm install grunt -g && \
+    npm install -g phantomjs 
 RUN chown -R jenkins /home/jenkins
 #USER jenkins
