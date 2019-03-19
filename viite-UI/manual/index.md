@@ -160,6 +160,7 @@ Tieosoitteilla on seuraavat ominaisuustiedot:
 |---------------|------|----------------|
 |Muokattu viimeksi*|Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.|X|
 |Linkkien lukumäärä|Niiden tielinkkien lukumäärä, joihin valinta  kohdistuu.|X|
+|Geometrian lähde|MML, Täydentävä tai Suravage.|X|
 |Tienumero|Tieosoiteverkon mukainen tienumero. Lähtöaineistona Tierekisterin tieosoitteet 2.1.2018.||
 |Tieosanumero|Tieosoiteverkon mukainen tieosanumero. Lähtöaineistona Tierekisterin tieosoitteet 2.1.2018.||
 |Ajorata|Tieosoiteverkon mukainen ajoratakoodi. Lähtöaineistona Tierekisterin tieosoitteet 2.1.2018.||
