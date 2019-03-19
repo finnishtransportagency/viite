@@ -66,7 +66,7 @@ Kullakin tieosoitesegmentillä on lisäksi tiettyjä sille annettuja ominaisuust
 
 ![Kohteita](k9.JPG)
 
-_Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikunnassa._
+_Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikkunassa._
 
 Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (kts. luku 4. Tieosoiteverkon katselu). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut, ajotiet.
 
@@ -89,7 +89,7 @@ Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisklikkaamalla, Shif
 
 ####Kohdistin####
 
-Kohdistin (3) kertoo kartan keskipisteen. Kohdistimen koordinaatit näkyvät karttaikkunan oikeassa alakulmassa(4). Kun karttaa liikuttaa, keskipiste muuttuu ja koordinaatit päivittyvät. Oikean alakulman valinnan (5) avulla kohdistimen saa myös halutessaan piilotettua kartalta.
+Kohdistin (3) kertoo kartan keskipisteen. Kohdistimen koordinaatit näkyvät karttaikkunan oikeassa alakulmassa (4). Kun karttaa liikuttaa, keskipiste muuttuu ja koordinaatit päivittyvät. Oikean alakulman valinnan (5) avulla kohdistimen saa myös halutessaan piilotettua kartalta.
 
 ####Merkitse piste kartalla####
 
@@ -328,7 +328,7 @@ Muutokset tallennetaan oikean alakulman Tallenna-painikkeesta. Ennen tallennusta
 
 Jos käyttäjä on jo tehnyt projektissa muutoksia tieosoitteille, ne tulevat näkyviin lomakkeelle klikatessa kyseistä tielinkkiä, jolle muutokset on tehty. Esimerkiksi, mikäli tieosalle on toteutettu Lakkautus, tieosaa valittaessa tiedot sen lakkautuksesta ilmestyvät lomakkeelle ja tieosalle on mahdollista tehdä toinen toimenpide. Mahdolliset uudet toimenpidevaihtoehdot kunkin toimenpiteen tallentamisen jälkeen, on kuvattu seuraavissa luvuissa, joissa kerrotaan kunkin toimenpiteen tekemisestä tarkemmin. 
 
-Selite projektitilassa on erilainen kuin katselutilassa. Projektitilan selite kuvaa linkkiverkkoon tehdyt toimenpiteet kun taas katselutilan selite kuvaa tieluokitusta.
+Selite projektitilassa on erilainen kuin katselutilassa. Projektitilan selite kuvaa linkkiverkkoon tehdyt toimenpiteet, kun taas katselutilan selite kuvaa tieluokitusta.
 
 
 
@@ -357,7 +357,7 @@ Tietyyppiä voi muokata pudotusvalikosta (3). Jatkuu-arvo määräytyy ensimmäi
 Huom: Mikäli jatkuvuutta täytyy muokata, esimerkiksi tien lopussa, käyttäjä klikkaa tieosan lopusta aktiiviseksi viimeisen tieosan "Uusi"-toimenpiteellä käsitellyn linkin, jossa tien loppu sijaitsee. Lomakkeelle tulee tiedot linkin osoitteesta ja sille tehdystä toimenpiteestä. Nyt linkin jatkuvuuskoodin muokkaaminen on mahdollista ja oikea koodi, esimerkiksi "1 Tien loppu", valitaan pudotusvalikosta ja tallennetaan. Päivitetty tieto näkyy myös yhteenvetotaulukossa tallennuksen jälkeen.   
 
 
-Käyttöliittymä varoittaa virheilmoituksella jos uusi tieosoite on jo olemassa projektin alkupäivänä tai se on varattuna toisessa tieosoiteprojektissa.
+Käyttöliittymä varoittaa virheilmoituksella, jos uusi tieosoite on jo olemassa projektin alkupäivänä tai se on varattuna toisessa tieosoiteprojektissa.
 
 ![Tieosoite on jo olemassa](k44.JPG)
 
@@ -365,7 +365,7 @@ _Tieosoite on jo olemassa projektin alkupäivänä._
 
 ![Kasvusuunnan vaihto](k47.JPG)
 
-_Valittuna olevan uuden tieosoitteen vaikutussuntaa vaihtuu lomakkeen 'Käännä vaikutussuunta'-nappulasta._
+_Valittuna olevan uuden tieosoitteen vaikutussunta vaihtuu lomakkeen 'Käännä vaikutussuunta'-nappulasta._
 
 
 Uuden tieosoitteen linkit piirtyvät kartalle pinkillä (2). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti etäisyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti myös linkkien m-arvot käyttäen VVH:n tietoja. Uudelle tieosoitteelle määrittyy aluksi satunnainen kasvusuunta, joka näkyy kartalla pinkkien nuolien suunnasta.
@@ -385,7 +385,7 @@ Jos Uusi-toimenpiteellä tieosoitteistetulla kiertoliittymän; linkeillä on VVH
 
 Muussa tapauksessa kiertoliittymän alkukohta asetataan manuaalisesti kahdessa vaiheessa. 1. Valitaan alkupaikka kaksoisklikkaamalla kiertoliittymän linkkiä tieosoitteen haluttuun alkupaikkaan. Valitulle linkille annetaan Uusi-toimenpiteellä tieosoite. 2. Kiertoliittymän loput linkit valitaan Ctrl + klikkaamalla ja annetaan nille sama tieosoite.    
 
-Tieosoiteprojektissa Uusi-toimenpiteellä jo tieosoiteistetun kiertoliittymän alkupaikka muutetaan palauttamalla kiertoliittymä ensin tieosoitteettomaksi ja osoitteistamalla se uudelleen. Valitse tieosoitteistettu kiertoliittymä ja käytä toimenpidettä "Palautus aihioksi tai tieosoitteettomaksi". Toimenpiteen jälkeen kiertoliittymän voi tieosoitteistaa uudelleen halutusta alkupaikasta aloittaen.
+Tieosoiteprojektissa Uusi-toimenpiteellä jo tieosoitteistetun kiertoliittymän alkupaikka muutetaan palauttamalla kiertoliittymä ensin tieosoitteettomaksi ja osoitteistamalla se uudelleen. Valitse tieosoitteistettu kiertoliittymä ja käytä toimenpidettä "Palautus aihioksi tai tieosoitteettomaksi". Toimenpiteen jälkeen kiertoliittymän voi tieosoitteistaa uudelleen halutusta alkupaikasta aloittaen.
 
 7.1.3 Ennallaan
 --------------------------
@@ -423,7 +423,7 @@ _Kuvasarjassa siirretään osa tiestä 14 tielle 459. Tieosoitteiden kasvusuunna
 
 _Manuaalinen kääntö siirron ja numeroinnin yhteydessä:_
 
-Manuaalista kääntöä varten Viitteessä on Käännä kasvusuunta -painike. Painike aktivoituu lomakkeelle kun käyttäjä on tehnyt varaamalleen aihiolle toimenpiteen ja tallentanut sen. Kun käsiteltyä aihiota (on tehty muutosilmoitus siirto tai numerointi) klikataan kartalla, lomakkeella näkyvät tehty ilmoitus ja sen tiedot sekä "Käännnä kasvusuunta" -painike. Kun sitä klikataan sekä tallennetaan, kasvusuunta kääntyy ja yhteenvetotauluun tulee tieto käännöstä oman sarakkeeseen "Kääntö" (rasti ruudussa). 
+Manuaalista kääntöä varten Viitteessä on Käännä kasvusuunta -painike. Painike aktivoituu lomakkeelle kun käyttäjä on tehnyt varaamalleen aihiolle toimenpiteen ja tallentanut sen. Kun käsiteltyä aihiota (on tehty muutosilmoitus siirto tai numerointi) klikataan kartalla, lomakkeella näkyvät tehty ilmoitus ja sen tiedot sekä Käännä kasvusuunta -painike. Kun sitä klikataan sekä tallennetaan, kasvusuunta kääntyy ja yhteenvetotauluun tulee tieto käännöstä oman sarakkeeseen Kääntö (rasti ruudussa). 
 	
 _Kaksiajorataisen osuuden kääntö_
 
