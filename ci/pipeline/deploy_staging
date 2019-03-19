@@ -61,9 +61,9 @@ pipeline {
 
 
                         STAGE_FRONTEND_BUILD_CMD = [
-                            "mkdir ~/tmp",
+                            //"mkdir ~/tmp",
                             "npm install",
-                            "export TMPDIR=~/tmp",
+                            "export TMPDIR=/tmp",
                             "grunt test",
                             "grunt deploy --target=${get_environment()?.trim()}",
                             "cp -r ${WORKSPACE}/dist ~/package/UI/",
