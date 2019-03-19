@@ -33,9 +33,9 @@ object RoadwayPointDAO {
       """.execute
   }
 
-  def fetch(id:Long) : RoadwayPoint = {
+/*  def fetch(id:Long) : RoadwayPoint = {
     s"""
 
      """.stripMargin
-  }
+  }*/
 }
