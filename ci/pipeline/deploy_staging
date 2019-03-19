@@ -62,7 +62,7 @@ pipeline {
 
                         STAGE_FRONTEND_BUILD_CMD = [
                             "mkdir ~/tmp",
-                            "yarn install",
+                            "npm install",
                             "export TMPDIR=~/tmp",
                             "grunt test",
                             "grunt deploy --target=${get_environment()?.trim()}",
