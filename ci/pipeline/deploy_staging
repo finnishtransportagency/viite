@@ -64,7 +64,6 @@ pipeline {
                             "mkdir tmp",
                             "npm install",
                             "export TMPDIR=~/tmp",
-                            "yarn install",
                             "grunt test",
                             "grunt deploy --target=${get_environment()?.trim()}",
                             "cp -r ${WORKSPACE}/dist ~/package/UI/",
