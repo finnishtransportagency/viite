@@ -296,9 +296,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       seq
   }
 
-  private def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String): Option[String] = {
+  def setProjectRoadName(projectId: Long, roadNumber: Long, roadName: String): Option[String] = {
     (ProjectLinkNameDAO.get(roadNumber, projectId),  RoadNameDAO.getLatestRoadName(roadNumber), roadName != null && roadName.trim.nonEmpty, roadNumber <= MaxRoadNumberDemandingRoadName) match {
-        case (Some(projectLinkName), _, true, _)  => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
+        case (Some(projectLinkName), None, true, _)  => ProjectLinkNameDAO.update(projectLinkName.id, roadName)
           None
         case (None, None, true, _) => ProjectLinkNameDAO.create(projectId, roadNumber, roadName)
           None
