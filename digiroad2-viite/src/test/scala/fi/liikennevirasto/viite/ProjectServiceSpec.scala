@@ -457,6 +457,55 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test checkRoadPartsReservable When there are some transferred road links to that same road part.") {
+    runWithRollback {
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
+        "TestUser", DateTime.now(), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val prj_id = project.id
+      val roadNumber = 42006
+      val roadPartNumber = 1
+      val newRoadPartNumber = 2
+      val roadWay_1 = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
+      mockForProject(prj_id, roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadWay_1.map(_.roadwayNumber).toSet)).map(toProjectLink(project)))
+      val reserved_42006_1 = ProjectReservedPart(0L, roadNumber, roadPartNumber, None, Some(Continuous), Some(8L), None, None, None, None, isDirty = true)
+      projectService.saveProject(project.copy(reservedParts = Seq(reserved_42006_1)))
+      val projectLinks = projectLinkDAO.fetchProjectLinks(prj_id)
+      val lastLink = Set(projectLinks.maxBy(_.endAddrMValue).id)
+
+      // transfer last link from 1 to 2:
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(projectLinks.filter(pl => lastLink.contains(pl.linkId)).map(toRoadLink))
+      projectService.updateProjectLinks(prj_id, lastLink, Seq(), LinkStatus.Transfer, "test",
+        roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(1L), false, None)
+      val before_part2_reservation = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      val lengthOfTheTransferredPart = 189
+      before_part2_reservation.find(_.roadPartNumber == newRoadPartNumber).getOrElse(fail()).newLength should be(Some(lengthOfTheTransferredPart))
+      val newLengthOfTheRoadPart_1 = 3829 - lengthOfTheTransferredPart
+      before_part2_reservation.find(_.roadPartNumber == roadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
+
+      // at this point, the error message to reserve road part 207 should be present and the reservation of the 207 should be possible
+
+
+      // test reservation of part 207 with success and final length values
+      val roadWay_2 = roadwayDAO.fetchAllBySection(roadNumber, newRoadPartNumber)
+      mockForProject(prj_id, roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadWay_2.map(_.roadwayNumber).toSet)).map(toProjectLink(project)))
+      val reservedParts = Seq(
+        ProjectReservedPart(0L, roadNumber, newRoadPartNumber, None, Some(Continuous), Some(8L), None, None, None, None, isDirty = true),
+        reserved_42006_1)
+      val prj_dummy = project.copy(reservedParts = reservedParts)
+      projectService.saveProject(project.copy(reservedParts = reservedParts))
+      val after_part2_reservation = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      after_part2_reservation.find(_.roadPartNumber == roadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
+      val newLengthOfTheRoadPart_2 = 647 + lengthOfTheTransferredPart
+//      after_part2_reservation.find(_.roadPartNumber == newRoadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_2))
+      val after_part2_reservation_1 = projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber)
+      after_part2_reservation_1.getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
+      val after_part2_reservation_2 = projectReservedPartDAO.fetchReservedRoadPart(roadNumber, newRoadPartNumber)
+//      after_part2_reservation_2.getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_2))
+    }
+}
+
   test("Test getRoadAddressAllProjects When project is created Then return project") {
     var count = 0
     runWithRollback {
