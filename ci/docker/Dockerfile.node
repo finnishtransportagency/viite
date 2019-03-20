@@ -1,7 +1,8 @@
-FROM alpine
+FROM node:alpine
 ARG JENKINS_UID=10000
 RUN adduser -D -S -u $JENKINS_UID jenkins
 RUN apk update && apk upgrade && \
+    apk add git && \
     apk add yarn && \
     mkdir /home/jenkins/package && \
     mkdir /home/jenkins/package/UI
