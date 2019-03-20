@@ -1,15 +1,23 @@
-FROM alpine
+FROM debian:jessie
 ARG JENKINS_UID=10000
-RUN adduser -D -S -u $JENKINS_UID jenkins
-RUN apk update && apk upgrade && \
-    apk add curl && \
-    apk add yarn && \
-    mkdir /home/jenkins/package && \
-    mkdir /home/jenkins/package/UI
+RUN adduser --system --disabled-password --uid $JENKINS_UID jenkins
 
-RUN curl https://github.com/dustinblackman/phantomized/releases/download/2.1.1a/dockerized-phantomjs.tar.gz | tar xz -C /
-RUN yarn global add phantomjs-prebuilt && \
+RUN apt-get update && \
+    apt-get install -y curl \
+                       bzip2 \
+                       libfontconfig \
+                       apt-transport-https \
+                       ca-certificates && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    curl -sL https://deb.nodesource.com/setup_11.x | bash
+
+RUN apt-get install -y nodejs yarn && \
+    yarn global add phantomjs-prebuilt && \
     yarn global add grunt-cli
+
+RUN mkdir /home/jenkins/package && \
+    mkdir /home/jenkins/package/UI
 
 RUN chown -R jenkins /home/jenkins
 USER jenkins
