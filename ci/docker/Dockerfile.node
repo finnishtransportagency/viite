@@ -8,14 +8,10 @@ RUN apt-get update && \
                        libfontconfig \
                        apt-transport-https \
                        ca-certificates && \
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
     curl -sL https://deb.nodesource.com/setup_11.x | bash
 
-RUN apt-get install -y nodejs yarn && \
-    yarn global add phantomjs-prebuilt && \
-    yarn global add grunt-cli && \
-    phantomjs --version
+RUN apt-get install -y nodejs && \
+    npm install -g grunt-cli
 
 RUN mkdir /home/jenkins/package && \
     mkdir /home/jenkins/package/UI
