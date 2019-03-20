@@ -60,6 +60,7 @@ pipeline {
 
 
                         STAGE_FRONTEND_BUILD_CMD = [
+                            "yarn global add phantomjs-prebuilt",
                             "phantomjs --version",
                             "yarn install",
                             "grunt test",
