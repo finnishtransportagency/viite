@@ -1,9 +1,14 @@
-FROM node:alpine
-#RUN apk --update add openjdk8-jre
+FROM alpine
 ARG JENKINS_UID=10000
 RUN adduser -D -S -u $JENKINS_UID jenkins
-RUN mkdir /home/jenkins/package && \
+RUN apk update && apk upgrade && \
+    apk add yarn && \
+    mkdir /home/jenkins/package && \
     mkdir /home/jenkins/package/UI
-RUN npm install grunt --global
+
+RUN wget -qO- "https://github.com/dustinblackman/phantomized/releases/download/2.1.1a/dockerized-phantomjs.tar.gz" | tar xz -C /  && \
+    yarn global add phantomjs-prebuilt && \
+    yarn global add grunt-cli
+
 RUN chown -R jenkins /home/jenkins
 USER jenkins
