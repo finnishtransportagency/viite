@@ -70,7 +70,7 @@ class ProjectReservedPartDAO {
            	FROM PROJECT_LINK_HISTORY
            	WHERE PROJECT_ID = $projectId
            	GROUP BY (ROAD_NUMBER, ROAD_PART_NUMBER, ELY)
-           ) PLH
+           ) PLH ORDER BY PLH.ROAD_NUMBER, PLH.ROAD_PART_NUMBER
         """
       Q.queryNA[(Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
         case (roadNumber, roadPartNumber, length, ely, discontinuityOpt, startingLinkId) =>
@@ -112,7 +112,7 @@ class ProjectReservedPartDAO {
               WHERE
                 rp.project_id = $projectId
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-            ) gr"""
+            ) gr order by gr.road_number, gr.road_part_number """
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).list.map {
         case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, startingLinkId) =>
