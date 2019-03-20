@@ -14,7 +14,8 @@ RUN apt-get update && \
 
 RUN apt-get install -y nodejs yarn && \
     yarn global add phantomjs-prebuilt && \
-    yarn global add grunt-cli
+    yarn global add grunt-cli && \
+    phantomjs --version
 
 RUN mkdir /home/jenkins/package && \
     mkdir /home/jenkins/package/UI
