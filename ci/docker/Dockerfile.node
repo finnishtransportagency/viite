@@ -7,8 +7,8 @@ RUN apk update && apk upgrade && \
     mkdir /home/jenkins/package && \
     mkdir /home/jenkins/package/UI
 
-RUN wget -qO- "https://github.com/dustinblackman/phantomized/releases/download/2.1.1a/dockerized-phantomjs.tar.gz" | tar xz -C /  && \
-    yarn global add phantomjs-prebuilt && \
+#RUN wget -qO- "https://github.com/dustinblackman/phantomized/releases/download/2.1.1a/dockerized-phantomjs.tar.gz" | tar xz -C /  && \
+RUN yarn global add phantomjs-prebuilt && \
     yarn global add grunt-cli
 
 RUN chown -R jenkins /home/jenkins
