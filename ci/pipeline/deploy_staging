@@ -124,7 +124,7 @@ pipeline {
                         "--build-arg JENKINS_UID=${jenkins_uid}"
                     ].join(" ")
                     docker.build(
-                        "viite-frontend-node",
+                        "viite-frontend-node_1",
                         "${build_args} -f ci/docker/Dockerfile.node ci"
                     )
                     docker.build(
@@ -153,7 +153,7 @@ pipeline {
         stage("Build: Frontend") {
             agent {
                 docker {
-                    image "viite-frontend-node"
+                    image "viite-frontend-node_1"
                     reuseNode true
                     args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
