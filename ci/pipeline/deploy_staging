@@ -62,6 +62,7 @@ pipeline {
                         STAGE_FRONTEND_BUILD_CMD = [
                             "npm install",
                             "grunt test",
+                            "grunt deploy --target=staging",
                             "cp -r ${WORKSPACE}/dist ~/package/UI/",
                             "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
                             "cd ~/package/UI"
