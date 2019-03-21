@@ -70,8 +70,8 @@ pipeline {
 
                         STAGE_BACKEND_BUILD_CMD = [
                             "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                            "./sbt -Ddigiroad2.env=ci-vahti 'project digiroad2-viite' 'test:run-main fi.liikennevirasto.viite.util.DataFixture test'",
-                            "java -Ddigiroad2.env=ci-vahti -XX:MaxPermSize=512M -Dfile.encoding=UTF8 -jar ${WORKSPACE}/sbt-launch.jar test",
+                            "./sbt -Ddigiroad2.env=ci-vahti $java_opts 'project digiroad2-viite' 'test:run-main fi.liikennevirasto.viite.util.DataFixture test'", // Fixture reset
+                            "java -Ddigiroad2.env=ci-vahti $java_opts -XX:MaxPermSize=512M -Dfile.encoding=UTF8 -jar ${WORKSPACE}/sbt-launch.jar test", // Run tests
                             "cp -r ${WORKSPACE}/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar ~/package/"
                         ].join(" && ")
 
