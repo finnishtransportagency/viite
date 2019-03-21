@@ -186,10 +186,10 @@ class ProjectReservedPartDAO {
               WHEN EXISTS(SELECT prj.NAME FROM PROJECT prj
                 WHERE prj.ID IN (SELECT DISTINCT(link.PROJECT_ID)
                   FROM PROJECT_LINK link
-                    WHERE LINK_ID IN (SELECT link.LINK_ID FROM LINEAR_LOCATION link
-                      INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
-                        WHERE road.ROAD_NUMBER = ROAD_NUMBER
-                        AND road.ROAD_PART_NUMBER = ROAD_PART_NUMBER)))
+                    WHERE link.LINK_ID IN (SELECT lrm.LINK_ID FROM LINEAR_LOCATION lrm
+                      INNER JOIN ROADWAY road ON lrm.ROADWAY_NUMBER = road.ROADWAY_NUMBER
+                        WHERE road.ROAD_NUMBER = $roadNumber
+                        AND road.ROAD_PART_NUMBER = $roadPartNumber)))
               THEN MAX(pl.END_ADDR_M)
               ELSE MAX(ra.END_ADDR_M)
             END AS length_new,
