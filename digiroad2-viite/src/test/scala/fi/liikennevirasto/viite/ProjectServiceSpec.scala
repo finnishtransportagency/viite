@@ -478,11 +478,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(projectLinks.filter(pl => lastLink.contains(pl.linkId)).map(toRoadLink))
       projectService.updateProjectLinks(project_id, lastLink, Seq(), LinkStatus.Transfer, "test",
         roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(1L), reversed = false, None)
-      val before_part2_reservation = projectReservedPartDAO.fetchReservedRoadParts(project.id)
       val lengthOfTheTransferredPart = 189
-      before_part2_reservation.find(_.roadPartNumber == newRoadPartNumber).getOrElse(fail()).newLength should be(Some(lengthOfTheTransferredPart))
+      projectReservedPartDAO.fetchReservedRoadPart(roadNumber, newRoadPartNumber).getOrElse(fail()).newLength should be(Some(lengthOfTheTransferredPart))
       val newLengthOfTheRoadPart_1 = 3829 - lengthOfTheTransferredPart
-      before_part2_reservation.find(_.roadPartNumber == roadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
+      projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
 
       // at this point, the error message to reserve road part 2 should be present and the reservation of the road part 2 should be possible
       projectService.validateProjectById(project_id).exists(
@@ -498,15 +497,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.saveProject(project.copy(reservedParts = reservedParts))
       val projectLinksSet = projectLinkDAO.fetchProjectLinks(project_id).filter(_.roadPartNumber == 2).map(_.id).toSet
       projectService.updateProjectLinks(project_id, projectLinksSet, Seq(), LinkStatus.Transfer, "test",
-        roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(1L), false, None)
-      val after_part2_reservation = projectReservedPartDAO.fetchReservedRoadParts(project.id)
-      after_part2_reservation.find(_.roadPartNumber == roadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
+        roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(1L), reversed = false, None)
+      projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
       val newLengthOfTheRoadPart_2 = 647 + lengthOfTheTransferredPart
-      after_part2_reservation.find(_.roadPartNumber == newRoadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_2))
-      val after_part2_reservation_1 = projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber)
-      after_part2_reservation_1.getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_1))
-      val after_part2_reservation_2 = projectReservedPartDAO.fetchReservedRoadPart(roadNumber, newRoadPartNumber)
-      after_part2_reservation_2.getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_2))
+      projectReservedPartDAO.fetchReservedRoadPart(roadNumber, newRoadPartNumber).getOrElse(fail()).newLength should be(Some(newLengthOfTheRoadPart_2))
 
       // at this point, the error is resolved
       projectService.validateProjectById(project_id).exists(
