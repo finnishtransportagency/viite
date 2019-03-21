@@ -69,7 +69,6 @@ object ProjectDeltaCalculator {
 
   private def findTerminations(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
     val terminations = projectLinks.filter(_.status == LinkStatus.Terminated)
-    validateTerminations(terminations)
     terminations.map(pl =>
         adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId)).get -> pl
     )
@@ -95,11 +94,6 @@ object ProjectDeltaCalculator {
 
   private def findNewCreations(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     projectLinks.filter(_.status == LinkStatus.New)
-  }
-
-  private def validateTerminations(roadAddresses: Seq[BaseRoadAddress]): Unit = {
-    if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
-      throw new RoadAddressException("Multiple or no road parts present in one termination set")
   }
 
   private def combineTwo[R <: BaseRoadAddress, P <: BaseRoadAddress](tr1: (R, P), tr2: (R, P), oppositeSections: Seq[RoadwaySection]): Seq[(R, P)] = {
