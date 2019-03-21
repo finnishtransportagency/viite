@@ -1,11 +1,27 @@
 package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
 object RoadwayPointDAO {
 
-  case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[Long] = None, modifiedBy: Option[String] = None, modifiedTime: Option[Long] = None)
+  case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: DateTime, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
+
+  implicit val getRoadwayPointRow = new GetResult[RoadwayPoint] {
+    def apply(r: PositionedResult) = {
+      val roadwayPointId = r.nextLong()
+      val roadwayNumber = r.nextLong()
+      val addrMValue = r.nextLong()
+      val createdBy = r.nextString()
+      val createdTime = new DateTime(r.nextDate())
+      val modifiedBy = r.nextStringOption()
+      val modifiedTime = r.nextDateOption().map(d => new DateTime(d.getTime))
+
+      RoadwayPoint(roadwayPointId, roadwayNumber, addrMValue, createdBy, createdTime, modifiedBy, modifiedTime)
+    }
+  }
 
   def create(roadwayPoint: RoadwayPoint): Unit = {
     sqlu"""
@@ -33,9 +49,11 @@ object RoadwayPointDAO {
       """.execute
   }
 
-/*  def fetch(id:Long) : RoadwayPoint = {
-    s"""
-
-     """.stripMargin
-  }*/
+  def fetch(id:Long) : RoadwayPoint = {
+    sql"""
+      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_DATE
+      from ROADWAY_POINT
+      where id = $id
+     """.as[RoadwayPoint].first
+  }
 }

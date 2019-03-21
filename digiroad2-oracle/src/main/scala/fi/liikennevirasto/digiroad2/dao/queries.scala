@@ -27,6 +27,8 @@ object Queries {
 
   def nextRoadwayPointId = sql"select ROADWAY_POINT_SEQ.nextval from dual"
 
+  def nextCalibrationPointId = sql"select CALIBRATION_POINT_SEQ.nextval from dual"
+
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
   }
