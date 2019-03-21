@@ -114,6 +114,8 @@
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
+    new NodeSearchForm();
+
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
     new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -142,7 +144,7 @@
 
     new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
 
-    applicationModel.refreshMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
+    applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };

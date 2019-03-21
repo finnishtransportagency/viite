@@ -3,8 +3,13 @@
     var LinkStatus = LinkValues.LinkStatus;
     var CalibrationCode = LinkValues.CalibrationCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErrorInTR.value, LinkValues.ProjectStatus.Unknown.value];
+    var ValidElys = _.map(LinkValues.ElyCodes, function(ely){
+      return ely;
+    });
     var selectedProjectLink = false;
+    var editedNameByUser = false;
     var LinkSources = LinkValues.LinkGeomSource;
+    var ProjectStatus = LinkValues.ProjectStatus;
     var formCommon = new FormCommon('');
 
     var endDistanceOriginalValue = '--';
@@ -71,8 +76,8 @@
         formCommon.staticField('Geometrian Lähde', roadLinkSources)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
-        selectionForm(selection, selected, road) +
-        formCommon.changeDirection(selected) +
+        selectionForm(project, selection, selected, road) +
+        formCommon.changeDirection(selected, project) +
         formCommon.actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -81,12 +86,12 @@
         '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
     };
 
-    var selectionForm = function(selection, selected, road){
+    var selectionForm = function(project, selection, selected, road) {
       var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
-        '<select class="action-select" id="dropdown_0" size="1">'+
+        '<select class="action-select" id="dropDown_0" size="1">'+
         '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
         '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
         '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
@@ -96,7 +101,7 @@
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink, road) +
+        formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road) +
         '</form>';
     };
 
@@ -143,6 +148,10 @@
           filled = false;
         }
       }
+
+      var trackCodeDropdown = $('#trackCodeDropdown')[0];
+      filled = filled && !_.isUndefined(trackCodeDropdown) && !_.isUndefined(trackCodeDropdown.value) && trackCodeDropdown.value !== '99';
+
       if (filled) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
@@ -173,22 +182,22 @@
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
-      $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
+      $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
     var fillDistanceValues = function (selectedLinks) {
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
-        $('#beginDistance').val(selectedLinks[0].startAddressM);
-        $('#endDistance').val(selectedLinks[0].endAddressM);
+        $('#beginDistance').prop("disabled", false).val(selectedLinks[0].startAddressM);
+        $('#endDistance').prop("disabled", false).val(selectedLinks[0].endAddressM);
       } else {
         var orderedByStartM = _.sortBy(selectedLinks, function (l) {
           return l.startAddressM;
         });
         if (orderedByStartM[0].calibrationCode === CalibrationCode.AtBeginning.value) {
-          $('#beginDistance').val(orderedByStartM[0].startAddressM);
+          $('#beginDistance').prop("disabled", false).val(orderedByStartM[0].startAddressM);
         }
         if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === CalibrationCode.AtEnd.value) {
-          $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          $('#endDistance').prop("disabled", false).val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
           endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].endAddressM;
         }
       }
@@ -200,6 +209,10 @@
         $('#roadAddressProjectFormCut select').prop('disabled',true);
         $('.update').prop('disabled', true);
         $('.btn-edit-project').prop('disabled', true);
+          if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
+              $(":input").prop('disabled',true);
+              $(".project-form button.cancelLink").prop('disabled',false);
+          }
       }
     };
 
@@ -217,7 +230,7 @@
         var currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
-        formCommon.replaceAddressInfo(backend, selectedProjectLink);
+        formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
@@ -275,6 +288,7 @@
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLinkProperty.setCurrent([]);
+        selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
@@ -345,8 +359,15 @@
 
       var saveChanges = function(){
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        var statusDropdown_0 =$('#dropdown_0').val();
-        var statusDropdown_1 = $('#dropdown_1').val();
+        var isValidEly = _.find(ValidElys, function(ely){
+          return ely.value == $('#ely')[0].value;
+        });
+        if(!isValidEly){
+          return new ModalConfirm("Tarkista antamasi ELY-koodi. Annettu arvo on virheellinen.");
+        }
+
+        var statusDropdown_0 =$('#dropDown_0').val();
+        var statusDropdown_1 = $('#dropDown_1').val();
 
         var objectDropdown_0 = _.find(LinkStatus, function(obj){
           return obj.description === statusDropdown_0;
@@ -385,7 +406,7 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
-      rootElement.on('change', '#roadTypeDropDown', function(){
+      rootElement.on('change', '#roadTypeDropdown', function(){
         setFormDirty();
       });
 
@@ -398,12 +419,12 @@
         saveChanges();
       });
 
-      rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
+      rootElement.on('change', '#roadAddressProjectForm #dropDown_0', function() {
         $('#tie').prop('disabled',false);
         $('#osa').prop('disabled',false);
         $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
-        $('#roadTypeDropDown').prop('disabled',false);
+        $('#roadTypeDropdown').prop('disabled',false);
         if(this.value == LinkStatus.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
@@ -438,7 +459,7 @@
           $('#osa').prop('disabled',true);
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
-          $('#roadTypeDropDown').prop('disabled',false);
+          $('#roadTypeDropdown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -472,7 +493,7 @@
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
-          $('#roadTypeDropDown').prop('disabled',true);
+          $('#roadTypeDropdown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -548,13 +569,14 @@
       });
 
       rootElement.on('change input', '.form-control.small-input', function (event) {
-      var dropdown_0 = $('#dropdown_0');
+      var dropdown_0 = $('#dropDown_0');
       var roadNameField =$('#roadName');
       checkInputs('.project-');
       setFormDirty();
         if (event.target.id === "tie" && (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
           backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
-            if (data !== null) {
+            if (!_.isUndefined(data.roadName)) {
+              editedNameByUser = false;
               roadNameField.val(data.roadName).change();
               if (data.isCurrent) {
                 roadNameField.prop('disabled', true);
@@ -563,8 +585,9 @@
               }
               checkInputs('.project-');
             } else {
-              if (roadNameField.prop('disabled')) {
+              if (roadNameField.prop('disabled') || !editedNameByUser) {
                 $('#roadName').val('').change();
+                editedNameByUser = false;
               }
               roadNameField.prop('disabled', false);
             }
@@ -574,25 +597,36 @@
 
         rootElement.on('keyup, input', '#roadName', function () {
             checkInputs('.project-');
+            editedNameByUser = $('#roadName').val !== '';
         });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
-        eventbus.trigger('projectCollection:clickCoordinates', event, map);
-          var error = projectCollection.getProjectErrors()[event.currentTarget.id];
+        var error = projectCollection.getProjectErrors()[event.currentTarget.id];
+        var roadPartErrors = [
+          LinkValues.ProjectError.TerminationContinuity.value,
+          LinkValues.ProjectError.DoubleEndOfRoad.value,
+          LinkValues.ProjectError.RoadNotReserved.value
+        ];
+        if (_.contains(roadPartErrors, error.errorCode)) {
+          var rootElement = $('#feature-attributes');
+          rootElement.find('#editProjectSpan').click();
+        } else {
+          eventbus.trigger('projectCollection:clickCoordinates', event, map);
           if (error.errorMessage !== "") {
             projectCollection.getProjectLinks().then(function (projectLinks) {
               var projectLinkIds = projectLinks.map(function (link) {
                 return link.linkId;
               });
               if (_.every(error.linkIds, function (link) {
-                  return projectLinkIds.indexOf(link) > -1;
-                })) {
+                return projectLinkIds.indexOf(link) > -1;
+              })) {
                 selectedProjectLinkProperty.openWithErrorMessage(error.ids, error.errorMessage);
               } else {
                 new ModalConfirm("Sinun täytyy varata tieosa projektille, jotta voit korjata sen.");
               }
             });
           }
+        }
       });
     };
     bindEvents();

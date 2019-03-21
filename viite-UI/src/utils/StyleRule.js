@@ -129,6 +129,51 @@
         this._get = function(){
             return styles;
         };
+
+        this.isBetween = function(values){
+            var expression = expressionFn[expressionFn.length-1];
+            if(!expression || expression.compare)
+                throw 'You must have on of the following functions ["where", "and", "or"] before use the "isBetween".';
+            if(values.length !== 2)
+                throw 'you must put an interval between two values [value_1, value_2]';
+            expression.compare = function(propertyValue){
+                return values[0] <= propertyValue  && propertyValue < values[1];
+            };
+            return this;
+        };
+
+        this.isGreater = function(value){
+            var expression = expressionFn[expressionFn.length-1];
+            if(!expression || expression.compare)
+                throw 'You must have on of the following functions ["where", "and", "or"] before use the "isGreater".';
+
+            expression.compare = function(propertyValue){
+                return value < propertyValue;
+            };
+            return this;
+        };
+
+        this.isGreaterOrEqual = function(value){
+            var expression = expressionFn[expressionFn.length-1];
+            if(!expression || expression.compare)
+                throw 'You must have on of the following functions ["where", "and", "or"] before use the "isGreater".';
+
+            expression.compare = function(propertyValue){
+                return value <= propertyValue;
+            };
+            return this;
+        };
+
+        this.isLessOrEqual = function(value){
+            var expression = expressionFn[expressionFn.length-1];
+            if(!expression || expression.compare)
+                throw 'You must have on of the following functions ["where", "and", "or"] before use the "isLess".';
+
+            expression.compare = function(propertyValue){
+                return value >= propertyValue;
+            };
+            return this;
+        };
     };
 
     root.StyleRuleProvider = function(defaultStyle){
@@ -164,9 +209,12 @@
         var openLayerStyleClassConfigs = [
             {
                 name: 'stroke',
-                factory: function(settings){
-                    if(settings.color)
+                factory: function(settings) {
+                    if (settings.color)
                         settings.color = mergeColorOpacity(settings.color, settings.opacity);
+                    if (!settings.lineCap) {
+                        settings.lineCap = 'round';
+                    }
 
                     return {
                         stroke: new ol.style.Stroke(settings)

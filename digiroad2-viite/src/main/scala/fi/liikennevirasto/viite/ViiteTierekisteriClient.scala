@@ -16,17 +16,17 @@ import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProjectId:Option[Long], trTrackingCode:Option[Long],
-                           status:Option[String], name:Option[String], changeDate:Option[String], ely:Option[Int],
+                           status:Option[String], name:Option[String], changeDate:Option[String],
                            trModifiedDate:Option[String], user:Option[String], trPublishedDate:Option[String],
                            trJobNumber:Option[Long], errorMessage:Option[String], trProcessingStarted:Option[String],
                            trProcessingEnded:Option[String], errorCode:Option[Int])
 case class TRStatusResponse(id_tr_projekti:Option[Long], projekti:Option[Long], id:Option[Long], tunnus:Option[Long],
-                            status:Option[String], name:Option[String], change_date:Option[String], ely:Option[Int],
+                            status:Option[String], name:Option[String], change_date:Option[String],
                             muutospvm:Option[String], user:Option[String], published_date:Option[String],
                             job_number:Option[Long], error_message:Option[String], start_time:Option[String],
                             end_time:Option[String], error_code:Option[Int])
 
-case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadwayChangeInfo])
+case class ChangeProject(id:Long, name:String, user:String, changeDate:String, changeInfoSeq:Seq[RoadwayChangeInfo])
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
 case class TRErrorResponse(error_message:String)
 
@@ -35,7 +35,7 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoItemSerializer
     ChangeProject(o.values("id").asInstanceOf[BigInt].longValue(), o.values("name").asInstanceOf[String],
-      o.values("user").asInstanceOf[String], o.values("ely").asInstanceOf[BigInt].intValue(),
+      o.values("user").asInstanceOf[String],
       o.values("change_date").asInstanceOf[String],
       (o \\ "change_info").extract[Seq[RoadwayChangeInfo]])
 }, {
@@ -45,7 +45,6 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
       JField("id", JInt(BigInt.apply(o.id))),
       JField("name", JString(o.name)),
       JField("user", JString(o.user)),
-      JField("ely", JInt(BigInt.apply(o.ely))),
       JField("change_date", JString(o.changeDate)),
       JField("change_info", Extraction.decompose(o.changeInfoSeq))
     )
@@ -57,7 +56,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
     RoadwayChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
       (o \\ "source").extract[RoadwayChangeSection], (o \\ "target").extract[RoadwayChangeSection],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
-      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), false)
+      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue), reversed = false, 0, o.values("ely").asInstanceOf[BigInt].intValue())
 }, {
   case o: RoadwayChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
@@ -68,6 +67,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(emptySection)),
           JField("target", Extraction.decompose(o.target))
         )
@@ -76,6 +76,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(o.source)),
           JField("target", Extraction.decompose(emptySection))
         )
@@ -85,6 +86,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
           JField("reversed", JInt(BigInt.apply(if (o.reversed) 1 else 0))),
+          JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(o.source)),
           JField("target", Extraction.decompose(o.target))
         )
@@ -104,15 +106,15 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
     }
     val map = o.values
     val (id, id_tr_projekti, projekti, tunnus,
-    status, name, change_date, ely,
+    status, name, change_date,
     muutospvm, user, published_date,
     job_number, error_message, start_time,
     end_time, error_code) =
       (map.get("id"), map.get("id_tr_projekti"), map.get("projekti"), map.get("tunnus"), map.get("status"), map.get("name"),
-        map.get("change_date"), map.get("ely"), map.get("muutospvm"), map.get("user"), map.get("published_date"), map.get("job_number"),
+        map.get("change_date"), map.get("muutospvm"), map.get("user"), map.get("published_date"), map.get("job_number"),
         map.get("error_message"), map.get("start_time"), map.get("end_time"), map.get("error_code"))
     TRProjectStatus(id.map(jIntToLong), id_tr_projekti.map(jIntToLong), projekti.map(jIntToLong), tunnus.map(jIntToLong),
-      status.map(jStringToString), name.map(jStringToString),change_date.map(jStringToString), ely.map(jIntToInt),
+      status.map(jStringToString), name.map(jStringToString),change_date.map(jStringToString),
       muutospvm.map(jStringToString), user.map(jStringToString),published_date.map(jStringToString), job_number.map(jIntToLong),
       error_message.map(jStringToString), start_time.map(jStringToString),end_time.map(jStringToString), error_code.map(jIntToInt))
 }, {
@@ -125,7 +127,6 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
       JField("status", s.status.map(l => JString(l)).orNull),
       JField("name", s.name.map(l => JString(l)).orNull),
       JField("change_date", s.changeDate.map(l => JString(l)).orNull),
-      JField("ely", s.ely.map(l => JInt(BigInt.apply(l))).orNull),
       JField("muutospvm", s.trModifiedDate.map(l => JString(l)).orNull),
       JField("user", s.user.map(l => JString(l)).orNull),
       JField("published_date", s.trPublishedDate.map(l => JString(l)).orNull),
@@ -175,13 +176,13 @@ object ViiteTierekisteriClient {
     loadedKeyString
   }
 
-  def convertToChangeProject(changeData: List[ProjectRoadwayChange]): ChangeProject= {
+  def convertToChangeProject(changeData: List[ProjectRoadwayChange]): ChangeProject = {
     val projects = changeData.map(cd => {
       convertChangeDataToChangeProject(cd)
     })
-    val grouped = projects.groupBy(p => (p.id, p.ely, p.name, p.changeDate, p.user))
+    val grouped = projects.groupBy(p => (p.id, p.name, p.changeDate, p.user))
     if (grouped.keySet.size > 1)
-      throw new IllegalArgumentException("Multiple projects, elys, users or change dates in single data set")
+      throw new IllegalArgumentException("Multiple projects, users or change dates in single data set")
     projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
       proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
     }
@@ -190,7 +191,7 @@ object ViiteTierekisteriClient {
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
@@ -230,7 +231,7 @@ object ViiteTierekisteriClient {
     } catch {
       case NonFatal(e) =>
         logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
-        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, failedToSendToTRMessage) // sending project to tierekisteri failed
+        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, FailedToSendToTRMessage) // sending project to tierekisteri failed
     } finally {
       response.close()
     }
@@ -247,7 +248,6 @@ object ViiteTierekisteriClient {
           "status" -> receivedData.status.getOrElse("null"),
           "name" -> receivedData.name.getOrElse("null"),
           "change_date" -> receivedData.changeDate.getOrElse("null"),
-          "ely" -> receivedData.ely.getOrElse("null"),
           "muutospvm" -> receivedData.trModifiedDate.getOrElse("null"),
           "user" -> receivedData.user.getOrElse("null"),
           "published_date" -> receivedData.trPublishedDate.getOrElse("null"),
@@ -287,7 +287,7 @@ object ViiteTierekisteriClient {
 
   def responseMapper (response:TRStatusResponse): TRProjectStatus = {
     TRProjectStatus(response.id, response.id_tr_projekti, response.tunnus, response.job_number, response.status,
-      response.name, response.change_date, response.ely, response.muutospvm, response.user, response.published_date,
+      response.name, response.change_date, response.muutospvm, response.user, response.published_date,
       response.job_number, response.error_message, response.start_time, response.end_time, response.error_code)
   }
 

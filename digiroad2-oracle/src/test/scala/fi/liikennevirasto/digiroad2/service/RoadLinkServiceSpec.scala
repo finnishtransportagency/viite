@@ -40,27 +40,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result
   }
 
-  test("Provide last edited date from VVH on road link modification date if there are no overrides") {
-    OracleDatabase.withDynTransaction {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-      val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
-
-      val lastEditedDate = DateTime.now()
-      val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TrafficDirection.TowardsDigitizing, AllOthers, Some(lastEditedDate)))
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(roadLinks).future)
-      when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
-
-      val service = new TestService(mockVVHClient)
-      val results = service.getRoadLinksFromVVH(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
-      results.head.modifiedAt should be(Some(DateTimePropertyFormat.print(lastEditedDate)))
-      dynamicSession.rollback()
-    }
-  }
-
-  test("Check the correct return of a ViiteRoadLink By Municipality") {
+  test("Test getRoadLinksFromVVHByMunicipality() When supplying a specific municipality Id Then return the correct return of a ViiteRoadLink of that Municipality") {
     val municipalityId = 235
     val linkId = 2l
     val roadLink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -82,7 +62,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Verify if there are roadlinks from the complimentary geometry") {
+  test("Test getComplementaryRoadLinksFromVVH() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
     val municipalityId = 235
     val linkId = 2l
     val roadLink: VVHRoadlink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -94,7 +74,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     OracleDatabase.withDynTransaction {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
+      when(mockVVHComplementaryClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
 
       val roadLinksList = service.getComplementaryRoadLinksFromVVH(boundingBox, Set.empty)
 
@@ -105,7 +85,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Full municipality request includes both complementary and ordinary geometries") {
+  test("Test getCurrentAndComplementaryRoadLinksFromVVH() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
     val municipalityId = 235
     val linkId = Seq(1l, 2l)
     val roadLinks = linkId.map(id =>
@@ -134,7 +114,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Verify the returning of the correct VVHHistoryRoadLink"){
+  test("Test getRoadLinksHistoryFromVVH() When supplying a single linkId to query Then return the VVHHistoryRoadLink for the queried linkId "){
     val municipalityId = 235
     val linkId = 1234
     val firstRoadLink = new VVHHistoryRoadLink(linkId, municipalityId, Seq.empty, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, 0, 100, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
@@ -154,7 +134,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Should return roadlinks and complementary roadlinks") {
+  test("Test getRoadLinksAndComplementaryFromVVH() When submitting a specific bounding box and a municipality Then return regular roadlinks and complementary roadlinks that are in the bounding box and belong to said municipality.") {
 
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -179,7 +159,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchWalkwaysByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4)))
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)))
+      when(mockVVHRoadLinkClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)))
 
       val roadlinks = service.getRoadLinksAndComplementaryFromVVH(boundingBox, Set(91))
 
@@ -189,7 +169,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("verify the output of change info") {
+  test("Test getChangeInfoFromVVHF() When defining a bounding box as a search area Then return the change infos for the links in the search area") {
     val oldLinkId = 1l
     val newLinkId = 2l
     val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, ChangeType.DividedModifiedPart, Some(0), Some(1), Some(0), Some(1), 144000000)

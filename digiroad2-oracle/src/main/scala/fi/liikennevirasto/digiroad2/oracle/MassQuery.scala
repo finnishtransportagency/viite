@@ -5,6 +5,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 object MassQuery {
   def withIds[T](ids: Set[Long])(f: String => T): T = {
+    sqlu"""DELETE FROM temp_id""".execute
     val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_id (id) values (?)")
     try {
       ids.foreach { id =>
@@ -13,7 +14,6 @@ object MassQuery {
       }
       insertLinkIdPS.executeBatch()
       val ret = f("temp_id")
-      sqlu"""DELETE FROM temp_id""".execute
       ret
     } finally {
       insertLinkIdPS.close()

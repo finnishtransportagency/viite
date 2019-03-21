@@ -9,20 +9,33 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.slf4j.LoggerFactory
+import org.scalatra.swagger._
 
 
-class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class ChangeApi(roadAddressService: RoadAddressService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport  {
   val logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
   protected implicit val jsonFormats: Formats = DefaultFormats
+  protected val applicationDescription = "The user interface API "
 
   before() {
     basicAuth
     contentType = formats("json")
   }
 
-  get("/road_numbers") {
+  val roadNumberToGeoJson = (
+    apiOperation[Map[String, Any]]("roadNumberToGeoJson")
+      .parameters(
+        queryParam[String]("since").description("Start date of the road addresses changes"),
+        queryParam[String]("until").description("End date of the road addresses changes")
+      )
+      tags "ChangeAPI"
+      summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
+      notes ""
+  )
+
+  get("/road_numbers", operation(roadNumberToGeoJson)) {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
@@ -83,7 +96,7 @@ class ChangeApi(roadAddressService: RoadAddressService) extends ScalatraServlet 
                 "createdBy" -> road.createdBy,
                 "modifiedAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
                 "createdAt" -> road.validFrom.map(DateTimePropertyFormat.print(_)),
-                "changeType" -> extractChangeType(since, road.isExpire(), road.validFrom)
+                "changeType" -> extractChangeType(since, road.isExpire, road.validFrom)
               )
           )
         }

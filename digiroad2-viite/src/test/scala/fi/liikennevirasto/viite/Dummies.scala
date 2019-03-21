@@ -6,18 +6,27 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.HistoryLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, FeatureClass, VVHHistoryRoadLink}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
-import fi.liikennevirasto.viite.dao.{FloatingReason, LinearLocation, RoadAddress, Roadway}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 
 object Dummies {
 
-  def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime]) = {
-    Roadway(0L, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "", None, 0L, NoTermination)
+  def dummyRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: DateTime, endDate: Option[DateTime], roadwayId: Long = 0L): Roadway = {
+    Roadway(roadwayId, roadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, false, startDate, endDate, "user", None, 0L, NoTermination)
   }
+
+  def dummyRoadwayChangeSection(roadNumber: Option[Long], roadPartNumber: Option[Long], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], roadType: Option[RoadType] = Some(RoadType.PublicRoad), discontinuity: Option[Discontinuity], ely: Option[Long]) = {
+    RoadwayChangeSection(roadNumber, track, roadPartNumber, roadPartNumber, startAddressM, endAddressM, roadType, discontinuity, ely)
+  }
+
+  def dummyLinearLocationWithGeometry(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, geometry: Seq[Point] = Seq()): LinearLocation =
+    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, NoFloating, LinkGeomSource.SuravageLinkInterface, 0, geometry)
 
   def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, vvhTimestamp: Long): LinearLocation =
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, NoFloating, LinkGeomSource.NormalLinkInterface, vvhTimestamp)
@@ -35,9 +44,9 @@ object Dummies {
     dummyLinearLocation(roadwayNumber + Math.round(orderNumber), roadwayNumber, orderNumber, linkId, startMValue, endMValue, floatingReason, LinkGeomSource.NormalLinkInterface, vvhTimestamp = 0L)
   }
 
-  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource, vvhTimestamp: Long): LinearLocation = {
+  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource, vvhTimestamp: Long, geometry: Seq[Point] = Seq()): LinearLocation = {
     LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, vvhTimestamp, (None, None), floatingReason,
-      Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, roadwayNumber)
+      if(geometry.isEmpty) Seq(Point(0.0, startMValue), Point(0.0, endMValue)) else geometry, linkGeomSource, roadwayNumber)
   }
 
   def dummyRoadAddress(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime],
@@ -45,9 +54,16 @@ object Dummies {
     dummyRoadAddress(roadwayNumber, roadNumber, roadPartNumber, startAddrM, endAddrM, startDate, endDate, linkId, startMValue, endMValue, NoFloating, linkGeomSource)
 
   def dummyRoadAddress(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime],
-                       linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource): RoadAddress = {
+                       linkId: Long, startMValue: Double, endMValue: Double, floatingReason: FloatingReason, linkGeomSource: LinkGeomSource, geometry: Seq[Point] = Seq()): RoadAddress = {
     RoadAddress(0L, 0L, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Continuous, startAddrM, endAddrM, startDate, endDate, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing,
-      0L, (None, None), floatingReason, Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, 0L, NoTermination, roadwayNumber, None, None, None)
+      0L, (None, None), floatingReason, if(geometry.nonEmpty) geometry else Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, 0L, NoTermination, roadwayNumber, None, None, None)
+  }
+
+  def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: Long = 0, startMValue: Double = 0,
+                       endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, roadType: RoadType = RoadType.PublicRoad, geometry: Seq[Point] = Seq()) = {
+    ProjectLink(0L, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startAddrM, endAddrM, startDate, endDate,
+      Some("user"), linkId, startMValue, endMValue, sideCode, (None, None), NoFloating, geometry, projectId,
+      status, roadType, geometryLength = 0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, linkGeometryTimeStamp = 0)
   }
 
   def dummyVvhHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): VVHHistoryRoadLink = {

@@ -45,7 +45,8 @@
           {value: 2, description: "Epäjatkuva"},
           {value: 3, description: "ELY:n raja"},
           {value: 4, description: "Lievä epäjatkuvuus"},
-          {value: 5, description: "Jatkuva"}
+          {value: 5, description: "Jatkuva"},
+          {value: 6, description: "Rinnakkainen linkki"} /* 5. Jatkuva (Rinnakkainen linkki) */
         ]
       }
     ];
@@ -399,34 +400,39 @@
       }
     };
 
-    var addOpenProjectButton = function() {
-      var rootElement = $('#feature-attributes');
-      rootElement.empty();
+      var addActionButtons = function () {
+        var rootElement = $('#feature-attributes');
+        rootElement.empty();
         var emptyFormDiv =
-            '<p class="center"><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
-            '<p class="center"><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">TIEOSOITEVERKON VIRHEET</a></p>' +
-            '<p class="form form-horizontal"></p>' +
-            '<div class="form-initial-state" id="emptyFormDiv">' +
-              '<span class="header-noposition">Aloita valitsemalla projekti.</span>' +
-              '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
-              '<button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
-            '</div>';
-      rootElement.append(emptyFormDiv);
-      $('[id=formProjectButton]').click(function() {
-        $('[id=projectListButton]').click();
-        return false;
-      });
-        $('[id=formNameToolButton]').click(function () {
-            roadNamingTool.toggle();
-            return false;
+          '<p class="center"><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
+          '<p class="center"><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">TIEOSOITEVERKON VIRHEET</a></p>' +
+          '<p class="form form-horizontal"></p>' +
+          '<div class="form-initial-state" id="emptyFormDiv">' +
+          '<span class="header-noposition">Aloita valitsemalla projekti.</span>' +
+          '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
+          '<button id="formNameToolButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Tiennimen ylläpito</button>' +
+          '<button id="formNodesAndJunctionsButton" class="open-tool-mode-btn btn btn-block btn-primary" style="margin-top: 5px;">Solmut ja liittymät</button>' +
+          '</div>';
+        rootElement.append(emptyFormDiv);
+        $('[id=formProjectButton]').click(function () {
+          $('[id=projectListButton]').click();
+          return false;
         });
-    };
+        $('[id=formNameToolButton]').click(function () {
+          roadNamingTool.toggle();
+          return false;
+        });
+        $('[id=formNodesAndJunctionsButton]').click(function () {
+          eventbus.trigger('nodesAndJunctions:open');
+          return false;
+        });
+      };
 
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
 
-      addOpenProjectButton();
+      addActionButtons();
 
       var switchMode = function (readOnly, linkProperties) {
         toggleMode(readOnly, linkProperties);
@@ -527,7 +533,7 @@
       });
 
       eventbus.on('form:showPropertyForm', function () {
-        addOpenProjectButton();
+        addActionButtons();
       });
 
       eventbus.on('adjacents:added', function(sources, targets) {
@@ -619,13 +625,13 @@
 
       eventbus.on('layer:selected', function(layer, previouslySelectedLayer, toggleStart) {
         if (layer === "linkProperty" && toggleStart) {
-          addOpenProjectButton();
+          addActionButtons();
         }
       });
 
       eventbus.on('roadLayer:toggleProjectSelectionInForm', function(layer, noSave) {
         if (layer === "linkProperty") {
-          addOpenProjectButton();
+          addActionButtons();
           if (noSave) {
             $('#formProjectButton').click();
           } else {
@@ -638,7 +644,7 @@
 
       eventbus.on('linkProperties:unselected', function() {
         if ((applicationModel.selectionTypeIs(selectionType.All) || applicationModel.selectionTypeIs(selectionType.Floating)) && !applicationModel.isProjectOpen()) {
-          addOpenProjectButton();
+          addActionButtons();
         }
       });
 
@@ -764,6 +770,7 @@
       eventbus.on('roadAddressProject:selected', function() {
         $('.wrapper').remove();
       });
+
     };
     bindEvents();
   };

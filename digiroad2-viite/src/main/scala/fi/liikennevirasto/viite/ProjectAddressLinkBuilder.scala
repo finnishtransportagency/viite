@@ -53,6 +53,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case 99 => roadLink.attributes.getOrElse(TrackCode, projectLink.track.value).asInstanceOf[Number].intValue()
       case _ => projectLink.track.value
     }
+
     val roadName = projectLink.roadName.getOrElse("")
     val municipalityCode = roadLink.municipalityCode
 

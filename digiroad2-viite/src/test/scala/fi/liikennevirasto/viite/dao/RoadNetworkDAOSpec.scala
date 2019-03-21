@@ -47,7 +47,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val previousRoadNetworkId = dao.getLatestRoadNetworkVersionId.getOrElse(-1l)
       val previousPublishedNetworkDate = dao.getLatestPublishedNetworkDate.getOrElse(DateTime.parse("2000-01-01"))
-      dao.createPublishedRoadNetwork
+      dao.createPublishedRoadNetwork()
       dao.getLatestRoadNetworkVersionId.getOrElse(fail) should not be previousRoadNetworkId
       dao.getLatestPublishedNetworkDate.getOrElse(fail) should not be previousPublishedNetworkDate
     }
@@ -58,7 +58,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   test("Test expireRoadNetwork When expiring Then the latest id changes") {
     runWithRollback {
       dao.expireRoadNetwork
-      dao.createPublishedRoadNetwork
+      dao.createPublishedRoadNetwork()
       val idBefore = dao.getLatestRoadNetworkVersionId.getOrElse(fail)
       dao.expireRoadNetwork
       dao.getLatestRoadNetworkVersionId.getOrElse(-1) should not be idBefore
@@ -70,7 +70,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   test("Test createPublishedRoadway When create two published roadways Then RoadwayDAO.fetchAllByRoadwayNumbers should return only these two") {
     runWithRollback {
       dao.expireRoadNetwork
-      dao.createPublishedRoadNetwork
+      dao.createPublishedRoadNetwork()
       val networkId = dao.getLatestRoadNetworkVersionId.getOrElse(fail)
       val roadwayId1 = Sequences.nextRoadwayId
       val roadwayId2 = Sequences.nextRoadwayId
@@ -89,16 +89,17 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   private def addLinearLocationAndRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
     val linearLocationDAO = new LinearLocationDAO
+    val roadnetworkDAO = new RoadNetworkDAO
     val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
       (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
       roadwayId)
     linearLocationDAO.create(List(linearLocation))
-    dao.addRoadNetworkError(roadwayId, linearLocationId, addressError)
+    dao.addRoadNetworkError(roadwayId, linearLocationId, addressError, roadnetworkDAO.getLatestRoadNetworkVersionId)
   }
 
   private def expireAndAddRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
     dao.expireRoadNetwork
-    dao.createPublishedRoadNetwork
+    dao.createPublishedRoadNetwork()
     roadwayDAO.create(List(testRoadway1.copy(id = roadwayId)))
     addLinearLocationAndRoadNetworkError(roadwayId, linearLocationId, linkId, addressError)
   }
@@ -160,14 +161,14 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   test("Test getLatestRoadNetworkVersionId When there is Then should return id") {
     runWithRollback {
-      dao.createPublishedRoadNetwork
+      dao.createPublishedRoadNetwork()
       dao.getLatestRoadNetworkVersionId.getOrElse(fail) should be > 0l
     }
   }
 
   test("Test getLatestRoadNetworkVersionId When there is only expired Then should return None") {
     runWithRollback {
-      dao.createPublishedRoadNetwork
+      dao.createPublishedRoadNetwork()
       dao.expireRoadNetwork
       dao.getLatestRoadNetworkVersionId should be(None)
     }
@@ -184,7 +185,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
 
   test("Test getLatestPublishedNetworkDate When there is published network Then return date") {
     runWithRollback {
-      dao.createPublishedRoadNetwork
+      dao.createPublishedRoadNetwork()
       val date = dao.getLatestPublishedNetworkDate
       date.isEmpty should be(false)
       date.get.isAfter(DateTime.now().minusHours(24))

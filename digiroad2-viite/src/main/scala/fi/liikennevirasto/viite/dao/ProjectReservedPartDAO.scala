@@ -1,26 +1,7 @@
 package fi.liikennevirasto.viite.dao
-
-import java.sql.Timestamp
-import java.util.Date
-
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{BaseCalibrationPoint, CalibrationPointMValues}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
-import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
-import fi.liikennevirasto.viite.dao.ProjectState.{Incomplete, Saved2TR}
-import fi.liikennevirasto.viite.process.InvalidAddressDataException
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -37,7 +18,7 @@ case class ProjectReservedPart(id: Long, roadNumber: Long, roadPartNumber: Long,
 }
 
 class ProjectReservedPartDAO {
-  private def logger = LoggerFactory.getLogger(getClass)
+  private def logger: Logger = LoggerFactory.getLogger(getClass)
 
   /**
     * Removes reserved road part and deletes the project links associated to it.
@@ -45,33 +26,34 @@ class ProjectReservedPartDAO {
     * or this will fail.
     *
     * @param projectId        Project's id
-    * @param reservedRoadPart Road part to be removed
+    * @param roadNumber       Road number of the reserved part to remove
+    * @param roadPartNumber   Road part number to remove
     */
-  def removeReservedRoadPart(projectId: Long, reservedRoadPart: ProjectReservedPart): Unit = {
+  def removeReservedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     time(logger, "Remove reserved road part") {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
       sqlu"""
            DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
            (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
-           RA.ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND RA.ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}))
-           OR (ROAD_NUMBER = ${reservedRoadPart.roadNumber} AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
+           RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
+           OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber
            AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
            """.execute
-      sqlu"""
-         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE id = ${reservedRoadPart.id}
-         """.execute
+      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}""".execute
     }
   }
 
   def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
-    sqlu"""
-         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}
-         """.execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
+    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}""".execute
   }
 
   def removeReservedRoadPartsByProject(projectId: Long): Unit = {
-    sqlu"""
-         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId
-         """.execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
+    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId""".execute
   }
 
   def fetchHistoryRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
@@ -213,12 +195,6 @@ class ProjectReservedPartDAO {
       SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
   }
 
-  def getReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
-    val query = s"""SELECT ID FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId AND
-            ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber"""
-    Q.queryNA[Long](query).list.head
-  }
-
   def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     time(logger, s"Check if the road part $roadNumber/$roadPartNumber is not available for the project $projectId") {
       val query =
@@ -233,12 +209,6 @@ class ProjectReservedPartDAO {
               WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number
                AND pro.road_number = $roadNumber AND pro.road_part_number = $roadPartNumber AND ra.end_date IS NULL)"""
       Q.queryNA[Int](query).firstOption.nonEmpty
-    }
-  }
-
-  implicit val getDiscontinuity = new GetResult[Option[Discontinuity]] {
-    def apply(r: PositionedResult) = {
-      r.nextLongOption().map(l => Discontinuity.apply(l))
     }
   }
 }

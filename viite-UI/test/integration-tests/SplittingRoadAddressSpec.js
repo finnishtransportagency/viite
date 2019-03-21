@@ -31,6 +31,8 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
 
     describe('select cut tool and make a split', function () {
       before(function () {
+        var suravageProjectLayer = testHelpers.getLayer(openLayersMap, 'suravageRoadProjectLayer');
+        suravageProjectLayer.setVisible(true);
         testHelpers.selectTool('Cut');
         testHelpers.clickMap(openLayersMap, 480905.40280654473, 7058825.968613995);
         eventbus.trigger('map:clicked', {x: 480905.40280654473, y: 7058825.968613995});
@@ -39,14 +41,14 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
       it('check split form data', function () {
         expect( $('.cut').attr('class')).to.be.a('string', 'action cut active');
         expect($('#roadAddressProjectFormCut').html()).not.to.have.length(0);
-        expect($('#dropdown_0')[0].value).to.be.a('String', 'Transfer');
-        expect($('#dropdown_1')[0].value).to.be.a('String', 'New');
-        expect($('#dropdown_2')[0].value).to.be.a('String', 'Terminated');
+        expect($('#splitDropDown_0')[0].value).to.be.a('String', 'Transfer');
+        expect($('#splitDropDown_1')[0].value).to.be.a('String', 'New');
+        expect($('#splitDropDown_2')[0].value).to.be.a('String', 'Terminated');
         expect($('#tie')[0].value).to.equal('16081');
         expect($('#osa')[0].value).to.equal('1');
         expect($('#trackCodeDropdown')[0].value).to.equal('0');
         expect($('#discontinuityDropdown')[0].value).to.equal('5');
-        expect($('#roadTypeDropDown')[0].value).to.equal('3');
+        expect($('#roadTypeDropdown')[0].value).to.equal('3');
       });
 
       describe('cancel the split', function () {

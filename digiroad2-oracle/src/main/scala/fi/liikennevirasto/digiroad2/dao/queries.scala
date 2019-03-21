@@ -7,6 +7,8 @@ import slick.jdbc.{StaticQuery => Q}
 
 object Queries {
 
+  def nextViiteProjectId = sql"select viite_project_seq.nextval from dual"
+
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
   def nextRoadwayId = sql"select ROADWAY_SEQ.nextval from dual"
@@ -16,6 +18,12 @@ object Queries {
   def nextRoadwayNumber = sql"select ROADWAY_NUMBER_SEQ.nextval from dual"
 
   def nextRoadNetworkErrorId = sql"select ROAD_NETWORK_ERROR_SEQ.nextval from dual"
+
+  def nextProjectId = sql"select VIITE_PROJECT_SEQ.nextval from dual"
+
+  def nextRoadwayChangeLink = sql"select ROADWAY_CHANGE_LINK.nextval from dual"
+
+  def nextPublishedRoadNetworkId = sql"select PUBLISHED_ROAD_NETWORK_SEQ.nextval from dual"
 
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list

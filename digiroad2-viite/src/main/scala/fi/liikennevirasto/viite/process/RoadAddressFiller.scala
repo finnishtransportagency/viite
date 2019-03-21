@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHHistoryRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinearLocation, RoadAddress, UnaddressedRoadLink}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import org.slf4j.LoggerFactory
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory
 object RoadAddressFiller {
 
   val logger = LoggerFactory.getLogger(getClass)
+  val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
 
   case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
   case class ChangeSet(
@@ -61,7 +62,7 @@ object RoadAddressFiller {
 
   //TODO will be implemented at VIITE-1542
   private def buildUnaddressedRoadLink(rl: RoadLinkLike, roadAddrSeq: Seq[UnaddressedRoadLink]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(mra => RoadAddressLinkBuilder.build(rl, mra))
+    roadAddrSeq.map(mra => roadAddressLinkBuilder.build(rl, mra))
   }
 
 //  def fillTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[Long, Seq[RoadAddressLink]]): (Seq[RoadAddressLink], AddressChangeSet) = {
@@ -173,7 +174,7 @@ object RoadAddressFiller {
     (passThroughSegments, changeSet.copy(droppedSegmentIds = changeSet.droppedSegmentIds ++ droppedSegmentIds))
   }
 
-  //TODO can also be done here the fuse of linear locations when thr roadway id of the linear location is the same and no calirabtion points in the middle
+  //TODO can also be done here the fuse of linear locations when thr roadway id of the linear location is the same and no calibration points in the middle
   def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation], initialChangeSet: ChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)): (Seq[LinearLocation], ChangeSet) = {
     time(logger, "Adjust linear location to topology") {
       val adjustOperations: Seq[(RoadLinkLike, Seq[LinearLocation], ChangeSet) => (Seq[LinearLocation], ChangeSet)] = Seq(
@@ -211,7 +212,7 @@ object RoadAddressFiller {
     * @param roadAddresses
     * @return
     */
-  private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
+  private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     //TODO check if its needed to create unaddressed road link for part after VIITE-1536
     if (roadAddresses.isEmpty) {
       val anomaly = isPublicRoad(roadLink) match {
@@ -222,21 +223,21 @@ object RoadAddressFiller {
         UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), anomaly,
           GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
 
-      Seq(RoadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))
+      Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))
     } else {
       Seq()
     }
   }
 
   private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
-    roadAddresses.map(ra => RoadAddressLinkBuilder.build(topology, ra))
+    roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
   }
 
   def fillTopologyWithFloating(topology: Seq[RoadLinkLike], historyTopology: Seq[VVHHistoryRoadLink], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     val (floatingRoadAddresses, nonFloatingRoadAddresses) = roadAddresses.partition(_.isFloating)
 
     val floatingRoadAddressLinks = floatingRoadAddresses.flatMap{ra =>
-      historyTopology.find(rl => rl.linkId == ra.linkId).map(rl => RoadAddressLinkBuilder.build(rl, ra))
+      historyTopology.find(rl => rl.linkId == ra.linkId).map(rl => roadAddressLinkBuilder.build(rl, ra))
     }
 
     floatingRoadAddressLinks ++ fillTopology(topology, nonFloatingRoadAddresses)

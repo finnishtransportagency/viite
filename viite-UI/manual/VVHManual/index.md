@@ -6,7 +6,7 @@ Digiroad - V&auml;yl&auml;verkon hallinta (VVH) -sovelluksen k&auml;ytt&ouml;ohj
 
 V&auml;yl&auml;verkon hallinta (VVH) -sovellus on osa Digiroad-tietoj&auml;rjestelm&auml;&auml;. VVH-sovelluksessa hallinnoidaan linkki-solmu -mallista v&auml;yl&auml;verkkoa (geometriaa). Digiroad-tietoj&auml;rjestelm&auml; koostuu ominaisuustietojen hallinta -sovelluksesta (OTH) ja VVH-sovelluksesta yhdess&auml;. VVH tarjoaa OTH:lle geometriatiedot rajapinnan kautta, eik&auml; geometriaa hallinnoida OTH-sovelluksen puolella.
 
-VVH-sovellus tarjoaa geometriatiedot my&ouml;s Viite-sovellukselle. Uudessa Viite-sovelluksessa hallinnoidaan Liikenneviraston tieosoiteverkkoa.
+VVH-sovellus tarjoaa geometriatiedot my&ouml;s Viite-sovellukselle. Uudessa Viite-sovelluksessa hallinnoidaan V&auml;yl&auml;n tieosoiteverkkoa.
 
 T&auml;ss&auml; ohjeessa k&auml;sitell&auml;&auml;n ainoastaan V&auml;yl&auml;verkon hallinnan sovellusta.
 
@@ -18,16 +18,15 @@ VVH-sovellus tarjoaa geometrian yll&auml;pitoon erilaisia ty&ouml;kaluja, joiden
 
 1. T&auml;ydent&auml;v&auml;n geometrian tallennetaminen VVH:n tietokantaan sovelluksen avulla. Ty&ouml; tehd&auml;&auml;n manuaalisesti. Olennaisessa osassa t&auml;t&auml; on VVH-ty&ouml;nohjaus (workflow), jonka mukaan k&auml;ytt&auml;j&auml;n toimenpiteet etenev&auml;t sovelluksessa.
 
-V&auml;yl&auml;verkon hallinta -sovellus on toteutettu Esri ArcGIS-teknologian p&auml;&auml;lle. K&auml;ytett&auml;v&auml; ArcGIS-sovellus on ArcMap 10.3. ArcEditor-lisenssill&auml;. Sovellusta k&auml;ytet&auml;&auml;n Liikenneviraston Citrix-palvelun kautta. Sovelluksessa on k&auml;yt&ouml;ss&auml; my&ouml;s kaikki ArcEditorin tavalliset toiminnot, eik&auml; niit&auml; k&auml;sitell&auml; t&auml;ss&auml; ohjeessa erikseen. Ohje olettaa, ett&auml; k&auml;ytt&auml;j&auml;lle ovat ArcMapin perustoiminnallisuudet tuttuja.
+V&auml;yl&auml;verkon hallinta -sovellus on toteutettu Esri ArcGIS-teknologian p&auml;&auml;lle. K&auml;ytett&auml;v&auml; ArcGIS-sovellus on ArcMap 10.3. ArcEditor-lisenssill&auml;. Sovellusta k&auml;ytet&auml;&auml;n V&auml;yl&auml;n Citrix-palvelun kautta. Sovelluksessa on k&auml;yt&ouml;ss&auml; my&ouml;s kaikki ArcEditorin tavalliset toiminnot, eik&auml; niit&auml; k&auml;sitell&auml; t&auml;ss&auml; ohjeessa erikseen. Ohje olettaa, ett&auml; k&auml;ytt&auml;j&auml;lle ovat ArcMapin perustoiminnallisuudet tuttuja.
 
 1.1 Yhteystiedot ja k&auml;ytt&auml;j&auml;tunnukset
 --------------------------
 
-VVH-sovelluksen k&auml;ytt&ouml;&auml; varten tulee olla p&auml;&auml;sy Liikenneviraston Citrix-palveluun, jonka lis&auml;ksi annetaan erikseen oikeudet VVH-sovellukseen.
+VVH-sovelluksen k&auml;ytt&ouml;&auml; varten tulee olla p&auml;&auml;sy V&auml;yl&auml;n Citrix-palveluun, jonka lis&auml;ksi annetaan erikseen oikeudet VVH-sovellukseen.
 
-__K&auml;ytt&auml;j&auml;tunnukset Citrix-palveluun:__ Liikennevirastosta oman yhteyshenkil&ouml;n kautta
-__K&auml;ytt&auml;j&auml;tunnukset VVH-sovellukseen:__ Toistaiseksi Emmi Sallinen, emmi.sallinen@karttakeskus.fi
-__Sovellustuki:__ Toistaiseksi Emmi Sallinen, emmi.sallinen@karttakeskus.fi
+__K&auml;ytt&auml;j&auml;tunnukset Citrix-palveluun:__ V&auml;yl&auml;n oman yhteyshenkil&ouml;n kautta
+__K&auml;ytt&auml;j&auml;tunnukset VVH-sovellukseen ja sovellustuki:__ Digiroad-operaattori, info@digiroad.fi
 
 1.2 Termit ja lyhenteet
 --------------------------
@@ -102,7 +101,7 @@ DRID, LinkiD ja NodeID muodostetaan kun kohde luodaan ensimm&auml;ist&auml; kert
 1.3 Ty&ouml;skentelyn aloitus
 --------------------------
 
-V&auml;yl&auml;verkon hallinnan sovellukseen kirjaudutaan osoitteesta https://citrix.liikennevirasto.fi/. Valitaan Apps ->  ArcMap __Standard__.
+V&auml;yl&auml;verkon hallinnan sovellukseen kirjaudutaan osoitteesta https://citrix.vayla.fi/. Valitaan Apps ->  ArcMap __Standard__.
 
 ![ArcMap.](k1.png)
 
@@ -140,7 +139,7 @@ _Digiroad Tools._
 
 Jos j&auml;rjestelm&auml; ei ArcMappia avattaessa kysy kirjautumistietoja, saa kirjautumisen auki Digiroad Tools -> Digiroad: Login. Kirjautuminen on pakollista, jotta VVH:n ty&ouml;kaluja voi k&auml;ytt&auml;&auml;. Oletuksena kirjautuminen tapahtuu VVH:n tuotantokantaan, jolloin osoitteen p&auml;&auml;te on /vvh.
 
-Kirjautumiseen k&auml;ytet&auml;&auml;n Liikenneviraston Citrixiin k&auml;ytett&auml;v&auml;&auml; k&auml;ytt&auml;j&auml;tunnusta (A-, U-, LX-, L- tai K-alkuinen) ja __erikseen VVH-sovellukseen m&auml;&auml;ritetty&auml; salasanaa__. Salasana ei siis ole sama, kuin Citrixiin kirjauduttaessa. Oletussalasana on kerrottu k&auml;ytt&auml;j&auml;lle VVH-sovelluskoulutuksen yhteydess&auml;.
+Kirjautumiseen k&auml;ytet&auml;&auml;n V&auml;yl&auml;n Citrixiin k&auml;ytett&auml;v&auml;&auml; k&auml;ytt&auml;j&auml;tunnusta (A-, U-, LX-, L- tai K-alkuinen) ja __erikseen VVH-sovellukseen m&auml;&auml;ritetty&auml; salasanaa__. Salasana ei siis ole sama, kuin Citrixiin kirjauduttaessa. Oletussalasana on kerrottu k&auml;ytt&auml;j&auml;lle VVH-sovelluskoulutuksen yhteydess&auml;.
 
 ![Kirjautuminen j&auml;rjestelm&auml;&auml;n.](k3.png)
 
@@ -165,7 +164,7 @@ _J&auml;rjestelm&auml; ilmoittaa k&auml;ytt&auml;j&auml;lle, jos jokin MTK-p&aum
 
 Add Layers -ty&ouml;kalulla voi lis&auml;t&auml; j&auml;rjestelm&auml;ss&auml; valmiiksi olevia karttatasoja kartalle. Add Layersin saa auki Digiroad Tools -alasvetovalikosta tai sen oikealla puolella olevasta kuvakkeesta. Haluttu karttataso ruksitaan valikosta ja painetaan Apply. Tasot tulevat n&auml;kyviin kartalle ja sis&auml;llysluetteloon (Table of Contents). OK-painikkeesta tasot lis&auml;t&auml;&auml;n kartalle ja Add Layers sulkeutuu. Add Layersin voi sulkea my&ouml;s ruksista.
 
-Add Layers -valikossa ylimp&auml;n&auml; ovat “perusgeometriatasot”, jotka ovat Maanmittauslaitoksen Maastotietokannasta. Lis&auml;ksi valittavana ovat historiatasot, suunnitelmalinkkeihin liittyv&auml;t tasot, kuntarajat, maakuntarajat, Ely-rajat, Liikenneviraston raiteet sek&auml; erilaisia MML:n taustakarttoja WMTS-tasoina.
+Add Layers -valikossa ylimp&auml;n&auml; ovat “perusgeometriatasot”, jotka ovat Maanmittauslaitoksen Maastotietokannasta. Lis&auml;ksi valittavana ovat historiatasot, suunnitelmalinkkeihin liittyv&auml;t tasot, kuntarajat, maakuntarajat, Ely-rajat, V&auml;yl&auml;n raiteet sek&auml; erilaisia MML:n taustakarttoja WMTS-tasoina.
 
 Add Layerisist&auml; voi valita my&ouml;s vain tietyn kunnan kohteet tielinkki-tasolta lis&auml;tt&auml;v&auml;ksi municipality alasvetovalikosta (oletuksena koko Suomi) ja zoomata ko. kuntaan valitsemalla ruksin kohtaan Zoom to selected.
 
@@ -456,7 +455,7 @@ Ominaisuustietojen muokkaus aukeaa sovelluksen oikeaan laitaan kartalta valitull
 
 _Suunnitelma-aineiston ominaisuustietoja._
 
-Ominaisuustietoja on erilaisia. Koodiarvollisilla ominaisuustiedoilla on VVH:ssa my&ouml;s domain-arvo, jolloin domain-arvo n&auml;kyy k&auml;ytt&ouml;liittym&auml;ss&auml;. Esimerkiksi Aineistol&auml;hde 7 on “Liikennevirasto”.
+Ominaisuustietoja on erilaisia. Koodiarvollisilla ominaisuustiedoilla on VVH:ssa my&ouml;s domain-arvo, jolloin domain-arvo n&auml;kyy k&auml;ytt&ouml;liittym&auml;ss&auml;. Esimerkiksi Aineistol&auml;hde 7 on “V&auml;yl&auml;”.
 
 Osa ominaisuustiedoista on pakollisia. T&auml;ll&ouml;in my&ouml;s kohteet, joista pakolliset tiedot puuttuvat, j&auml;&auml;v&auml;t kiinni validoinnissa (mik&auml;li pakollisten tietojen validointi on valittuna, validoinnista tarkemmin my&ouml;hemmiss&auml; kappaleissa).
 

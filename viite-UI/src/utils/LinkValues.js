@@ -130,6 +130,18 @@
         SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
     };
 
+    root.RoadNameSource = {
+        UnknownSource:              {value: 99, description: "Unknown Source"},
+        ProjectLinkSource:          {value: 0, description: "Project Link Source"},
+        RoadAddressSource:          {value: 1, description: "Road Name Source"}
+    };
+
+    root.ProjectError = {
+        TerminationContinuity:  {value: 18},
+        DoubleEndOfRoad:        {value: 19},
+        RoadNotReserved:        {value: 27}
+    };
+
     /*
     The meta key codes are browser dependant, in proper:
         Firefox: 224
@@ -147,6 +159,18 @@
     root.NewRoadId = -1000;
 
     root.BlackUnderlineRoadTypes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
+
+    root.ElyCodes = {
+        ELY_U:      {value: 1},
+        ELY_T:      {value: 2},
+        ELY_KAS:    {value: 3},
+        ELY_H:      {value: 4},
+        ELY_SK:     {value: 8},
+        ELY_KES:    {value: 9},
+        ELY_V:      {value: 10},
+        ELY_O:      {value: 12},
+        ELY_L:      {value: 14}
+    };
 
 })(window.LinkValues = window.LinkValues || {});
 

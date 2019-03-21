@@ -4,6 +4,7 @@
     var loadingProject;
     var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
     var gettingRoadLinks;
+    moment.locale('fi');
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
@@ -87,11 +88,11 @@
         });
     }, 1000);
 
-    this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
+      this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
+          return $.getJSON('api/viite/roadlinks/project/prefillfromvvh?linkId=' + linkId +'&currentProjectId=' + currentProjectId, function (data) {
+              return _.isFunction(callback) && callback(data);
+          });
+      }, 1000);
 
     this.getRoadLinkByMmlId = _.throttle(function (mmlId, callback) {
       return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {
@@ -210,7 +211,7 @@
         roadNumber: roadNumber,
         startPart: startPart,
         endPart: endPart,
-        projDate: convertDateToIso(projDate)
+        projDate: convertDatetoSimpleDate(projDate)
       })
         .then(function (x) {
           eventbus.trigger('roadPartsValidation:checkRoadParts', x);
@@ -321,9 +322,8 @@
       });
     };
 
-    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, callback) {
-
-      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: 0}, callback);
+    this.getCoordinatesFromRoadAddress = function (roadNumber, roadPartNumber, distance, callback) {
+      return $.get('api/viite/roadlinks/roadaddress', {road: roadNumber, part: roadPartNumber, addrMValue: distance}, callback);
     };
 
     this.removeProjectLinkSplit = function (data, success, errorCallback) {
@@ -372,11 +372,11 @@
     }, 1000);
 
     this.getFloatingRoadAddresses = function () {
-      return $.getJSON('api/viite/roadaddress/floatings');
+      return $.getJSON('api/viite/roadaddress/floatings/');
     };
 
     this.getRoadAddressErrors = function () {
-      return $.getJSON('api/viite/roadaddress/errors');
+      return $.getJSON('api/viite/roadaddress/errors/');
     };
 
     function createCallbackRequestor(getParameters) {
@@ -404,8 +404,8 @@
       };
     }
 
-    function convertDateToIso(date) {
-      return new Date(date.replace(finnishDatePattern,'$3-$2-$1')).toISOString();
+    function convertDatetoSimpleDate(date) {
+      return moment(date, 'DD.MM.YYYY').format("YYYY-MM-DD");
     }
 
     //Methods for the UI Integrated Tests

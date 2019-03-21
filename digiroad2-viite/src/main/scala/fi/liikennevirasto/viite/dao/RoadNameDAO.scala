@@ -151,12 +151,17 @@ object RoadNameDAO {
     queryList(query).headOption
   }
 
-  def expire(id: Long, user: User) = {
-    val query = s"""Update ROAD_NAME Set valid_to = sysdate, created_by = '${user.username}' where id = $id"""
+  def expire(id: Long, username: String) = {
+    val query = s"""Update ROAD_NAME Set valid_to = sysdate, created_by = '${username}' where id = $id"""
     Q.updateNA(query).first
   }
 
-  def update(id: Long, fields: Map[String, String], user: User) = {
+  def expireAndCreateHistory(idToExpire: Long, username: String, historyRoadName: RoadName) = {
+    expire(idToExpire, username)
+    create(Seq(historyRoadName))
+  }
+
+  def update(id: Long, fields: Map[String, String]) = {
     val roadNumber = fields.get("roadNumber")
     val roadName = fields.get("roadName")
     val startDate = fields.get("startDate")

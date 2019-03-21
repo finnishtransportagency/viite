@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
@@ -212,7 +211,7 @@ class LinearLocationDAO {
     )
 
     createLinearLocations.foreach {
-      case (location) =>
+      case location =>
         val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
           Sequences.nextRoadwayNumber
         } else {
@@ -495,6 +494,14 @@ class LinearLocationDAO {
     }
   }
 
+  private def fetch(queryFilter: String => String): Seq[LinearLocation] = {
+    val query = s"""
+        $selectFromLinearLocation
+      """
+    val filteredQuery = queryFilter(query)
+    Q.queryNA[LinearLocation](filteredQuery).iterator.toSeq
+  }
+
   // TODO If not used, should be removed
   def toTimeStamp(dateTime: Option[DateTime]): Option[Timestamp] = {
     dateTime.map(dt => new Timestamp(dt.getMillis))
@@ -533,6 +540,17 @@ class LinearLocationDAO {
         Update LINEAR_LOCATION Set valid_to = sysdate Where valid_to IS NULL and link_id in (${linkIds.mkString(",")})
       """
     if (linkIds.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
+  }
+
+  def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {
+    val query =
+      s"""
+        Update LINEAR_LOCATION Set valid_to = sysdate Where valid_to IS NULL and roadway_number in (${roadwayNumbers.mkString(",")})
+      """
+    if (roadwayNumbers.isEmpty)
       0
     else
       Q.updateNA(query).first
@@ -711,11 +729,21 @@ class LinearLocationDAO {
     if (roadwayNumbers.isEmpty) {
       Seq()
     } else {
-      val query =
+      val query = if (roadwayNumbers.size > 1000) {
+        MassQuery.withIds(roadwayNumbers) {
+          idTableName =>
+            s"""
+              $selectFromLinearLocation
+              join $idTableName i on i.id = loc.ROADWAY_NUMBER
+              where valid_to is null and t.id < t2.id
+            """.stripMargin
+        }
+      } else {
         s"""
-          $selectFromLinearLocation
-          where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
-        """
+            $selectFromLinearLocation
+            where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
+          """
+      }
       queryList(query)
     }
   }
@@ -748,6 +776,26 @@ class LinearLocationDAO {
     queryList(query)
   }
 
+  def fetchUpdatedSince(sinceDate: DateTime): Seq[LinearLocation] = {
+    time(logger, "Fetch linear locations updated since date") {
+      fetch(withUpdatedSince(sinceDate))
+    }
+  }
+
+  private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
+    val sinceString = sinceDate.toString("yyyy-MM-dd")
+    s"""$query
+        where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
+  }
+
+  /**
+    * Sets up the query filters of road numbers
+    * @param roadNumbers: Seq[(Int, Int) - list of lowest and highest road numbers
+    * @param alias: String - The alias of the roadway table on the query
+    * @param filter: String - already existing filters
+    * @return
+    */
   def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s"""($filter)"""
@@ -760,6 +808,11 @@ class LinearLocationDAO {
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
 
+  /**
+    * Returns the calibration code of a linear location found by it's id.
+    * @param linearLocationId: Long - The linear location id.
+    * @return
+    */
   def getLinearLocationCalibrationCode(linearLocationId: Long): CalibrationCode = {
     val query =
       s"""SELECT (CASE
@@ -772,7 +825,7 @@ class LinearLocationDAO {
     CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
   }
 
-  def getLinearLocationCalibrationCode(linearLocationIds: Seq[Long]): Map[Long, CalibrationCode] = {
+  def getLinearLocationCalibrationCodeNSide(linearLocationIds: Seq[Long]): Map[Long, (CalibrationCode, SideCode)] = {
     if (linearLocationIds.isEmpty) {
       Map()
     } else {
@@ -782,10 +835,10 @@ class LinearLocationDAO {
                        WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
                        WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
                        ELSE 0
-                       END) AS calibrationCode
+                       END) AS calibrationCode, side
                        FROM LINEAR_LOCATION WHERE id in (${linearLocationIds.mkString(",")})"""
-      Q.queryNA[(Long, Int)](query).list.map {
-        case (id, code) => id -> CalibrationCode(code)
+      Q.queryNA[(Long, Int, Int)](query).list.map {
+        case (id, code, side) => id -> (CalibrationCode(code), SideCode.apply(side))
       }.toMap
     }
   }

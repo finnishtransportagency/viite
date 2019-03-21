@@ -23,14 +23,17 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 
-class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, unaddressedRoadLinkDAO: UnaddressedRoadLinkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus) {
+class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, unaddressedRoadLinkDAO: UnaddressedRoadLinkDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
+
+  private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, new ProjectLinkDAO)
 
   /**
     * Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
@@ -62,6 +65,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    LinearLocationResult(nonFloatingAddresses, floatingAddresses)
   }
 
+  /**
+    * Fetches linear locations based on a bounding box and, if defined, within the road number limits supplied.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     withDynSession {
       time(logger, "Fetch floating and non-floating addresses") {
@@ -70,18 +79,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  /**
+    * Returns the roadways that match the supplied linear locations.
+    * @param linearLocations: Seq[LinearLocation] - The linear locations to search
+    * @return
+    */
   def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]) = {
     roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
 
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
-    //TODO check if this will continue to be needed or if it was something that
-//    def complementaryLinkFilter(roadAddressLink: RoadAddressLink) = {
-//      everything || publicRoads || roadNumberLimits.exists {
-//        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
-//      }
-//    }
-
     val boundingBoxResultF =
       for {
         changeInfoF <- boundingBoxResult.changeInfoF
@@ -98,13 +105,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val allRoadLinks = roadLinks ++ complementaryRoadLinks ++ suravageRoadLinks
 
-    //TODO Will be implemented at VIITE-1542
-    //RoadAddressDAO.getUnaddressedRoadLinks(linkIds -- existingFloating.map(_.linkId).toSet -- allRoadAddressesAfterChangeTable.flatMap(_.allSegments).map(_.linkId).toSet)
-
     //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
-    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
-
-    eventbus.publish("roadAddress:persistChangeSet", changeSet)
+    val (adjustedLinearLocations, changeSet) = if (frozenTimeVVHAPIServiceEnabled) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
+    if (!frozenTimeVVHAPIServiceEnabled)
+      eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
     val roadAddresses = withDynSession {
       roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
@@ -113,6 +117,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     RoadAddressFiller.fillTopologyWithFloating(allRoadLinks, historyRoadLinks, roadAddresses)
   }
 
+  def getRoadAddressWithRoadNumberAddress(road: Long): Seq[RoadAddress] = {
+    withDynSession {
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoad(road))
+    }
+  }
+
+  /**
+    * Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
@@ -129,7 +145,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(nonFloatingLinkIds),
       Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(floatingLinkIds))),
-      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds)),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(nonFloatingLinkIds, frozenTimeVVHAPIServiceEnabled)),
       Future(Seq()),
       Future(Seq())
     )
@@ -137,6 +153,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     getRoadAddressLinks(boundingBoxResult)
   }
 
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+    * @param boundingRectangle: BoundingRectangle - The search box
+    * @param roadNumberLimits: Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+    * @return
+    */
   def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
     val linearLocations =
       time(logger, "Fetch floating and non-floating linear locations by bounding box") {
@@ -159,10 +181,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
     }
 
-    nonFloatingRoadAddresses.map(RoadAddressLinkBuilder.build)
+    nonFloatingRoadAddresses.map(roadAddressLinkBuilder.build)
   }
 
-  def getRoadAddressesByLinkIds(linkIds: Seq[Long]) = {
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) that share the same linkIds as those supplied.
+    * @param linkIds: Seq[Long] - The linkId's to fetch information
+    * @return
+    */
+  def getRoadAddressesByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
     val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
     roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations).filterNot(_.isFloating)
   }
@@ -177,7 +204,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     val suravageRoadLinksF = Future(roadLinkService.getSuravageRoadLinks(municipality))
 
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality, frozenTimeVVHAPIServiceEnabled)
 
     val allRoadLinks = roadLinks ++ Await.result(suravageRoadLinksF, atMost = Duration.create(1, TimeUnit.HOURS))
 
@@ -186,11 +213,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         linearLocationDAO.fetchRoadwayByLinkId(allRoadLinks.map(_.linkId).toSet)
       }
     }
+    val (adjustedLinearLocations, changeSet) = if (frozenTimeVVHAPIServiceEnabled) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
+    if (!frozenTimeVVHAPIServiceEnabled) {
+      //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
+      eventbus.publish("roadAddress:persistChangeSet", changeSet)
+    }
 
-    val (adjustedLinearLocations, changeSet) = RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
-
-    //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
-    eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
     val roadAddresses = withDynTransaction {
       roadNetworkDAO.getLatestRoadNetworkVersionId match {
@@ -202,7 +230,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     roadAddresses.flatMap { ra =>
       //TODO check if the floating are needed
       val roadLink = allRoadLinks.find(rl => rl.linkId == ra.linkId)
-      roadLink.map(rl => RoadAddressLinkBuilder.build(rl, ra))
+      roadLink.map(rl => roadAddressLinkBuilder.build(rl, ra))
     }
   }
 
@@ -231,13 +259,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     withDynSession {
       val roadways = trackOption match {
         case Some(track) =>
-          roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
+          if (addressM != 0)
+            roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, Some(addressM))
+          else
+            roadwayDAO.fetchAllBySectionTrackAndAddresses(road, roadPart, track, None, None)
         case _ =>
-          roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
+          if (addressM != 0)
+            roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
+          else
+            roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, None)
       }
 
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-      roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
+      if (addressM > 0)
+        roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      else Seq(roadAddresses.head)
     }
   }
 
@@ -289,9 +325,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   // TODO Implement fetching with floating
   def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, withFloating: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
-    if (withFloating) {
-      throw new NotImplementedError("Fetching with floating not implemented.")
-    }
     withDynSession {
       val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -335,9 +368,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns road addresses filtered given section
     */
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long): Seq[RoadAddress] = {
-    withDynSession {
+    if (OracleDatabase.isWithinSession) {
       val roadwayAddresses = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+    } else {
+      withDynSession {
+        val roadwayAddresses = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
+        roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+      }
     }
   }
 
@@ -393,65 +431,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns all filtered the road addresses
     */
   def getRoadAddressByLinkIds(linkIds: Set[Long]): Seq[RoadAddress] = {
-    withDynSession {
+    withDynTransaction {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(linkIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
       roadAddresses.filter(ra => linkIds.contains(ra.linkId)).filterNot(_.isFloating)
     }
   }
 
-  // TODO
-  def getRoadAddressesByLinkIds(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true, includeTerminated: Boolean = true, includeCurrent: Boolean = true,
-                    filterIds: Set[Long] = Set()): List[RoadAddress] = {
-    throw new NotImplementedError()
-//      if (linkIds.size > 1000 || filterIds.size > 1000) {
-//        return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory).filterNot(ra => filterIds.contains(ra.id))
-//      }
-//      val linkIdString = linkIds.mkString(",")
-//      val where = if (linkIds.isEmpty) {
-//        return List()
-//      } else {
-//        s""" where ra.link_id in ($linkIdString)"""
-//      }
-//      val floating = if (!includeFloating)
-//        "AND ra.floating='0'"
-//      else
-//        ""
-//      val history = if (!includeHistory)
-//        "AND ra.end_date is null"
-//      else
-//        ""
-//      val current = if (!includeCurrent)
-//        "AND ra.end_date is not null"
-//      else
-//        ""
-//      val idFilter = if (filterIds.nonEmpty)
-//        s"AND ra.id not in ${filterIds.mkString("(", ",", ")")}"
-//      else
-//        ""
-//
-//      val valid = if (!includeTerminated) {
-//        "AND ra.terminated = 0"
-//      } else {
-//        ""
-//      }
-//
-//      val query =
-//        s"""
-//        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
-//        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.link_id, ra.start_measure, ra.end_measure,
-//        ra.side_code, ra.adjusted_timestamp,
-//        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, ra.link_source, ra.ely, ra.terminated, ra.common_history_id, ra.valid_to,
-//        (SELECT rn.road_name FROM ROAD_NAMES rn WHERE rn.ROAD_NUMBER = ra.ROAD_NUMBER AND rn.END_DATE IS NULL AND rn.VALID_TO IS NULL)
-//        from ROAD_ADDRESS ra cross join
-//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-//        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-//        $where $floating $history $current $valid $idFilter and t.id < t2.id and
-//           valid_to is null
-//      """
-//      queryList(query)
-  }
-
+  /**
+    * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
+    * @param roadwayIds: Seq[Long] - The roadway Id's to fetch
+    * @param includeFloating: Boolean - Signals if we fetch the floatings or not
+    * @return
+    */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long], includeFloating: Boolean = false): Seq[RoadAddress] = {
       val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -461,7 +453,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
     val roadwayAddresses =
       withDynSession {
-        roadwayDAO.fetchAllByBetweenDates(sinceDate, untilDate)
+        roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)
       }
 
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
@@ -477,6 +469,34 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         )
       }
     }
+  }
+
+  def getUpdatedRoadways(sinceDate: DateTime): Either[String, Seq[Roadway]] = {
+    withDynSession {
+      try {
+        val roadways = roadwayDAO.fetchUpdatedSince(sinceDate)
+        Right(roadways)
+      } catch {
+        case e if NonFatal(e) =>
+          logger.error("Failed to fetch updated roadways.", e)
+          Left(e.getMessage)
+      }
+    }
+
+  }
+
+  def getUpdatedLinearLocations(sinceDate: DateTime): Either[String, Seq[LinearLocation]] = {
+    withDynSession {
+      try {
+        val linearLocations = linearLocationDAO.fetchUpdatedSince(sinceDate)
+        Right(linearLocations)
+      } catch {
+        case e if NonFatal(e) =>
+          logger.error("Failed to fetch updated linear locations.", e)
+          Left(e.getMessage)
+      }
+    }
+
   }
 
   /**
@@ -508,12 +528,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     RoadAddressFiller.fillTopology(roadlinks, roadAddresses).filter(_.linkId == linkId)
-
-    //    val (addresses, missedRL) = withDynTransaction {
-    //      (RoadAddressDAO.fetchByLinkId(Set(linkId), includeFloating = true, includeHistory = false, includeTerminated = false), // cannot builld terminated link because missing geometry
-    //        RoadAddressDAO.getUnaddressedRoadLinks(Set(linkId)))
-    //    }
-    //    processRoadAddresses(addresses, missedRL)
 
   }
 
@@ -602,6 +616,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   // TODO
+  /**
+    * Gets the Unaddressed roads that match the link ids from the list supplied.
+    * @param linkIds: Set[Long] - The link ids to fetch
+    * @return
+    */
   def fetchUnaddressedRoadLinksByLinkIds(linkIds: Set[Long]): Seq[UnaddressedRoadLink] = {
     time(logger, "RoadAddressDAO.getUnaddressedRoadLinks by linkIds") {
       unaddressedRoadLinkDAO.getUnaddressedRoadLinks(linkIds)
@@ -633,9 +652,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   //  }
 
   private def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
+    val fusedRoadAddresses = roadAddressLinkBuilder.fuseRoadAddressWithTransaction(roadAddrSeq)
     fusedRoadAddresses.map(ra => {
-      RoadAddressLinkBuilder.build(rl, ra)
+      roadAddressLinkBuilder.build(rl, ra)
     })
   }
 
@@ -648,19 +667,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     //    }
   }
 
-//  private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
+  private def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
 //    throw new NotImplementedError("Will be implemented at VIITE-1540")
-////    withDynSession {
-////      Await.result(boundingBoxResult.suravageF, Duration.Inf).map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-////    }
-//  }
+    withDynSession {
+      Await.result(boundingBoxResult.suravageF, Duration.Inf).map(x => (x, None)).map(roadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
+  }
 
   def getSuravageRoadLinkAddressesByLinkIds(linkIdsToGet: Set[Long]): Seq[RoadAddressLink] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1540")
-//    val suravageLinks = roadLinkService.getSuravageRoadLinksFromVVH(linkIdsToGet)
-//    withDynSession {
-//      suravageLinks.map(x => (x, None)).map(RoadAddressLinkBuilder.buildSuravageRoadAddressLink)
-//    }
+//    throw new NotImplementedError("Will be implemented at VIITE-1540")
+    Seq()
+    val suravageLinks = roadLinkService.getSuravageVVHRoadLinksByLinkIdsFromVVH(linkIdsToGet)
+    withDynSession {
+      suravageLinks.map(x => (x, None)).map(roadAddressLinkBuilder.buildSuravageRoadAddressLink)
+    }
   }
 
   def getRoadAddressLinksWithSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
@@ -670,14 +690,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
       //Should fetch all the road types
       Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
+      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads, frozenTimeVVHAPIServiceEnabled)),
       Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set())),
-      Future(roadLinkService.getSuravageLinksFromVVH(boundingRectangle, Set()))
+      Future(roadLinkService.getSuravageLinksFromVVHF(boundingRectangle, Set()))
     )
 
-    getRoadAddressLinks(boundingBoxResult)
-//    val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, combinedFuture)
-//    suravageAddresses ++ roadAddressLinks
+    val suravageAddresses = getSuravageRoadLinkAddresses(boundingRectangle, boundingBoxResult)
+    suravageAddresses ++ getRoadAddressLinks(boundingBoxResult)
+
   }
 
   // For the purpose of the use of this conversion we do not need a accurate start date and end date since it comes from the Road address on the builder
@@ -852,7 +872,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     if (roadLinks.isEmpty) {
       throw new InvalidAddressDataException(s"Can't find road link for target link id $linkId")
     } else {
-      RoadAddressLinkBuilder.build(roadLinks.head, UnaddressedRoadLink(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven, Seq.empty[Point]))
+      roadAddressLinkBuilder.build(roadLinks.head, UnaddressedRoadLink(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven, Seq.empty[Point]))
     }
   }
 
@@ -1106,160 +1126,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    if (!hasFloatings)
 //      eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq()))
   }
-
-  //TODO this method is used for defloating process
-  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
-    throw new NotImplementedError("Will be implemented at VIITE-1537")
-//    def latestSegments(segments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-//      if (segments.exists(_.endDate == ""))
-//        segments.filter(_.endDate == "")
-//      else {
-//        val max = RoadAddressLinkBuilder.formatter.print(segments.map(s =>
-//          RoadAddressLinkBuilder.formatter.parseDateTime(s.endDate)).maxBy(_.toDate))
-//        segments.filter(_.endDate == max)
-//      }
-//    }
-//
-//    val mapping = DefloatMapper.createAddressMap(latestSegments(sources.sortBy(_.startMValue)), targets).filter(_.sourceLen > MinAllowedRoadAddressLength)
-//    if (mapping.exists(DefloatMapper.invalidMapping)) {
-//      throw new InvalidAddressDataException("Mapping failed to map following items: " +
-//        mapping.filter(DefloatMapper.invalidMapping).map(
-//          r => s"${r.sourceLinkId}: ${r.sourceStartM}-${r.sourceEndM} -> ${r.targetLinkId}: ${r.targetStartM}-${r.targetEndM}").mkString(", ")
-//      )
-//    }
-//    val sourceRoadAddresses = withDynSession {
-//      RoadAddressDAO.fetchByLinkId(sources.map(_.linkId).toSet, includeFloating = true, includeTerminated = false)
-//    }
-//
-//    val (currentSourceRoadAddresses, historySourceRoadAddresses) = sourceRoadAddresses.partition(ra => ra.endDate.isEmpty)
-//
-//    DefloatMapper.preTransferChecks(currentSourceRoadAddresses)
-//    val currentTargetRoadAddresses = DefloatMapper.adjustRoadAddresses(RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(currentSourceRoadAddresses.sortBy(_.startAddrMValue).flatMap(DefloatMapper.mapRoadAddresses(mapping, currentSourceRoadAddresses))), currentSourceRoadAddresses)
-//    DefloatMapper.postTransferChecks(currentTargetRoadAddresses.filter(_.endDate.isEmpty), currentSourceRoadAddresses)
-//
-//    val historyTargetRoadAddresses = historySourceRoadAddresses.groupBy(_.endDate).flatMap(group => {
-//      DefloatMapper.preTransferChecks(group._2)
-//      val targetHistory = DefloatMapper.adjustRoadAddresses(RoadAddressLinkBuilder.fuseRoadAddressWithTransaction(group._2.flatMap(DefloatMapper.mapRoadAddresses(mapping, group._2))),group._2)
-//      targetHistory
-//    })
-//
-//    currentTargetRoadAddresses ++ historyTargetRoadAddresses
-  }
-
-  //TODO this can be removed
-//  def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long): Boolean = {
-//    try {
-//      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true)
-//      if (!roads.exists(_.isFloating)) {
-//        try {
-//          val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-//          assert(adjusted.size == roads.size)
-//          // Must not lose any
-//          val (changed, unchanged) = adjusted.partition(ra =>
-//            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-//          )
-//          logger.info(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-//          changed.foreach(addr => RoadAddressDAO.update(addr, None))
-//          return true
-//        } catch {
-//          case ex: InvalidAddressDataException => logger.error(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!", ex)
-//        }
-//      } else {
-//        logger.info(s"Not recalculating $roadNumber / $roadPartNumber because floating segments were found")
-//      }
-//    } catch {
-//      case a: Exception => logger.error(a.getMessage, a)
-//    }
-//    false
-//  }
-/*
-  def getRoadAddress(road: Long, roadPart: Long, track: Option[Int], mValue: Option[Double]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadAddress(road, roadPart, track, mValue))
-    }
-  }
-
-  def getRoadAddressWithRoadNumber(road: Long, tracks: Seq[Int]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumber(road, tracks))
-    }
-  }
-*/
-  def getRoadAddressWithRoadNumberAddress(road: Long, addrMValue: Option[Long]): Seq[RoadAddress] = {
-    throw new NotImplementedError("Implement RoadAddressService.getRoadAddressWithRoadNumberAddress")
-    //withDynSession {
-    //  RoadwayDAO.getRoadAddressByFilter(RoadwayDAO.withRoadNumberAddress(road, addrMValue))
-    //}
-  }
-/*
-  def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Seq[Long], tracks: Seq[Int]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withRoadNumberParts(road, roadParts, tracks))
-    }
-  }
-
-  def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withLinkIdAndMeasure(linkId, startM, endM))
-    }
-  }
-
-  def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Option[Double], endM: Option[Double]): Seq[RoadAddress] = {
-    withDynSession {
-      RoadAddressDAO.getRoadAddressesFiltered(roadNumber, roadPartNumber, startM, endM)
-    }
-  }
-
-  def getRoadAddressByLinkIds(linkIds: Set[Long], withFloating: Boolean): Seq[RoadAddress] = {
-    withDynTransaction {
-      RoadAddressDAO.fetchByLinkId(linkIds, withFloating, includeHistory = false, includeTerminated = false)
-    }
-  }
-
-  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
-
-    val roadAddresses =
-      withDynTransaction {
-        RoadAddressDAO.getRoadAddressByFilter(RoadAddressDAO.withBetweenDates(sinceDate, untilDate))
-      }
-
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
-    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-
-    roadAddresses.flatMap { roadAddress =>
-      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
-        ChangedRoadAddress(
-          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
-          link = roadLink
-        )
-      }
-    }
-  }
-
-  /**
-    * This will define what road_addresses should have a black outline according to the following rule:
-    * Address must have road type = 3 (MunicipalityStreetRoad)
-    * The length of all addresses in the same road number and road part number that posses road type = 3  must be
-    * bigger than the combined length of ALL the road numbers that have the same road number and road part number divided by 2.
-    *
-    * @param addresses Sequence of all road addresses that were fetched
-    * @return Sequence of road addresses properly tagged in order to get the
-    */
-  private def setBlackUnderline(addresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    time(logger, "Set the black underline") {
-      val typesForBlackUnderline = Set(RoadType.MunicipalityStreetRoad.value, RoadType.PrivateRoadType.value)
-      addresses.map(a => a.copy(blackUnderline = typesForBlackUnderline.contains(a.roadType.value)))
-    }
-  }
-  */
-
-  def setSubsequentTermination(linkIds: Set[Long]): Unit = {
-    val roadAddresses = getRoadAddressByLinkIds(linkIds/*, includeFloating = true, includeHistory = true*/).filter(_.terminated == NoTermination)
-    val roadways = roadwayDAO.fetchAllByRoadwayId(roadAddresses.map(_.id))
-    roadwayDAO.expireById(roadways.map(_.id).toSet)
-    roadwayDAO.create(roadways.map(ra => ra.copy(id = NewRoadway, terminated = Subsequent)))
-  }
-
 }
 
 sealed trait RoadClass {
@@ -1301,7 +1167,7 @@ case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 case class LinearLocationResult(current: Seq[LinearLocation], floating: Seq[LinearLocation])
 
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
-                             roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[RoadLink]])
+                             roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[VVHRoadlink]])
 
 case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val currentSegments: Seq[RoadAddress] = v._1
@@ -1315,7 +1181,6 @@ object AddressConsistencyValidator {
 
   sealed trait AddressError {
     def value: Int
-
     def message: String
   }
 
@@ -1324,20 +1189,37 @@ object AddressConsistencyValidator {
 
     case object OverlappingRoadAddresses extends AddressError {
       def value = 1
-
       def message: String = ErrorOverlappingRoadAddress
     }
 
     case object InconsistentTopology extends AddressError {
       def value = 2
-
       def message: String = ErrorInconsistentTopology
     }
 
     case object InconsistentLrmHistory extends AddressError {
       def value = 3
-
       def message: String = ErrorInconsistentLrmHistory
+    }
+
+    case object Inconsistent2TrackCalibrationPoints extends AddressError {
+      def value = 4
+      def message: String = ErrorInconsistent2TrackCalibrationPoints
+    }
+
+    case object InconsistentContinuityCalibrationPoints extends AddressError {
+      def value = 5
+      def message: String = ErrorInconsistentContinuityCalibrationPoints
+    }
+
+    case object MissingEdgeCalibrationPoints extends AddressError {
+      def value = 6
+      def message: String = ErrorMissingEdgeCalibrationPoints
+    }
+
+    case object InconsistentAddressValues extends AddressError {
+      def value = 7
+      def message: String = ErrorInconsistentAddressValues
     }
 
     def apply(intValue: Int): AddressError = {

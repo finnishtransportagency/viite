@@ -1,8 +1,10 @@
 (function (root) {
   root.FormCommon = function(prefix) {
     var Track = LinkValues.Track;
+    var RoadNameSource = LinkValues.RoadNameSource;
+    var editableStatus = LinkValues.ProjectStatus.Incomplete.value;
 
-      var title = function (titleName) {
+    var title = function (titleName) {
           if (!titleName)
               titleName = "Uusi tieosoiteprojekti";
           return '<span class ="edit-mode-title">' + titleName + '</span>';
@@ -25,25 +27,26 @@
       '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
-    var newRoadAddressInfo = function(selected, links, road){
+    var newRoadAddressInfo = function(project, selected, links, road) {
       var roadNumber = road.roadNumber;
       var part = road.roadPartNumber;
       var track = road.trackCode;
-        var roadName = selected[0].roadName;
+      var roadName = selected[0].roadName;
       var link = _.first(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
+      var projectEditable = project.statusCode === editableStatus;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie',(roadNumber !== 0 ? roadNumber : '')) +
-        addSmallInputNumber('osa',(part !== 0 ? part : '')) +
+        addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectEditable) +
+        addSmallInputNumber('osa', (part !== 0 ? part : ''), !projectEditable) +
         addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
-        addSmallInputNumberDisabled('ely', link.elyCode) +
+        addSmallInputNumber('ely', link.elyCode, !projectEditable) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
           roadTypeDropdown() + '<br>' +
@@ -53,27 +56,27 @@
         '</div>';
     };
 
-    var replaceAddressInfo = function(backend, selectedProjectLink) {
-        var roadNameField = $('#roadName');
-        if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
-        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
-          if (response.success) {
-            $('#tie').val(response.roadNumber);
-            $('#osa').val(response.roadPartNumber);
-            if(response.roadName !== ''){
-                roadNameField.val(response.roadName);
-                roadNameField.prop('disabled', true);
-                $('.project-form button.update').prop("disabled", false);
-            }
-            if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
-              $('#trackCodeDropdown').val("0");
+      var replaceAddressInfo = function(backend, selectedProjectLink, currentProjectId) {
+          var roadNameField = $('#roadName');
+          if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
+              backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
+                  if (response.success) {
+                      $('#tie').val(response.roadNumber);
+                      $('#osa').val(response.roadPartNumber);
+                      if(response.roadName !== ''){
+                          roadNameField.val(response.roadName);
+                          roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
+                          $('.project-form button.update').prop("disabled", false);
+                      }
+                      if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
+                          $('#trackCodeDropdown').val("0");
+                  }
+              });
           }
-        });
-      }
-    };
+      };
 
     var roadTypeDropdown = function() {
-      return '<select class="'+prefix+'form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
+      return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
         '<option value = "1">1 Maantie</option>'+
         '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
@@ -101,14 +104,16 @@
       return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">'+label+'</label>';
     };
 
-    var addSmallInputNumber = function(id, value){
+    var addSmallInputNumber = function(id, value, isDisabled) {
       //Validate only number characters on "onkeypress" including TAB and backspace
+      var disabled = isDisabled ? ' readonly="readonly" ': '';
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="'+prefix+'form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+        '" class="' + prefix + 'form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value)? '' : value ) + '" ' +
+        disabled + ' onclick=""/>';
     };
 
-    var addSmallInputNumberDisabled = function(id, value){
-      return '<input type="text" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" readonly="readonly"/>';
+    var addSmallInputNumberDisabled = function(id, value) {
+      return '<input type="text" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value)? '' : value ) + '" readonly="readonly"/>';
     };
 
     var addDiscontinuityDropdown = function(link){
@@ -124,6 +129,7 @@
           '<option value="3" >3 ELY:n raja</option>' +
           '<option value="4" >4 Lievä epäjatkuvuus</option>' +
           '<option value="5" >5 Jatkuva</option>' +
+          '<option value="6" >5 Jatkuva (Rinnakkainen linkki)</option>' +
           '</select>';
       }
     };
@@ -147,6 +153,7 @@
     };
 
     var directionChangedInfo = function (selected, isPartialReversed) {
+      if (selected[0].status === LinkValues.LinkStatus.New.value) return '';
       if (isPartialReversed) {
         return '<label class="split-form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {
@@ -156,7 +163,11 @@
       }
     };
 
-    var changeDirection = function (selected) {
+    var changeDirection = function (selected, project) {
+      var projectEditable = project.statusCode === editableStatus;
+      if (!projectEditable) {
+        return ''; // Don't show the button if project status is not incomplete
+      }
       var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
       var isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
@@ -252,9 +263,9 @@
         '</div>' +
         '<div class="'+prefix+'form-group">' +
         '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
-        addSmallInputNumber('beginDistance', '--') +
+        addSmallInputNumber('beginDistance', '--', true) +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
-        addSmallInputNumber('endDistance', '--') +
+        addSmallInputNumber('endDistance', '--', true) +
         '<span id="manualCPWarning" class="manualCPWarningSpan">!</span>' +
         '</div></div>';
     };

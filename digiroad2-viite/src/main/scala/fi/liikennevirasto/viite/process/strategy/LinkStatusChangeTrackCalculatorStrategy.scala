@@ -1,7 +1,8 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.util.{Track}
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.LinkStatus.New
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 
 
@@ -13,7 +14,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
   override def applicableStrategy(headProjectLink: ProjectLink, projectLink: ProjectLink): Boolean = {
     //Will be applied if the link status changes for every status change detected and track is Left or Right
-    projectLink.status != headProjectLink.status &&
+    projectLink.status != headProjectLink.status && (projectLink.status != New && headProjectLink.status != New) &&
       (projectLink.track == Track.LeftSide || projectLink.track == Track.RightSide)
   }
 
@@ -28,7 +29,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
-        val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
+        val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight)
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
       }
     } else {
@@ -36,7 +37,7 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
       if (distance < AdjustmentToleranceMeters) {
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
       } else {
-        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
+        val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft)
         adjustTwoTracks(startAddress, left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
       }
     }
@@ -76,10 +77,10 @@ class TerminatedLinkStatusChangeStrategy extends  LinkStatusChangeTrackCalculato
 
     val (lastLeft, lastRight) = (left.last, right.last)
     if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
-      val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight.endAddrMValue)
+      val (newLeft, newRestLeft) = getUntilNearestAddress(leftProjectLinks, lastRight)
       adjustTwoTrackss(startAddress, Some(lastRight.endAddrMValue), newLeft, right, userDefinedCalibrationPoint, newRestLeft, restRight)
     } else {
-      val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft.endAddrMValue)
+      val (newRight, newRestRight) = getUntilNearestAddress(rightProjectLinks, lastLeft)
       adjustTwoTrackss(startAddress, Some(lastLeft.endAddrMValue), left, newRight, userDefinedCalibrationPoint, restLeft, newRestRight)
     }
   }

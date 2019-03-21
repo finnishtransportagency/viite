@@ -13,23 +13,22 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 
-object RoadAddressLinkBuilder extends AddressLinkBuilder {
-  lazy val dr2properties: Properties = {
+class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, projectLinkDAO: ProjectLinkDAO) extends AddressLinkBuilder {
+  lazy val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  val projectLinkDAO = new ProjectLinkDAO
-  val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+
+  val vvhClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-  val roadwayDAO = new RoadwayDAO
-  val linearLocationDAO = new LinearLocationDAO
-  val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus){
+  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean){
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
+
+  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
   def build(roadLink: RoadLinkLike, roadAddress: RoadAddress): RoadAddressLink = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
@@ -67,7 +66,7 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
   def build(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
     roadLink match {
       case rl: RoadLink => buildRoadLink(rl, unaddressedRoadLink)
-      case rl: RoadLinkLike => throw new NotImplementedError(s"No support for building unaddressed road links on RoadLinkLike subclass ${rl.getClass}")
+      case rl: RoadLinkLike => buildRoadLinkLike(rl, unaddressedRoadLink)
     }
   }
 
@@ -87,18 +86,43 @@ object RoadAddressLinkBuilder extends AddressLinkBuilder {
       VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber),
       unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry))
+  }
+
+  private def buildRoadLinkLike(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(roadLink.length))
+    val length = GeometryUtils.geometryLength(geom)
+    val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
+    val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
+    val VVHRoadName = getVVHRoadName(roadLink.attributes)
+    val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[Number].intValue()
+    val roadType = unaddressedRoadLink.roadType match {
+      case RoadType.Unknown => getRoadType(roadLink.administrativeClass, UnknownLinkType)
+      case _ => unaddressedRoadLink.roadType
+    }
+    RoadAddressLink(0, 0, roadLink.linkId, geom,
+      length, roadLink.administrativeClass, UnknownLinkType, roadLink.constructionType, roadLink.linkSource, roadType,
+      VVHRoadName, Some(""), municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber),
+      unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry), floating = false)
   }
 
+  /**
+    * This will return a RoadAddressLink based on the information of suravage links we fetch from VVH.
+    * It is possible that we already have road addresses or project links formed using those suravage links if so we include that information on the final RoadAddressLink.
+    * @param roadLinkProjectIdTuple: (VVHRoadlink, Option[Long]) - The suravage link and a possible project id
+    * @return
+    */
   def buildSuravageRoadAddressLink(roadLinkProjectIdTuple: (VVHRoadlink, Option[Long])): RoadAddressLink = {
     val roadLink = roadLinkProjectIdTuple._1
     val roadAddresses = roadLinkProjectIdTuple._2 match { //Check if project attribute has been initialized
-      case (Some(projectId)) =>
+      case Some(projectId) =>
         //TODO define and use projectService to fetch project links by linkId
-        projectLinkDAO.getProjectLinksByLinkIdAndProjectId(roadLink.linkId, projectId)
+        projectLinkDAO.getProjectLinksByLinkId(roadLink.linkId)
 
       case _ =>
-        roadAddressService.getRoadAddressesByLinkIds(Set(roadLink.linkId), includeHistory = false)
+        roadAddressService.getRoadAddressesByLinkIds(Seq(roadLink.linkId))
     }
     val headAddress = roadAddresses.headOption
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)

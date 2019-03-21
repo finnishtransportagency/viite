@@ -1,11 +1,13 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.NewRoadway
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
+import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -14,11 +16,11 @@ import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 object TrackCalculatorContext {
 
   private lazy val minorDiscontinuityStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(MinorDiscontinuity)
+    new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
   }
 
   private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(Discontinuous)
+    new DiscontinuityTrackCalculatorStrategy(Seq(Discontinuous, ParallelLink))
   }
 
   private lazy val linkStatusChangeTrackCalculatorStrategy: LinkStatusChangeTrackCalculatorStrategy = {
@@ -61,7 +63,7 @@ object TrackCalculatorContext {
   }
 }
 
-case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], stratAddrMValue: Long, endAddrMValue: Long, restLeft: Seq[ProjectLink] = Seq(), restRight: Seq[ProjectLink] = Seq())
+case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], startAddrMValue: Long, endAddrMValue: Long, restLeft: Seq[ProjectLink] = Seq(), restRight: Seq[ProjectLink] = Seq())
 
 /**
   * Strategy used on the DefaultSectionCalculatorStrategy
@@ -116,7 +118,7 @@ trait TrackCalculatorStrategy {
     */
   protected def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     val coEff = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
-    ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), coEff)
+    ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), if (coEff.isNaN || coEff.isInfinity) 1.0 else coEff)
   }
 
   protected def adjustTwoTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]) = {
@@ -124,6 +126,19 @@ trait TrackCalculatorStrategy {
       assignValues(right, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(right), userDefinedCalibrationPoint))
   }
 
+  /**
+    * Return the calculated values of the start and end addresses of both left and right links depending of the link status:
+    *
+    * L: Transfer, R: Transfer OR L: Unchanged, R: Unchanged =>  return the Average between two address measures.
+    * L: Unchanged, R: WTV OR L: Transfer, R: WTV => Start and end of the left links
+    * L: WTV, R: Unchanged OR L: WTV, R: Transfer => Start and end of the right links
+    * None of the above => if it exists return the address measure of the user defined calibration point, if not then return the Average between two address measures.
+    *
+    * @param leftLink
+    * @param rightLink
+    * @param userCalibrationPoint
+    * @return
+    */
   protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
                                 userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
 
@@ -153,6 +168,7 @@ trait TrackCalculatorStrategy {
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
 
+    // Find a calibration point annexed to the projectLink Id
     val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
 
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
@@ -168,51 +184,77 @@ trait TrackCalculatorStrategy {
   }
 
 
-  protected def setOnSideCalibrationPoints(projectlinks: Seq[ProjectLink], raCalibrationPoints: Map[Long, CalibrationCode], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    projectlinks.size match {
-      case 1 =>
-        projectlinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true, ProjectLinkSource))
-      case _ =>
-        val pls = projectlinks.map {
-          pl =>
-            val raCalibrationCode = raCalibrationPoints.get(pl.roadwayId).getOrElse(CalibrationCode.No)
-            val raStartCP = raCalibrationCode == CalibrationCode.AtBeginning || raCalibrationCode == CalibrationCode.AtBoth
-            val raEndCP = raCalibrationCode == CalibrationCode.AtEnd || raCalibrationCode == CalibrationCode.AtBoth
-            setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
-        }
+  protected def setOnSideCalibrationPoints(projectLinks: Seq[ProjectLink], raCalibrationPointsNSide: Map[Long, (CalibrationCode, SideCode)], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+    if (projectLinks.head.status == NotHandled)
+      projectLinks
+    else
+      projectLinks.size match {
+        case 0 => projectLinks
+        case 1 =>
+          projectLinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), true, true, ProjectLinkSource))
+        case _ =>
+          val pls = projectLinks.map {
+            pl =>
+              val (raCalibrationCode, raSideCode) = raCalibrationPointsNSide.getOrElse(pl.linearLocationId, (CalibrationCode.No, SideCode.Unknown))
+              val adjustedCalibrationCode = if(raSideCode != pl.sideCode) CalibrationCode.switch(raCalibrationCode)
+              val raStartCP = adjustedCalibrationCode == CalibrationCode.AtBeginning || adjustedCalibrationCode == CalibrationCode.AtBoth
+              val raEndCP = adjustedCalibrationCode == CalibrationCode.AtEnd || adjustedCalibrationCode == CalibrationCode.AtBoth
+              setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
+          }
 
-        Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, false, ProjectLinkSource)) ++ pls.init.tail ++
-          Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), false, true, ProjectLinkSource))
-    }
+          val calPointSource1 = if (pls.tail.head.calibrationPoints._1.isDefined) pls.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
+          val calPointSource2 = if (pls.init.last.calibrationPoints._2.isDefined) pls.init.last.calibrationPoints._2.get.source else ProjectLinkSource
+          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), true, pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
+            Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, true, calPointSource2))
+      }
   }
 
-  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint], startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource) = {
+  protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
+                                    startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource): ProjectLink = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
     val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo((sCP, eCP), source))
   }
 
-  protected def getUntilNearestAddress(seq: Seq[ProjectLink], address: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < address)
+  /**
+    * Returns project links for the other track before and after the point where there is discontinuity on the track.
+    *
+    * @param trackA
+    * @param linkOnTrackB
+    * @return (Project links before the discontinuity point, project links after the discontinuity point)
+    */
+  protected def getUntilNearestAddress(seq: Seq[ProjectLink], endProjectLink: ProjectLink): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    if (endProjectLink.discontinuity == MinorDiscontinuity || endProjectLink.discontinuity == Discontinuous || endProjectLink.discontinuity == ParallelLink) {
+      val continuousProjectLinks = seq.takeWhile(pl => pl.startAddrMValue < endProjectLink.endAddrMValue)
+      if (continuousProjectLinks.isEmpty)
+        throw new RoadAddressException("Could not find any nearest road address")
 
-    if (continuousProjectLinks.isEmpty)
-      throw new RoadAddressException("Could not find any nearest road address")
-
-    val lastProjectLink = continuousProjectLinks.last
-    if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(address - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(address - lastProjectLink.endAddrMValue))) {
-      (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
+      val lastProjectLink = continuousProjectLinks.last
+      if (continuousProjectLinks.size > 1 && lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.startAddrMValue)) < lastProjectLink.toMeters(Math.abs(endProjectLink.endAddrMValue - lastProjectLink.endAddrMValue))) {
+        (continuousProjectLinks.init, lastProjectLink +: seq.drop(continuousProjectLinks.size))
+      } else {
+        (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+      }
     } else {
+      val continuousProjectLinks = seq.takeWhile(pl => pl.status == endProjectLink.status)
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
   }
 
+  /**
+    * Re-adds the calibration points to the project links after the calculation. The calibration points are gotten via the information on our current linear locations.
+    * 
+    * @param calculatorResult: TrackCalculatorResult - the result of the calculation
+    * @param userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint] - Map of linear location id -> UserDefinedCalibrationPoint
+    * @return
+    */
   def setCalibrationPoints(calculatorResult: TrackCalculatorResult, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val projectLinks = calculatorResult.leftProjectLinks ++ calculatorResult.rightProjectLinks
 
-    val roadAddressCalibrationPoints = new LinearLocationDAO().getLinearLocationCalibrationCode(projectLinks.map(_.roadwayId).filter(_ > 0).distinct)
+    val raCalibrationPointsNSide = new LinearLocationDAO().getLinearLocationCalibrationCodeNSide(projectLinks.map(_.linearLocationId).filter(_ > 0).distinct)
 
-    (setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint),
-      setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, roadAddressCalibrationPoints, userDefinedCalibrationPoint))
+    (setOnSideCalibrationPoints(calculatorResult.leftProjectLinks, raCalibrationPointsNSide, userDefinedCalibrationPoint),
+      setOnSideCalibrationPoints(calculatorResult.rightProjectLinks, raCalibrationPointsNSide, userDefinedCalibrationPoint))
   }
 
   def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.endAddrMValue

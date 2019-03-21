@@ -7,7 +7,7 @@ VIITE on Liikenneviraston tieosoitej&auml;rjestelm&auml;n yll&auml;pito-sovellus
 
 Seuraavasta linkist&auml; p&auml;&auml;see Liikenneviraston extranet VIITE-sivulle (t&auml;ll&auml; hetkell&auml; testiextranet k&auml;yt&ouml;ss&auml;, varsinainen extranet-osoite p&auml;ivitet&auml;&auml;n my&ouml;hemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita k&auml;ytt&auml;jille. Sivulla yll&auml;pidet&auml;&auml;n my&ouml;s dokumentaatiota Viitteest&auml;. 
 
-https://testiextranet.liikennevirasto.fi/extranet/web/fi/viite?kategoria=7457637 (testi) 
+https://testiextranet.vayla.fi/extranet/web/fi/viite?kategoria=7457637 (testi) 
 
 __Huom! Suosittelemme Firefoxia tai Chromea, kun sovelluksella yll&auml;pidet&auml;&auml;n Digiroad-tietoja.__
 
@@ -20,7 +20,7 @@ Viite-sovelluksen k&auml;ytt&ouml;&auml; varten tarvitaan Liikenneviraston tunnu
 
 Kaikilla Liikenneviraston tunnuksilla on p&auml;&auml;sy Viite-sovellukseen.
 
-Viite-sovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.liikennevirasto.fi/viite/ target="_blank">https://extranet.liikennevirasto.fi/viite/. </a>
+Viite-sovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/viite/ target="_blank">https://extranet.vayla.fi/viite/. </a>
 
 ![Kirjautuminen Viite-sovellukseen.](k1.JPG)
 
@@ -51,7 +51,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu 
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
 - Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; janne.grekula@karttakeskus.fi
+- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; janne.grekula@cgi.com.
 
 
 2. Perustietoja Viite-sovelluksesta
@@ -193,7 +193,7 @@ Palautteet hallinnollisen luokan virheist&auml; voi toimittaa Maanmittauslaitoks
 
 Kun kohdetta klikkaa kartalla, tulee selaimen osoiteriville n&auml;kyviin valitun kohteen tielinkin ID. Osoiterivill&auml; olevan URL:n avulla voi my&ouml;s kohdistaa k&auml;ytt&ouml;liittym&auml;ss&auml; ko. tielinkkiin. URL:n voi esimerkiksi l&auml;hett&auml;&auml; toiselle henkil&ouml;lle s&auml;hk&ouml;postilla, jolloin h&auml;n p&auml;&auml;see samaan paikkaan k&auml;ytt&ouml;liittym&auml;ss&auml; helposti.
 
-Esimerkiksi: https://extranet.liikennevirasto.fi/viite/#linkProperty/799497 n&auml;kyy kuvassa osoiterivill&auml; (5). 799497 on tielinkin ID.
+Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/799497 n&auml;kyy kuvassa osoiterivill&auml; (5). 799497 on tielinkin ID.
 
 ![Kohdistaminen tielinkin ID:ll&auml;](k8.JPG)
 
