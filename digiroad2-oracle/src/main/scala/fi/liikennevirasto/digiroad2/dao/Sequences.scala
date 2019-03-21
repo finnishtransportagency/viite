@@ -57,4 +57,8 @@ object Sequences {
   def nextRoadwayPointId: Long = {
     Queries.nextRoadwayPointId.as[Long].first
   }
+
+  def nextCalibrationPointId: Long = {
+    Queries.nextCalibrationPointId.as[Long].first
+  }
 }
