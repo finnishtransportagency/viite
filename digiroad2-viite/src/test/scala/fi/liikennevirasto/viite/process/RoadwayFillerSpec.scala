@@ -184,7 +184,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
       result(1)._1.size should be(1)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
-      result(1)._1.head.terminated should be(Termination)
+      result(1)._1.head.terminated.value should be(Termination.value)
     }
   }
 
@@ -220,7 +220,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.size should be(2)
       result.head._1.size should be(1)
       result.head._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
-      result.head._1.head.terminated should be(Termination)
+      result.head._1.head.terminated.value should be(Termination.value)
       result(1)._1.size should be(2)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
     }
@@ -276,7 +276,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       //Terminated
       result(1)._1.size should be(1)
       result(1)._1.head.roadwayNumber should not be roadways.head._2.roadwayNumber
-      result(1)._1.head.terminated should be(Termination)
+      result(1)._1.head.terminated.value should be(Termination.value)
       result(1)._1.head.endDate.isDefined should be(true)
       //New
       result(2)._1.size should be(1)
@@ -350,7 +350,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.head._1.head.roadwayNumber should be(roadways.head._2.roadwayNumber)
       result.head._1.last.roadwayNumber should be(roadways.head._2.roadwayNumber)
       result.head._1.last.endDate.isDefined should be(true)
-      result.head._1.head.terminated should be(Termination)
+      result.head._1.head.terminated.value should be(Termination.value)
       result.head._1.last.terminated should be(Subsequent)
     }
   }
