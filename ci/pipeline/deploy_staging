@@ -61,7 +61,7 @@ pipeline {
                         STAGE_FRONTEND_BUILD_CMD = [
                             "npm install",
                             "grunt test",
-                            "grunt deploy --target=${get_environment()?.trim()}",
+                            "grunt deploy --target=staging",
                             "cp -r ${WORKSPACE}/dist ~/package/UI/",
                             "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
                             "cd ~/package/UI"
@@ -133,7 +133,7 @@ pipeline {
                         "${build_args} -f ci/docker/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "viite-cap",
+                        "viite-capistrano",
                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
                      )
                 }
@@ -234,7 +234,7 @@ pipeline {
 
             agent {
                 docker {
-                    image "viite-cap"
+                    image "viite-capistrano"
                     reuseNode true
                 }
             }
