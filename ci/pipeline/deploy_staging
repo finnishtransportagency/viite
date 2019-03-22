@@ -61,7 +61,7 @@ pipeline {
                         STAGE_FRONTEND_BUILD_CMD = [
                             "npm install",
                             "grunt test",
-                            "grunt deploy --target=staging",
+                            "grunt deploy --target=${get_environment()?.trim()}",
                             "cp -r ${WORKSPACE}/dist ~/package/UI/",
                             "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
                             "cd ~/package/UI"
@@ -121,7 +121,7 @@ pipeline {
                         "--build-arg JENKINS_UID=${jenkins_uid}"
                     ].join(" ")
                     docker.build(
-                        "viite-frontend-node",
+                        "viite-frontend",
                         "${build_args} -f ci/docker/Dockerfile.node ci"
                     )
                     docker.build(
@@ -150,7 +150,7 @@ pipeline {
         stage("Build: Frontend") {
             agent {
                 docker {
-                    image "viite-frontend-node"
+                    image "viite-frontend"
                     reuseNode true
                     args "-v viite-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
