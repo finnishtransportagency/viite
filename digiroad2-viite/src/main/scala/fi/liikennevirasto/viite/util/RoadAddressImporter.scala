@@ -108,9 +108,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def insertRoadwayPoint(roadwayPointStatement: PreparedStatement, roadwayPoint: RoadwayPoint): Long = {
     val id = Sequences.nextRoadwayPointId
     roadwayPointStatement.setLong(1, id)
-    roadwayPointStatement.setLong( 1, roadwayPoint.roadwayNumber)
-    roadwayPointStatement.setLong(2, roadwayPoint.addrMValue)
-    roadwayPointStatement.setString(3, roadwayPoint.createdBy)
+    roadwayPointStatement.setLong(2, roadwayPoint.roadwayNumber)
+    roadwayPointStatement.setLong(3, roadwayPoint.addrMValue)
+    roadwayPointStatement.setString(4, roadwayPoint.createdBy)
     roadwayPointStatement.addBatch()
     id
   }
