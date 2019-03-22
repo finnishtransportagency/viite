@@ -125,6 +125,65 @@ class ProjectReservedPartDAO {
   def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
       val sql =
+        s"""
+        SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length, length_new, ely, ely_new,
+        (SELECT DISCONTINUITY FROM ROADWAY ra
+          WHERE ra.ROAD_NUMBER = gr.ROAD_NUMBER
+          AND ra.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
+          AND ra.END_DATE IS NULL
+          AND ra.VALID_TO IS NULL
+          AND END_ADDR_M = gr.LENGTH and ROWNUM < 2) as discontinuity,
+        (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl
+          WHERE pl.PROJECT_ID = gr.PROJECT_ID
+          AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
+          AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
+          AND pl.STATUS != 5
+          AND pl.TRACK IN (0,1)
+          AND END_ADDR_M = gr.LENGTH_NEW and ROWNUM < 2) as discontinuity_new,
+        (SELECT LINK_ID FROM PROJECT_LINK pl
+          WHERE pl.PROJECT_ID = gr.PROJECT_ID
+          AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
+          AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
+          AND pl.STATUS != 5
+          AND pl.TRACK IN (0,1)
+          AND pl.START_ADDR_M = 0
+          AND pl.END_ADDR_M > 0
+          AND ROWNUM < 2) as first_link FROM (
+            SELECT rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER,
+            MAX(ra.END_ADDR_M) as length,
+            CASE WHEN EXISTS(SELECT prj.NAME FROM PROJECT prj
+              WHERE prj.ID IN (SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
+                WHERE LINK_ID IN (SELECT link.LINK_ID FROM LINEAR_LOCATION link
+                  INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
+                  WHERE road.ROAD_NUMBER = $roadNumber
+                  AND road.ROAD_PART_NUMBER = $roadPartNumber)))
+            THEN MAX(pl.END_ADDR_M)
+            ELSE MAX(ra.END_ADDR_M)
+                END as length_new,
+                MAX(ra.ELY) as ely,
+                MAX(pl.ELY) as ely_new
+        FROM PROJECT_RESERVED_ROAD_PART rp
+          LEFT JOIN PROJECT_LINK pl ON (pl.PROJECT_ID = rp.PROJECT_ID AND pl.ROAD_NUMBER = rp.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER)
+          LEFT JOIN ROADWAY ra ON ((ra.ROAD_NUMBER = rp.ROAD_NUMBER AND ra.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER) OR ra.ID = pl.ROADWAY_ID)
+          LEFT JOIN LINEAR_LOCATION lc ON (lc.ID = pl.LINEAR_LOCATION_ID)
+          WHERE ra.ROAD_NUMBER = $roadNumber
+          AND ra.ROAD_PART_NUMBER = $roadPartNumber
+          AND ra.END_DATE IS NULL
+          AND ra.VALID_TO IS NULL
+          AND (pl.STATUS IS NULL OR (pl.STATUS != 5 AND pl.TRACK IN (0,1)))
+          GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
+        Option[Long], Option[Long])](sql).firstOption.map {
+        case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
+          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
+            newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
+      }
+    }
+  }
+
+  /*def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
+    time(logger, "Fetch reserved road part") {
+      val sql =
         s"""SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length, length_new, ely, ely_new,
         (SELECT DISCONTINUITY FROM ROADWAY ra
           WHERE ra.ROAD_NUMBER = gr.ROAD_NUMBER
@@ -193,7 +252,7 @@ class ProjectReservedPartDAO {
             newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
       }
     }
-  }
+  }*/
 
   def roadPartReservedTo(roadNumber: Long, roadPart: Long): Option[(Long, String)] = {
     time(logger, "Road part reserved to") {
